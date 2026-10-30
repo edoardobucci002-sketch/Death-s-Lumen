@@ -1,0 +1,55 @@
+/* Caratteri inclusi nel pacchetto: il gioco funziona anche offline. */
+@import '@fontsource/im-fell-english-sc/400.css';
+@import '@fontsource/im-fell-english/400.css';
+@import '@fontsource/im-fell-english/400-italic.css';
+@import '@fontsource/eb-garamond/400.css';
+@import '@fontsource/eb-garamond/500.css';
+@import '@fontsource/pixelify-sans/500.css';
+@import '@fontsource/pixelify-sans/700.css';
+
+:root {
+  --sfondo: #0d0b09;
+  --pannello: #15110d;
+  --pergamena: #e8dcc4;
+  --tenue: #9c907c;
+  --linea: rgba(232, 220, 196, 0.15);
+  --accento: #e3913a;
+  --f-titolo: 'IM Fell English SC', Georgia, serif;
+  --f-corsivo: 'IM Fell English', Georgia, serif;
+  --f-testo: 'EB Garamond', Georgia, serif;
+  --f-pixel: 'Pixelify Sans', ui-monospace, monospace;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden; background: var(--sfondo); color: var(--pergamena);
+  font-family: var(--f-testo); overscroll-behavior: none; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
+}
+#gioco { position: fixed; inset: 0; display: grid; place-items: center; }
+#gioco canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+#interfaccia { position: fixed; inset: 0; pointer-events: none; }
+#interfaccia > * { pointer-events: auto; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
+
+/* Schermata di prova della tappa M0 */
+.prova-testa {
+  position: absolute; top: 0; left: 0; right: 0; text-align: center;
+  padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+.prova-testa h1 { margin: 0; font: 400 clamp(34px, 8vw, 64px)/1 var(--f-titolo); text-shadow: 0 0 30px rgba(227, 145, 58, 0.3); }
+.prova-testa p { margin: 6px 0 0; font: italic 400 17px/1.3 var(--f-corsivo); color: var(--tenue); }
+.prova-piede {
+  position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 0 max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.prova-tag { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.prova-tag button {
+  min-width: 88px; min-height: 44px; padding: 8px 16px; background: var(--pannello); border: 1px solid var(--linea);
+  font: 400 17px var(--f-titolo); letter-spacing: 0.04em;
+}
+.prova-tag button[aria-pressed='true'] { border-color: var(--accento); color: var(--accento); }
+.prova-info { margin: 0; font: 500 12px var(--f-pixel); letter-spacing: 0.06em; color: var(--tenue); text-align: center; }

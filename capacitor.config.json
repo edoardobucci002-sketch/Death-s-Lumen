@@ -1,0 +1,12 @@
+{
+  "appId": "com.deathslumen.game",
+  "appName": "Death's Lumen",
+  "webDir": "dist",
+  "backgroundColor": "#0d0b09",
+  "android": { "backgroundColor": "#0d0b09" },
+  "ios": { "backgroundColor": "#0d0b09", "contentInset": "never", "scrollEnabled": false },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 800, "launchAutoHide": true, "backgroundColor": "#0d0b09", "showSpinner": false, "androidScaleType": "CENTER_CROP" },
+    "StatusBar": { "overlaysWebView": true, "style": "DARK", "backgroundColor": "#0d0b09" }
+  }
+}

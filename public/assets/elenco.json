@@ -1,0 +1,18 @@
+{
+  "versione": 1,
+  "asset": [
+    {
+      "chiave": "Il_Lampionaio",
+      "categoria": "personaggi",
+      "immagine": "assets/personaggi/Il_Lampionaio.png",
+      "dati": "assets/personaggi/Il_Lampionaio.json",
+      "versioneFile": 0,
+      "tag": [
+        "idle",
+        "walk",
+        "attack",
+        "special"
+      ]
+    }
+  ]
+}
