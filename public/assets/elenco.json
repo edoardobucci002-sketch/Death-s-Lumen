@@ -17,7 +17,10 @@
       "immagine": "assets/personaggi/Il_Becchino_ingame.png",
       "dati": "assets/personaggi/Il_Becchino_ingame.json",
       "versioneFile": 5,
-      "tag": []
+      "tag": [
+        "idle",
+        "walk"
+      ]
     },
     {
       "chiave": "Il_Lampionaio",
@@ -35,7 +38,10 @@
       "immagine": "assets/personaggi/Il_Lampionaio_ingame.png",
       "dati": "assets/personaggi/Il_Lampionaio_ingame.json",
       "versioneFile": 5,
-      "tag": []
+      "tag": [
+        "idle",
+        "walk"
+      ]
     },
     {
       "chiave": "La_Badessa",
@@ -53,7 +59,10 @@
       "immagine": "assets/personaggi/La_Badessa_ingame.png",
       "dati": "assets/personaggi/La_Badessa_ingame.json",
       "versioneFile": 5,
-      "tag": []
+      "tag": [
+        "idle",
+        "walk"
+      ]
     },
     {
       "chiave": "La_Strega",
@@ -71,7 +80,10 @@
       "immagine": "assets/personaggi/La_Strega_ingame.png",
       "dati": "assets/personaggi/La_Strega_ingame.json",
       "versioneFile": 5,
-      "tag": []
+      "tag": [
+        "idle",
+        "walk"
+      ]
     }
   ]
 }
