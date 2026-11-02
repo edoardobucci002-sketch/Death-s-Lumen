@@ -5,7 +5,7 @@
 // Per ogni sprite usa la versione più alta: La_Badessa_V3.aseprite batte La_Badessa_V2.aseprite.
 // Cerca anche in segnaposto/ (stesse sottocartelle): gli sprite provvisori hanno la versione V0,
 // quindi il primo file vero di Edoardo (V1 o più) li sostituisce da solo.
-// Convenzione: Nome_V#.aseprite è il ritratto della selezione, Nome_gioco_V# lo sprite in gioco.
+// Convenzione: Nome_V#.aseprite è il ritratto della selezione, Nome_ingame_V# lo sprite in gioco.
 // Produce in public/assets/<categoria>/ un PNG con tutti i fotogrammi e un JSON con i tag,
 // più public/assets/elenco.json che il gioco legge all'avvio.
 //

@@ -72,7 +72,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 - **Nomi dei file** (convenzione di Edoardo), con le parole separate da `_` e la versione in fondo:
   - `Nome_V#.aseprite`, per esempio `La_Badessa_V2.aseprite`
   - `Nome_idle_sheet_V#.png`, per esempio `La_Badessa_idle_sheet_V2.png`
-  - `Nome_V#.aseprite` è il **ritratto** della selezione; `Nome_gioco_V#.aseprite` è lo **sprite in gioco** (stessa cartella, deciso il 2 novembre 2026)
+  - `Nome_V#.aseprite` è il **ritratto** della selezione; `Nome_ingame_V#.aseprite` è lo **sprite in gioco** (stessa cartella, deciso il 2 novembre 2026)
   - Il gioco usa sempre la versione più alta presente; non cancellare le versioni vecchie.
   - Gli sprite in `segnaposto/` hanno la versione V0: il primo file vero (V1 o più) li sostituisce da solo.
 - **Animazioni come tag di Aseprite**, con nomi fissi: `idle`, `walk`, `attack`, `special`, `hurt`, `death`. Lo script di export legge i tag; Edoardo non deve tagliare fotogrammi a mano.

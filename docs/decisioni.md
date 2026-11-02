@@ -4,7 +4,8 @@ Una riga per decisione, la più recente in alto.
 
 | Data | Decisione | Motivo |
 | --- | --- | --- |
-| 2026-11-02 | Nomi degli sprite in gioco: `Nome_gioco_V#.aseprite`, nella cartella del personaggio accanto al ritratto `Nome_V#.aseprite` | Scelta di Edoardo: i ritratti già fatti non vanno rinominati |
+| 2026-11-02 | Gli sprite in gioco andranno ridisegnati più piccoli (32-48 px di altezza invece di circa 100), in linea con i numeri della v0 | I primi sprite ingame_V1 erano alti circa 100 px: personaggio troppo grande sullo schermo da 300 px, nemici visibili tardi |
+| 2026-11-02 | Nomi degli sprite in gioco: `Nome_ingame_V#.aseprite`, nella cartella del personaggio accanto al ritratto `Nome_V#.aseprite` | Scelta di Edoardo (prima si era detto `_gioco`): i ritratti già fatti non vanno rinominati |
 | 2026-11-02 | Gli sprite provvisori stanno in `segnaposto/<CATEGORIA>/` con versione V0: il primo file vero di Edoardo li sostituisce da solo | Nessun passaggio a mano quando arrivano gli sprite veri |
 | 2026-11-02 | `ALTEZZA_MINIMA` resta 300 pixel di gioco | Scelta di Edoardo |
 | 2026-11-02 | Workflow su GitHub: tolto `setup-android` (gli strumenti Android sono già sui server); azioni aggiornate a checkout v7, setup-node v7, setup-java v6, upload-artifact v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5 | `setup-android` faceva fallire l'APK; le versioni vecchie usavano Node 20, che GitHub sta ritirando |
