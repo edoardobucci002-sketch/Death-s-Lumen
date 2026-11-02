@@ -131,6 +131,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
   - vibrazione sugli eventi importanti, disattivabile;
   - su Android, il tasto Indietro mette in pausa, riprende o torna al menu.
 - Niente zoom con doppio tocco o pizzico; niente selezione di testo nell'interfaccia di gioco.
+- Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia «Verifica tutti i telefoni» nella bozza (`npm run bozza`).
 - Funziona offline: tutti gli asset sono nel pacchetto.
 
 ## Verifica, prima di dire che una tappa è finita

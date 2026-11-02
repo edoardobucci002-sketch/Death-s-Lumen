@@ -1,16 +1,18 @@
 // Sfondi per la pagina di bozza dell'HUD: screenshot del gioco vero, senza l'interfaccia HTML,
 // riportati ai pixel di gioco (un pixel dell'immagine = un pixel di gioco). Scrive in bozza/sfondi/.
 // Uso: node tools/sfondi-bozza.mjs (con la build fatta: usa vite preview)
-import { chromium, devices } from 'playwright';
+import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 
 const porta = 4321;
 const server = spawn('npx', ['vite', 'preview', '--port', String(porta), '--strictPort'], { stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 2500));
+// schermi grandi (scala ×1): la bozza ne ritaglia il centro per ogni telefono
+const telefono = { deviceScaleFactor: 1, isMobile: true, hasTouch: true };
 const casi = [
-  ['verticale', devices['iPhone 13'], 'lampionaio'],
-  ['orizzontale', { ...devices['iPhone 13'], viewport: { width: 844, height: 390 } }, 'strega'],
+  ['verticale', { ...telefono, viewport: { width: 800, height: 1400 } }, 'lampionaio'],
+  ['orizzontale', { ...telefono, viewport: { width: 1400, height: 800 } }, 'strega'],
 ];
 const browser = await chromium.launch();
 for (const [nome, disp, pg] of casi) {
@@ -18,7 +20,7 @@ for (const [nome, disp, pg] of casi) {
   const pag = await ctx.newPage();
   await pag.goto(`http://localhost:${porta}/?pg=${pg}&nemici=60&immortale&automatico&livello=3`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 });
-  await pag.waitForTimeout(2500);
+  await pag.waitForTimeout(900); // i nemici ci sono ma non hanno ancora raggiunto il personaggio (niente lampi né numeri)
   await pag.addStyleTag({ content: '#interfaccia { display: none !important; }' });
   await pag.waitForTimeout(100);
   const scala = await pag.evaluate(() => window.__dl.registry.get('scala'));

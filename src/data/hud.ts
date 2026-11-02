@@ -30,8 +30,20 @@ export const INGRANDIMENTO: Record<string, number> = {
   avvisi: 1,
   carte: 2,
   pannelli: 2,
+  pulsanti: 3, // i pulsanti dei menu: a ×3 sono alti almeno 44 punti, la misura di un dito
   ritratto: 4, // la cornice del ritratto: deve contenere il ritratto 224×288 disegnato a grandezza piena
 };
+
+/**
+ * Sui telefoni dove un pixel di gioco è più piccolo di così (in punti, cioè la misura che vede il dito)
+ * l'HUD si ingrandisce di un numero intero di volte: succede con la scala ×1 (iPhone SE, Android piccoli),
+ * dove altrimenti pausa e abilità sarebbero grandi la metà.
+ */
+export const PUNTI_MINIMI_PER_PIXEL = 0.6;
+/** Gruppi che non si ingrandiscono con la regola qui sopra (la cornice del ritratto non ci starebbe). */
+export const SENZA_RADDOPPIO = ['ritratto'];
+/** Area di tocco invisibile attorno a pausa e abilità, in punti per lato: il dito li prende anche appena fuori dal disegno. */
+export const MARGINE_TOCCO = 4;
 
 /** Dove scorre il riempimento dentro ogni cornice di barra (il riempimento ha già queste misure). */
 export const FINESTRE: Record<string, Riquadro> = {

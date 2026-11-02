@@ -37,6 +37,7 @@
       </fieldset>
       <fieldset>
         <legend>Telefono</legend>
+        <select id="scelta-dispositivo" aria-label="Modello di telefono"></select>
         <div class="scelte" data-scelta="telefono">
           <button data-valore="verticale">Verticale</button>
           <button data-valore="orizzontale">Orizzontale</button>
@@ -91,6 +92,13 @@
       </fieldset>
     </aside>
   </main>
+
+  <section class="sezione">
+    <h2>Verifica sui telefoni</h2>
+    <p class="spiega">Disegna ogni schermata su ogni telefono, in verticale e in orizzontale, con le misure ingrandimento scelte qui sopra. Controlla che ogni elemento stia nello schermo e fuori da tacca e barre di sistema, che due elementi non si coprano (il joystick e la salute sotto i piedi possono stare sopra al gioco) e che i pulsanti siano larghi almeno 44 punti, la misura di un dito.</p>
+    <button class="grande" id="verifica-avvia">Verifica tutti i telefoni</button>
+    <div id="verifica-esito"></div>
+  </section>
 
   <section class="sezione">
     <h2>Tutti gli elementi</h2>

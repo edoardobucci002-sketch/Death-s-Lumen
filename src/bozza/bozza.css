@@ -67,6 +67,15 @@ input[type='checkbox'] { accent-color: var(--accento); }
 .fondo-scacchi .tela { background: repeating-conic-gradient(#3a3a3a 0 25%, #262626 0 50%) 0 0 / 16px 16px; }
 .fondo-cimitero .tela { background: #17130f url('/bozza/sfondi/verticale.png') center / 585px auto; }
 
+select { font: inherit; font-size: 14px; color: inherit; background: #1d1812; border: 1px solid var(--linea); border-radius: 4px; padding: 3px 6px; }
+.spiega { color: var(--tenue); max-width: 900px; margin: 0 0 8px; }
+.grande { border: 1px solid var(--accento); background: #2a1f14; color: var(--accento); border-radius: 6px; padding: 6px 14px; font: 400 16px var(--f-titolo); }
+.esito { border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+.esito th, .esito td { border: 1px solid var(--linea); padding: 5px 10px; text-align: left; }
+.esito td small { display: block; font: 12px var(--f-pixel); color: var(--tenue); }
+.esito td.si { color: #9fd49a; }
+.esito td.no { color: #e8a090; }
+.problemi { font-size: 14px; display: grid; gap: 3px; padding-left: 22px; max-width: 1100px; }
 .note ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 900px; }
 .note li { color: var(--pergamena); }
 .note ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; color: var(--tenue); }
