@@ -86,7 +86,7 @@ for (const s of [...scelti.values()].sort((a, b) => a.chiave.localeCompare(b.chi
   const png = join(cartella, `${s.chiave}.png`);
   const json = join(cartella, `${s.chiave}.json`);
   execFileSync(aseprite, ['-b', s.p, '--sheet', png, '--sheet-type', 'packed', '--data', json,
-    '--format', 'json-array', '--list-tags', '--trim', '--shape-padding', '1', '--filename-format', '{title} {frame}.{extension}'], { stdio: 'inherit' });
+    '--format', 'json-array', '--list-tags', '--trim', '--shape-padding', '1', '--filename-format', '{frame}'], { stdio: 'inherit' });
   const dati = JSON.parse(readFileSync(json, 'utf8'));
   dati.meta.image = `${s.chiave}.png`;
   writeFileSync(json, JSON.stringify(dati));
