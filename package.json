@@ -9,6 +9,7 @@
     "build": "tsc --noEmit && vite build && node tools/genera-sw.mjs",
     "anteprima": "vite preview --host",
     "asset": "node tools/export-asset.mjs",
+    "icone": "node tools/icone.mjs",
     "prova": "node tools/prova.mjs",
     "app": "npm run build && cap sync",
     "ios": "npm run app && cap open ios",
