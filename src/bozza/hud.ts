@@ -180,7 +180,7 @@ function datiAnello(colore: string, grigio: string | null): DatiAnello | null {
   const id = `anello|${colore}|${grigio}`;
   const vecchio = cacheAnelli.get(id); if (vecchio) return vecchio;
   const pc = piatto(colore), a = ANELLI[colore]; if (!pc || !a) return null;
-  const base = grigio ? piatto(grigio) : ricolora(colore, 'spento'), ab = grigio ? ANELLI[grigio] : a;
+  const base = grigio ? piatto(grigio) : ricolora(colore, 'spento'), ab = grigio ? ANELLI[grigio] ?? a : a;
   if (!base || !ab) return null;
   const [cg, xg] = tela(base.width, base.height); xg.drawImage(base, 0, 0);
   const [cc, xc] = tela(base.width, base.height); xc.drawImage(pc, ab.x - a.x, ab.y - a.y); // i due anelli allineati sul centro
@@ -313,7 +313,7 @@ function scenaPartita(t: number): void {
 
   // abilità in basso a sinistra, pausa in basso a destra
   const zsp = z('speciale');
-  const anello = stato.anello === 'tavola' ? datiAnello('Speciale_Pronta', 'Speciale_Ricarica') : datiAnello(`Speciale_${chiavePg()}`, null);
+  const anello = stato.anello === 'tavola' ? datiAnello('Speciale_Pronta', 'Speciale_Ricarica') : datiAnello(`Speciale_${chiavePg()}`, sprite(`Speciale_${chiavePg()}_Ricarica`) ? `Speciale_${chiavePg()}_Ricarica` : null);
   const parte = stato.ricarica ? ((t / 1000) % 8) / 6 : 1; // 6 secondi di ricarica, 2 pronta
   if (anello) {
     const xs = b.s + 4, ys = H - b.b - anello.h * zsp;
@@ -515,7 +515,7 @@ function cartella(k: string): string {
 }
 
 function descrizione(k: string): string {
-  const nomePg = PERSONAGGI.find((p) => k.endsWith(p.nome.replace(/ /g, '_')))?.nome ?? '';
+  const nomePg = PERSONAGGI.find((p) => k.includes(p.nome.replace(/ /g, '_')))?.nome ?? '';
   const D: Record<string, string> = {
     Barra_Esperienza_Cornice: "Barra dell'esperienza, in alto: sostituisce la striscia arancione.",
     Barra_Esperienza_Piena: "Riempimento dell'esperienza, già della misura della finestra (184×5).",
@@ -544,6 +544,7 @@ function descrizione(k: string): string {
     Scrigno: 'Scrigno: reliquiario o forziere, da decidere.',
   };
   if (D[k]) return D[k];
+  if (k.endsWith('_Ricarica')) return `Anello dell'abilità di ${nomePg}, in ricarica: si colora man mano che l'abilità torna pronta.`;
   if (k.startsWith('Speciale_')) return `Anello dell'abilità di ${nomePg} (versione pronta).`;
   if (k.startsWith('Cornice_')) return `Cornice del ritratto di ${nomePg}, nella selezione.`;
   if (k.startsWith('Emblema_')) return `Emblema di ${nomePg}.`;

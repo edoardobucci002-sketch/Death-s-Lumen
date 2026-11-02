@@ -37,6 +37,7 @@ Una riga per decisione, la più recente in alto.
 | 2026-10-30 | Versione web pubblicata su GitHub Pages, repository pubblico `edoardobucci002-sketch/Death-s-Lumen` | GitHub Pages gratuito richiede un repository pubblico |
 | 2026-11-02 | Elementi dell'HUD in `HUD/<Gruppo>/<Elemento>_V#.aseprite`, uno per file; esportati in un elenco a parte (`public/assets/hud/elenco.json`) che il gioco non carica finché l'HUD non entra nel gioco | ogni pezzo si ridisegna da solo con la sua versione; il gioco resta com'è mentre Edoardo prova i disegni nella bozza |
 | 2026-11-02 | Le tavole HUD (finta pixel art a 3,6–4 px per pixel, 10,7 negli emblemi) riportate ai pixel veri da uno script, 32 colori; riempimenti delle barre adattati alla finestra, salute e joystick divisi in due pezzi | base pulita da ripassare in Aseprite; le misure delle finestre sono in `src/data/hud.ts` |
+| 2026-11-02 | HUD V2 in vera pixel art: palette unica di 64 colori (`HUD/Tavole/Palette_HUD.gpl`), interni lisci con retino ordinato, contorno di 1 pixel, emblemi rifatti a 38 px, anelli «in ricarica» per ogni personaggio | richiesta di Edoardo: un set coerente, pronto da ritoccare in Aseprite |
 
 ## Riferimenti della v0
 

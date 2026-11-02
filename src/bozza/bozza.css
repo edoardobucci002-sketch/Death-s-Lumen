@@ -69,6 +69,7 @@ input[type='checkbox'] { accent-color: var(--accento); }
 
 .note ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 900px; }
 .note li { color: var(--pergamena); }
+.note ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; color: var(--tenue); }
 
 /* telefono più largo dello spazio accanto ai comandi (orizzontale su schermi senza Retina) */
 .banco.largo { grid-template-columns: minmax(0, 1fr); }

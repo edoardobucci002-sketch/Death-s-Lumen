@@ -113,15 +113,21 @@
   <section class="sezione note">
     <h2>Note sulle tavole</h2>
     <ol>
-      <li><strong>Non sono pixel art vera.</strong> Nelle tavole ogni "pixel" è un quadretto di 3,6–4 pixel (10,7 negli emblemi), con bordi sfumati e una griglia che scivola di qualche decimo. Lo strumento ha trovato la griglia e ha riportato ogni elemento ai suoi pixel veri, con 32 colori come i tuoi sprite. È una base pulita, ma va ripassata a mano: macchie scure dentro i pannelli e gli anelli, qualche pixel isolato, contorni a volte spessi 2.</li>
-      <li><strong>Densità diverse.</strong> La tavola degli emblemi ha pixel quasi 3 volte più grandi delle altre: ridotti, gli emblemi sono larghi 46 px, e così non entrano nel disco dell'anello (circa 38 px). Per metterli dentro vanno ridisegnati a 36–38 px, oppure si usa l'icona dell'abilità (24 px), come adesso.</li>
-      <li><strong>Cornici dei ritratti troppo piccole.</strong> I ritratti sono 224×288; le cornici dei personaggi hanno un vano di circa 62×96. Per contenerli vanno ingrandite ×4, e allora un pixel della cornice è grande come 16 del ritratto. Se le vuoi attorno al ritratto conviene ridisegnarle a circa 250×330. Lo stesso vale per il Pannello scheda.</li>
-      <li><strong>Riempimenti adattati.</strong> Le barre piene della tavola erano più alte e più corte della finestra delle loro cornici. Le ho portate alla misura esatta (esperienza 184×5, Mietitore 204×8). La barra della salute aveva il rosso dentro la cornice: l'ho divisa in cornice vuota più riempimento.</li>
-      <li><strong>Il joystick</strong> è diviso in base e pomello (il pomello si muove). Il fondo semitrasparente è diventato un retino, come vuole la regola del pixel perfect.</li>
-      <li><strong>Anelli dell'abilità.</strong> Della tavola UI c'è la coppia grigio/arancio, ma solo con la lanterna. Gli anelli dei quattro personaggi hanno solo la versione "pronta": la versione "in ricarica" qui la ottengo spegnendo i colori. Se la vuoi disegnata, basta un secondo file per ciascuno.</li>
-      <li><strong>Segnale del reliquiario.</strong> Punta solo in diagonale. Ruotare la pixel art di angoli qualsiasi la rovina: servono la versione dritta e quella diagonale, che il gioco poi ribalta e gira di 90°.</li>
-      <li><strong>Caselle delle armi.</strong> La casella è 58×69: con 6 armi più 6 doni occupa molto spazio in verticale. Lo Stemma piccolo (25×34) potrebbe fare da casella dei doni passivi, ma per un'icona da 24 px va allargato.</li>
-      <li><strong>Pulsanti "scuro" e "spento"</strong> sono quasi uguali: conviene distinguerli di più, oppure tenerne uno solo.</li>
+      <li><strong>Pixel art vera (versione V2).</strong> Ogni pezzo è stato ripulito con le stesse regole. Le V1 restano nelle cartelle, come da regola.
+        <ul>
+          <li>Una sola palette di 64 colori per tutto l'HUD, in <code>HUD/Tavole/Palette_HUD.gpl</code> (in Aseprite: menu della palette → Load Palette).</li>
+          <li>Via gli aloni grigi della tavola, i pixel isolati e il rumore.</li>
+          <li>Interni dei pannelli lisci, con un retino ordinato verso i bordi al posto delle macchie.</li>
+          <li>Barre piene a righe di un colore solo, luce in alto e ombra in basso.</li>
+          <li>Contorno scuro di 1 pixel attorno a ogni sagoma.</li>
+        </ul>
+      </li>
+      <li><strong>Emblemi a 38 px.</strong> Li ho ricavati di nuovo dalla tavola originale alla misura del disco dell'anello: ora ci entrano (prova «Dentro l'anello: emblema»).</li>
+      <li><strong>Anelli in ricarica disegnati.</strong> Ogni personaggio ha il suo <code>Speciale_&lt;Nome&gt;_Ricarica</code>, nei grigi della palette; l'anello si colora man mano. Il «Pulsante spento» ora è la versione grigia del pulsante scuro, così si distingue.</li>
+      <li><strong>Riempimenti adattati.</strong> Le barre piene hanno la misura esatta della finestra (esperienza 184×5, Mietitore 204×8, salute 47×6). Salute e joystick sono in due pezzi.</li>
+      <li><strong>Ancora da decidere: cornici dei ritratti.</strong> Il vano è circa 62×96 e i ritratti sono 224×288. Ingrandite ×4 li contengono, ma un pixel della cornice vale 16 del ritratto. Per avere la stessa grana vanno ridisegnate a circa 250×330; lo stesso vale per il Pannello scheda.</li>
+      <li><strong>Ancora da disegnare: segnale del reliquiario dritto.</strong> Punta solo in diagonale. Ruotarlo di angoli qualsiasi rovina i pixel: serve anche la versione dritta.</li>
+      <li><strong>Caselle delle armi.</strong> La casella è 58×69: con 6 armi più 6 doni occupa molto spazio. Lo Stemma piccolo potrebbe fare da casella dei doni, allargato per un'icona da 24 px.</li>
     </ol>
   </section>
 
