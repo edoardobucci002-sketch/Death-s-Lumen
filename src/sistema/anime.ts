@@ -41,6 +41,11 @@ export class Anime {
     this.aspetto(i);
   }
 
+  /** Calamita: tutte le anime della mappa volano verso il personaggio. */
+  attiraTutte(): void {
+    for (let i = 0; i < this.numero; i++) if (!this.volo[i]) this.volo[i] = ANIME.volo;
+  }
+
   /** Muove le anime verso il personaggio (gx, gy) e restituisce quante ne ha raccolte in questo passo. */
   aggiorna(dt: number, gx: number, gy: number, raccolta: number): number {
     let raccolte = 0;

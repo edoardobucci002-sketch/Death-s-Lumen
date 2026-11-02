@@ -1,6 +1,7 @@
 /*
  * Avvio: carica l'elenco degli asset e tutti gli sprite esportati da Aseprite,
- * poi crea le animazioni dai tag (idle, walk, attack, special, hurt, death).
+ * poi crea le animazioni dai tag (idle, walk, attack, special, hurt, death) e apre il menu
+ * (o direttamente la partita, se l'indirizzo sceglie già il personaggio con ?pg=).
  */
 import Phaser from 'phaser';
 import type { ElencoAsset } from '../sistema/asset';
@@ -41,6 +42,6 @@ export class Avvio extends Phaser.Scene {
         });
       }
     }
-    this.scene.start('Gioco');
+    this.scene.start(new URLSearchParams(location.search).has('pg') ? 'Gioco' : 'Menu');
   }
 }

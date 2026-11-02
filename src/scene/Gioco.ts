@@ -1,9 +1,10 @@
 /*
- * Gioco (tappa M3): il personaggio cammina nel cimitero, i nemici arrivano dal buio e feriscono al contatto.
- * Le armi colpiscono da sole, i nemici uccisi lasciano anime, a ogni livello si sceglie un dono;
- * l'abilità speciale si usa con Spazio o con il pulsante in basso a sinistra.
+ * Gioco: una notte nel cimitero. Il personaggio cammina, le armi colpiscono da sole, i nemici arrivano dal buio;
+ * i nemici uccisi lasciano anime e a volte pane, calamite e reliquiari; a ogni livello si sceglie un dono.
+ * La notte ha i suoi eventi: élite ogni 55 s, sciami a inizio minuto, il Mietitore ai minuti 5 e 10, l'alba al 15.
+ * Pausa con il pulsante, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni.
  * La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
- * Nell'indirizzo, per le prove: ?pg=becchino (personaggio), ?minuto=5 (parte da quel minuto),
+ * Nell'indirizzo, per le prove: ?pg=becchino (salta il menu), ?minuto=5 (parte da quel minuto),
  * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (armi già a quel livello),
  * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle).
  */
@@ -11,28 +12,33 @@ import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
-import { COMBATTIMENTO, COMPARSA } from '../data/nemici';
+import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, SCIAMI } from '../data/nemici';
 import { ARMI_COMUNI, ARMI_INIZIALI, COLPI } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { PASSIVI, RICARICA_MINIMA, type IdDono } from '../data/doni';
-import { Speciale } from '../sistema/speciale';
-import type { Bonus } from '../sistema/armi';
 import { animePerLivello, CARTE } from '../data/progressione';
+import { ALBA, DROP } from '../data/oggetti';
 import { Anime } from '../sistema/anime';
-import { Arsenale } from '../sistema/armi';
-import { Doni, type Dono } from '../sistema/doni';
-import { Effetti, PROFONDITA } from '../sistema/effetti';
+import { Arsenale, type Bonus } from '../sistema/armi';
+import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
-import { Hud } from '../sistema/hud';
+import { Doni, type Dono } from '../sistema/doni';
+import { Effetti, PROFONDITA } from '../sistema/effetti';
+import { Hud, type VoceBuild } from '../sistema/hud';
 import { vibra } from '../sistema/mobile';
+import { CALAMITA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
 import { Orda } from '../sistema/orda';
+import { leggiRecord, salvaRecord } from '../sistema/record';
+import { Speciale } from '../sistema/speciale';
 import { creaTerreno } from '../sistema/terreno';
 import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
 const RITARDO_MASSIMO_MS = 250; // dopo un blocco lungo non recupera all'infinito
+const ID_PIPISTRELLO = NEMICI.findIndex((t) => t.id === 'pipistrello');
+const ID_FANTASMA = NEMICI.findIndex((t) => t.id === 'fantasma');
 
 export class Gioco extends Phaser.Scene {
   pg!: Personaggio;
@@ -42,19 +48,24 @@ export class Gioco extends Phaser.Scene {
   salute = 0;
   saluteMassima = 0;
   morto = false;
+  finito = false; // morto o arrivato all'alba
+  pausa = false;
   orda!: Orda;
   arsenale!: Arsenale;
   livello = 1;
   esperienza = 0; // anime raccolte verso il prossimo livello
+  animeTotali = 0;
+  /** Livello di ogni dono passivo (0 = non posseduto). */
+  passivi = {} as Record<IdDono, number>;
+  giocatore!: Phaser.GameObjects.Sprite;
+  speciale!: Speciale;
   private livelliDaScegliere = 0;
   private anime!: Anime;
+  private oggetti!: Oggetti;
   private effetti!: Effetti;
   private doni!: Doni;
   private raccolta = 0;
   private rigenerazione = 0;
-  private speciale!: Speciale;
-  /** Livello di ogni dono passivo (0 = non posseduto). */
-  passivi = {} as Record<IdDono, number>;
   private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0 };
   private areaLuce = 0;
   private dirX = 1; // ultima direzione in cui ha camminato (le armi colpiscono da quella parte)
@@ -68,7 +79,10 @@ export class Gioco extends Phaser.Scene {
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
-  giocatore!: Phaser.GameObjects.Sprite;
+  // eventi della notte
+  private prossimaElite = 0;
+  private ultimoSciame = 0;
+  private mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
   private buio!: Phaser.GameObjects.Image;
   private barraBordo!: Phaser.GameObjects.Rectangle;
@@ -86,9 +100,10 @@ export class Gioco extends Phaser.Scene {
     super('Gioco');
   }
 
-  create(): void {
+  create(dati: { pg?: string }): void {
     const parametri = new URLSearchParams(location.search);
-    this.pg = PERSONAGGI.find((p) => p.id === parametri.get('pg')) ?? PERSONAGGI[0];
+    const scelto = dati?.pg ?? parametri.get('pg');
+    this.pg = PERSONAGGI.find((p) => p.id === scelto) ?? PERSONAGGI[0];
     document.documentElement.style.setProperty('--accento', this.pg.colore);
     // finché un personaggio non ha il suo sprite in gioco, usa quello del Lampionaio (segnaposto)
     this.chiaveSprite = this.textures.exists(this.pg.sprite) ? this.pg.sprite : PERSONAGGI[0].sprite;
@@ -100,17 +115,22 @@ export class Gioco extends Phaser.Scene {
     this.caso = new Caso(SEME_PREDEFINITO);
     this.x = this.y = 0;
     this.secondi = 60 * Number(parametri.get('minuto') ?? 0) || 0;
-    this.morto = false;
+    this.morto = this.finito = this.pausa = false;
     this.invulnerabile = this.attesaFine = this.accumulo = 0;
     this.livello = 1;
-    this.esperienza = this.livelliDaScegliere = 0;
+    this.esperienza = this.livelliDaScegliere = this.animeTotali = 0;
     this.dirX = 1;
     this.dirY = 0;
+    // se la partita parte più avanti (prove), gli eventi già passati non si ripetono
+    this.prossimaElite = Math.max(ELITE.primo, Math.ceil(this.secondi / ELITE.ogni) * ELITE.ogni);
+    this.ultimoSciame = Math.ceil(this.secondi / 60) - 1;
+    this.mietitoriArrivati = MIETITORE.minuti.filter((m) => m * 60 < this.secondi).length;
 
     creaTerreno(this, 'terreno', SEME_PREDEFINITO);
     this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
     this.orda = new Orda(this, this.caso);
     this.anime = new Anime(this, this.caso);
+    this.oggetti = new Oggetti(this);
     this.effetti = new Effetti(this);
     this.arsenale = new Arsenale(this, this.orda, this.caso, this.bonus, this.effetti);
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
@@ -142,21 +162,32 @@ export class Gioco extends Phaser.Scene {
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
     this.comandi = new Comandi(interfaccia);
-    this.hud = new Hud(interfaccia, () => this.scene.restart());
+    this.hud = new Hud(interfaccia, {
+      pausa: () => this.apriPausa(),
+      riprendi: () => this.riprendi(),
+      riprova: () => this.scene.restart({ pg: this.pg.id }),
+      menu: () => this.scene.start('Menu'),
+    });
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, this);
     this.speciale = new Speciale(interfaccia, this, ABILITA[this.pg.abilita], () => {
-      if (this.morto || this.doni.aperta) return false;
+      if (this.finito || this.pausa || this.doni.aperta) return false;
       this.arsenale.abilita(ABILITA[this.pg.abilita]);
+      suona('speciale');
       vibra('media');
       return true;
     });
+    this.aggiornaBuild();
 
     const riempi = Number(parametri.get('nemici'));
     if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.scale.width / 2, this.scale.height / 2);
 
     this.scale.on('resize', this.ridimensiona, this);
+    this.game.events.on('sfondo', this.apriPausa, this);
+    window.addEventListener('keydown', this.tasto);
     this.events.once('shutdown', () => {
       this.scale.off('resize', this.ridimensiona, this);
+      this.game.events.off('sfondo', this.apriPausa, this);
+      window.removeEventListener('keydown', this.tasto);
       this.comandi.distruggi();
       this.hud.distruggi();
       this.doni.distruggi();
@@ -172,8 +203,21 @@ export class Gioco extends Phaser.Scene {
       this.passo(PASSO);
       this.accumulo -= PASSO_MS;
     }
-    if (!this.doni.aperta) this.effetti.aggiorna(delta / 1000);
-    this.disegna();
+    if (!this.fermo()) this.effetti.aggiorna(delta / 1000);
+    this.disegna(delta / 1000);
+  }
+
+  /** Tasto Indietro di Android: pausa, riprende, o dalla fine torna al menu. Restituisce sempre true (gestito). */
+  indietro(): boolean {
+    if (this.finito && this.hud.fineAperta) this.scene.start('Menu');
+    else if (this.pausa) this.riprendi();
+    else this.apriPausa();
+    return true;
+  }
+
+  /** Il gioco è fermo: pausa o scelta del dono. */
+  private fermo(): boolean {
+    return this.pausa || this.doni.aperta;
   }
 
   /** Un passo di logica: niente disegno qui. */
@@ -183,11 +227,11 @@ export class Gioco extends Phaser.Scene {
       this.attesaTremolio = LUCE.intervalloTremolio;
       this.fiamma = this.caso.intero(0, CHIAVI_BUIO.length - 1);
     }
-    if (this.morto) {
-      if (this.attesaFine > 0 && (this.attesaFine -= dt) <= 0) this.hud.mostraFine(this.secondi);
+    if (this.finito) {
+      if (this.attesaFine > 0 && (this.attesaFine -= dt) <= 0) this.mostraFine(false);
       return;
     }
-    if (this.doni.aperta) return; // il gioco è fermo mentre si sceglie il dono
+    if (this.fermo()) return;
 
     this.secondi += dt;
     const c = this.comandi;
@@ -204,18 +248,64 @@ export class Gioco extends Phaser.Scene {
     }
     this.speciale.aggiorna(dt, this.bonus.ricarica);
 
-    this.orda.aggiorna(dt, this.secondi, this.x, this.y, c.dx, c.dy, this.scale.width / 2, this.scale.height / 2);
-    this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, this.versoSinistra ? -1 : 1, this.scale.width / 2, this.scale.height / 2);
-    this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + this.arsenale.cura()) * dt);
-    this.orda.rimuoviMorti(this.lasciaAnima);
+    const mezzaL = this.scale.width / 2;
+    const mezzaA = this.scale.height / 2;
+    this.notte(mezzaL, mezzaA);
+    if (this.finito) return;
+    this.orda.aggiorna(dt, this.secondi, this.x, this.y, c.dx, c.dy, mezzaL, mezzaA);
+    this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, this.versoSinistra ? -1 : 1, mezzaL, mezzaA);
+    const cura = this.arsenale.cura();
+    if (cura && this.salute < this.saluteMassima) suona('cura');
+    this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + cura) * dt);
+    this.orda.rimuoviMorti(this.muore);
     this.contatti(dt);
-    this.esperienza += this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
+    const raccolte = this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
+    if (raccolte) {
+      this.esperienza += raccolte;
+      this.animeTotali += raccolte;
+      suona('anima');
+    }
+    this.oggetti.aggiorna(this.x, this.y - COLPI.corpo, this.raccogli);
     while (this.esperienza >= animePerLivello(this.livello)) {
       this.esperienza -= animePerLivello(this.livello);
       this.livello++;
       this.livelliDaScegliere++;
     }
-    if (this.livelliDaScegliere > 0) this.apriDoni();
+    if (this.livelliDaScegliere > 0) {
+      suona('livello');
+      vibra('media');
+      this.apriDoni();
+    }
+  }
+
+  /** Eventi della notte (GDD, sezione 1): élite, sciami, Mietitore, alba. */
+  private notte(mezzaL: number, mezzaA: number): void {
+    while (this.secondi >= this.prossimaElite) {
+      this.orda.nasciElite(this.secondi, this.x, this.y, mezzaL, mezzaA);
+      this.prossimaElite += ELITE.ogni;
+    }
+    const minuto = Math.floor(this.secondi / 60);
+    if (minuto > this.ultimoSciame) {
+      this.ultimoSciame = minuto;
+      if (minuto >= 1 && minuto <= SCIAMI.ultimoMinuto && !(SCIAMI.saltaMinuti as readonly number[]).includes(minuto)) {
+        const quanti = Math.min(SCIAMI.massimo, SCIAMI.base + SCIAMI.perMinuto * minuto);
+        this.orda.sciame(this.secondi, minuto <= SCIAMI.pipistrelliFinoAl ? ID_PIPISTRELLO : ID_FANTASMA, quanti, this.x, this.y, mezzaL, mezzaA);
+        this.hud.avviso('Uno sciame ti circonda');
+      }
+    }
+    if (this.mietitoriArrivati < MIETITORE.minuti.length && this.secondi >= MIETITORE.minuti[this.mietitoriArrivati] * 60) {
+      this.orda.nasciMietitore(this.secondi, this.mietitoriArrivati, this.x, this.y, mezzaL, mezzaA);
+      this.mietitoriArrivati++;
+      this.hud.avviso('Il Mietitore è venuto per te');
+      suona('mietitore');
+      vibra('forte');
+    }
+    if (this.secondi >= ALBA) {
+      this.finito = true;
+      this.inMoto = false;
+      suona('alba');
+      this.mostraFine(true);
+    }
   }
 
   /** Ricalcola statistiche e bonus delle armi da personaggio e doni passivi (GDD, sezioni 2 e 5). */
@@ -232,10 +322,63 @@ export class Gioco extends Phaser.Scene {
     this.bonus.quantita = per('specchio');
   }
 
-  private lasciaAnima = (x: number, y: number, valore: number): void => {
+  /** Dopo un dono passivo: statistiche, salute in più del Cuore di cera, alone più ampio con lo Stoppino lungo. */
+  private dopoPassivo(): void {
+    const prima = this.saluteMassima;
+    this.ricalcola();
+    this.salute += this.saluteMassima - prima;
+    if (this.bonus.area !== this.areaLuce) {
+      this.areaLuce = this.bonus.area;
+      this.ridimensiona();
+    }
+  }
+
+  /** Un nemico muore: anime, scoppio, e a volte pane, calamita o reliquiari. */
+  private muore = (x: number, y: number, valore: number, reliquiari: number): void => {
     this.anime.aggiungi(x, y, valore);
     this.effetti.scoppio(x, y);
+    for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
+    const r = this.caso.numero();
+    if (r < DROP.pane.probabilita) this.oggetti.aggiungi(PANE, x, y);
+    else if (r < DROP.pane.probabilita + DROP.calamita.probabilita) this.oggetti.aggiungi(CALAMITA, x, y);
   };
+
+  private raccogli = (tipo: number): void => {
+    if (tipo === PANE) {
+      this.salute = Math.min(this.saluteMassima, this.salute + DROP.pane.cura);
+      suona('cura');
+    } else if (tipo === CALAMITA) {
+      this.anime.attiraTutte();
+      suona('reliquiario');
+    } else {
+      this.apriReliquiario();
+    }
+  };
+
+  /** Reliquiario: 1 potenziamento (75%) o 3 (25%) di ciò che possiedi; se è tutto al massimo, salute. */
+  private apriReliquiario(): void {
+    const quanti = this.caso.numero() < DROP.reliquiario.tre ? 3 : 1;
+    const nomi: string[] = [];
+    for (let k = 0; k < quanti; k++) {
+      const possibili: (() => string)[] = [];
+      for (const p of this.arsenale.possedute) {
+        if (p.livello < CARTE.livelloMassimo) possibili.push(() => (this.arsenale.potenzia(p.arma), p.arma.nome));
+      }
+      for (const q of PASSIVI) {
+        if (this.passivi[q.id] > 0 && this.passivi[q.id] < q.massimo) possibili.push(() => (this.passivi[q.id]++, this.dopoPassivo(), q.nome));
+      }
+      if (!possibili.length) {
+        this.salute = Math.min(this.saluteMassima, this.salute + DROP.reliquiario.cura);
+        nomi.push('salute');
+        break;
+      }
+      nomi.push(possibili[this.caso.intero(0, possibili.length - 1)]());
+    }
+    this.aggiornaBuild();
+    this.hud.avviso(`Reliquiario: ${nomi.join(', ')}`);
+    suona('reliquiario');
+    vibra('media');
+  }
 
   /** Ferma il gioco e mostra le carte; dopo la scelta, se ci sono altri livelli da scegliere, le rimostra. */
   private apriDoni(): void {
@@ -247,21 +390,59 @@ export class Gioco extends Phaser.Scene {
         else this.arsenale.aggiungi(d.arma);
       } else if (d.tipo === 'passivo') {
         this.passivi[d.passivo.id]++;
-        const prima = this.saluteMassima;
-        this.ricalcola();
-        this.salute += this.saluteMassima - prima; // il Cuore di cera aggiunge anche salute attuale
-        // lo Stoppino lungo allarga anche l'alone della lanterna
-        if (this.bonus.area !== this.areaLuce) {
-          this.areaLuce = this.bonus.area;
-          this.ridimensiona();
-        }
+        this.dopoPassivo();
+      } else {
+        this.salute = Math.min(this.saluteMassima, this.salute + CARTE.paneEVino);
       }
-      else this.salute = Math.min(this.saluteMassima, this.salute + CARTE.paneEVino);
+      this.aggiornaBuild();
       this.livelliDaScegliere--;
       if (this.livelliDaScegliere > 0) this.apriDoni();
-      else this.anims.resumeAll();
+      else if (!this.pausa) this.anims.resumeAll();
     });
     if (this.automatico) this.doni.scegliPrima();
+  }
+
+  private apriPausa(): void {
+    if (this.finito || this.pausa) return;
+    this.pausa = true;
+    this.anims.pauseAll();
+    this.comandi.lascia();
+    this.hud.mostraPausa(this.build());
+  }
+
+  private riprendi(): void {
+    if (!this.pausa) return;
+    this.pausa = false;
+    this.hud.nascondiPausa();
+    if (!this.doni.aperta) this.anims.resumeAll();
+  }
+
+  private mostraFine(vittoria: boolean): void {
+    const nuovo = salvaRecord(this.pg.id, this.secondi);
+    this.comandi.lascia();
+    this.hud.mostraFine({
+      vittoria,
+      secondi: this.secondi,
+      livello: this.livello,
+      anime: this.animeTotali,
+      danno: this.arsenale.dannoTotale,
+      record: leggiRecord(this.pg.id),
+      nuovoRecord: nuovo,
+      build: this.build(),
+    });
+  }
+
+  /** Armi e doni posseduti, per le icone in alto e i riepiloghi. */
+  private build(): VoceBuild[] {
+    const voci: VoceBuild[] = this.arsenale.possedute.map((p) => ({ nome: p.arma.nome, immagine: voce(this, p.arma.icona)?.immagine ?? null, livello: p.livello }));
+    for (const q of PASSIVI) {
+      if (this.passivi[q.id]) voci.push({ nome: q.nome, immagine: voce(this, q.icona)?.immagine ?? null, livello: this.passivi[q.id] });
+    }
+    return voci;
+  }
+
+  private aggiornaBuild(): void {
+    this.hud.build(this.build());
   }
 
   /** Danno da contatto: il colpo più forte tra i nemici che toccano il personaggio, poi un attimo di invulnerabilità. */
@@ -282,18 +463,20 @@ export class Gioco extends Phaser.Scene {
     this.invulnerabile = COMBATTIMENTO.invulnerabilita;
     if (this.immortale) return;
     this.salute -= Math.max(1, colpo - this.armatura);
+    suona('danno');
     vibra('leggera');
     if (this.salute <= 0) {
       this.salute = 0;
-      this.morto = true;
+      this.morto = this.finito = true;
       this.attesaFine = COMBATTIMENTO.attesaFine;
       this.inMoto = false;
+      suona('morte');
       vibra('forte');
     }
   }
 
   /** Disegna lo stato attuale, con tutte le posizioni arrotondate al pixel. */
-  private disegna(): void {
+  private disegna(dt = 0): void {
     const w = this.scale.width;
     const h = this.scale.height;
     const px = Math.round(this.x);
@@ -309,6 +492,7 @@ export class Gioco extends Phaser.Scene {
     this.anima(this.inMoto ? 'walk' : 'idle');
     this.orda.disegna(cam, COMPARSA.margine);
     this.anime.disegna(cam);
+    this.oggetti.disegna(cam, this.fermo() ? 0 : dt);
     this.arsenale.disegna();
     this.terreno.setTilePosition(cam.scrollX, cam.scrollY);
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
@@ -323,7 +507,12 @@ export class Gioco extends Phaser.Scene {
     this.barraBordo.setPosition(bx, by).setVisible(!this.morto);
     this.barraVuota.setPosition(bx + 1, by + 1).setVisible(!this.morto);
     this.barraPiena.setPosition(bx + 1, by + 1).setSize(piena, b.altezza - 2).setVisible(!this.morto && piena > 0);
-    this.hud.aggiorna(this.secondi, !this.morto && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello, this.esperienza / animePerLivello(this.livello));
+    const boss = this.orda.mietitore();
+    this.hud.aggiorna(
+      this.secondi, !this.finito && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello,
+      this.esperienza / animePerLivello(this.livello), this.animeTotali,
+      boss >= 0 ? Math.max(0, this.orda.salute[boss] / this.orda.saluteMassima[boss]) : -1,
+    );
   }
 
   /** Avvia un'animazione; se lo sprite non ha quel tag (per esempio walk), resta su idle. */
@@ -337,4 +526,17 @@ export class Gioco extends Phaser.Scene {
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (1 + this.areaLuce));
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
+
+  private tasto = (e: KeyboardEvent): void => {
+    if (e.code === 'KeyP' || e.code === 'Escape') {
+      if (this.pausa) this.riprendi();
+      else this.apriPausa();
+    } else if (e.code === 'KeyM') {
+      impostaAudio(!audioAttivo());
+      this.hud.avviso(audioAttivo() ? 'Suoni accesi' : 'Suoni spenti');
+    } else {
+      return;
+    }
+    e.preventDefault();
+  };
 }

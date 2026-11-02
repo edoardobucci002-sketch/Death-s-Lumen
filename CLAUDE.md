@@ -48,7 +48,7 @@ DEATH'S LUMEN/
     docs/                          GDD_base.md, decisioni.md, tappe.md
     src/
       main.ts                      avvio di Phaser in pixel perfect e collegamento al telefono
-      scene/                       le scene di Phaser (Avvio, poi Gioco, Menu…)
+      scene/                       le scene di Phaser: Avvio, Menu (schede), Gioco
       sistema/                     pixel perfect, mobile, elenco asset
       data/                        TUTTI i numeri di bilanciamento (personaggi, armi, nemici…)
       stile.css                    interfaccia HTML sopra il gioco e caratteri inclusi
