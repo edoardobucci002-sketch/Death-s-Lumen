@@ -12,7 +12,7 @@ Ogni tappa finisce con qualcosa che Edoardo può provare sul telefono. Non si pa
 | M5 · La notte intera | Élite, sciami, Mietitore, drop, reliquiari, alba e vittoria | Partita completa di 15 minuti | **fatta** (2/11): élite, sciami, Mietitore ai minuti 5 e 10, pane, calamita, reliquiari con segnali, alba e vittoria; anime oltre il limite corrette dopo la prova di Edoardo |
 | M6 · Facciata | Selezione con le schede, HUD, pause, fine partita, audio, record | Il gioco si presenta come la v0 o meglio | **fatta** (2/11): menu con le schede, HUD completo, pausa (anche automatica e con Indietro), fine partita con record, suoni sintetizzati |
 | M7 · App | Capacitor iOS e Android, icone, avvio, vibrazione, schermo acceso, tasto Indietro | App installata sul telefono di Edoardo | **in prova** (2/11): icone e avvio dal Lampionaio V5; APK costruita da GitHub Actions; Edoardo ha un Galaxy S25 (Android), iOS rimandato (manca Xcode) |
-| M8 · Bilanciamento | Bot di simulazione, ritocco dei numeri, playtest | I risultati del bot rispettano gli obiettivi | **in corso** (2/11): bot e `npm run sim` pronti; prima simulazione: Badessa e Strega vincono sempre senza sforzo, il Mietitore del 5 fa male solo al Becchino, livello ≈ 100 all'alba |
+| M8 · Bilanciamento | Bot di simulazione, ritocco dei numeri, playtest | I risultati del bot rispettano gli obiettivi | **in corso** (2/11): bot e `npm run sim` pronti; primo ritocco (esperienza, salute dei nemici, Mietitore, Lanterna), 3 mosse nuove del Mietitore, IA dei nemici e orde. Obiettivi rispettati nella simulazione (ognuno vince circa metà delle notti); da provare a mano |
 
 ## Note per la M1
 

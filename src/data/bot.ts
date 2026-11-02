@@ -14,8 +14,13 @@ export const BOT = {
   pesoBruto: 2,
   schivata: 3, // quando il Mietitore pulsa o scatta, quanto preferisce spostarsi di lato rispetto allo scatto
   distanzaSchivata: 700, // entro questa distanza dal Mietitore
+  pesoArea: 40, // quanto evita di trovarsi dentro un cerchio rosso che sta per colpire
+  margineArea: 30, // pixel di sicurezza oltre il bordo del cerchio
+  areaMinima: 60, // i cerchi più piccoli sono solo i segni della chiamata: non fanno male
+  pesoFalce: 4, // una falce spettrale fa paura come 4 nemici
+  anticipoFalci: 0.25, // guarda dove sarà la falce tra 0,25 s
   // le armi che colpiscono dove cammini (Lanterna, Pala): il bot gira intorno ai nemici tenendoli davanti
-  attaccoDavanti: { lanterna: 1.6, pala: 1.6 } as Partial<Record<IdArma, number>>,
+  attaccoDavanti: { lanterna: 0.8, pala: 0.8 } as Partial<Record<IdArma, number>>,
   portataAttacco: 260, // guarda i nemici entro questa distanza per decidere da che parte girare
   // dove andare quando non scappa
   cercaAnime: 650, // va verso l'anima più vicina entro questa distanza

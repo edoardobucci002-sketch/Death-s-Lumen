@@ -88,14 +88,14 @@ export type Arma = Lanterna | Pala | Turibolo | Bastone | Candela | Falce | Camp
 export const LANTERNA: Lanterna = {
   id: 'lanterna', nome: 'Lanterna', icona: 'Icona_Lanterna', effetto: 'Lanterna_Arco', respinta: 259,
   livelli: [
-    { ricarica: 0.8, danno: 14, raggio: 136, ampiezza: 132, spalle: false, testo: 'Colpo corto, ampia gittata frontale.' },
-    { ricarica: 0.8, danno: 19, raggio: 136, ampiezza: 132, spalle: false, testo: '+5 danno.' },
-    { ricarica: 0.8, danno: 19, raggio: 160, ampiezza: 132, spalle: false, testo: 'Raggio maggiore.' },
-    { ricarica: 0.68, danno: 19, raggio: 160, ampiezza: 132, spalle: false, testo: 'Colpi più frequenti.' },
-    { ricarica: 0.68, danno: 25, raggio: 160, ampiezza: 132, spalle: false, testo: '+6 danno.' },
-    { ricarica: 0.68, danno: 25, raggio: 183, ampiezza: 166, spalle: false, testo: 'Raggio e ampiezza maggiori.' },
-    { ricarica: 0.56, danno: 25, raggio: 183, ampiezza: 166, spalle: false, testo: 'Colpi più frequenti.' },
-    { ricarica: 0.56, danno: 35, raggio: 183, ampiezza: 166, spalle: true, testo: '+10 danno, colpisce anche alle spalle.' },
+    { ricarica: 0.8, danno: 18, raggio: 136, ampiezza: 132, spalle: false, testo: 'Colpo corto, ampia gittata frontale.' },
+    { ricarica: 0.8, danno: 24, raggio: 136, ampiezza: 132, spalle: false, testo: '+6 danno.' },
+    { ricarica: 0.8, danno: 24, raggio: 160, ampiezza: 132, spalle: false, testo: 'Raggio maggiore.' },
+    { ricarica: 0.68, danno: 24, raggio: 160, ampiezza: 132, spalle: false, testo: 'Colpi più frequenti.' },
+    { ricarica: 0.68, danno: 32, raggio: 160, ampiezza: 132, spalle: false, testo: '+8 danno.' },
+    { ricarica: 0.68, danno: 32, raggio: 183, ampiezza: 166, spalle: false, testo: 'Raggio e ampiezza maggiori.' },
+    { ricarica: 0.56, danno: 32, raggio: 183, ampiezza: 166, spalle: false, testo: 'Colpi più frequenti.' },
+    { ricarica: 0.56, danno: 44, raggio: 183, ampiezza: 166, spalle: true, testo: '+12 danno, colpisce anche alle spalle.' },
   ],
 };
 

@@ -3,9 +3,14 @@
  * con le distanze della v0 × 2,35. Ogni modifica qui va riportata anche nel GDD.
  */
 
-/** Anime per passare dal livello L al successivo: ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋ */
+/**
+ * Anime per passare dal livello L al successivo: base + perLivello × L + alQuadrato × L² (ora 2 + 3 L + L²).
+ * M8: prima era ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋ e il bot arrivava al livello 45 al minuto 5 e 100 all'alba;
+ * così i primi livelli arrivano svelti e quelli alti costano molto di più.
+ */
+export const LIVELLI = { base: 2, perLivello: 3, alQuadrato: 1 } as const;
 export function animePerLivello(l: number): number {
-  return Math.floor(4 + 3.2 * l + 2 * Math.max(0, l - 12) ** 1.8);
+  return LIVELLI.base + LIVELLI.perLivello * l + LIVELLI.alQuadrato * l * l;
 }
 
 export const ANIME = {

@@ -2,7 +2,8 @@
  * Bot delle simulazioni: gioca al posto del giocatore quando l'indirizzo contiene ?bot.
  * A ogni passo prova 16 direzioni e sceglie quella più lontana dai nemici (élite e Mietitore pesano di più),
  * andando verso anime, pane e reliquiari quando può; senza obiettivi cammina in cerchio.
- * Quando il Mietitore pulsa di rosso (sta per scattare) si sposta di lato, come farebbe un giocatore.
+ * Quando il Mietitore pulsa di rosso (sta per scattare) si sposta di lato, come farebbe un giocatore;
+ * esce dai cerchi rossi prima che colpiscano e sta lontano dalle falci spettrali.
  * Con un'arma che colpisce dove cammina (Lanterna, Pala) gira intorno ai nemici tenendoli davanti.
  * Sceglie le carte con le preferenze di data/bot.ts e usa l'abilità quando è circondato.
  * Non usa il caso: a parità di seme gioca sempre la stessa partita.
@@ -13,6 +14,7 @@ import { MAX_ARMI, type Arma } from '../data/armi';
 import type { Dono } from './doni';
 import type { Orda } from './orda';
 import type { Anime } from './anime';
+import type { Minacce } from './minacce';
 import { PANE, type Oggetti } from './oggetti';
 
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
@@ -34,6 +36,7 @@ export class Bot {
     private orda: Orda,
     private anime: Anime,
     private oggetti: Oggetti,
+    private minacce: Minacce,
     private armaIniziale: Arma,
   ) {
     this.vicini = new Int32Array(orda.x.length);
@@ -121,6 +124,18 @@ export class Bot {
       else costo -= BOT.pesoObiettivo * 0.5 * (COS[k] * Math.cos(this.angolo) + SIN[k] * Math.sin(this.angolo));
       costo -= BOT.pesoInerzia * (COS[k] * this.dx + SIN[k] * this.dy);
       costo -= this.aggressione * (COS[k] * versoX + SIN[k] * versoY);
+      // fuori dai cerchi che stanno per colpire, lontano dalle falci (dove saranno tra un attimo)
+      const mi = this.minacce;
+      for (let a = 0; a < mi.aree; a++) {
+        if (mi.aAttesa[a] <= 0 || mi.aR[a] < BOT.areaMinima) continue;
+        const r = mi.aR[a] + BOT.margineArea;
+        if ((px - mi.aX[a]) ** 2 + (py - mi.aY[a]) ** 2 < r * r) costo += BOT.pesoArea;
+      }
+      for (let f = 0; f < mi.falci; f++) {
+        const fx = mi.fX[f] + mi.fVX[f] * BOT.anticipoFalci;
+        const fy = mi.fY[f] + mi.fVY[f] * BOT.anticipoFalci;
+        costo += BOT.pesoFalce / (0.15 + ((fx - px) ** 2 + (fy - py) ** 2) / (BOT.sguardo * BOT.sguardo));
+      }
       // di lato rispetto allo scatto: il prodotto vettoriale è 1 in perpendicolare, 0 lungo la linea
       if (schivaX || schivaY) costo -= BOT.schivata * Math.abs(COS[k] * schivaY - SIN[k] * schivaX);
       if (costo < costoMinimo) {

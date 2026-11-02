@@ -22,8 +22,9 @@ Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i 
 | 0:50 | Iniziano i fantasmi |
 | 0:55, poi ogni 55 s | Un nemico élite, che lascia un reliquiario |
 | inizio di ogni minuto (tranne il 5° e il 10°, fino al 14°) | Sciame che ti circonda: pipistrelli fino al 6° minuto, fantasmi dal 7° |
-| 2:20 | Iniziano gli scheletri |
-| 3:50 | Iniziano i segugi |
+| 2:20 | Iniziano gli scheletri (ti accerchiano) |
+| 2:30, poi ogni 80 s fino a 14:20 | Un'orda in formazione marcia verso di te e poi carica; dalle 7:00 due orde da lati opposti |
+| 3:50 | Iniziano i segugi (ti tagliano la strada) |
 | 5:00 | Primo Mietitore |
 | 6:00 | Iniziano i bruti |
 | 10:00 | Secondo Mietitore, molto più resistente |
@@ -81,14 +82,16 @@ Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge
 
 | Lv | Ricarica (s) | Danno | Raggio | Ampiezza arco (°) | Colpo alle spalle | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 0,8 | 14 | 136 | 132 | no | Colpo corto, ampia gittata frontale. |
-| 2 | 0,8 | 19 | 136 | 132 | no | +5 danno. |
-| 3 | 0,8 | 19 | 160 | 132 | no | Raggio maggiore. |
-| 4 | 0,68 | 19 | 160 | 132 | no | Colpi più frequenti. |
-| 5 | 0,68 | 25 | 160 | 132 | no | +6 danno. |
-| 6 | 0,68 | 25 | 183 | 166 | no | Raggio e ampiezza maggiori. |
-| 7 | 0,56 | 25 | 183 | 166 | no | Colpi più frequenti. |
-| 8 | 0,56 | 35 | 183 | 166 | sì | +10 danno, colpisce anche alle spalle. |
+| 1 | 0,8 | 18 | 136 | 132 | no | Colpo corto, ampia gittata frontale. |
+| 2 | 0,8 | 24 | 136 | 132 | no | +6 danno. |
+| 3 | 0,8 | 24 | 160 | 132 | no | Raggio maggiore. |
+| 4 | 0,68 | 24 | 160 | 132 | no | Colpi più frequenti. |
+| 5 | 0,68 | 32 | 160 | 132 | no | +8 danno. |
+| 6 | 0,68 | 32 | 183 | 166 | no | Raggio e ampiezza maggiori. |
+| 7 | 0,56 | 32 | 183 | 166 | no | Colpi più frequenti. |
+| 8 | 0,56 | 44 | 183 | 166 | sì | +12 danno, colpisce anche alle spalle. |
+
+M8: danni circa +25% (erano 14, 19, 25, 35). Con la curva dell'esperienza più lenta il Lampionaio non vinceva mai nelle simulazioni.
 
 #### Pala
 
@@ -249,16 +252,30 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 
 | Nemico | Salute | Velocità | Danno | Raggio | Anime | Compare da | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Pipistrello | 6 | 179 | 5 | 16 | 1 | 0:00 | comune all'inizio, sciami |
+| Pipistrello | 6 | 179 | 5 | 16 | 1 | 0:00 | comune all'inizio, sciami; vola a zig-zag |
 | Zombi | 16 | 87 | 8 | 21 | 2 | 0:00 | lento |
 | Fantasma | 13 | 129 | 7 | 21 | 2 | 0:50 | attraversa gli altri nemici |
-| Scheletro | 34 | 106 | 10 | 21 | 3 | 2:20 | resistente |
-| Segugio | 28 | 200 | 9 | 21 | 3 | 3:50 | il più veloce |
+| Scheletro | 34 | 106 | 10 | 21 | 3 | 2:20 | resistente; ti accerchia |
+| Segugio | 28 | 200 | 9 | 21 | 3 | 3:50 | il più veloce; ti taglia la strada |
 | Bruto | 150 | 78 | 18 | 38 | 8 | 6:00 | pesante: respinta e attrazione ridotte |
-| Il Mietitore | 3200 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici |
+| Il Mietitore | 5500 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici (salute 3200 fino alla M8) |
 
 - **Élite**: ogni 55 s compare un nemico normale potenziato: salute ×7, danno ×1,4, anime ×6, dimensione ×1,5, velocità ×0,9, alone ambra. Lascia un reliquiario.
-- **Il Mietitore**: cammina verso di te per 3–5 s. Poi si ferma per 0,7 s pulsando di rosso e scatta per 0,55 s a 3,6 volte la sua velocità, nella direzione in cui ti trovavi. Lascia 2 reliquiari. Al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5, già scalata con il tempo.
+- **Il Mietitore**: cammina verso di te per 3–5 s (al minuto 10 per ×0,75 di quel tempo), poi si ferma pulsando di rosso e fa una mossa, scelta a caso con questi pesi. Ogni mossa ha un preavviso, il momento per scansarsi. Il danno delle mosse cresce con il tempo come il suo (× danno attuale ÷ 22). Dopo falciata, falci e chiamata resta fermo 0,45 s. Lascia 2 reliquiari. Al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5, già scalata con il tempo.
+
+| Mossa | Peso | Preavviso | Cosa fa |
+| --- | --- | --- | --- |
+| Scatto | 3 | 0,7 s | scatta per 0,55 s a 3,6 volte la sua velocità, verso dove ti trovavi |
+| Falciata (M8) | 3 | 0,95 s | un cerchio rosso di raggio 200 si accende intorno a lui; allo scadere ferisce di 28 chi è dentro |
+| Falci spettrali (M8) | 2 | 0,6 s | lancia 5 falci rosse a ventaglio (0,9 radianti) verso di te: 330 px/s, raggio 18, danno 16, durano 3,2 s |
+| Chiamata dei morti (M8) | 1,5 | 1,1 s | 8 segni rossi a terra in cerchio a 190 px da te; allo scadere ne escono 8 scheletri |
+
+- **Come si muovono (M8, `IA` in `src/data/nemici.ts`)**:
+  - *dritto*: zombi, fantasmi, bruti;
+  - *accerchia* (scheletri): punta a un punto girato di lato intorno a te di 0,6–1,2 radianti e al 60% della distanza, così arriva dai fianchi; sotto i 120 px viene dritto;
+  - *taglia la strada* (segugi): punta dove sarai, guardando dove cammini, fino a 1,1 s in anticipo;
+  - *zig-zag* (pipistrelli): ondeggia di lato (ampiezza 0,7, 5 oscillazioni al secondo, ognuno con il suo ritmo).
+- **Orde (M8)**: dalle 2:30, ogni 80 s fino alle 14:20, un'orda di 12 + 2 nemici per minuto (al massimo 28) nasce in formazione appena fuori dallo schermo: file di 7, distanziate di 2,4 raggi. Marcia compatta verso di te a 80 px/s; a 260 px carica tutta insieme a velocità ×1,35. Zombi fino alle 5:00, poi scheletri, dalle 10:00 segugi. Dalle 7:00 arrivano due orde da lati opposti (tenaglia). Avvisi: «Un'orda marcia verso di te», «Due orde ti stringono».
 - **Sciami**: 14 + 3 nemici per minuto, fino a 56, a +12% di velocità. Nascono in cerchio (un'ellisse grande quanto lo schermo, 48 px fuori dal bordo).
 - **Élite**: l'alone ambra è un colore aggiunto allo sprite; ingrandite × 1,5 anche nel raggio dei contatti.
 
@@ -277,7 +294,7 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 
 Un nemico prende i valori del momento in cui nasce (m = minuti di gioco, anche frazionari):
 
-- salute = base × (1 + 0,34 m)
+- salute = base × (1 + 0,28 m) (0,34 fino alla M8)
 - danno = base × (1 + 0,09 m)
 - nemici massimi in campo = min(380, 20 + 30 m)
 - comparse al secondo = 1,2 + 2,5 m (al massimo 8 per fotogramma)
@@ -299,9 +316,9 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 
 ## 9. Esperienza e doni
 
-- Anime per passare dal livello L al successivo: ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋
-  - Valori: livello 2: 7 · livello 13: 42 · livello 31: 503 · livello 50: 1490 · livello 65: 2662.
-- Livello tipico nelle simulazioni: 10 al primo minuto, 31 al quinto, 50 al decimo, oltre 60 all'alba.
+- Anime per passare dal livello L al successivo: 2 + 3 L + L² (M8; prima ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋)
+  - Valori: livello 1: 6 · livello 5: 42 · livello 10: 132 · livello 20: 462 · livello 40: 1722 · livello 60: 3782.
+- Livello medio nella simulazione con il bot (`npm run sim`, 2/11): circa 7 al primo minuto, 28 al quinto, 60–70 al decimo, 70–90 all'alba (prima della M8: 13, 45, 77, 100).
 - Ogni livello mostra 3 carte casuali. Pesi:
   - arma posseduta 1,5 (l'arma iniziale 2)
   - arma nuova 1
