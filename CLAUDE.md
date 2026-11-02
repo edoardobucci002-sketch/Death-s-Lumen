@@ -36,7 +36,7 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 | `npm run bozza` | apre la pagina di bozza dell'HUD (`bozza-hud.html`): gli elementi di `HUD/` al loro posto, senza giocare |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
-| `npm run prova` | prova automatica su desktop, iPhone e Android emulati; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
+| `npm run prova` | prova automatica su desktop, iPhone e Android emulati, su una porta libera; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run ios` / `npm run android` | build + copia nei progetti nativi + apre Xcode o Android Studio |
 
 ## Struttura delle cartelle (proposta)
@@ -53,7 +53,7 @@ DEATH'S LUMEN/
     src/
       main.ts                      avvio di Phaser in pixel perfect e collegamento al telefono
       scene/                       le scene di Phaser: Avvio, Menu (schede), Gioco
-      sistema/                     pixel perfect, mobile, elenco asset
+      sistema/                     pixel perfect, mobile, elenco asset, arte dell'HUD (arte.ts: immagini e misure a pixel interi)
       data/                        TUTTI i numeri di bilanciamento (personaggi, armi, nemici…)
       stile.css                    interfaccia HTML sopra il gioco e caratteri inclusi
     public/                        manifest, icone

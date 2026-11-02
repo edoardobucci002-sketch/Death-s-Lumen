@@ -1,9 +1,10 @@
 /*
- * Avvio: carica l'elenco degli asset e tutti gli sprite esportati da Aseprite,
- * poi crea le animazioni dai tag (idle, walk, attack, special, hurt, death) e apre il menu
+ * Avvio: carica l'elenco degli asset e tutti gli sprite esportati da Aseprite (più gli elementi dell'HUD),
+ * poi crea le animazioni dai tag (idle, walk, attack, special, hurt, death), prepara l'arte dell'HUD e apre il menu
  * (o direttamente la partita, se l'indirizzo sceglie già il personaggio con ?pg=).
  */
 import Phaser from 'phaser';
+import { preparaArte } from '../sistema/arte';
 import type { ElencoAsset } from '../sistema/asset';
 
 export class Avvio extends Phaser.Scene {
@@ -14,6 +15,10 @@ export class Avvio extends Phaser.Scene {
   preload(): void {
     this.load.json('elenco', 'assets/elenco.json');
     this.load.once('filecomplete-json-elenco', (_k: string, _t: string, elenco: ElencoAsset) => {
+      for (const a of elenco.asset) this.load.aseprite(a.chiave, a.immagine, a.dati);
+    });
+    this.load.json('elencoHud', 'assets/hud/elenco.json');
+    this.load.once('filecomplete-json-elencoHud', (_k: string, _t: string, elenco: ElencoAsset) => {
       for (const a of elenco.asset) this.load.aseprite(a.chiave, a.immagine, a.dati);
     });
   }
@@ -42,6 +47,9 @@ export class Avvio extends Phaser.Scene {
         });
       }
     }
+    // l'interfaccia HTML usa gli elementi dell'HUD e le icone come immagini intere
+    const hud = this.cache.json.get('elencoHud') as ElencoAsset;
+    preparaArte(this, [...hud.asset.map((a) => a.chiave), ...elenco.asset.filter((a) => a.categoria === 'icone').map((a) => a.chiave)]);
     this.scene.start(new URLSearchParams(location.search).has('pg') ? 'Gioco' : 'Menu');
   }
 }

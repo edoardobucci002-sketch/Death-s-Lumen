@@ -1,10 +1,12 @@
 /*
  * Oggetti a terra: pane (salute), calamita (attira tutte le anime) e reliquiari (potenziamenti).
  * Si raccolgono passandoci sopra. Si disegnano sopra il buio, come le anime;
- * un reliquiario fuori dallo schermo è indicato da un segnale lampeggiante sul bordo.
+ * un reliquiario fuori dallo schermo è indicato da un segnale lampeggiante sul bordo (HUD/Segnali/Segnale_Reliquiario).
  */
 import type Phaser from 'phaser';
+import { ingr, misureHud } from './arte';
 import { PROFONDITA } from './effetti';
+import { LAMPEGGIO_SEGNALE } from '../data/hud';
 import { DROP } from '../data/oggetti';
 
 export const PANE = 0;
@@ -22,13 +24,14 @@ export class Oggetti {
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private segnali: Phaser.GameObjects.Sprite[] = [];
   private tempo = 0;
+  private zSegnale = ingr('segnale', misureHud());
 
   constructor(scena: Phaser.Scene) {
     for (let i = 0; i < MAX_OGGETTI; i++) {
       this.sprite.push(scena.add.sprite(0, 0, DROP.pane.sprite).setScale(DROP.ingrandimento).setDepth(PROFONDITA.anime).setVisible(false));
     }
     for (let i = 0; i < MAX_SEGNALI; i++) {
-      this.segnali.push(scena.add.sprite(0, 0, DROP.reliquiario.sprite).setScale(DROP.ingrandimento - 1).setDepth(PROFONDITA.barra + 1).setScrollFactor(0).setVisible(false));
+      this.segnali.push(scena.add.sprite(0, 0, 'Segnale_Reliquiario').setDepth(PROFONDITA.barra + 1).setScrollFactor(0).setVisible(false));
     }
   }
 
@@ -66,7 +69,10 @@ export class Oggetti {
       // segnale sul bordo, nella direzione del reliquiario
       const sx = Math.min(Math.max(x - cam.scrollX, m), cam.width - m);
       const sy = Math.min(Math.max(y - cam.scrollY, m), cam.height - m);
-      this.segnali[segnale++].setPosition(Math.round(sx), Math.round(sy)).setVisible(Math.floor(this.tempo * 3) % 2 === 0);
+      // la freccia disegnata punta in alto a destra: si ribalta verso il quarto dove sta il reliquiario
+      const sinistra = x < cam.scrollX + cam.width / 2, sotto = y > cam.scrollY + cam.height / 2;
+      this.segnali[segnale++].setPosition(Math.round(sx), Math.round(sy)).setFlip(sinistra, sotto).setScale(this.zSegnale)
+        .setVisible(Math.floor(this.tempo * LAMPEGGIO_SEGNALE) % 2 === 0);
     }
     for (let k = segnale; k < MAX_SEGNALI; k++) this.segnali[k].setVisible(false);
   }

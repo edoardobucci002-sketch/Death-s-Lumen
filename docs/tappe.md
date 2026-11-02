@@ -14,6 +14,8 @@ Ogni tappa finisce con qualcosa che Edoardo può provare sul telefono. Non si pa
 | M7 · App | Capacitor iOS e Android, icone, avvio, vibrazione, schermo acceso, tasto Indietro | App installata sul telefono di Edoardo | **in prova** (2/11): icone e avvio dal Lampionaio V5; APK costruita da GitHub Actions; Edoardo ha un Galaxy S25 (Android), iOS rimandato (manca Xcode) |
 | M8 · Bilanciamento | Bot di simulazione, ritocco dei numeri, playtest | I risultati del bot rispettano gli obiettivi | da fare |
 
+Fuori tappa, 3/11: l'HUD disegnato da Edoardo è nel gioco sul branch `hud-gioco`, **in prova**. La selezione del personaggio resta quella di prima: la sua cornice sarà rinnovata.
+
 ## Note per la M1
 
 - `ALTEZZA_MINIMA` portata a 700 pixel di gioco e distanze × 2,35 con gli sprite V5 (deciso con Edoardo il 2/11; prima era 300).

@@ -392,8 +392,8 @@ function grigioDi(c: HTMLCanvasElement): HTMLCanvasElement {
 }
 
 /** Pulsanti uno sotto l'altro: ogni riga è alta come il pulsante più alto, e si tocca tutta la riga. */
-function pulsanti(lista: [string, string][], cx: number, y: number, zz: number): number {
-  const riga = Math.max(...lista.map(([k]) => misura(k).h)) * zz;
+function pulsanti(lista: [string, string][], cx: number, y: number, zz: number, rigaMinima = 0): number {
+  const riga = Math.max(rigaMinima, ...lista.map(([k]) => misura(k).h)) * zz;
   for (const [k, testo] of lista) {
     const m = misura(k), x = Math.round(cx - (m.w * zz) / 2), yy = Math.round(y + (riga - m.h * zz) / 2);
     gruppo = `pulsante «${testo}»`;
@@ -413,30 +413,34 @@ function adattaZoom(zz: number, ciSta: (k: number) => boolean): number {
 
 function scenaDoni(t: number): void {
   scenaPartita(t); retino(11); strato = 1;
-  const m = misura('Carta_Dono'), b = bordi(), libera = W - b.s - b.d;
-  // tre carte affiancate; se non ci stanno nemmeno a ×1 vanno in colonna
-  const zz = adattaZoom(z('carte'), (k) => 3 * m.w * k + 8 * k <= libera);
+  // stessa disposizione del gioco (src/sistema/doni.ts): titolo, tre carte affiancate, numeri, Rimescola
+  const m = misura('Carta_Dono'), r = misura('Pulsante_Scuro'), b = bordi(), zt = z('pulsanti');
+  const titolo = 32 * raddoppio(), sotto = 14 * raddoppio(), alta = H - b.a - b.b, larga = W - b.s - b.d;
+  const riga = Math.max(r.h, misura('Pulsante_Acceso').h);
+  const zz = adattaZoom(z('carte'), (k) => 3 * m.w * k + 8 * k <= larga && titolo + m.h * k + sotto + 8 + riga * zt <= alta);
+  const tot = 3 * m.w * zz + 8 * zz, x0 = Math.round(W / 2 - tot / 2);
+  let y = b.a + Math.max(0, Math.round((alta - (titolo + m.h * zz + sotto + 8 + riga * zt)) / 2));
   gruppo = 'titolo';
-  scrivi('Scegli un dono', W / 2, b.a + 30, { px: 28, colore: pg().colore, font: 'titolo', allinea: 'centro', ombra: true });
+  scrivi('Un nuovo dono', W / 2, y + Math.round((titolo - 22 * raddoppio() * 1.35) / 2), { px: 22 * raddoppio(), colore: pg().colore, font: 'titolo', allinea: 'centro', ombra: true });
+  y += titolo;
   const arma = iconaArma();
   const carte: [string, string, string, string][] = [
     ['Carta_Dono', arma.icona, arma.nome, 'Livello 4: un colpo in più'],
     ['Carta_Dono_Scelta', FALCE.icona, FALCE.nome, 'Nuova arma: una lama che ti gira attorno'],
     ['Carta_Dono', CAMPANA.icona, CAMPANA.nome, 'Nuova arma: un rintocco che respinge'],
   ];
-  const gap = 4 * zz, tot = carte.length * m.w * zz + (carte.length - 1) * gap;
-  const verticali = tot > W - b.s - b.d;
   carte.forEach(([k, icona, nome, testo], i) => {
-    const x = verticali ? Math.round(W / 2 - (m.w * zz) / 2) : Math.round(W / 2 - tot / 2 + i * (m.w * zz + gap));
-    const y = verticali ? b.a + 70 + i * (m.h * zz + gap) : Math.round(H / 2 - (m.h * zz) / 2);
-    const r = INTERNI[k];
+    const x = x0 + i * (m.w + 4) * zz, ri = INTERNI[k];
     gruppo = `carta ${i + 1}`;
     disegna(k, x, y, zz);
     const zi = Math.max(1, zz - 1);
-    disegna(icona, x + (r.icona.x + r.icona.l / 2) * zz - 12 * zi, y + (r.icona.y + r.icona.a / 2) * zz - 12 * zi, zi);
-    scriviDentro(nome, r.titolo, x, y, zz, { px: 8 * zz, colore: '#e8dcc4' });
-    scriviRighe(testo, r.testo, x, y, zz, { px: 6 * zz, colore: '#c8bca4' });
+    disegna(icona, x + (ri.icona.x + ri.icona.l / 2) * zz - 12 * zi, y + (ri.icona.y + ri.icona.a / 2) * zz - 12 * zi, zi);
+    scriviDentro(nome, ri.titolo, x, y, zz, { px: 8 * zz, colore: '#e8dcc4' });
+    scriviRighe(testo, ri.testo, x, y, zz, { px: 6 * zz, colore: '#c8bca4' });
+    scrivi(String(i + 1), x + (m.w * zz) / 2, y + m.h * zz + 2, { px: 10 * raddoppio(), colore: '#9c907c', allinea: 'centro' });
   });
+  y += m.h * zz + sotto + 8;
+  pulsanti([['Pulsante_Scuro', 'Rimescola (2)']], W / 2, y, zt, misura('Pulsante_Acceso').h); // come nel gioco: si tocca sull'altezza dei pulsanti più alti
 }
 
 function scenaPausa(t: number): void {

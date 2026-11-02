@@ -1,8 +1,11 @@
 /*
  * Comandi: tastiera (WASD e frecce) e joystick virtuale che compare dove si appoggia il dito
  * (o dove si preme il mouse). La logica legge dx e dy: una direzione lunga da 0 a 1.
+ * Base e pomello sono quelli disegnati da Edoardo (Joystick_Base, Joystick_Pomello), messi a pixel di gioco interi.
+ * La sensibilità resta in punti dello schermo (JOYSTICK.raggio); il pomello disegnato si sposta fino al bordo della base.
  */
 import { JOYSTICK } from '../data/mondo';
+import { arte, immagine, ingr, misura, misureHud, type MisureHud } from './arte';
 
 const SU = new Set(['KeyW', 'ArrowUp']);
 const GIU = new Set(['KeyS', 'ArrowDown']);
@@ -23,15 +26,14 @@ export class Comandi {
   private jy = 0;
   private base: HTMLElement;
   private pomello: HTMLElement;
+  private m: MisureHud = misureHud();
 
   constructor(contenitore: HTMLElement) {
     this.base = document.createElement('div');
     this.base.className = 'joystick';
     this.base.hidden = true;
-    this.base.style.setProperty('--raggio', `${JOYSTICK.raggio}px`);
-    this.pomello = document.createElement('div');
-    this.pomello.className = 'joystick-pomello';
-    this.base.append(this.pomello);
+    this.pomello = immagine('Joystick_Pomello', 'joystick-pomello');
+    this.base.append(immagine('Joystick_Base', 'joystick-base'), this.pomello);
     contenitore.append(this.base);
     window.addEventListener('keydown', this.tasto);
     window.addEventListener('keyup', this.tasto);
@@ -99,7 +101,10 @@ export class Comandi {
     this.ox = e.clientX;
     this.oy = e.clientY;
     this.jx = this.jy = 0;
-    this.base.style.transform = `translate(${this.ox}px, ${this.oy}px)`;
+    this.misure();
+    // il centro della base va su un pixel di gioco intero
+    const px = this.m.px;
+    this.base.style.transform = `translate(${Math.round(this.ox / px) * px}px, ${Math.round(this.oy / px) * px}px)`;
     this.pomello.style.transform = '';
     this.base.hidden = false;
   };
@@ -115,8 +120,24 @@ export class Comandi {
     }
     this.jx = x;
     this.jy = y;
-    this.pomello.style.transform = `translate(${Math.round(x * JOYSTICK.raggio)}px, ${Math.round(y * JOYSTICK.raggio)}px)`;
+    // corsa del pomello disegnato: dal centro fino al bordo della base, in pixel di gioco interi
+    const z = ingr('joystick', this.m), b = arte('Joystick_Base'), p = arte('Joystick_Pomello');
+    const corsa = b && p ? ((b.w - p.w) / 2) * z : 0, px = this.m.px;
+    this.pomello.style.transform = `translate(${Math.round(x * corsa) * px}px, ${Math.round(y * corsa) * px}px)`;
   };
+
+  /** Misure della base e del pomello per questo telefono (centrati sul punto del dito). */
+  private misure(): void {
+    const m = (this.m = misureHud()), z = ingr('joystick', m), b = arte('Joystick_Base'), p = arte('Joystick_Pomello');
+    if (!b || !p) return;
+    const base = this.base.firstElementChild as HTMLElement;
+    misura(base, b.w, b.h, z, m);
+    misura(this.pomello, p.w, p.h, z, m);
+    base.style.left = `${-Math.floor((b.w * z) / 2) * m.px}px`;
+    base.style.top = `${-Math.floor((b.h * z) / 2) * m.px}px`;
+    this.pomello.style.left = `${-Math.floor((p.w * z) / 2) * m.px}px`;
+    this.pomello.style.top = `${-Math.floor((p.h * z) / 2) * m.px}px`;
+  }
 
   private solleva = (e?: PointerEvent): void => {
     if (e && e.pointerId !== this.dito) return;

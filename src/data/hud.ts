@@ -27,8 +27,8 @@ export const INGRANDIMENTO: Record<string, number> = {
   pausa: 1,
   joystick: 2,
   segnale: 1,
-  avvisi: 1,
-  carte: 2,
+  avvisi: 2, // a ×2 nel nastro ci sta una riga di testo leggibile
+  carte: 3, // in verticale tre carte ×3 non ci stanno e scendono a ×2; in orizzontale restano ×3, più leggibili
   pannelli: 2,
   pulsanti: 3, // i pulsanti dei menu: a ×3 sono alti almeno 44 punti, la misura di un dito
   ritratto: 4, // la cornice del ritratto: deve contenere il ritratto 224×288 disegnato a grandezza piena
@@ -81,10 +81,10 @@ export const INTERNI: Record<string, Record<string, Riquadro>> = {
   Cornice_La_Strega: { ritratto: { x: 9, y: 32, l: 70, a: 77 } },
   Nastro_Titolo: { testo: { x: 22, y: 22, l: 78, a: 16 } },
   Targa_Lapide: { testo: { x: 25, y: 30, l: 82, a: 22 } },
-  Pulsante_Chiaro: { testo: { x: 12, y: 5, l: 77, a: 13 } },
-  Pulsante_Acceso: { testo: { x: 12, y: 5, l: 73, a: 13 } },
-  Pulsante_Scuro: { testo: { x: 12, y: 4, l: 74, a: 13 } },
-  Pulsante_Spento: { testo: { x: 12, y: 4, l: 74, a: 13 } },
+  Pulsante_Chiaro: { testo: { x: 16, y: 5, l: 69, a: 13 } }, // la targhetta tra le due croci
+  Pulsante_Acceso: { testo: { x: 16, y: 5, l: 65, a: 13 } },
+  Pulsante_Scuro: { testo: { x: 16, y: 4, l: 66, a: 13 } },
+  Pulsante_Spento: { testo: { x: 16, y: 4, l: 66, a: 13 } },
 };
 
 /** Quante volte al secondo il segnale del reliquiario si accende e si spegne (come nel gioco). */
