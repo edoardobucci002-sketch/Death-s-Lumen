@@ -33,6 +33,7 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 | `npm install` | scarica le dipendenze (la prima volta e dopo ogni cambio di `package.json`) |
 | `npm run dev` | avvia il gioco in locale; l'indirizzo «Network» si apre anche dal telefono sulla stessa Wi-Fi |
 | `npm run asset` | esporta da Aseprite tutti gli sprite (vedi «Asset») |
+| `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
 | `npm run prova` | prova automatica su desktop, iPhone e Android emulati; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run ios` / `npm run android` | build + copia nei progetti nativi + apre Xcode o Android Studio |
@@ -56,7 +57,7 @@ DEATH'S LUMEN/
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/PERSONAGGI/ …       sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
                                    (effetti, icone e anime divisi dai file della v0 con tools/dividi-v0.lua)
-    tools/                         export-asset, genera-sw, prova (poi: simulazione di bilanciamento)
+    tools/                         export-asset, icone, dividi-v0, genera-sw, prova (poi: simulazione di bilanciamento)
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
 ```
