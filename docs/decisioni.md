@@ -13,6 +13,7 @@ Una riga per decisione, la più recente in alto.
 | 2026-10-30 | Nomi dei file: `Nome_V#.aseprite`, `Nome_idle_sheet_V#.png`; archivio in `DEATH'S LUMEN/PERSONAGGI/<Nome personaggio>/` | Convenzione di Edoardo |
 | 2026-10-30 | Obiettivo: app per iOS e Android, più versione web installabile | Richiesta di Edoardo |
 | 2026-10-30 | Versione web pubblicata su GitHub Pages, repository pubblico `edoardobucci002-sketch/Death-s-Lumen` | GitHub Pages gratuito richiede un repository pubblico |
+| 2026-11-02 | Workflow su GitHub: tolto `setup-android` (gli strumenti Android sono già sui server); azioni aggiornate a checkout v7, setup-node v7, setup-java v6, upload-artifact v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5 | `setup-android` faceva fallire l'APK; le versioni vecchie usavano Node 20, che GitHub sta ritirando |
 
 ## Riferimenti della v0
 
