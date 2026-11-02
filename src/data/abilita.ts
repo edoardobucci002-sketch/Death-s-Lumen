@@ -28,7 +28,7 @@ export const ABILITA: Record<IdAbilita, Abilita> = {
   sepoltura: { id: 'sepoltura', nome: 'Sepoltura', effetto: 'Sepoltura', icona: 'Icona_Sepoltura',
     ricarica: 16, durata: 4.5, raggio: 247, danno: 11, intervallo: 0.3, segue: false, rallenta: 0.8, cura: 0, attira: 0, animazione: 'distesa' },
   benedizione: { id: 'benedizione', nome: 'Benedizione', effetto: 'Benedizione', icona: 'Icona_Benedizione',
-    ricarica: 18, durata: 6, raggio: 207, danno: 8, intervallo: 0.3, segue: false, rallenta: 0, cura: 9, attira: 0, animazione: 'ciclo' },
+    ricarica: 18, durata: 6, raggio: 207, danno: 8, intervallo: 0.3, segue: false, rallenta: 0, cura: 5, attira: 0, animazione: 'ciclo' },
   ritoProibito: { id: 'ritoProibito', nome: 'Rito proibito', effetto: 'Rito_proibito', icona: 'Icona_Rito_proibito',
     ricarica: 16, durata: 5, raggio: 259, danno: 10, intervallo: 0.3, segue: false, rallenta: 0, cura: 0, attira: 153, animazione: 'ciclo' },
 };

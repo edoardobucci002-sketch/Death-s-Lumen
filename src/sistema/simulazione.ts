@@ -1,10 +1,11 @@
 /*
- * Simulazione: con ?bot registra la partita minuto per minuto (livello, salute, nemici, danno subito, uccisi)
- * e quanto dura e quanto fa male ogni Mietitore. Alla fine mette il risultato in window.__sim,
- * dove lo legge tools/sim.mjs.
+ * Simulazione: con ?bot registra la partita minuto per minuto (livello, salute, nemici, danno subito, uccisi),
+ * quanto dura e quanto fa male ogni Mietitore, quanti pani e calamite raccoglie e quanta salute recupera.
+ * Alla fine mette il risultato in window.__sim, dove lo legge tools/sim.mjs.
  */
 import { NEMICI } from '../data/nemici';
 import type { Orda } from './orda';
+import { CALAMITA, PANE } from './oggetti';
 
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 
@@ -33,6 +34,10 @@ export interface RisultatoSim {
   build: string[];
   minuti: MinutoSim[];
   mietitori: MietitoreSim[];
+  pani: number;
+  calamite: number;
+  curaPane: number; // salute recuperata con il pane
+  curaAltro: number; // con rigenerazione e Benedizione
 }
 
 export class Simulazione {
@@ -42,6 +47,10 @@ export class Simulazione {
   private uccisi = 0;
   private saluteMinima = Infinity;
   private prossimo = 1; // minuto da registrare
+  private pani = 0;
+  private calamite = 0;
+  private curaPane = 0;
+  private curaAltro = 0;
 
   /** Una volta per passo: chiude il minuto quando passa. */
   passo(secondi: number, livello: number, salute: number, orda: Orda): void {
@@ -81,8 +90,21 @@ export class Simulazione {
     this.uccisi++;
   }
 
-  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori'>): void {
+  raccolto(tipo: number): void {
+    if (tipo === PANE) this.pani++;
+    else if (tipo === CALAMITA) this.calamite++;
+  }
+
+  curato(da: 'pane' | 'altro', quanto: number): void {
+    if (da === 'pane') this.curaPane += quanto;
+    else this.curaAltro += quanto;
+  }
+
+  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro'>): void {
     for (const m of this.mietitori) m.dannoSubito = Math.round(m.dannoSubito);
-    (window as unknown as { __sim: RisultatoSim }).__sim = { ...r, minuti: this.minuti, mietitori: this.mietitori };
+    (window as unknown as { __sim: RisultatoSim }).__sim = {
+      ...r, minuti: this.minuti, mietitori: this.mietitori,
+      pani: this.pani, calamite: this.calamite, curaPane: Math.round(this.curaPane), curaAltro: Math.round(this.curaAltro),
+    };
   }
 }

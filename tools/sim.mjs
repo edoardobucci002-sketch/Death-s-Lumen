@@ -1,7 +1,9 @@
 // Simulazione di bilanciamento: il bot gioca la notte intera con ogni personaggio, su più semi,
 // nel gioco vero (build in dist/) dentro un browser invisibile con lo schermo di un telefono Android.
-// Stampa a che minuto muore, il livello minuto per minuto e quanto fa male il Mietitore, e controlla gli obiettivi
-// di CLAUDE.md. Risultati completi in prove/sim.json.
+// Stampa a che minuto muore, il livello minuto per minuto, quanto fa male il Mietitore, quanti pani e calamite
+// raccoglie e quanta salute recupera, e controlla gli obiettivi di CLAUDE.md. Risultati completi in prove/sim.json.
+// Un giocatore umano va più forte del bot (prova di Edoardo del 3/11: livello 60 al minuto 8, il bot 40),
+// quindi il bot deve vincere al massimo VITTORIE_MASSIME delle notti.
 // Uso: npm run sim            (3 partite per personaggio)
 //      npm run sim -- 5       (5 partite per personaggio)
 //      npm run sim -- 3 strega,becchino
@@ -12,6 +14,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const PERSONAGGI = ['lampionaio', 'becchino', 'badessa', 'strega'];
 const partite = Number(process.argv[2]) || 3;
 const scelti = process.argv[3] ? process.argv[3].split(',') : PERSONAGGI;
+const VITTORIE_MASSIME = 0.4;
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
 const porta = 4320;
 
@@ -86,11 +89,15 @@ for (const pg of scelti) {
     return m.dannoSubito / Math.max(1 / 6, (fine - m.arrivo) / 60);
   }));
   const saluteMinima = media(vinte.map((r) => Math.min(...r.minuti.map((m) => m.saluteMinima))));
+  const alMinuto = (f) => media(rr.map((r) => f(r) / (r.secondi / 60)));
   console.log(`  ${pg}: vince ${vinte.length}/${rr.length}` +
     (morti.length ? `, muore in media a ${tempo(media(morti))} (${morti.map(tempo).join(', ')})` : '') +
     `\n     Mietitore del 5: ucciso in ${uccisoM5.length}/${m5.length}` + (uccisoM5.length ? ` dopo ${Math.round(media(uccisoM5))} s in media` : '') +
     `; danno subito al minuto ${Math.round(primaAlMinuto)} prima, ${Math.round(durante)} durante` +
-    (vinte.length ? `\n     nelle vittorie la salute più bassa è stata in media ${Math.round(saluteMinima)}` : ''));
+    (vinte.length ? `\n     nelle vittorie la salute più bassa è stata in media ${Math.round(saluteMinima)}` : '') +
+    `\n     al minuto: ${alMinuto((r) => r.pani).toFixed(1)} pani, ${alMinuto((r) => r.calamite).toFixed(2)} calamite; ` +
+    `salute recuperata ${Math.round(alMinuto((r) => r.curaPane))} col pane, ${Math.round(alMinuto((r) => r.curaAltro))} con rigenerazione e abilità`);
+  if (rr.length && vinte.length / rr.length > VITTORIE_MASSIME) problemi.push(`${pg} vince troppo spesso (${vinte.length}/${rr.length}; al massimo ${Math.round(VITTORIE_MASSIME * 100)}%)`);
   if (rr.length && vinte.length === rr.length && saluteMinima > 50) problemi.push(`${pg} vince sempre senza sforzo (salute mai sotto ${Math.round(saluteMinima)})`);
   if (rr.length && morti.length === rr.length && Math.max(...morti) < 300) problemi.push(`${pg} muore sempre prima del minuto 5`);
   if (m5.length && !(durante > primaAlMinuto)) problemi.push(`per ${pg} il Mietitore del 5 non fa più male dei minuti prima`);

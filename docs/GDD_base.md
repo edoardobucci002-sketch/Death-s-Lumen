@@ -65,7 +65,7 @@ Si attivano con Spazio o con il pulsante a schermo. Danno, area e ricarica seguo
 | --- | --- | --- | --- | --- | --- |
 | Cerchio di luce | 14 s | 5 s | 216 | 6 ogni 0,25 s | ti segue; rallenta del 55% |
 | Sepoltura | 16 s | 4,5 s | 247 | 11 ogni 0,3 s | fissa; mani dalla terra; rallenta dell'80% |
-| Benedizione | 18 s | 6 s | 207 | 8 ogni 0,3 s | fissa; croce dorata; cura 9 salute/s se ci stai dentro |
+| Benedizione | 18 s | 6 s | 207 | 8 ogni 0,3 s | fissa; croce dorata; cura 5 salute/s se ci stai dentro (9 fino alla M8) |
 | Rito proibito | 16 s | 5 s | 259 | 10 ogni 0,3 s | fissa; sigillo con candele; attira i nemici a 153 px/s |
 
 Il Mietitore subisce il rallentamento a metà e l'attrazione a un quarto; bruti ed élite l'attrazione a metà.
@@ -294,7 +294,7 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 
 Un nemico prende i valori del momento in cui nasce (m = minuti di gioco, anche frazionari):
 
-- salute = base × (1 + 0,28 m) (0,34 fino alla M8)
+- salute = base × (1 + 0,28 m + 0,04 × (m − 3)²), l'ultimo termine solo dopo il minuto 3 (fino alla M8: 1 + 0,34 m). Al minuto 10 ≈ ×5,8, al 15 ≈ ×10
 - danno = base × (1 + 0,09 m)
 - nemici massimi in campo = min(380, 20 + 30 m)
 - comparse al secondo = 1,2 + 2,5 m (al massimo 8 per fotogramma)
@@ -306,9 +306,11 @@ Le comparse arrivano appena fuori dallo schermo. Se in campo c'è meno del 40% d
 | Oggetto | Fonte | Probabilità | Effetto |
 | --- | --- | --- | --- |
 | Anima | ogni nemico | 100% | esperienza = anime del nemico |
-| Pane | ogni nemico | 0,9% | +30 salute |
-| Calamita | ogni nemico | 0,25% | attira tutte le anime della mappa |
+| Pane | ogni nemico | 0,9%, al massimo uno ogni 45 s | +40 salute |
+| Calamita | ogni nemico | 0,25%, al massimo una ogni 3 minuti | attira tutte le anime della mappa |
 | Reliquiario | élite (1), Mietitore (2) | sempre | 1 potenziamento (75%) o 3 (25%) di ciò che possiedi; se è tutto al massimo, +40 salute |
+
+M8 (prova di Edoardo del 3/11): senza limite di tempo, dal minuto 5 si uccidono circa 2000 nemici al minuto e cadevano circa 18 pani (+30) e 5 calamite al minuto. Ora nella simulazione se ne raccolgono 0,2–0,4 pani al minuto e una calamita ogni 4–6 minuti.
 
 Pane, calamita e reliquiari si raccolgono a 40 px dal personaggio, sono disegnati sopra il buio e ingranditi × 3; i reliquiari fuori schermo hanno un segnale lampeggiante sul bordo (M5, `src/data/oggetti.ts`).
 

@@ -88,7 +88,10 @@ export const SCIAMI = {
 
 /** Un nemico prende i valori del momento in cui nasce (m = minuti di gioco). */
 export const DIFFICOLTA = {
-  salutePerMinuto: 0.28, // salute = base × (1 + 0,28 m)
+  // salute = base × (1 + 0,28 m + 0,04 × (m − 3)² dopo il minuto 3): uguale all'inizio, molto più resistenti a metà notte
+  salutePerMinuto: 0.28,
+  saluteDopo: 3, // minuto da cui la crescita accelera
+  saluteAccelera: 0.04,
   dannoPerMinuto: 0.09, // danno = base × (1 + 0,09 m)
   massimiBase: 20, // nemici massimi in campo = min(tetto, 20 + 30 m)
   massimiPerMinuto: 30,

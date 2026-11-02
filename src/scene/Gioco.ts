@@ -93,6 +93,8 @@ export class Gioco extends Phaser.Scene {
   private prossimaElite = 0;
   private ultimoSciame = 0;
   private prossimaOrda = 0;
+  private prossimoPane = 0; // secondi: prima di allora non cade altro pane
+  private prossimaCalamita = 0;
   private mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
   private buio!: Phaser.GameObjects.Image;
@@ -135,6 +137,7 @@ export class Gioco extends Phaser.Scene {
     // se la partita parte più avanti (prove), gli eventi già passati non si ripetono
     this.prossimaElite = Math.max(ELITE.primo, Math.ceil(this.secondi / ELITE.ogni) * ELITE.ogni);
     this.ultimoSciame = Math.ceil(this.secondi / 60) - 1;
+    this.prossimoPane = this.prossimaCalamita = 0;
     this.prossimaOrda = ORDE.primo + Math.max(0, Math.ceil((this.secondi - ORDE.primo) / ORDE.ogni)) * ORDE.ogni;
     this.mietitoriArrivati = MIETITORE.minuti.filter((m) => m * 60 < this.secondi).length;
 
@@ -288,7 +291,9 @@ export class Gioco extends Phaser.Scene {
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, this.versoSinistra ? -1 : 1, mezzaL, mezzaA);
     const cura = this.arsenale.cura();
     if (cura && this.salute < this.saluteMassima) suona('cura');
+    const primaCura = this.salute;
     this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + cura) * dt);
+    this.sim?.curato('altro', this.salute - primaCura);
     this.orda.rimuoviMorti(this.muore);
     const minaccia = this.minacce.aggiorna(dt, this.x, this.y, COMBATTIMENTO.raggioGiocatore);
     if (this.minacce.colpita) {
@@ -392,13 +397,23 @@ export class Gioco extends Phaser.Scene {
     this.sim?.ucciso();
     for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
     const r = this.caso.numero();
-    if (r < DROP.pane.probabilita) this.oggetti.aggiungi(PANE, x, y);
-    else if (r < DROP.pane.probabilita + DROP.calamita.probabilita) this.oggetti.aggiungi(CALAMITA, x, y);
+    if (r < DROP.pane.probabilita) {
+      if (this.secondi < this.prossimoPane) return;
+      this.prossimoPane = this.secondi + DROP.pane.ogni;
+      this.oggetti.aggiungi(PANE, x, y);
+    } else if (r < DROP.pane.probabilita + DROP.calamita.probabilita) {
+      if (this.secondi < this.prossimaCalamita) return;
+      this.prossimaCalamita = this.secondi + DROP.calamita.ogni;
+      this.oggetti.aggiungi(CALAMITA, x, y);
+    }
   };
 
   private raccogli = (tipo: number): void => {
+    this.sim?.raccolto(tipo);
     if (tipo === PANE) {
+      const prima = this.salute;
       this.salute = Math.min(this.saluteMassima, this.salute + DROP.pane.cura);
+      this.sim?.curato('pane', this.salute - prima);
       suona('cura');
     } else if (tipo === CALAMITA) {
       this.anime.attiraTutte();

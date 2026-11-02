@@ -372,7 +372,8 @@ export class Orda {
     this.id[i] = this.prossimoId++;
     this.segno[i] = 0;
     this.raggio[i] = tipo.raggio;
-    this.salute[i] = this.saluteMassima[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m);
+    const oltre = Math.max(0, m - DIFFICOLTA.saluteDopo);
+    this.salute[i] = this.saluteMassima[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m + DIFFICOLTA.saluteAccelera * oltre * oltre);
     this.anime[i] = tipo.anime;
     this.elite[i] = 0;
     this.fase[i] = this.mossa[i] = this.volta[i] = this.branco[i] = 0;
