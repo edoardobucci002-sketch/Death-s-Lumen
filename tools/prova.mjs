@@ -35,7 +35,8 @@ for (const [nome, disp] of casi) {
   });
   const bottoni = await pag.locator('[data-tag]').count();
   if (bottoni) {
-    await pag.locator('[data-tag]').nth(1).click();
+    // con un solo tag (per esempio solo idle) si clicca quello
+    await pag.locator('[data-tag]').nth(Math.min(1, bottoni - 1)).click();
     await pag.waitForTimeout(300);
   }
   await pag.screenshot({ path: `prove/${nome}.png` });

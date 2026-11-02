@@ -2,16 +2,43 @@
   "versione": 1,
   "asset": [
     {
+      "chiave": "Il_Becchino",
+      "categoria": "personaggi",
+      "immagine": "assets/personaggi/Il_Becchino.png",
+      "dati": "assets/personaggi/Il_Becchino.json",
+      "versioneFile": 3,
+      "tag": [
+        "idle"
+      ]
+    },
+    {
       "chiave": "Il_Lampionaio",
       "categoria": "personaggi",
       "immagine": "assets/personaggi/Il_Lampionaio.png",
       "dati": "assets/personaggi/Il_Lampionaio.json",
-      "versioneFile": 0,
+      "versioneFile": 3,
       "tag": [
-        "idle",
-        "walk",
-        "attack",
-        "special"
+        "idle"
+      ]
+    },
+    {
+      "chiave": "La_Badessa",
+      "categoria": "personaggi",
+      "immagine": "assets/personaggi/La_Badessa.png",
+      "dati": "assets/personaggi/La_Badessa.json",
+      "versioneFile": 3,
+      "tag": [
+        "idle"
+      ]
+    },
+    {
+      "chiave": "La_Strega",
+      "categoria": "personaggi",
+      "immagine": "assets/personaggi/La_Strega.png",
+      "dati": "assets/personaggi/La_Strega.json",
+      "versioneFile": 3,
+      "tag": [
+        "idle"
       ]
     }
   ]

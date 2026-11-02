@@ -4,7 +4,7 @@ Ogni tappa finisce con qualcosa che Edoardo può provare sul telefono. Non si pa
 
 | Tappa | Obiettivo | Si prova così | Stato |
 | --- | --- | --- | --- |
-| M0 · Fondamenta | Stack confermato, progetto creato, export da Aseprite funzionante, PWA vuota pubblicata su GitHub Pages | Il link si apre sul telefono e mostra uno sprite di Edoardo animato | **fatta** (30/10): manca solo la prova con un export vero da Aseprite |
+| M0 · Fondamenta | Stack confermato, progetto creato, export da Aseprite funzionante, PWA vuota pubblicata su GitHub Pages | Il link si apre sul telefono e mostra uno sprite di Edoardo animato | **fatta** (30/10; export vero dei 4 ritratti V3 provato il 2/11) |
 | M1 · Camminare | Un personaggio, joystick touch e tastiera, telecamera, terreno del cimitero, buio e alone di luce, pixel perfect | Il personaggio cammina nel cimitero, in verticale e in orizzontale | da fare |
 | M2 · La notte arriva | Nemici, comparse, griglia spaziale, danno da contatto, salute, morte | 400 nemici a 60 fps; si muore | da fare |
 | M3 · Combattere | 4 armi iniziali, anime, esperienza, scelta dei doni | Partita di 5 minuti con un personaggio | da fare |
@@ -16,5 +16,6 @@ Ogni tappa finisce con qualcosa che Edoardo può provare sul telefono. Non si pa
 
 ## Note per la M1
 
-- Sul telefono in orizzontale il personaggio risulta piccolo (390 pixel di gioco in altezza). Decidere con Edoardo quanti pixel di gioco devono stare in verticale: oggi `ALTEZZA_MINIMA = 300` in `src/sistema/pixel.ts`.
-- Lo sprite segnaposto è quello della v0 (80×64 con gli effetti dentro). Gli sprite in gioco semplificati di Edoardo lo sostituiscono.
+- `ALTEZZA_MINIMA` resta 300 pixel di gioco (deciso con Edoardo il 2/11).
+- I file `PERSONAGGI/<Nome>/<Nome>_V#.aseprite` (224×288, solo `idle`) sono i **ritratti della selezione**, non gli sprite in gioco. Edoardo disegnerà a parte gli sprite di gameplay (idle, walk, hurt, death, special): serve una convenzione di nome per distinguerli.
+- Finché mancano gli sprite di gameplay si usa il segnaposto della v0 (80×64 con gli effetti dentro).
