@@ -1,5 +1,5 @@
 // Prova automatica: apre la build su desktop, iPhone (verticale e orizzontale) e Android,
-// fa camminare il personaggio, controlla che non ci siano errori e salva gli screenshot in prove/.
+// fa camminare il personaggio, prova 400 nemici e la morte, controlla che non ci siano errori e salva gli screenshot in prove/.
 // La prima volta serve: npx playwright install chromium
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -68,6 +68,57 @@ for (const [nome, disp] of casi) {
   console.log(`${ok ? '✓' : '✗'} ${nome}: ${stato.w}×${stato.h} px di gioco, ×${stato.scala}, camminato ${passi} px a destra${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
+
+// Orda: 400 nemici in campo su un telefono emulato, quanti fotogrammi al secondo
+{
+  const ctx = await browser.newContext(devices['Pixel 7']);
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?nemici=400&immortale`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(1500);
+  const misura = await pag.evaluate(() => new Promise((fine) => {
+    let n = 0;
+    const via = performance.now();
+    const conta = () => (performance.now() - via < 3000 ? (n++, requestAnimationFrame(conta)) : fine(n / 3));
+    requestAnimationFrame(conta);
+  }));
+  const numero = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').orda.numero);
+  await pag.screenshot({ path: 'prove/orda-400.png' });
+  const ok = !errori.length && numero >= 400 && misura >= 30;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} orda: ${numero} nemici, ${Math.round(misura)} fotogrammi al secondo (emulato sul Mac)${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// Morte: al minuto 8, fermo, il personaggio deve morire e «Riprova» deve far ripartire la partita
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?minuto=8`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  const morto = await pag.waitForSelector('.hud-fine:not([hidden])', { timeout: 30000 }).then(() => true, () => false);
+  if (!morto) errori.push('il personaggio non muore');
+  await pag.screenshot({ path: 'prove/fine.png' });
+  let ripartita = false;
+  if (morto) {
+    await pag.click('.hud-fine button');
+    await pag.waitForTimeout(500);
+    ripartita = await pag.evaluate(() => {
+      const s = window.__dl.scene.getScene('Gioco');
+      return !s.morto && s.salute === s.saluteMassima && !document.querySelector('.hud-fine:not([hidden])');
+    });
+    if (!ripartita) errori.push('«Riprova» non fa ripartire la partita');
+  }
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} morte: ${morto ? 'si muore' : 'non si muore'}, ${ripartita ? 'Riprova riparte' : 'Riprova non riparte'}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
 await browser.close();
 server.kill();
 console.log(falliti ? `\n${falliti} prove fallite` : '\nTutto a posto. Screenshot in prove/.');

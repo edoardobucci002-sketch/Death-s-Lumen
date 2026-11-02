@@ -50,3 +50,38 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
   width: 44px; height: 44px; left: -22px; top: -22px;
   border: 2px solid var(--accento); background: var(--pannello);
 }
+
+/* Interfaccia in partita (src/sistema/hud.ts) */
+#interfaccia > .hud { position: fixed; inset: 0; pointer-events: none; }
+.hud-alto {
+  position: absolute; left: 0; right: 0; top: 0;
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.hud-orologio {
+  font-family: var(--f-pixel); font-weight: 700; font-size: 22px; letter-spacing: 1px;
+  color: var(--pergamena); text-shadow: 0 2px 0 #000;
+}
+.hud-salute {
+  width: min(220px, 60vw); height: 8px; box-sizing: border-box;
+  border: 2px solid #000; background: #2a1512;
+}
+.hud-salute-piena { height: 100%; width: 100%; background: #c2412d; }
+.hud-bordo {
+  position: absolute; inset: 0;
+  box-shadow: inset 0 0 0 6px rgba(194, 65, 45, 0.85), inset 0 0 48px rgba(194, 65, 45, 0.55);
+  animation: pulsa 0.9s steps(3) infinite alternate;
+}
+@keyframes pulsa { from { opacity: 0.25; } to { opacity: 1; } }
+.hud-fine {
+  position: absolute; inset: 0; pointer-events: auto;
+  display: grid; grid-template-columns: minmax(0, 1fr); place-content: center; justify-items: center;
+  gap: 12px; padding: 16px; text-align: center; background: rgba(8, 6, 5, 0.82);
+}
+.hud-fine h1 { margin: 0; font: 400 clamp(28px, 7vw, 44px) var(--f-titolo); color: var(--accento); }
+.hud-fine-tempo { margin: 0; font: italic 20px var(--f-corsivo); color: var(--tenue); }
+.hud-fine button {
+  margin-top: 12px; padding: 10px 28px; min-height: 44px;
+  font: 400 20px var(--f-titolo); background: var(--pannello);
+  border: 2px solid var(--accento); color: var(--pergamena);
+}

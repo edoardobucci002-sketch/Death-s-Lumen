@@ -245,16 +245,16 @@ Al massimo 6 doni passivi diversi.
 
 ## 6. Nemici
 
-Valori al minuto 0; la velocità varia a caso del ±10%.
+Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi convertiti × 2,35 (M2, in `src/data/nemici.ts`); il Mietitore è ancora con i valori della v0 (arriva nella M5).
 
 | Nemico | Salute | Velocità | Danno | Raggio | Anime | Compare da | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Pipistrello | 6 | 76 | 5 | 7 | 1 | 0:00 | comune all'inizio, sciami |
-| Zombi | 16 | 37 | 8 | 9 | 2 | 0:00 | lento |
-| Fantasma | 13 | 55 | 7 | 9 | 2 | 0:50 | attraversa gli altri nemici |
-| Scheletro | 34 | 45 | 10 | 9 | 3 | 2:20 | resistente |
-| Segugio | 28 | 85 | 9 | 9 | 3 | 3:50 | il più veloce |
-| Bruto | 150 | 33 | 18 | 16 | 8 | 6:00 | pesante: respinta e attrazione ridotte |
+| Pipistrello | 6 | 179 | 5 | 16 | 1 | 0:00 | comune all'inizio, sciami |
+| Zombi | 16 | 87 | 8 | 21 | 2 | 0:00 | lento |
+| Fantasma | 13 | 129 | 7 | 21 | 2 | 0:50 | attraversa gli altri nemici |
+| Scheletro | 34 | 106 | 10 | 21 | 3 | 2:20 | resistente |
+| Segugio | 28 | 200 | 9 | 21 | 3 | 3:50 | il più veloce |
+| Bruto | 150 | 78 | 18 | 38 | 8 | 6:00 | pesante: respinta e attrazione ridotte |
 | Il Mietitore | 3200 | 50 | 22 | 26 | 60 | 5:00 e 10:00 | boss |
 
 - **Élite**: ogni 55 s compare un nemico normale potenziato: salute ×7, danno ×1,4, anime ×6, dimensione ×1,5, velocità ×0,9, alone ambra. Lascia un reliquiario.
@@ -313,7 +313,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al mass
 | Danno inflitto | danno arma × (1 + bonus danno) × caso tra 0,92 e 1,08 |
 | Danno subito | danno nemico − armatura, minimo 1 |
 | Invulnerabilità dopo un colpo | 0,45 s |
-| Raggio del giocatore | 9 px |
+| Raggio del giocatore | 21 px (9 nella v0) |
 | Respinta | per arma; bruti ed élite la subiscono a un quarto, il Mietitore per niente |
 | Rallentamento | resta attivo il più forte tra quelli in corso |
 | Salute bassa | sotto il 35% il bordo dello schermo pulsa di rosso |
@@ -345,6 +345,17 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al mass
 | Tremolio della fiamma | ±7 px ogni 0,12 s | |
 | Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |
 | Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito |
+
+### Nemici in campo (nuovi nella M2, in `src/data/nemici.ts`)
+
+| Valore | Numero | Note |
+| --- | --- | --- |
+| Dove nascono | 48 px fuori dal bordo dello schermo | |
+| Ricollocamento | oltre 2,2 × 48 px fuori dallo schermo | torna davanti al giocatore, entro ±0,7 radianti dalla direzione in cui cammina |
+| Separazione tra nemici | forza 0,5; si toccano sotto il 75% della somma dei raggi | i fantasmi attraversano gli altri |
+| Sprite segnaposto V0 | ingranditi × 2 | disegnati per personaggi di 34 px |
+| Lampo quando sei colpito | 0,1 s | bianco pieno |
+| Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 
 ## 12. Da fare e da decidere
 
