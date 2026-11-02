@@ -47,3 +47,11 @@ export const JOYSTICK = {
  * Coordinate dei piedi dentro il fotogramma. Gli sprite di Edoardo usano la regola normale.
  */
 export const PIEDI_SEGNAPOSTO = { x: 28, y: 61 } as const;
+
+/** Barra della salute sotto i piedi del personaggio (pixel di gioco). */
+export const BARRA_SALUTE = {
+  larghezza: 40,
+  altezza: 4, // bordo scuro compreso
+  distanza: 5, // quanto sotto i piedi
+  colori: { bordo: 0x000000, vuota: 0x2a1512, piena: 0xc2412d },
+} as const;

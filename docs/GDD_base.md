@@ -354,6 +354,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al mass
 | Ricollocamento | oltre 2,2 × 48 px fuori dallo schermo | torna davanti al giocatore, entro ±0,7 radianti dalla direzione in cui cammina |
 | Separazione tra nemici | forza 0,5; si toccano sotto il 75% della somma dei raggi | i fantasmi attraversano gli altri |
 | Sprite segnaposto V0 | ingranditi × 2 | disegnati per personaggi di 34 px |
+| Barra della salute | 40 × 4 px, 5 px sotto i piedi | decisa da Edoardo: sotto il personaggio, non in alto (`src/data/mondo.ts`) |
 | Lampo quando sei colpito | 0,1 s | bianco pieno |
 | Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 

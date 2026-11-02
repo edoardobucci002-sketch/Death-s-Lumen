@@ -7,7 +7,7 @@
 import Phaser from 'phaser';
 import type { ElencoAsset } from '../sistema/asset';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
-import { LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
+import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA } from '../data/nemici';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
@@ -42,6 +42,9 @@ export class Gioco extends Phaser.Scene {
   private giocatore!: Phaser.GameObjects.Sprite;
   private terreno!: Phaser.GameObjects.TileSprite;
   private buio!: Phaser.GameObjects.Image;
+  private barraBordo!: Phaser.GameObjects.Rectangle;
+  private barraVuota!: Phaser.GameObjects.Rectangle;
+  private barraPiena!: Phaser.GameObjects.Rectangle;
   private misureBuio = { w: 0, h: 0 };
   private comandi!: Comandi;
   private hud!: Hud;
@@ -83,6 +86,11 @@ export class Gioco extends Phaser.Scene {
     }
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(SOPRA_TUTTO);
+    // barra della salute sotto i piedi, sopra il buio così si vede sempre
+    const b = BARRA_SALUTE;
+    this.barraBordo = this.add.rectangle(0, 0, b.larghezza, b.altezza, b.colori.bordo).setOrigin(0).setDepth(SOPRA_TUTTO + 1);
+    this.barraVuota = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.vuota).setOrigin(0).setDepth(SOPRA_TUTTO + 2);
+    this.barraPiena = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.piena).setOrigin(0).setDepth(SOPRA_TUTTO + 3);
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
@@ -186,7 +194,14 @@ export class Gioco extends Phaser.Scene {
       px - cam.scrollX - Math.floor(this.misureBuio.w / 2),
       py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2),
     );
-    this.hud.aggiorna(this.secondi, this.salute / this.saluteMassima, !this.morto && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa);
+    const b = BARRA_SALUTE;
+    const bx = px - Math.floor(b.larghezza / 2);
+    const by = py + b.distanza;
+    const piena = Math.round((b.larghezza - 2) * (this.salute / this.saluteMassima));
+    this.barraBordo.setPosition(bx, by).setVisible(!this.morto);
+    this.barraVuota.setPosition(bx + 1, by + 1).setVisible(!this.morto);
+    this.barraPiena.setPosition(bx + 1, by + 1).setSize(piena, b.altezza - 2).setVisible(!this.morto && piena > 0);
+    this.hud.aggiorna(this.secondi, !this.morto && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa);
   }
 
   /** Avvia un'animazione; se lo sprite non ha quel tag (per esempio walk), resta su idle. */

@@ -62,11 +62,6 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
   font-family: var(--f-pixel); font-weight: 700; font-size: 22px; letter-spacing: 1px;
   color: var(--pergamena); text-shadow: 0 2px 0 #000;
 }
-.hud-salute {
-  width: min(220px, 60vw); height: 8px; box-sizing: border-box;
-  border: 2px solid #000; background: #2a1512;
-}
-.hud-salute-piena { height: 100%; width: 100%; background: #c2412d; }
 .hud-bordo {
   position: absolute; inset: 0;
   box-shadow: inset 0 0 0 6px rgba(194, 65, 45, 0.85), inset 0 0 48px rgba(194, 65, 45, 0.55);

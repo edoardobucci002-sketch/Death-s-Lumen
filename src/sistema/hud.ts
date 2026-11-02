@@ -1,15 +1,13 @@
 /*
- * Interfaccia in partita (HTML sopra il gioco): orologio, barra della salute,
- * bordo rosso quando la salute è bassa, schermata di fine. L'HUD completo arriva nella M6.
+ * Interfaccia in partita (HTML sopra il gioco): orologio,
+ * bordo rosso quando la salute è bassa, schermata di fine. La barra della salute è nel gioco, sotto il personaggio.
  */
 export class Hud {
   private radice: HTMLElement;
   private orologio: HTMLElement;
-  private barra: HTMLElement;
   private bordo: HTMLElement;
   private fine: HTMLElement;
   private ultimoSecondo = -1;
-  private ultimaParte = -1;
 
   constructor(contenitore: HTMLElement, riprova: () => void) {
     this.radice = document.createElement('div');
@@ -18,7 +16,6 @@ export class Hud {
       <div class="hud-bordo" hidden></div>
       <div class="hud-alto">
         <div class="hud-orologio">0:00</div>
-        <div class="hud-salute"><div class="hud-salute-piena"></div></div>
       </div>
       <div class="hud-fine" hidden>
         <h1>La lanterna si è spenta</h1>
@@ -26,7 +23,6 @@ export class Hud {
         <button type="button">Riprova</button>
       </div>`;
     this.orologio = this.radice.querySelector('.hud-orologio')!;
-    this.barra = this.radice.querySelector('.hud-salute-piena')!;
     this.bordo = this.radice.querySelector('.hud-bordo')!;
     this.fine = this.radice.querySelector('.hud-fine')!;
     this.fine.querySelector('button')!.addEventListener('click', riprova);
@@ -34,16 +30,11 @@ export class Hud {
   }
 
   /** Aggiorna solo quando qualcosa cambia davvero, per non toccare la pagina a ogni fotogramma. */
-  aggiorna(secondi: number, parteSalute: number, saluteBassa: boolean): void {
+  aggiorna(secondi: number, saluteBassa: boolean): void {
     const s = Math.floor(secondi);
     if (s !== this.ultimoSecondo) {
       this.ultimoSecondo = s;
       this.orologio.textContent = tempo(s);
-    }
-    const p = Math.max(0, Math.round(parteSalute * 100));
-    if (p !== this.ultimaParte) {
-      this.ultimaParte = p;
-      this.barra.style.width = `${p}%`;
     }
     this.bordo.hidden = !saluteBassa;
   }
