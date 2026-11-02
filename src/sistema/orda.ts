@@ -2,17 +2,21 @@
  * Orda: tutti i nemici in campo. Li fa nascere appena fuori dallo schermo, li muove verso
  * il giocatore, li tiene separati con la griglia spaziale e ricolloca chi resta troppo indietro.
  * Quando un'arma li colpisce perdono salute, si illuminano, vengono respinti; a zero salute muoiono.
+ * Fa nascere anche le élite (più grosse, con alone ambra), gli sciami che circondano e il Mietitore,
+ * che cammina, si ferma pulsando di rosso e poi scatta verso dove eri.
  * I nemici vivono in array preparati all'inizio (pool): durante la partita non si crea niente di nuovo.
  */
 import Phaser from 'phaser';
 import { ingrandimento } from './asset';
 import type { Caso } from './caso';
 import { Griglia } from './griglia';
-import { COMPARSA, DIFFICOLTA, NEMICI, SEPARAZIONE } from '../data/nemici';
+import { COMPARSA, DIFFICOLTA, ELITE, MIETITORE, NEMICI, SCIAMI, SEPARAZIONE } from '../data/nemici';
+import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { COLPI } from '../data/armi';
 
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici. */
-export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + 20;
+export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + SCIAMI.massimo + 20;
+const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 
 interface AspettoNemico {
   ingrandimento: number;
@@ -26,6 +30,8 @@ export class Orda {
   readonly raggio = new Float32Array(CAPIENZA);
   readonly danno = new Float32Array(CAPIENZA);
   readonly salute = new Float32Array(CAPIENZA);
+  readonly saluteMassima = new Float32Array(CAPIENZA);
+  readonly elite = new Uint8Array(CAPIENZA);
   readonly tipo = new Uint8Array(CAPIENZA);
   readonly id = new Uint32Array(CAPIENZA); // numero unico di ogni nemico nato, anche se cambia posto
   readonly segno = new Uint32Array(CAPIENZA); // l'ultimo colpo che l'ha già toccato (vedi Griglia.nelRaggio)
@@ -37,6 +43,12 @@ export class Orda {
   private lentoPer = new Float32Array(CAPIENZA); // secondi rimasti di rallentamento
   private lampo = new Float32Array(CAPIENZA);
   readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
+  // Mietitore: 0 cammina, 1 si ferma e pulsa, 2 scatta
+  private fase = new Uint8Array(CAPIENZA);
+  private faseTempo = new Float32Array(CAPIENZA);
+  private scattoX = new Float32Array(CAPIENZA);
+  private scattoY = new Float32Array(CAPIENZA);
+  private anime = new Float32Array(CAPIENZA);
   private versoSinistra = new Uint8Array(CAPIENZA);
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private aspetto: AspettoNemico[];
@@ -46,7 +58,8 @@ export class Orda {
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
-  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaFalce];
+  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaFalce,
+    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime];
 
   constructor(
     scena: Phaser.Scene,
@@ -83,6 +96,7 @@ export class Orda {
       if (this.lentoPer[i] > 0) this.lentoPer[i] -= dt;
       if (this.lampo[i] > 0) this.lampo[i] -= dt;
       if (this.pausaFalce[i] > 0) this.pausaFalce[i] -= dt;
+      if (this.tipo[i] === ID_MIETITORE && this.muoviMietitore(i, dt, dx, dy, d)) continue;
       if (d > 0.5) {
         const v = this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
         const passo = Math.min(d, v * dt);
@@ -122,8 +136,8 @@ export class Orda {
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number): void {
     this.salute[i] -= danno;
     this.lampo[i] = COLPI.lampoNemico;
-    if (respinta) {
-      const r = respinta * (NEMICI[this.tipo[i]].pesante ? COLPI.respintaPesanti : 1);
+    if (respinta && this.tipo[i] !== ID_MIETITORE) {
+      const r = respinta * (NEMICI[this.tipo[i]].pesante || this.elite[i] ? COLPI.respintaPesanti : 1);
       this.respintaX[i] = dx * r;
       this.respintaY[i] = dy * r;
     }
@@ -131,28 +145,70 @@ export class Orda {
 
   /** Rallenta il nemico i per qualche istante; resta il rallentamento più forte. */
   rallenta(i: number, quanto: number, secondi: number): void {
+    if (this.tipo[i] === ID_MIETITORE) quanto *= MIETITORE.rallentamento;
     if (this.lentoPer[i] <= 0 || quanto >= this.lento[i]) this.lento[i] = quanto;
     this.lentoPer[i] = Math.max(this.lentoPer[i], secondi);
   }
 
-  /** Tira il nemico i verso (tx, ty) di passo pixel (i pesanti di meno). */
-  attira(i: number, tx: number, ty: number, passo: number, pesanti: number): void {
+  /** Tira il nemico i verso (tx, ty) di passo pixel (bruti ed élite a metà, il Mietitore a un quarto). */
+  attira(i: number, tx: number, ty: number, passo: number): void {
     const dx = tx - this.x[i];
     const dy = ty - this.y[i];
     const d = Math.hypot(dx, dy);
     if (d < 1) return;
-    const p = Math.min(d, passo * (NEMICI[this.tipo[i]].pesante ? pesanti : 1));
+    const f = this.tipo[i] === ID_MIETITORE ? MIETITORE.attrazione : NEMICI[this.tipo[i]].pesante || this.elite[i] ? ATTRAZIONE_PESANTI : 1;
+    const p = Math.min(d, passo * f);
     this.x[i] += (dx / d) * p;
     this.y[i] += (dy / d) * p;
   }
 
-  /** Toglie dal campo i nemici senza salute; per ognuno chiama muore(x, y, anime). */
-  rimuoviMorti(muore: (x: number, y: number, anime: number) => void): void {
+  /** Toglie dal campo i nemici senza salute; per ognuno chiama muore(x, y, anime, reliquiari). */
+  rimuoviMorti(muore: (x: number, y: number, anime: number, reliquiari: number) => void): void {
     for (let i = this.numero - 1; i >= 0; i--) {
       if (this.salute[i] > 0) continue;
-      muore(this.x[i], this.y[i] - this.raggio[i], NEMICI[this.tipo[i]].anime);
+      const reliquiari = this.tipo[i] === ID_MIETITORE ? MIETITORE.reliquiari : this.elite[i] ? 1 : 0;
+      muore(this.x[i], this.y[i] - this.raggio[i], this.anime[i], reliquiari);
       this.togli(i);
     }
+  }
+
+  /** Un'élite: un nemico normale potenziato, con un alone ambra. */
+  nasciElite(secondi: number, gx: number, gy: number, mezzaL: number, mezzaA: number): void {
+    if (this.numero >= CAPIENZA) return;
+    const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
+    this.elite[i] = 1;
+    this.salute[i] = this.saluteMassima[i] *= ELITE.salute;
+    this.danno[i] *= ELITE.danno;
+    this.anime[i] *= ELITE.anime;
+    this.raggio[i] *= ELITE.dimensione;
+    this.velocita[i] *= ELITE.velocita;
+    this.sprite[i].setScale(this.aspetto[this.tipo[i]].ingrandimento * ELITE.dimensione);
+  }
+
+  /** Il Mietitore; volta è 0 al primo arrivo, 1 al secondo (più resistente). */
+  nasciMietitore(secondi: number, volta: number, gx: number, gy: number, mezzaL: number, mezzaA: number): void {
+    if (this.numero >= CAPIENZA) return;
+    const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA, ID_MIETITORE);
+    if (volta > 0) this.salute[i] = this.saluteMassima[i] *= MIETITORE.saluteSecondo;
+    this.fase[i] = 0;
+    this.faseTempo[i] = MIETITORE.cammina[0] + this.caso.numero() * (MIETITORE.cammina[1] - MIETITORE.cammina[0]);
+  }
+
+  /** Uno sciame di quanti nemici del tipo dato, in cerchio appena fuori dallo schermo, un po' più veloci. */
+  sciame(secondi: number, tipo: number, quanti: number, gx: number, gy: number, mezzaL: number, mezzaA: number): void {
+    for (let k = 0; k < quanti && this.numero < CAPIENZA; k++) {
+      const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA, tipo);
+      const ang = (k / quanti) * Math.PI * 2;
+      this.x[i] = gx + Math.cos(ang) * (mezzaL + COMPARSA.margine);
+      this.y[i] = gy + Math.sin(ang) * (mezzaA + COMPARSA.margine);
+      this.velocita[i] *= SCIAMI.velocita;
+    }
+  }
+
+  /** Il Mietitore in campo (−1 se non c'è). */
+  mietitore(): number {
+    for (let i = 0; i < this.numero; i++) if (this.tipo[i] === ID_MIETITORE) return i;
+    return -1;
   }
 
   /** Riempie il campo di nemici in un colpo: per la prova delle prestazioni. */
@@ -174,21 +230,30 @@ export class Orda {
       s.setVisible(visibile);
       if (!visibile) continue;
       s.setPosition(x, y).setDepth(y).setFlipX(this.versoSinistra[i] === 1);
-      if (this.lampo[i] > 0) s.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-      else if (s.tintMode !== Phaser.TintModes.MULTIPLY) s.clearTint();
+      if (this.lampo[i] > 0 || (this.fase[i] === 1 && Math.floor(this.faseTempo[i] * 10) % 2 === 0)) {
+        // colpito: bianco; il Mietitore che sta per scattare pulsa di rosso
+        s.setTint(this.lampo[i] > 0 ? 0xffffff : 0xc2412d).setTintMode(Phaser.TintModes.FILL);
+      } else if (this.elite[i]) {
+        s.setTint(ELITE.alone).setTintMode(Phaser.TintModes.ADD);
+      } else if (s.tintMode !== Phaser.TintModes.MULTIPLY) {
+        s.clearTint();
+      }
     }
   }
 
-  private nasci(secondi: number, gx: number, gy: number, dirX: number, dirY: number, mezzaL: number, mezzaA: number): void {
+  private nasci(secondi: number, gx: number, gy: number, dirX: number, dirY: number, mezzaL: number, mezzaA: number, tipoScelto = -1): number {
     const i = this.numero++;
-    const t = this.scegliTipo(secondi);
+    const t = tipoScelto >= 0 ? tipoScelto : this.scegliTipo(secondi);
     const tipo = NEMICI[t];
     const m = secondi / 60;
     this.tipo[i] = t;
     this.id[i] = this.prossimoId++;
     this.segno[i] = 0;
     this.raggio[i] = tipo.raggio;
-    this.salute[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m);
+    this.salute[i] = this.saluteMassima[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m);
+    this.anime[i] = tipo.anime;
+    this.elite[i] = 0;
+    this.fase[i] = 0;
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
     this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaFalce[i] = 0;
@@ -199,6 +264,35 @@ export class Orda {
     s.setTexture(tipo.sprite).setOrigin(0.5, a.piedi).setScale(a.ingrandimento).setActive(true).clearTint();
     const anim = s.scene.anims.get(`${tipo.sprite}:walk`);
     if (anim) s.play({ key: anim.key, startFrame: this.caso.intero(0, anim.frames.length - 1) });
+    return i;
+  }
+
+  /** Movimento del Mietitore; restituisce true se ha già mosso lui (si ferma o scatta). */
+  private muoviMietitore(i: number, dt: number, dx: number, dy: number, d: number): boolean {
+    this.faseTempo[i] -= dt;
+    if (this.faseTempo[i] <= 0) {
+      this.fase[i] = (this.fase[i] + 1) % 3;
+      if (this.fase[i] === 1) {
+        this.faseTempo[i] = MIETITORE.carica;
+        this.scattoX[i] = d > 0.5 ? dx / d : 1; // scatterà verso dove sei adesso
+        this.scattoY[i] = d > 0.5 ? dy / d : 0;
+        this.sprite[i].play(`${NEMICI[ID_MIETITORE].sprite}:special`, true);
+      } else if (this.fase[i] === 2) {
+        this.faseTempo[i] = MIETITORE.scatto;
+      } else {
+        this.faseTempo[i] = MIETITORE.cammina[0] + this.caso.numero() * (MIETITORE.cammina[1] - MIETITORE.cammina[0]);
+        this.sprite[i].play(`${NEMICI[ID_MIETITORE].sprite}:walk`, true);
+      }
+    }
+    if (this.fase[i] === 1) return true;
+    if (this.fase[i] === 2) {
+      const v = this.velocita[i] * MIETITORE.velocitaScatto;
+      this.x[i] += this.scattoX[i] * v * dt;
+      this.y[i] += this.scattoY[i] * v * dt;
+      this.versoSinistra[i] = this.scattoX[i] < 0 ? 1 : 0;
+      return true;
+    }
+    return false;
   }
 
   /** Toglie il nemico i spostando l'ultimo al suo posto (con il suo sprite). */
@@ -210,6 +304,8 @@ export class Orda {
     if (i === u) return;
     for (const a of this.campi) a[i] = a[u];
     this.tipo[i] = this.tipo[u];
+    this.elite[i] = this.elite[u];
+    this.fase[i] = this.fase[u];
     this.id[i] = this.id[u];
     this.segno[i] = this.segno[u];
     this.versoSinistra[i] = this.versoSinistra[u];

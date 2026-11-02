@@ -10,9 +10,10 @@ import Phaser from 'phaser';
 import { ingrandimento, raggioDisegnato } from './asset';
 import type { Caso } from './caso';
 import type { Orda } from './orda';
+import { suona } from './audio';
 import { PROFONDITA, type Effetti } from './effetti';
 import { EFFETTI } from '../data/effetti';
-import { ATTRAZIONE_PESANTI, type Abilita } from '../data/abilita';
+import type { Abilita } from '../data/abilita';
 import {
   BASTONE, CAMPANA, CANDELA, COLPI, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, PALA, TURIBOLO, type Arma,
 } from '../data/armi';
@@ -44,6 +45,7 @@ export interface Bonus {
 
 export class Arsenale {
   readonly possedute: Posseduta[] = [];
+  dannoTotale = 0; // per il riepilogo di fine partita
   private attesa: number[] = [];
   private scena: Phaser.Scene;
   private orda: Orda;
@@ -324,6 +326,8 @@ export class Arsenale {
     const o = this.orda;
     const danno = this.danno(base);
     o.colpisci(j, danno, respinta, dx, dy);
+    this.dannoTotale += danno;
+    suona('colpo');
     this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
   }
 
@@ -348,6 +352,7 @@ export class Arsenale {
     this.prepara(0, this.px, this.py, raggio, danno, CAMPANA.respinta);
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
     this.effetto(CAMPANA.effetto, this.px, this.py, raggio, PROFONDITA.aTerra, CAMPANA.durataEffetto);
+    suona('campana');
   }
 
   /** Fendente orizzontale verso il lato (−1 sinistra, 1 destra). */
@@ -514,7 +519,7 @@ export class Arsenale {
   private attiraZona(j: number): void {
     if (!this.dentroZona(j)) return;
     const i = this.cZona;
-    this.orda.attira(j, this.zX[i], this.zY[i] + this.orda.raggio[j], this.zAttira[i] * this.cDt, ATTRAZIONE_PESANTI);
+    this.orda.attira(j, this.zX[i], this.zY[i] + this.orda.raggio[j], this.zAttira[i] * this.cDt);
   }
 
   private togliZona(i: number): void {
@@ -578,6 +583,7 @@ export class Arsenale {
       return;
     }
     const i = this.proiettili++;
+    suona('sparo');
     this.prX[i] = this.px;
     this.prY[i] = this.py;
     this.prVX[i] = Math.cos(ang) * velocita;

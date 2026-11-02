@@ -4,7 +4,7 @@ Questo documento raccoglie tutti i contenuti e i numeri della **v0** (prototipo 
 
 Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i tempi in secondi.
 
-**Scala del mondo (2 novembre 2026).** Nella v0 il personaggio era alto circa 34 px; gli sprite in gioco di Edoardo (V5) sono alti circa 80 px. Per tenere le stesse proporzioni, **ogni distanza e velocità della v0 si moltiplica per 2,35**. Le sezioni già portate nel gioco nuovo hanno i valori convertiti (segnati «× 2,35»); le altre (Mietitore, élite, sciami, drop) riportano ancora i numeri della v0 e si convertono quando vengono programmate.
+**Scala del mondo (2 novembre 2026).** Nella v0 il personaggio era alto circa 34 px; gli sprite in gioco di Edoardo (V5) sono alti circa 80 px. Per tenere le stesse proporzioni, **ogni distanza e velocità della v0 si moltiplica per 2,35**. Le sezioni già portate nel gioco nuovo hanno i valori convertiti (segnati «× 2,35»); dalla M5 tutto il GDD è convertito.
 
 ## 1. Il gioco in breve
 
@@ -245,7 +245,7 @@ Al massimo 6 doni passivi diversi.
 
 ## 6. Nemici
 
-Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi convertiti × 2,35 (M2, in `src/data/nemici.ts`); il Mietitore è ancora con i valori della v0 (arriva nella M5).
+Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi convertiti × 2,35 (M2, in `src/data/nemici.ts`); anche il Mietitore (M5).
 
 | Nemico | Salute | Velocità | Danno | Raggio | Anime | Compare da | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -255,11 +255,12 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 | Scheletro | 34 | 106 | 10 | 21 | 3 | 2:20 | resistente |
 | Segugio | 28 | 200 | 9 | 21 | 3 | 3:50 | il più veloce |
 | Bruto | 150 | 78 | 18 | 38 | 8 | 6:00 | pesante: respinta e attrazione ridotte |
-| Il Mietitore | 3200 | 50 | 22 | 26 | 60 | 5:00 e 10:00 | boss |
+| Il Mietitore | 3200 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici |
 
 - **Élite**: ogni 55 s compare un nemico normale potenziato: salute ×7, danno ×1,4, anime ×6, dimensione ×1,5, velocità ×0,9, alone ambra. Lascia un reliquiario.
 - **Il Mietitore**: cammina verso di te per 3–5 s. Poi si ferma per 0,7 s pulsando di rosso e scatta per 0,55 s a 3,6 volte la sua velocità, nella direzione in cui ti trovavi. Lascia 2 reliquiari. Al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5, già scalata con il tempo.
-- **Sciami**: 14 + 3 nemici per minuto, fino a 56, a +12% di velocità.
+- **Sciami**: 14 + 3 nemici per minuto, fino a 56, a +12% di velocità. Nascono in cerchio (un'ellisse grande quanto lo schermo, 48 px fuori dal bordo).
+- **Élite**: l'alone ambra è un colore aggiunto allo sprite; ingrandite × 1,5 anche nel raggio dei contatti.
 
 **Pesi di comparsa** (s = secondi di gioco)
 
@@ -292,7 +293,9 @@ Le comparse arrivano appena fuori dallo schermo. Se in campo c'è meno del 40% d
 | Calamita | ogni nemico | 0,25% | attira tutte le anime della mappa |
 | Reliquiario | élite (1), Mietitore (2) | sempre | 1 potenziamento (75%) o 3 (25%) di ciò che possiedi; se è tutto al massimo, +40 salute |
 
-Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (valori nuovi della M3, `src/data/progressione.ts`). Al massimo 320 anime a terra: le nuove si sommano a quelle già presenti. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
+Pane, calamita e reliquiari si raccolgono a 40 px dal personaggio, sono disegnati sopra il buio e ingranditi × 3; i reliquiari fuori schermo hanno un segnale lampeggiante sul bordo (M5, `src/data/oggetti.ts`).
+
+Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (valori nuovi della M3, `src/data/progressione.ts`). Al massimo 320 anime a terra: oltre, la nuova nasce comunque dove muore il nemico e prende il posto e il valore dell'anima più lontana dal personaggio (nel gioco nuovo, dal 2/11: prima finivano su un'anima a caso, spesso lontana fuori schermo, e sembrava che i nemici non lasciassero più anime). Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
 
 ## 9. Esperienza e doni
 
@@ -333,6 +336,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
   - bordo rosso quando la salute è bassa;
   - avvisi testuali a centro schermo (sciami, Mietitore, reliquiari).
 - **Audio** (v0, sintetizzato): colpo, sparo, anima con tono che sale nelle serie, danno subito, campana, livello, reliquiario, Mietitore, cura, speciale. Nella nuova versione va sostituito con suoni veri.
+- **Nel gioco nuovo (M6)**: HUD in alto con livello, orologio, anime, icone di armi e doni con il livello, barra del Mietitore; avvisi «Uno sciame ti circonda», «Il Mietitore è venuto per te», «Reliquiario: …»; pausa con il pulsante in basso a destra, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni.
 - **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.
 
 ### Mondo, luce e comandi (nuovi nella M1, in `src/data/mondo.ts`)

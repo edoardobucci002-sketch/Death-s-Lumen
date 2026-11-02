@@ -1,5 +1,5 @@
 // Prova automatica: apre la build su desktop, iPhone (verticale e orizzontale) e Android,
-// fa camminare il personaggio, prova 400 nemici, le armi dei quattro personaggi e la morte, controlla che non ci siano errori e salva gli screenshot in prove/.
+// prova menu, camminata, 400 nemici, armi e abilità, pausa, élite, sciami, Mietitore, alba e morte, controlla che non ci siano errori e salva gli screenshot in prove/.
 // La prima volta serve: npx playwright install chromium
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -27,7 +27,7 @@ for (const [nome, disp] of casi) {
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
   pag.on('console', (m) => (m.type() === 'error' || m.text().includes('has no frame')) && errori.push(m.text()));
-  await pag.goto(`${url}?automatico`);
+  await pag.goto(`${url}?pg=lampionaio&automatico`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(600);
   const stato = await pag.evaluate(() => {
@@ -77,7 +77,7 @@ for (const [nome, disp] of casi) {
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`${url}?nemici=400&immortale&automatico`);
+  await pag.goto(`${url}?pg=lampionaio&nemici=400&immortale&automatico`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   // le armi li uccidono: si conta subito quanti ne sono entrati in campo
   const numero = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').orda.numero);
@@ -134,7 +134,7 @@ for (const pg of ['lampionaio', 'becchino', 'badessa', 'strega']) {
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
   pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
-  await pag.goto(`${url}?armi=candela,falce,campana,fuocoFatuo,acquaSanta,lamaDiLuce&livello=8&immortale&automatico&minuto=3`);
+  await pag.goto(`${url}?pg=lampionaio&armi=candela,falce,campana,fuocoFatuo,acquaSanta,lamaDiLuce&livello=8&immortale&automatico&minuto=3`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(6000);
   await pag.screenshot({ path: 'prove/arsenale.png' });
@@ -167,13 +167,114 @@ for (const pg of ['lampionaio', 'becchino', 'badessa', 'strega']) {
   await ctx.close();
 }
 
+// Menu: la scheda cambia con la freccia, «Inizia la notte» apre la partita con il personaggio scelto
+for (const [nome, disp] of casi) {
+  const ctx = await browser.newContext(disp);
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+  await pag.goto(url);
+  await pag.waitForSelector('.menu .scheda h2', { timeout: 15000 }).catch(() => errori.push('il menu non compare'));
+  await pag.waitForTimeout(400);
+  await pag.screenshot({ path: `prove/menu-${nome}.png` });
+  await pag.click('.menu-freccia[data-passo="1"]').catch(() => errori.push('freccia non cliccabile'));
+  const nomePg = await pag.textContent('.scheda h2').catch(() => '');
+  if (nomePg !== 'Il Becchino') errori.push(`dopo la freccia: ${nomePg}`);
+  const largo = await pag.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+  if (largo) errori.push('la pagina scorre in orizzontale');
+  await pag.click('.menu-inizia').catch(() => errori.push('«Inizia» non cliccabile'));
+  await pag.waitForFunction(() => window.__dl.scene.isActive('Gioco'), null, { timeout: 5000 }).catch(() => errori.push('la partita non parte'));
+  const pg = await pag.evaluate(() => window.__dl.scene.getScene('Gioco')?.pg?.id);
+  if (pg !== 'becchino') errori.push(`parte con ${pg}`);
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} menu ${nome}: scheda, freccia e partenza${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// Pausa, eventi della notte e alba
+const eventi = [
+  ['pausa', '?pg=badessa&immortale&automatico&minuto=2', async (pag) => {
+    await pag.waitForTimeout(1500);
+    await pag.keyboard.press('KeyP');
+    await pag.waitForSelector('.hud-pausa:not([hidden])', { timeout: 2000 });
+    const t0 = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').secondi);
+    await pag.waitForTimeout(600);
+    await pag.screenshot({ path: 'prove/pausa.png' });
+    const t1 = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').secondi);
+    if (t1 !== t0) return 'il tempo scorre in pausa';
+    await pag.keyboard.press('KeyP');
+    await pag.waitForTimeout(400);
+    const t2 = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').secondi);
+    return t2 > t1 ? '' : 'non riprende';
+  }],
+  ['mietitore', '?pg=becchino&immortale&automatico&minuto=5&livello=5', async (pag) => {
+    await pag.waitForTimeout(2500);
+    await pag.screenshot({ path: 'prove/mietitore.png' });
+    const c = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').orda.mietitore());
+    const barra = await pag.$('.hud-boss:not([hidden])');
+    return c >= 0 && barra ? '' : 'il Mietitore non arriva o manca la sua barra';
+  }],
+  ['élite e sciame', '?pg=strega&immortale&automatico&minuto=0.9', async (pag) => {
+    await pag.waitForTimeout(7000);
+    await pag.screenshot({ path: 'prove/elite-sciame.png' });
+    const s = await pag.evaluate(() => { const o = window.__dl.scene.getScene('Gioco').orda; let e = 0; for (let i = 0; i < o.numero; i++) e += o.elite[i]; return { e, n: o.numero }; });
+    return s.e > 0 && s.n > 30 ? '' : `élite ${s.e}, nemici ${s.n}`;
+  }],
+  ['alba', '?pg=lampionaio&immortale&automatico&minuto=14.95', async (pag) => {
+    const ok = await pag.waitForSelector('.hud-fine.vittoria:not([hidden])', { timeout: 10000 }).then(() => true, () => false);
+    await pag.screenshot({ path: 'prove/alba.png' });
+    return ok ? '' : "l'alba non arriva";
+  }],
+];
+for (const [nome, indirizzo, prova] of eventi) {
+  const ctx = await browser.newContext(devices['iPhone 13']);
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+  await pag.goto(url + indirizzo);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  const esito = await prova(pag).catch((e) => e.message);
+  if (esito) errori.push(esito);
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} ${nome}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// Anime oltre il limite: con 320 anime lontane, un nemico che muore vicino lascia comunque la sua anima lì
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?pg=lampionaio&immortale&automatico`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  const esito = await pag.evaluate(() => {
+    const s = window.__dl.scene.getScene('Gioco');
+    const a = s.anime;
+    for (let k = 0; k < 330; k++) a.aggiungi(s.x + 3000 + k, s.y, 1, s.x, s.y);
+    a.aggiungi(s.x + 200, s.y, 1, s.x, s.y);
+    let vicina = false;
+    for (let k = 0; k < a.numero; k++) if (Math.abs(a.x[k] - (s.x + 200)) < 1) vicina = true;
+    return { numero: a.numero, vicina };
+  });
+  if (!esito.vicina || esito.numero > 320) errori.push(`anime ${esito.numero}, quella nuova ${esito.vicina ? 'c\'è' : 'manca'}`);
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} anime oltre il limite: la nuova nasce vicino al personaggio${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
 // Morte: al minuto 8, fermo, il personaggio deve morire e «Riprova» deve far ripartire la partita
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`${url}?minuto=8&automatico`);
+  await pag.goto(`${url}?pg=lampionaio&minuto=8&automatico`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   const morto = await pag.waitForSelector('.hud-fine:not([hidden])', { timeout: 30000 }).then(() => true, () => false);
   if (!morto) errori.push('il personaggio non muore');

@@ -22,6 +22,8 @@ export interface Personaggio {
   armatura: number;
   rigenerazione: number; // salute al secondo
   barre: [number, number, number, number, number]; // vitalità, danno, velocità, raggio, controllo (su 6)
+  biografia: string;
+  citazione: string;
 }
 
 // velocità e raccolta: valori della v0 × 2,35, perché i personaggi ora sono alti circa 80 px invece di 34
@@ -30,14 +32,22 @@ export const BASE = { salute: 100, velocita: 245, raccolta: 150, armatura: 0 } a
 export const PERSONAGGI: Personaggio[] = [
   { id: 'lampionaio', nome: 'Il Lampionaio', motto: 'Guida nel buio', colore: '#e3913a', ritratto: 'Il_Lampionaio', sprite: 'Il_Lampionaio_ingame',
     armaIniziale: 'lanterna', abilita: 'cerchioDiLuce',
-    salute: 0, velocita: 0.1, danno: 0, ricarica: 0, area: 0, armatura: 0, rigenerazione: 0, barre: [3, 3, 4, 3, 4] },
+    salute: 0, velocita: 0.1, danno: 0, ricarica: 0, area: 0, armatura: 0, rigenerazione: 0, barre: [3, 3, 4, 3, 4],
+    biografia: "Un viandante che continua a camminare anche quando tutto il resto si è fermato. Accende la luce per sé e per chi non può più trovarla.",
+    citazione: "Finché c'è una luce accesa, qualcuno può ancora tornare." },
   { id: 'becchino', nome: 'Il Becchino', motto: 'Nulla resta davvero sotto terra', colore: '#b89a74', ritratto: 'Il_Becchino', sprite: 'Il_Becchino_ingame',
     armaIniziale: 'pala', abilita: 'sepoltura',
-    salute: 30, velocita: -0.08, danno: 0.15, ricarica: 0, area: 0, armatura: 1, rigenerazione: 0, barre: [5, 5, 2, 2, 3] },
+    salute: 30, velocita: -0.08, danno: 0.15, ricarica: 0, area: 0, armatura: 1, rigenerazione: 0, barre: [5, 5, 2, 2, 3],
+    biografia: "Si prende cura di ciò che gli altri abbandonano. Scava per mestiere, ma anche per ricordare. Conosce bene il peso della terra.",
+    citazione: "Tutti finiscono qui. Io arrivo solo prima." },
   { id: 'badessa', nome: 'La Badessa', motto: 'Preghiere per ciò che è stato', colore: '#dcc07a', ritratto: 'La_Badessa', sprite: 'La_Badessa_ingame',
     armaIniziale: 'turibolo', abilita: 'benedizione',
-    salute: 10, velocita: 0, danno: 0, ricarica: 0, area: 0.15, armatura: 0, rigenerazione: 0.3, barre: [4, 2, 3, 5, 3] },
+    salute: 10, velocita: 0, danno: 0, ricarica: 0, area: 0.15, armatura: 0, rigenerazione: 0.3, barre: [4, 2, 3, 5, 3],
+    biografia: "Custodisce ciò che ancora merita di essere salvato. Prega per i vivi, ma soprattutto per i dimenticati. La sua fede non consola: protegge.",
+    citazione: "Non tutto può essere salvato, ma nulla è davvero perduto." },
   { id: 'strega', nome: 'La Strega', motto: 'Conosce nomi che non dovrebbero essere detti', colore: '#a57ae0', ritratto: 'La_Strega', sprite: 'La_Strega_ingame',
     armaIniziale: 'bastone', abilita: 'ritoProibito',
-    salute: -15, velocita: 0, danno: 0.1, ricarica: 0.1, area: 0, armatura: 0, rigenerazione: 0, barre: [2, 4, 3, 4, 5] },
+    salute: -15, velocita: 0, danno: 0.1, ricarica: 0.1, area: 0, armatura: 0, rigenerazione: 0, barre: [2, 4, 3, 4, 5],
+    biografia: "Ascolta ciò che gli altri temono. Parla con le ombre, raccoglie ciò che la terra rifiuta. Le sue magie non guariscono: trasformano.",
+    citazione: "Ci sono cose che il mondo ha dimenticato. Io, no." },
 ];

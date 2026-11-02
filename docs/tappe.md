@@ -9,8 +9,8 @@ Ogni tappa finisce con qualcosa che Edoardo può provare sul telefono. Non si pa
 | M2 · La notte arriva | Nemici, comparse, griglia spaziale, danno da contatto, salute, morte | 400 nemici a 60 fps; si muore | **fatta** (2/11): 6 nemici segnaposto, 400 in campo a 58 fps (emulato), danno da contatto, morte e Riprova; barra della salute sotto il personaggio |
 | M3 · Combattere | 4 armi iniziali, anime, esperienza, scelta dei doni | Partita di 5 minuti con un personaggio | **fatta** (2/11): 4 armi iniziali, anime, esperienza, carte dei doni (solo arma iniziale); colpi resi più leggibili dopo la prova di Edoardo |
 | M4 · Il resto dell'arsenale | 6 armi comuni, 9 doni passivi, 4 abilità speciali | Ogni personaggio ha la sua build | **fatta** (2/11): 6 armi comuni, 9 doni passivi, 4 abilità con pulsante e Spazio; 60 fps con 400 nemici e 7 armi (Mac) |
-| M5 · La notte intera | Élite, sciami, Mietitore, drop, reliquiari, alba e vittoria | Partita completa di 15 minuti | da fare |
-| M6 · Facciata | Selezione con le schede, HUD, pause, fine partita, audio, record | Il gioco si presenta come la v0 o meglio | da fare |
+| M5 · La notte intera | Élite, sciami, Mietitore, drop, reliquiari, alba e vittoria | Partita completa di 15 minuti | **fatta** (2/11): élite, sciami, Mietitore ai minuti 5 e 10, pane, calamita, reliquiari con segnali, alba e vittoria; anime oltre il limite corrette dopo la prova di Edoardo |
+| M6 · Facciata | Selezione con le schede, HUD, pause, fine partita, audio, record | Il gioco si presenta come la v0 o meglio | **fatta** (2/11): menu con le schede, HUD completo, pausa (anche automatica e con Indietro), fine partita con record, suoni sintetizzati |
 | M7 · App | Capacitor iOS e Android, icone, avvio, vibrazione, schermo acceso, tasto Indietro | App installata sul telefono di Edoardo | da fare |
 | M8 · Bilanciamento | Bot di simulazione, ritocco dei numeri, playtest | I risultati del bot rispettano gli obiettivi | da fare |
 

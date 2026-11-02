@@ -9,7 +9,7 @@ export function animePerLivello(l: number): number {
 }
 
 export const ANIME = {
-  massimeATerra: 320, // oltre, le nuove si sommano a quelle già presenti
+  massimeATerra: 320, // oltre, la nuova prende il posto (e il valore) della più lontana dal personaggio
   media: 6, // da 6 anime in su il cristallo è verde…
   grande: 20, // …da 20 in su ambra
   sprite: { piccola: 'Anima_piccola', media: 'Anima_media', grande: 'Anima_grande' },

@@ -3,7 +3,7 @@
  * con distanze e velocità della v0 × 2,35. Ogni modifica qui va riportata anche nel GDD.
  */
 export interface TipoNemico {
-  id: 'pipistrello' | 'zombi' | 'fantasma' | 'scheletro' | 'segugio' | 'bruto';
+  id: 'pipistrello' | 'zombi' | 'fantasma' | 'scheletro' | 'segugio' | 'bruto' | 'mietitore';
   sprite: string; // chiave dell'asset: NEMICI/<Nome>/<Nome>_V#.aseprite
   salute: number;
   velocita: number; // pixel al secondo
@@ -29,7 +29,46 @@ export const NEMICI: TipoNemico[] = [
     peso: (s) => (s >= 230 ? 2 : 0) },
   { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false, pesante: true,
     peso: (s) => (s >= 360 ? 1 + s / 600 : 0) },
+  // il Mietitore non compare a caso: arriva ai minuti indicati in MIETITORE
+  { id: 'mietitore', sprite: 'Il_Mietitore', salute: 3200, velocita: 118, danno: 22, raggio: 61, anime: 60, attraversa: true, pesante: true,
+    peso: () => 0 },
 ];
+
+/** Il Mietitore, il boss (GDD, sezione 6). Raggio e velocità della v0 × 2,35. */
+export const MIETITORE = {
+  minuti: [5, 10],
+  saluteSecondo: 1.7, // al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5 (già scalata con il tempo)
+  cammina: [3, 5], // cammina verso di te per 3-5 s…
+  carica: 0.7, // …poi si ferma pulsando di rosso…
+  scatto: 0.55, // …e scatta per 0,55 s…
+  velocitaScatto: 3.6, // …a 3,6 volte la sua velocità, verso dove ti trovavi
+  reliquiari: 2,
+  rallentamento: 0.5, // subisce i rallentamenti a metà…
+  attrazione: 0.25, // …e l'attrazione del Rito a un quarto; la respinta per niente
+} as const;
+
+/** Élite: ogni 55 s un nemico normale potenziato, con un alone ambra. Lascia un reliquiario. */
+export const ELITE = {
+  primo: 55, // secondi
+  ogni: 55,
+  salute: 7,
+  danno: 1.4,
+  anime: 6,
+  dimensione: 1.5,
+  velocita: 0.9,
+  alone: 0x6a3a00, // colore aggiunto allo sprite (ambra)
+} as const;
+
+/** Sciami: all'inizio di ogni minuto (tranne il 5° e il 10°, fino al 14°) ti circondano. */
+export const SCIAMI = {
+  base: 14, // 14 + 3 nemici per minuto, fino a 56
+  perMinuto: 3,
+  massimo: 56,
+  velocita: 1.12, // +12%
+  saltaMinuti: [5, 10],
+  ultimoMinuto: 14,
+  pipistrelliFinoAl: 6, // pipistrelli fino al 6° minuto, poi fantasmi
+} as const;
 
 /** Un nemico prende i valori del momento in cui nasce (m = minuti di gioco). */
 export const DIFFICOLTA = {
