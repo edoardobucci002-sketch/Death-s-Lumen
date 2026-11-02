@@ -16,9 +16,9 @@ const MAX_SEGNALI = 6;
 
 export class Oggetti {
   numero = 0;
-  private x = new Float32Array(MAX_OGGETTI);
-  private y = new Float32Array(MAX_OGGETTI);
-  private tipo = new Uint8Array(MAX_OGGETTI);
+  readonly x = new Float32Array(MAX_OGGETTI);
+  readonly y = new Float32Array(MAX_OGGETTI);
+  readonly tipo = new Uint8Array(MAX_OGGETTI);
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private segnali: Phaser.GameObjects.Sprite[] = [];
   private tempo = 0;

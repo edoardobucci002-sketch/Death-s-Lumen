@@ -43,11 +43,11 @@ export class Orda {
   private lentoPer = new Float32Array(CAPIENZA); // secondi rimasti di rallentamento
   private lampo = new Float32Array(CAPIENZA);
   readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
-  // Mietitore: 0 cammina, 1 si ferma e pulsa, 2 scatta
-  private fase = new Uint8Array(CAPIENZA);
+  // Mietitore: 0 cammina, 1 si ferma e pulsa, 2 scatta (letti anche dal bot, per schivare)
+  readonly fase = new Uint8Array(CAPIENZA);
   private faseTempo = new Float32Array(CAPIENZA);
-  private scattoX = new Float32Array(CAPIENZA);
-  private scattoY = new Float32Array(CAPIENZA);
+  readonly scattoX = new Float32Array(CAPIENZA);
+  readonly scattoY = new Float32Array(CAPIENZA);
   private anime = new Float32Array(CAPIENZA);
   private versoSinistra = new Uint8Array(CAPIENZA);
   private sprite: Phaser.GameObjects.Sprite[] = [];

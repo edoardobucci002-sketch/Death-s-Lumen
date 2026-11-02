@@ -11,6 +11,7 @@
     "asset": "node tools/export-asset.mjs",
     "icone": "node tools/icone.mjs",
     "prova": "node tools/prova.mjs",
+    "sim": "npm run build && node tools/sim.mjs",
     "app": "npm run build && cap sync",
     "ios": "npm run app && cap open ios",
     "android": "npm run app && cap open android"

@@ -35,6 +35,7 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 | `npm run asset` | esporta da Aseprite tutti gli sprite (vedi «Asset») |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
+| `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi); riepilogo a schermo, dettagli in `prove/sim.json` |
 | `npm run prova` | prova automatica su desktop, iPhone e Android emulati; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run ios` / `npm run android` | build + copia nei progetti nativi + apre Xcode o Android Studio |
 
@@ -57,7 +58,7 @@ DEATH'S LUMEN/
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/PERSONAGGI/ …       sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
                                    (effetti, icone e anime divisi dai file della v0 con tools/dividi-v0.lua)
-    tools/                         export-asset, icone, dividi-v0, genera-sw, prova (poi: simulazione di bilanciamento)
+    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sim (simulazione di bilanciamento)
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
 ```
@@ -133,7 +134,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 
 1. `npm run build` senza errori né avvisi di tipo.
 2. Prova nel browser con Playwright in viewport desktop, iPhone verticale e iPhone orizzontale, più un Android: niente errori in console, screenshot controllati a occhio.
-3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`tools/sim`). Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
+3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
    - il Mietitore del minuto 5 è il primo vero ostacolo;
    - nessun personaggio vince sempre senza sforzo;
    - nessuno muore sempre prima del minuto 5.

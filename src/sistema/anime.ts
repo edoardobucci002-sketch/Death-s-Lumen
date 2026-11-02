@@ -11,8 +11,8 @@ import { ANIME } from '../data/progressione';
 
 export class Anime {
   numero = 0;
-  private x = new Float32Array(ANIME.massimeATerra);
-  private y = new Float32Array(ANIME.massimeATerra);
+  readonly x = new Float32Array(ANIME.massimeATerra);
+  readonly y = new Float32Array(ANIME.massimeATerra);
   private valore = new Float32Array(ANIME.massimeATerra);
   private volo = new Float32Array(ANIME.massimeATerra); // 0 = ferma a terra, altrimenti velocità verso il personaggio
   private sprite: Phaser.GameObjects.Sprite[] = [];

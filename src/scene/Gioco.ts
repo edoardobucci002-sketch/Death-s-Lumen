@@ -6,7 +6,8 @@
  * La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?pg=becchino (salta il menu), ?minuto=5 (parte da quel minuto),
  * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (armi già a quel livello),
- * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle).
+ * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle),
+ * ?seme=7 (un'altra notte), ?bot (gioca il bot, senza disegno e più veloce possibile: lo usa npm run sim).
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
@@ -18,8 +19,10 @@ import { ABILITA } from '../data/abilita';
 import { PASSIVI, RICARICA_MINIMA, type IdDono } from '../data/doni';
 import { animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
+import { BOT } from '../data/bot';
 import { Anime } from '../sistema/anime';
 import { Arsenale, type Bonus } from '../sistema/armi';
+import { Bot } from '../sistema/bot';
 import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
@@ -30,6 +33,7 @@ import { vibra } from '../sistema/mobile';
 import { CALAMITA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
 import { Orda } from '../sistema/orda';
 import { leggiRecord, salvaRecord } from '../sistema/record';
+import { Simulazione } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { creaTerreno } from '../sistema/terreno';
 import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
@@ -76,6 +80,8 @@ export class Gioco extends Phaser.Scene {
   private attesaFine = 0;
   private immortale = false;
   private automatico = false;
+  private bot: Bot | null = null; // con ?bot gioca lui
+  private sim: Simulazione | null = null;
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
@@ -112,7 +118,7 @@ export class Gioco extends Phaser.Scene {
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
     this.automatico = parametri.has('automatico');
-    this.caso = new Caso(SEME_PREDEFINITO);
+    this.caso = new Caso(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.x = this.y = 0;
     this.secondi = 60 * Number(parametri.get('minuto') ?? 0) || 0;
     this.morto = this.finito = this.pausa = false;
@@ -177,6 +183,9 @@ export class Gioco extends Phaser.Scene {
       return true;
     });
     this.aggiornaBuild();
+    this.bot = parametri.has('bot') ? new Bot(this.orda, this.anime, this.oggetti, arma) : null;
+    this.sim = this.bot ? new Simulazione() : null;
+    this.cameras.main.setVisible(!this.bot);
 
     const riempi = Number(parametri.get('nemici'));
     if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.scale.width / 2, this.scale.height / 2);
@@ -198,6 +207,12 @@ export class Gioco extends Phaser.Scene {
   }
 
   update(_t: number, delta: number): void {
+    if (this.bot) {
+      // simulazione: niente disegno, la logica corre più veloce possibile fino alla fine della partita
+      const fine = performance.now() + BOT.msPerFotogramma;
+      while (!this.hud.fineAperta && performance.now() < fine) this.passo(PASSO);
+      return;
+    }
     this.accumulo = Math.min(this.accumulo + delta, RITARDO_MASSIMO_MS);
     while (this.accumulo >= PASSO_MS) {
       this.passo(PASSO);
@@ -234,25 +249,35 @@ export class Gioco extends Phaser.Scene {
     if (this.fermo()) return;
 
     this.secondi += dt;
-    const c = this.comandi;
-    c.aggiorna();
-    this.x += c.dx * this.velocita * dt;
-    this.y += c.dy * this.velocita * dt;
-    this.inMoto = c.dx !== 0 || c.dy !== 0;
-    if (c.dx < 0) this.versoSinistra = true;
-    else if (c.dx > 0) this.versoSinistra = false;
+    this.comandi.aggiorna();
+    let dx = this.comandi.dx;
+    let dy = this.comandi.dy;
+    if (this.bot) {
+      this.bot.guida(dt, this.x, this.y, this.salute / this.saluteMassima);
+      dx = this.bot.dx;
+      dy = this.bot.dy;
+    }
+    this.x += dx * this.velocita * dt;
+    this.y += dy * this.velocita * dt;
+    this.inMoto = dx !== 0 || dy !== 0;
+    if (dx < 0) this.versoSinistra = true;
+    else if (dx > 0) this.versoSinistra = false;
     if (this.inMoto) {
-      const l = Math.hypot(c.dx, c.dy);
-      this.dirX = c.dx / l;
-      this.dirY = c.dy / l;
+      const l = Math.hypot(dx, dy);
+      this.dirX = dx / l;
+      this.dirY = dy / l;
     }
     this.speciale.aggiorna(dt, this.bonus.ricarica);
+    if (this.bot && this.speciale.attesa <= 0) {
+      const a = ABILITA[this.pg.abilita];
+      if (this.bot.abilita(this.x, this.y - COLPI.corpo, a.raggio * (1 + this.bonus.area), a.cura > 0, this.salute / this.saluteMassima)) this.speciale.prova();
+    }
 
     const mezzaL = this.scale.width / 2;
     const mezzaA = this.scale.height / 2;
     this.notte(mezzaL, mezzaA);
     if (this.finito) return;
-    this.orda.aggiorna(dt, this.secondi, this.x, this.y, c.dx, c.dy, mezzaL, mezzaA);
+    this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, mezzaL, mezzaA);
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, this.versoSinistra ? -1 : 1, mezzaL, mezzaA);
     const cura = this.arsenale.cura();
     if (cura && this.salute < this.saluteMassima) suona('cura');
@@ -266,6 +291,7 @@ export class Gioco extends Phaser.Scene {
       suona('anima');
     }
     this.oggetti.aggiorna(this.x, this.y - COLPI.corpo, this.raccogli);
+    this.sim?.passo(this.secondi, this.livello, this.salute, this.orda);
     while (this.esperienza >= animePerLivello(this.livello)) {
       this.esperienza -= animePerLivello(this.livello);
       this.livello++;
@@ -296,6 +322,7 @@ export class Gioco extends Phaser.Scene {
     if (this.mietitoriArrivati < MIETITORE.minuti.length && this.secondi >= MIETITORE.minuti[this.mietitoriArrivati] * 60) {
       this.orda.nasciMietitore(this.secondi, this.mietitoriArrivati, this.x, this.y, mezzaL, mezzaA);
       this.mietitoriArrivati++;
+      this.sim?.mietitoreArrivato(this.secondi);
       this.hud.avviso('Il Mietitore è venuto per te');
       suona('mietitore');
       vibra('forte');
@@ -337,6 +364,7 @@ export class Gioco extends Phaser.Scene {
   private muore = (x: number, y: number, valore: number, reliquiari: number): void => {
     this.anime.aggiungi(x, y, valore, this.x, this.y);
     this.effetti.scoppio(x, y);
+    this.sim?.ucciso();
     for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
     const r = this.caso.numero();
     if (r < DROP.pane.probabilita) this.oggetti.aggiungi(PANE, x, y);
@@ -399,7 +427,8 @@ export class Gioco extends Phaser.Scene {
       if (this.livelliDaScegliere > 0) this.apriDoni();
       else if (!this.pausa) this.anims.resumeAll();
     });
-    if (this.automatico) this.doni.scegliPrima();
+    if (this.bot) this.doni.scegliCon((carte) => this.bot!.carta(carte, this.arsenale.possedute.length));
+    else if (this.automatico) this.doni.scegliPrima();
   }
 
   private apriPausa(): void {
@@ -418,7 +447,13 @@ export class Gioco extends Phaser.Scene {
   }
 
   private mostraFine(vittoria: boolean): void {
-    const nuovo = salvaRecord(this.pg.id, this.secondi);
+    if (this.sim) {
+      this.sim.fine({
+        vittoria, secondi: Math.round(this.secondi), livello: this.livello, anime: this.animeTotali, danno: Math.round(this.arsenale.dannoTotale),
+        build: this.build().map((v) => `${v.nome} ${v.livello}`),
+      });
+    }
+    const nuovo = this.sim ? false : salvaRecord(this.pg.id, this.secondi);
     this.comandi.lascia();
     this.hud.mostraFine({
       vittoria,
@@ -462,7 +497,9 @@ export class Gioco extends Phaser.Scene {
     if (!colpo) return;
     this.invulnerabile = COMBATTIMENTO.invulnerabilita;
     if (this.immortale) return;
-    this.salute -= Math.max(1, colpo - this.armatura);
+    const danno = Math.max(1, colpo - this.armatura);
+    this.salute -= danno;
+    this.sim?.colpito(danno);
     suona('danno');
     vibra('leggera');
     if (this.salute <= 0) {
