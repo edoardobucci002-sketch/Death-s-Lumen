@@ -11,6 +11,7 @@ Una riga per decisione, la più recente in alto.
 | 2026-11-02 | `ALTEZZA_MINIMA` resta 300 pixel di gioco | Scelta di Edoardo |
 | 2026-11-02 | Workflow su GitHub: tolto `setup-android` (gli strumenti Android sono già sui server); azioni aggiornate a checkout v7, setup-node v7, setup-java v6, upload-artifact v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5 | `setup-android` faceva fallire l'APK; le versioni vecchie usavano Node 20, che GitHub sta ritirando |
 | 2026-10-30 | Stack: Phaser 4.2 + TypeScript + Vite 8 + Capacitor 8 | Phaser legge gli export di Aseprite con i tag; Capacitor già collaudato nella v0 |
+| 2026-11-02 | L'app si prova sul Galaxy S25 di Edoardo con l'APK di GitHub Actions; iOS rimandato | Edoardo ha Android; sul Mac mancano Xcode e lo spazio per installarlo |
 | 2026-11-02 | Icone e schermate di avvio rifatte dallo sprite in gioco V5 del Lampionaio con alone ambra a retino (`npm run icone`) | Le vecchie usavano lo sprite della v0 |
 | 2026-11-02 | Oltre le 320 anime a terra, la nuova nasce dove muore il nemico e assorbe l'anima più lontana dal personaggio | Prova di Edoardo: al minuto 6 le anime sembravano non cadere più, perché finivano su anime lontane fuori schermo |
 | 2026-11-02 | M5 e M6 fatte insieme (richiesta di Edoardo): eventi della notte, drop, alba; menu con le schede, HUD completo, pausa, fine partita, record, suoni sintetizzati | Toccano gli stessi file: insieme si evitano due riscritture |
