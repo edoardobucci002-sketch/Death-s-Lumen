@@ -24,7 +24,7 @@ for (const [nome, disp] of casi) {
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+  pag.on('console', (m) => (m.type() === 'error' || m.text().includes('has no frame')) && errori.push(m.text()));
   await pag.goto(url);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(600);
@@ -37,6 +37,13 @@ for (const [nome, disp] of casi) {
     const s = window.__dl.scene.getScene('Gioco');
     return { x: s.x, y: s.y };
   });
+  // l'animazione deve cambiare davvero fotogramma (per i nomi dei fotogrammi in cui Phaser non trova l'immagine)
+  const fotogrammi = new Set();
+  for (let i = 0; i < 8; i++) {
+    fotogrammi.add(await pag.evaluate(() => window.__dl.scene.getScene('Gioco').children.list.find((o) => o.type === 'Sprite').frame.name));
+    await pag.waitForTimeout(80);
+  }
+  if (fotogrammi.size < 2) errori.push('il personaggio non si anima');
   // cammina: tastiera sul computer, joystick (trascinamento verso destra) sui telefoni
   const prima = await posizione();
   if (nome === 'desktop') {
