@@ -16,7 +16,7 @@
       "categoria": "personaggi",
       "immagine": "assets/personaggi/Il_Becchino_ingame.png",
       "dati": "assets/personaggi/Il_Becchino_ingame.json",
-      "versioneFile": 1,
+      "versioneFile": 5,
       "tag": []
     },
     {
@@ -34,7 +34,7 @@
       "categoria": "personaggi",
       "immagine": "assets/personaggi/Il_Lampionaio_ingame.png",
       "dati": "assets/personaggi/Il_Lampionaio_ingame.json",
-      "versioneFile": 1,
+      "versioneFile": 5,
       "tag": []
     },
     {
@@ -52,7 +52,7 @@
       "categoria": "personaggi",
       "immagine": "assets/personaggi/La_Badessa_ingame.png",
       "dati": "assets/personaggi/La_Badessa_ingame.json",
-      "versioneFile": 1,
+      "versioneFile": 5,
       "tag": []
     },
     {
@@ -70,7 +70,7 @@
       "categoria": "personaggi",
       "immagine": "assets/personaggi/La_Strega_ingame.png",
       "dati": "assets/personaggi/La_Strega_ingame.json",
-      "versioneFile": 1,
+      "versioneFile": 5,
       "tag": []
     }
   ]
