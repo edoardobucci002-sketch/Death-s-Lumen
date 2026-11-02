@@ -1,5 +1,5 @@
 // Prova automatica: apre la build su desktop, iPhone (verticale e orizzontale) e Android,
-// fa camminare il personaggio, prova 400 nemici e la morte, controlla che non ci siano errori e salva gli screenshot in prove/.
+// fa camminare il personaggio, prova 400 nemici, le armi dei quattro personaggi e la morte, controlla che non ci siano errori e salva gli screenshot in prove/.
 // La prima volta serve: npx playwright install chromium
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -25,7 +25,7 @@ for (const [nome, disp] of casi) {
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
   pag.on('console', (m) => (m.type() === 'error' || m.text().includes('has no frame')) && errori.push(m.text()));
-  await pag.goto(url);
+  await pag.goto(`${url}?automatico`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(600);
   const stato = await pag.evaluate(() => {
@@ -75,8 +75,10 @@ for (const [nome, disp] of casi) {
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`${url}?nemici=400&immortale`);
+  await pag.goto(`${url}?nemici=400&immortale&automatico`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  // le armi li uccidono: si conta subito quanti ne sono entrati in campo
+  const numero = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').orda.numero);
   await pag.waitForTimeout(1500);
   const misura = await pag.evaluate(() => new Promise((fine) => {
     let n = 0;
@@ -84,11 +86,40 @@ for (const [nome, disp] of casi) {
     const conta = () => (performance.now() - via < 3000 ? (n++, requestAnimationFrame(conta)) : fine(n / 3));
     requestAnimationFrame(conta);
   }));
-  const numero = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').orda.numero);
   await pag.screenshot({ path: 'prove/orda-400.png' });
   const ok = !errori.length && numero >= 400 && misura >= 30;
   if (!ok) falliti++;
   console.log(`${ok ? '✓' : '✗'} orda: ${numero} nemici, ${Math.round(misura)} fotogrammi al secondo (emulato sul Mac)${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// Combattimento: ogni personaggio, fermo e immortale, deve uccidere nemici e salire di livello con la sua arma
+for (const pg of ['lampionaio', 'becchino', 'badessa', 'strega']) {
+  const ctx = await browser.newContext(devices['iPhone 13']);
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+  await pag.goto(`${url}?pg=${pg}&immortale&minuto=1`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  // aspetta la prima scelta del dono, la fotografa, sceglie con il tasto 1
+  const carte = await pag.waitForSelector('.doni:not([hidden])', { timeout: 20000 }).then(() => true, () => false);
+  if (!carte) errori.push('nessun livello in 20 s');
+  else {
+    if (pg === 'lampionaio') await pag.screenshot({ path: 'prove/doni.png' });
+    await pag.keyboard.press('Digit1');
+    await pag.waitForTimeout(300);
+    if (await pag.$('.doni:not([hidden])') && !(await pag.evaluate(() => window.__dl.scene.getScene('Gioco').livello > 2))) errori.push('il tasto 1 non sceglie la carta');
+  }
+  await pag.screenshot({ path: `prove/combattimento-${pg}.png` });
+  const stato = await pag.evaluate(() => {
+    const s = window.__dl.scene.getScene('Gioco');
+    return { livello: s.livello, arma: s.arsenale.possedute[0].livello };
+  });
+  if (carte && stato.arma < 2) errori.push("l'arma non è stata potenziata");
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} combattimento ${pg}: livello ${stato.livello}, arma al livello ${stato.arma}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 
@@ -98,7 +129,7 @@ for (const [nome, disp] of casi) {
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`${url}?minuto=8`);
+  await pag.goto(`${url}?minuto=8&automatico`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   const morto = await pag.waitForSelector('.hud-fine:not([hidden])', { timeout: 30000 }).then(() => true, () => false);
   if (!morto) errori.push('il personaggio non muore');

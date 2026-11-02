@@ -31,12 +31,12 @@ export class Avvio extends Phaser.Scene {
           repeat: -1,
         });
       }
-      // uno sprite senza tag vale come "idle" con tutti i suoi fotogrammi
+      // uno sprite senza tag vale come "idle" con tutti i suoi fotogrammi, con le durate di Aseprite
       if (!anims.length) {
+        const dati = this.cache.json.get(a.chiave) as { frames: { duration: number }[] };
         this.anims.create({
           key: `${a.chiave}:idle`,
-          frames: this.anims.generateFrameNames(a.chiave),
-          frameRate: 8,
+          frames: dati.frames.map((f, i) => ({ key: a.chiave, frame: String(i), duration: f.duration })),
           repeat: -1,
         });
       }

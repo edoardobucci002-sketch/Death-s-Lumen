@@ -42,7 +42,7 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 ```
 DEATH'S LUMEN/
   PERSONAGGI/<Nome personaggio>/   sorgenti Aseprite di Edoardo (non modificarli mai)
-  NEMICI/ EFFETTI/ OGGETTI/        stessa logica per gli altri asset
+  NEMICI/ EFFETTI/ OGGETTI/ ICONE/ stessa logica per gli altri asset (le icone si chiamano Icona_<Nome>)
   gioco/                           questo repository (su GitHub: Death-s-Lumen)
     CLAUDE.md
     docs/                          GDD_base.md, decisioni.md, tappe.md
@@ -55,6 +55,7 @@ DEATH'S LUMEN/
     public/                        manifest, icone
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/PERSONAGGI/ …       sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
+                                   (effetti, icone e anime divisi dai file della v0 con tools/dividi-v0.lua)
     tools/                         export-asset, genera-sw, prova (poi: simulazione di bilanciamento)
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici

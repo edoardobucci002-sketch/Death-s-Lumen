@@ -55,8 +55,8 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 #interfaccia > .hud { position: fixed; inset: 0; pointer-events: none; }
 .hud-alto {
   position: absolute; left: 0; right: 0; top: 0;
-  padding: calc(env(safe-area-inset-top) + 10px) 16px 0;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 16px) 0 calc(env(safe-area-inset-left) + 16px);
+  display: flex; justify-content: space-between; align-items: center; gap: 6px;
 }
 .hud-orologio {
   font-family: var(--f-pixel); font-weight: 700; font-size: 22px; letter-spacing: 1px;
@@ -79,4 +79,41 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
   margin-top: 12px; padding: 10px 28px; min-height: 44px;
   font: 400 20px var(--f-titolo); background: var(--pannello);
   border: 2px solid var(--accento); color: var(--pergamena);
+}
+.hud-esperienza {
+  position: absolute; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 6px);
+  background: #1a1510; border-bottom: 2px solid #000;
+}
+.hud-esperienza-piena { height: 100%; width: 0; background: var(--accento); }
+.hud-alto > * { flex: 1 1 0; }
+.hud-orologio { text-align: center; }
+.hud-livello { font-family: var(--f-pixel); font-weight: 700; font-size: 18px; color: var(--accento); text-shadow: 0 2px 0 #000; }
+
+/* Scelta del dono (src/sistema/doni.ts) */
+#interfaccia > .doni {
+  position: fixed; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center;
+  gap: 14px; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
+  background: rgba(8, 6, 5, 0.86); overflow-y: auto;
+}
+.doni h2 { margin: 0; font: 400 clamp(26px, 6vw, 36px) var(--f-titolo); color: var(--accento); }
+.doni-carte { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: min(460px, 100%); min-width: 0; }
+.doni-carta {
+  display: flex; align-items: center; gap: 14px; min-width: 0; padding: 12px 14px; text-align: left;
+  background: var(--pannello); border: 2px solid var(--linea);
+}
+.doni-carta:hover, .doni-carta:focus-visible { border-color: var(--accento); outline: none; }
+.doni-carta img, .doni-vuota { flex: none; width: 66px; image-rendering: pixelated; }
+.doni-testi { display: grid; gap: 2px; min-width: 0; }
+.doni-testi strong { font: 400 22px var(--f-titolo); color: var(--pergamena); }
+.doni-testi em { font: italic 16px var(--f-corsivo); color: var(--accento); }
+.doni-testi span { font-size: 17px; color: var(--tenue); }
+.doni-tasto { flex: none; font: 700 14px var(--f-pixel); color: var(--tenue); }
+.doni-rimescola {
+  padding: 8px 20px; min-height: 44px; font: 400 18px var(--f-titolo);
+  background: transparent; border: 2px solid var(--linea); color: var(--pergamena);
+}
+.doni-rimescola:disabled { opacity: 0.4; cursor: default; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .doni-carte { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(860px, 100%); }
+  .doni-carta { flex-direction: column; align-items: flex-start; }
 }

@@ -1,13 +1,15 @@
 /*
  * Orda: tutti i nemici in campo. Li fa nascere appena fuori dallo schermo, li muove verso
  * il giocatore, li tiene separati con la griglia spaziale e ricolloca chi resta troppo indietro.
+ * Quando un'arma li colpisce perdono salute, si illuminano, vengono respinti; a zero salute muoiono.
  * I nemici vivono in array preparati all'inizio (pool): durante la partita non si crea niente di nuovo.
  */
 import Phaser from 'phaser';
-import type { ElencoAsset } from './asset';
+import { ingrandimento } from './asset';
 import type { Caso } from './caso';
 import { Griglia } from './griglia';
-import { COMPARSA, DIFFICOLTA, INGRANDIMENTO_SEGNAPOSTO, NEMICI, SEPARAZIONE } from '../data/nemici';
+import { COMPARSA, DIFFICOLTA, NEMICI, SEPARAZIONE } from '../data/nemici';
+import { COLPI } from '../data/armi';
 
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici. */
 export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + 20;
@@ -24,28 +26,36 @@ export class Orda {
   readonly raggio = new Float32Array(CAPIENZA);
   readonly danno = new Float32Array(CAPIENZA);
   readonly salute = new Float32Array(CAPIENZA);
+  readonly tipo = new Uint8Array(CAPIENZA);
+  readonly id = new Uint32Array(CAPIENZA); // numero unico di ogni nemico nato, anche se cambia posto
+  readonly segno = new Uint32Array(CAPIENZA); // l'ultimo colpo che l'ha già toccato (vedi Griglia.nelRaggio)
+  readonly griglia = new Griglia(64, CAPIENZA);
   private velocita = new Float32Array(CAPIENZA);
-  private tipo = new Uint8Array(CAPIENZA);
+  private respintaX = new Float32Array(CAPIENZA);
+  private respintaY = new Float32Array(CAPIENZA);
+  private lento = new Float32Array(CAPIENZA); // parte di velocità tolta (0,3 = −30%)
+  private lentoPer = new Float32Array(CAPIENZA); // secondi rimasti di rallentamento
+  private lampo = new Float32Array(CAPIENZA);
   private versoSinistra = new Uint8Array(CAPIENZA);
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private aspetto: AspettoNemico[];
-  private griglia = new Griglia(64, CAPIENZA);
   private daFare = 0; // comparse accumulate (frazioni di nemico)
+  private prossimoId = 1;
   // usati dentro la separazione, per non creare funzioni nel ciclo di gioco
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
+  // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
+  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo];
 
   constructor(
     scena: Phaser.Scene,
     private caso: Caso,
   ) {
-    const elenco = scena.cache.json.get('elenco') as ElencoAsset;
     this.aspetto = NEMICI.map((t) => {
-      const voce = elenco.asset.find((a) => a.chiave === t.sprite);
       // i piedi sono la riga più bassa usata in tutti i fotogrammi (negli sprite V0 non è il bordo della tela)
       const dati = scena.cache.json.get(t.sprite) as { frames: { spriteSourceSize: { y: number; h: number }; sourceSize: { h: number } }[] };
       const fondo = Math.max(...dati.frames.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h));
-      return { ingrandimento: voce?.versioneFile === 0 ? INGRANDIMENTO_SEGNAPOSTO : 1, piedi: fondo / dati.frames[0].sourceSize.h };
+      return { ingrandimento: ingrandimento(scena, t.sprite), piedi: fondo / dati.frames[0].sourceSize.h };
     });
     for (let i = 0; i < CAPIENZA; i++) {
       this.sprite.push(scena.add.sprite(0, 0, NEMICI[0].sprite).setVisible(false).setActive(false));
@@ -63,23 +73,32 @@ export class Orda {
     if (this.numero < massimi * DIFFICOLTA.sogliaRinforzo) nascite += DIFFICOLTA.rinforzoPerFotogramma;
     for (; nascite > 0 && this.numero < massimi; nascite--) this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
 
-    // verso il giocatore
+    // verso il giocatore, più la respinta che si spegne a poco a poco
+    const frena = Math.exp(-COLPI.attrito * dt);
     for (let i = 0; i < this.numero; i++) {
       const dx = gx - this.x[i];
       const dy = gy - this.y[i];
       const d = Math.hypot(dx, dy);
+      if (this.lentoPer[i] > 0) this.lentoPer[i] -= dt;
+      if (this.lampo[i] > 0) this.lampo[i] -= dt;
       if (d > 0.5) {
-        const passo = Math.min(d, this.velocita[i] * dt);
+        const v = this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
+        const passo = Math.min(d, v * dt);
         this.x[i] += (dx / d) * passo;
         this.y[i] += (dy / d) * passo;
         if (dx < -0.5) this.versoSinistra[i] = 1;
         else if (dx > 0.5) this.versoSinistra[i] = 0;
       }
+      this.x[i] += this.respintaX[i] * dt;
+      this.y[i] += this.respintaY[i] * dt;
+      this.respintaX[i] *= frena;
+      this.respintaY[i] *= frena;
     }
 
-    // separazione: ognuno si allontana dai vicini che lo toccano
+    // griglia con tutti i nemici: serve alle armi e alla separazione
     this.griglia.svuota();
-    for (let i = 0; i < this.numero; i++) if (!NEMICI[this.tipo[i]].attraversa) this.griglia.inserisci(i, this.x[i], this.y[i]);
+    for (let i = 0; i < this.numero; i++) this.griglia.inserisci(i, this.x[i], this.y[i]);
+    // separazione: ognuno si allontana dai vicini che lo toccano (i fantasmi attraversano tutti)
     for (let i = 0; i < this.numero; i++) {
       if (NEMICI[this.tipo[i]].attraversa) continue;
       this.corrente = i;
@@ -92,7 +111,34 @@ export class Orda {
     for (let i = 0; i < this.numero; i++) {
       if (Math.abs(this.x[i] - gx) > limiteX || Math.abs(this.y[i] - gy) > limiteY) {
         this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
+        this.respintaX[i] = this.respintaY[i] = 0;
       }
+    }
+  }
+
+  /** Colpisce il nemico i: toglie salute, lo illumina e lo spinge nella direzione (dx, dy), lunga 1. */
+  colpisci(i: number, danno: number, respinta: number, dx: number, dy: number): void {
+    this.salute[i] -= danno;
+    this.lampo[i] = COLPI.lampoNemico;
+    if (respinta) {
+      const r = respinta * (NEMICI[this.tipo[i]].pesante ? COLPI.respintaPesanti : 1);
+      this.respintaX[i] = dx * r;
+      this.respintaY[i] = dy * r;
+    }
+  }
+
+  /** Rallenta il nemico i per qualche istante; resta il rallentamento più forte. */
+  rallenta(i: number, quanto: number, secondi: number): void {
+    if (this.lentoPer[i] <= 0 || quanto >= this.lento[i]) this.lento[i] = quanto;
+    this.lentoPer[i] = Math.max(this.lentoPer[i], secondi);
+  }
+
+  /** Toglie dal campo i nemici senza salute; per ognuno chiama muore(x, y, anime). */
+  rimuoviMorti(muore: (x: number, y: number, anime: number) => void): void {
+    for (let i = this.numero - 1; i >= 0; i--) {
+      if (this.salute[i] > 0) continue;
+      muore(this.x[i], this.y[i] - this.raggio[i], NEMICI[this.tipo[i]].anime);
+      this.togli(i);
     }
   }
 
@@ -113,7 +159,10 @@ export class Orda {
       const y = Math.round(this.y[i]);
       const visibile = x > sx && x < ex && y > sy && y < ey;
       s.setVisible(visibile);
-      if (visibile) s.setPosition(x, y).setDepth(y).setFlipX(this.versoSinistra[i] === 1);
+      if (!visibile) continue;
+      s.setPosition(x, y).setDepth(y).setFlipX(this.versoSinistra[i] === 1);
+      if (this.lampo[i] > 0) s.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+      else if (s.tintMode !== Phaser.TintModes.MULTIPLY) s.clearTint();
     }
   }
 
@@ -123,17 +172,36 @@ export class Orda {
     const tipo = NEMICI[t];
     const m = secondi / 60;
     this.tipo[i] = t;
+    this.id[i] = this.prossimoId++;
+    this.segno[i] = 0;
     this.raggio[i] = tipo.raggio;
     this.salute[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m);
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
+    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];
     const s = this.sprite[i];
-    s.setTexture(tipo.sprite).setOrigin(0.5, a.piedi).setScale(a.ingrandimento).setActive(true);
+    s.setTexture(tipo.sprite).setOrigin(0.5, a.piedi).setScale(a.ingrandimento).setActive(true).clearTint();
     const anim = s.scene.anims.get(`${tipo.sprite}:walk`);
     if (anim) s.play({ key: anim.key, startFrame: this.caso.intero(0, anim.frames.length - 1) });
+  }
+
+  /** Toglie il nemico i spostando l'ultimo al suo posto (con il suo sprite). */
+  private togli(i: number): void {
+    const u = --this.numero;
+    const s = this.sprite[i];
+    s.stop();
+    s.setVisible(false).setActive(false);
+    if (i === u) return;
+    for (const a of this.campi) a[i] = a[u];
+    this.tipo[i] = this.tipo[u];
+    this.id[i] = this.id[u];
+    this.segno[i] = this.segno[u];
+    this.versoSinistra[i] = this.versoSinistra[u];
+    this.sprite[i] = this.sprite[u];
+    this.sprite[u] = s;
   }
 
   /** Mette il nemico i appena fuori dallo schermo: a caso, o davanti al giocatore se si sta muovendo. */
@@ -163,7 +231,7 @@ export class Orda {
 
   private separa(j: number): void {
     const i = this.corrente;
-    if (j === i) return;
+    if (j === i || NEMICI[this.tipo[j]].attraversa) return;
     const dx = this.x[i] - this.x[j];
     const dy = this.y[i] - this.y[j];
     const minima = (this.raggio[i] + this.raggio[j]) * SEPARAZIONE.tolleranza;

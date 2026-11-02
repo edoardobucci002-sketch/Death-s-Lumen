@@ -87,7 +87,8 @@ export class Comandi {
     e.preventDefault();
   };
 
-  private lascia = (): void => {
+  /** Lascia tutti i tasti e il joystick (per esempio quando il gioco si ferma). */
+  lascia = (): void => {
     this.su = this.giu = this.sinistra = this.destra = false;
     this.solleva();
   };

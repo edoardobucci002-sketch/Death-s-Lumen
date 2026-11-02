@@ -11,22 +11,23 @@ export interface TipoNemico {
   raggio: number; // per i contatti, in pixel di gioco
   anime: number; // esperienza lasciata (dalla M3)
   attraversa: boolean; // passa attraverso gli altri nemici
+  pesante: boolean; // subisce solo un quarto della respinta
   /** Quanto spesso compare rispetto agli altri, dato il tempo di gioco in secondi (0 = non ancora). */
   peso: (s: number) => number;
 }
 
 export const NEMICI: TipoNemico[] = [
-  { id: 'pipistrello', sprite: 'Pipistrello', salute: 6, velocita: 179, danno: 5, raggio: 16, anime: 1, attraversa: false,
+  { id: 'pipistrello', sprite: 'Pipistrello', salute: 6, velocita: 179, danno: 5, raggio: 16, anime: 1, attraversa: false, pesante: false,
     peso: (s) => Math.max(0.7, 3 - s / 200) },
-  { id: 'zombi', sprite: 'Zombi', salute: 16, velocita: 87, danno: 8, raggio: 21, anime: 2, attraversa: false,
+  { id: 'zombi', sprite: 'Zombi', salute: 16, velocita: 87, danno: 8, raggio: 21, anime: 2, attraversa: false, pesante: false,
     peso: (s) => (s < 480 ? 3 : 1.5) },
-  { id: 'fantasma', sprite: 'Fantasma', salute: 13, velocita: 129, danno: 7, raggio: 21, anime: 2, attraversa: true,
+  { id: 'fantasma', sprite: 'Fantasma', salute: 13, velocita: 129, danno: 7, raggio: 21, anime: 2, attraversa: true, pesante: false,
     peso: (s) => (s >= 50 ? 2 : 0) },
-  { id: 'scheletro', sprite: 'Scheletro', salute: 34, velocita: 106, danno: 10, raggio: 21, anime: 3, attraversa: false,
+  { id: 'scheletro', sprite: 'Scheletro', salute: 34, velocita: 106, danno: 10, raggio: 21, anime: 3, attraversa: false, pesante: false,
     peso: (s) => (s >= 140 ? 2.6 : 0) },
-  { id: 'segugio', sprite: 'Segugio', salute: 28, velocita: 200, danno: 9, raggio: 21, anime: 3, attraversa: false,
+  { id: 'segugio', sprite: 'Segugio', salute: 28, velocita: 200, danno: 9, raggio: 21, anime: 3, attraversa: false, pesante: false,
     peso: (s) => (s >= 230 ? 2 : 0) },
-  { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false,
+  { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false, pesante: true,
     peso: (s) => (s >= 360 ? 1 + s / 600 : 0) },
 ];
 
@@ -57,9 +58,6 @@ export const SEPARAZIONE = {
   forza: 0.5,
   tolleranza: 0.75, // si toccano quando la distanza è sotto il 75% della somma dei raggi
 } as const;
-
-/** Sprite segnaposto della v0 (V0): disegnati per personaggi di 34 px, si ingrandiscono di 2. */
-export const INGRANDIMENTO_SEGNAPOSTO = 2;
 
 /** Regole di combattimento (GDD, sezione 10). */
 export const COMBATTIMENTO = {

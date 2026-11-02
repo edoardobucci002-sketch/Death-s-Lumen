@@ -77,63 +77,63 @@ Al massimo 6 armi, ognuna fino al livello 8. Le quattro armi iniziali sono **esc
 
 #### Lanterna
 
-Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge di 110. Arma iniziale del Lampionaio, esclusiva.
+Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge di 259 (110 × 2,35). Raggi già × 2,35. Arma iniziale del Lampionaio, esclusiva.
 
 | Lv | Ricarica (s) | Danno | Raggio | Ampiezza arco (°) | Colpo alle spalle | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 0,8 | 14 | 58 | 132 | no | Colpo corto, ampia gittata frontale. |
-| 2 | 0,8 | 19 | 58 | 132 | no | +5 danno. |
-| 3 | 0,8 | 19 | 68 | 132 | no | Raggio maggiore. |
-| 4 | 0,68 | 19 | 68 | 132 | no | Colpi più frequenti. |
-| 5 | 0,68 | 25 | 68 | 132 | no | +6 danno. |
-| 6 | 0,68 | 25 | 78 | 166 | no | Raggio e ampiezza maggiori. |
-| 7 | 0,56 | 25 | 78 | 166 | no | Colpi più frequenti. |
-| 8 | 0,56 | 35 | 78 | 166 | sì | +10 danno, colpisce anche alle spalle. |
+| 1 | 0,8 | 14 | 136 | 132 | no | Colpo corto, ampia gittata frontale. |
+| 2 | 0,8 | 19 | 136 | 132 | no | +5 danno. |
+| 3 | 0,8 | 19 | 160 | 132 | no | Raggio maggiore. |
+| 4 | 0,68 | 19 | 160 | 132 | no | Colpi più frequenti. |
+| 5 | 0,68 | 25 | 160 | 132 | no | +6 danno. |
+| 6 | 0,68 | 25 | 183 | 166 | no | Raggio e ampiezza maggiori. |
+| 7 | 0,56 | 25 | 183 | 166 | no | Colpi più frequenti. |
+| 8 | 0,56 | 35 | 183 | 166 | sì | +10 danno, colpisce anche alle spalle. |
 
 #### Pala
 
-Impatto circolare 26 px davanti a te, nella direzione di cammino; respinge di 180. A Lv 8 un secondo colpo alle spalle 0,22 s dopo. Arma iniziale del Becchino, esclusiva.
+Impatto circolare 61 px davanti a te (26 × 2,35), nella direzione di cammino; respinge di 423 (180 × 2,35). Raggi già × 2,35. A Lv 8 un secondo colpo alle spalle 0,22 s dopo. Arma iniziale del Becchino, esclusiva.
 
 | Lv | Ricarica (s) | Danno | Raggio | Distanza colpo | Colpo doppio | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 1,35 | 34 | 30 | 26 | no | Colpo potente a corta gittata. |
-| 2 | 1,35 | 44 | 30 | 26 | no | +10 danno. |
-| 3 | 1,35 | 44 | 37 | 26 | no | Area d'impatto maggiore. |
-| 4 | 1,15 | 44 | 37 | 26 | no | Colpi più frequenti. |
-| 5 | 1,15 | 56 | 37 | 26 | no | +12 danno. |
-| 6 | 1,15 | 56 | 44 | 26 | no | Area d'impatto maggiore. |
-| 7 | 0,95 | 56 | 44 | 26 | no | Colpi più frequenti. |
-| 8 | 0,95 | 76 | 44 | 26 | sì | +20 danno, colpo doppio. |
+| 1 | 1,35 | 34 | 70 | 61 | no | Colpo potente a corta gittata. |
+| 2 | 1,35 | 44 | 70 | 61 | no | +10 danno. |
+| 3 | 1,35 | 44 | 87 | 61 | no | Area d'impatto maggiore. |
+| 4 | 1,15 | 44 | 87 | 61 | no | Colpi più frequenti. |
+| 5 | 1,15 | 56 | 87 | 61 | no | +12 danno. |
+| 6 | 1,15 | 56 | 103 | 61 | no | Area d'impatto maggiore. |
+| 7 | 0,95 | 56 | 103 | 61 | no | Colpi più frequenti. |
+| 8 | 0,95 | 76 | 103 | 61 | sì | +20 danno, colpo doppio. |
 
 #### Turibolo
 
-La prima nube nasce 20 px davanti a te, le altre a caso fino a 40 px; ogni nube ferisce ogni 0,3 s e rallenta del 30%. Specchio aggiunge una nube. Arma iniziale della Badessa, esclusiva.
+La prima nube nasce 47 px davanti a te, le altre a caso fino a 94 px (× 2,35); ogni nube ferisce ogni 0,3 s e rallenta del 30%. Specchio aggiunge una nube. Arma iniziale della Badessa, esclusiva.
 
 | Lv | Ricarica (s) | Quantità | Danno | Raggio | Durata (s) | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 1,25 | 1 | 6 | 30 | 2,4 | Emette fumo sacro a corta gittata. |
-| 2 | 1,25 | 1 | 8 | 30 | 2,4 | +2 danno. |
-| 3 | 1,25 | 2 | 8 | 36 | 2,4 | +1 nube, nubi più ampie. |
-| 4 | 1,05 | 2 | 8 | 36 | 2,4 | Più frequente. |
-| 5 | 1,05 | 2 | 11 | 36 | 3,1 | +3 danno, fumo più duraturo. |
-| 6 | 1,05 | 3 | 11 | 42 | 3,1 | +1 nube, nubi più ampie. |
-| 7 | 0,85 | 3 | 11 | 42 | 3,1 | Più frequente. |
-| 8 | 0,85 | 3 | 15 | 42 | 3,1 | +4 danno. |
+| 1 | 1,25 | 1 | 6 | 70 | 2,4 | Emette fumo sacro a corta gittata. |
+| 2 | 1,25 | 1 | 8 | 70 | 2,4 | +2 danno. |
+| 3 | 1,25 | 2 | 8 | 85 | 2,4 | +1 nube, nubi più ampie. |
+| 4 | 1,05 | 2 | 8 | 85 | 2,4 | Più frequente. |
+| 5 | 1,05 | 2 | 11 | 85 | 3,1 | +3 danno, fumo più duraturo. |
+| 6 | 1,05 | 3 | 11 | 99 | 3,1 | +1 nube, nubi più ampie. |
+| 7 | 0,85 | 3 | 11 | 99 | 3,1 | Più frequente. |
+| 8 | 0,85 | 3 | 15 | 99 | 3,1 | +4 danno. |
 
 #### Bastone
 
-Mira al nemico più vicino entro 260 px; i proiettili partono a 0,08 s l'uno dall'altro e svaniscono dopo 1,3 s. Specchio aggiunge un proiettile. Arma iniziale della Strega, esclusiva.
+Mira al nemico più vicino entro 611 px (× 2,35); proiettili a 541 px/s, raggio 9 px; i proiettili partono a 0,08 s l'uno dall'altro e svaniscono dopo 1,3 s. Specchio aggiunge un proiettile. Arma iniziale della Strega, esclusiva.
 
 | Lv | Ricarica (s) | Quantità | Danno | Trapassa | Velocità proiettile | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 0,85 | 1 | 15 | 1 | 230 | Colpo a media gittata, proiettili magici. |
-| 2 | 0,85 | 2 | 15 | 1 | 230 | +1 proiettile. |
-| 3 | 0,85 | 2 | 20 | 1 | 230 | +5 danno. |
-| 4 | 0,72 | 2 | 20 | 1 | 230 | Più frequente. |
-| 5 | 0,72 | 3 | 20 | 1 | 230 | +1 proiettile. |
-| 6 | 0,72 | 3 | 27 | 2 | 230 | +7 danno, trapassano. |
-| 7 | 0,59 | 3 | 27 | 2 | 230 | Più frequente. |
-| 8 | 0,59 | 4 | 35 | 2 | 230 | +1 proiettile, +8 danno. |
+| 1 | 0,85 | 1 | 15 | 1 | 541 | Colpo a media gittata, proiettili magici. |
+| 2 | 0,85 | 2 | 15 | 1 | 541 | +1 proiettile. |
+| 3 | 0,85 | 2 | 20 | 1 | 541 | +5 danno. |
+| 4 | 0,72 | 2 | 20 | 1 | 541 | Più frequente. |
+| 5 | 0,72 | 3 | 20 | 1 | 541 | +1 proiettile. |
+| 6 | 0,72 | 3 | 27 | 2 | 541 | +7 danno, trapassano. |
+| 7 | 0,59 | 3 | 27 | 2 | 541 | Più frequente. |
+| 8 | 0,59 | 4 | 35 | 2 | 541 | +1 proiettile, +8 danno. |
 
 ### Armi comuni
 
@@ -292,7 +292,7 @@ Le comparse arrivano appena fuori dallo schermo. Se in campo c'è meno del 40% d
 | Calamita | ogni nemico | 0,25% | attira tutte le anime della mappa |
 | Reliquiario | élite (1), Mietitore (2) | sempre | 1 potenziamento (75%) o 3 (25%) di ciò che possiedi; se è tutto al massimo, +40 salute |
 
-Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al massimo 320 anime a terra: le nuove si sommano a quelle già presenti. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
+Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (valori nuovi della M3, `src/data/progressione.ts`). Al massimo 320 anime a terra: le nuove si sommano a quelle già presenti. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
 
 ## 9. Esperienza e doni
 
@@ -314,7 +314,9 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al mass
 | Danno subito | danno nemico − armatura, minimo 1 |
 | Invulnerabilità dopo un colpo | 0,45 s |
 | Raggio del giocatore | 21 px (9 nella v0) |
-| Respinta | per arma; bruti ed élite la subiscono a un quarto, il Mietitore per niente |
+| Respinta | per arma: è la velocità con cui il nemico viene spinto via, che poi si spegne (attrito 8 al secondo, cioè percorre circa respinta ÷ 8 px); bruti ed élite la subiscono a un quarto, il Mietitore per niente |
+| Lampo del nemico colpito | 0,1 s |
+| Punto da cui partono le armi | 36 px sopra i piedi |
 | Rallentamento | resta attivo il più forte tra quelli in corso |
 | Salute bassa | sotto il 35% il bordo dello schermo pulsa di rosso |
 
