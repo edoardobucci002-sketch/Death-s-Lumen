@@ -31,7 +31,16 @@ export class Avvio extends Phaser.Scene {
           repeat: -1,
         });
       }
+      // uno sprite senza tag vale come "idle" con tutti i suoi fotogrammi
+      if (!anims.length) {
+        this.anims.create({
+          key: `${a.chiave}:idle`,
+          frames: this.anims.generateFrameNames(a.chiave),
+          frameRate: 8,
+          repeat: -1,
+        });
+      }
     }
-    this.scene.start('Prova');
+    this.scene.start('Gioco');
   }
 }
