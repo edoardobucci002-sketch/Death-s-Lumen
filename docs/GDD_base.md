@@ -2,7 +2,9 @@
 
 Questo documento raccoglie tutti i contenuti e i numeri della **v0** (prototipo "Lumen dei Morti", ottobre 2026). La nuova versione riparte da qui: contenuti e valori sono un punto di partenza da migliorare, non un vincolo. Ogni cambiamento va scritto in questo file e in `decisioni.md`.
 
-Unità: le distanze sono in pixel di gioco (il personaggio è alto circa 34 px), le velocità in pixel al secondo, i tempi in secondi.
+Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i tempi in secondi.
+
+**Scala del mondo (2 novembre 2026).** Nella v0 il personaggio era alto circa 34 px; gli sprite in gioco di Edoardo (V5) sono alti circa 80 px. Per tenere le stesse proporzioni, **ogni distanza e velocità della v0 si moltiplica per 2,35**. Le sezioni già portate nel gioco nuovo hanno i valori convertiti (segnati «× 2,35»); le altre (armi, nemici, abilità) riportano ancora i numeri della v0 e si convertono quando vengono programmate.
 
 ## 1. Il gioco in breve
 
@@ -29,7 +31,7 @@ Unità: le distanze sono in pixel di gioco (il personaggio è alto circa 34 px),
 
 ## 2. Personaggi
 
-Valori di base comuni: 100 salute, velocità 105, raccolta delle anime a 64 px, armatura 0.
+Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 150 px, armatura 0 (× 2,35: nella v0 erano 105 e 64).
 
 | Personaggio | Motto | Colore | Arma iniziale | Abilità speciale | Modificatori |
 | --- | --- | --- | --- | --- | --- |
@@ -335,13 +337,13 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al mass
 
 | Valore | Numero | Note |
 | --- | --- | --- |
-| Pixel di gioco in verticale | almeno 300 | `src/sistema/pixel.ts` |
-| Raggio della luce | 110 | oltre comincia il buio a retino |
+| Pixel di gioco da vedere | 700 in verticale, 610 in orizzontale | `src/sistema/pixel.ts`; si sceglie la scala intera più vicina, quindi sui telefoni se ne vedono un po' meno (circa 585 sul lato corto) |
+| Raggio della luce | 260 | oltre comincia il buio a retino |
 | Sfumatura del buio | 0,9 | più alto = buio più rapido |
 | Buio massimo | 78% dei pixel | nel buio più fitto il terreno si intravede ancora |
-| Centro della luce | 18 px sopra i piedi | |
-| Tremolio della fiamma | ±3 px ogni 0,12 s | |
-| Terreno | riquadro di 480 px che si ripete, celle di 24 px | tombe 4%, croci 2%, erba 24% per cella |
+| Centro della luce | 42 px sopra i piedi | |
+| Tremolio della fiamma | ±7 px ogni 0,12 s | |
+| Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |
 | Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito |
 
 ## 12. Da fare e da decidere

@@ -1,6 +1,7 @@
 /*
  * Mondo, luce e comandi. Distanze in pixel di gioco, tempi in secondi.
  * Valori nuovi della M1 (la v0 non li fissava): riportati in docs/GDD_base.md, sezione 11.
+ * Pensati per personaggi alti circa 80 px (sprite ingame V5): 2,35 volte quelli della v0.
  */
 
 /** Seme del caso: a parità di seme il cimitero è sempre uguale. */
@@ -8,19 +9,19 @@ export const SEME_PREDEFINITO = 1031;
 
 /** Alone della lanterna: fuori dal raggio il buio cresce a retino. */
 export const LUCE = {
-  raggio: 110, // dove comincia il buio
+  raggio: 260, // dove comincia il buio
   sfumatura: 0.9, // quanto in fretta si fa buio fuori dal raggio
   buioMassimo: 0.78, // parte di pixel neri nel buio più fitto (1 = nero pieno)
-  altezza: 18, // centro della luce sopra i piedi del personaggio
-  tremolio: 3, // di quanti pixel varia il raggio quando la fiamma tremola
+  altezza: 42, // centro della luce sopra i piedi del personaggio
+  tremolio: 7, // di quanti pixel varia il raggio quando la fiamma tremola
   intervalloTremolio: 0.12,
   colore: '#080605',
 } as const;
 
 /** Terreno del cimitero: un riquadro che si ripete senza bordi. */
 export const TERRENO = {
-  lato: 480, // dimensione del riquadro che si ripete
-  cella: 24, // griglia su cui si posano tombe, croci ed erba
+  lato: 1120, // dimensione del riquadro che si ripete
+  cella: 56, // griglia su cui si posano tombe, croci ed erba
   tombe: 0.04, // probabilità per cella
   croci: 0.02,
   erba: 0.24,
