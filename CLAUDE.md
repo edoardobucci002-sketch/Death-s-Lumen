@@ -54,7 +54,7 @@ DEATH'S LUMEN/
       stile.css                    interfaccia HTML sopra il gioco e caratteri inclusi
     public/                        manifest, icone
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
-    segnaposto/                    sprite provvisori della v0, finché Edoardo non esporta i suoi
+    segnaposto/PERSONAGGI/ …       sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
     tools/                         export-asset, genera-sw, prova (poi: simulazione di bilanciamento)
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
@@ -72,7 +72,9 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 - **Nomi dei file** (convenzione di Edoardo), con le parole separate da `_` e la versione in fondo:
   - `Nome_V#.aseprite`, per esempio `La_Badessa_V2.aseprite`
   - `Nome_idle_sheet_V#.png`, per esempio `La_Badessa_idle_sheet_V2.png`
+  - `Nome_V#.aseprite` è il **ritratto** della selezione; `Nome_gioco_V#.aseprite` è lo **sprite in gioco** (stessa cartella, deciso il 2 novembre 2026)
   - Il gioco usa sempre la versione più alta presente; non cancellare le versioni vecchie.
+  - Gli sprite in `segnaposto/` hanno la versione V0: il primo file vero (V1 o più) li sostituisce da solo.
 - **Animazioni come tag di Aseprite**, con nomi fissi: `idle`, `walk`, `attack`, `special`, `hurt`, `death`. Lo script di export legge i tag; Edoardo non deve tagliare fotogrammi a mano.
 - **Export**: `npm run asset` (`tools/export-asset.mjs`) lancia la CLI di Aseprite su ogni `.aseprite` (versione più alta), produce sprite sheet + JSON e scrive `public/assets/elenco.json`. Avvisa se un file non ha tag o ha tag con nomi non previsti.
   - La CLI su Mac è in `/Applications/Aseprite.app/Contents/MacOS/aseprite`; con Aseprite da Steam lo script la trova da solo.

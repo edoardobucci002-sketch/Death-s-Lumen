@@ -1,0 +1,48 @@
+/*
+ * Mondo, luce e comandi. Distanze in pixel di gioco, tempi in secondi.
+ * Valori nuovi della M1 (la v0 non li fissava): riportati in docs/GDD_base.md, sezione 11.
+ */
+
+/** Seme del caso: a parità di seme il cimitero è sempre uguale. */
+export const SEME_PREDEFINITO = 1031;
+
+/** Alone della lanterna: fuori dal raggio il buio cresce a retino. */
+export const LUCE = {
+  raggio: 110, // dove comincia il buio
+  sfumatura: 0.9, // quanto in fretta si fa buio fuori dal raggio
+  buioMassimo: 0.78, // parte di pixel neri nel buio più fitto (1 = nero pieno)
+  altezza: 18, // centro della luce sopra i piedi del personaggio
+  tremolio: 3, // di quanti pixel varia il raggio quando la fiamma tremola
+  intervalloTremolio: 0.12,
+  colore: '#080605',
+} as const;
+
+/** Terreno del cimitero: un riquadro che si ripete senza bordi. */
+export const TERRENO = {
+  lato: 480, // dimensione del riquadro che si ripete
+  cella: 24, // griglia su cui si posano tombe, croci ed erba
+  tombe: 0.04, // probabilità per cella
+  croci: 0.02,
+  erba: 0.24,
+  colori: {
+    terra: '#17130f',
+    macchia: '#1c1813',
+    pietra: '#3d3832',
+    pietraLuce: '#4a443c',
+    croce: '#37322b',
+    ombra: '#0e0b09',
+    erba: '#26251a',
+  },
+} as const;
+
+/** Joystick virtuale (pixel dello schermo, non di gioco). */
+export const JOYSTICK = {
+  raggio: 44, // quanto si sposta il pomello prima di andare al massimo
+  zonaMorta: 0.18, // sotto questa frazione del raggio il personaggio sta fermo
+} as const;
+
+/**
+ * Sprite provvisori della v0 (versione V0): i piedi non sono in basso al centro.
+ * Coordinate dei piedi dentro il fotogramma. Gli sprite di Edoardo usano la regola normale.
+ */
+export const PIEDI_SEGNAPOSTO = { x: 28, y: 61 } as const;

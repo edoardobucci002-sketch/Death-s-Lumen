@@ -22,6 +22,19 @@
       ]
     },
     {
+      "chiave": "Il_Lampionaio_gioco",
+      "categoria": "personaggi",
+      "immagine": "assets/personaggi/Il_Lampionaio_gioco.png",
+      "dati": "assets/personaggi/Il_Lampionaio_gioco.json",
+      "versioneFile": 0,
+      "tag": [
+        "idle",
+        "walk",
+        "attack",
+        "special"
+      ]
+    },
+    {
       "chiave": "La_Badessa",
       "categoria": "personaggi",
       "immagine": "assets/personaggi/La_Badessa.png",

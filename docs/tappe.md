@@ -5,7 +5,7 @@ Ogni tappa finisce con qualcosa che Edoardo può provare sul telefono. Non si pa
 | Tappa | Obiettivo | Si prova così | Stato |
 | --- | --- | --- | --- |
 | M0 · Fondamenta | Stack confermato, progetto creato, export da Aseprite funzionante, PWA vuota pubblicata su GitHub Pages | Il link si apre sul telefono e mostra uno sprite di Edoardo animato | **fatta** (30/10; export vero dei 4 ritratti V3 provato il 2/11) |
-| M1 · Camminare | Un personaggio, joystick touch e tastiera, telecamera, terreno del cimitero, buio e alone di luce, pixel perfect | Il personaggio cammina nel cimitero, in verticale e in orizzontale | da fare |
+| M1 · Camminare | Un personaggio, joystick touch e tastiera, telecamera, terreno del cimitero, buio e alone di luce, pixel perfect | Il personaggio cammina nel cimitero, in verticale e in orizzontale | **in corso** (branch `m1-movimento`): da provare sul telefono |
 | M2 · La notte arriva | Nemici, comparse, griglia spaziale, danno da contatto, salute, morte | 400 nemici a 60 fps; si muore | da fare |
 | M3 · Combattere | 4 armi iniziali, anime, esperienza, scelta dei doni | Partita di 5 minuti con un personaggio | da fare |
 | M4 · Il resto dell'arsenale | 6 armi comuni, 9 doni passivi, 4 abilità speciali | Ogni personaggio ha la sua build | da fare |

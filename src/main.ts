@@ -5,7 +5,7 @@
 import './stile.css';
 import Phaser from 'phaser';
 import { Avvio } from './scene/Avvio';
-import { Prova } from './scene/Prova';
+import { Gioco } from './scene/Gioco';
 import { calcolaMisure } from './sistema/pixel';
 import { avviaMobile, nativo, schermoAcceso } from './sistema/mobile';
 
@@ -22,7 +22,9 @@ const gioco = new Phaser.Game({
   height: m.altezza,
   scale: { mode: Phaser.Scale.NONE, zoom: m.zoom },
   fps: { target: 60, forceSetTimeOut: false },
-  scene: [Avvio, Prova],
+  // i comandi li gestisce src/sistema/comandi.ts, non Phaser
+  input: { keyboard: false, mouse: false, touch: false, gamepad: false },
+  scene: [Avvio, Gioco],
 });
 gioco.registry.set('scala', m.scala);
 
@@ -48,7 +50,7 @@ avviaMobile({
     gioco.loop.wake();
     schermoAcceso(true);
   },
-  indietro: () => false, // M0: nessun menu, Indietro chiude l'app
+  indietro: () => false, // M1: nessun menu, Indietro chiude l'app
 });
 schermoAcceso(true);
 

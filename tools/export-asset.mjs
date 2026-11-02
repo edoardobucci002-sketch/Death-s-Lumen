@@ -3,6 +3,9 @@
 // Cerca i file .aseprite nelle cartelle PERSONAGGI, NEMICI, EFFETTI e OGGETTI della
 // cartella principale "DEATH'S LUMEN" (per default la cartella che contiene questo repository).
 // Per ogni sprite usa la versione più alta: La_Badessa_V3.aseprite batte La_Badessa_V2.aseprite.
+// Cerca anche in segnaposto/ (stesse sottocartelle): gli sprite provvisori hanno la versione V0,
+// quindi il primo file vero di Edoardo (V1 o più) li sostituisce da solo.
+// Convenzione: Nome_V#.aseprite è il ritratto della selezione, Nome_gioco_V# lo sprite in gioco.
 // Produce in public/assets/<categoria>/ un PNG con tutti i fotogrammi e un JSON con i tag,
 // più public/assets/elenco.json che il gioco legge all'avvio.
 //
@@ -56,14 +59,16 @@ console.log(`Aseprite: ${aseprite}\nSprite da: ${arte}\n`);
 
 // versione più alta per ogni sprite
 const scelti = new Map();
-for (const [cartella, categoria] of Object.entries(CATEGORIE)) {
-  const dir = join(arte, cartella);
-  if (!existsSync(dir)) continue;
-  for (const p of cerca(dir)) {
-    const [, chiave, v] = basename(p).match(NOME);
-    const id = `${categoria}/${chiave}`;
-    const versione = Number(v);
-    if (!scelti.has(id) || scelti.get(id).versione < versione) scelti.set(id, { chiave, categoria, versione, p });
+for (const radice of [arte, join(repo, 'segnaposto')]) {
+  for (const [cartella, categoria] of Object.entries(CATEGORIE)) {
+    const dir = join(radice, cartella);
+    if (!existsSync(dir)) continue;
+    for (const p of cerca(dir)) {
+      const [, chiave, v] = basename(p).match(NOME);
+      const id = `${categoria}/${chiave}`;
+      const versione = Number(v);
+      if (!scelti.has(id) || scelti.get(id).versione < versione) scelti.set(id, { chiave, categoria, versione, p });
+    }
   }
 }
 if (!scelti.size) {
@@ -91,7 +96,7 @@ for (const s of [...scelti.values()].sort((a, b) => a.chiave.localeCompare(b.chi
   if (strani.length) avvisi.push(`${s.chiave}: tag non previsti ${strani.join(', ')} (ammessi: ${TAG_AMMESSI.join(', ')})`);
   elenco.asset.push({ chiave: s.chiave, categoria: s.categoria, immagine: `assets/${s.categoria}/${s.chiave}.png`,
     dati: `assets/${s.categoria}/${s.chiave}.json`, versioneFile: s.versione, tag });
-  console.log(`✓ ${s.categoria}/${s.chiave} (V${s.versione}) · ${tag.join(', ') || 'nessun tag'}`);
+  console.log(`✓ ${s.categoria}/${s.chiave} (V${s.versione}${s.versione === 0 ? ', segnaposto' : ''}) · ${tag.join(', ') || 'nessun tag'}`);
 }
 writeFileSync(join(dest, 'elenco.json'), JSON.stringify(elenco, null, 2));
 console.log(`\n${elenco.asset.length} sprite esportati in public/assets.`);

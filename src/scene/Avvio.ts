@@ -32,6 +32,6 @@ export class Avvio extends Phaser.Scene {
         });
       }
     }
-    this.scene.start('Prova');
+    this.scene.start('Gioco');
   }
 }

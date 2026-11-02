@@ -331,6 +331,19 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al mass
 - **Audio** (v0, sintetizzato): colpo, sparo, anima con tono che sale nelle serie, danno subito, campana, livello, reliquiario, Mietitore, cura, speciale. Nella nuova versione va sostituito con suoni veri.
 - **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.
 
+### Mondo, luce e comandi (nuovi nella M1, in `src/data/mondo.ts`)
+
+| Valore | Numero | Note |
+| --- | --- | --- |
+| Pixel di gioco in verticale | almeno 300 | `src/sistema/pixel.ts` |
+| Raggio della luce | 110 | oltre comincia il buio a retino |
+| Sfumatura del buio | 0,9 | più alto = buio più rapido |
+| Buio massimo | 78% dei pixel | nel buio più fitto il terreno si intravede ancora |
+| Centro della luce | 18 px sopra i piedi | |
+| Tremolio della fiamma | ±3 px ogni 0,12 s | |
+| Terreno | riquadro di 480 px che si ripete, celle di 24 px | tombe 4%, croci 2%, erba 24% per cella |
+| Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito |
+
 ## 12. Da fare e da decidere
 
 **Già deciso da Edoardo**
