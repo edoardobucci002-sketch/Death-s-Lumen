@@ -2,11 +2,11 @@
  * Anime: i cristalli che cadono dai nemici; si disegnano sopra il buio, così brillano nella notte.
  * Quando il personaggio arriva entro il raggio di raccolta volano verso di lui sempre più veloci;
  * raccolte, diventano esperienza.
- * Al massimo ANIME.massimeATerra: oltre, le nuove si sommano a una già presente (pool, niente allocazioni).
+ * Al massimo ANIME.massimeATerra (pool, niente allocazioni): oltre, la nuova nasce comunque dove muore il nemico
+ * e prende il posto (e il valore) dell'anima più lontana dal personaggio, così le anime vicine si vedono sempre.
  */
 import type Phaser from 'phaser';
 import { PROFONDITA } from './effetti';
-import type { Caso } from './caso';
 import { ANIME } from '../data/progressione';
 
 export class Anime {
@@ -17,23 +17,31 @@ export class Anime {
   private volo = new Float32Array(ANIME.massimeATerra); // 0 = ferma a terra, altrimenti velocità verso il personaggio
   private sprite: Phaser.GameObjects.Sprite[] = [];
 
-  constructor(
-    scena: Phaser.Scene,
-    private caso: Caso,
-  ) {
+  constructor(scena: Phaser.Scene) {
     for (let i = 0; i < ANIME.massimeATerra; i++) {
       this.sprite.push(scena.add.sprite(0, 0, ANIME.sprite.piccola).setScale(ANIME.ingrandimento).setDepth(PROFONDITA.anime).setVisible(false));
     }
   }
 
-  aggiungi(x: number, y: number, valore: number): void {
-    if (this.numero >= ANIME.massimeATerra) {
-      const i = this.caso.intero(0, this.numero - 1);
-      this.valore[i] += valore;
-      this.aspetto(i);
-      return;
+  /** Nuova anima in (x, y); (gx, gy) è il personaggio, per sapere quale anima riciclare se sono troppe. */
+  aggiungi(x: number, y: number, valore: number, gx: number, gy: number): void {
+    let i = this.numero;
+    if (i >= ANIME.massimeATerra) {
+      // la più lontana dal personaggio lascia il posto alla nuova e le passa il suo valore
+      let d2max = -1;
+      for (let k = 0; k < this.numero; k++) {
+        const dx = this.x[k] - gx;
+        const dy = this.y[k] - gy;
+        const d2 = dx * dx + dy * dy;
+        if (d2 > d2max) {
+          d2max = d2;
+          i = k;
+        }
+      }
+      valore += this.valore[i];
+    } else {
+      this.numero++;
     }
-    const i = this.numero++;
     this.x[i] = x;
     this.y[i] = y;
     this.valore[i] = valore;

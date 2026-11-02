@@ -129,7 +129,7 @@ export class Gioco extends Phaser.Scene {
     creaTerreno(this, 'terreno', SEME_PREDEFINITO);
     this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
     this.orda = new Orda(this, this.caso);
-    this.anime = new Anime(this, this.caso);
+    this.anime = new Anime(this);
     this.oggetti = new Oggetti(this);
     this.effetti = new Effetti(this);
     this.arsenale = new Arsenale(this, this.orda, this.caso, this.bonus, this.effetti);
@@ -335,7 +335,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Un nemico muore: anime, scoppio, e a volte pane, calamita o reliquiari. */
   private muore = (x: number, y: number, valore: number, reliquiari: number): void => {
-    this.anime.aggiungi(x, y, valore);
+    this.anime.aggiungi(x, y, valore, this.x, this.y);
     this.effetti.scoppio(x, y);
     for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
     const r = this.caso.numero();

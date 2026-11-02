@@ -244,6 +244,30 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
+// Anime oltre il limite: con 320 anime lontane, un nemico che muore vicino lascia comunque la sua anima lì
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?pg=lampionaio&immortale&automatico`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  const esito = await pag.evaluate(() => {
+    const s = window.__dl.scene.getScene('Gioco');
+    const a = s.anime;
+    for (let k = 0; k < 330; k++) a.aggiungi(s.x + 3000 + k, s.y, 1, s.x, s.y);
+    a.aggiungi(s.x + 200, s.y, 1, s.x, s.y);
+    let vicina = false;
+    for (let k = 0; k < a.numero; k++) if (Math.abs(a.x[k] - (s.x + 200)) < 1) vicina = true;
+    return { numero: a.numero, vicina };
+  });
+  if (!esito.vicina || esito.numero > 320) errori.push(`anime ${esito.numero}, quella nuova ${esito.vicina ? 'c\'è' : 'manca'}`);
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} anime oltre il limite: la nuova nasce vicino al personaggio${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
 // Morte: al minuto 8, fermo, il personaggio deve morire e «Riprova» deve far ripartire la partita
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });

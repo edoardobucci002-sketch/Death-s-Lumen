@@ -295,7 +295,7 @@ Le comparse arrivano appena fuori dallo schermo. Se in campo c'è meno del 40% d
 
 Pane, calamita e reliquiari si raccolgono a 40 px dal personaggio, sono disegnati sopra il buio e ingranditi × 3; i reliquiari fuori schermo hanno un segnale lampeggiante sul bordo (M5, `src/data/oggetti.ts`).
 
-Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (valori nuovi della M3, `src/data/progressione.ts`). Al massimo 320 anime a terra: le nuove si sommano a quelle già presenti. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
+Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (valori nuovi della M3, `src/data/progressione.ts`). Al massimo 320 anime a terra: oltre, la nuova nasce comunque dove muore il nemico e prende il posto e il valore dell'anima più lontana dal personaggio (nel gioco nuovo, dal 2/11: prima finivano su un'anima a caso, spesso lontana fuori schermo, e sembrava che i nemici non lasciassero più anime). Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
 
 ## 9. Esperienza e doni
 
