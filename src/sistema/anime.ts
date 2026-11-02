@@ -1,10 +1,11 @@
 /*
- * Anime: i cristalli che cadono dai nemici. Quando il personaggio arriva entro il raggio di raccolta
- * volano verso di lui sempre più veloci; raccolte, diventano esperienza.
+ * Anime: i cristalli che cadono dai nemici; si disegnano sopra il buio, così brillano nella notte.
+ * Quando il personaggio arriva entro il raggio di raccolta volano verso di lui sempre più veloci;
+ * raccolte, diventano esperienza.
  * Al massimo ANIME.massimeATerra: oltre, le nuove si sommano a una già presente (pool, niente allocazioni).
  */
 import type Phaser from 'phaser';
-import { ingrandimento } from './asset';
+import { PROFONDITA } from './effetti';
 import type { Caso } from './caso';
 import { ANIME } from '../data/progressione';
 
@@ -20,9 +21,8 @@ export class Anime {
     scena: Phaser.Scene,
     private caso: Caso,
   ) {
-    const scala = ingrandimento(scena, ANIME.sprite.piccola);
     for (let i = 0; i < ANIME.massimeATerra; i++) {
-      this.sprite.push(scena.add.sprite(0, 0, ANIME.sprite.piccola).setScale(scala).setVisible(false));
+      this.sprite.push(scena.add.sprite(0, 0, ANIME.sprite.piccola).setScale(ANIME.ingrandimento).setDepth(PROFONDITA.anime).setVisible(false));
     }
   }
 
@@ -70,7 +70,7 @@ export class Anime {
       const y = Math.round(this.y[i]);
       const visibile = x > cam.scrollX - 16 && x < cam.scrollX + cam.width + 16 && y > cam.scrollY - 16 && y < cam.scrollY + cam.height + 16;
       this.sprite[i].setVisible(visibile);
-      if (visibile) this.sprite[i].setPosition(x, y).setDepth(y);
+      if (visibile) this.sprite[i].setPosition(x, y);
     }
   }
 

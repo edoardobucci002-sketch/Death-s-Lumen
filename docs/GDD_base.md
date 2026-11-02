@@ -360,6 +360,18 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 | Lampo quando sei colpito | 0,1 s | bianco pieno |
 | Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 
+### Impatto dei colpi (nuovi nella M3, in `src/data/effetti.ts`)
+
+| Valore | Numero | Note |
+| --- | --- | --- |
+| Numeri del danno | durano 0,55 s, salgono di 22 px, cifre 3×5 ingrandite × 2 | ambra da 40 in su |
+| Scoppio del nemico che muore | 0,2 s | anello chiaro che si sfalda a retino |
+| Arco della Lanterna | 0,12 s, spessore 6 px | disegnato dal codice, metà pieno e metà a retino |
+| Impatto della pala | 0,22 s; scossa dello schermo di 2 px per 0,1 s se colpisce qualcuno | |
+| Esplosione dei dardi | 0,18 s | |
+| Ordine di disegno | arco, impatto e nubi sotto i nemici; anime sopra il buio | decisione di Edoardo: i colpi non devono coprire i nemici, le anime devono vedersi |
+| Anime a terra | cristalli della v0 ingranditi × 3 | |
+
 ## 12. Da fare e da decidere
 
 **Già deciso da Edoardo**

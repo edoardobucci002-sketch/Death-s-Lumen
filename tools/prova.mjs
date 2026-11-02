@@ -40,7 +40,7 @@ for (const [nome, disp] of casi) {
   // l'animazione deve cambiare davvero fotogramma (per i nomi dei fotogrammi in cui Phaser non trova l'immagine)
   const fotogrammi = new Set();
   for (let i = 0; i < 8; i++) {
-    fotogrammi.add(await pag.evaluate(() => window.__dl.scene.getScene('Gioco').children.list.find((o) => o.type === 'Sprite').frame.name));
+    fotogrammi.add(await pag.evaluate(() => window.__dl.scene.getScene('Gioco').giocatore.frame.name));
     await pag.waitForTimeout(80);
   }
   if (fotogrammi.size < 2) errori.push('il personaggio non si anima');

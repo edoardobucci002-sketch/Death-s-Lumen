@@ -16,6 +16,7 @@ import { animePerLivello, CARTE } from '../data/progressione';
 import { Anime } from '../sistema/anime';
 import { Arsenale } from '../sistema/armi';
 import { Doni, type Dono } from '../sistema/doni';
+import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Hud } from '../sistema/hud';
@@ -27,7 +28,6 @@ import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
 const RITARDO_MASSIMO_MS = 250; // dopo un blocco lungo non recupera all'infinito
-const SOPRA_TUTTO = 1e7; // profondità del buio: copre personaggio e nemici
 
 export class Gioco extends Phaser.Scene {
   pg!: Personaggio;
@@ -43,6 +43,7 @@ export class Gioco extends Phaser.Scene {
   esperienza = 0; // anime raccolte verso il prossimo livello
   private livelliDaScegliere = 0;
   private anime!: Anime;
+  private effetti!: Effetti;
   private doni!: Doni;
   private raccolta = 0;
   private dirX = 1; // ultima direzione in cui ha camminato (le armi colpiscono da quella parte)
@@ -56,7 +57,7 @@ export class Gioco extends Phaser.Scene {
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
-  private giocatore!: Phaser.GameObjects.Sprite;
+  giocatore!: Phaser.GameObjects.Sprite;
   private terreno!: Phaser.GameObjects.TileSprite;
   private buio!: Phaser.GameObjects.Image;
   private barraBordo!: Phaser.GameObjects.Rectangle;
@@ -97,10 +98,11 @@ export class Gioco extends Phaser.Scene {
     this.raccolta = BASE.raccolta;
 
     creaTerreno(this, 'terreno', SEME_PREDEFINITO);
-    this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(-SOPRA_TUTTO);
+    this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
     this.orda = new Orda(this, this.caso);
     this.anime = new Anime(this, this.caso);
-    this.arsenale = new Arsenale(this, this.orda, this.caso, { danno: this.pg.danno, ricarica: this.pg.ricarica, area: this.pg.area });
+    this.effetti = new Effetti(this);
+    this.arsenale = new Arsenale(this, this.orda, this.caso, { danno: this.pg.danno, ricarica: this.pg.ricarica, area: this.pg.area }, this.effetti);
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
     const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
@@ -113,12 +115,12 @@ export class Gioco extends Phaser.Scene {
       this.giocatore.setOrigin(0.5, 1);
     }
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
-    this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(SOPRA_TUTTO);
+    this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     // barra della salute sotto i piedi, sopra il buio così si vede sempre
     const b = BARRA_SALUTE;
-    this.barraBordo = this.add.rectangle(0, 0, b.larghezza, b.altezza, b.colori.bordo).setOrigin(0).setDepth(SOPRA_TUTTO + 1);
-    this.barraVuota = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.vuota).setOrigin(0).setDepth(SOPRA_TUTTO + 2);
-    this.barraPiena = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.piena).setOrigin(0).setDepth(SOPRA_TUTTO + 3);
+    this.barraBordo = this.add.rectangle(0, 0, b.larghezza, b.altezza, b.colori.bordo).setOrigin(0).setDepth(PROFONDITA.barra);
+    this.barraVuota = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.vuota).setOrigin(0).setDepth(PROFONDITA.barra + 0.1);
+    this.barraPiena = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.piena).setOrigin(0).setDepth(PROFONDITA.barra + 0.2);
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
@@ -146,6 +148,7 @@ export class Gioco extends Phaser.Scene {
       this.passo(PASSO);
       this.accumulo -= PASSO_MS;
     }
+    if (!this.doni.aperta) this.effetti.aggiorna(delta / 1000);
     this.disegna();
   }
 
@@ -190,7 +193,10 @@ export class Gioco extends Phaser.Scene {
     if (this.livelliDaScegliere > 0) this.apriDoni();
   }
 
-  private lasciaAnima = (x: number, y: number, valore: number): void => this.anime.aggiungi(x, y, valore);
+  private lasciaAnima = (x: number, y: number, valore: number): void => {
+    this.anime.aggiungi(x, y, valore);
+    this.effetti.scoppio(x, y);
+  };
 
   /** Ferma il gioco e mostra le carte; dopo la scelta, se ci sono altri livelli da scegliere, le rimostra. */
   private apriDoni(): void {
@@ -241,7 +247,7 @@ export class Gioco extends Phaser.Scene {
     const px = Math.round(this.x);
     const py = Math.round(this.y);
     const cam = this.cameras.main;
-    cam.setScroll(px - Math.floor(w / 2), py - Math.floor(h / 2));
+    cam.setScroll(px - Math.floor(w / 2) + this.effetti.scossaX, py - Math.floor(h / 2) + this.effetti.scossaY);
     this.giocatore.setPosition(px, py).setDepth(py).setFlipX(this.versoSinistra);
     // lampo bianco appena colpito; da morto il personaggio lampeggia e poi sparisce
     const lampo = this.invulnerabile > COMBATTIMENTO.invulnerabilita - COMBATTIMENTO.lampo || (this.morto && this.attesaFine > 0 && Math.floor(this.attesaFine * 12) % 2 === 0);

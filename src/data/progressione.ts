@@ -13,6 +13,7 @@ export const ANIME = {
   media: 6, // da 6 anime in su il cristallo è verde…
   grande: 20, // …da 20 in su ambra
   sprite: { piccola: 'Anima_piccola', media: 'Anima_media', grande: 'Anima_grande' },
+  ingrandimento: 3, // i cristalli della v0 sono piccoli: si disegnano grandi il triplo, sopra il buio
   volo: 420, // velocità iniziale verso il personaggio quando entra nel raggio di raccolta
   accelerazione: 900, // quanto accelera mentre vola
   presa: 24, // a questa distanza dal personaggio l'anima è raccolta

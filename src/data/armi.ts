@@ -8,7 +8,7 @@ export type IdArma = 'lanterna' | 'pala' | 'turibolo' | 'bastone';
 interface Comune {
   nome: string;
   icona: string; // chiave dell'icona: ICONE/<Nome>/Icona_<Nome>_V#.aseprite
-  effetto: string; // chiave dell'effetto: EFFETTI/<Nome>/<Nome>_V#.aseprite
+  effetto: string; // chiave dell'effetto: EFFETTI/<Nome>/<Nome>_V#.aseprite (la Lanterna per ora usa un arco disegnato dal codice)
   respinta: number; // velocità di spinta all'indietro dei nemici colpiti, pixel al secondo
 }
 

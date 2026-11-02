@@ -10,12 +10,13 @@ import Phaser from 'phaser';
 import { ingrandimento, raggioDisegnato } from './asset';
 import type { Caso } from './caso';
 import type { Orda } from './orda';
+import { PROFONDITA, type Effetti } from './effetti';
+import { EFFETTI } from '../data/effetti';
 import { BASTONE, COLPI, LANTERNA, PALA, TURIBOLO, type Arma } from '../data/armi';
 
 const MAX_EFFETTI = 48;
 const MAX_NUBI = 16;
 const MAX_PROIETTILI = 48;
-const PROFONDITA_EFFETTI = 5e6; // sopra personaggio e nemici, sotto il buio
 
 export interface Posseduta {
   arma: Arma;
@@ -37,14 +38,16 @@ export class Arsenale {
   private caso: Caso;
   private bonus: Bonus;
   private colpo = 0; // numero del colpo in corso, per non toccare due volte lo stesso nemico
+  private toccati = 0; // nemici toccati dal colpo in corso
+  private effetti: Effetti;
   // centro e direzione del personaggio in questo passo
   private px = 0;
   private py = 0;
   private dx = 1;
   private dy = 0;
 
-  // effetti solo da vedere (arco, impatto, esplosione)
-  private effetti: Phaser.GameObjects.Sprite[] = [];
+  // effetti solo da vedere disegnati da Edoardo (impatto della pala, esplosione dei dardi)
+  private sprEffetti: Phaser.GameObjects.Sprite[] = [];
   private vitaEffetto = new Float32Array(MAX_EFFETTI);
   private raggioEffetto = new Map<string, number>();
 
@@ -94,19 +97,20 @@ export class Arsenale {
   private visitaProiettile = (j: number): void => this.toccaProiettile(j);
   private cProiettile = 0;
 
-  constructor(scena: Phaser.Scene, orda: Orda, caso: Caso, bonus: Bonus) {
+  constructor(scena: Phaser.Scene, orda: Orda, caso: Caso, bonus: Bonus, effetti: Effetti) {
     this.scena = scena;
+    this.effetti = effetti;
     this.orda = orda;
     this.caso = caso;
     this.bonus = bonus;
-    for (let i = 0; i < MAX_EFFETTI; i++) this.effetti.push(scena.add.sprite(0, 0, LANTERNA.effetto).setVisible(false).setDepth(PROFONDITA_EFFETTI));
-    for (let i = 0; i < MAX_NUBI; i++) this.nubeSprite.push(scena.add.sprite(0, 0, TURIBOLO.effetto).setVisible(false).setDepth(PROFONDITA_EFFETTI - 1));
+    for (let i = 0; i < MAX_EFFETTI; i++) this.sprEffetti.push(scena.add.sprite(0, 0, PALA.effetto).setVisible(false));
+    for (let i = 0; i < MAX_NUBI; i++) this.nubeSprite.push(scena.add.sprite(0, 0, TURIBOLO.effetto).setVisible(false).setDepth(PROFONDITA.aTerra));
     const scalaPr = ingrandimento(scena, BASTONE.effetto);
     for (let i = 0; i < MAX_PROIETTILI; i++) {
       // il proiettile della v0 attraversa la tela nei suoi fotogrammi: si usa l'ultimo, con l'origine sulla punta
-      this.prSprite.push(scena.add.sprite(0, 0, BASTONE.effetto, '3').setOrigin(88 / 128, 0.5).setScale(scalaPr).setVisible(false).setDepth(PROFONDITA_EFFETTI));
+      this.prSprite.push(scena.add.sprite(0, 0, BASTONE.effetto, '3').setOrigin(88 / 128, 0.5).setScale(scalaPr).setVisible(false).setDepth(PROFONDITA.sopra));
     }
-    for (const chiave of [LANTERNA.effetto, PALA.effetto, TURIBOLO.effetto, BASTONE.esplosione]) this.raggioEffetto.set(chiave, raggioDisegnato(scena, chiave));
+    for (const chiave of [PALA.effetto, TURIBOLO.effetto, BASTONE.esplosione]) this.raggioEffetto.set(chiave, raggioDisegnato(scena, chiave));
   }
 
   aggiungi(arma: Arma): void {
@@ -142,7 +146,7 @@ export class Arsenale {
     this.aggiornaNubi(dt);
     this.aggiornaProiettili(dt);
     for (let i = 0; i < MAX_EFFETTI; i++) {
-      if (this.vitaEffetto[i] > 0 && (this.vitaEffetto[i] -= dt) <= 0) this.effetti[i].stop().setVisible(false);
+      if (this.vitaEffetto[i] > 0 && (this.vitaEffetto[i] -= dt) <= 0) this.sprEffetti[i].stop().setVisible(false);
     }
   }
 
@@ -215,7 +219,7 @@ export class Arsenale {
     this.cRespinta = LANTERNA.respinta;
     this.colpo++;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaArco);
-    this.effetto(LANTERNA.effetto, this.px, this.py, Math.atan2(dy, dx), raggio);
+    this.effetti.arco(this.px, this.py, Math.atan2(dy, dx), raggio, ampiezza);
   }
   // ——— Pala ———
   private impatto(dx: number, dy: number, raggio: number, danno: number): void {
@@ -225,8 +229,10 @@ export class Arsenale {
     this.cDanno = danno;
     this.cRespinta = PALA.respinta;
     this.colpo++;
+    this.toccati = 0;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaCerchio);
-    this.effetto(PALA.effetto, this.cx, this.cy, 0, raggio);
+    this.effetto(PALA.effetto, this.cx, this.cy, 0, raggio, PROFONDITA.aTerra, EFFETTI.impattoPala);
+    if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
   }
 
   private aggiornaDoppio(dt: number): void {
@@ -247,7 +253,10 @@ export class Arsenale {
     const d = Math.sqrt(d2) || 1;
     if (arco && (ex * this.dxArco + ey * this.dyArco) / d < this.cCos && d > o.raggio[j]) return;
     o.segno[j] = this.colpo;
-    o.colpisci(j, this.danno(this.cDanno), this.cRespinta, ex / d, ey / d);
+    this.toccati++;
+    const danno = this.danno(this.cDanno);
+    o.colpisci(j, danno, this.cRespinta, ex / d, ey / d);
+    this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
   }
 
   // ——— Turibolo ———
@@ -294,8 +303,10 @@ export class Arsenale {
     const r = this.cr + o.raggio[j];
     if (ex * ex + ey * ey > r * r) return;
     o.segno[j] = this.colpo;
-    o.colpisci(j, this.danno(this.cDanno), 0, 0, 0);
+    const danno = this.danno(this.cDanno);
+    o.colpisci(j, danno, 0, 0, 0);
     o.rallenta(j, this.cRallenta, this.cDurata);
+    this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
   }
 
   private togliNube(i: number): void {
@@ -388,8 +399,10 @@ export class Arsenale {
     }
     this.prResto[i]--;
     const v = Math.hypot(this.prVX[i], this.prVY[i]) || 1;
-    o.colpisci(j, this.danno(this.prDanno[i]), BASTONE.respinta, this.prVX[i] / v, this.prVY[i] / v);
-    this.effetto(BASTONE.esplosione, this.cx, this.cy, 0, 0);
+    const danno = this.danno(this.prDanno[i]);
+    o.colpisci(j, danno, BASTONE.respinta, this.prVX[i] / v, this.prVY[i] / v);
+    this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
+    this.effetto(BASTONE.esplosione, this.cx, this.cy, 0, 0, PROFONDITA.sopra, EFFETTI.esplosione);
   }
 
   private togliProiettile(i: number): void {
@@ -410,17 +423,17 @@ export class Arsenale {
   }
 
   // ——— Effetti solo da vedere ———
-  /** Mostra un effetto centrato in (x, y). Con raggio > 0 lo ingrandisce fino a coprire quell'area. */
-  private effetto(chiave: string, x: number, y: number, angolo: number, raggio: number): void {
+  /** Mostra un effetto centrato in (x, y) per durata secondi. Con raggio > 0 lo ingrandisce fino a coprire quell'area. */
+  private effetto(chiave: string, x: number, y: number, angolo: number, raggio: number, profondita: number, durata: number): void {
     let i = 0;
     while (i < MAX_EFFETTI && this.vitaEffetto[i] > 0) i++;
     if (i === MAX_EFFETTI) return;
-    const s = this.effetti[i];
+    const s = this.sprEffetti[i];
     const anim = this.scena.anims.get(`${chiave}:idle`);
     if (!anim) return;
     const scala = raggio > 0 ? raggio / this.raggioEffetto.get(chiave)! : ingrandimento(this.scena, chiave);
-    s.setTexture(chiave).setPosition(Math.round(x), Math.round(y)).setRotation(angolo).setScale(scala).setVisible(true);
-    s.play({ key: anim.key, repeat: 0 });
-    this.vitaEffetto[i] = anim.duration / 1000;
+    s.setTexture(chiave).setPosition(Math.round(x), Math.round(y)).setRotation(angolo).setScale(scala).setDepth(profondita).setVisible(true);
+    s.play({ key: anim.key, repeat: 0, duration: durata * 1000 });
+    this.vitaEffetto[i] = durata;
   }
 }
