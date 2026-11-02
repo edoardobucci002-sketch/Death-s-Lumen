@@ -63,6 +63,13 @@ preparaAudio();
 // PWA: lavoro offline e installazione (non serve dentro l'app nativa)
 if ('serviceWorker' in navigator && import.meta.env.PROD && !nativo) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  // quando arriva una versione nuova del gioco, ricarica la pagina una volta per mostrarla
+  if (navigator.serviceWorker.controller) {
+    let ricaricato = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!ricaricato) { ricaricato = true; location.reload(); }
+    });
+  }
 }
 
 // usato dalle prove automatiche
