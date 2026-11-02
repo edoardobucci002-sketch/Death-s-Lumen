@@ -1,16 +1,18 @@
 /*
  * Scelta del dono a ogni livello: il gioco si ferma e mostra fino a 3 carte estratte a caso con i pesi del GDD.
  * Si sceglie toccando una carta o con i tasti 1-2-3; «Rimescola» estrae carte nuove (2 volte per partita).
- * Nella M3 si può solo potenziare l'arma iniziale; quando è al massimo esce «Pane e vino».
+ * Escono: armi possedute da potenziare, armi comuni nuove (fino a 6 armi), doni passivi (fino a 6).
+ * Quando non resta nulla da potenziare esce «Pane e vino».
  */
 import type Phaser from 'phaser';
 import type { Caso } from './caso';
 import type { Arsenale } from './armi';
 import { voce } from './asset';
 import { CARTE } from '../data/progressione';
-import type { Arma } from '../data/armi';
+import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
+import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 
-export type Dono = { tipo: 'arma'; arma: Arma; livello: number } | { tipo: 'pane' };
+export type Dono = { tipo: 'arma'; arma: Arma; livello: number } | { tipo: 'passivo'; passivo: Passivo; livello: number } | { tipo: 'pane' };
 
 export class Doni {
   private radice: HTMLElement;
@@ -24,6 +26,7 @@ export class Doni {
     contenitore: HTMLElement,
     private arsenale: Arsenale,
     private armaIniziale: Arma,
+    private passivi: Record<IdDono, number>, // livello di ogni dono passivo (0 = non posseduto)
     private caso: Caso,
     private scena: Phaser.Scene,
   ) {
@@ -76,6 +79,15 @@ export class Doni {
         peso: p.arma === this.armaIniziale ? CARTE.armaIniziale : CARTE.armaPosseduta,
       });
     }
+    if (this.arsenale.possedute.length < MAX_ARMI) {
+      for (const a of ARMI_COMUNI) if (!this.arsenale.livello(a)) possibili.push({ dono: { tipo: 'arma', arma: a, livello: 1 }, peso: CARTE.armaNuova });
+    }
+    const posseduti = PASSIVI.filter((q) => this.passivi[q.id] > 0).length;
+    for (const q of PASSIVI) {
+      const l = this.passivi[q.id];
+      if (l >= q.massimo || (!l && posseduti >= MAX_PASSIVI)) continue;
+      possibili.push({ dono: { tipo: 'passivo', passivo: q, livello: l + 1 }, peso: l ? CARTE.donoPosseduto : CARTE.donoNuovo });
+    }
     this.carte = [];
     while (this.carte.length < CARTE.quante && possibili.length) {
       let totale = 0;
@@ -98,11 +110,12 @@ export class Doni {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'doni-carta';
-    const icona = d.tipo === 'arma' ? d.arma.icona : null;
+    const icona = d.tipo === 'arma' ? d.arma.icona : d.tipo === 'passivo' ? d.passivo.icona : null;
     const img = icona && voce(this.scena, icona) ? `<img alt="" src="${voce(this.scena, icona)!.immagine}">` : '<span class="doni-vuota"></span>';
-    const titolo = d.tipo === 'arma' ? d.arma.nome : 'Pane e vino';
-    const sotto = d.tipo === 'arma' ? (d.livello === 1 ? 'Nuova' : `Livello ${d.livello}`) : `+${CARTE.paneEVino} salute`;
-    const testo = d.tipo === 'arma' ? d.arma.livelli[d.livello - 1].testo : 'Un ristoro nella notte.';
+    const titolo = d.tipo === 'arma' ? d.arma.nome : d.tipo === 'passivo' ? d.passivo.nome : 'Pane e vino';
+    const sotto = d.tipo === 'pane' ? `+${CARTE.paneEVino} salute`
+      : d.livello === 1 ? (d.tipo === 'arma' ? 'Nuova arma' : 'Nuovo dono') : `Livello ${d.livello}`;
+    const testo = d.tipo === 'arma' ? d.arma.livelli[d.livello - 1].testo : d.tipo === 'passivo' ? d.passivo.testo : 'Un ristoro nella notte.';
     b.innerHTML = `<span class="doni-tasto">${n + 1}</span>${img}<span class="doni-testi"><strong>${titolo}</strong><em>${sotto}</em><span>${testo}</span></span>`;
     // le icone della v0 sono piccole: si ingrandiscono di un numero intero di volte
     const im = b.querySelector('img');

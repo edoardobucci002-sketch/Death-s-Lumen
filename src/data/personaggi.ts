@@ -2,7 +2,7 @@
  * Personaggi. Valori di partenza dal GDD (docs/GDD_base.md, sezione 2).
  * Ogni modifica qui va riportata anche nel GDD.
  */
-import type { IdArma } from './armi';
+import type { IdAbilita } from './abilita';
 
 export interface Personaggio {
   id: 'lampionaio' | 'becchino' | 'badessa' | 'strega';
@@ -11,8 +11,8 @@ export interface Personaggio {
   colore: string;
   ritratto: string; // chiave dell'asset del ritratto (schermata di selezione)
   sprite: string; // chiave dell'asset in gioco: Nome_ingame_V#.aseprite
-  armaIniziale: IdArma;
-  abilita: string;
+  armaIniziale: 'lanterna' | 'pala' | 'turibolo' | 'bastone';
+  abilita: IdAbilita;
   // modificatori rispetto ai valori comuni (BASE)
   salute: number;
   velocita: number; // percentuale, 0.1 = +10%

@@ -4,7 +4,7 @@ Questo documento raccoglie tutti i contenuti e i numeri della **v0** (prototipo 
 
 Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i tempi in secondi.
 
-**Scala del mondo (2 novembre 2026).** Nella v0 il personaggio era alto circa 34 px; gli sprite in gioco di Edoardo (V5) sono alti circa 80 px. Per tenere le stesse proporzioni, **ogni distanza e velocità della v0 si moltiplica per 2,35**. Le sezioni già portate nel gioco nuovo hanno i valori convertiti (segnati «× 2,35»); le altre (armi, nemici, abilità) riportano ancora i numeri della v0 e si convertono quando vengono programmate.
+**Scala del mondo (2 novembre 2026).** Nella v0 il personaggio era alto circa 34 px; gli sprite in gioco di Edoardo (V5) sono alti circa 80 px. Per tenere le stesse proporzioni, **ogni distanza e velocità della v0 si moltiplica per 2,35**. Le sezioni già portate nel gioco nuovo hanno i valori convertiti (segnati «× 2,35»); le altre (Mietitore, élite, sciami, drop) riportano ancora i numeri della v0 e si convertono quando vengono programmate.
 
 ## 1. Il gioco in breve
 
@@ -58,14 +58,14 @@ Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 150 px,
 
 ## 3. Abilità speciali
 
-Si attivano con Spazio o con il pulsante a schermo. Danno, area e ricarica seguono i doni passivi.
+Si attivano con Spazio o con il pulsante a schermo. Danno, area e ricarica seguono i doni passivi. Raggi e attrazione già × 2,35 (M4, `src/data/abilita.ts`).
 
 | Abilità | Ricarica | Durata | Raggio | Danno | Effetto |
 | --- | --- | --- | --- | --- | --- |
-| Cerchio di luce | 14 s | 5 s | 92 | 6 ogni 0,25 s | ti segue; rallenta del 55% |
-| Sepoltura | 16 s | 4,5 s | 105 | 11 ogni 0,3 s | fissa; mani dalla terra; rallenta dell'80% |
-| Benedizione | 18 s | 6 s | 88 | 8 ogni 0,3 s | fissa; croce dorata; cura 9 salute/s se ci stai dentro |
-| Rito proibito | 16 s | 5 s | 110 | 10 ogni 0,3 s | fissa; sigillo con candele; attira i nemici a 65 px/s |
+| Cerchio di luce | 14 s | 5 s | 216 | 6 ogni 0,25 s | ti segue; rallenta del 55% |
+| Sepoltura | 16 s | 4,5 s | 247 | 11 ogni 0,3 s | fissa; mani dalla terra; rallenta dell'80% |
+| Benedizione | 18 s | 6 s | 207 | 8 ogni 0,3 s | fissa; croce dorata; cura 9 salute/s se ci stai dentro |
+| Rito proibito | 16 s | 5 s | 259 | 10 ogni 0,3 s | fissa; sigillo con candele; attira i nemici a 153 px/s |
 
 Il Mietitore subisce il rallentamento a metà e l'attrazione a un quarto; bruti ed élite l'attrazione a metà.
 
@@ -139,52 +139,52 @@ Mira al nemico più vicino entro 611 px (× 2,35); proiettili a 541 px/s, raggio
 
 #### Candela
 
-Bersaglia i nemici più vicini sullo schermo; le fiammelle durano 1,4 s. Specchio aggiunge una fiammella.
+Bersaglia i nemici più vicini entro 700 px (circa lo schermo), uno diverso per fiammella; le fiammelle durano 1,4 s, raggio 9 px. Velocità già × 2,35. Specchio aggiunge una fiammella.
 
 | Lv | Ricarica (s) | Danno | Quantità | Trapassa | Velocità proiettile | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 0,95 | 12 | 1 | 1 | 300 | Lancia fiammelle verso il nemico più vicino. |
-| 2 | 0,95 | 12 | 2 | 1 | 300 | +1 fiammella. |
-| 3 | 0,95 | 17 | 2 | 1 | 300 | +5 danno. |
-| 4 | 0,95 | 17 | 3 | 1 | 300 | +1 fiammella. |
-| 5 | 0,95 | 17 | 3 | 2 | 300 | Le fiammelle trapassano un nemico in più. |
-| 6 | 0,95 | 22 | 4 | 2 | 300 | +5 danno e +1 fiammella. |
-| 7 | 0,75 | 22 | 4 | 2 | 300 | Ricarica più rapida. |
-| 8 | 0,75 | 32 | 5 | 3 | 300 | +1 fiammella, +10 danno, trapassano di più. |
+| 1 | 0,95 | 12 | 1 | 1 | 705 | Lancia fiammelle verso il nemico più vicino. |
+| 2 | 0,95 | 12 | 2 | 1 | 705 | +1 fiammella. |
+| 3 | 0,95 | 17 | 2 | 1 | 705 | +5 danno. |
+| 4 | 0,95 | 17 | 3 | 1 | 705 | +1 fiammella. |
+| 5 | 0,95 | 17 | 3 | 2 | 705 | Le fiammelle trapassano un nemico in più. |
+| 6 | 0,95 | 22 | 4 | 2 | 705 | +5 danno e +1 fiammella. |
+| 7 | 0,75 | 22 | 4 | 2 | 705 | Ricarica più rapida. |
+| 8 | 0,75 | 32 | 5 | 3 | 705 | +1 fiammella, +10 danno, trapassano di più. |
 
 #### Falce
 
-Sempre attiva: lo stesso nemico può essere colpito da una falce ogni 0,45 s; respinge di 70. Specchio aggiunge una falce.
+Sempre attiva: lo stesso nemico può essere colpito da una falce ogni 0,45 s; respinge di 165 (70 × 2,35); la lama tocca entro 24 px. Raggi già × 2,35. Specchio aggiunge una falce.
 
 | Lv | Quantità | Danno | Raggio | Rotazione (giri/s) | Cosa cambia |
 |---|---|---|---|---|---|
-| 1 | 1 | 12 | 56 | 0,45 | Una falce spettrale ti ruota intorno. |
-| 2 | 2 | 12 | 56 | 0,45 | +1 falce. |
-| 3 | 2 | 15 | 56 | 0,45 | +3 danno. |
-| 4 | 3 | 15 | 56 | 0,45 | +1 falce. |
-| 5 | 3 | 19 | 68 | 0,45 | Raggio più ampio e +4 danno. |
-| 6 | 4 | 19 | 68 | 0,45 | +1 falce. |
-| 7 | 4 | 25 | 68 | 0,59 | Rotazione più veloce e +6 danno. |
-| 8 | 5 | 25 | 68 | 0,59 | +1 falce. |
+| 1 | 1 | 12 | 132 | 0,45 | Una falce spettrale ti ruota intorno. |
+| 2 | 2 | 12 | 132 | 0,45 | +1 falce. |
+| 3 | 2 | 15 | 132 | 0,45 | +3 danno. |
+| 4 | 3 | 15 | 132 | 0,45 | +1 falce. |
+| 5 | 3 | 19 | 160 | 0,45 | Raggio più ampio e +4 danno. |
+| 6 | 4 | 19 | 160 | 0,45 | +1 falce. |
+| 7 | 4 | 25 | 160 | 0,59 | Rotazione più veloce e +6 danno. |
+| 8 | 5 | 25 | 160 | 0,59 | +1 falce. |
 
 #### Campana
 
-Colpisce tutto entro il raggio e respinge di 200; a Lv 8 il secondo rintocco arriva 0,35 s dopo.
+Colpisce tutto entro il raggio e respinge di 470 (200 × 2,35); raggi già × 2,35; a Lv 8 il secondo rintocco arriva 0,35 s dopo.
 
 | Lv | Ricarica (s) | Danno | Raggio | Colpo doppio | Cosa cambia |
 |---|---|---|---|---|---|
-| 1 | 2,6 | 16 | 84 | no | Rintocchi che respingono e feriscono tutto intorno. |
-| 2 | 2,6 | 22 | 84 | no | +6 danno. |
-| 3 | 2,6 | 22 | 102 | no | Raggio più ampio. |
-| 4 | 2,2 | 22 | 102 | no | Rintocchi più frequenti. |
-| 5 | 2,2 | 30 | 102 | no | +8 danno. |
-| 6 | 2,2 | 30 | 120 | no | Raggio più ampio. |
-| 7 | 1,8 | 30 | 120 | no | Rintocchi più frequenti. |
-| 8 | 1,8 | 42 | 120 | sì | +12 danno e doppio rintocco. |
+| 1 | 2,6 | 16 | 197 | no | Rintocchi che respingono e feriscono tutto intorno. |
+| 2 | 2,6 | 22 | 197 | no | +6 danno. |
+| 3 | 2,6 | 22 | 240 | no | Raggio più ampio. |
+| 4 | 2,2 | 22 | 240 | no | Rintocchi più frequenti. |
+| 5 | 2,2 | 30 | 240 | no | +8 danno. |
+| 6 | 2,2 | 30 | 282 | no | Raggio più ampio. |
+| 7 | 1,8 | 30 | 282 | no | Rintocchi più frequenti. |
+| 8 | 1,8 | 42 | 282 | sì | +12 danno e doppio rintocco. |
 
 #### Fuoco fatuo
 
-Insegue il nemico più vicino entro 320 px a 200 px/s e dura 3,2 s. Specchio aggiunge un fuoco.
+Partono a raggiera e girano (fino a 6 radianti al secondo) verso il nemico più vicino a loro, entro 752 px, a 470 px/s (× 2,35); durano 3,2 s. Specchio aggiunge un fuoco.
 
 | Lv | Ricarica (s) | Quantità | Danno | Trapassa | Cosa cambia |
 |---|---|---|---|---|---|
@@ -199,33 +199,33 @@ Insegue il nemico più vicino entro 320 px a 200 px/s e dura 3,2 s. Specchio agg
 
 #### Acqua santa
 
-Ogni fiala cade su un nemico visibile scelto a caso; la pozza ferisce ogni 0,3 s. Specchio aggiunge una fiala.
+Ogni fiala cade su un nemico visibile scelto a caso; la pozza ferisce ogni 0,3 s. Raggi già × 2,35. Specchio aggiunge una fiala.
 
 | Lv | Ricarica (s) | Quantità | Danno | Raggio | Durata (s) | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 2,8 | 1 | 7 | 38 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
-| 2 | 2,8 | 2 | 7 | 38 | 2,6 | +1 fiala. |
-| 3 | 2,8 | 2 | 10 | 46 | 2,6 | Pozze più grandi e dannose. |
-| 4 | 2,8 | 3 | 10 | 46 | 2,6 | +1 fiala. |
-| 5 | 2,3 | 3 | 10 | 46 | 3,2 | Ricarica più rapida, pozze più durature. |
-| 6 | 2,3 | 3 | 14 | 55 | 3,2 | Pozze più grandi e dannose. |
-| 7 | 2,3 | 4 | 14 | 55 | 3,2 | +1 fiala. |
-| 8 | 2,3 | 4 | 19 | 55 | 4,2 | Durata e danno maggiori. |
+| 1 | 2,8 | 1 | 7 | 89 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
+| 2 | 2,8 | 2 | 7 | 89 | 2,6 | +1 fiala. |
+| 3 | 2,8 | 2 | 10 | 108 | 2,6 | Pozze più grandi e dannose. |
+| 4 | 2,8 | 3 | 10 | 108 | 2,6 | +1 fiala. |
+| 5 | 2,3 | 3 | 10 | 108 | 3,2 | Ricarica più rapida, pozze più durature. |
+| 6 | 2,3 | 3 | 14 | 129 | 3,2 | Pozze più grandi e dannose. |
+| 7 | 2,3 | 4 | 14 | 129 | 3,2 | +1 fiala. |
+| 8 | 2,3 | 4 | 19 | 129 | 4,2 | Durata e danno maggiori. |
 
 #### Lama di luce
 
-Fendente orizzontale alto 44 px verso il lato in cui guardi; il colpo alle spalle parte 0,12 s dopo; respinge di 110.
+Fendente orizzontale alto 103 px verso il lato in cui guardi; il colpo alle spalle parte 0,12 s dopo; respinge di 259. Misure già × 2,35.
 
 | Lv | Ricarica (s) | Danno | Lunghezza | Colpo alle spalle | Cosa cambia |
 |---|---|---|---|---|---|
-| 1 | 1,15 | 18 | 110 | no | Un fendente di luce davanti a te. |
-| 2 | 1,15 | 18 | 110 | sì | Colpisce anche alle spalle. |
-| 3 | 1,15 | 24 | 110 | sì | +6 danno. |
-| 4 | 1 | 24 | 110 | sì | Ricarica più rapida. |
-| 5 | 1 | 32 | 110 | sì | +8 danno. |
-| 6 | 1 | 32 | 140 | sì | Fendente più lungo. |
-| 7 | 0,85 | 32 | 140 | sì | Ricarica più rapida. |
-| 8 | 0,85 | 44 | 140 | sì | +12 danno. |
+| 1 | 1,15 | 18 | 259 | no | Un fendente di luce davanti a te. |
+| 2 | 1,15 | 18 | 259 | sì | Colpisce anche alle spalle. |
+| 3 | 1,15 | 24 | 259 | sì | +6 danno. |
+| 4 | 1 | 24 | 259 | sì | Ricarica più rapida. |
+| 5 | 1 | 32 | 259 | sì | +8 danno. |
+| 6 | 1 | 32 | 329 | sì | Fendente più lungo. |
+| 7 | 0,85 | 32 | 329 | sì | Ricarica più rapida. |
+| 8 | 0,85 | 44 | 329 | sì | +12 danno. |
 
 ## 5. Doni passivi
 
@@ -236,7 +236,7 @@ Al massimo 6 doni passivi diversi.
 | Cuore di cera | +20 salute massima | 5 |
 | Sale nero | +10% danno | 5 |
 | Clessidra | −7% ricarica, si moltiplica (minimo 40% della ricarica base) | 5 |
-| Stoppino lungo | +10% area (raggi, archi, nubi, pozze, abilità, alone di luce) | 5 |
+| Stoppino lungo | +10% area (raggi, archi, nubi, pozze, abilità, alone di luce; nel gioco nuovo anche il bonus area del personaggio allarga l'alone) | 5 |
 | Ali di falena | +8% velocità | 5 |
 | Calamita | +30% raggio di raccolta delle anime | 5 |
 | Erbe amare | +0,25 salute al secondo | 5 |

@@ -117,3 +117,16 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
   .doni-carte { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(860px, 100%); }
   .doni-carta { flex-direction: column; align-items: flex-start; }
 }
+
+/* Abilità speciale (src/sistema/speciale.ts) */
+.speciale {
+  position: fixed; left: calc(env(safe-area-inset-left) + 16px); bottom: calc(env(safe-area-inset-bottom) + 16px);
+  width: 68px; height: 68px; padding: 0; border-radius: 50%; display: grid; place-items: center;
+  border: 2px solid var(--linea); touch-action: none;
+  background:
+    radial-gradient(circle, var(--pannello) 0 58%, transparent 59%),
+    conic-gradient(var(--accento) var(--carica, 0%), #2a231c 0);
+}
+.speciale img { image-rendering: pixelated; opacity: 0.45; }
+.speciale.pronta { border-color: var(--accento); }
+.speciale.pronta img { opacity: 1; }

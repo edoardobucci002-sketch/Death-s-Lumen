@@ -15,7 +15,7 @@ const BAYER = [
 export const CHIAVI_BUIO = ['buio-0', 'buio-1', 'buio-2'];
 
 /** Il buio copre tutto lo schermo anche quando la luce non è al centro: margine in più. */
-export function creaBuio(scena: Phaser.Scene, larghezza: number, altezza: number): { w: number; h: number } {
+export function creaBuio(scena: Phaser.Scene, larghezza: number, altezza: number, raggioBase: number = LUCE.raggio): { w: number; h: number } {
   const w = larghezza + 2 * (LUCE.altezza + 8);
   const h = altezza + 2 * (LUCE.altezza + 8);
   const [cr, cg, cb] = [1, 3, 5].map((i) => parseInt(LUCE.colore.slice(i, i + 2), 16));
@@ -24,7 +24,7 @@ export function creaBuio(scena: Phaser.Scene, larghezza: number, altezza: number
     const tela = scena.textures.createCanvas(chiave, w, h)!;
     const g = tela.getContext();
     const img = g.createImageData(w, h);
-    const raggio = LUCE.raggio + (n - 1) * LUCE.tremolio;
+    const raggio = raggioBase + (n - 1) * LUCE.tremolio;
     const cx = Math.floor(w / 2);
     const cy = Math.floor(h / 2);
     for (let y = 0; y < h; y++) {
