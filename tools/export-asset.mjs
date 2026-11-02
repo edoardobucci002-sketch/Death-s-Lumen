@@ -1,6 +1,6 @@
 // Esporta da Aseprite tutti gli sprite del gioco.
 //
-// Cerca i file .aseprite nelle cartelle PERSONAGGI, NEMICI, EFFETTI e OGGETTI della
+// Cerca i file .aseprite nelle cartelle PERSONAGGI, NEMICI, EFFETTI, OGGETTI, ICONE e HUD della
 // cartella principale "DEATH'S LUMEN" (per default la cartella che contiene questo repository).
 // Per ogni sprite usa la versione più alta: La_Badessa_V3.aseprite batte La_Badessa_V2.aseprite.
 // Cerca anche in segnaposto/ (stesse sottocartelle): gli sprite provvisori hanno la versione V0,
@@ -8,6 +8,8 @@
 // Convenzione: Nome_V#.aseprite è il ritratto della selezione, Nome_ingame_V# lo sprite in gioco.
 // Produce in public/assets/<categoria>/ un PNG con tutti i fotogrammi e un JSON con i tag,
 // più public/assets/elenco.json che il gioco legge all'avvio.
+// Gli elementi dell'HUD vanno in un elenco a parte (public/assets/hud/elenco.json), letto per ora
+// solo dalla pagina di bozza (bozza-hud.html): il gioco non li carica finché non li usa.
 //
 // Uso:  npm run asset
 // Opzioni (variabili d'ambiente):
@@ -20,9 +22,9 @@ import { fileURLToPath } from 'node:url';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arte = resolve(process.env.DL_ARTE ?? join(repo, '..'));
-const CATEGORIE = { PERSONAGGI: 'personaggi', NEMICI: 'nemici', EFFETTI: 'effetti', OGGETTI: 'oggetti', ICONE: 'icone' };
-// effetti, oggetti e icone possono non avere tag: tutto il file è una sola animazione
-const SENZA_TAG_OK = ['effetti', 'oggetti', 'icone'];
+const CATEGORIE = { PERSONAGGI: 'personaggi', NEMICI: 'nemici', EFFETTI: 'effetti', OGGETTI: 'oggetti', ICONE: 'icone', HUD: 'hud' };
+// effetti, oggetti, icone e HUD possono non avere tag: tutto il file è una sola animazione
+const SENZA_TAG_OK = ['effetti', 'oggetti', 'icone', 'hud'];
 const TAG_AMMESSI = ['idle', 'walk', 'attack', 'special', 'hurt', 'death'];
 const NOME = /^(.+)_V(\d+)\.aseprite$/i;
 
@@ -81,6 +83,7 @@ if (!scelti.size) {
 const dest = join(repo, 'public', 'assets');
 for (const c of Object.values(CATEGORIE)) rmSync(join(dest, c), { recursive: true, force: true });
 const elenco = { versione: 1, asset: [] };
+const elencoHud = { versione: 1, esportato: new Date().toISOString(), asset: [] }; // la bozza si aggiorna quando cambia l'ora
 const avvisi = [];
 for (const s of [...scelti.values()].sort((a, b) => a.chiave.localeCompare(b.chiave))) {
   const cartella = join(dest, s.categoria);
@@ -96,10 +99,11 @@ for (const s of [...scelti.values()].sort((a, b) => a.chiave.localeCompare(b.chi
   const strani = tag.filter((t) => !TAG_AMMESSI.includes(t));
   if (!tag.length && !SENZA_TAG_OK.includes(s.categoria)) avvisi.push(`${s.chiave}: nessun tag di animazione`);
   if (strani.length) avvisi.push(`${s.chiave}: tag non previsti ${strani.join(', ')} (ammessi: ${TAG_AMMESSI.join(', ')})`);
-  elenco.asset.push({ chiave: s.chiave, categoria: s.categoria, immagine: `assets/${s.categoria}/${s.chiave}.png`,
+  (s.categoria === 'hud' ? elencoHud : elenco).asset.push({ chiave: s.chiave, categoria: s.categoria, immagine: `assets/${s.categoria}/${s.chiave}.png`,
     dati: `assets/${s.categoria}/${s.chiave}.json`, versioneFile: s.versione, tag });
   console.log(`✓ ${s.categoria}/${s.chiave} (V${s.versione}${s.versione === 0 ? ', segnaposto' : ''}) · ${tag.join(', ') || 'nessun tag'}`);
 }
 writeFileSync(join(dest, 'elenco.json'), JSON.stringify(elenco, null, 2));
-console.log(`\n${elenco.asset.length} sprite esportati in public/assets.`);
+if (elencoHud.asset.length) writeFileSync(join(dest, 'hud', 'elenco.json'), JSON.stringify(elencoHud, null, 2));
+console.log(`\n${elenco.asset.length} sprite e ${elencoHud.asset.length} elementi dell'HUD esportati in public/assets.`);
 if (avvisi.length) console.log('\nDa controllare:\n- ' + avvisi.join('\n- '));

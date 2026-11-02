@@ -33,6 +33,7 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 | `npm install` | scarica le dipendenze (la prima volta e dopo ogni cambio di `package.json`) |
 | `npm run dev` | avvia il gioco in locale; l'indirizzo «Network» si apre anche dal telefono sulla stessa Wi-Fi |
 | `npm run asset` | esporta da Aseprite tutti gli sprite (vedi «Asset») |
+| `npm run bozza` | apre la pagina di bozza dell'HUD (`bozza-hud.html`): gli elementi di `HUD/` al loro posto, senza giocare |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
 | `npm run prova` | prova automatica su desktop, iPhone e Android emulati; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
@@ -44,6 +45,8 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 DEATH'S LUMEN/
   PERSONAGGI/<Nome personaggio>/   sorgenti Aseprite di Edoardo (non modificarli mai)
   NEMICI/ EFFETTI/ OGGETTI/ ICONE/ stessa logica per gli altri asset (le icone si chiamano Icona_<Nome>)
+  HUD/<Gruppo>/<Elemento>_V#.aseprite  interfaccia (Barre, Pulsanti, Cornici, Pannelli, Emblemi, Segnali);
+                                   HUD/Tavole/ tiene le tavole originali (senza _V#, quindi non esportate)
   gioco/                           questo repository (su GitHub: Death-s-Lumen)
     CLAUDE.md
     docs/                          GDD_base.md, decisioni.md, tappe.md
@@ -57,7 +60,8 @@ DEATH'S LUMEN/
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/PERSONAGGI/ …       sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
                                    (effetti, icone e anime divisi dai file della v0 con tools/dividi-v0.lua)
-    tools/                         export-asset, icone, dividi-v0, genera-sw, prova (poi: simulazione di bilanciamento)
+    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sfondi-bozza (poi: simulazione di bilanciamento)
+    bozza-hud.html, src/bozza/     pagina di bozza dell'HUD (solo in sviluppo, non entra nella build); sfondi in bozza/sfondi/
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
 ```

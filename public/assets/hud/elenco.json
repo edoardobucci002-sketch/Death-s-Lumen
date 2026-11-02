@@ -1,0 +1,301 @@
+{
+  "versione": 1,
+  "asset": [
+    {
+      "chiave": "Barra_Esperienza_Cornice",
+      "categoria": "hud",
+      "immagine": "assets/hud/Barra_Esperienza_Cornice.png",
+      "dati": "assets/hud/Barra_Esperienza_Cornice.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Barra_Esperienza_Piena",
+      "categoria": "hud",
+      "immagine": "assets/hud/Barra_Esperienza_Piena.png",
+      "dati": "assets/hud/Barra_Esperienza_Piena.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Barra_Mietitore_Cornice",
+      "categoria": "hud",
+      "immagine": "assets/hud/Barra_Mietitore_Cornice.png",
+      "dati": "assets/hud/Barra_Mietitore_Cornice.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Barra_Mietitore_Piena",
+      "categoria": "hud",
+      "immagine": "assets/hud/Barra_Mietitore_Piena.png",
+      "dati": "assets/hud/Barra_Mietitore_Piena.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Barra_Salute_Cornice",
+      "categoria": "hud",
+      "immagine": "assets/hud/Barra_Salute_Cornice.png",
+      "dati": "assets/hud/Barra_Salute_Cornice.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Barra_Salute_Piena",
+      "categoria": "hud",
+      "immagine": "assets/hud/Barra_Salute_Piena.png",
+      "dati": "assets/hud/Barra_Salute_Piena.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Carta_Dono",
+      "categoria": "hud",
+      "immagine": "assets/hud/Carta_Dono.png",
+      "dati": "assets/hud/Carta_Dono.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Carta_Dono_Scelta",
+      "categoria": "hud",
+      "immagine": "assets/hud/Carta_Dono_Scelta.png",
+      "dati": "assets/hud/Carta_Dono_Scelta.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Casella_Arma",
+      "categoria": "hud",
+      "immagine": "assets/hud/Casella_Arma.png",
+      "dati": "assets/hud/Casella_Arma.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Cornice_Il_Becchino",
+      "categoria": "hud",
+      "immagine": "assets/hud/Cornice_Il_Becchino.png",
+      "dati": "assets/hud/Cornice_Il_Becchino.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Cornice_Il_Lampionaio",
+      "categoria": "hud",
+      "immagine": "assets/hud/Cornice_Il_Lampionaio.png",
+      "dati": "assets/hud/Cornice_Il_Lampionaio.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Cornice_La_Badessa",
+      "categoria": "hud",
+      "immagine": "assets/hud/Cornice_La_Badessa.png",
+      "dati": "assets/hud/Cornice_La_Badessa.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Cornice_La_Strega",
+      "categoria": "hud",
+      "immagine": "assets/hud/Cornice_La_Strega.png",
+      "dati": "assets/hud/Cornice_La_Strega.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Emblema_Il_Becchino",
+      "categoria": "hud",
+      "immagine": "assets/hud/Emblema_Il_Becchino.png",
+      "dati": "assets/hud/Emblema_Il_Becchino.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Emblema_Il_Lampionaio",
+      "categoria": "hud",
+      "immagine": "assets/hud/Emblema_Il_Lampionaio.png",
+      "dati": "assets/hud/Emblema_Il_Lampionaio.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Emblema_La_Badessa",
+      "categoria": "hud",
+      "immagine": "assets/hud/Emblema_La_Badessa.png",
+      "dati": "assets/hud/Emblema_La_Badessa.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Emblema_La_Strega",
+      "categoria": "hud",
+      "immagine": "assets/hud/Emblema_La_Strega.png",
+      "dati": "assets/hud/Emblema_La_Strega.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Joystick_Base",
+      "categoria": "hud",
+      "immagine": "assets/hud/Joystick_Base.png",
+      "dati": "assets/hud/Joystick_Base.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Joystick_Pomello",
+      "categoria": "hud",
+      "immagine": "assets/hud/Joystick_Pomello.png",
+      "dati": "assets/hud/Joystick_Pomello.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Nastro_Titolo",
+      "categoria": "hud",
+      "immagine": "assets/hud/Nastro_Titolo.png",
+      "dati": "assets/hud/Nastro_Titolo.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Pannello_Grande",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pannello_Grande.png",
+      "dati": "assets/hud/Pannello_Grande.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Pannello_Scheda",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pannello_Scheda.png",
+      "dati": "assets/hud/Pannello_Scheda.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Pulsante_Acceso",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pulsante_Acceso.png",
+      "dati": "assets/hud/Pulsante_Acceso.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Pulsante_Chiaro",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pulsante_Chiaro.png",
+      "dati": "assets/hud/Pulsante_Chiaro.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Pulsante_Pausa",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pulsante_Pausa.png",
+      "dati": "assets/hud/Pulsante_Pausa.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Pulsante_Scuro",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pulsante_Scuro.png",
+      "dati": "assets/hud/Pulsante_Scuro.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Pulsante_Spento",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pulsante_Spento.png",
+      "dati": "assets/hud/Pulsante_Spento.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Scrigno",
+      "categoria": "hud",
+      "immagine": "assets/hud/Scrigno.png",
+      "dati": "assets/hud/Scrigno.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Segnale_Reliquiario",
+      "categoria": "hud",
+      "immagine": "assets/hud/Segnale_Reliquiario.png",
+      "dati": "assets/hud/Segnale_Reliquiario.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Speciale_Il_Becchino",
+      "categoria": "hud",
+      "immagine": "assets/hud/Speciale_Il_Becchino.png",
+      "dati": "assets/hud/Speciale_Il_Becchino.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Speciale_Il_Lampionaio",
+      "categoria": "hud",
+      "immagine": "assets/hud/Speciale_Il_Lampionaio.png",
+      "dati": "assets/hud/Speciale_Il_Lampionaio.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Speciale_La_Badessa",
+      "categoria": "hud",
+      "immagine": "assets/hud/Speciale_La_Badessa.png",
+      "dati": "assets/hud/Speciale_La_Badessa.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Speciale_La_Strega",
+      "categoria": "hud",
+      "immagine": "assets/hud/Speciale_La_Strega.png",
+      "dati": "assets/hud/Speciale_La_Strega.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Speciale_Pronta",
+      "categoria": "hud",
+      "immagine": "assets/hud/Speciale_Pronta.png",
+      "dati": "assets/hud/Speciale_Pronta.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Speciale_Ricarica",
+      "categoria": "hud",
+      "immagine": "assets/hud/Speciale_Ricarica.png",
+      "dati": "assets/hud/Speciale_Ricarica.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Stemma_Livello",
+      "categoria": "hud",
+      "immagine": "assets/hud/Stemma_Livello.png",
+      "dati": "assets/hud/Stemma_Livello.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Targa_Lapide",
+      "categoria": "hud",
+      "immagine": "assets/hud/Targa_Lapide.png",
+      "dati": "assets/hud/Targa_Lapide.json",
+      "versioneFile": 1,
+      "tag": []
+    }
+  ]
+}

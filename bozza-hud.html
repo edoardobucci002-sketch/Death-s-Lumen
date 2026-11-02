@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bozza HUD</title>
+  <meta name="description" content="Death's Lumen: gli elementi dell'HUD disegnati da Edoardo, al loro posto nel gioco.">
+  <meta name="color-scheme" content="dark">
+</head>
+<body>
+  <header class="testa">
+    <h1>Bozza dell'HUD</h1>
+    <p>Gli elementi della cartella <code>HUD</code>, al loro posto, in pixel di gioco veri. Dopo aver salvato in Aseprite lancia <code>npm run asset</code>: la pagina si aggiorna da sola.</p>
+    <p class="stato" id="stato">Carico gli asset…</p>
+  </header>
+
+  <main class="banco">
+    <section class="telefono" aria-label="Anteprima sul telefono">
+      <canvas id="schermo"></canvas>
+      <p class="didascalia" id="didascalia"></p>
+    </section>
+
+    <aside class="comandi" id="comandi">
+      <fieldset>
+        <legend>Schermata</legend>
+        <div class="scelte" data-scelta="schermata">
+          <button data-valore="partita">Partita</button>
+          <button data-valore="doni">Scelta del dono</button>
+          <button data-valore="pausa">Pausa</button>
+          <button data-valore="selezione">Selezione</button>
+          <button data-valore="fine">Fine partita</button>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Personaggio</legend>
+        <div class="scelte" data-scelta="pg" id="scelta-pg"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Telefono</legend>
+        <div class="scelte" data-scelta="telefono">
+          <button data-valore="verticale">Verticale</button>
+          <button data-valore="orizzontale">Orizzontale</button>
+        </div>
+        <label><input type="checkbox" data-opzione="tacca"> Tacca e bordi del telefono (safe area)</label>
+      </fieldset>
+      <fieldset data-solo="partita">
+        <legend>In partita</legend>
+        <label>Salute <input type="range" min="0" max="100" data-valore-num="salute"></label>
+        <label>Esperienza <input type="range" min="0" max="100" data-valore-num="esperienza"></label>
+        <label>Mietitore <input type="range" min="0" max="100" data-valore-num="mietitore"></label>
+        <label><input type="checkbox" data-opzione="boss"> Barra del Mietitore</label>
+        <label><input type="checkbox" data-opzione="joystick"> Joystick (dito appoggiato)</label>
+        <label><input type="checkbox" data-opzione="segnale"> Segnale del reliquiario</label>
+        <label><input type="checkbox" data-opzione="ricarica"> Abilità in ricarica (animata)</label>
+        <div class="riga">Salute
+          <div class="scelte" data-scelta="salutePosto">
+            <button data-valore="personaggio">sotto i piedi</button>
+            <button data-valore="alto">in alto</button>
+          </div>
+        </div>
+        <div class="riga">Anello dell'abilità
+          <div class="scelte" data-scelta="anello">
+            <button data-valore="personaggio">del personaggio</button>
+            <button data-valore="tavola">grigio → arancio</button>
+          </div>
+        </div>
+        <div class="riga">Dentro l'anello
+          <div class="scelte" data-scelta="dentro">
+            <button data-valore="icona">icona abilità</button>
+            <button data-valore="emblema">emblema</button>
+          </div>
+        </div>
+        <div class="riga">Esperienza
+          <div class="scelte" data-scelta="esperienzaColore">
+            <button data-valore="tavola">verde acqua</button>
+            <button data-valore="personaggio">colore del personaggio</button>
+          </div>
+        </div>
+        <div class="riga">Avviso
+          <div class="scelte" data-scelta="avviso">
+            <button data-valore="nessuno">nessuno</button>
+            <button data-valore="nastro">nastro</button>
+            <button data-valore="targa">lapide</button>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Ingrandimento (pixel di gioco per pixel disegnato)</legend>
+        <div class="misure" id="misure"></div>
+        <button class="piccolo" id="misure-predefinite">Torna alle misure proposte</button>
+      </fieldset>
+    </aside>
+  </main>
+
+  <section class="sezione">
+    <h2>Tutti gli elementi</h2>
+    <div class="riga-comandi">
+      <div class="scelte" data-scelta="fondoCatalogo">
+        <button data-valore="scuro">fondo scuro</button>
+        <button data-valore="chiaro">fondo chiaro</button>
+        <button data-valore="scacchi">scacchiera</button>
+        <button data-valore="cimitero">cimitero</button>
+      </div>
+      <div class="scelte" data-scelta="zoomCatalogo">
+        <button data-valore="2">×2</button>
+        <button data-valore="3">×3</button>
+        <button data-valore="4">×4</button>
+      </div>
+    </div>
+    <div class="catalogo" id="catalogo"></div>
+  </section>
+
+  <section class="sezione note">
+    <h2>Note sulle tavole</h2>
+    <ol>
+      <li><strong>Non sono pixel art vera.</strong> Nelle tavole ogni "pixel" è un quadretto di 3,6–4 pixel (10,7 negli emblemi), con bordi sfumati e una griglia che scivola di qualche decimo. Lo strumento ha trovato la griglia e ha riportato ogni elemento ai suoi pixel veri, con 32 colori come i tuoi sprite. È una base pulita, ma va ripassata a mano: macchie scure dentro i pannelli e gli anelli, qualche pixel isolato, contorni a volte spessi 2.</li>
+      <li><strong>Densità diverse.</strong> La tavola degli emblemi ha pixel quasi 3 volte più grandi delle altre: ridotti, gli emblemi sono larghi 46 px, e così non entrano nel disco dell'anello (circa 38 px). Per metterli dentro vanno ridisegnati a 36–38 px, oppure si usa l'icona dell'abilità (24 px), come adesso.</li>
+      <li><strong>Cornici dei ritratti troppo piccole.</strong> I ritratti sono 224×288; le cornici dei personaggi hanno un vano di circa 62×96. Per contenerli vanno ingrandite ×4, e allora un pixel della cornice è grande come 16 del ritratto. Se le vuoi attorno al ritratto conviene ridisegnarle a circa 250×330. Lo stesso vale per il Pannello scheda.</li>
+      <li><strong>Riempimenti adattati.</strong> Le barre piene della tavola erano più alte e più corte della finestra delle loro cornici. Le ho portate alla misura esatta (esperienza 184×5, Mietitore 204×8). La barra della salute aveva il rosso dentro la cornice: l'ho divisa in cornice vuota più riempimento.</li>
+      <li><strong>Il joystick</strong> è diviso in base e pomello (il pomello si muove). Il fondo semitrasparente è diventato un retino, come vuole la regola del pixel perfect.</li>
+      <li><strong>Anelli dell'abilità.</strong> Della tavola UI c'è la coppia grigio/arancio, ma solo con la lanterna. Gli anelli dei quattro personaggi hanno solo la versione "pronta": la versione "in ricarica" qui la ottengo spegnendo i colori. Se la vuoi disegnata, basta un secondo file per ciascuno.</li>
+      <li><strong>Segnale del reliquiario.</strong> Punta solo in diagonale. Ruotare la pixel art di angoli qualsiasi la rovina: servono la versione dritta e quella diagonale, che il gioco poi ribalta e gira di 90°.</li>
+      <li><strong>Caselle delle armi.</strong> La casella è 58×69: con 6 armi più 6 doni occupa molto spazio in verticale. Lo Stemma piccolo (25×34) potrebbe fare da casella dei doni passivi, ma per un'icona da 24 px va allargato.</li>
+      <li><strong>Pulsanti "scuro" e "spento"</strong> sono quasi uguali: conviene distinguerli di più, oppure tenerne uno solo.</li>
+    </ol>
+  </section>
+
+  <script type="module" src="/src/bozza/hud.ts"></script>
+</body>
+</html>
