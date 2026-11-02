@@ -357,4 +357,5 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Al mass
 - Altri scenari oltre al cimitero.
 - Suoni e musica originali al posto di quelli sintetizzati.
 - Lingua del gioco: solo italiano, oppure anche inglese (il titolo è in inglese).
+- Nemici con uno stile grafico diverso da quello dei personaggi (idea di Edoardo, da riprendere alla M2).
 - Torce o lumini sparsi nel cimitero, con un loro alone di luce: oggi l'unica luce è la lanterna e la mappa risulta molto buia (osservazione di Edoardo, 2 novembre 2026).

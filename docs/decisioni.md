@@ -4,7 +4,8 @@ Una riga per decisione, la più recente in alto.
 
 | Data | Decisione | Motivo |
 | --- | --- | --- |
-| 2026-11-02 | Gli sprite in gioco andranno ridisegnati più piccoli (32-48 px di altezza invece di circa 100), in linea con i numeri della v0 | I primi sprite ingame_V1 erano alti circa 100 px: personaggio troppo grande sullo schermo da 300 px, nemici visibili tardi |
+| 2026-11-02 | Sprite in gioco dei personaggi alti circa **64 px**. Quando arrivano, lo schermo di gioco sale da 300 a circa 560 px (stessa proporzione della v0: personaggio ≈ 1/9 dell'altezza) e tutte le distanze del GDD si moltiplicano per lo stesso fattore | A 32-48 px lo stile dettagliato di Edoardo non rende; a 100 px anche nemici ed effetti andrebbero disegnati enormi |
+| 2026-11-02 | ~~Sprite in gioco a 32-48 px~~ (superata dalla riga sopra) | I primi ingame_V1 erano alti circa 100 px |
 | 2026-11-02 | Nomi degli sprite in gioco: `Nome_ingame_V#.aseprite`, nella cartella del personaggio accanto al ritratto `Nome_V#.aseprite` | Scelta di Edoardo (prima si era detto `_gioco`): i ritratti già fatti non vanno rinominati |
 | 2026-11-02 | Gli sprite provvisori stanno in `segnaposto/<CATEGORIA>/` con versione V0: il primo file vero di Edoardo li sostituisce da solo | Nessun passaggio a mano quando arrivano gli sprite veri |
 | 2026-11-02 | `ALTEZZA_MINIMA` resta 300 pixel di gioco | Scelta di Edoardo |
