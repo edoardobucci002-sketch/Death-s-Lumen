@@ -2,6 +2,70 @@
   "versione": 1,
   "asset": [
     {
+      "chiave": "Acqua_santa_Fiala",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Acqua_santa_Fiala.png",
+      "dati": "assets/effetti/Acqua_santa_Fiala.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Acqua_santa_Pozza",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Acqua_santa_Pozza.png",
+      "dati": "assets/effetti/Acqua_santa_Pozza.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Anima_grande",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Anima_grande.png",
+      "dati": "assets/oggetti/Anima_grande.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Anima_media",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Anima_media.png",
+      "dati": "assets/oggetti/Anima_media.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Anima_piccola",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Anima_piccola.png",
+      "dati": "assets/oggetti/Anima_piccola.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Bastone_Esplosione",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Bastone_Esplosione.png",
+      "dati": "assets/effetti/Bastone_Esplosione.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Bastone_Proiettile",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Bastone_Proiettile.png",
+      "dati": "assets/effetti/Bastone_Proiettile.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Benedizione",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Benedizione.png",
+      "dati": "assets/effetti/Benedizione.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
       "chiave": "Bruto",
       "categoria": "nemici",
       "immagine": "assets/nemici/Bruto.png",
@@ -13,6 +77,46 @@
       ]
     },
     {
+      "chiave": "Calamita_drop",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Calamita_drop.png",
+      "dati": "assets/oggetti/Calamita_drop.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Campana_Rintocco",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Campana_Rintocco.png",
+      "dati": "assets/effetti/Campana_Rintocco.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Candela_Fiammella",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Candela_Fiammella.png",
+      "dati": "assets/effetti/Candela_Fiammella.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Cerchio_di_luce",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Cerchio_di_luce.png",
+      "dati": "assets/effetti/Cerchio_di_luce.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Falce_Rotazione",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Falce_Rotazione.png",
+      "dati": "assets/effetti/Falce_Rotazione.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
       "chiave": "Fantasma",
       "categoria": "nemici",
       "immagine": "assets/nemici/Fantasma.png",
@@ -22,6 +126,198 @@
         "walk",
         "hurt"
       ]
+    },
+    {
+      "chiave": "Fuoco_fatuo_Volo",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Fuoco_fatuo_Volo.png",
+      "dati": "assets/effetti/Fuoco_fatuo_Volo.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Acqua_santa",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Acqua_santa.png",
+      "dati": "assets/icone/Icona_Acqua_santa.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Ali_di_falena",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Ali_di_falena.png",
+      "dati": "assets/icone/Icona_Ali_di_falena.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Bastone",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Bastone.png",
+      "dati": "assets/icone/Icona_Bastone.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Benedizione",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Benedizione.png",
+      "dati": "assets/icone/Icona_Benedizione.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Calamita",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Calamita.png",
+      "dati": "assets/icone/Icona_Calamita.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Campana",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Campana.png",
+      "dati": "assets/icone/Icona_Campana.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Candela",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Candela.png",
+      "dati": "assets/icone/Icona_Candela.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Cerchio_di_luce",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Cerchio_di_luce.png",
+      "dati": "assets/icone/Icona_Cerchio_di_luce.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Clessidra",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Clessidra.png",
+      "dati": "assets/icone/Icona_Clessidra.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Cuore_di_cera",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Cuore_di_cera.png",
+      "dati": "assets/icone/Icona_Cuore_di_cera.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Erbe_amare",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Erbe_amare.png",
+      "dati": "assets/icone/Icona_Erbe_amare.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Falce",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Falce.png",
+      "dati": "assets/icone/Icona_Falce.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Fuoco_fatuo",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Fuoco_fatuo.png",
+      "dati": "assets/icone/Icona_Fuoco_fatuo.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Lama_di_luce",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Lama_di_luce.png",
+      "dati": "assets/icone/Icona_Lama_di_luce.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Lanterna",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Lanterna.png",
+      "dati": "assets/icone/Icona_Lanterna.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Pala",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Pala.png",
+      "dati": "assets/icone/Icona_Pala.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Rito_proibito",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Rito_proibito.png",
+      "dati": "assets/icone/Icona_Rito_proibito.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Sale_nero",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Sale_nero.png",
+      "dati": "assets/icone/Icona_Sale_nero.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Scudo_di_ferro",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Scudo_di_ferro.png",
+      "dati": "assets/icone/Icona_Scudo_di_ferro.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Sepoltura",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Sepoltura.png",
+      "dati": "assets/icone/Icona_Sepoltura.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Specchio",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Specchio.png",
+      "dati": "assets/icone/Icona_Specchio.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Stoppino_lungo",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Stoppino_lungo.png",
+      "dati": "assets/icone/Icona_Stoppino_lungo.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Icona_Turibolo",
+      "categoria": "icone",
+      "immagine": "assets/icone/Icona_Turibolo.png",
+      "dati": "assets/icone/Icona_Turibolo.json",
+      "versioneFile": 0,
+      "tag": []
     },
     {
       "chiave": "Il_Becchino",
@@ -120,6 +416,38 @@
       ]
     },
     {
+      "chiave": "Lama_di_luce_Fendente",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Lama_di_luce_Fendente.png",
+      "dati": "assets/effetti/Lama_di_luce_Fendente.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Lanterna_Arco",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Lanterna_Arco.png",
+      "dati": "assets/effetti/Lanterna_Arco.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pala_Impatto",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pala_Impatto.png",
+      "dati": "assets/effetti/Pala_Impatto.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pane",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Pane.png",
+      "dati": "assets/oggetti/Pane.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
       "chiave": "Pipistrello",
       "categoria": "nemici",
       "immagine": "assets/nemici/Pipistrello.png",
@@ -129,6 +457,22 @@
         "walk",
         "hurt"
       ]
+    },
+    {
+      "chiave": "Reliquiario",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Reliquiario.png",
+      "dati": "assets/oggetti/Reliquiario.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Rito_proibito",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Rito_proibito.png",
+      "dati": "assets/effetti/Rito_proibito.json",
+      "versioneFile": 0,
+      "tag": []
     },
     {
       "chiave": "Scheletro",
@@ -151,6 +495,22 @@
         "walk",
         "hurt"
       ]
+    },
+    {
+      "chiave": "Sepoltura",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Sepoltura.png",
+      "dati": "assets/effetti/Sepoltura.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Turibolo_Nube",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Turibolo_Nube.png",
+      "dati": "assets/effetti/Turibolo_Nube.json",
+      "versioneFile": 0,
+      "tag": []
     },
     {
       "chiave": "Zombi",

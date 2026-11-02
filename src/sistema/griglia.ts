@@ -40,6 +40,22 @@ export class Griglia {
     }
   }
 
+  /**
+   * Chiama visita(j) per ogni elemento nelle celle che toccano il cerchio di centro (x, y) e raggio r.
+   * Lo stesso elemento può comparire due volte (celle che condividono il secchio): chi la usa deve segnarsi chi ha già visto.
+   */
+  nelRaggio(x: number, y: number, r: number, visita: (j: number) => void): void {
+    const x0 = Math.floor((x - r) / this.cella);
+    const x1 = Math.floor((x + r) / this.cella);
+    const y0 = Math.floor((y - r) / this.cella);
+    const y1 = Math.floor((y + r) / this.cella);
+    for (let cy = y0; cy <= y1; cy++) {
+      for (let cx = x0; cx <= x1; cx++) {
+        for (let j = this.testa[this.secchio(cx, cy)]; j !== -1; j = this.seguente[j]) visita(j);
+      }
+    }
+  }
+
   private secchio(cx: number, cy: number): number {
     return (Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663)) & (SECCHI - 1);
   }

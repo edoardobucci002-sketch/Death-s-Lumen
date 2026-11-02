@@ -1,14 +1,22 @@
 /*
- * Gioco (tappa M2): il personaggio cammina nel cimitero, i nemici arrivano dal buio e feriscono al contatto.
+ * Gioco (tappa M3): il personaggio cammina nel cimitero, i nemici arrivano dal buio e feriscono al contatto.
+ * L'arma iniziale colpisce da sola, i nemici uccisi lasciano anime, a ogni livello si sceglie un dono.
  * La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?pg=becchino (personaggio), ?minuto=5 (parte da quel minuto),
- * ?nemici=400 (riempie subito il campo), ?immortale (non si muore).
+ * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (arma già a quel livello),
+ * ?automatico (sceglie da solo la prima carta a ogni livello).
  */
 import Phaser from 'phaser';
-import type { ElencoAsset } from '../sistema/asset';
+import { voce } from '../sistema/asset';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA } from '../data/nemici';
+import { ARMI_INIZIALI, COLPI } from '../data/armi';
+import { animePerLivello, CARTE } from '../data/progressione';
+import { Anime } from '../sistema/anime';
+import { Arsenale } from '../sistema/armi';
+import { Doni, type Dono } from '../sistema/doni';
+import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Hud } from '../sistema/hud';
@@ -20,7 +28,6 @@ import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
 const RITARDO_MASSIMO_MS = 250; // dopo un blocco lungo non recupera all'infinito
-const SOPRA_TUTTO = 1e7; // profondità del buio: copre personaggio e nemici
 
 export class Gioco extends Phaser.Scene {
   pg!: Personaggio;
@@ -31,15 +38,26 @@ export class Gioco extends Phaser.Scene {
   saluteMassima = 0;
   morto = false;
   orda!: Orda;
+  arsenale!: Arsenale;
+  livello = 1;
+  esperienza = 0; // anime raccolte verso il prossimo livello
+  private livelliDaScegliere = 0;
+  private anime!: Anime;
+  private effetti!: Effetti;
+  private doni!: Doni;
+  private raccolta = 0;
+  private dirX = 1; // ultima direzione in cui ha camminato (le armi colpiscono da quella parte)
+  private dirY = 0;
   private velocita = 0;
   private armatura = 0;
   private invulnerabile = 0; // secondi rimasti
   private attesaFine = 0;
   private immortale = false;
+  private automatico = false;
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
-  private giocatore!: Phaser.GameObjects.Sprite;
+  giocatore!: Phaser.GameObjects.Sprite;
   private terreno!: Phaser.GameObjects.TileSprite;
   private buio!: Phaser.GameObjects.Image;
   private barraBordo!: Phaser.GameObjects.Rectangle;
@@ -67,35 +85,48 @@ export class Gioco extends Phaser.Scene {
     this.saluteMassima = this.salute = BASE.salute + this.pg.salute;
     this.armatura = BASE.armatura + this.pg.armatura;
     this.immortale = parametri.has('immortale');
+    this.automatico = parametri.has('automatico');
     this.caso = new Caso(SEME_PREDEFINITO);
     this.x = this.y = 0;
     this.secondi = 60 * Number(parametri.get('minuto') ?? 0) || 0;
     this.morto = false;
     this.invulnerabile = this.attesaFine = this.accumulo = 0;
+    this.livello = 1;
+    this.esperienza = this.livelliDaScegliere = 0;
+    this.dirX = 1;
+    this.dirY = 0;
+    this.raccolta = BASE.raccolta;
 
     creaTerreno(this, 'terreno', SEME_PREDEFINITO);
-    this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(-SOPRA_TUTTO);
+    this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
     this.orda = new Orda(this, this.caso);
+    this.anime = new Anime(this, this.caso);
+    this.effetti = new Effetti(this);
+    this.arsenale = new Arsenale(this, this.orda, this.caso, { danno: this.pg.danno, ricarica: this.pg.ricarica, area: this.pg.area }, this.effetti);
+    const arma = ARMI_INIZIALI[this.pg.armaIniziale];
+    this.arsenale.aggiungi(arma);
+    const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
+    for (let l = 1; l < livelloProva; l++) this.arsenale.potenzia(arma);
     this.giocatore = this.add.sprite(0, 0, this.chiaveSprite);
     this.anima('idle');
-    const voce = (this.cache.json.get('elenco') as ElencoAsset).asset.find((a) => a.chiave === this.chiaveSprite);
-    if (voce?.versioneFile === 0) {
+    if (voce(this, this.chiaveSprite)?.versioneFile === 0) {
       this.giocatore.setOrigin(PIEDI_SEGNAPOSTO.x / this.giocatore.frame.realWidth, PIEDI_SEGNAPOSTO.y / this.giocatore.frame.realHeight);
     } else {
       this.giocatore.setOrigin(0.5, 1);
     }
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
-    this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(SOPRA_TUTTO);
+    this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     // barra della salute sotto i piedi, sopra il buio così si vede sempre
     const b = BARRA_SALUTE;
-    this.barraBordo = this.add.rectangle(0, 0, b.larghezza, b.altezza, b.colori.bordo).setOrigin(0).setDepth(SOPRA_TUTTO + 1);
-    this.barraVuota = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.vuota).setOrigin(0).setDepth(SOPRA_TUTTO + 2);
-    this.barraPiena = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.piena).setOrigin(0).setDepth(SOPRA_TUTTO + 3);
+    this.barraBordo = this.add.rectangle(0, 0, b.larghezza, b.altezza, b.colori.bordo).setOrigin(0).setDepth(PROFONDITA.barra);
+    this.barraVuota = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.vuota).setOrigin(0).setDepth(PROFONDITA.barra + 0.1);
+    this.barraPiena = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.piena).setOrigin(0).setDepth(PROFONDITA.barra + 0.2);
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
     this.comandi = new Comandi(interfaccia);
     this.hud = new Hud(interfaccia, () => this.scene.restart());
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.caso, this);
 
     const riempi = Number(parametri.get('nemici'));
     if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.scale.width / 2, this.scale.height / 2);
@@ -105,6 +136,8 @@ export class Gioco extends Phaser.Scene {
       this.scale.off('resize', this.ridimensiona, this);
       this.comandi.distruggi();
       this.hud.distruggi();
+      this.doni.distruggi();
+      this.anims.resumeAll();
     });
     this.disegna();
   }
@@ -115,6 +148,7 @@ export class Gioco extends Phaser.Scene {
       this.passo(PASSO);
       this.accumulo -= PASSO_MS;
     }
+    if (!this.doni.aperta) this.effetti.aggiorna(delta / 1000);
     this.disegna();
   }
 
@@ -129,6 +163,7 @@ export class Gioco extends Phaser.Scene {
       if (this.attesaFine > 0 && (this.attesaFine -= dt) <= 0) this.hud.mostraFine(this.secondi);
       return;
     }
+    if (this.doni.aperta) return; // il gioco è fermo mentre si sceglie il dono
 
     this.secondi += dt;
     const c = this.comandi;
@@ -138,10 +173,43 @@ export class Gioco extends Phaser.Scene {
     this.inMoto = c.dx !== 0 || c.dy !== 0;
     if (c.dx < 0) this.versoSinistra = true;
     else if (c.dx > 0) this.versoSinistra = false;
+    if (this.inMoto) {
+      const l = Math.hypot(c.dx, c.dy);
+      this.dirX = c.dx / l;
+      this.dirY = c.dy / l;
+    }
     this.salute = Math.min(this.saluteMassima, this.salute + this.pg.rigenerazione * dt);
 
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, c.dx, c.dy, this.scale.width / 2, this.scale.height / 2);
+    this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY);
+    this.orda.rimuoviMorti(this.lasciaAnima);
     this.contatti(dt);
+    this.esperienza += this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
+    while (this.esperienza >= animePerLivello(this.livello)) {
+      this.esperienza -= animePerLivello(this.livello);
+      this.livello++;
+      this.livelliDaScegliere++;
+    }
+    if (this.livelliDaScegliere > 0) this.apriDoni();
+  }
+
+  private lasciaAnima = (x: number, y: number, valore: number): void => {
+    this.anime.aggiungi(x, y, valore);
+    this.effetti.scoppio(x, y);
+  };
+
+  /** Ferma il gioco e mostra le carte; dopo la scelta, se ci sono altri livelli da scegliere, le rimostra. */
+  private apriDoni(): void {
+    this.anims.pauseAll();
+    this.comandi.lascia();
+    this.doni.mostra((d: Dono) => {
+      if (d.tipo === 'arma') this.arsenale.potenzia(d.arma);
+      else this.salute = Math.min(this.saluteMassima, this.salute + CARTE.paneEVino);
+      this.livelliDaScegliere--;
+      if (this.livelliDaScegliere > 0) this.apriDoni();
+      else this.anims.resumeAll();
+    });
+    if (this.automatico) this.doni.scegliPrima();
   }
 
   /** Danno da contatto: il colpo più forte tra i nemici che toccano il personaggio, poi un attimo di invulnerabilità. */
@@ -179,7 +247,7 @@ export class Gioco extends Phaser.Scene {
     const px = Math.round(this.x);
     const py = Math.round(this.y);
     const cam = this.cameras.main;
-    cam.setScroll(px - Math.floor(w / 2), py - Math.floor(h / 2));
+    cam.setScroll(px - Math.floor(w / 2) + this.effetti.scossaX, py - Math.floor(h / 2) + this.effetti.scossaY);
     this.giocatore.setPosition(px, py).setDepth(py).setFlipX(this.versoSinistra);
     // lampo bianco appena colpito; da morto il personaggio lampeggia e poi sparisce
     const lampo = this.invulnerabile > COMBATTIMENTO.invulnerabilita - COMBATTIMENTO.lampo || (this.morto && this.attesaFine > 0 && Math.floor(this.attesaFine * 12) % 2 === 0);
@@ -188,6 +256,8 @@ export class Gioco extends Phaser.Scene {
     this.giocatore.setVisible(!this.morto || this.attesaFine > 0);
     this.anima(this.inMoto ? 'walk' : 'idle');
     this.orda.disegna(cam, COMPARSA.margine);
+    this.anime.disegna(cam);
+    this.arsenale.disegna();
     this.terreno.setTilePosition(cam.scrollX, cam.scrollY);
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
     this.buio.setPosition(
@@ -201,7 +271,7 @@ export class Gioco extends Phaser.Scene {
     this.barraBordo.setPosition(bx, by).setVisible(!this.morto);
     this.barraVuota.setPosition(bx + 1, by + 1).setVisible(!this.morto);
     this.barraPiena.setPosition(bx + 1, by + 1).setSize(piena, b.altezza - 2).setVisible(!this.morto && piena > 0);
-    this.hud.aggiorna(this.secondi, !this.morto && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa);
+    this.hud.aggiorna(this.secondi, !this.morto && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello, this.esperienza / animePerLivello(this.livello));
   }
 
   /** Avvia un'animazione; se lo sprite non ha quel tag (per esempio walk), resta su idle. */

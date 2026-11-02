@@ -20,7 +20,9 @@ import { fileURLToPath } from 'node:url';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arte = resolve(process.env.DL_ARTE ?? join(repo, '..'));
-const CATEGORIE = { PERSONAGGI: 'personaggi', NEMICI: 'nemici', EFFETTI: 'effetti', OGGETTI: 'oggetti' };
+const CATEGORIE = { PERSONAGGI: 'personaggi', NEMICI: 'nemici', EFFETTI: 'effetti', OGGETTI: 'oggetti', ICONE: 'icone' };
+// effetti, oggetti e icone possono non avere tag: tutto il file è una sola animazione
+const SENZA_TAG_OK = ['effetti', 'oggetti', 'icone'];
 const TAG_AMMESSI = ['idle', 'walk', 'attack', 'special', 'hurt', 'death'];
 const NOME = /^(.+)_V(\d+)\.aseprite$/i;
 
@@ -92,7 +94,7 @@ for (const s of [...scelti.values()].sort((a, b) => a.chiave.localeCompare(b.chi
   writeFileSync(json, JSON.stringify(dati));
   const tag = (dati.meta.frameTags ?? []).map((t) => t.name);
   const strani = tag.filter((t) => !TAG_AMMESSI.includes(t));
-  if (!tag.length) avvisi.push(`${s.chiave}: nessun tag di animazione`);
+  if (!tag.length && !SENZA_TAG_OK.includes(s.categoria)) avvisi.push(`${s.chiave}: nessun tag di animazione`);
   if (strani.length) avvisi.push(`${s.chiave}: tag non previsti ${strani.join(', ')} (ammessi: ${TAG_AMMESSI.join(', ')})`);
   elenco.asset.push({ chiave: s.chiave, categoria: s.categoria, immagine: `assets/${s.categoria}/${s.chiave}.png`,
     dati: `assets/${s.categoria}/${s.chiave}.json`, versioneFile: s.versione, tag });

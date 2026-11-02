@@ -4,6 +4,9 @@
  * Pensati per personaggi alti circa 80 px (sprite ingame V5): 2,35 volte quelli della v0.
  */
 
+/** Sprite segnaposto della v0 (V0: nemici, anime): disegnati per personaggi di 34 px, si ingrandiscono di 2. */
+export const INGRANDIMENTO_SEGNAPOSTO = 2;
+
 /** Seme del caso: a parità di seme il cimitero è sempre uguale. */
 export const SEME_PREDEFINITO = 1031;
 
