@@ -18,7 +18,9 @@ const casi = [
   ['android', devices['Pixel 7']],
 ];
 let falliti = 0;
-const browser = await chromium.launch(process.env.DL_CHROMIUM ? { executablePath: process.env.DL_CHROMIUM } : {});
+// con la scheda grafica del Mac: senza, il browser disegna «a mano» e i fotogrammi al secondo non dicono nulla del telefono
+const grafica = { args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] };
+const browser = await chromium.launch(process.env.DL_CHROMIUM ? { ...grafica, executablePath: process.env.DL_CHROMIUM } : grafica);
 for (const [nome, disp] of casi) {
   const ctx = await browser.newContext(disp);
   const pag = await ctx.newPage();
@@ -114,12 +116,54 @@ for (const pg of ['lampionaio', 'becchino', 'badessa', 'strega']) {
   await pag.screenshot({ path: `prove/combattimento-${pg}.png` });
   const stato = await pag.evaluate(() => {
     const s = window.__dl.scene.getScene('Gioco');
-    return { livello: s.livello, arma: s.arsenale.possedute[0].livello };
+    const armi = s.arsenale.possedute.reduce((t, p) => t + p.livello, 0);
+    const doni = Object.values(s.passivi).reduce((t, l) => t + l, 0);
+    return { livello: s.livello, scelte: armi + doni - 1, armi: s.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`).join(', ') };
   });
-  if (carte && stato.arma < 2) errori.push("l'arma non è stata potenziata");
+  if (carte && stato.scelte < 1) errori.push('la carta scelta non ha dato niente');
   const ok = !errori.length;
   if (!ok) falliti++;
-  console.log(`${ok ? '✓' : '✗'} combattimento ${pg}: livello ${stato.livello}, arma al livello ${stato.arma}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${ok ? '✓' : '✗'} combattimento ${pg}: livello ${stato.livello}, armi: ${stato.armi}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// Arsenale: tutte le armi comuni al livello 8 insieme, e l'abilità speciale di ogni personaggio con Spazio
+{
+  const ctx = await browser.newContext(devices['iPhone 13']);
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+  await pag.goto(`${url}?armi=candela,falce,campana,fuocoFatuo,acquaSanta,lamaDiLuce&livello=8&immortale&automatico&minuto=3`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(6000);
+  await pag.screenshot({ path: 'prove/arsenale.png' });
+  const armi = await pag.evaluate(() => window.__dl.scene.getScene('Gioco').arsenale.possedute.length);
+  if (armi < 7) errori.push(`solo ${armi} armi`);
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} arsenale: ${armi} armi al livello 8 insieme${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+for (const pg of ['lampionaio', 'becchino', 'badessa', 'strega']) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?pg=${pg}&immortale&automatico&minuto=2`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(4500); // pronta dopo 4 secondi
+  await pag.keyboard.press('Space');
+  await pag.waitForTimeout(800);
+  await pag.screenshot({ path: `prove/speciale-${pg}.png` });
+  const stato = await pag.evaluate(() => {
+    const s = window.__dl.scene.getScene('Gioco');
+    return { zone: s.arsenale.zone, attesa: s.speciale.attesa };
+  });
+  if (!stato.zone || stato.attesa <= 0) errori.push("l'abilità non parte con Spazio");
+  const ok = !errori.length;
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} abilità ${pg}: ${ok ? 'parte, di nuovo pronta tra ' + Math.round(stato.attesa) + ' s' : 'non parte'}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

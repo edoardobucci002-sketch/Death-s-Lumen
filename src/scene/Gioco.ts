@@ -1,17 +1,22 @@
 /*
  * Gioco (tappa M3): il personaggio cammina nel cimitero, i nemici arrivano dal buio e feriscono al contatto.
- * L'arma iniziale colpisce da sola, i nemici uccisi lasciano anime, a ogni livello si sceglie un dono.
+ * Le armi colpiscono da sole, i nemici uccisi lasciano anime, a ogni livello si sceglie un dono;
+ * l'abilità speciale si usa con Spazio o con il pulsante in basso a sinistra.
  * La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?pg=becchino (personaggio), ?minuto=5 (parte da quel minuto),
- * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (arma già a quel livello),
- * ?automatico (sceglie da solo la prima carta a ogni livello).
+ * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (armi già a quel livello),
+ * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle).
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA } from '../data/nemici';
-import { ARMI_INIZIALI, COLPI } from '../data/armi';
+import { ARMI_COMUNI, ARMI_INIZIALI, COLPI } from '../data/armi';
+import { ABILITA } from '../data/abilita';
+import { PASSIVI, RICARICA_MINIMA, type IdDono } from '../data/doni';
+import { Speciale } from '../sistema/speciale';
+import type { Bonus } from '../sistema/armi';
 import { animePerLivello, CARTE } from '../data/progressione';
 import { Anime } from '../sistema/anime';
 import { Arsenale } from '../sistema/armi';
@@ -46,6 +51,12 @@ export class Gioco extends Phaser.Scene {
   private effetti!: Effetti;
   private doni!: Doni;
   private raccolta = 0;
+  private rigenerazione = 0;
+  private speciale!: Speciale;
+  /** Livello di ogni dono passivo (0 = non posseduto). */
+  passivi = {} as Record<IdDono, number>;
+  private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0 };
+  private areaLuce = 0;
   private dirX = 1; // ultima direzione in cui ha camminato (le armi colpiscono da quella parte)
   private dirY = 0;
   private velocita = 0;
@@ -81,9 +92,9 @@ export class Gioco extends Phaser.Scene {
     document.documentElement.style.setProperty('--accento', this.pg.colore);
     // finché un personaggio non ha il suo sprite in gioco, usa quello del Lampionaio (segnaposto)
     this.chiaveSprite = this.textures.exists(this.pg.sprite) ? this.pg.sprite : PERSONAGGI[0].sprite;
-    this.velocita = BASE.velocita * (1 + this.pg.velocita);
-    this.saluteMassima = this.salute = BASE.salute + this.pg.salute;
-    this.armatura = BASE.armatura + this.pg.armatura;
+    for (const q of PASSIVI) this.passivi[q.id] = 0;
+    this.ricalcola();
+    this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
     this.automatico = parametri.has('automatico');
     this.caso = new Caso(SEME_PREDEFINITO);
@@ -95,18 +106,23 @@ export class Gioco extends Phaser.Scene {
     this.esperienza = this.livelliDaScegliere = 0;
     this.dirX = 1;
     this.dirY = 0;
-    this.raccolta = BASE.raccolta;
 
     creaTerreno(this, 'terreno', SEME_PREDEFINITO);
     this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
     this.orda = new Orda(this, this.caso);
     this.anime = new Anime(this, this.caso);
     this.effetti = new Effetti(this);
-    this.arsenale = new Arsenale(this, this.orda, this.caso, { danno: this.pg.danno, ricarica: this.pg.ricarica, area: this.pg.area }, this.effetti);
+    this.arsenale = new Arsenale(this, this.orda, this.caso, this.bonus, this.effetti);
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
     const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
     for (let l = 1; l < livelloProva; l++) this.arsenale.potenzia(arma);
+    for (const id of (parametri.get('armi') ?? '').split(',')) {
+      const extra = ARMI_COMUNI.find((a) => a.id === id);
+      if (!extra || this.arsenale.livello(extra)) continue;
+      this.arsenale.aggiungi(extra);
+      for (let l = 1; l < livelloProva; l++) this.arsenale.potenzia(extra);
+    }
     this.giocatore = this.add.sprite(0, 0, this.chiaveSprite);
     this.anima('idle');
     if (voce(this, this.chiaveSprite)?.versioneFile === 0) {
@@ -114,7 +130,8 @@ export class Gioco extends Phaser.Scene {
     } else {
       this.giocatore.setOrigin(0.5, 1);
     }
-    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
+    this.areaLuce = this.bonus.area;
+    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (1 + this.areaLuce));
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     // barra della salute sotto i piedi, sopra il buio così si vede sempre
     const b = BARRA_SALUTE;
@@ -126,7 +143,13 @@ export class Gioco extends Phaser.Scene {
     interfaccia.replaceChildren();
     this.comandi = new Comandi(interfaccia);
     this.hud = new Hud(interfaccia, () => this.scene.restart());
-    this.doni = new Doni(interfaccia, this.arsenale, arma, this.caso, this);
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, this);
+    this.speciale = new Speciale(interfaccia, this, ABILITA[this.pg.abilita], () => {
+      if (this.morto || this.doni.aperta) return false;
+      this.arsenale.abilita(ABILITA[this.pg.abilita]);
+      vibra('media');
+      return true;
+    });
 
     const riempi = Number(parametri.get('nemici'));
     if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.scale.width / 2, this.scale.height / 2);
@@ -137,6 +160,7 @@ export class Gioco extends Phaser.Scene {
       this.comandi.distruggi();
       this.hud.distruggi();
       this.doni.distruggi();
+      this.speciale.distruggi();
       this.anims.resumeAll();
     });
     this.disegna();
@@ -178,10 +202,11 @@ export class Gioco extends Phaser.Scene {
       this.dirX = c.dx / l;
       this.dirY = c.dy / l;
     }
-    this.salute = Math.min(this.saluteMassima, this.salute + this.pg.rigenerazione * dt);
+    this.speciale.aggiorna(dt, this.bonus.ricarica);
 
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, c.dx, c.dy, this.scale.width / 2, this.scale.height / 2);
-    this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY);
+    this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, this.versoSinistra ? -1 : 1, this.scale.width / 2, this.scale.height / 2);
+    this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + this.arsenale.cura()) * dt);
     this.orda.rimuoviMorti(this.lasciaAnima);
     this.contatti(dt);
     this.esperienza += this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
@@ -191,6 +216,20 @@ export class Gioco extends Phaser.Scene {
       this.livelliDaScegliere++;
     }
     if (this.livelliDaScegliere > 0) this.apriDoni();
+  }
+
+  /** Ricalcola statistiche e bonus delle armi da personaggio e doni passivi (GDD, sezioni 2 e 5). */
+  private ricalcola(): void {
+    const per = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
+    this.saluteMassima = BASE.salute + this.pg.salute + per('cuoreDiCera');
+    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena'));
+    this.raccolta = BASE.raccolta * (1 + per('calamita'));
+    this.rigenerazione = this.pg.rigenerazione + per('erbeAmare');
+    this.armatura = BASE.armatura + this.pg.armatura + per('scudoDiFerro');
+    this.bonus.danno = this.pg.danno + per('saleNero');
+    this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * (1 - PASSIVI.find((q) => q.id === 'clessidra')!.per) ** this.passivi.clessidra);
+    this.bonus.area = this.pg.area + per('stoppinoLungo');
+    this.bonus.quantita = per('specchio');
   }
 
   private lasciaAnima = (x: number, y: number, valore: number): void => {
@@ -203,7 +242,20 @@ export class Gioco extends Phaser.Scene {
     this.anims.pauseAll();
     this.comandi.lascia();
     this.doni.mostra((d: Dono) => {
-      if (d.tipo === 'arma') this.arsenale.potenzia(d.arma);
+      if (d.tipo === 'arma') {
+        if (this.arsenale.livello(d.arma)) this.arsenale.potenzia(d.arma);
+        else this.arsenale.aggiungi(d.arma);
+      } else if (d.tipo === 'passivo') {
+        this.passivi[d.passivo.id]++;
+        const prima = this.saluteMassima;
+        this.ricalcola();
+        this.salute += this.saluteMassima - prima; // il Cuore di cera aggiunge anche salute attuale
+        // lo Stoppino lungo allarga anche l'alone della lanterna
+        if (this.bonus.area !== this.areaLuce) {
+          this.areaLuce = this.bonus.area;
+          this.ridimensiona();
+        }
+      }
       else this.salute = Math.min(this.saluteMassima, this.salute + CARTE.paneEVino);
       this.livelliDaScegliere--;
       if (this.livelliDaScegliere > 0) this.apriDoni();
@@ -282,7 +334,7 @@ export class Gioco extends Phaser.Scene {
 
   private ridimensiona(): void {
     this.terreno.setSize(this.scale.width, this.scale.height);
-    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
+    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (1 + this.areaLuce));
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
 }

@@ -36,6 +36,7 @@ export class Orda {
   private lento = new Float32Array(CAPIENZA); // parte di velocità tolta (0,3 = −30%)
   private lentoPer = new Float32Array(CAPIENZA); // secondi rimasti di rallentamento
   private lampo = new Float32Array(CAPIENZA);
+  readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
   private versoSinistra = new Uint8Array(CAPIENZA);
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private aspetto: AspettoNemico[];
@@ -45,7 +46,7 @@ export class Orda {
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
-  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo];
+  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaFalce];
 
   constructor(
     scena: Phaser.Scene,
@@ -81,6 +82,7 @@ export class Orda {
       const d = Math.hypot(dx, dy);
       if (this.lentoPer[i] > 0) this.lentoPer[i] -= dt;
       if (this.lampo[i] > 0) this.lampo[i] -= dt;
+      if (this.pausaFalce[i] > 0) this.pausaFalce[i] -= dt;
       if (d > 0.5) {
         const v = this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
         const passo = Math.min(d, v * dt);
@@ -133,6 +135,17 @@ export class Orda {
     this.lentoPer[i] = Math.max(this.lentoPer[i], secondi);
   }
 
+  /** Tira il nemico i verso (tx, ty) di passo pixel (i pesanti di meno). */
+  attira(i: number, tx: number, ty: number, passo: number, pesanti: number): void {
+    const dx = tx - this.x[i];
+    const dy = ty - this.y[i];
+    const d = Math.hypot(dx, dy);
+    if (d < 1) return;
+    const p = Math.min(d, passo * (NEMICI[this.tipo[i]].pesante ? pesanti : 1));
+    this.x[i] += (dx / d) * p;
+    this.y[i] += (dy / d) * p;
+  }
+
   /** Toglie dal campo i nemici senza salute; per ognuno chiama muore(x, y, anime). */
   rimuoviMorti(muore: (x: number, y: number, anime: number) => void): void {
     for (let i = this.numero - 1; i >= 0; i--) {
@@ -178,7 +191,7 @@ export class Orda {
     this.salute[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m);
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
-    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = 0;
+    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaFalce[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];
