@@ -2,6 +2,28 @@
   "versione": 1,
   "asset": [
     {
+      "chiave": "Bruto",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Bruto.png",
+      "dati": "assets/nemici/Bruto.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "hurt"
+      ]
+    },
+    {
+      "chiave": "Fantasma",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Fantasma.png",
+      "dati": "assets/nemici/Fantasma.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "hurt"
+      ]
+    },
+    {
       "chiave": "Il_Becchino",
       "categoria": "personaggi",
       "immagine": "assets/personaggi/Il_Becchino.png",
@@ -44,6 +66,18 @@
       ]
     },
     {
+      "chiave": "Il_Mietitore",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Il_Mietitore.png",
+      "dati": "assets/nemici/Il_Mietitore.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "hurt",
+        "special"
+      ]
+    },
+    {
       "chiave": "La_Badessa",
       "categoria": "personaggi",
       "immagine": "assets/personaggi/La_Badessa.png",
@@ -83,6 +117,50 @@
       "tag": [
         "idle",
         "walk"
+      ]
+    },
+    {
+      "chiave": "Pipistrello",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Pipistrello.png",
+      "dati": "assets/nemici/Pipistrello.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "hurt"
+      ]
+    },
+    {
+      "chiave": "Scheletro",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Scheletro.png",
+      "dati": "assets/nemici/Scheletro.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "hurt"
+      ]
+    },
+    {
+      "chiave": "Segugio",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Segugio.png",
+      "dati": "assets/nemici/Segugio.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "hurt"
+      ]
+    },
+    {
+      "chiave": "Zombi",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Zombi.png",
+      "dati": "assets/nemici/Zombi.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "hurt"
       ]
     }
   ]
