@@ -151,6 +151,11 @@ export class Menu extends Phaser.Scene {
     this.mostra(this.scelto);
   }
 
+  /** Per il Laboratorio: apre la Cappella. */
+  labApriCappella(): void {
+    this.apriCappella();
+  }
+
   private apriCappella(): void {
     this.radice.hidden = true;
     this.cappella.apri();

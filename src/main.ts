@@ -69,6 +69,11 @@ if (import.meta.env.VITE_CANALE === 'prova') {
   document.title += ' · prova';
 }
 
+// il Laboratorio (pannello per saltare a qualsiasi punto del gioco e cambiare i numeri) esiste solo sul link di prova e in sviluppo
+if (import.meta.env.VITE_CANALE === 'prova' || import.meta.env.DEV) {
+  void import('./sistema/laboratorio').then((l) => l.avviaLaboratorio(gioco));
+}
+
 // PWA: lavoro offline e installazione (non serve dentro l'app nativa)
 if ('serviceWorker' in navigator && import.meta.env.PROD && !nativo) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

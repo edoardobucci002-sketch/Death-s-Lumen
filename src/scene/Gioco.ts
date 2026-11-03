@@ -21,7 +21,7 @@ import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, ORDE, SCIAMI } from '../data/nemici';
 import { EFFETTI } from '../data/effetti';
-import { ARMI_COMUNI, ARMI_INIZIALI, COLPI } from '../data/armi';
+import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, type Arma } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { PASSIVI, RICARICA_MINIMA, type IdDono } from '../data/doni';
 import { animePerLivello, CARTE } from '../data/progressione';
@@ -38,6 +38,7 @@ import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Hud, type VoceBuild } from '../sistema/hud';
 import { vibra } from '../sistema/mobile';
 import { CALAMITA, CERA_GOCCIA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
+import { LUCE as LUCE_AFF, OMBRA as OMBRA_AFF, SACRO as SACRO_AFF, TERRA as TERRA_AFF } from '../sistema/orda';
 import { Orda } from '../sistema/orda';
 import { Minacce } from '../sistema/minacce';
 import { leggiRecord, salvaRecord } from '../sistema/record';
@@ -113,6 +114,7 @@ export class Gioco extends Phaser.Scene {
   private ultimaDanza = -99; // secondi dell'ultima Grazia data dalla Danza macabra
   private prossimoAbbaglio = 0;
   private reliquiariInAttesa = 0; // reliquiari raccolti mentre era già aperta una scelta
+  private pausaLab = false; // il Laboratorio tiene fermo il gioco
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
@@ -158,6 +160,7 @@ export class Gioco extends Phaser.Scene {
     this.sangueFreddoAttivo = false;
     this.ultimaDanza = -99;
     this.prossimoAbbaglio = this.reliquiariInAttesa = 0;
+    this.pausaLab = false;
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
@@ -289,7 +292,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Il gioco è fermo: pausa o scelta del dono. */
   private fermo(): boolean {
-    return this.pausa || this.doni.aperta;
+    return this.pausa || this.doni.aperta || this.pausaLab;
   }
 
   /** Un passo di logica: niente disegno qui. */
@@ -459,6 +462,127 @@ export class Gioco extends Phaser.Scene {
     this.bonus.quantita = per('specchio') + (this.ha('specchioRotto') ? AM.specchioRotto.proiettili : 0);
     if (this.speciale) this.speciale.caricheMassime = this.ha('ceriGemelli') ? AM.ceriGemelli.cariche : 1;
     if (this.orda) this.orda.moltSaluteElite = this.ha('ossaDelite') ? 1 + AM.ossaDelite.salute : 1;
+  }
+
+  // ——— Laboratorio (solo link di prova e sviluppo: sistema/laboratorio.ts) ———
+  // Comandi per andare subito a qualsiasi punto della partita e vedere una cosa sola, senza rigiocare tutto.
+
+  /** Per il pannello: a che punto è la partita. */
+  labStato(): { secondi: number; livello: number; salute: number; saluteMassima: number; immortale: boolean; fermo: boolean; nemici: number; rosario: boolean; pg: string } {
+    return {
+      secondi: this.secondi, livello: this.livello, salute: this.salute, saluteMassima: this.saluteMassima, immortale: this.immortale,
+      fermo: this.pausaLab, nemici: this.orda.numero, rosario: this.rosarioSbloccato, pg: this.pg.id,
+    };
+  }
+
+  labFerma(on: boolean): void {
+    this.pausaLab = on;
+    if (on) this.anims.pauseAll();
+    else if (!this.fermo()) this.anims.resumeAll();
+  }
+
+  labImmortale(on: boolean): void {
+    this.immortale = on;
+  }
+
+  /** Porta la notte al minuto m: gli eventi già passati non si ripetono, gli altri partono al loro turno. */
+  labMinuto(m: number): void {
+    this.secondi = Math.max(0, m) * 60;
+    this.prossimaElite = Math.max(ELITE.primo, Math.ceil(this.secondi / ELITE.ogni) * ELITE.ogni);
+    this.ultimoSciame = Math.ceil(this.secondi / 60) - 1;
+    this.prossimaOrda = ORDE.primo + Math.max(0, Math.ceil((this.secondi - ORDE.primo) / ORDE.ogni)) * ORDE.ogni;
+    this.mietitoriArrivati = MIETITORE.minuti.filter((q) => q * 60 < this.secondi).length;
+  }
+
+  /** Livello n, con le armi e i doni che hai. */
+  labLivello(n: number): void {
+    this.livello = Math.max(1, Math.floor(n));
+    this.esperienza = 0;
+  }
+
+  /** Un livello in più con la sua scelta di doni. */
+  labSceltaDono(): void {
+    this.livelliDaScegliere++;
+    this.livello++;
+    this.apriDoni();
+  }
+
+  labReliquiario(): void {
+    this.apriReliquiario();
+  }
+
+  /** Porta l'arma al livello l (la aggiunge se non c'è); non si scende, per togliere si riavvia. */
+  labArma(arma: Arma, l: number): void {
+    if (!this.arsenale.livello(arma)) this.arsenale.aggiungi(arma);
+    while (this.arsenale.livello(arma) < Math.min(l, CARTE.livelloMassimo)) this.arsenale.potenzia(arma);
+    this.aggiornaBuild();
+  }
+
+  labDono(id: IdDono, l: number): void {
+    this.passivi[id] = Math.max(0, l);
+    this.dopoPassivo();
+    this.aggiornaBuild();
+  }
+
+  labAmuleto(id: IdAmuleto, on: boolean): void {
+    if (on && !this.amuletiPosseduti.includes(id)) this.amuletiPosseduti.push(id);
+    if (!on) this.amuletiPosseduti = this.amuletiPosseduti.filter((x) => x !== id);
+    if (on) this.amuletiAccesi.add(id);
+    else this.amuletiAccesi.delete(id);
+    this.dopoPassivo();
+    this.aggiornaBuild();
+  }
+
+  labAmuletiSnapshot(): { posseduti: IdAmuleto[]; accesi: IdAmuleto[] } {
+    return { posseduti: [...this.amuletiPosseduti], accesi: [...this.amuletiAccesi] };
+  }
+
+  labLivelli(): { armi: { arma: Arma; livello: number }[]; doni: Record<IdDono, number> } {
+    return { armi: this.arsenale.possedute.map((p) => ({ arma: p.arma, livello: p.livello })), doni: { ...this.passivi } };
+  }
+
+  labRosario(on: boolean): void {
+    this.rosarioSbloccato = on;
+  }
+
+  labEvento(nome: 'elite' | 'seth1' | 'seth2' | 'orda' | 'sciame' | 'pane' | 'calamita' | 'reliquiarioATerra' | 'cera' | 'anime' | 'cura' | 'grazia' | 'eliminaNemici' | 'riempi' | 'vittoria' | 'morte'): void {
+    const mezzaL = this.scale.width / 2, mezzaA = this.scale.height / 2, s = this.secondi;
+    switch (nome) {
+      case 'elite': this.orda.nasciElite(s, this.x, this.y, mezzaL, mezzaA); break;
+      case 'seth1': this.orda.nasciMietitore(s, 0, this.x, this.y, mezzaL, mezzaA); break;
+      case 'seth2': this.orda.nasciMietitore(s, 1, this.x, this.y, mezzaL, mezzaA); break;
+      case 'orda': this.orda.orda(s, NEMICI.findIndex((t) => t.id === ORDE.tipi[ORDE.tipi.length - 1].tipo), ORDE.base, 0, this.x, this.y, mezzaL, mezzaA); break;
+      case 'sciame': this.orda.sciame(s, ID_FANTASMA, SCIAMI.base, this.x, this.y, mezzaL, mezzaA); break;
+      case 'pane': this.oggetti.aggiungi(PANE, this.x + 40, this.y - 40); break;
+      case 'calamita': this.oggetti.aggiungi(CALAMITA, this.x - 40, this.y - 40); break;
+      case 'reliquiarioATerra': this.oggetti.aggiungi(RELIQUIARIO, this.x, this.y - 70); break;
+      case 'cera': for (let k = 0; k < 10; k++) this.oggetti.aggiungi(CERA_GOCCIA, this.x - 60 + k * 14, this.y + 40); break;
+      case 'anime': this.anime.aggiungi(this.x + 60, this.y, 50, this.x, this.y); break;
+      case 'cura': this.salute = this.saluteMassima; break;
+      case 'grazia': this.iniziaGrazia(); break;
+      case 'eliminaNemici': for (let i = 0; i < this.orda.numero; i++) this.orda.salute[i] = 0; break;
+      case 'riempi': this.orda.riempi(400, s, this.x, this.y, mezzaL, mezzaA); break;
+      case 'vittoria':
+        this.finito = true;
+        this.inMoto = false;
+        this.mostraFine(true);
+        break;
+      case 'morte':
+        this.salute = 0;
+        this.morto = this.finito = true;
+        this.attesaFine = COMBATTIMENTO.attesaFine;
+        this.inMoto = false;
+        break;
+    }
+  }
+
+  /** Lascia lo stato dell'affinità (luce, sacro, ombra, terra) ai nemici vicini: due stati diversi fanno la reazione. */
+  labStatoVicini(aff: 'luce' | 'sacro' | 'ombra' | 'terra'): void {
+    this.arsenale.abbaglia(this.x, this.y - COLPI.corpo, 260, { luce: LUCE_AFF, sacro: SACRO_AFF, ombra: OMBRA_AFF, terra: TERRA_AFF }[aff]);
+  }
+
+  labPausa(): void {
+    this.apriPausa();
   }
 
   // ——— Rosario ———

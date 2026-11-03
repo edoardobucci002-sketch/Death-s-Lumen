@@ -246,13 +246,13 @@ export class Arsenale {
     this.effetti.reazione(this.px, this.py, raggio, REAZIONI.rivelazione.colore, REAZIONI.rivelazione.bordo, REAZIONI.durataEffetto);
   }
 
-  /** Lucciola: abbaglia i nemici entro raggio dal personaggio (senza danno); le reazioni si eseguono a fine passo. */
-  abbaglia(x: number, y: number, raggio: number): void {
+  /** Lucciola (e Laboratorio): lascia lo stato dell'affinità aff ai nemici entro raggio (senza danno); le reazioni si eseguono a fine passo. */
+  abbaglia(x: number, y: number, raggio: number, aff: number = LUCE): void {
     const o = this.orda, r2 = raggio * raggio;
     for (let j = 0; j < o.numero; j++) {
       const dx = o.x[j] - x, dy = o.y[j] - y;
       if (dx * dx + dy * dy > r2) continue;
-      const r = o.marca(j, LUCE);
+      const r = o.marca(j, aff);
       if (r) this.accoda(r, j, 0);
     }
   }

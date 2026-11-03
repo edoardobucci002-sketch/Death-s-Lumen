@@ -179,7 +179,22 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 - Sul Mac al massimo un server acceso (`npm run anteprima`, porta 4173). Spegnilo quando hai finito.
 - Il service worker tiene separate le copie offline dei due link (`tools/genera-sw.mjs`). Salvataggi e record invece sono in comune, perché il sito è lo stesso.
 
-## Revisioni con gli artifact (deciso il 3 novembre 2026)
+## Il Laboratorio (deciso il 3 novembre 2026)
+
+Edoardo è l'unico sviluppatore: non può rigiocare tutta la notte per vedere una cosa sola, e gli artifact con le foto non gli bastano. Sul link `/prova/` (e in `npm run dev`, mai su `main`) c'è il **Laboratorio**: il pulsante «LAB» sul bordo sinistro apre un pannello (`src/sistema/laboratorio.ts`) con:
+
+- **Partita**: vai a qualsiasi minuto o livello, immortale, cura, nemici (elimina, riempi 400), cambia personaggio;
+- **Eventi**: élite, Seth, orde, sciami, drop (pane, calamita, reliquiario, Cera), stati e reazioni, Grazia, vittoria e sconfitta;
+- **Oggetti**: armi, doni e amuleti a qualsiasi livello;
+- **Numeri**: ogni numero di `src/data/` si cambia al volo (restano anche ricaricando); «Copia le modifiche per Claude» dà l'elenco da incollare in chat;
+- **Schermate**: menu, Cappella, pausa, scelta del dono, reliquiario, fine;
+- **Salvataggio**: Cera, sblocchi, ceri.
+
+**Regola per ogni nuova funzione**: aggiungi i comandi nel Laboratorio (metodi `lab…` in `Gioco.ts`, scheda in `laboratorio.ts`) così Edoardo la raggiunge subito. Ogni consegna dice «apri LAB → scheda X → tocca Y per vedere Z». Le funzioni nuove nascono con il loro punto di accesso nel Laboratorio, non solo nelle schermate.
+
+## Revisioni con gli artifact (deciso il 3 novembre 2026; dal Laboratorio solo per i casi che non si possono toccare)
+
+Per vedere e provare le cose c'è il Laboratorio (qui sopra). Gli artifact restano solo per decisioni da confrontare a parole o a schizzi (proposte, questionari).
 
 Quando una modifica tocca molti elementi (HUD, schermate, scritte, più personaggi), Edoardo la rivede in un **artifact su claude.ai**, separato dall'app, invece di giocare o di aprire pagine sul Mac.
 
