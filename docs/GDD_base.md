@@ -43,13 +43,14 @@ Mondo inventato: niente riferimenti alla realtà come feste, luoghi o fatti stor
 - **Il Ceraiolo**: il custode della Cappella. Personaggio guida, non giocabile, una specie di tutorial raccontato dentro il gioco. Fa le candele con la Cera che si riporta dalle veglie, ed è lui a riparare l'ampolla della fiaschetta.
 - **La Fiaschetta di Lumen** sarà un oggetto da sbloccare dopo qualche notte, con una questline (proposta sotto). Per ora nel gioco c'è dalla prima notte, con 3 sorsi. Disegno: `HUD/Pulsanti/Fiaschetta_Lumen_V1.aseprite`, 4 fotogrammi (piena, 2/3, 1/3, vuota).
 
-**Proposte da decidere**
-- Le anime che si raccolgono sono il Lumen liberato dai rinnovati abbattuti: farle proprie fa crescere (i livelli) e lascia riposare quei morti.
-- La Cappella è l'ultimo luogo acceso; la Cera tiene vive le sue candele (miglioramenti permanenti).
-- Chi sostiene il Rinnovo tiene in piedi i propri cari consumando il Lumen dei vivi: nessuna delle due parti ha del tutto torto.
-- I quattro personaggi stanno in punti diversi del conflitto: il Lampionaio guida i morti a spegnersi; il Becchino forse ha visto tornare qualcuno che amava; la Badessa è combattuta, perché la sua fede promette un ritorno; la Strega forse sa come è cominciato il Rinnovo.
-- Spezzare il Rinnovo di Seth potrebbe essere la vittoria finale della trama.
-- Questline della fiaschetta: ampolla incrinata lasciata da un'élite (dalla terza notte) → riparata dal Ceraiolo con la Cera → si riempie per la prima volta battendo Seth (1 sorso) → secondo e terzo sorso più avanti.
+**Deciso con Edoardo (proposte chiuse il 3 novembre 2026)**
+- **Le anime sono Lumen liberato** dai rinnovati abbattuti: farle proprie fa crescere (i livelli) e lascia riposare quei morti. All'inizio è un gesto puro; più avanti il mondo lo mette in dubbio: in un mondo che per debellare il male ha strumentalizzato i defunti, raccogliere Lumen per rafforzarsi può essere visto come oggettificare le anime. Il giocatore lo capisce da solo.
+- **Le altre aberrazioni** (animali, mostri…) sono un miscuglio di Lumen e sentimenti contrastanti che ha dato vita a mostruosità.
+- **Chi sostiene il Rinnovo** tiene in piedi i propri cari con il Lumen dei vivi. Si cita qualche volta, solo in dialoghi e descrizioni: è ambiguo ma mostrato con tenerezza, l'ingenuità dei vivi davanti ai propri morti. Il giocatore si fa da solo un'opinione; nessuna delle due parti ha del tutto torto.
+- **La Cappella** è l'ultimo luogo acceso; la Cera tiene vive le sue candele (miglioramenti permanenti).
+- **I quattro personaggi** hanno posizioni diverse nel conflitto (il Lampionaio accompagna i morti a spegnersi; il Becchino forse ha visto tornare un caro; la Badessa è combattuta perché la sua fede promette un ritorno; la Strega forse sa come è cominciato il Rinnovo). La loro storia si riprende più avanti.
+- **La vittoria finale** (spezzare il Rinnovo di Seth) è un **finto finale** che porta al gioco vero: una specie di endgame in cui si scopre tutto su trama e Lumen. Seth non è l'unico boss e il cimitero non è l'unica ambientazione.
+- **Questline della fiaschetta**: ampolla incrinata lasciata da un'élite (dalla terza notte) → riparata dal Ceraiolo con la Cera → si riempie battendo Seth (1 sorso) → secondo e terzo sorso più avanti (idea: il Seth del minuto 10, poi la prima alba). Si svilupperà meglio quando ci sarà il Ceraiolo. Quando la fiaschetta diventerà uno sblocco, rilanciare la simulazione.
 
 ## 2. Personaggi
 
