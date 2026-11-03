@@ -455,7 +455,7 @@ export class Orda {
         // colpito: bianco; il Mietitore che sta per scattare pulsa di rosso
         s.setTint(this.lampo[i] > 0 ? 0xffffff : 0xc2412d).setTintMode(Phaser.TintModes.FILL);
       } else if (this.ultimoStato[i] && Math.floor(this.tempo * STATI.lampi * 2) % 2 === 0) {
-        s.setTint(COLORE_STATO[this.ultimoStato[i]]).setTintMode(Phaser.TintModes.ADD); // lo stato lampeggia del suo colore
+        s.setTint(COLORE_STATO[this.ultimoStato[i]]).setTintMode(Phaser.TintModes.FILL); // lo stato lampeggia del suo colore pieno
       } else if (this.elite[i]) {
         s.setTint(ELITE.alone).setTintMode(Phaser.TintModes.ADD);
       } else if (s.tintMode !== Phaser.TintModes.MULTIPLY) {

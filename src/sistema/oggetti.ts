@@ -1,5 +1,6 @@
 /*
- * Oggetti a terra: pane (salute), calamita (attira tutte le anime) e reliquiari (potenziamenti).
+ * Oggetti a terra: pane (salute), calamita (attira tutte le anime), reliquiari (potenziamenti) e gocce di Cera
+ * (la valuta della Cappella: rare, volano verso il personaggio come le anime ma più piano).
  * Si raccolgono passandoci sopra. Si disegnano sopra il buio, come le anime;
  * un reliquiario fuori dallo schermo è indicato da un segnale lampeggiante sul bordo (HUD/Segnali/Segnale_Reliquiario).
  */
@@ -12,8 +13,35 @@ import { DROP } from '../data/oggetti';
 export const PANE = 0;
 export const CALAMITA = 1;
 export const RELIQUIARIO = 2;
-const SPRITE = [DROP.pane.sprite, DROP.calamita.sprite, DROP.reliquiario.sprite];
-const MAX_OGGETTI = 64;
+export const CERA_GOCCIA = 3;
+const SPRITE = [DROP.pane.sprite, DROP.calamita.sprite, DROP.reliquiario.sprite, DROP.cera.sprite];
+const MAX_OGGETTI = 128;
+
+/** La goccia di cera, provvisoria, disegnata qui in pixel art (8×11) finché Edoardo non ne disegna una. */
+const GOCCIA = [
+  '...OO...',
+  '..OYYO..',
+  '..OYYO..',
+  '.OYYYYO.',
+  '.OYWYYO.',
+  'OYWYYYYO',
+  'OYWYYYYO',
+  'OYYYYYAO',
+  'OYYYYAAO',
+  '.OAAAAO.',
+  '..OOOO..',
+];
+function creaTexturaGoccia(scena: Phaser.Scene): void {
+  if (scena.textures.exists(DROP.cera.sprite)) return;
+  const c = scena.textures.createCanvas(DROP.cera.sprite, 8, GOCCIA.length)!;
+  const colori: Record<string, string> = { O: '#3a2208', Y: '#f2cf6a', W: '#fff4c8', A: '#c98a2c' };
+  GOCCIA.forEach((riga, y) => [...riga].forEach((ch, x) => {
+    if (ch === '.') return;
+    c.context.fillStyle = colori[ch];
+    c.context.fillRect(x, y, 1, 1);
+  }));
+  c.refresh();
+}
 const MAX_SEGNALI = 6;
 
 export class Oggetti {
@@ -27,6 +55,7 @@ export class Oggetti {
   private zSegnale = ingr('segnale', misureHud());
 
   constructor(scena: Phaser.Scene) {
+    creaTexturaGoccia(scena);
     for (let i = 0; i < MAX_OGGETTI; i++) {
       this.sprite.push(scena.add.sprite(0, 0, DROP.pane.sprite).setScale(DROP.ingrandimento).setDepth(PROFONDITA.anime).setVisible(false));
     }
@@ -41,14 +70,26 @@ export class Oggetti {
     this.x[i] = x;
     this.y[i] = y;
     this.tipo[i] = tipo;
-    this.sprite[i].setTexture(SPRITE[tipo]).setVisible(true).play(`${SPRITE[tipo]}:idle`);
+    const s = this.sprite[i].setTexture(SPRITE[tipo]).setVisible(true);
+    if (tipo === CERA_GOCCIA) s.stop().setScale(DROP.cera.ingrandimento);
+    else s.setScale(DROP.ingrandimento).play(`${SPRITE[tipo]}:idle`);
   }
 
-  /** Raccoglie ciò che il personaggio (gx, gy) tocca; per ognuno chiama raccogli(tipo). */
-  aggiorna(gx: number, gy: number, raccogli: (tipo: number) => void): void {
+  /** Raccoglie ciò che il personaggio (gx, gy) tocca; per ognuno chiama raccogli(tipo). Le gocce di Cera entro `raggioCera` volano verso di lui. */
+  aggiorna(dt: number, gx: number, gy: number, raggioCera: number, raccogli: (tipo: number) => void): void {
     for (let i = this.numero - 1; i >= 0; i--) {
-      const dx = gx - this.x[i];
-      const dy = gy - this.y[i];
+      let dx = gx - this.x[i];
+      let dy = gy - this.y[i];
+      if (this.tipo[i] === CERA_GOCCIA) {
+        const d = Math.hypot(dx, dy);
+        if (d < raggioCera && d > 0) {
+          const passo = Math.min(d, DROP.cera.volo * dt);
+          this.x[i] += (dx / d) * passo;
+          this.y[i] += (dy / d) * passo;
+          dx = gx - this.x[i];
+          dy = gy - this.y[i];
+        }
+      }
       if (dx * dx + dy * dy > DROP.presa * DROP.presa) continue;
       const tipo = this.tipo[i];
       this.togli(i);

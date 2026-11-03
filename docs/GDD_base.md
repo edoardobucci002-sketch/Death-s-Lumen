@@ -384,7 +384,7 @@ Simulazione (3/11, 24 notti per personaggio): circa 300–1000 reazioni a notte.
 
 Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è la prima parte: Cera, Cappella a elenco, ceri votivi, Seconda candela, personaggi da sbloccare, salvataggio.
 
-- **Cera a fine veglia**, anche persa: 10 per minuto intero, 5 per élite, 40 per ogni Seth sconfitto, 100 per l'alba. Compare nella schermata di fine («+N Cera per la Cappella»); il conto voce per voce è nella Cappella.
+- **Cera a terra** (3/11, dopo la prova di Edoardo; prima era un conto a fine veglia): i nemici lasciano gocce di cera che si raccolgono come le anime (volano verso il personaggio da più vicino e più piano), molto più rare delle anime: 0,4% dei nemici comuni, 3 gocce da un'élite, 10 da Seth; ogni goccia vale 1. Più 100 per l'alba. Il contatore «Cera N» sta sotto quello delle anime. La si porta a casa anche morendo; compare nella schermata di fine («+N Cera per la Cappella»). Numeri in `DROP.cera` (`data/oggetti.ts`) e `CERA` (`data/meta.ts`). Goccia provvisoria disegnata dal codice, da sostituire.
 - **Ceri votivi**: 5 livelli, costo 30, 60, 100, 150, 220 Cera (560 per cero). Valgono per tutti i personaggi e si possono spegnere uno a uno.
 
 | Cero | Per livello | Al massimo |

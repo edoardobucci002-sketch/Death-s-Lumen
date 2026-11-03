@@ -108,6 +108,7 @@ export class Hud {
   private orologio = blocco('hud-orologio');
   private livello = blocco('hud-livello', immagine('Stemma_Livello'), blocco('hud-livello-numero'));
   private anime = blocco('hud-anime');
+  private cera = blocco('hud-cera');
   private icone = blocco('hud-icone');
   private avvisoEl = blocco('hud-avviso', immagine('Nastro_Titolo'), blocco('hud-avviso-testo'), blocco('hud-avviso-sotto'));
   private pausaTasto = document.createElement('button');
@@ -118,6 +119,7 @@ export class Hud {
   private m: MisureHud = misureHud();
   private ultimoSecondo = -1;
   private ultimoLivello = -1;
+  private ultimaCera = -1;
   private ultimeAnime = -1;
   private ultimoBoss = -2;
   private timerAvviso = 0;
@@ -151,7 +153,7 @@ export class Hud {
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
       tasto('Pulsante_Chiaro', 'Personaggi', { azione: 'menu' }),
     );
-    this.radice.append(this.bordo, this.xp.el, this.orologio, this.livello, this.anime, this.icone, this.mietitore.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
+    this.radice.append(this.bordo, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.icone, this.mietitore.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
     this.radice.addEventListener('click', (e) => {
       const b = (e.target as Element).closest('button');
       if (!b) return;
@@ -181,7 +183,7 @@ export class Hud {
   }
 
   /** Aggiorna solo quando qualcosa cambia davvero, per non toccare la pagina a ogni fotogramma. */
-  aggiorna(secondi: number, saluteBassa: boolean, livello: number, parteEsperienza: number, anime: number, boss: number): void {
+  aggiorna(secondi: number, saluteBassa: boolean, livello: number, parteEsperienza: number, anime: number, boss: number, cera = 0): void {
     const s = Math.floor(secondi);
     if (s !== this.ultimoSecondo) {
       this.ultimoSecondo = s;
@@ -195,6 +197,10 @@ export class Hud {
     if (a !== this.ultimeAnime) {
       this.ultimeAnime = a;
       this.anime.textContent = `◆ ${a}`;
+    }
+    if (cera !== this.ultimaCera) {
+      this.ultimaCera = cera;
+      this.cera.textContent = `Cera ${cera}`;
     }
     this.xp.mostra(parteEsperienza, this.m);
     // boss: parte di salute rimasta, oppure −1 se non c'è
@@ -312,6 +318,7 @@ export class Hud {
     misura(num, rn.l, rn.a, zc, m);
     Object.assign(num.style, { fontSize: `${TESTI.livello * zc * px}px`, lineHeight: `${rn.a * zc * px}px` });
     Object.assign(this.anime.style, { right: `${b.d * px}px`, top: `${(b.a + 4) * px}px`, fontSize: `${16 * zc * px}px` });
+    Object.assign(this.cera.style, { right: `${b.d * px}px`, top: `${(b.a + 4 + 14 * zc) * px}px`, fontSize: `${14 * zc * px}px` });
     // caselle: armi nella prima fila, doni nella seconda
     const yc = b.a + ms.h * zc + 4, passo = (CASELLA.lato + CASELLA.spazio) * zc;
     let file = 0;

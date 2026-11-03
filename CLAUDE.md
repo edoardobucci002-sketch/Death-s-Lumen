@@ -126,7 +126,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 ## Mobile (obbligatorio fin dalla prima tappa)
 
 - Controlli touch: joystick virtuale dove si appoggia il dito, pulsante dell'abilità in basso a sinistra con la fiaschetta accanto, pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio (abilità), F (fiaschetta), P, M, 1-2-3.
-- Rispetta le safe area (notch, Dynamic Island, barre di sistema). Funziona sia in verticale sia in orizzontale.
+- Rispetta le safe area (notch, Dynamic Island, barre di sistema). **Su telefono il gioco è solo in verticale** (deciso il 3 novembre 2026); su computer e tablet è in orizzontale, come Vampire Survivors.
 - Comportamento dell'app:
   - pausa automatica quando l'app va in background;
   - schermo sempre acceso durante la partita;
@@ -139,7 +139,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 ## Verifica, prima di dire che una tappa è finita
 
 1. `npm run build` senza errori né avvisi di tipo.
-2. Prova nel browser con Playwright (`npm run prova`) in viewport desktop, iPhone verticale e iPhone orizzontale, più un Android: niente errori in console.
+2. Prova nel browser con Playwright (`npm run prova`) in viewport desktop e iPhone verticale, più un Android verticale: niente errori in console.
    - **Guarda gli screenshot solo se la modifica cambia quello che si vede** (HUD, schermate, scritte, sprite, effetti). Per logica e bilanciamento basta che la prova passi senza errori.
    - Le immagini consumano molti token e restano nella conversazione: aprine il minimo indispensabile (di solito una per viewport toccato).
 3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Leggi il riepilogo a schermo; apri `prove/sim.json` solo per indagare un risultato strano. Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
@@ -183,7 +183,7 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 
 Quando una modifica tocca molti elementi (HUD, schermate, scritte, più personaggi), Edoardo la rivede in un **artifact su claude.ai**, separato dall'app, invece di giocare o di aprire pagine sul Mac.
 
-- **Contenuto**: le schermate interessate, fotografate con Playwright dalla build di `prova` su iPhone verticale, iPhone orizzontale e computer (più Android se serve), e tutto quello che c'è da decidere.
+- **Contenuto**: le schermate interessate, fotografate con Playwright dalla build di `prova` su iPhone verticale e computer (più Android verticale se serve), e tutto quello che c'è da decidere.
 - **Questionario, sempre**: ogni artifact ha un questionario da compilare. Ogni domanda ha «Va bene» / «Cambia» e un campo per la nota o la proposta. In fondo c'è un **riassunto che si aggiorna in tempo reale** a ogni risposta, con il pulsante «Copia il riassunto», da incollare in chat: così sai subito cosa va e cosa no. Quando c'è da dire di più, Edoardo scrive direttamente in chat.
 - **Vita breve**: un artifact si apre quando serve e si **elimina quando non serve più**, cioè quando le risposte sono arrivate e applicate. Proponilo a Edoardo ed elimina solo dopo il suo sì.
 - La bozza dell'HUD (`npm run bozza`, porta 5190) non si tiene accesa per Edoardo: per lui ci sono gli artifact. Resta uno strumento di verifica tuo (per esempio «Verifica tutti i telefoni»): spegnila quando hai finito.

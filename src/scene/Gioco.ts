@@ -37,7 +37,7 @@ import { Doni, type Dono } from '../sistema/doni';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Hud, type VoceBuild } from '../sistema/hud';
 import { vibra } from '../sistema/mobile';
-import { CALAMITA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
+import { CALAMITA, CERA_GOCCIA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
 import { Orda } from '../sistema/orda';
 import { Minacce } from '../sistema/minacce';
 import { leggiRecord, salvaRecord } from '../sistema/record';
@@ -101,6 +101,7 @@ export class Gioco extends Phaser.Scene {
   private meta!: BonusMeta; // ceri accesi della Cappella
   private candelaUsata = false; // Seconda candela
   private eliteUccise = 0;
+  private ceraRaccolta = 0; // gocce di Cera raccolte in questa veglia
   private sethSconfitti = 0;
   private inMoto = false;
   private versoSinistra = false;
@@ -139,7 +140,7 @@ export class Gioco extends Phaser.Scene {
     for (const q of PASSIVI) this.passivi[q.id] = 0;
     this.grazia = 0;
     this.candelaUsata = false;
-    this.eliteUccise = this.sethSconfitti = 0;
+    this.eliteUccise = this.sethSconfitti = this.ceraRaccolta = 0;
     this.meta = bonusMeta(carica(), parametri.get('meta') ?? (parametri.has('bot') ? '0' : null));
     this.ricalcola();
     this.salute = this.saluteMassima;
@@ -345,7 +346,7 @@ export class Gioco extends Phaser.Scene {
       this.animeTotali += raccolte;
       suona('anima');
     }
-    this.oggetti.aggiorna(this.x, this.y - COLPI.corpo, this.raccogli);
+    this.oggetti.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta * 0.6, this.raccogli);
     this.sim?.passo(this.secondi, this.livello, this.salute, this.orda);
     while (this.esperienza >= animePerLivello(this.livello)) {
       this.esperienza -= animePerLivello(this.livello);
@@ -448,6 +449,9 @@ export class Gioco extends Phaser.Scene {
     this.effetti.scoppio(x, y);
     this.sim?.ucciso();
     for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
+    // gocce di Cera: rare dai nemici comuni, qualcuna in più da élite e Seth
+    const gocce = reliquiari === MIETITORE.reliquiari ? DROP.cera.perSeth : reliquiari > 0 ? DROP.cera.perElite : this.caso.numero() < DROP.cera.probabilita ? 1 : 0;
+    for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * 14, y + 10);
     // la fiaschetta si ricarica: un sorso per un'élite, tutta per il Mietitore
     if (reliquiari === MIETITORE.reliquiari) {
       this.fiaschetta.ricarica(FIASCHETTA.sorsi);
@@ -470,7 +474,10 @@ export class Gioco extends Phaser.Scene {
 
   private raccogli = (tipo: number): void => {
     this.sim?.raccolto(tipo);
-    if (tipo === PANE) {
+    if (tipo === CERA_GOCCIA) {
+      this.ceraRaccolta += CERA.goccia;
+      suona('cera');
+    } else if (tipo === PANE) {
       const prima = this.salute;
       this.salute = Math.min(this.saluteMassima, this.salute + DROP.pane.cura);
       this.sim?.curato('pane', this.salute - prima);
@@ -575,10 +582,7 @@ export class Gioco extends Phaser.Scene {
    * se un personaggio si è sbloccato con un'impresa. Restituisce il totale e il nome sbloccato (o null).
    */
   private contaCera(vittoria: boolean): { totale: number; sbloccato: string | null } {
-    const minuti = Math.floor(this.secondi / 60), e = this.eliteUccise, n = this.sethSconfitti;
-    const voci: VoceVeglia[] = [{ nome: minuti === 1 ? '1 minuto' : `${minuti} minuti`, cera: minuti * CERA.perMinuto }];
-    if (e) voci.push({ nome: e === 1 ? '1 élite' : `${e} élite`, cera: e * CERA.perElite });
-    if (n) voci.push({ nome: n === 1 ? 'Seth sconfitto' : `Seth sconfitto ${n} volte`, cera: n * CERA.perSeth });
+    const voci: VoceVeglia[] = [{ nome: 'Gocce raccolte', cera: this.ceraRaccolta }];
     if (vittoria) voci.push({ nome: "L'alba", cera: CERA.alba });
     const totale = voci.reduce((t, v) => t + v.cera, 0);
     if (this.sim || this.immortale) return { totale, sbloccato: null };
@@ -692,7 +696,7 @@ export class Gioco extends Phaser.Scene {
     this.hud.aggiorna(
       this.secondi, !this.finito && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello,
       this.esperienza / animePerLivello(this.livello), this.animeTotali,
-      boss >= 0 ? Math.max(0, this.orda.salute[boss] / this.orda.saluteMassima[boss]) : -1,
+      boss >= 0 ? Math.max(0, this.orda.salute[boss] / this.orda.saluteMassima[boss]) : -1, this.ceraRaccolta,
     );
   }
 

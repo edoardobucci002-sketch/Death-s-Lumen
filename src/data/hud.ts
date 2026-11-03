@@ -40,6 +40,13 @@ export const INGRANDIMENTO: Record<string, number> = {
  * dove altrimenti pausa e abilità sarebbero grandi la metà.
  */
 export const PUNTI_MINIMI_PER_PIXEL = 0.6;
+/**
+ * L'HUD della partita (barre, caselle, abilità, pausa, avvisi) deve restare leggibile con il dito e l'occhio:
+ * su un telefono in verticale un pixel di gioco è ~0,67 punti e le barre risultavano minuscole.
+ * Questi gruppi raddoppiano finché un pixel di gioco è sotto questa soglia (computer e tablet non cambiano).
+ */
+export const PUNTI_MINIMI_PARTITA = 1.0;
+export const GRUPPI_PARTITA = ['barre', 'salute', 'caselle', 'speciale', 'pausa', 'segnale', 'avvisi'];
 /** Gruppi che non si ingrandiscono con la regola qui sopra (la cornice del ritratto non ci starebbe). */
 export const SENZA_RADDOPPIO = ['ritratto'];
 /** Area di tocco invisibile attorno a pausa e abilità, in punti per lato: il dito li prende anche appena fuori dal disegno. */

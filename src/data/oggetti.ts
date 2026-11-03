@@ -7,6 +7,9 @@ export const DROP = {
   // e senza limite cadevano 18 pani e 5 calamite al minuto (M8, dopo la prova di Edoardo)
   pane: { probabilita: 0.009, ogni: 45, cura: 40, sprite: 'Pane' },
   calamita: { probabilita: 0.0025, ogni: 180, sprite: 'Calamita_drop' }, // attira tutte le anime della mappa
+  // la Cera cade rara (molto meno delle anime): da un nemico comune, più gocce da élite e Seth.
+  // La Cera di una veglia = gocce raccolte + il premio dell'alba (data/meta.ts)
+  cera: { probabilita: 0.004, perElite: 3, perSeth: 10, ingrandimento: 2, volo: 260, sprite: 'Goccia_cera' },
   reliquiario: {
     sprite: 'Reliquiario',
     tre: 0.25, // 25% tre potenziamenti, altrimenti uno

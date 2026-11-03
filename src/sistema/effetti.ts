@@ -8,6 +8,7 @@
 import Phaser from 'phaser';
 import { Caso } from './caso';
 import { EFFETTI } from '../data/effetti';
+import { REAZIONI } from '../data/stati';
 
 /** Ordine di disegno, dal basso verso l'alto. Personaggio e nemici stanno in mezzo, ordinati per i piedi. */
 export const PROFONDITA = {
@@ -108,7 +109,7 @@ export class Effetti {
 
   /** Cerchio di una reazione in (x, y): pieno, poi a retino, poi sparisce. Colori come '#rrggbb'. */
   reazione(x: number, y: number, raggio: number, colore: string, bordo: string, durata: number): void {
-    const r = Math.round(raggio);
+    const r = Math.round(raggio * REAZIONI.ingrandimentoEffetto);
     const chiave = `reazione-${r}-${colore}-${bordo}`;
     if (!this.scena.textures.exists(`${chiave}-0`)) creaReazione(this.scena, chiave, r, colore, bordo);
     const i = this.prossimaReazione;

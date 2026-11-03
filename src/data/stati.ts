@@ -20,16 +20,16 @@ export const AFFINITA_ABILITA: Record<IdAbilita, IdAffinita> = {
   cerchioDiLuce: 'luce', benedizione: 'sacro', ritoProibito: 'ombra', sepoltura: 'terra',
 };
 
-/** Gli stati: durano STATI.durata secondi (tranne Sepolto); il colore è quello del personaggio dell'affinità. */
+/** Gli stati: durano STATI.durata secondi (tranne Sepolto); il colore è quello del personaggio dell'affinità e tinge tutto il nemico a lampi (pieno, non sfumato: si vede anche sui fantasmi bianchi). */
 export const STATI = {
   durata: 3,
   // un colpo lascia lo stato solo con questa probabilità: con ogni colpo le reazioni erano circa 2000 al minuto
   probabilita: 0.1,
   probabilitaZone: 0.05, // nubi, pozze e abilità feriscono ogni 0,3 s: tirano il dado più spesso, quindi la metà
-  abbagliato: { danno: 0.15, colore: 0x6a3a00 }, // Luce: subisce +15% danno (ambra del Lampionaio)
-  consacrato: { lento: 0.25, colore: 0x5a4a10 }, // Sacro: va più lento del 25% (oro della Badessa)
-  maledetto: { perSecondo: 0.02, colore: 0x40205a }, // Ombra: perde il 2% della salute massima al secondo (viola della Strega)
-  sepolto: { fermo: 0.6, pausa: 4, colore: 0x4a3a20 }, // Terra: fermo 0,6 s, poi non può esserlo di nuovo per 4 s (seppia del Becchino)
+  abbagliato: { danno: 0.15, colore: 0xe3913a }, // Luce: subisce +15% danno (ambra del Lampionaio)
+  consacrato: { lento: 0.25, colore: 0xdcc07a }, // Sacro: va più lento del 25% (oro della Badessa)
+  maledetto: { perSecondo: 0.02, colore: 0xa57ae0 }, // Ombra: perde il 2% della salute massima al secondo (viola della Strega)
+  sepolto: { fermo: 0.6, pausa: 4, colore: 0xb89a74 }, // Terra: fermo 0,6 s, poi non può esserlo di nuovo per 4 s (seppia del Becchino)
   lampi: 4, // il colore lampeggia tante volte al secondo, per distinguerlo dall'alone fisso delle élite
   // il Mietitore resiste: stati di Terra (e Interramento) a metà durata, maledizione a un decimo
   mietitore: { fermo: 0.5, maledetto: 0.1 },
@@ -46,7 +46,8 @@ export const REAZIONI = {
   esorcismo: { fiammelle: 3, danno: 18, velocita: 420, vita: 1.6, raggio: 36, colore: '#e8dcc4', bordo: '#ffffff' },
   // Terra + qualsiasi altro: fermo a lungo e più vulnerabile
   interramento: { fermo: 1.5, danno: 0.3, raggio: 44, colore: '#b89a74', bordo: '#2a1f17' },
-  durataEffetto: 0.25, // il cerchio della reazione: metà pieno, metà a retino
+  durataEffetto: 0.5, // il cerchio della reazione: metà pieno, metà a retino (era 0,25: non si faceva in tempo a vederlo)
+  ingrandimentoEffetto: 1.35, // il cerchio si disegna più largo dell'area vera, per leggerlo meglio
 } as const;
 
 /** Ruoli nuovi delle armi (tappa 3). */

@@ -4,10 +4,10 @@
  * Ogni suono ha un intervallo minimo, così cento colpi nello stesso istante non diventano un frastuono.
  * Acceso o spento si ricorda sul dispositivo (tasto M o menu di pausa).
  */
-export type Suono = 'colpo' | 'sparo' | 'anima' | 'danno' | 'campana' | 'livello' | 'reliquiario' | 'mietitore' | 'cura' | 'speciale' | 'morte' | 'alba';
+export type Suono = 'colpo' | 'sparo' | 'anima' | 'cera' | 'danno' | 'campana' | 'livello' | 'reliquiario' | 'mietitore' | 'cura' | 'speciale' | 'morte' | 'alba';
 
 const PAUSA_MINIMA: Record<Suono, number> = {
-  colpo: 0.05, sparo: 0.07, anima: 0.035, danno: 0.1, campana: 0.3, livello: 0.2, reliquiario: 0.3, mietitore: 1, cura: 0.4, speciale: 0.3, morte: 1, alba: 1,
+  colpo: 0.05, sparo: 0.07, anima: 0.035, cera: 0.1, danno: 0.1, campana: 0.3, livello: 0.2, reliquiario: 0.3, mietitore: 1, cura: 0.4, speciale: 0.3, morte: 1, alba: 1,
 };
 const VOLUME = 0.35;
 
@@ -69,6 +69,9 @@ export function suona(s: Suono): void {
       tono(t, 'sine', f, f, 0.07, 0.25);
       break;
     }
+    case 'cera':
+      tono(t, 'triangle', 880, 1175, 0.1, 0.18);
+      break;
     case 'danno':
       tono(t, 'sawtooth', 180, 70, 0.18, 0.3);
       break;

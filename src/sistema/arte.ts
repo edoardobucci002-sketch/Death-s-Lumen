@@ -4,7 +4,7 @@
  * Le posizioni si danno sempre in pixel di gioco interi (posa), mai centrando con il CSS, che lascerebbe mezzi pixel.
  */
 import type Phaser from 'phaser';
-import { INGRANDIMENTO, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
+import { GRUPPI_PARTITA, INGRANDIMENTO, PUNTI_MINIMI_PARTITA, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
 import { calcolaMisure } from './pixel';
 
 interface R4 { x: number; y: number; w: number; h: number }
@@ -46,6 +46,7 @@ export interface MisureHud {
   scala: number;
   dpr: number;
   safe: { a: number; b: number; s: number; d: number }; // safe area in pixel di gioco, arrotondata in su
+  raddoppioPartita: number; // come raddoppio, ma per l'HUD della partita (soglia più alta)
   raddoppio: number; // 2 dove un pixel di gioco è troppo piccolo per il dito (scala ×1), altrimenti 1
 }
 
@@ -65,12 +66,13 @@ export function misureHud(): MisureHud {
   return {
     W: m.larghezza, H: m.altezza, px: m.zoom, scala: m.scala, dpr,
     safe: { a: p(st.paddingTop), b: p(st.paddingBottom), s: p(st.paddingLeft), d: p(st.paddingRight) },
+    raddoppioPartita: Math.max(1, Math.ceil(PUNTI_MINIMI_PARTITA / (m.scala / dpr) - 1e-9)),
     raddoppio: Math.max(1, Math.ceil(PUNTI_MINIMI_PER_PIXEL / (m.scala / dpr) - 1e-9)),
   };
 }
 
 /** Ingrandimento di un gruppo di elementi su questo telefono (vedi INGRANDIMENTO in data/hud.ts). */
-export const ingr = (gruppo: string, m: MisureHud): number => (INGRANDIMENTO[gruppo] ?? 1) * (SENZA_RADDOPPIO.includes(gruppo) ? 1 : m.raddoppio);
+export const ingr = (gruppo: string, m: MisureHud): number => (INGRANDIMENTO[gruppo] ?? 1) * (SENZA_RADDOPPIO.includes(gruppo) ? 1 : GRUPPI_PARTITA.includes(gruppo) ? m.raddoppioPartita : m.raddoppio);
 
 /** Dove l'HUD può stare: la safe area più 6 pixel di respiro (come nella bozza). */
 export const bordiHud = (m: MisureHud): { a: number; b: number; s: number; d: number } => ({ a: m.safe.a + 6, b: m.safe.b + 6, s: m.safe.s + 6, d: m.safe.d + 6 });

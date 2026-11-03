@@ -5,11 +5,12 @@
  */
 import type { Personaggio } from './personaggi';
 
-/** Cera guadagnata a fine veglia, anche persa. */
+/**
+ * Cera di una veglia: le gocce raccolte durante la partita (cadono da nemici, élite e Seth: vedi DROP.cera in
+ * data/oggetti.ts, una goccia vale 1) più il premio dell'alba. La si porta a casa anche morendo.
+ */
 export const CERA = {
-  perMinuto: 10, // ogni minuto intero sopravvissuto
-  perElite: 5,
-  perSeth: 40, // ogni volta che Seth viene sconfitto
+  goccia: 1,
   alba: 100, // vittoria
 } as const;
 
