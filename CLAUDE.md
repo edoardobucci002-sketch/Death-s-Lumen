@@ -160,8 +160,23 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 - `docs/tappe.md`: piano di lavoro e stato. La tappa M0 è fatta: si riparte dalla M1.
 - La v0 giocabile e il compendio della v0 sono artifact su claude.ai (link in `docs/decisioni.md`).
 
+## I due link (deciso il 3 novembre 2026)
+
+Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
+
+| Ramo | Link | Cosa contiene |
+| --- | --- | --- |
+| `prova` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/ | il link personale di Edoardo: **ogni modifica nuova finisce qui**; in basso la scritta «PROVA» |
+| `main` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/ | il link pubblico (e l'APK Android): solo ciò che Edoardo ha approvato |
+
+- Ogni push su `prova` o su `main` ripubblica entrambi i link in un paio di minuti (`.github/workflows/pagine.yml`; per `prova` lo fa partire `prova.yml`, perché GitHub pubblica solo da `main`).
+- Lavora sempre su `prova`, o su un ramo di passaggio che unisci a `prova` appena funziona, nella stessa sessione. Mai rami lasciati a metà o worktree dimenticati: Edoardo deve trovare tutto in `/prova/`.
+- Unisci `prova` in `main` **solo quando Edoardo dice che approva**.
+- Sul Mac al massimo un server acceso (`npm run anteprima`, porta 4173). Spegnilo quando hai finito.
+- Il service worker tiene separate le copie offline dei due link (`tools/genera-sw.mjs`). Salvataggi e record invece sono in comune, perché il sito è lo stesso.
+
 ## Git
 
-- Lavora su un branch per tappa (`m1-movimento`, …) e fai il merge su `main` solo dopo la verifica.
+- Lavora su `prova` (vedi «I due link») e fai il merge su `main` solo dopo la verifica e l'approvazione di Edoardo.
 - Messaggi di commit in italiano, al presente: «Aggiunge la camminata della Strega».
 - Non caricare mai su GitHub chiavi, certificati di firma o il file `.keystore` di Android.

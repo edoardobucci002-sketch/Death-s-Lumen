@@ -22,6 +22,11 @@
   color-scheme: dark;
 }
 [hidden] { display: none !important; }
+/* scritta del link di prova (src/main.ts), sopra a tutto ma senza intralciare i tocchi */
+.canale {
+  position: fixed; z-index: 10; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 4px); transform: translateX(-50%); pointer-events: none;
+  font-family: var(--f-pixel); font-size: 14px; letter-spacing: 2px; color: #e3913a; text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000;
+}
 html, body {
   margin: 0; height: 100%; overflow: hidden; background: var(--sfondo); color: var(--pergamena);
   font-family: var(--f-testo); overscroll-behavior: none; touch-action: none;

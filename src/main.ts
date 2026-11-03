@@ -60,6 +60,15 @@ preparaAudio();
 schermoAcceso(true);
 preparaAudio();
 
+// sul link di prova (build con VITE_CANALE=prova) una scritta ricorda che non è la versione pubblica
+if (import.meta.env.VITE_CANALE === 'prova') {
+  const scritta = document.createElement('div');
+  scritta.className = 'canale';
+  scritta.textContent = 'PROVA';
+  document.body.append(scritta);
+  document.title += ' · prova';
+}
+
 // PWA: lavoro offline e installazione (non serve dentro l'app nativa)
 if ('serviceWorker' in navigator && import.meta.env.PROD && !nativo) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

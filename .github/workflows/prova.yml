@@ -1,0 +1,14 @@
+# A ogni push su prova fa ripartire la pubblicazione (pagine.yml) da main, che costruisce entrambi i link.
+name: Aggiorna il link di prova
+on:
+  push:
+    branches: [prova]
+permissions:
+  actions: write
+jobs:
+  avvia:
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh workflow run pagine.yml --ref main --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
