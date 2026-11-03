@@ -44,7 +44,7 @@ export const NEMICI: TipoNemico[] = [
  */
 export const MIETITORE = {
   minuti: [5, 10],
-  saluteSecondo: 2, // al minuto 10 ha salute ×2 rispetto a quella del minuto 5 (già scalata con il tempo)
+  saluteSecondo: 3.5, // al minuto 10 ha salute ×3,5 rispetto a quella del minuto 5 (già scalata con il tempo)
   cammina: [3, 5], // cammina verso di te per 3-5 s, poi una mossa
   camminaSecondo: 0.75, // al minuto 10 cammina meno tra una mossa e l'altra (×0,75)
   mosse: { scatto: 3, falciata: 3, falci: 2, chiamata: 1.5 }, // quanto spesso sceglie ogni mossa
@@ -92,8 +92,8 @@ export const DIFFICOLTA = {
   // salute = base × (1 + 0,28 m + 0,04 × (m − 3)² dopo il minuto 3): uguale all'inizio, molto più resistenti a metà notte
   salutePerMinuto: 0.28,
   saluteDopo: 3, // minuto da cui la crescita accelera
-  saluteAccelera: 0.03,
-  dannoPerMinuto: 0.09, // danno = base × (1 + 0,09 m)
+  saluteAccelera: 0.06,
+  dannoPerMinuto: 0.16, // danno = base × (1 + 0,16 m)
   massimiBase: 20, // nemici massimi in campo = min(tetto, 20 + 30 m)
   massimiPerMinuto: 30,
   tetto: 380,

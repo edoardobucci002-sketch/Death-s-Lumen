@@ -307,7 +307,7 @@ export class Gioco extends Phaser.Scene {
     this.notte(mezzaL, mezzaA);
     if (this.finito) return;
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, this.velocita, mezzaL, mezzaA);
-    this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, this.versoSinistra ? -1 : 1, mezzaL, mezzaA);
+    this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, mezzaL, mezzaA);
     const cura = this.arsenale.cura();
     if (cura && this.salute < this.saluteMassima) suona('cura');
     const primaCura = this.salute;
@@ -532,7 +532,7 @@ export class Gioco extends Phaser.Scene {
     if (this.sim) {
       this.sim.fine({
         vittoria, secondi: Math.round(this.secondi), livello: this.livello, anime: this.animeTotali, danno: Math.round(this.arsenale.dannoTotale),
-        build: this.build().map((v) => `${v.nome} ${v.livello}`),
+        build: this.build().map((v) => `${v.nome} ${v.livello}`), reazioni: this.arsenale.reazioni,
       });
     }
     const nuovo = this.sim ? false : salvaRecord(this.pg.id, this.secondi);

@@ -1,6 +1,7 @@
 /*
  * Effetti che danno impatto ai colpi: numeri del danno che saltano fuori, scoppio quando un nemico muore,
- * arco di luce della Lanterna disegnato nitido, scossa dello schermo per i colpi pesanti.
+ * arco di luce della Lanterna disegnato nitido, scossa dello schermo per i colpi pesanti,
+ * cerchi colorati delle reazioni tra stati (Eclissi, Rivelazione, Esorcismo, Interramento).
  * Tutto in pool preparati all'inizio; il caso degli effetti è separato da quello del gioco,
  * così ciò che si vede non cambia ciò che succede.
  */
@@ -21,6 +22,7 @@ export const PROFONDITA = {
 const MAX_NUMERI = 64;
 const MAX_SCOPPI = 48;
 const MAX_ARCHI = 4;
+const MAX_REAZIONI = 24;
 // cifre 3×5: ogni riga è una cifra, 1 = pixel acceso
 const CIFRE = [
   '111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001',
@@ -43,6 +45,11 @@ export class Effetti {
   private arcoVita = new Float32Array(MAX_ARCHI);
   private arcoChiave: string[] = [];
   private prossimoArco = 0;
+  private reazioni: Phaser.GameObjects.Image[] = [];
+  private reazioneVita = new Float32Array(MAX_REAZIONI);
+  private reazioneChiave: string[] = [];
+  private prossimaReazione = 0;
+  private durataReazione = 0.25;
   private scossa = 0; // secondi rimasti
   private forzaScossa = 0;
   scossaX = 0; // spostamento della telecamera in questo fotogramma, in pixel interi
@@ -56,6 +63,10 @@ export class Effetti {
       this.numeri.push(scena.add.bitmapText(0, 0, 'cifre', '', 5).setLetterSpacing(-1).setScale(EFFETTI.numeri.ingrandimento).setOrigin(0.5, 1).setDepth(PROFONDITA.sopra + 1).setVisible(false));
     }
     for (let i = 0; i < MAX_SCOPPI; i++) this.scoppi.push(scena.add.sprite(0, 0, 'scoppio').setDepth(PROFONDITA.sopra).setScale(EFFETTI.scoppio.ingrandimento).setVisible(false));
+    for (let i = 0; i < MAX_REAZIONI; i++) {
+      this.reazioni.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.sopra).setVisible(false));
+      this.reazioneChiave.push('');
+    }
     for (let i = 0; i < MAX_ARCHI; i++) {
       this.archi.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.aTerra + 1).setVisible(false));
       this.arcoChiave.push('');
@@ -95,6 +106,19 @@ export class Effetti {
     this.archi[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setRotation(angolo).setVisible(true);
   }
 
+  /** Cerchio di una reazione in (x, y): pieno, poi a retino, poi sparisce. Colori come '#rrggbb'. */
+  reazione(x: number, y: number, raggio: number, colore: string, bordo: string, durata: number): void {
+    const r = Math.round(raggio);
+    const chiave = `reazione-${r}-${colore}-${bordo}`;
+    if (!this.scena.textures.exists(`${chiave}-0`)) creaReazione(this.scena, chiave, r, colore, bordo);
+    const i = this.prossimaReazione;
+    this.prossimaReazione = (i + 1) % MAX_REAZIONI;
+    this.durataReazione = durata;
+    this.reazioneVita[i] = durata;
+    this.reazioneChiave[i] = chiave;
+    this.reazioni[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setVisible(true);
+  }
+
   /** Scuote lo schermo; resta la scossa più forte tra quelle in corso. */
   scuoti(forza: number, durata: number): void {
     if (this.scossa <= 0 || forza >= this.forzaScossa) this.forzaScossa = forza;
@@ -125,6 +149,12 @@ export class Effetti {
       // seconda metà della vita: lo stesso arco a retino, poi sparisce
       if (this.arcoVita[i] <= 0) this.archi[i].setVisible(false);
       else if (this.arcoVita[i] < EFFETTI.arco.durata / 2) this.archi[i].setTexture(`${this.arcoChiave[i]}-1`);
+    }
+    for (let i = 0; i < MAX_REAZIONI; i++) {
+      if (this.reazioneVita[i] <= 0) continue;
+      this.reazioneVita[i] -= dt;
+      if (this.reazioneVita[i] <= 0) this.reazioni[i].setVisible(false);
+      else if (this.reazioneVita[i] < this.durataReazione / 2) this.reazioni[i].setTexture(`${this.reazioneChiave[i]}-1`);
     }
     if (this.scossa > 0) {
       this.scossa -= dt;
@@ -208,6 +238,26 @@ function creaArco(scena: Phaser.Scene, chiave: string, r: number, ampiezza: numb
         if (d > r || d < r - a.spessore || Math.abs(Math.atan2(dy, dx)) > meta) continue;
         if (retino && (x + y) % 2) continue;
         g.fillStyle = d > r - 1 ? a.bordo : d > r - a.spessore + 1 ? a.colore : a.interno;
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+    tela.refresh();
+  }
+}
+
+/** Cerchio di una reazione: anello pieno con il bordo e l'interno a retino rado; la versione «-1» è tutta a retino. */
+function creaReazione(scena: Phaser.Scene, chiave: string, r: number, colore: string, bordo: string): void {
+  const L = 2 * r + 2;
+  for (const retino of [0, 1]) {
+    const tela = scena.textures.createCanvas(`${chiave}-${retino}`, L, L)!;
+    const g = tela.getContext();
+    for (let y = 0; y < L; y++) {
+      for (let x = 0; x < L; x++) {
+        const d = Math.hypot(x + 0.5 - L / 2, y + 0.5 - L / 2);
+        if (d > r) continue;
+        const anello = d > r - 4;
+        if (retino ? (x + y) % 2 : !anello && (x % 2 || y % 2)) continue;
+        g.fillStyle = d > r - 1.5 ? bordo : colore;
         g.fillRect(x, y, 1, 1);
       }
     }

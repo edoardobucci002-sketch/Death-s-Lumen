@@ -37,9 +37,9 @@ Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 150 px,
 | Personaggio | Motto | Colore | Arma iniziale | Abilità speciale | Modificatori |
 | --- | --- | --- | --- | --- | --- |
 | Il Lampionaio | Guida nel buio | `#e3913a` | Lanterna | Cerchio di luce | +10% velocità, +0,2 salute/s (M8) |
-| Il Becchino | Nulla resta davvero sotto terra | `#b89a74` | Pala | Sepoltura | +30 salute, −15% danno subito, +5% danno, −3% velocità (M8; prima +1 armatura, +15% danno e −8% velocità) |
+| Il Becchino | Nulla resta davvero sotto terra | `#b89a74` | Pala | Sepoltura | +30 salute, −10% danno subito, +5% danno, −3% velocità (M8; prima +1 armatura, +15% danno e −8% velocità) |
 | La Badessa | Preghiere per ciò che è stato | `#dcc07a` | Turibolo | Benedizione | +10 salute, +0,3 salute/s, +15% area |
-| La Strega | Conosce nomi che non dovrebbero essere detti | `#a57ae0` | Bastone | Rito proibito | −5 salute, +20% danno, −10% ricarica (M8; prima −15 salute e +10% danno) |
+| La Strega | Conosce nomi che non dovrebbero essere detti | `#a57ae0` | Bastone | Rito proibito | −5 salute, +10% danno, −10% ricarica (M8; prima −15 salute) |
 
 **Barre della scheda** (su 6: Vitalità, Danno, Velocità, Raggio, Controllo)
 
@@ -198,7 +198,7 @@ Partono a raggiera e girano (fino a 6 radianti al secondo) verso il nemico più 
 
 | Lv | Ricarica (s) | Quantità | Danno | Trapassa | Cosa cambia |
 |---|---|---|---|---|---|
-| 1 | 1,3 | 1 | 12 | 1 | Fuochi fatui che inseguono i nemici. |
+| 1 | 1,3 | 1 | 12 | 1 | Fuochi fatui che inseguono i nemici, prima élite e Mietitore. |
 | 2 | 1,3 | 2 | 12 | 1 | +1 fuoco. |
 | 3 | 1,3 | 2 | 18 | 1 | +6 danno. |
 | 4 | 1,3 | 3 | 18 | 1 | +1 fuoco. |
@@ -206,6 +206,9 @@ Partono a raggiera e girano (fino a 6 radianti al secondo) verso il nemico più 
 | 6 | 1 | 3 | 26 | 1 | +8 danno. |
 | 7 | 1 | 4 | 26 | 1 | +1 fuoco. |
 | 8 | 1 | 4 | 36 | 3 | +10 danno, trapassano tre nemici. |
+
+M8: inseguono per primi élite e Mietitore (danni invariati).
+
 
 #### Acqua santa
 
@@ -270,7 +273,7 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 | Il Mietitore | 3600 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici (3200 prima della M8, poi 5500, ora 3600 con le mosse nuove) |
 
 - **Élite**: ogni 55 s compare un nemico normale potenziato: salute ×7, danno ×1,4, anime ×6, dimensione ×1,5, velocità ×0,9, alone ambra. Lascia un reliquiario.
-- **Il Mietitore**: cammina verso di te per 3–5 s (al minuto 10 per ×0,75 di quel tempo), poi si ferma pulsando di rosso e fa una mossa, scelta a caso con questi pesi. Ogni mossa ha un preavviso, il momento per scansarsi. Il danno delle mosse cresce con il tempo come il suo (× danno attuale ÷ 22). Dopo falciata, falci e chiamata resta fermo 0,45 s. Lascia 2 reliquiari. Al minuto 10 ha salute ×2 rispetto a quella del minuto 5, già scalata con il tempo (×1,7 fino alla M8).
+- **Il Mietitore**: cammina verso di te per 3–5 s (al minuto 10 per ×0,75 di quel tempo), poi si ferma pulsando di rosso e fa una mossa, scelta a caso con questi pesi. Ogni mossa ha un preavviso, il momento per scansarsi. Il danno delle mosse cresce con il tempo come il suo (× danno attuale ÷ 22). Dopo falciata, falci e chiamata resta fermo 0,45 s. Lascia 2 reliquiari. Al minuto 10 ha salute ×3,5 rispetto a quella del minuto 5, già scalata con il tempo (×1,7 fino alla M8; alzata con stati e reazioni della tappa 3).
 
 | Mossa | Peso | Preavviso | Cosa fa |
 | --- | --- | --- | --- |
@@ -303,8 +306,8 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 
 Un nemico prende i valori del momento in cui nasce (m = minuti di gioco, anche frazionari):
 
-- salute = base × (1 + 0,28 m + 0,03 × (m − 3)²), l'ultimo termine solo dopo il minuto 3 (fino alla M8: 1 + 0,34 m). Al minuto 10 ≈ ×5,3, al 15 ≈ ×9,5
-- danno = base × (1 + 0,09 m)
+- salute = base × (1 + 0,28 m + 0,06 × (m − 3)²), l'ultimo termine solo dopo il minuto 3 (fino alla M8: 1 + 0,34 m). Al minuto 10 ≈ ×6,7, al 15 ≈ ×13,8
+- danno = base × (1 + 0,16 m) (0,09 fino alla tappa 3 della M8)
 - nemici massimi in campo = min(380, 20 + 30 m)
 - comparse al secondo = 1,2 + 2,5 m (al massimo 8 per fotogramma)
 
@@ -330,6 +333,30 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 - **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, il Mietitore riempie la fiaschetta. La fiala è disegnata dal codice (15×27 pixel, ingrandita il triplo dell'anello) finché Edoardo non disegna la sua.
 - **Grazia**: scatta uscendo da un cerchio rosso del Mietitore quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova.
 - Nella simulazione (3/11, 24 notti per personaggio) il bot beve 4–5,4 sorsi a notte e fa 1,5–3,3 schivate perfette.
+
+## 8c. Affinità, stati e reazioni (M8, `src/data/stati.ts`)
+
+Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Il nemico lampeggia del colore dello stato (4 volte al secondo, per distinguerlo dall'alone fisso delle élite).
+
+| Affinità | Armi e abilità | Stato | Effetto |
+| --- | --- | --- | --- |
+| Luce | Lanterna, Candela, Lama di luce, Cerchio di luce | Abbagliato | subisce +15% danno |
+| Sacro | Turibolo, Acqua santa, Campana, Benedizione | Consacrato | va più lento del 25% (il Mietitore a metà) |
+| Ombra | Bastone, Fuoco fatuo, Falce, Rito proibito | Maledetto | perde il 2% della salute massima al secondo (élite 40% di questo, Mietitore 10%) |
+| Terra | Pala, Sepoltura | Sepolto | resta fermo 0,6 s; poi per 4 s non può esserlo di nuovo |
+
+Due stati diversi sullo stesso nemico si consumano e fanno una reazione:
+
+| Stati | Reazione | Effetto |
+| --- | --- | --- |
+| Luce + Ombra | Eclissi | esplosione di 64 px; danno = 10% della salute massima del nemico, al massimo 80 (il Mietitore sempre 80) |
+| Luce + Sacro | Rivelazione | il nemico lascia il doppio delle anime (una volta sola per nemico) |
+| Sacro + Ombra | Esorcismo | dal nemico partono 3 fiammelle che inseguono i vicini (18 danni l'una) |
+| Terra + qualsiasi | Interramento | fermo 1,5 s e +30% danno subito (il Mietitore a metà durata) |
+
+Ruoli nuovi delle armi (M8): l'esplosione del dardo del Bastone ferisce in 40 px al 35% del danno; il Fuoco fatuo insegue per primi élite e Mietitore (li vede 4 volte più vicini); ogni uccisione della Falce allunga la lama del 2% per 5 s (al massimo +30%); il fendente della Lama di luce segue la direzione in cui cammini; il secondo rintocco della Campana (livello 8) ferma i nemici per 0,6 s. I cerchi delle reazioni sono disegnati dal codice a retino finché Edoardo non disegna i suoi.
+
+Simulazione (3/11, 24 notti per personaggio): circa 300–1000 reazioni a notte. Con ogni colpo che lasciava uno stato erano 19.000–32.000 e il bot vinceva 85 notti su 96; la forza viene sia dagli stati sia dalle reazioni, e per compensare la seconda metà della notte è diventata più dura (sezioni 6 e 7).
 
 ## 9. Esperienza e doni
 

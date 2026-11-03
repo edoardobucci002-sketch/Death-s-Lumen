@@ -6,6 +6,8 @@
  * Fa nascere anche le élite (più grosse, con alone ambra), gli sciami che circondano, le orde in formazione
  * che marciano compatte e poi caricano, e il Mietitore, che cammina e poi fa una mossa con preavviso:
  * scatto, falciata, falci spettrali o chiamata dei morti (le ultime tre passano da Minacce).
+ * Gli stati lasciati dalle armi (abbagliato, consacrato, maledetto, sepolto) cambiano danno e movimento;
+ * due stati diversi fanno una reazione (marca restituisce quale: la esegue Arsenale, che può ferire e lanciare).
  * I nemici vivono in array preparati all'inizio (pool): durante la partita non si crea niente di nuovo.
  */
 import Phaser from 'phaser';
@@ -15,6 +17,7 @@ import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
 import { COMPARSA, DIFFICOLTA, ELITE, IA, MIETITORE, NEMICI, ORDE, SCIAMI, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
+import { REAZIONI, STATI } from '../data/stati';
 import { COLPI } from '../data/armi';
 
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici, alle orde e alla chiamata dei morti. */
@@ -27,6 +30,11 @@ const [DIRETTO, ACCERCHIA, INTERCETTA, ZIGZAG] = [0, 1, 2, 3];
 const MOSSE = ['scatto', 'falciata', 'falci', 'chiamata'] as const;
 const [SCATTO, FALCIATA, FALCI, CHIAMATA] = [0, 1, 2, 3];
 const MAX_BRANCHI = 4; // orde in campo insieme
+/** Affinità come numeri, per gli array: 0 = nessuna. */
+export const [LUCE, SACRO, OMBRA, TERRA] = [1, 2, 3, 4];
+/** Reazioni, come le restituisce marca (0 = nessuna). */
+export const [ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO] = [1, 2, 3, 4];
+const COLORE_STATO = [0, STATI.abbagliato.colore, STATI.consacrato.colore, STATI.maledetto.colore, STATI.sepolto.colore];
 
 interface AspettoNemico {
   ingrandimento: number;
@@ -55,6 +63,17 @@ export class Orda {
   readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
   readonly pausaNube = new Float32Array(CAPIENZA); // …una nube del Turibolo
   readonly pausaPozza = new Float32Array(CAPIENZA); // …una pozza dell'Acqua santa
+  // stati: secondi rimasti (0 = assente)
+  private sAbbagliato = new Float32Array(CAPIENZA);
+  private sConsacrato = new Float32Array(CAPIENZA);
+  private sMaledetto = new Float32Array(CAPIENZA);
+  private sSepolto = new Float32Array(CAPIENZA);
+  private sInterrato = new Float32Array(CAPIENZA);
+  private pausaSepolto = new Float32Array(CAPIENZA); // prima di allora non può essere sepolto di nuovo
+  private fermo = new Float32Array(CAPIENZA); // fermato da altro (secondo rintocco della Campana)
+  private ultimoStato = new Uint8Array(CAPIENZA); // affinità dell'ultimo stato, per il colore
+  private rivelato = new Uint8Array(CAPIENZA); // 1 = le sue anime sono già raddoppiate (Rivelazione una volta sola)
+  private tempo = 0;
   // Mietitore: 0 cammina, 1 si ferma e pulsa (preavviso), 2 fa la mossa (letti anche dal bot, per schivare)
   readonly fase = new Uint8Array(CAPIENZA);
   readonly mossa = new Uint8Array(CAPIENZA);
@@ -87,6 +106,7 @@ export class Orda {
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
+    this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo,
     this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY];
 
   constructor(
@@ -140,6 +160,7 @@ export class Orda {
 
     // ognuno verso dove punta (IA), più la respinta che si spegne a poco a poco
     const frena = Math.exp(-COLPI.attrito * dt);
+    this.tempo += dt;
     const pvx = dirX * vel; // velocità del giocatore, per chi gli taglia la strada
     const pvy = dirY * vel;
     for (let i = 0; i < this.numero; i++) {
@@ -151,8 +172,10 @@ export class Orda {
       if (this.pausaFalce[i] > 0) this.pausaFalce[i] -= dt;
       if (this.pausaNube[i] > 0) this.pausaNube[i] -= dt;
       if (this.pausaPozza[i] > 0) this.pausaPozza[i] -= dt;
-      if (this.tipo[i] === ID_MIETITORE && this.muoviMietitore(i, dt, dx, dy, d, gx, gy, secondi)) continue;
-      let v = this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
+      const fermo = this.aggiornaStati(i, dt);
+      if (!fermo && this.tipo[i] === ID_MIETITORE && this.muoviMietitore(i, dt, dx, dy, d, gx, gy, secondi)) continue;
+      let v = fermo ? 0 : this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
+      if (this.sConsacrato[i] > 0) v *= 1 - STATI.consacrato.lento * (this.tipo[i] === ID_MIETITORE ? MIETITORE.rallentamento : 1);
       let tx = gx;
       let ty = gy;
       const b = this.branco[i] - 1;
@@ -229,13 +252,85 @@ export class Orda {
 
   /** Colpisce il nemico i: toglie salute, lo illumina e lo spinge nella direzione (dx, dy), lunga 1. */
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number): void {
-    this.salute[i] -= danno;
+    // abbagliato e interrato subiscono di più
+    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? REAZIONI.interramento.danno : 0));
     this.lampo[i] = COLPI.lampoNemico;
     if (respinta && this.tipo[i] !== ID_MIETITORE) {
       const r = respinta * (NEMICI[this.tipo[i]].pesante || this.elite[i] ? COLPI.respintaPesanti : 1);
       this.respintaX[i] = dx * r;
       this.respintaY[i] = dy * r;
     }
+  }
+
+  /**
+   * Lascia sul nemico i lo stato dell'affinità aff. Se aveva già uno stato diverso, li consuma e restituisce
+   * la reazione (ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO); Rivelazione e Interramento li applica qui.
+   */
+  marca(i: number, aff: number): number {
+    if (!aff || this.salute[i] <= 0) return 0;
+    if (aff === TERRA && this.pausaSepolto[i] > 0) return 0;
+    const abb = this.sAbbagliato[i] > 0, cons = this.sConsacrato[i] > 0, mal = this.sMaledetto[i] > 0, sep = this.sSepolto[i] > 0;
+    let r = 0;
+    if (aff === TERRA ? abb || cons || mal : sep) r = INTERRAMENTO;
+    else if ((aff === LUCE && mal) || (aff === OMBRA && abb)) r = ECLISSI;
+    else if ((aff === LUCE && cons) || (aff === SACRO && abb)) r = RIVELAZIONE;
+    else if ((aff === SACRO && mal) || (aff === OMBRA && cons)) r = ESORCISMO;
+    const resiste = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1;
+    if (r) {
+      this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = 0;
+      this.ultimoStato[i] = 0;
+      if (r === INTERRAMENTO) {
+        this.sInterrato[i] = REAZIONI.interramento.fermo * resiste;
+        this.pausaSepolto[i] = STATI.sepolto.pausa;
+      } else if (r === RIVELAZIONE && !this.rivelato[i]) {
+        // una volta sola: sul Mietitore, colpito di continuo, le anime raddoppiavano all'infinito
+        this.anime[i] *= REAZIONI.rivelazione.anime;
+        this.rivelato[i] = 1;
+      }
+      return r;
+    }
+    if (aff === LUCE) this.sAbbagliato[i] = STATI.durata;
+    else if (aff === SACRO) this.sConsacrato[i] = STATI.durata;
+    else if (aff === OMBRA) this.sMaledetto[i] = STATI.durata;
+    else {
+      this.sSepolto[i] = STATI.sepolto.fermo * resiste;
+      this.pausaSepolto[i] = STATI.sepolto.pausa;
+    }
+    this.ultimoStato[i] = aff;
+    return 0;
+  }
+
+  /** Ferma il nemico i per qualche secondo, senza stato (secondo rintocco della Campana); il Mietitore a metà. */
+  ferma(i: number, secondi: number): void {
+    const s = secondi * (this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1);
+    if (s > this.fermo[i]) this.fermo[i] = s;
+  }
+
+  /** Avanza gli stati del nemico i (la maledizione toglie salute); restituisce true se è fermo. */
+  private aggiornaStati(i: number, dt: number): boolean {
+    if (this.sAbbagliato[i] > 0) this.sAbbagliato[i] -= dt;
+    if (this.sConsacrato[i] > 0) this.sConsacrato[i] -= dt;
+    if (this.pausaSepolto[i] > 0) this.pausaSepolto[i] -= dt;
+    if (this.sMaledetto[i] > 0) {
+      this.sMaledetto[i] -= dt;
+      const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
+      this.salute[i] -= this.saluteMassima[i] * STATI.maledetto.perSecondo * f * dt;
+    }
+    let fermo = false;
+    if (this.sSepolto[i] > 0) {
+      this.sSepolto[i] -= dt;
+      fermo = true;
+    }
+    if (this.sInterrato[i] > 0) {
+      this.sInterrato[i] -= dt;
+      fermo = true;
+    }
+    if (this.fermo[i] > 0) {
+      this.fermo[i] -= dt;
+      fermo = true;
+    }
+    if (this.ultimoStato[i] && this.sAbbagliato[i] <= 0 && this.sConsacrato[i] <= 0 && this.sMaledetto[i] <= 0 && this.sSepolto[i] <= 0) this.ultimoStato[i] = 0;
+    return fermo;
   }
 
   /** Rallenta il nemico i per qualche istante; resta il rallentamento più forte. */
@@ -359,6 +454,8 @@ export class Orda {
       if (this.lampo[i] > 0 || (this.fase[i] === 1 && Math.floor(this.faseTempo[i] * 10) % 2 === 0)) {
         // colpito: bianco; il Mietitore che sta per scattare pulsa di rosso
         s.setTint(this.lampo[i] > 0 ? 0xffffff : 0xc2412d).setTintMode(Phaser.TintModes.FILL);
+      } else if (this.ultimoStato[i] && Math.floor(this.tempo * STATI.lampi * 2) % 2 === 0) {
+        s.setTint(COLORE_STATO[this.ultimoStato[i]]).setTintMode(Phaser.TintModes.ADD); // lo stato lampeggia del suo colore
       } else if (this.elite[i]) {
         s.setTint(ELITE.alone).setTintMode(Phaser.TintModes.ADD);
       } else if (s.tintMode !== Phaser.TintModes.MULTIPLY) {
@@ -385,6 +482,8 @@ export class Orda {
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
     this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
+    this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = 0;
+    this.ultimoStato[i] = this.rivelato[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];
@@ -496,6 +595,8 @@ export class Orda {
     this.mossa[i] = this.mossa[u];
     this.volta[i] = this.volta[u];
     this.branco[i] = this.branco[u];
+    this.ultimoStato[i] = this.ultimoStato[u];
+    this.rivelato[i] = this.rivelato[u];
     this.id[i] = this.id[u];
     this.segno[i] = this.segno[u];
     this.versoSinistra[i] = this.versoSinistra[u];

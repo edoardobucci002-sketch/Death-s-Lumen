@@ -4,12 +4,16 @@
  * - proiettili: Bastone e Candela (verso il nemico più vicino), Fuoco fatuo (lo insegue);
  * - zone che feriscono a intervalli: nubi del Turibolo, pozze dell'Acqua santa, abilità speciali;
  * - lame che girano intorno al personaggio: Falce.
- * Proiettili, zone ed effetti sono pool preparati all'inizio: niente allocazioni durante la partita.
+ * Ogni arma ha un'affinità (data/stati.ts): colpendo lascia uno stato; quando due stati fanno una reazione,
+ * la reazione va in coda e si esegue alla fine del passo (esplosioni, fiammelle), fuori dalle ricerche nella griglia.
+ * Proiettili, zone, coda ed effetti sono pool preparati all'inizio: niente allocazioni durante la partita.
  */
 import Phaser from 'phaser';
 import { ingrandimento, raggioDisegnato } from './asset';
-import type { Caso } from './caso';
-import type { Orda } from './orda';
+import { Caso } from './caso';
+import { ECLISSI, ESORCISMO, INTERRAMENTO, LUCE, OMBRA, RIVELAZIONE, SACRO, TERRA, type Orda } from './orda';
+import { AFFINITA_ABILITA, REAZIONI, RUOLI, STATI } from '../data/stati';
+import { NEMICI } from '../data/nemici';
 import { suona } from './audio';
 import { PROFONDITA, type Effetti } from './effetti';
 import { EFFETTI } from '../data/effetti';
@@ -20,6 +24,10 @@ import {
 
 const NUBE = 1;
 const POZZA = 2;
+const ESPLOSIONE = 5; // in coda insieme alle reazioni: l'esplosione del dardo del Bastone
+const MAX_CODA = 48;
+const CODICE_AFFINITA = { luce: LUCE, sacro: SACRO, ombra: OMBRA, terra: TERRA } as const;
+const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 const MAX_EFFETTI = 48;
 const MAX_ZONE = 32;
 const MAX_PROIETTILI = 96;
@@ -48,20 +56,21 @@ export interface Bonus {
 export class Arsenale {
   readonly possedute: Posseduta[] = [];
   dannoTotale = 0; // per il riepilogo di fine partita
+  reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)
   private attesa: number[] = [];
   private scena: Phaser.Scene;
   private orda: Orda;
   private caso: Caso;
+  private casoStati = new Caso(29); // gli stati hanno il loro caso: così non cambiano carte, comparse e drop della notte
   private bonus: Bonus;
   private effetti: Effetti;
   private colpo = 0; // numero del colpo in corso, per non toccare due volte lo stesso nemico
   private toccati = 0; // nemici toccati dal colpo in corso
-  // centro del personaggio, direzione in cui cammina, lato in cui guarda, metà dello schermo
+  // centro del personaggio, direzione in cui cammina, metà dello schermo
   private px = 0;
   private py = 0;
   private dx = 1;
   private dy = 0;
-  private lato = 1;
   private mezzaL = 300;
   private mezzaA = 300;
 
@@ -85,6 +94,7 @@ export class Arsenale {
   private zCura = new Float32Array(MAX_ZONE);
   private zSegue = new Uint8Array(MAX_ZONE);
   private zTipo = new Uint8Array(MAX_ZONE); // 0 abilità, 1 nube, 2 pozza (nubi e pozze non si sommano: COLPI.zoneNonCumulative)
+  private zAff = new Uint8Array(MAX_ZONE); // affinità della zona
   private zCampi = [this.zX, this.zY, this.zR, this.zDanno, this.zVita, this.zIntervallo, this.zTick, this.zRallenta, this.zAttira, this.zCura];
   private zSprite: Phaser.GameObjects.Sprite[] = [];
 
@@ -102,6 +112,7 @@ export class Arsenale {
   private prPortata = new Float32Array(MAX_PROIETTILI);
   private prCampi = [this.prX, this.prY, this.prVX, this.prVY, this.prVel, this.prVita, this.prDanno, this.prRaggio, this.prSterzo, this.prPortata];
   private prEsplode = new Uint8Array(MAX_PROIETTILI);
+  private prAff = new Uint8Array(MAX_PROIETTILI);
   private prResto = new Uint8Array(MAX_PROIETTILI); // nemici che può ancora trapassare
   private prColpiti = new Uint32Array(MAX_PROIETTILI * 4); // id dei nemici già colpiti (fino a 4)
   private prSprite: Phaser.GameObjects.Sprite[] = [];
@@ -112,6 +123,9 @@ export class Arsenale {
 
   // falci
   private angoloFalci = 0;
+  private falceCresce = 0; // lama più lunga dopo le uccisioni (0,1 = +10%)
+  private falceDura = 0; // secondi prima che torni normale
+  private scalaLama = 1;
   private lame: Phaser.GameObjects.Sprite[] = [];
 
   // colpi ritardati: secondo colpo della pala e della campana, fendente alle spalle
@@ -120,7 +134,7 @@ export class Arsenale {
   private rtArma: Arma[] = [];
   private rtA = new Float32Array(MAX_RITARDATI); // raggio o lunghezza
   private rtB = new Float32Array(MAX_RITARDATI); // danno
-  private rtC = new Float32Array(MAX_RITARDATI); // direzione (angolo) o lato
+  private rtC = new Float32Array(MAX_RITARDATI); // direzione (angolo); per la Campana 1 = rintocco che ferma
 
   // usati dentro le ricerche nella griglia, per non creare funzioni nel ciclo di gioco
   private cx = 0;
@@ -130,13 +144,22 @@ export class Arsenale {
   private cRespinta = 0;
   private cForma = 0; // 0 cerchio, 1 arco, 2 rettangolo
   private cCos = 0; // arco: metà ampiezza come coseno
-  private cDX = 1; // arco: direzione; rettangolo: lato
+  private cDX = 1; // arco e rettangolo: direzione
   private cDY = 0;
   private cX0 = 0; // rettangolo
   private cX1 = 0;
   private cY0 = 0;
   private cY1 = 0;
   private cZona = 0;
+  private cAff = 0; // affinità del colpo in corso
+  private cFerma = 0; // secondi per cui il colpo in corso ferma i nemici (secondo rintocco)
+  // coda delle reazioni e delle esplosioni, eseguite alla fine del passo
+  private code = 0;
+  private qTipo = new Uint8Array(MAX_CODA);
+  private qJ = new Int32Array(MAX_CODA);
+  private qX = new Float32Array(MAX_CODA);
+  private qY = new Float32Array(MAX_CODA);
+  private qDanno = new Float32Array(MAX_CODA);
   private cDt = 0;
   private cProiettile = 0;
   private cMigliore = -1;
@@ -158,8 +181,8 @@ export class Arsenale {
     for (let i = 0; i < MAX_EFFETTI; i++) this.sprEffetti.push(scena.add.sprite(0, 0, PALA.effetto).setVisible(false));
     for (let i = 0; i < MAX_ZONE; i++) this.zSprite.push(scena.add.sprite(0, 0, TURIBOLO.effetto).setVisible(false).setDepth(PROFONDITA.aTerra));
     for (let i = 0; i < MAX_PROIETTILI; i++) this.prSprite.push(scena.add.sprite(0, 0, BASTONE.effetto, '3').setVisible(false).setDepth(PROFONDITA.sopra));
-    const scalaLama = ingrandimento(scena, FALCE.lama);
-    for (let i = 0; i < MAX_LAME; i++) this.lame.push(scena.add.sprite(0, 0, FALCE.lama).setScale(scalaLama).setVisible(false).setDepth(PROFONDITA.sopra));
+    this.scalaLama = ingrandimento(scena, FALCE.lama);
+    for (let i = 0; i < MAX_LAME; i++) this.lame.push(scena.add.sprite(0, 0, FALCE.lama).setScale(this.scalaLama).setVisible(false).setDepth(PROFONDITA.sopra));
     for (let i = 0; i < MAX_RITARDATI; i++) this.rtArma.push(PALA);
   }
 
@@ -179,14 +202,13 @@ export class Arsenale {
 
   /**
    * Un passo di logica. (x, y) sono i piedi del personaggio, (dx, dy) la direzione in cui cammina,
-   * lato −1 o 1 se guarda a sinistra o a destra; mezzaL e mezzaA sono metà dello schermo.
+   * mezzaL e mezzaA sono metà dello schermo.
    */
-  aggiorna(dt: number, x: number, y: number, dx: number, dy: number, lato: number, mezzaL: number, mezzaA: number): void {
+  aggiorna(dt: number, x: number, y: number, dx: number, dy: number, mezzaL: number, mezzaA: number): void {
     this.px = x;
     this.py = y - COLPI.corpo;
     this.dx = dx;
     this.dy = dy;
-    this.lato = lato;
     this.mezzaL = mezzaL;
     this.mezzaA = mezzaA;
     for (let n = 0; n < this.possedute.length; n++) {
@@ -202,6 +224,8 @@ export class Arsenale {
     this.aggiornaFalci(dt);
     this.aggiornaZone(dt);
     this.aggiornaProiettili(dt);
+    this.eseguiCoda();
+    if (this.falceDura > 0 && (this.falceDura -= dt) <= 0) this.falceCresce = 0;
     for (let i = 0; i < MAX_EFFETTI; i++) {
       if (this.vitaEffetto[i] > 0 && (this.vitaEffetto[i] -= dt) <= 0) this.sprEffetti[i].stop().setVisible(false);
     }
@@ -210,7 +234,8 @@ export class Arsenale {
   /** Lancia un'abilità speciale nel punto del personaggio. */
   abilita(a: Abilita): void {
     const area = 1 + this.bonus.area;
-    this.zona(a.effetto, this.px, this.py, a.raggio * area, a.danno, a.durata, a.intervallo, a.rallenta, a.attira, a.cura, a.segue, a.animazione === 'ciclo');
+    this.zona(a.effetto, this.px, this.py, a.raggio * area, a.danno, a.durata, a.intervallo, a.rallenta, a.attira, a.cura, a.segue, a.animazione === 'ciclo',
+      0, CODICE_AFFINITA[AFFINITA_ABILITA[a.id]]);
   }
 
   /** Salute al secondo che il personaggio riceve dalle zone che curano (Benedizione) in cui si trova. */
@@ -254,13 +279,14 @@ export class Arsenale {
       case 'campana': {
         const l = a.livelli[p.livello - 1];
         this.rintocco(l.raggio * area, l.danno);
-        if (l.doppio) this.ritarda(a, a.ritardoDoppio, l.raggio * area, l.danno, 0);
+        if (l.doppio) this.ritarda(a, a.ritardoDoppio, l.raggio * area, l.danno, 1); // il secondo rintocco ferma
         return l.ricarica;
       }
       case 'lamaDiLuce': {
         const l = a.livelli[p.livello - 1];
-        this.fendente(this.lato, l.lunghezza * area, l.danno);
-        if (l.spalle) this.ritarda(a, a.ritardoSpalle, l.lunghezza * area, l.danno, -this.lato);
+        // il fendente segue la direzione in cui cammini (prima solo destra o sinistra)
+        this.fendente(this.dx, this.dy, l.lunghezza * area, l.danno);
+        if (l.spalle) this.ritarda(a, a.ritardoSpalle, l.lunghezza * area, l.danno, Math.atan2(-this.dy, -this.dx));
         return l.ricarica;
       }
       case 'turibolo': {
@@ -274,7 +300,7 @@ export class Arsenale {
             nx = this.px + Math.cos(ang) * d;
             ny = this.py + Math.sin(ang) * d;
           }
-          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, a.rallenta, 0, 0, false, false, NUBE);
+          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, a.rallenta, 0, 0, false, false, NUBE, SACRO);
         }
         return l.ricarica;
       }
@@ -284,7 +310,7 @@ export class Arsenale {
         for (let k = 0; k < l.quantita + piu; k++) {
           const j = this.nemicoVisibile();
           if (j < 0) break;
-          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, l.danno, l.durata, a.intervallo, 0, 0, 0, false, true, POZZA);
+          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, l.danno, l.durata, a.intervallo, 0, 0, 0, false, true, POZZA, SACRO);
         }
         return l.ricarica;
       }
@@ -304,7 +330,7 @@ export class Arsenale {
           const j = this.piuVicino(a.portata, k);
           if (j < 0) break;
           this.scelti[k] = j;
-          this.lancia(a.effetto, j, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, 0, 0, false, 0);
+          this.lancia(a.effetto, j, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, 0, 0, false, 0, LUCE);
         }
         return l.ricarica;
       }
@@ -312,7 +338,7 @@ export class Arsenale {
         const l = a.livelli[p.livello - 1];
         const n = l.quantita + piu;
         // partono a raggiera e poi girano verso i nemici
-        for (let k = 0; k < n; k++) this.lancia(a.effetto, -1, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2);
+        for (let k = 0; k < n; k++) this.lancia(a.effetto, -1, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2, OMBRA);
         return l.ricarica;
       }
       case 'falce':
@@ -324,11 +350,13 @@ export class Arsenale {
     return base * (1 + this.bonus.danno) * (COLPI.casoMinimo + this.caso.numero() * (COLPI.casoMassimo - COLPI.casoMinimo));
   }
 
-  /** Colpisce il nemico j e mostra il numero del danno. */
-  private ferisci(j: number, base: number, respinta: number, dx: number, dy: number): void {
+  /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno. */
+  private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita): void {
     const o = this.orda;
     const danno = this.danno(base);
     o.colpisci(j, danno, respinta, dx, dy);
+    const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
+    if (r) this.accoda(r, j, 0);
     this.dannoTotale += danno;
     suona('colpo');
     this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
@@ -340,40 +368,88 @@ export class Arsenale {
     this.cDX = dx;
     this.cDY = dy;
     this.cCos = Math.cos(((ampiezza / 2) * Math.PI) / 180);
+    this.cAff = LUCE;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
     this.effetti.arco(this.px, this.py, Math.atan2(dy, dx), raggio, ampiezza);
   }
 
+  /** Mette in coda una reazione (o un'esplosione) sul nemico j, da eseguire alla fine del passo. */
+  private accoda(tipo: number, j: number, danno: number): void {
+    if (this.code >= MAX_CODA) return;
+    const k = this.code++;
+    const o = this.orda;
+    this.qTipo[k] = tipo;
+    this.qJ[k] = j;
+    this.qX[k] = o.x[j];
+    this.qY[k] = o.y[j] - o.raggio[j];
+    // l'Eclissi toglie una parte della salute massima, con un tetto (il Mietitore subisce sempre il tetto)
+    const eclissi = o.tipo[j] === ID_MIETITORE ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
+    this.qDanno[k] = tipo === ECLISSI ? eclissi : danno;
+  }
+
+  /** Esegue le reazioni e le esplosioni in coda (i nemici non hanno ancora cambiato posto: i morti si tolgono dopo). */
+  private eseguiCoda(): void {
+    const o = this.orda;
+    for (let k = 0; k < this.code; k++) {
+      const x = this.qX[k], y = this.qY[k], j = this.qJ[k];
+      const t = this.qTipo[k];
+      if (t === ESPLOSIONE || t === ECLISSI) {
+        const r = t === ECLISSI ? REAZIONI.eclissi.raggio : RUOLI.esplosioneBastone.raggio;
+        this.prepara(0, x, y, r, this.qDanno[k], 0);
+        if (t === ESPLOSIONE) o.segno[j] = this.colpo; // il dardo l'ha già colpito
+        this.orda.griglia.nelRaggio(x, y, r + 40, this.visitaColpo);
+        if (t === ECLISSI) this.effetti.reazione(x, y, r, REAZIONI.eclissi.colore, REAZIONI.eclissi.bordo, REAZIONI.durataEffetto);
+      } else if (t === ESORCISMO) {
+        const e = REAZIONI.esorcismo;
+        for (let f = 0; f < e.fiammelle; f++) {
+          this.lancia(FUOCO_FATUO.effetto, -1, e.velocita, e.vita, e.danno, 1, FUOCO_FATUO.raggio, FUOCO_FATUO.sterzo, FUOCO_FATUO.portata, false, (f / e.fiammelle) * Math.PI * 2, 0, x, y);
+        }
+        this.effetti.reazione(x, y, e.raggio, e.colore, e.bordo, REAZIONI.durataEffetto);
+      } else if (t === RIVELAZIONE) {
+        this.effetti.reazione(x, y, REAZIONI.rivelazione.raggio, REAZIONI.rivelazione.colore, REAZIONI.rivelazione.bordo, REAZIONI.durataEffetto);
+      } else if (t === INTERRAMENTO) {
+        this.effetti.reazione(x, y, REAZIONI.interramento.raggio, REAZIONI.interramento.colore, REAZIONI.interramento.bordo, REAZIONI.durataEffetto);
+      }
+      if (t !== ESPLOSIONE) this.reazioni++;
+    }
+    this.code = 0;
+  }
+
   private impatto(dx: number, dy: number, raggio: number, danno: number): void {
     this.prepara(0, this.px + dx * PALA.distanza, this.py + dy * PALA.distanza, raggio, danno, PALA.respinta);
+    this.cAff = TERRA;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
     this.effetto(PALA.effetto, this.cx, this.cy, raggio, PROFONDITA.aTerra, EFFETTI.impattoPala);
     if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
   }
 
-  private rintocco(raggio: number, danno: number): void {
+  private rintocco(raggio: number, danno: number, ferma = 0): void {
     this.prepara(0, this.px, this.py, raggio, danno, CAMPANA.respinta);
+    this.cAff = SACRO;
+    this.cFerma = ferma;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
     this.effetto(CAMPANA.effetto, this.px, this.py, raggio, PROFONDITA.aTerra, CAMPANA.durataEffetto);
     suona('campana');
   }
 
-  /** Fendente orizzontale verso il lato (−1 sinistra, 1 destra). */
-  private fendente(lato: number, lunghezza: number, danno: number): void {
+  /** Fendente dritto nella direzione (dx, dy), lunga 1: un rettangolo che parte dal personaggio. */
+  private fendente(dx: number, dy: number, lunghezza: number, danno: number): void {
     const h = LAMA_DI_LUCE.altezza / 2;
-    this.prepara(2, this.px + (lato * lunghezza) / 2, this.py, Math.hypot(lunghezza / 2, h), danno, LAMA_DI_LUCE.respinta);
-    this.cX0 = Math.min(this.px, this.px + lato * lunghezza);
-    this.cX1 = Math.max(this.px, this.px + lato * lunghezza);
-    this.cY0 = this.py - h;
-    this.cY1 = this.py + h;
-    this.cDX = lato;
+    this.prepara(2, this.px + (dx * lunghezza) / 2, this.py + (dy * lunghezza) / 2, Math.hypot(lunghezza / 2, h), danno, LAMA_DI_LUCE.respinta);
+    this.cAff = LUCE;
+    this.cX0 = this.px; // inizio del fendente
+    this.cY0 = this.py;
+    this.cX1 = lunghezza;
+    this.cY1 = h;
+    this.cDX = dx;
+    this.cDY = dy;
     this.orda.griglia.nelRaggio(this.cx, this.cy, this.cr + 40, this.visitaColpo);
-    // il fendente della v0 parte dal bordo sinistro della tela e va a destra: si allunga e si ribalta per la sinistra
+    // il fendente della v0 parte dal bordo sinistro della tela e va a destra: si allunga e si gira nella direzione;
+    // verso sinistra si capovolge anche in verticale, così il disegno non resta sottosopra
     const s = this.effetto(LAMA_DI_LUCE.effetto, this.px, this.py, 0, PROFONDITA.aTerra, LAMA_DI_LUCE.durataEffetto);
     if (!s) return;
     const m = this.misureLama();
-    const ox = m.x / m.l;
-    s.setOrigin(lato < 0 ? 1 - ox : ox, 0.5).setScale(lunghezza / m.lunghezza, LAMA_DI_LUCE.altezza / m.altezza).setFlipX(lato < 0);
+    s.setOrigin(m.x / m.l, 0.5).setScale(lunghezza / m.lunghezza, LAMA_DI_LUCE.altezza / m.altezza).setRotation(Math.atan2(dy, dx)).setFlipY(dx < 0);
   }
 
   private misureLama(): { x: number; l: number; lunghezza: number; altezza: number } {
@@ -399,6 +475,8 @@ export class Arsenale {
     this.cr = r;
     this.cDanno = danno;
     this.cRespinta = respinta;
+    this.cAff = 0;
+    this.cFerma = 0;
     this.colpo++;
     this.toccati = 0;
   }
@@ -414,9 +492,14 @@ export class Arsenale {
     let spintaX = 0;
     let spintaY = 0;
     if (this.cForma === 2) {
+      // rettangolo girato: lungo la direzione da 0 a cX1, di lato al massimo cY1
       const r = o.raggio[j];
-      if (ex < this.cX0 - r || ex > this.cX1 + r || ey < this.cY0 - r || ey > this.cY1 + r) return;
+      const lx = ex - this.cX0, ly = ey - this.cY0;
+      const lungo = lx * this.cDX + ly * this.cDY;
+      const largo = Math.abs(-lx * this.cDY + ly * this.cDX);
+      if (lungo < -r || lungo > this.cX1 + r || largo > this.cY1 + r) return;
       spintaX = this.cDX;
+      spintaY = this.cDY;
     } else {
       const r = this.cr + o.raggio[j];
       const d2 = rx * rx + ry * ry;
@@ -428,7 +511,9 @@ export class Arsenale {
     }
     o.segno[j] = this.colpo;
     this.toccati++;
-    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY);
+    const aff = this.cAff, ferma = this.cFerma;
+    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff);
+    if (ferma) o.ferma(j, ferma);
   }
 
   private ritarda(arma: Arma, tempo: number, a: number, b: number, c: number): void {
@@ -447,8 +532,8 @@ export class Arsenale {
       if (this.rtTempo[i] > 0) continue;
       const arma = this.rtArma[i];
       if (arma === PALA) this.impatto(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
-      else if (arma === CAMPANA) this.rintocco(this.rtA[i], this.rtB[i]);
-      else this.fendente(this.rtC[i], this.rtA[i], this.rtB[i]);
+      else if (arma === CAMPANA) this.rintocco(this.rtA[i], this.rtB[i], this.rtC[i] ? RUOLI.campanaFermo : 0);
+      else this.fendente(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
       const u = --this.ritardati;
       this.rtTempo[i] = this.rtTempo[u];
       this.rtArma[i] = this.rtArma[u];
@@ -460,7 +545,7 @@ export class Arsenale {
 
   // ——— Zone ———
   private zona(chiave: string, x: number, y: number, raggio: number, danno: number, durata: number, intervallo: number,
-    rallenta: number, attira: number, cura: number, segue: boolean, ciclo: boolean, tipo = 0): void {
+    rallenta: number, attira: number, cura: number, segue: boolean, ciclo: boolean, tipo = 0, aff = 0): void {
     if (this.zone >= MAX_ZONE) return;
     const i = this.zone++;
     this.zX[i] = x;
@@ -475,6 +560,7 @@ export class Arsenale {
     this.zCura[i] = cura;
     this.zSegue[i] = segue ? 1 : 0;
     this.zTipo[i] = tipo;
+    this.zAff[i] = aff;
     const s = this.zSprite[i];
     s.setTexture(chiave).setScale(raggio / this.raggioDi(chiave)).setVisible(true);
     s.play(ciclo ? { key: `${chiave}:idle`, repeat: -1 } : { key: `${chiave}:idle`, duration: durata * 1000, repeat: 0 });
@@ -522,7 +608,7 @@ export class Arsenale {
       pausa[j] = this.zIntervallo[i] - 0.01;
     }
     o.segno[j] = this.colpo;
-    this.ferisci(j, this.zDanno[i], 0, 0, 0);
+    this.ferisci(j, this.zDanno[i], 0, 0, 0, this.zAff[i], STATI.probabilitaZone);
     if (this.zRallenta[i]) o.rallenta(j, this.zRallenta[i], this.zIntervallo[i] + 0.05);
   }
 
@@ -541,6 +627,7 @@ export class Arsenale {
     for (const a of this.zCampi) a[i] = a[u];
     this.zSegue[i] = this.zSegue[u];
     this.zTipo[i] = this.zTipo[u];
+    this.zAff[i] = this.zAff[u];
     this.zSprite[i] = this.zSprite[u];
     this.zSprite[u] = s;
   }
@@ -555,13 +642,13 @@ export class Arsenale {
       const r = l.raggio * (1 + this.bonus.area);
       this.angoloFalci = (this.angoloFalci + l.giri * Math.PI * 2 * dt) % (Math.PI * 2);
       this.cDanno = l.danno;
-      this.cr = FALCE.raggioLama;
+      this.cr = FALCE.raggioLama * (1 + this.falceCresce);
       for (let k = 0; k < n; k++) {
         const ang = this.angoloFalci + (k / n) * Math.PI * 2;
         this.cx = this.px + Math.cos(ang) * r;
         this.cy = this.py + Math.sin(ang) * r;
         this.orda.griglia.vicini(this.cx, this.cy, this.visitaFalce);
-        this.lame[k].setPosition(Math.round(this.cx), Math.round(this.cy)).setRotation(ang * 3).setVisible(true);
+        this.lame[k].setPosition(Math.round(this.cx), Math.round(this.cy)).setRotation(ang * 3).setScale(this.scalaLama * (1 + this.falceCresce)).setVisible(true);
       }
     }
     for (let k = n; k < MAX_LAME; k++) this.lame[k].setVisible(false);
@@ -578,25 +665,32 @@ export class Arsenale {
     const ex = o.x[j] - this.px;
     const ey = o.y[j] - o.raggio[j] - this.py;
     const d = Math.hypot(ex, ey) || 1;
-    this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d);
+    this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
+    if (o.salute[j] <= 0) {
+      // ogni uccisione allunga la lama per qualche secondo
+      const c = RUOLI.falceCrescita;
+      this.falceCresce = Math.min(c.massimo, this.falceCresce + c.perUccisione);
+      this.falceDura = c.durata;
+    }
   }
 
   // ——— Proiettili ———
   /** Un proiettile verso il nemico j; con j = −1 parte nella direzione angolo (solo per quelli che inseguono). */
   private lancia(chiave: string, j: number, velocita: number, vita: number, danno: number, trapassa: number, raggio: number,
-    sterzo: number, portata: number, esplode: boolean, angolo: number): void {
+    sterzo: number, portata: number, esplode: boolean, angolo: number, aff = 0, ox = this.px, oy = this.py): void {
     if (this.proiettili >= MAX_PROIETTILI) return;
     let ang = angolo;
     if (j >= 0) {
       const o = this.orda;
-      ang = Math.atan2(o.y[j] - o.raggio[j] - this.py, o.x[j] - this.px);
+      ang = Math.atan2(o.y[j] - o.raggio[j] - oy, o.x[j] - ox);
     } else if (!sterzo) {
       return;
     }
     const i = this.proiettili++;
     suona('sparo');
-    this.prX[i] = this.px;
-    this.prY[i] = this.py;
+    this.prX[i] = ox;
+    this.prY[i] = oy;
+    this.prAff[i] = aff;
     this.prVX[i] = Math.cos(ang) * velocita;
     this.prVY[i] = Math.sin(ang) * velocita;
     this.prVel[i] = velocita;
@@ -622,7 +716,7 @@ export class Arsenale {
     this.attesaRaffica += BASTONE.intervallo;
     this.raffica--;
     const j = this.piuVicino(BASTONE.portata, 0);
-    if (j >= 0) this.lancia(BASTONE.effetto, j, BASTONE.velocita, BASTONE.vita, this.dannoRaffica, this.trapassaRaffica, BASTONE.raggio, 0, 0, true, 0);
+    if (j >= 0) this.lancia(BASTONE.effetto, j, BASTONE.velocita, BASTONE.vita, this.dannoRaffica, this.trapassaRaffica, BASTONE.raggio, 0, 0, true, 0, OMBRA);
   }
 
   /** Il nemico più vicino al personaggio entro portata, saltando i primi «salta» già scelti dalla stessa raffica. */
@@ -702,7 +796,8 @@ export class Arsenale {
     if (o.salute[j] <= 0) return;
     const ex = o.x[j] - this.cx;
     const ey = o.y[j] - o.raggio[j] - this.cy;
-    const d2 = ex * ex + ey * ey;
+    // élite e Mietitore sembrano più vicini: il fuoco fatuo li insegue per primi
+    const d2 = (ex * ex + ey * ey) * (o.elite[j] || o.tipo[j] === ID_MIETITORE ? RUOLI.fuocoFatuoPreda : 1);
     if (d2 < this.cDistanza) {
       this.cDistanza = d2;
       this.cMigliore = j;
@@ -726,8 +821,11 @@ export class Arsenale {
     }
     this.prResto[i]--;
     const v = this.prVel[i] || 1;
-    this.ferisci(j, this.prDanno[i], 0, this.prVX[i] / v, this.prVY[i] / v);
-    if (this.prEsplode[i]) this.effetto(BASTONE.esplosione, this.cx, this.cy, 0, PROFONDITA.sopra, EFFETTI.esplosione);
+    this.ferisci(j, this.prDanno[i], 0, this.prVX[i] / v, this.prVY[i] / v, this.prAff[i]);
+    if (this.prEsplode[i]) {
+      this.effetto(BASTONE.esplosione, this.cx, this.cy, 0, PROFONDITA.sopra, EFFETTI.esplosione);
+      this.accoda(ESPLOSIONE, j, this.prDanno[i] * RUOLI.esplosioneBastone.danno); // ferisce anche intorno
+    }
   }
 
   private togliProiettile(i: number): void {
@@ -737,6 +835,7 @@ export class Arsenale {
     if (i === u) return;
     for (const a of this.prCampi) a[i] = a[u];
     this.prEsplode[i] = this.prEsplode[u];
+    this.prAff[i] = this.prAff[u];
     this.prResto[i] = this.prResto[u];
     this.prColpiti.copyWithin(i * 4, u * 4, u * 4 + 4);
     this.prSprite[i] = this.prSprite[u];

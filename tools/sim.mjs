@@ -97,7 +97,7 @@ for (const pg of scelti) {
     (vinte.length ? `\n     nelle vittorie la salute più bassa è stata in media ${Math.round(saluteMinima)}` : '') +
     `\n     al minuto: ${alMinuto((r) => r.pani).toFixed(1)} pani, ${alMinuto((r) => r.calamite).toFixed(2)} calamite; ` +
     `salute recuperata ${Math.round(alMinuto((r) => r.curaPane))} col pane, ${Math.round(alMinuto((r) => r.curaFiaschetta ?? 0))} con la fiaschetta, ${Math.round(alMinuto((r) => r.curaAltro))} con rigenerazione e abilità` +
-    `\n     a notte: ${media(rr.map((r) => r.sorsi ?? 0)).toFixed(1)} sorsi, ${media(rr.map((r) => r.grazie ?? 0)).toFixed(1)} schivate perfette`);
+    `\n     a notte: ${media(rr.map((r) => r.sorsi ?? 0)).toFixed(1)} sorsi, ${media(rr.map((r) => r.grazie ?? 0)).toFixed(1)} schivate perfette, ${Math.round(media(rr.map((r) => r.reazioni ?? 0)))} reazioni`);
   if (rr.length && vinte.length / rr.length > VITTORIE_MASSIME) problemi.push(`${pg} vince troppo spesso (${vinte.length}/${rr.length}; al massimo ${Math.round(VITTORIE_MASSIME * 100)}%)`);
   if (rr.length && vinte.length === rr.length && saluteMinima > 50) problemi.push(`${pg} vince sempre senza sforzo (salute mai sotto ${Math.round(saluteMinima)})`);
   if (rr.length && morti.length === rr.length && Math.max(...morti) < 300) problemi.push(`${pg} muore sempre prima del minuto 5`);
