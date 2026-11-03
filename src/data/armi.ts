@@ -102,11 +102,11 @@ export const LANTERNA: Lanterna = {
 export const PALA: Pala = {
   id: 'pala', nome: 'Pala', icona: 'Icona_Pala', effetto: 'Pala_Impatto', respinta: 423, distanza: 61, ritardoDoppio: 0.22,
   livelli: [
-    { ricarica: 1.35, danno: 34, raggio: 70, doppio: false, testo: 'Colpo potente a corta gittata.' },
-    { ricarica: 1.35, danno: 44, raggio: 70, doppio: false, testo: '+10 danno.' },
-    { ricarica: 1.35, danno: 44, raggio: 87, doppio: false, testo: "Area d'impatto maggiore." },
-    { ricarica: 1.15, danno: 44, raggio: 87, doppio: false, testo: 'Colpi più frequenti.' },
-    { ricarica: 1.15, danno: 56, raggio: 87, doppio: false, testo: '+12 danno.' },
+    { ricarica: 1.35, danno: 34, raggio: 87, doppio: false, testo: 'Colpo potente a corta gittata.' },
+    { ricarica: 1.35, danno: 44, raggio: 87, doppio: false, testo: '+10 danno.' },
+    { ricarica: 1.35, danno: 44, raggio: 95, doppio: false, testo: "Area d'impatto maggiore." },
+    { ricarica: 1.15, danno: 44, raggio: 95, doppio: false, testo: 'Colpi più frequenti.' },
+    { ricarica: 1.15, danno: 56, raggio: 95, doppio: false, testo: '+12 danno.' },
     { ricarica: 1.15, danno: 56, raggio: 103, doppio: false, testo: "Area d'impatto maggiore." },
     { ricarica: 0.95, danno: 56, raggio: 103, doppio: false, testo: 'Colpi più frequenti.' },
     { ricarica: 0.95, danno: 76, raggio: 103, doppio: true, testo: '+20 danno, colpo doppio.' },
@@ -117,14 +117,14 @@ export const TURIBOLO: Turibolo = {
   id: 'turibolo', nome: 'Turibolo', icona: 'Icona_Turibolo', effetto: 'Turibolo_Nube', respinta: 0,
   distanzaPrima: 47, distanzaAltre: 94, intervallo: 0.3, rallenta: 0.3,
   livelli: [
-    { ricarica: 1.25, quantita: 1, danno: 6, raggio: 70, durata: 2.4, testo: 'Emette fumo sacro a corta gittata.' },
-    { ricarica: 1.25, quantita: 1, danno: 8, raggio: 70, durata: 2.4, testo: '+2 danno.' },
-    { ricarica: 1.25, quantita: 2, danno: 8, raggio: 85, durata: 2.4, testo: '+1 nube, nubi più ampie.' },
-    { ricarica: 1.05, quantita: 2, danno: 8, raggio: 85, durata: 2.4, testo: 'Più frequente.' },
-    { ricarica: 1.05, quantita: 2, danno: 11, raggio: 85, durata: 3.1, testo: '+3 danno, fumo più duraturo.' },
-    { ricarica: 1.05, quantita: 3, danno: 11, raggio: 99, durata: 3.1, testo: '+1 nube, nubi più ampie.' },
-    { ricarica: 0.85, quantita: 3, danno: 11, raggio: 99, durata: 3.1, testo: 'Più frequente.' },
-    { ricarica: 0.85, quantita: 3, danno: 15, raggio: 99, durata: 3.1, testo: '+4 danno.' },
+    { ricarica: 1.25, quantita: 1, danno: 8, raggio: 70, durata: 2.4, testo: 'Emette fumo sacro a corta gittata.' },
+    { ricarica: 1.25, quantita: 1, danno: 11, raggio: 70, durata: 2.4, testo: '+3 danno.' },
+    { ricarica: 1.25, quantita: 2, danno: 11, raggio: 85, durata: 2.4, testo: '+1 nube, nubi più ampie.' },
+    { ricarica: 1.05, quantita: 2, danno: 11, raggio: 85, durata: 2.4, testo: 'Più frequente.' },
+    { ricarica: 1.05, quantita: 2, danno: 15, raggio: 85, durata: 3.1, testo: '+4 danno, fumo più duraturo.' },
+    { ricarica: 1.05, quantita: 3, danno: 15, raggio: 99, durata: 3.1, testo: '+1 nube, nubi più ampie.' },
+    { ricarica: 0.85, quantita: 3, danno: 15, raggio: 99, durata: 3.1, testo: 'Più frequente.' },
+    { ricarica: 0.85, quantita: 3, danno: 21, raggio: 99, durata: 3.1, testo: '+6 danno.' },
   ],
 };
 
@@ -176,14 +176,14 @@ export const FALCE: Falce = {
 export const CAMPANA: Campana = {
   id: 'campana', nome: 'Campana', icona: 'Icona_Campana', effetto: 'Campana_Rintocco', respinta: 470, ritardoDoppio: 0.35, durataEffetto: 0.3,
   livelli: [
-    { ricarica: 2.6, danno: 16, raggio: 197, doppio: false, testo: 'Rintocchi che respingono e feriscono tutto intorno.' },
-    { ricarica: 2.6, danno: 22, raggio: 197, doppio: false, testo: '+6 danno.' },
-    { ricarica: 2.6, danno: 22, raggio: 240, doppio: false, testo: 'Raggio più ampio.' },
-    { ricarica: 2.2, danno: 22, raggio: 240, doppio: false, testo: 'Rintocchi più frequenti.' },
-    { ricarica: 2.2, danno: 30, raggio: 240, doppio: false, testo: '+8 danno.' },
-    { ricarica: 2.2, danno: 30, raggio: 282, doppio: false, testo: 'Raggio più ampio.' },
-    { ricarica: 1.8, danno: 30, raggio: 282, doppio: false, testo: 'Rintocchi più frequenti.' },
-    { ricarica: 1.8, danno: 42, raggio: 282, doppio: true, testo: '+12 danno e doppio rintocco.' },
+    { ricarica: 2.6, danno: 19, raggio: 197, doppio: false, testo: 'Rintocchi che respingono e feriscono tutto intorno.' },
+    { ricarica: 2.6, danno: 26, raggio: 197, doppio: false, testo: '+7 danno.' },
+    { ricarica: 2.6, danno: 26, raggio: 240, doppio: false, testo: 'Raggio più ampio.' },
+    { ricarica: 2.2, danno: 26, raggio: 240, doppio: false, testo: 'Rintocchi più frequenti.' },
+    { ricarica: 2.2, danno: 36, raggio: 240, doppio: false, testo: '+10 danno.' },
+    { ricarica: 2.2, danno: 36, raggio: 282, doppio: false, testo: 'Raggio più ampio.' },
+    { ricarica: 1.8, danno: 36, raggio: 282, doppio: false, testo: 'Rintocchi più frequenti.' },
+    { ricarica: 1.8, danno: 50, raggio: 282, doppio: true, testo: '+14 danno e doppio rintocco.' },
   ],
 };
 
@@ -205,14 +205,14 @@ export const FUOCO_FATUO: FuocoFatuo = {
 export const ACQUA_SANTA: AcquaSanta = {
   id: 'acquaSanta', nome: 'Acqua santa', icona: 'Icona_Acqua_santa', effetto: 'Acqua_santa_Pozza', respinta: 0, intervallo: 0.3,
   livelli: [
-    { ricarica: 2.8, quantita: 1, danno: 7, raggio: 89, durata: 2.6, testo: 'Fiale che lasciano pozze benedette sui nemici.' },
-    { ricarica: 2.8, quantita: 2, danno: 7, raggio: 89, durata: 2.6, testo: '+1 fiala.' },
-    { ricarica: 2.8, quantita: 2, danno: 10, raggio: 108, durata: 2.6, testo: 'Pozze più grandi e dannose.' },
-    { ricarica: 2.8, quantita: 3, danno: 10, raggio: 108, durata: 2.6, testo: '+1 fiala.' },
-    { ricarica: 2.3, quantita: 3, danno: 10, raggio: 108, durata: 3.2, testo: 'Ricarica più rapida, pozze più durature.' },
-    { ricarica: 2.3, quantita: 3, danno: 14, raggio: 129, durata: 3.2, testo: 'Pozze più grandi e dannose.' },
-    { ricarica: 2.3, quantita: 4, danno: 14, raggio: 129, durata: 3.2, testo: '+1 fiala.' },
-    { ricarica: 2.3, quantita: 4, danno: 19, raggio: 129, durata: 4.2, testo: 'Durata e danno maggiori.' },
+    { ricarica: 2.8, quantita: 1, danno: 9, raggio: 89, durata: 2.6, testo: 'Fiale che lasciano pozze benedette sui nemici.' },
+    { ricarica: 2.8, quantita: 2, danno: 9, raggio: 89, durata: 2.6, testo: '+1 fiala.' },
+    { ricarica: 2.8, quantita: 2, danno: 13, raggio: 108, durata: 2.6, testo: 'Pozze più grandi e dannose.' },
+    { ricarica: 2.8, quantita: 3, danno: 13, raggio: 108, durata: 2.6, testo: '+1 fiala.' },
+    { ricarica: 2.3, quantita: 3, danno: 13, raggio: 108, durata: 3.2, testo: 'Ricarica più rapida, pozze più durature.' },
+    { ricarica: 2.3, quantita: 3, danno: 18, raggio: 129, durata: 3.2, testo: 'Pozze più grandi e dannose.' },
+    { ricarica: 2.3, quantita: 4, danno: 18, raggio: 129, durata: 3.2, testo: '+1 fiala.' },
+    { ricarica: 2.3, quantita: 4, danno: 25, raggio: 129, durata: 4.2, testo: 'Durata e danno maggiori.' },
   ],
 };
 
@@ -244,4 +244,7 @@ export const COLPI = {
   respintaPesanti: 0.25, // bruti ed élite subiscono un quarto della respinta
   lampoNemico: 0.1, // secondi in cui il nemico colpito si illumina di bianco
   corpo: 36, // le armi partono da qui, sopra i piedi del personaggio
+  // nubi del Turibolo e pozze dell'Acqua santa non si sommano: un nemico subisce una nube e una pozza alla volta
+  // (M8: con 11 nubi attive il Turibolo arrivava a 550 danni al secondo sul Mietitore)
+  zoneNonCumulative: true,
 } as const;

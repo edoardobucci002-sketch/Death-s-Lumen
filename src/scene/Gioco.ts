@@ -81,7 +81,8 @@ export class Gioco extends Phaser.Scene {
   private dirX = 1; // ultima direzione in cui ha camminato (le armi colpiscono da quella parte)
   private dirY = 0;
   private velocita = 0;
-  private armatura = 0;
+  private armatura = 0; // parte di danno in meno (0,15 = −15%)
+  private moltAnime = 1; // Calamita: anime in più
   private invulnerabile = 0; // secondi rimasti
   private attesaFine = 0;
   private immortale = false;
@@ -305,7 +306,7 @@ export class Gioco extends Phaser.Scene {
     this.contatti(dt, minaccia);
     const raccolte = this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
     if (raccolte) {
-      this.esperienza += raccolte;
+      this.esperienza += raccolte * this.moltAnime;
       this.animeTotali += raccolte;
       suona('anima');
     }
@@ -374,7 +375,8 @@ export class Gioco extends Phaser.Scene {
     this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena'));
     this.raccolta = BASE.raccolta * (1 + per('calamita'));
     this.rigenerazione = this.pg.rigenerazione + per('erbeAmare');
-    this.armatura = BASE.armatura + this.pg.armatura + per('scudoDiFerro');
+    this.armatura = Math.min(BASE.armaturaMassima, BASE.armatura + this.pg.armatura + per('scudoDiFerro'));
+    this.moltAnime = 1 + this.passivi.calamita * (PASSIVI.find((q) => q.id === 'calamita')!.anime ?? 0);
     this.bonus.danno = this.pg.danno + per('saleNero');
     this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * (1 - PASSIVI.find((q) => q.id === 'clessidra')!.per) ** this.passivi.clessidra);
     this.bonus.area = this.pg.area + per('stoppinoLungo');
@@ -542,7 +544,7 @@ export class Gioco extends Phaser.Scene {
     if (!colpo) return;
     this.invulnerabile = COMBATTIMENTO.invulnerabilita;
     if (this.immortale) return;
-    const danno = Math.max(1, colpo - this.armatura);
+    const danno = Math.max(1, colpo * (1 - this.armatura));
     this.salute -= danno;
     this.sim?.colpito(danno);
     suona('danno');

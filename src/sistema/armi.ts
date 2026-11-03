@@ -18,6 +18,8 @@ import {
   BASTONE, CAMPANA, CANDELA, COLPI, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, PALA, TURIBOLO, type Arma,
 } from '../data/armi';
 
+const NUBE = 1;
+const POZZA = 2;
 const MAX_EFFETTI = 48;
 const MAX_ZONE = 32;
 const MAX_PROIETTILI = 96;
@@ -82,6 +84,7 @@ export class Arsenale {
   private zAttira = new Float32Array(MAX_ZONE);
   private zCura = new Float32Array(MAX_ZONE);
   private zSegue = new Uint8Array(MAX_ZONE);
+  private zTipo = new Uint8Array(MAX_ZONE); // 0 abilità, 1 nube, 2 pozza (nubi e pozze non si sommano: COLPI.zoneNonCumulative)
   private zCampi = [this.zX, this.zY, this.zR, this.zDanno, this.zVita, this.zIntervallo, this.zTick, this.zRallenta, this.zAttira, this.zCura];
   private zSprite: Phaser.GameObjects.Sprite[] = [];
 
@@ -271,7 +274,7 @@ export class Arsenale {
             nx = this.px + Math.cos(ang) * d;
             ny = this.py + Math.sin(ang) * d;
           }
-          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, a.rallenta, 0, 0, false, false);
+          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, a.rallenta, 0, 0, false, false, NUBE);
         }
         return l.ricarica;
       }
@@ -281,7 +284,7 @@ export class Arsenale {
         for (let k = 0; k < l.quantita + piu; k++) {
           const j = this.nemicoVisibile();
           if (j < 0) break;
-          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, l.danno, l.durata, a.intervallo, 0, 0, 0, false, true);
+          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, l.danno, l.durata, a.intervallo, 0, 0, 0, false, true, POZZA);
         }
         return l.ricarica;
       }
@@ -457,7 +460,7 @@ export class Arsenale {
 
   // ——— Zone ———
   private zona(chiave: string, x: number, y: number, raggio: number, danno: number, durata: number, intervallo: number,
-    rallenta: number, attira: number, cura: number, segue: boolean, ciclo: boolean): void {
+    rallenta: number, attira: number, cura: number, segue: boolean, ciclo: boolean, tipo = 0): void {
     if (this.zone >= MAX_ZONE) return;
     const i = this.zone++;
     this.zX[i] = x;
@@ -471,6 +474,7 @@ export class Arsenale {
     this.zAttira[i] = attira;
     this.zCura[i] = cura;
     this.zSegue[i] = segue ? 1 : 0;
+    this.zTipo[i] = tipo;
     const s = this.zSprite[i];
     s.setTexture(chiave).setScale(raggio / this.raggioDi(chiave)).setVisible(true);
     s.play(ciclo ? { key: `${chiave}:idle`, repeat: -1 } : { key: `${chiave}:idle`, duration: durata * 1000, repeat: 0 });
@@ -510,8 +514,14 @@ export class Arsenale {
   private toccaZona(j: number): void {
     const o = this.orda;
     if (o.segno[j] === this.colpo || o.salute[j] <= 0 || !this.dentroZona(j)) return;
-    o.segno[j] = this.colpo;
     const i = this.cZona;
+    if (COLPI.zoneNonCumulative && this.zTipo[i]) {
+      // già ferito da un'altra nube (o pozza) in questo intervallo: questa non si somma
+      const pausa = this.zTipo[i] === NUBE ? o.pausaNube : o.pausaPozza;
+      if (pausa[j] > 0) return;
+      pausa[j] = this.zIntervallo[i] - 0.01;
+    }
+    o.segno[j] = this.colpo;
     this.ferisci(j, this.zDanno[i], 0, 0, 0);
     if (this.zRallenta[i]) o.rallenta(j, this.zRallenta[i], this.zIntervallo[i] + 0.05);
   }
@@ -530,6 +540,7 @@ export class Arsenale {
     if (i === u) return;
     for (const a of this.zCampi) a[i] = a[u];
     this.zSegue[i] = this.zSegue[u];
+    this.zTipo[i] = this.zTipo[u];
     this.zSprite[i] = this.zSprite[u];
     this.zSprite[u] = s;
   }

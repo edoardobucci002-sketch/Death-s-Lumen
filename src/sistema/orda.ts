@@ -53,6 +53,8 @@ export class Orda {
   private lentoPer = new Float32Array(CAPIENZA); // secondi rimasti di rallentamento
   private lampo = new Float32Array(CAPIENZA);
   readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
+  readonly pausaNube = new Float32Array(CAPIENZA); // …una nube del Turibolo
+  readonly pausaPozza = new Float32Array(CAPIENZA); // …una pozza dell'Acqua santa
   // Mietitore: 0 cammina, 1 si ferma e pulsa (preavviso), 2 fa la mossa (letti anche dal bot, per schivare)
   readonly fase = new Uint8Array(CAPIENZA);
   readonly mossa = new Uint8Array(CAPIENZA);
@@ -84,7 +86,7 @@ export class Orda {
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
-  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaFalce,
+  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY];
 
   constructor(
@@ -147,6 +149,8 @@ export class Orda {
       if (this.lentoPer[i] > 0) this.lentoPer[i] -= dt;
       if (this.lampo[i] > 0) this.lampo[i] -= dt;
       if (this.pausaFalce[i] > 0) this.pausaFalce[i] -= dt;
+      if (this.pausaNube[i] > 0) this.pausaNube[i] -= dt;
+      if (this.pausaPozza[i] > 0) this.pausaPozza[i] -= dt;
       if (this.tipo[i] === ID_MIETITORE && this.muoviMietitore(i, dt, dx, dy, d, gx, gy, secondi)) continue;
       let v = this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
       let tx = gx;
@@ -380,7 +384,7 @@ export class Orda {
     this.fianco[i] = (this.caso.numero() < 0.5 ? -1 : 1) * (IA.accerchia.angolo[0] + this.caso.numero() * (IA.accerchia.angolo[1] - IA.accerchia.angolo[0]));
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
-    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaFalce[i] = 0;
+    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];

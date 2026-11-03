@@ -30,9 +30,10 @@ export const NEMICI: TipoNemico[] = [
   { id: 'segugio', sprite: 'Segugio', salute: 28, velocita: 200, danno: 9, raggio: 21, anime: 3, attraversa: false, pesante: false, comportamento: 'intercetta',
     peso: (s) => (s >= 230 ? 2 : 0) },
   { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false, pesante: true, comportamento: 'diretto',
-    peso: (s) => (s >= 360 ? 1 + s / 600 : 0) },
+    // M8: entrano gradualmente in 2 minuti invece che tutti insieme alle 6:00 (lì si moriva quasi sempre)
+    peso: (s) => (s >= 360 ? Math.min(1 + s / 600, (s - 360) / 75) : 0) },
   // il Mietitore non compare a caso: arriva ai minuti indicati in MIETITORE
-  { id: 'mietitore', sprite: 'Il_Mietitore', salute: 5500, velocita: 118, danno: 22, raggio: 61, anime: 60, attraversa: true, pesante: true, comportamento: 'diretto',
+  { id: 'mietitore', sprite: 'Il_Mietitore', salute: 3600, velocita: 118, danno: 22, raggio: 61, anime: 60, attraversa: true, pesante: true, comportamento: 'diretto',
     peso: () => 0 },
 ];
 
@@ -53,7 +54,7 @@ export const MIETITORE = {
   scatto: 0.55, // durata dello scatto…
   velocitaScatto: 3.6, // …a 3,6 volte la sua velocità
   // Falciata: un cerchio rosso si accende intorno a lui; quando finisce di pulsare, colpisce chi ci è dentro
-  falciata: { carica: 0.95, raggio: 200, danno: 28 },
+  falciata: { carica: 0.95, raggio: 200, danno: 22 },
   // Falci spettrali: lancia falci rosse a ventaglio verso di te
   falci: { carica: 0.6, quante: 5, ventaglio: 0.9, velocita: 330, danno: 16, raggio: 18, durata: 3.2 },
   // Chiamata dei morti: segni rossi a terra intorno a te, poi da lì escono scheletri
@@ -91,7 +92,7 @@ export const DIFFICOLTA = {
   // salute = base × (1 + 0,28 m + 0,04 × (m − 3)² dopo il minuto 3): uguale all'inizio, molto più resistenti a metà notte
   salutePerMinuto: 0.28,
   saluteDopo: 3, // minuto da cui la crescita accelera
-  saluteAccelera: 0.04,
+  saluteAccelera: 0.03,
   dannoPerMinuto: 0.09, // danno = base × (1 + 0,09 m)
   massimiBase: 20, // nemici massimi in campo = min(tetto, 20 + 30 m)
   massimiPerMinuto: 30,

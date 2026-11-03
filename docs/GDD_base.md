@@ -36,8 +36,8 @@ Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 150 px,
 
 | Personaggio | Motto | Colore | Arma iniziale | Abilità speciale | Modificatori |
 | --- | --- | --- | --- | --- | --- |
-| Il Lampionaio | Guida nel buio | `#e3913a` | Lanterna | Cerchio di luce | +10% velocità |
-| Il Becchino | Nulla resta davvero sotto terra | `#b89a74` | Pala | Sepoltura | +30 salute, +1 armatura, +15% danno, −8% velocità |
+| Il Lampionaio | Guida nel buio | `#e3913a` | Lanterna | Cerchio di luce | +10% velocità, +0,2 salute/s (M8) |
+| Il Becchino | Nulla resta davvero sotto terra | `#b89a74` | Pala | Sepoltura | +30 salute, −25% danno subito, +15% danno, −3% velocità (M8; prima +1 armatura e −8% velocità) |
 | La Badessa | Preghiere per ciò che è stato | `#dcc07a` | Turibolo | Benedizione | +10 salute, +0,3 salute/s, +15% area |
 | La Strega | Conosce nomi che non dovrebbero essere detti | `#a57ae0` | Bastone | Rito proibito | −15 salute, +10% danno, −10% ricarica |
 
@@ -99,29 +99,35 @@ Impatto circolare 61 px davanti a te (26 × 2,35), nella direzione di cammino; r
 
 | Lv | Ricarica (s) | Danno | Raggio | Distanza colpo | Colpo doppio | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 1,35 | 34 | 70 | 61 | no | Colpo potente a corta gittata. |
-| 2 | 1,35 | 44 | 70 | 61 | no | +10 danno. |
-| 3 | 1,35 | 44 | 87 | 61 | no | Area d'impatto maggiore. |
-| 4 | 1,15 | 44 | 87 | 61 | no | Colpi più frequenti. |
-| 5 | 1,15 | 56 | 87 | 61 | no | +12 danno. |
+| 1 | 1,35 | 34 | 87 | 61 | no | Colpo potente a corta gittata. |
+| 2 | 1,35 | 44 | 87 | 61 | no | +10 danno. |
+| 3 | 1,35 | 44 | 95 | 61 | no | Area d'impatto maggiore. |
+| 4 | 1,15 | 44 | 95 | 61 | no | Colpi più frequenti. |
+| 5 | 1,15 | 56 | 95 | 61 | no | +12 danno. |
 | 6 | 1,15 | 56 | 103 | 61 | no | Area d'impatto maggiore. |
 | 7 | 0,95 | 56 | 103 | 61 | no | Colpi più frequenti. |
 | 8 | 0,95 | 76 | 103 | 61 | sì | +20 danno, colpo doppio. |
 
+M8: raggi dei livelli 1–5 più ampi (erano 70, 70, 87, 87, 87): il Becchino moriva quasi sempre verso il minuto 3.
+
+
 #### Turibolo
 
-La prima nube nasce 47 px davanti a te, le altre a caso fino a 94 px (× 2,35); ogni nube ferisce ogni 0,3 s e rallenta del 30%. Specchio aggiunge una nube. Arma iniziale della Badessa, esclusiva.
+La prima nube nasce 47 px davanti a te, le altre a caso fino a 94 px (× 2,35); ogni nube ferisce ogni 0,3 s e rallenta del 30%. Le nubi non si sommano: un nemico dentro più nubi è ferito da una sola (M8). Specchio aggiunge una nube. Arma iniziale della Badessa, esclusiva.
 
 | Lv | Ricarica (s) | Quantità | Danno | Raggio | Durata (s) | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 1,25 | 1 | 6 | 70 | 2,4 | Emette fumo sacro a corta gittata. |
-| 2 | 1,25 | 1 | 8 | 70 | 2,4 | +2 danno. |
-| 3 | 1,25 | 2 | 8 | 85 | 2,4 | +1 nube, nubi più ampie. |
-| 4 | 1,05 | 2 | 8 | 85 | 2,4 | Più frequente. |
-| 5 | 1,05 | 2 | 11 | 85 | 3,1 | +3 danno, fumo più duraturo. |
-| 6 | 1,05 | 3 | 11 | 99 | 3,1 | +1 nube, nubi più ampie. |
-| 7 | 0,85 | 3 | 11 | 99 | 3,1 | Più frequente. |
-| 8 | 0,85 | 3 | 15 | 99 | 3,1 | +4 danno. |
+| 1 | 1,25 | 1 | 8 | 70 | 2,4 | Emette fumo sacro a corta gittata. |
+| 2 | 1,25 | 1 | 11 | 70 | 2,4 | +3 danno. |
+| 3 | 1,25 | 2 | 11 | 85 | 2,4 | +1 nube, nubi più ampie. |
+| 4 | 1,05 | 2 | 11 | 85 | 2,4 | Più frequente. |
+| 5 | 1,05 | 2 | 15 | 85 | 3,1 | +4 danno, fumo più duraturo. |
+| 6 | 1,05 | 3 | 15 | 99 | 3,1 | +1 nube, nubi più ampie. |
+| 7 | 0,85 | 3 | 15 | 99 | 3,1 | Più frequente. |
+| 8 | 0,85 | 3 | 21 | 99 | 3,1 | +6 danno. |
+
+M8: danni +40% (erano 6, 8, 8, 8, 11, 11, 11, 15), per compensare le nubi che non si sommano.
+
 
 #### Bastone
 
@@ -176,14 +182,17 @@ Colpisce tutto entro il raggio e respinge di 470 (200 × 2,35); raggi già × 2,
 
 | Lv | Ricarica (s) | Danno | Raggio | Colpo doppio | Cosa cambia |
 |---|---|---|---|---|---|
-| 1 | 2,6 | 16 | 197 | no | Rintocchi che respingono e feriscono tutto intorno. |
-| 2 | 2,6 | 22 | 197 | no | +6 danno. |
-| 3 | 2,6 | 22 | 240 | no | Raggio più ampio. |
-| 4 | 2,2 | 22 | 240 | no | Rintocchi più frequenti. |
-| 5 | 2,2 | 30 | 240 | no | +8 danno. |
-| 6 | 2,2 | 30 | 282 | no | Raggio più ampio. |
-| 7 | 1,8 | 30 | 282 | no | Rintocchi più frequenti. |
-| 8 | 1,8 | 42 | 282 | sì | +12 danno e doppio rintocco. |
+| 1 | 2,6 | 19 | 197 | no | Rintocchi che respingono e feriscono tutto intorno. |
+| 2 | 2,6 | 26 | 197 | no | +7 danno. |
+| 3 | 2,6 | 26 | 240 | no | Raggio più ampio. |
+| 4 | 2,2 | 26 | 240 | no | Rintocchi più frequenti. |
+| 5 | 2,2 | 36 | 240 | no | +10 danno. |
+| 6 | 2,2 | 36 | 282 | no | Raggio più ampio. |
+| 7 | 1,8 | 36 | 282 | no | Rintocchi più frequenti. |
+| 8 | 1,8 | 50 | 282 | sì | +14 danno e doppio rintocco. |
+
+M8: danni +20% (erano 16, 22, 22, 22, 30, 30, 30, 42): era l'arma più debole.
+
 
 #### Fuoco fatuo
 
@@ -202,18 +211,18 @@ Partono a raggiera e girano (fino a 6 radianti al secondo) verso il nemico più 
 
 #### Acqua santa
 
-Ogni fiala cade su un nemico visibile scelto a caso; la pozza ferisce ogni 0,3 s. Raggi già × 2,35. Specchio aggiunge una fiala.
+Ogni fiala cade su un nemico visibile scelto a caso; la pozza ferisce ogni 0,3 s. Le pozze non si sommano: un nemico dentro più pozze è ferito da una sola (M8). Raggi già × 2,35. Specchio aggiunge una fiala.
 
 | Lv | Ricarica (s) | Quantità | Danno | Raggio | Durata (s) | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 2,8 | 1 | 7 | 89 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
-| 2 | 2,8 | 2 | 7 | 89 | 2,6 | +1 fiala. |
-| 3 | 2,8 | 2 | 10 | 108 | 2,6 | Pozze più grandi e dannose. |
-| 4 | 2,8 | 3 | 10 | 108 | 2,6 | +1 fiala. |
-| 5 | 2,3 | 3 | 10 | 108 | 3,2 | Ricarica più rapida, pozze più durature. |
-| 6 | 2,3 | 3 | 14 | 129 | 3,2 | Pozze più grandi e dannose. |
-| 7 | 2,3 | 4 | 14 | 129 | 3,2 | +1 fiala. |
-| 8 | 2,3 | 4 | 19 | 129 | 4,2 | Durata e danno maggiori. |
+| 1 | 2,8 | 1 | 9 | 89 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
+| 2 | 2,8 | 2 | 9 | 89 | 2,6 | +1 fiala. |
+| 3 | 2,8 | 2 | 13 | 108 | 2,6 | Pozze più grandi e dannose. |
+| 4 | 2,8 | 3 | 13 | 108 | 2,6 | +1 fiala. |
+| 5 | 2,3 | 3 | 13 | 108 | 3,2 | Ricarica più rapida, pozze più durature. |
+| 6 | 2,3 | 3 | 18 | 129 | 3,2 | Pozze più grandi e dannose. |
+| 7 | 2,3 | 4 | 18 | 129 | 3,2 | +1 fiala. |
+| 8 | 2,3 | 4 | 25 | 129 | 4,2 | Durata e danno maggiori. |
 
 #### Lama di luce
 
@@ -230,6 +239,8 @@ Fendente orizzontale alto 103 px verso il lato in cui guardi; il colpo alle spal
 | 7 | 0,85 | 32 | 329 | sì | Ricarica più rapida. |
 | 8 | 0,85 | 44 | 329 | sì | +12 danno. |
 
+M8: danni +30% (erano 7, 7, 10, 10, 10, 14, 14, 19), per compensare le pozze che non si sommano.
+
 ## 5. Doni passivi
 
 Al massimo 6 doni passivi diversi.
@@ -241,10 +252,10 @@ Al massimo 6 doni passivi diversi.
 | Clessidra | −7% ricarica, si moltiplica (minimo 40% della ricarica base) | 5 |
 | Stoppino lungo | +10% area (raggi, archi, nubi, pozze, abilità, alone di luce; nel gioco nuovo anche il bonus area del personaggio allarga l'alone) | 5 |
 | Ali di falena | +8% velocità | 5 |
-| Calamita | +30% raggio di raccolta delle anime | 5 |
+| Calamita | +30% raggio di raccolta e +5% anime (M8) | 5 |
 | Erbe amare | +0,25 salute al secondo | 5 |
-| Scudo di ferro | +1 armatura | 4 |
-| Specchio | +1 proiettile, nube, fiala, fuoco o falce | 2 |
+| Scudo di ferro | −6% danno subito (M8; prima +1 armatura) | 4 |
+| Specchio | +1 proiettile, nube, fiala, fuoco o falce | 1 (2 fino alla M8) |
 
 ## 6. Nemici
 
@@ -258,7 +269,7 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 | Scheletro | 34 | 106 | 10 | 21 | 3 | 2:20 | resistente; ti accerchia |
 | Segugio | 28 | 200 | 9 | 21 | 3 | 3:50 | il più veloce; ti taglia la strada |
 | Bruto | 150 | 78 | 18 | 38 | 8 | 6:00 | pesante: respinta e attrazione ridotte |
-| Il Mietitore | 5500 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici (salute 3200 fino alla M8) |
+| Il Mietitore | 3600 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici (3200 prima della M8, poi 5500, ora 3600 con le mosse nuove) |
 
 - **Élite**: ogni 55 s compare un nemico normale potenziato: salute ×7, danno ×1,4, anime ×6, dimensione ×1,5, velocità ×0,9, alone ambra. Lascia un reliquiario.
 - **Il Mietitore**: cammina verso di te per 3–5 s (al minuto 10 per ×0,75 di quel tempo), poi si ferma pulsando di rosso e fa una mossa, scelta a caso con questi pesi. Ogni mossa ha un preavviso, il momento per scansarsi. Il danno delle mosse cresce con il tempo come il suo (× danno attuale ÷ 22). Dopo falciata, falci e chiamata resta fermo 0,45 s. Lascia 2 reliquiari. Al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5, già scalata con il tempo.
@@ -266,7 +277,7 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 | Mossa | Peso | Preavviso | Cosa fa |
 | --- | --- | --- | --- |
 | Scatto | 3 | 0,7 s | scatta per 0,55 s a 3,6 volte la sua velocità, verso dove ti trovavi |
-| Falciata (M8) | 3 | 0,95 s | un cerchio rosso di raggio 200 si accende intorno a lui; allo scadere ferisce di 28 chi è dentro |
+| Falciata (M8) | 3 | 0,95 s | un cerchio rosso di raggio 200 si accende intorno a lui; allo scadere ferisce di 22 chi è dentro |
 | Falci spettrali (M8) | 2 | 0,6 s | lancia 5 falci rosse a ventaglio (0,9 radianti) verso di te: 330 px/s, raggio 18, danno 16, durano 3,2 s |
 | Chiamata dei morti (M8) | 1,5 | 1,1 s | 8 segni rossi a terra in cerchio a 190 px da te; allo scadere ne escono 8 scheletri |
 
@@ -288,13 +299,13 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 | Fantasma | 2 dopo 50 s |
 | Scheletro | 2,6 dopo 140 s |
 | Segugio | 2 dopo 230 s |
-| Bruto | 1 + s/600 dopo 360 s |
+| Bruto | dopo 360 s: il minore tra 1 + s/600 e (s − 360)/75, cioè entrano in 2 minuti (M8) |
 
 ## 7. Difficoltà
 
 Un nemico prende i valori del momento in cui nasce (m = minuti di gioco, anche frazionari):
 
-- salute = base × (1 + 0,28 m + 0,04 × (m − 3)²), l'ultimo termine solo dopo il minuto 3 (fino alla M8: 1 + 0,34 m). Al minuto 10 ≈ ×5,8, al 15 ≈ ×10
+- salute = base × (1 + 0,28 m + 0,03 × (m − 3)²), l'ultimo termine solo dopo il minuto 3 (fino alla M8: 1 + 0,34 m). Al minuto 10 ≈ ×5,3, al 15 ≈ ×9,5
 - danno = base × (1 + 0,09 m)
 - nemici massimi in campo = min(380, 20 + 30 m)
 - comparse al secondo = 1,2 + 2,5 m (al massimo 8 per fotogramma)
@@ -333,7 +344,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 | Regola | Valore |
 | --- | --- |
 | Danno inflitto | danno arma × (1 + bonus danno) × caso tra 0,92 e 1,08 |
-| Danno subito | danno nemico − armatura, minimo 1 |
+| Danno subito | danno nemico × (1 − armatura), minimo 1; armatura = parte di danno in meno, al massimo 60% (M8; prima un numero fisso sottratto) |
 | Invulnerabilità dopo un colpo | 0,45 s |
 | Raggio del giocatore | 21 px (9 nella v0) |
 | Respinta | per arma: è la velocità con cui il nemico viene spinto via, che poi si spegne (attrito 8 al secondo, cioè percorre circa respinta ÷ 8 px); bruti ed élite la subiscono a un quarto, il Mietitore per niente |
