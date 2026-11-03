@@ -32,20 +32,24 @@ Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i 
 
 ## 1b. Mondo e lore (in costruzione, dal 3 novembre 2026)
 
-Mondo inventato: niente riferimenti alla realtà. Le croci dei disegni restano, fanno parte di questo mondo.
+Mondo inventato: niente riferimenti alla realtà come feste, luoghi o fatti storici. Le croci dei disegni restano, fanno parte di questo mondo. Alcuni nomi sono scelti apposta da Edoardo per quello che evocano (Seth).
 
 **Deciso con Edoardo**
 - **Il Lumen** è la luce che ogni essere vivo porta dentro: la risorsa principale del mondo. Alla morte dovrebbe spegnersi e lasciar riposare.
-- **La piaga**: il Lumen dei morti non si spegne più e li rialza. Nome provvisorio: **il Rinnovo**. Ha diviso la società: c'è chi la aborre e chi la sostiene, perché far tornare un morto può voler dire riavere una persona amata. Va debellata.
+- **La piaga**: il Lumen dei morti non si spegne più e li rialza. Ha diviso la società: chi la sostiene la chiama **il Rinnovo** (far tornare un morto può voler dire riavere una persona amata), chi la combatte **la Ricaduta**. Va debellata. Il giocatore impara questi due nomi **più avanti nella trama**, da descrizioni e dialoghi: nelle prime notti non compaiono nell'interfaccia.
+- **I nemici** sono i rinnovati rimasti senza Lumen, o con pochissime tracce: corpi vuoti e affamati di luce.
 - **La veglia**: ogni partita è una veglia, una notte da tenere fino all'alba.
-- **Il Mietitore** è corrotto e, per ora, immortale: per questo torna come boss ogni notte.
-- **Il Custode della Cappella**: personaggio nuovo, non giocabile. È la guida, una specie di tutorial raccontato dentro il gioco. È lui a riparare l'ampolla della fiaschetta.
-- **La Fiaschetta di Lumen** sarà un oggetto da sbloccare dopo qualche notte, con una questline (proposta sotto). Per ora nel gioco c'è dalla prima notte, con 3 sorsi.
+- **Seth, il Rinnovato** (prima «il Mietitore»): il boss che arriva ai minuti 5 e 10. È la Morte stessa, rinnovata: per questo è corrotta e per ora immortale, e torna ogni notte. Il giocatore lo scopre più avanti nella trama. Nome e design nuovi da disegnare: lo sprite `Il_Mietitore` e la barra `Barra_Mietitore` restano finché Edoardo non disegna quelli di Seth. Nel codice e nei numeri di bilanciamento il boss si chiama ancora `mietitore`.
+- **Il Ceraiolo**: il custode della Cappella. Personaggio guida, non giocabile, una specie di tutorial raccontato dentro il gioco. Fa le candele con la Cera che si riporta dalle veglie, ed è lui a riparare l'ampolla della fiaschetta.
+- **La Fiaschetta di Lumen** sarà un oggetto da sbloccare dopo qualche notte, con una questline (proposta sotto). Per ora nel gioco c'è dalla prima notte, con 3 sorsi. Disegno: `HUD/Pulsanti/Fiaschetta_Lumen_V1.aseprite`, 4 fotogrammi (piena, 2/3, 1/3, vuota).
 
 **Proposte da decidere**
-- Le anime che si raccolgono sono il Lumen liberato dai morti abbattuti: farle proprie fa crescere (i livelli) e lascia riposare quei morti.
+- Le anime che si raccolgono sono il Lumen liberato dai rinnovati abbattuti: farle proprie fa crescere (i livelli) e lascia riposare quei morti.
 - La Cappella è l'ultimo luogo acceso; la Cera tiene vive le sue candele (miglioramenti permanenti).
-- Questline della fiaschetta: ampolla incrinata lasciata da un'élite (dalla terza notte) → riparata dal Custode con la Cera → si riempie per la prima volta battendo il Mietitore (1 sorso) → secondo e terzo sorso più avanti.
+- Chi sostiene il Rinnovo tiene in piedi i propri cari consumando il Lumen dei vivi: nessuna delle due parti ha del tutto torto.
+- I quattro personaggi stanno in punti diversi del conflitto: il Lampionaio guida i morti a spegnersi; il Becchino forse ha visto tornare qualcuno che amava; la Badessa è combattuta, perché la sua fede promette un ritorno; la Strega forse sa come è cominciato il Rinnovo.
+- Spezzare il Rinnovo di Seth potrebbe essere la vittoria finale della trama.
+- Questline della fiaschetta: ampolla incrinata lasciata da un'élite (dalla terza notte) → riparata dal Ceraiolo con la Cera → si riempie per la prima volta battendo Seth (1 sorso) → secondo e terzo sorso più avanti.
 
 ## 2. Personaggi
 
