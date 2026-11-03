@@ -66,6 +66,7 @@ Una riga per decisione, la più recente in alto.
 | 2026-11-03 | Su telefono il gioco è **solo in verticale**; su computer e tablet resta in orizzontale (come Vampire Survivors). Si smette di adattare l'HUD al telefono in orizzontale | Adattare entrambi gli orientamenti è lavoro superfluo (scelta di Edoardo) |
 | 2026-11-03 | **Cera a terra**: gocce rare lasciate dai nemici (0,4%; 3 da un'élite, 10 da Seth), raccolte come le anime, contatore «Cera N» nell'HUD; più 100 all'alba. Via il conto a fine veglia (minuti, élite, Seth) | Edoardo: la Cera aveva poco impatto in partita e non si capiva come si guadagnava; il drop deve essere molto più ridotto delle anime |
 | 2026-11-03 | HUD della partita (barre, caselle, abilità, pausa, avvisi) raddoppiato sui telefoni dove un pixel di gioco è sotto 1 punto (prima 0,6, solo scala ×1); stati dei nemici a lampi di colore pieno (colori guida dei personaggi); cerchi delle reazioni più larghi (×1,35) e lunghi il doppio (0,5 s) | Edoardo: HUD piccolissimo su telefono verticale; stati e reazioni quasi invisibili |
+| 2026-11-03 | **Stati sui nemici: niente più cambi di colore o intermittenza**; ogni stato sarà un **simbolo sopra la testa del nemico** più gli effetti del caso. La **scelta dei doni cambierà**: le carte verticali una accanto all'altra non vanno bene sul telefono | Scelte di Edoardo; il lampeggio a colore pieno del 3/11 è provvisorio. Asset da disegnare in `docs/asset_da_creare.md` |
 
 ## Riferimenti della v0
 
