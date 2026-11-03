@@ -4,6 +4,7 @@ Una riga per decisione, la più recente in alto.
 
 | Data | Decisione | Motivo |
 | --- | --- | --- |
+| 2026-11-03 | Numeri e HUD con il font **Jersey 10** al posto di Pixelify Sans (scelto da Edoardo fra Jersey 10, VT323 e Press Start 2P), in grandezze multiple del suo pixel | In Pixelify Sans il 5 era quasi uguale alla S |
 | 2026-11-02 | Sprite in gioco dei personaggi alti circa **64 px**. Quando arrivano, lo schermo di gioco sale da 300 a circa 560 px (stessa proporzione della v0: personaggio ≈ 1/9 dell'altezza) e tutte le distanze del GDD si moltiplicano per lo stesso fattore | A 32-48 px lo stile dettagliato di Edoardo non rende; a 100 px anche nemici ed effetti andrebbero disegnati enormi |
 | 2026-11-02 | ~~Sprite in gioco a 32-48 px~~ (superata dalla riga sopra) | I primi ingame_V1 erano alti circa 100 px |
 | 2026-11-02 | Nomi degli sprite in gioco: `Nome_ingame_V#.aseprite`, nella cartella del personaggio accanto al ritratto `Nome_V#.aseprite` | Scelta di Edoardo (prima si era detto `_gioco`): i ritratti già fatti non vanno rinominati |

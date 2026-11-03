@@ -4,8 +4,7 @@
 @import '@fontsource/im-fell-english/400-italic.css';
 @import '@fontsource/eb-garamond/400.css';
 @import '@fontsource/eb-garamond/500.css';
-@import '@fontsource/pixelify-sans/500.css';
-@import '@fontsource/pixelify-sans/700.css';
+@import '@fontsource/jersey-10/400.css';
 
 :root {
   --sfondo: #0d0b09;
@@ -17,7 +16,9 @@
   --f-titolo: 'IM Fell English SC', Georgia, serif;
   --f-corsivo: 'IM Fell English', Georgia, serif;
   --f-testo: 'EB Garamond', Georgia, serif;
-  --f-pixel: 'Pixelify Sans', ui-monospace, monospace;
+  --f-pixel: 'Jersey 10', ui-monospace, monospace;
+  /* Jersey 10 ha un solo spessore (niente grassetto). A questa grandezza un pixel del font misura 1 px: usarne i multipli tiene i pixel netti */
+  --pixel-font: calc(56px / 3);
   color-scheme: dark;
 }
 [hidden] { display: none !important; }
@@ -64,17 +65,17 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
   padding: calc(env(safe-area-inset-top) + 14px) calc(env(safe-area-inset-right) + 16px) 0 calc(env(safe-area-inset-left) + 16px);
 }
 .hud-riga { display: flex; justify-content: space-between; align-items: center; }
-.hud-riga > * { flex: 1 1 0; font-family: var(--f-pixel); font-weight: 700; text-shadow: 0 2px 0 #000; }
-.hud-livello { font-size: 18px; color: var(--accento); }
-.hud-orologio { font-size: 22px; letter-spacing: 1px; color: var(--pergamena); text-align: center; }
-.hud-anime { font-size: 18px; color: #9fe3dc; text-align: right; }
+.hud-riga > * { flex: 1 1 0; font-family: var(--f-pixel); font-weight: 400; text-shadow: 0 2px 0 #000; }
+.hud-livello { font-size: calc(var(--pixel-font) * 1.25); color: var(--accento); }
+.hud-orologio { font-size: calc(var(--pixel-font) * 1.5); letter-spacing: 1px; color: var(--pergamena); text-align: center; }
+.hud-anime { font-size: calc(var(--pixel-font) * 1.25); color: #9fe3dc; text-align: right; }
 .hud-anime::before { content: '◆ '; font-size: 13px; }
 .hud-icone { display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
 .hud-icona, .hud-voce { position: relative; display: inline-flex; align-items: center; gap: 6px; }
 .hud-icona { padding: 2px; background: rgba(13, 11, 9, 0.6); border: 1px solid var(--linea); }
 .hud-icona img, .hud-voce img { image-rendering: pixelated; display: block; }
 .hud-lv {
-  font: 700 11px var(--f-pixel); color: var(--pergamena); text-shadow: 0 1px 0 #000;
+  font: 400 calc(var(--pixel-font) * 0.75) var(--f-pixel); color: var(--pergamena); text-shadow: 0 1px 0 #000;
 }
 .hud-icona .hud-lv { position: absolute; right: 1px; bottom: -2px; }
 .hud-boss { display: grid; gap: 3px; justify-items: center; margin-top: 4px; }
@@ -111,7 +112,7 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 .hud-numeri { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin: 0; }
 .hud-numeri div { display: grid; gap: 2px; }
 .hud-numeri dt { font: italic 15px var(--f-corsivo); color: var(--tenue); }
-.hud-numeri dd { margin: 0; font: 700 20px var(--f-pixel); color: var(--pergamena); }
+.hud-numeri dd { margin: 0; font: 400 calc(var(--pixel-font) * 1.25) var(--f-pixel); color: var(--pergamena); }
 .hud-build {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px;
   width: min(520px, 100%); min-width: 0; text-align: left;
@@ -143,7 +144,7 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 .doni-testi strong { font: 400 22px var(--f-titolo); color: var(--pergamena); }
 .doni-testi em { font: italic 16px var(--f-corsivo); color: var(--accento); }
 .doni-testi span { font-size: 17px; color: var(--tenue); }
-.doni-tasto { flex: none; font: 700 14px var(--f-pixel); color: var(--tenue); }
+.doni-tasto { flex: none; font: 400 var(--pixel-font) var(--f-pixel); color: var(--tenue); }
 .doni-rimescola {
   padding: 8px 20px; min-height: 44px; font: 400 18px var(--f-titolo);
   background: transparent; border: 2px solid var(--linea); color: var(--pergamena);
@@ -217,7 +218,7 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
     radial-gradient(ellipse 70% 35% at 80% 100%, #1d1813 98%, transparent 100%),
     linear-gradient(#0e0c14, #231a24);
 }
-.scheda-record { margin: 0; font: 700 15px var(--f-pixel); color: var(--accento); }
+.scheda-record { margin: 0; font: 400 var(--pixel-font) var(--f-pixel); color: var(--accento); }
 .menu-inizia {
   padding: 12px 34px; min-height: 52px; font: 400 24px var(--f-titolo); color: var(--pergamena);
   background: var(--pannello); border: 2px solid var(--accento);

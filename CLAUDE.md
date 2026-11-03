@@ -101,7 +101,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
   - Titoli: IM Fell English SC
   - Testi: EB Garamond
   - Corsivi: IM Fell English
-  - Numeri e HUD: Pixelify Sans
+  - Numeri e HUD: Jersey 10 (dal 3 novembre 2026, al posto di Pixelify Sans: il suo 5 sembrava una S)
 
   Nell'app vanno inclusi nel pacchetto, non scaricati da internet.
 - Le schede dei personaggi riprendono lo stile della scheda di Edoardo: nome, motto, ritratto, biografia, fila di sprite, arma iniziale, abilità speciale, barre delle statistiche, citazione sopra un paesaggio.
