@@ -379,7 +379,7 @@ export class Gioco extends Phaser.Scene {
       this.orda.nasciMietitore(this.secondi, this.mietitoriArrivati, this.x, this.y, mezzaL, mezzaA);
       this.mietitoriArrivati++;
       this.sim?.mietitoreArrivato(this.secondi);
-      this.hud.avviso('Il Mietitore', 'è venuto per te');
+      this.hud.avviso('Seth', 'il Rinnovato è venuto per te');
       suona('mietitore');
       vibra('forte');
     }

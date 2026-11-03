@@ -125,7 +125,7 @@ export class Hud {
     this.radice = blocco('hud');
     this.bordo.hidden = true;
     this.mietitore.el.hidden = true;
-    this.mietitore.el.setAttribute('aria-label', 'Il Mietitore');
+    this.mietitore.el.setAttribute('aria-label', 'Seth, il Rinnovato');
     this.avvisoEl.hidden = true;
     this.avvisoEl.setAttribute('aria-live', 'polite');
     this.pausaTasto.type = 'button';
