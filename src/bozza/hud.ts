@@ -7,7 +7,7 @@
 import './bozza.css';
 import { ABILITA } from '../data/abilita';
 import { ARMI_INIZIALI, CAMPANA, CANDELA, FALCE } from '../data/armi';
-import { ANELLI, FINESTRE, INGRANDIMENTO, INTERNI, LAMPEGGIO_SEGNALE, MARGINE_TOCCO, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
+import { ANELLI, CASELLA, FINESTRE, INGRANDIMENTO, INTERNI, TESTI, LAMPEGGIO_SEGNALE, MARGINE_TOCCO, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
 import { PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { TELEFONI, misureTelefono, type Bordi, type MisureTelefono, type Telefono } from './telefoni';
 
@@ -306,22 +306,23 @@ function scenaPartita(t: number): void {
   const ms = misura('Stemma_Livello');
   gruppo = 'livello';
   disegna('Stemma_Livello', b.s, b.a, zc);
-  scriviDentro('12', INTERNI.Stemma_Livello.numero, b.s, b.a, zc, { px: 12 * zc, colore: p.colore, ombra: true });
+  scriviDentro('12', INTERNI.Stemma_Livello.numero, b.s, b.a, zc, { px: TESTI.livello * zc, colore: '#e8dcc4', ombra: true });
   gruppo = 'anime';
   scrivi('◆ 248', W - b.d, b.a + 4, { px: 16 * zc, colore: '#8fd6c8', allinea: 'destra', ombra: true });
 
-  // caselle delle armi
-  const mc = misura('Casella_Arma'), ic = INTERNI.Casella_Arma.icona;
+  // caselle delle armi: compatte come nel gioco (CASELLA in data/hud.ts), sotto lo stemma
   const hOrologio = testoTela('7:42', { px: 16 * zb, colore: '#e8dcc4', ombra: true }).height;
-  const yc = b.a + Math.max(ms.h * zc, me.h * zb + 2 + hOrologio) + 4;
+  const yc = b.a + ms.h * zc + 4, lc = CASELLA.lato * zc, bc = CASELLA.bordo * zc;
   [[iconaArma().icona, 3], [FALCE.icona, 1], [CANDELA.icona, 2]].forEach(([icona, lv], i) => {
-    const x = b.s + i * (mc.w * zc + 2 * zc);
+    const x = b.s + i * (CASELLA.lato + CASELLA.spazio) * zc;
     gruppo = `casella ${i + 1}`;
-    disegna('Casella_Arma', x, yc, zc);
-    disegna(String(icona), x + (ic.x + ic.l / 2 - 12) * zc, yc + (ic.y + ic.a / 2 - 12) * zc, zc);
-    scrivi(String(lv), x + (ic.x + ic.l) * zc, yc + (ic.y + ic.a) * zc - 10 * zc, { px: 10 * zc, colore: '#e8dcc4', allinea: 'destra', ombra: true });
+    g.fillStyle = '#8a5a32'; g.fillRect(x, yc, lc, lc);
+    g.fillStyle = '#1b1514'; g.fillRect(x + bc, yc + bc, lc - 2 * bc, lc - 2 * bc);
+    segna(x, yc, lc, lc);
+    disegna(String(icona), x + (CASELLA.lato / 2 - 12) * zc, yc + (CASELLA.lato / 2 - 12) * zc, zc);
+    scrivi(String(lv), x + lc + 2 * zc, yc + lc + 3 * zc - TESTI.casella * zc, { px: TESTI.casella * zc, colore: '#e8dcc4', allinea: 'destra', ombra: true });
   });
-  let y = yc + mc.h * zc + 4;
+  let y = Math.max(ye + me.h * zb + 2 + hOrologio, yc + lc) + 4;
   gruppo = 'salute-alto';
   if (stato.salutePosto === 'alto') { const zs = z('salute'); barraSalute(b.s + (misura('Barra_Salute_Cornice').w * zs) / 2, y); y += misura('Barra_Salute_Cornice').h * zs + 4; }
 
@@ -336,13 +337,13 @@ function scenaPartita(t: number): void {
     y += mm.h * zb + 6;
   }
 
-  // avviso al centro
+  // avviso in alto, sotto barre e caselle, per non coprire il personaggio
   if (stato.avviso !== 'nessuno') {
     const k = stato.avviso === 'nastro' ? 'Nastro_Titolo' : 'Targa_Lapide', za = z('avvisi'), ma = misura(k);
-    const xa = Math.round(W / 2 - (ma.w * za) / 2), ya = Math.max(y, Math.round(H * 0.3));
+    const xa = Math.round(W / 2 - (ma.w * za) / 2), ya = y;
     gruppo = 'avviso';
     disegna(k, xa, ya, za);
-    scriviDentro('Arriva uno sciame', INTERNI[k].testo, xa, ya, za, { px: 10 * za, colore: stato.avviso === 'nastro' ? '#3a2414' : '#2a2018' });
+    scriviDentro('Arriva uno sciame', INTERNI[k].testo, xa, ya, za, { px: TESTI.avviso * za, colore: stato.avviso === 'nastro' ? '#1e1008' : '#2a2018', font: 'titolo' }); // come nel gioco
   }
 
   // segnale del reliquiario sul bordo
@@ -399,7 +400,7 @@ function pulsanti(lista: [string, string][], cx: number, y: number, zz: number, 
     gruppo = `pulsante «${testo}»`;
     disegna(k, x, yy, zz);
     segna(x, y, m.w * zz, riga); // la zona che si tocca
-    scriviDentro(testo, INTERNI[k]?.testo ?? { x: 0, y: 0, l: m.w, a: m.h }, x, yy, zz, { px: 11 * zz, colore: k === 'Pulsante_Acceso' || k === 'Pulsante_Chiaro' ? '#2a1a0c' : '#e8dcc4', font: 'titolo' });
+    scriviDentro(testo, INTERNI[k]?.testo ?? { x: 0, y: 0, l: m.w, a: m.h }, x, yy, zz, { px: TESTI.pulsante * zz, colore: k === 'Pulsante_Acceso' || k === 'Pulsante_Chiaro' ? '#2a1a0c' : '#e8dcc4', font: 'titolo' });
     y += riga + 3 * zz;
   }
   return y;
@@ -415,7 +416,7 @@ function scenaDoni(t: number): void {
   scenaPartita(t); retino(11); strato = 1;
   // stessa disposizione del gioco (src/sistema/doni.ts): titolo, tre carte affiancate, numeri, Rimescola
   const m = misura('Carta_Dono'), r = misura('Pulsante_Scuro'), b = bordi(), zt = z('pulsanti');
-  const titolo = 32 * raddoppio(), sotto = 14 * raddoppio(), alta = H - b.a - b.b, larga = W - b.s - b.d;
+  const titolo = 32 * raddoppio(), sotto = (TESTI.cartaTasto + 4) * raddoppio(), alta = H - b.a - b.b, larga = W - b.s - b.d;
   const riga = Math.max(r.h, misura('Pulsante_Acceso').h);
   const zz = adattaZoom(z('carte'), (k) => 3 * m.w * k + 8 * k <= larga && titolo + m.h * k + sotto + 8 + riga * zt <= alta);
   const tot = 3 * m.w * zz + 8 * zz, x0 = Math.round(W / 2 - tot / 2);
@@ -435,9 +436,9 @@ function scenaDoni(t: number): void {
     disegna(k, x, y, zz);
     const zi = Math.max(1, zz - 1);
     disegna(icona, x + (ri.icona.x + ri.icona.l / 2) * zz - 12 * zi, y + (ri.icona.y + ri.icona.a / 2) * zz - 12 * zi, zi);
-    scriviDentro(nome, ri.titolo, x, y, zz, { px: 8 * zz, colore: '#e8dcc4' });
+    scriviDentro(nome, ri.titolo, x, y, zz, { px: TESTI.cartaTitolo * zz, colore: '#e8dcc4' });
     scriviRighe(testo, ri.testo, x, y, zz, { px: 6 * zz, colore: '#c8bca4' });
-    scrivi(String(i + 1), x + (m.w * zz) / 2, y + m.h * zz + 2, { px: 10 * raddoppio(), colore: '#9c907c', allinea: 'centro' });
+    scrivi(String(i + 1), x + (m.w * zz) / 2, y + m.h * zz + 2, { px: TESTI.cartaTasto * raddoppio(), colore: '#9c907c', allinea: 'centro' });
   });
   y += m.h * zz + sotto + 8;
   pulsanti([['Pulsante_Scuro', 'Rimescola (2)']], W / 2, y, zt, misura('Pulsante_Acceso').h); // come nel gioco: si tocca sull'altezza dei pulsanti più alti
@@ -482,7 +483,7 @@ function scenaSelezione(t: number): void {
   const xn = Math.round(cx - (mn.w * zp) / 2);
   gruppo = 'nome';
   disegna('Nastro_Titolo', xn, y, zp);
-  scriviDentro(p.nome, INTERNI.Nastro_Titolo.testo, xn, y, zp, { px: 14 * zp, colore: '#3a2414', font: 'titolo' });
+  scriviDentro(p.nome, INTERNI.Nastro_Titolo.testo, xn, y, zp, { px: TESTI.avviso * zp, colore: '#1e1008', font: 'titolo' });
   y += mn.h * zp + 2;
   gruppo = 'motto';
   scrivi(p.motto, cx, y, { px: 18, colore: p.colore, font: 'titolo', allinea: 'centro', ombra: true });
@@ -505,7 +506,7 @@ function scenaFine(t: number): void {
   const xn = Math.round(W / 2 - (mn.w * zz) / 2);
   gruppo = 'titolo';
   disegna('Nastro_Titolo', xn, y, zz);
-  scriviDentro("L'alba", INTERNI.Nastro_Titolo.testo, xn, y, zz, { px: 16 * zz, colore: '#3a2414', font: 'titolo' });
+  scriviDentro("L'alba", INTERNI.Nastro_Titolo.testo, xn, y, zz, { px: TESTI.avviso * zz, colore: '#1e1008', font: 'titolo' });
   y += mn.h * zz - 6 * zz;
   const ori = stato.telefono === 'orizzontale', larghi = ori ? mp.w * zz + 12 + misura('Pulsante_Acceso').w * z('pulsanti') : mp.w * zz;
   const xp = Math.round(W / 2 - larghi / 2);
