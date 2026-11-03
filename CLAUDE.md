@@ -139,8 +139,10 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 ## Verifica, prima di dire che una tappa è finita
 
 1. `npm run build` senza errori né avvisi di tipo.
-2. Prova nel browser con Playwright in viewport desktop, iPhone verticale e iPhone orizzontale, più un Android: niente errori in console, screenshot controllati a occhio.
-3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
+2. Prova nel browser con Playwright (`npm run prova`) in viewport desktop, iPhone verticale e iPhone orizzontale, più un Android: niente errori in console.
+   - **Guarda gli screenshot solo se la modifica cambia quello che si vede** (HUD, schermate, scritte, sprite, effetti). Per logica e bilanciamento basta che la prova passi senza errori.
+   - Le immagini consumano molti token e restano nella conversazione: aprine il minimo indispensabile (di solito una per viewport toccato).
+3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Leggi il riepilogo a schermo; apri `prove/sim.json` solo per indagare un risultato strano. Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
    - Seth, il Rinnovato (il boss del minuto 5, nel codice ancora `mietitore`) è il primo vero ostacolo;
    - nessun personaggio vince sempre senza sforzo: il bot vince al massimo il 40% delle notti, perché un giocatore umano va più forte di lui (Edoardo al minuto 8 era al livello 60, il bot al 40);
    - nessuno muore sempre prima del minuto 5.
