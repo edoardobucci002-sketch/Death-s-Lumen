@@ -54,6 +54,11 @@ export class Doni {
     window.addEventListener('resize', this.ridimensiona);
   }
 
+  /** Rimescolate in più per tutta la veglia (Cero della scelta). */
+  aggiungiRimescolate(n: number): void {
+    this.rimescolate += n;
+  }
+
   get aperta(): boolean {
     return !this.radice.hidden;
   }

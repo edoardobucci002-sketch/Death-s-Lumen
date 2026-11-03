@@ -171,6 +171,51 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
   /* resta sempre visibile in fondo allo schermo, anche quando la scheda è lunga */
   position: sticky; bottom: 0; box-shadow: 0 0 0 10px var(--sfondo), 0 -14px 24px 10px var(--sfondo);
 }
+/* Meta progressione: personaggi bloccati, pulsanti in fondo al menu, Cappella (src/sistema/cappella.ts) */
+.menu-nomi button.bloccato { opacity: 0.55; font-style: italic; }
+.menu-inizia:disabled { color: var(--tenue); border-color: var(--linea); cursor: default; }
+.menu-piede {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+  position: sticky; bottom: 0; box-shadow: 0 0 0 10px var(--sfondo), 0 -14px 24px 10px var(--sfondo); background: var(--sfondo);
+}
+.menu-piede .menu-inizia { position: static; box-shadow: none; }
+.menu-cappella { padding: 12px 18px; min-height: 52px; font: 400 18px var(--f-titolo); color: var(--pergamena); background: transparent; border: 2px solid var(--linea); }
+.scheda-blocco { display: grid; gap: 8px; padding: 10px 12px; border: 1px dashed var(--accento); }
+.scheda-blocco p { margin: 0; font-size: 17px; color: var(--pergamena); }
+.scheda-blocco button, .cappella button { padding: 8px 14px; min-height: 40px; font: 400 16px var(--f-titolo); color: var(--pergamena); background: var(--pannello); border: 2px solid var(--accento); cursor: pointer; justify-self: start; }
+.scheda-blocco button:disabled, .cappella button:disabled { color: var(--tenue); border-color: var(--linea); cursor: default; }
+#interfaccia > .cappella {
+  position: fixed; inset: 0; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 720px); justify-content: center;
+  align-content: start; gap: 14px;
+  padding: calc(env(safe-area-inset-top) + 18px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 18px) calc(env(safe-area-inset-left) + 16px);
+  background: radial-gradient(ellipse at 50% 0%, #1d1712 0%, var(--sfondo) 70%); color: var(--pergamena);
+}
+.cappella-testa { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+.cappella-testa h2 { margin: 0; font: 400 clamp(30px, 8vw, 44px) var(--f-titolo); color: var(--accento); }
+.cappella-cera { margin: 0; font: 400 var(--pixel-font) var(--f-pixel); color: var(--accento); }
+.cappella-testa .cappella-chiudi { margin-left: auto; }
+.cappella-intro { margin: 0; font: italic 17px var(--f-corsivo); color: var(--tenue); }
+.cappella h3 { margin: 0; font: 400 19px var(--f-titolo); color: var(--pergamena); }
+.cappella-veglia { display: grid; gap: 6px; padding: 10px 12px; background: var(--pannello); border: 1px solid var(--linea); }
+.cappella-veglia ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.cappella-veglia li { display: flex; justify-content: space-between; gap: 12px; font-size: 16px; color: var(--tenue); }
+.cappella-veglia p { margin: 0; color: var(--accento); }
+.cappella-ceri { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.cero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 12px; background: var(--pannello); border: 1px solid var(--linea); }
+.cero.spento { opacity: 0.6; }
+.cero-testo { min-width: 0; }
+.cero-testo p { margin: 2px 0 0; font-size: 15px; color: var(--tenue); }
+.cero-livelli { display: flex; gap: 3px; }
+.cero-livelli b { width: 12px; height: 12px; background: var(--accento); }
+.cero-livelli b.vuota { background: #2a231c; }
+.cero-azioni { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.cero-pieno { font: italic 15px var(--f-corsivo); color: var(--tenue); align-self: center; }
+.cero-interruttore[aria-pressed="false"] { border-color: var(--linea); color: var(--tenue); }
+.cappella-codice { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--linea); }
+.cappella-codice p { margin: 0; font-size: 15px; color: var(--tenue); }
+.cappella-codice label { font: italic 14px var(--f-corsivo); color: var(--tenue); }
+.cappella-codice textarea { width: 100%; font: 13px ui-monospace, Menlo, monospace; color: var(--pergamena); background: #0d0b09; border: 1px solid var(--linea); padding: 6px; resize: vertical; user-select: text; -webkit-user-select: text; }
+.cappella-messaggio { color: var(--accento) !important; }
 @media (min-width: 700px) {
   .scheda { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: start; }
   .scheda-ritratto canvas { width: 448px; }

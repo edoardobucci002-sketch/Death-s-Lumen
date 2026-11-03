@@ -380,6 +380,29 @@ Ruoli nuovi delle armi (M8): l'esplosione del dardo del Bastone ferisce in 40 px
 
 Simulazione (3/11, 24 notti per personaggio): circa 300–1000 reazioni a notte. Con ogni colpo che lasciava uno stato erano 19.000–32.000 e il bot vinceva 85 notti su 96; la forza viene sia dagli stati sia dalle reazioni, e per compensare la seconda metà della notte è diventata più dura (sezioni 6 e 7).
 
+## 8d. Meta progressione di base (M8, `src/data/meta.ts`)
+
+Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è la prima parte: Cera, Cappella a elenco, ceri votivi, Seconda candela, personaggi da sbloccare, salvataggio.
+
+- **Cera a fine veglia**, anche persa: 10 per minuto intero, 5 per élite, 40 per ogni Seth sconfitto, 100 per l'alba. Compare nella schermata di fine («+N Cera per la Cappella»); il conto voce per voce è nella Cappella.
+- **Ceri votivi**: 5 livelli, costo 30, 60, 100, 150, 220 Cera (560 per cero). Valgono per tutti i personaggi e si possono spegnere uno a uno.
+
+| Cero | Per livello | Al massimo |
+| --- | --- | --- |
+| Cero della vita | +5% salute massima | +25% |
+| Cero della forza | +4% danno | +20% |
+| Cero del passo | +3% velocità | +15% |
+| Cero del raccolto | +10% raggio di raccolta | +50% |
+| Cero del rito | −4% ricarica dell'abilità speciale | −20% |
+| Cero delle anime | +4% anime | +20% |
+| Cero della scelta | +1 rimescolata ogni 2 livelli | +3 |
+
+- **Seconda candela**: 400 Cera; una volta per veglia, a salute zero ci si rialza con il 30% della salute e 2 s di invulnerabilità. Si può spegnere.
+- Il cero della fiaschetta della proposta non c'è: aspetta la questline della fiaschetta.
+- **Personaggi**: si parte con il solo Lampionaio. Becchino: sopravvivi 5 minuti, oppure 200 Cera. Badessa: sconfiggi Seth, oppure 400 Cera. Strega: arriva all'alba, oppure 700 Cera. Le imprese valgono con qualsiasi personaggio.
+- **Salvataggio** sul dispositivo (chiave `dl-salvataggio`, con numero di versione) e **codice di salvataggio** nella Cappella (testo che comincia con `DL1-`, da copiare e incollare: copia di sicurezza e passaggio tra link e app). Caricare un codice chiede conferma.
+- **Simulazione** (3/11, 12 notti per personaggio): Cappella a metà (livello 3 di ogni cero) il bot vince 20 notti su 48 (42%, obiettivo 30–45%); completa 24 su 48 (50%, obiettivo 60–75%, un po' sotto); vuota 9 su 96. Il bot porta a casa circa 150 Cera a notte con la Cappella vuota e 230–300 con la Cappella piena.
+
 ## 9. Esperienza e doni
 
 - Anime per passare dal livello L al successivo: 2 + 3 L + L² (M8; prima ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋)

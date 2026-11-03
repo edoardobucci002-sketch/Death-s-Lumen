@@ -36,7 +36,7 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 | `npm run bozza` | apre la pagina di bozza dell'HUD (`bozza-hud.html`): gli elementi di `HUD/` al loro posto, senza giocare |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
-| `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi); riepilogo a schermo, dettagli in `prove/sim.json` |
+| `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi; `npm run sim -- 12 tutti meta=max` con la Cappella completa, `meta=meta` a metà); riepilogo a schermo, dettagli in `prove/sim.json` |
 | `npm run prova` | prova automatica su desktop, iPhone e Android emulati, su una porta libera; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run ios` / `npm run android` | build + copia nei progetti nativi + apre Xcode o Android Studio |
 
@@ -145,6 +145,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Leggi il riepilogo a schermo; apri `prove/sim.json` solo per indagare un risultato strano. Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
    - Seth, il Rinnovato (il boss del minuto 5, nel codice ancora `mietitore`) è il primo vero ostacolo;
    - nessun personaggio vince sempre senza sforzo: il bot vince al massimo il 40% delle notti, perché un giocatore umano va più forte di lui (Edoardo al minuto 8 era al livello 60, il bot al 40);
+   - con la meta progressione il bot vince il 5–15% delle notti con la Cappella vuota, il 30–45% a metà, il 60–75% completa (`meta=meta`, `meta=max`);
    - nessuno muore sempre prima del minuto 5.
 4. Riassumi a Edoardo cosa è cambiato e come provarlo.
 

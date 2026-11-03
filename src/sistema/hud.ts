@@ -28,6 +28,8 @@ export interface Riepilogo {
   record: number; // miglior tempo con questo personaggio, in secondi
   nuovoRecord: boolean;
   build: VoceBuild[];
+  cera: number; // Cera guadagnata nella veglia (meta progressione)
+  sbloccato: string | null; // personaggio sbloccato con un'impresa in questa veglia
 }
 
 export interface AzioniHud {
@@ -243,7 +245,9 @@ export class Hud {
       r.vittoria ? 'Hai attraversato la notte.' : `La lanterna ha resistito ${tempo(Math.floor(r.secondi))}`,
       `Livello ${r.livello} · ${Math.floor(r.anime)} anime · danno ${Math.round(r.danno)}`,
       `Record ${tempo(Math.floor(r.record))}${r.nuovoRecord ? ' · nuovo!' : ''}`,
+      `+${r.cera} Cera per la Cappella`,
     ];
+    if (r.sbloccato) numeri.push(`Sbloccato: ${r.sbloccato}`);
     this.riempiPannello(this.fine, r.build, '', numeri.join('\n'));
     this.bordo.hidden = true;
     this.pausa.hidden = true;

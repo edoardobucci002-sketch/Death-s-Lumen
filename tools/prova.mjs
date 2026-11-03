@@ -174,13 +174,15 @@ for (const pg of ['lampionaio', 'becchino', 'badessa', 'strega']) {
   await ctx.close();
 }
 
-// Menu: la scheda cambia con la freccia, «Inizia la notte» apre la partita con il personaggio scelto
+// Menu: la scheda cambia con la freccia, un personaggio bloccato si sblocca con la Cera, «Inizia la veglia» apre la partita
 for (const [nome, disp] of casi) {
   const ctx = await browser.newContext(disp);
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
   pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+  // meta progressione: il Becchino è bloccato; con 250 Cera nel salvataggio si sblocca dalla scheda
+  await pag.addInitScript(() => localStorage.setItem('dl-salvataggio', JSON.stringify({ versione: 1, cera: 250, sbloccati: ['lampionaio'] })));
   await pag.goto(url);
   await pag.waitForSelector('.menu .scheda h2', { timeout: 15000 }).catch(() => errori.push('il menu non compare'));
   await pag.waitForTimeout(400);
@@ -188,8 +190,12 @@ for (const [nome, disp] of casi) {
   await pag.click('.menu-freccia[data-passo="1"]').catch(() => errori.push('freccia non cliccabile'));
   const nomePg = await pag.textContent('.scheda h2').catch(() => '');
   if (nomePg !== 'Il Becchino') errori.push(`dopo la freccia: ${nomePg}`);
+  if (!(await pag.evaluate(() => document.querySelector('.menu-inizia').disabled))) errori.push('il Becchino non risulta bloccato');
   const largo = await pag.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   if (largo) errori.push('la pagina scorre in orizzontale');
+  await pag.click('[data-sblocca]').catch(() => errori.push('«Sblocca con la Cera» non cliccabile'));
+  const cera = await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).cera);
+  if (cera !== 50) errori.push(`dopo lo sblocco restano ${cera} Cera invece di 50`);
   await pag.click('.menu-inizia').catch(() => errori.push('«Inizia» non cliccabile'));
   await pag.waitForFunction(() => window.__dl.scene.isActive('Gioco'), null, { timeout: 5000 }).catch(() => errori.push('la partita non parte'));
   const pg = await pag.evaluate(() => window.__dl.scene.getScene('Gioco')?.pg?.id);

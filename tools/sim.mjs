@@ -7,14 +7,20 @@
 // Uso: npm run sim            (3 partite per personaggio)
 //      npm run sim -- 5       (5 partite per personaggio)
 //      npm run sim -- 3 strega,becchino
+//      npm run sim -- 6 tutti meta=max   (Cappella completa; meta=meta a metà; senza, vuota)
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const PERSONAGGI = ['lampionaio', 'becchino', 'badessa', 'strega'];
-const partite = Number(process.argv[2]) || 3;
-const scelti = process.argv[3] ? process.argv[3].split(',') : PERSONAGGI;
-const VITTORIE_MASSIME = 0.15; // proposta sulla meta progressione: 5–15% con la Cappella vuota
+const argomenti = process.argv.slice(2);
+const meta = (argomenti.find((a) => a.startsWith('meta=')) ?? 'meta=0').slice(5);
+const altri = argomenti.filter((a) => !a.startsWith('meta='));
+const partite = Number(altri[0]) || 3;
+const scelti = altri[1] && altri[1] !== 'tutti' ? altri[1].split(',') : PERSONAGGI;
+// obiettivi di vittoria del bot secondo la Cappella (proposta sulla meta progressione)
+const OBIETTIVI = { 0: [0.05, 0.15], meta: [0.3, 0.45], max: [0.6, 0.75] };
+const VITTORIE_MASSIME = (OBIETTIVI[meta] ?? OBIETTIVI[0])[1];
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
 const porta = 4320;
 
@@ -34,7 +40,7 @@ async function gioca({ pg, seme }) {
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot`);
+  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 10 * 60_000, polling: 1000 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();
@@ -44,7 +50,7 @@ async function gioca({ pg, seme }) {
   risultati.push({ pg, seme, ...r, errori });
 }
 
-console.log(`Simulazione: ${partite} partite per ${scelti.join(', ')}\n`);
+console.log(`Simulazione: ${partite} partite per ${scelti.join(', ')}, Cappella ${meta === '0' ? 'vuota' : meta === 'meta' ? 'a metà' : 'completa'}\n`);
 const lavori = [];
 for (let n = 0; n < INSIEME; n++) {
   lavori.push((async () => {
@@ -97,7 +103,7 @@ for (const pg of scelti) {
     (vinte.length ? `\n     nelle vittorie la salute più bassa è stata in media ${Math.round(saluteMinima)}` : '') +
     `\n     al minuto: ${alMinuto((r) => r.pani).toFixed(1)} pani, ${alMinuto((r) => r.calamite).toFixed(2)} calamite; ` +
     `salute recuperata ${Math.round(alMinuto((r) => r.curaPane))} col pane, ${Math.round(alMinuto((r) => r.curaFiaschetta ?? 0))} con la fiaschetta, ${Math.round(alMinuto((r) => r.curaAltro))} con rigenerazione e abilità` +
-    `\n     a notte: ${media(rr.map((r) => r.sorsi ?? 0)).toFixed(1)} sorsi, ${media(rr.map((r) => r.grazie ?? 0)).toFixed(1)} schivate perfette, ${Math.round(media(rr.map((r) => r.reazioni ?? 0)))} reazioni`);
+    `\n     a notte: ${media(rr.map((r) => r.sorsi ?? 0)).toFixed(1)} sorsi, ${media(rr.map((r) => r.grazie ?? 0)).toFixed(1)} schivate perfette, ${Math.round(media(rr.map((r) => r.reazioni ?? 0)))} reazioni, ${Math.round(media(rr.map((r) => r.cera ?? 0)))} Cera`);
   if (rr.length && vinte.length / rr.length > VITTORIE_MASSIME) problemi.push(`${pg} vince troppo spesso (${vinte.length}/${rr.length}; al massimo ${Math.round(VITTORIE_MASSIME * 100)}%)`);
   if (rr.length && vinte.length === rr.length && saluteMinima > 50) problemi.push(`${pg} vince sempre senza sforzo (salute mai sotto ${Math.round(saluteMinima)})`);
   if (rr.length && morti.length === rr.length && Math.max(...morti) < 300) problemi.push(`${pg} muore sempre prima del minuto 5`);

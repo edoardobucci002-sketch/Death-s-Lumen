@@ -42,6 +42,7 @@ export interface RisultatoSim {
   sorsi: number; // sorsi della fiaschetta bevuti
   grazie: number; // schivate perfette
   reazioni: number; // reazioni tra stati (Eclissi, Rivelazione, Esorcismo, Interramento)
+  cera: number; // Cera guadagnata
 }
 
 export class Simulazione {
@@ -116,7 +117,7 @@ export class Simulazione {
     this.grazie++;
   }
 
-  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro' | 'curaFiaschetta' | 'sorsi' | 'grazie'> & { reazioni: number }): void {
+  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro' | 'curaFiaschetta' | 'sorsi' | 'grazie'> & { reazioni: number; cera: number }): void {
     for (const m of this.mietitori) m.dannoSubito = Math.round(m.dannoSubito);
     (window as unknown as { __sim: RisultatoSim }).__sim = {
       ...r, minuti: this.minuti, mietitori: this.mietitori,

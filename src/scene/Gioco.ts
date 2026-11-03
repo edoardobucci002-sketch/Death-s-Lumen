@@ -4,6 +4,8 @@
  * La notte ha i suoi eventi: élite ogni 55 s, sciami a inizio minuto, orde in formazione ogni 80 s dal 2:30,
  * il Mietitore ai minuti 5 e 10 (con le sue mosse), l'alba al 15.
  * La fiaschetta (pulsante o F) cura a sorsi contati; schivare all'ultimo istante le mosse del Mietitore dà la Grazia.
+ * Meta progressione: i ceri accesi della Cappella entrano nelle statistiche; a fine veglia si conta e si salva la Cera
+ * e si controllano gli sblocchi dei personaggi. ?meta=0|meta|max finge la Cappella vuota, a metà o completa.
  * Pausa con il pulsante, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni.
  * La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?pg=becchino (salta il menu), ?minuto=5 (parte da quel minuto),
@@ -43,6 +45,8 @@ import { Simulazione } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
 import { FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
+import { CERA, SBLOCCHI, SECONDA_CANDELA } from '../data/meta';
+import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { creaTerreno } from '../sistema/terreno';
 import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 
@@ -94,6 +98,10 @@ export class Gioco extends Phaser.Scene {
   private sim: Simulazione | null = null;
   private fiaschetta!: Fiaschetta;
   private grazia = 0; // secondi di Grazia rimasti
+  private meta!: BonusMeta; // ceri accesi della Cappella
+  private candelaUsata = false; // Seconda candela
+  private eliteUccise = 0;
+  private sethSconfitti = 0;
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
@@ -130,6 +138,9 @@ export class Gioco extends Phaser.Scene {
     this.chiaveSprite = this.textures.exists(this.pg.sprite) ? this.pg.sprite : PERSONAGGI[0].sprite;
     for (const q of PASSIVI) this.passivi[q.id] = 0;
     this.grazia = 0;
+    this.candelaUsata = false;
+    this.eliteUccise = this.sethSconfitti = 0;
+    this.meta = bonusMeta(carica(), parametri.get('meta') ?? (parametri.has('bot') ? '0' : null));
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
@@ -194,6 +205,7 @@ export class Gioco extends Phaser.Scene {
       menu: () => this.scene.start('Menu'),
     });
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso);
+    this.doni.aggiungiRimescolate(this.meta.rimescolate);
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.pausa || this.doni.aperta) return false;
       this.arsenale.abilita(ABILITA[this.pg.abilita]);
@@ -294,7 +306,7 @@ export class Gioco extends Phaser.Scene {
       this.dirX = dx / l;
       this.dirY = dy / l;
     }
-    this.speciale.aggiorna(dt, this.bonus.ricarica);
+    this.speciale.aggiorna(dt, this.bonus.ricarica * (1 - this.meta.rito));
     if (this.bot && this.speciale.attesa <= 0) {
       const a = ABILITA[this.pg.abilita];
       if (this.bot.abilita(this.x, this.y - COLPI.corpo, a.raggio * (1 + this.bonus.area), a.cura > 0, this.salute / this.saluteMassima)) this.speciale.prova();
@@ -405,14 +417,15 @@ export class Gioco extends Phaser.Scene {
   /** Ricalcola statistiche e bonus delle armi da personaggio e doni passivi (GDD, sezioni 2 e 5). */
   private ricalcola(): void {
     const per = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
-    this.saluteMassima = BASE.salute + this.pg.salute + per('cuoreDiCera');
+    const m = this.meta;
+    this.saluteMassima = (BASE.salute + this.pg.salute + per('cuoreDiCera')) * (1 + m.salute);
     const grazia = this.grazia > 0;
-    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + (grazia ? GRAZIA.velocita : 0));
-    this.raccolta = BASE.raccolta * (1 + per('calamita'));
+    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + m.velocita + (grazia ? GRAZIA.velocita : 0));
+    this.raccolta = BASE.raccolta * (1 + per('calamita') + m.raccolta);
     this.rigenerazione = this.pg.rigenerazione + per('erbeAmare');
     this.armatura = Math.min(BASE.armaturaMassima, BASE.armatura + this.pg.armatura + per('scudoDiFerro'));
-    this.moltAnime = 1 + this.passivi.calamita * (PASSIVI.find((q) => q.id === 'calamita')!.anime ?? 0);
-    this.bonus.danno = this.pg.danno + per('saleNero') + (grazia ? GRAZIA.danno : 0);
+    this.moltAnime = 1 + this.passivi.calamita * (PASSIVI.find((q) => q.id === 'calamita')!.anime ?? 0) + m.anime;
+    this.bonus.danno = this.pg.danno + per('saleNero') + m.danno + (grazia ? GRAZIA.danno : 0);
     this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * (1 - PASSIVI.find((q) => q.id === 'clessidra')!.per) ** this.passivi.clessidra);
     this.bonus.area = this.pg.area + per('stoppinoLungo');
     this.bonus.quantita = per('specchio');
@@ -436,8 +449,13 @@ export class Gioco extends Phaser.Scene {
     this.sim?.ucciso();
     for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
     // la fiaschetta si ricarica: un sorso per un'élite, tutta per il Mietitore
-    if (reliquiari === MIETITORE.reliquiari) this.fiaschetta.ricarica(FIASCHETTA.sorsi);
-    else if (reliquiari > 0) this.fiaschetta.ricarica(FIASCHETTA.perElite);
+    if (reliquiari === MIETITORE.reliquiari) {
+      this.fiaschetta.ricarica(FIASCHETTA.sorsi);
+      this.sethSconfitti++;
+    } else if (reliquiari > 0) {
+      this.fiaschetta.ricarica(FIASCHETTA.perElite);
+      this.eliteUccise++;
+    }
     const r = this.caso.numero();
     if (r < DROP.pane.probabilita) {
       if (this.secondi < this.prossimoPane) return;
@@ -529,10 +547,11 @@ export class Gioco extends Phaser.Scene {
   }
 
   private mostraFine(vittoria: boolean): void {
+    const veglia = this.contaCera(vittoria);
     if (this.sim) {
       this.sim.fine({
         vittoria, secondi: Math.round(this.secondi), livello: this.livello, anime: this.animeTotali, danno: Math.round(this.arsenale.dannoTotale),
-        build: this.build().map((v) => `${v.nome} ${v.livello}`), reazioni: this.arsenale.reazioni,
+        build: this.build().map((v) => `${v.nome} ${v.livello}`), reazioni: this.arsenale.reazioni, cera: veglia.totale,
       });
     }
     const nuovo = this.sim ? false : salvaRecord(this.pg.id, this.secondi);
@@ -546,7 +565,36 @@ export class Gioco extends Phaser.Scene {
       record: leggiRecord(this.pg.id),
       nuovoRecord: nuovo,
       build: this.build(),
+      cera: veglia.totale,
+      sbloccato: veglia.sbloccato,
     });
+  }
+
+  /**
+   * Cera della veglia, voce per voce; fuori dalle simulazioni la aggiunge al salvataggio e controlla
+   * se un personaggio si è sbloccato con un'impresa. Restituisce il totale e il nome sbloccato (o null).
+   */
+  private contaCera(vittoria: boolean): { totale: number; sbloccato: string | null } {
+    const minuti = Math.floor(this.secondi / 60), e = this.eliteUccise, n = this.sethSconfitti;
+    const voci: VoceVeglia[] = [{ nome: minuti === 1 ? '1 minuto' : `${minuti} minuti`, cera: minuti * CERA.perMinuto }];
+    if (e) voci.push({ nome: e === 1 ? '1 élite' : `${e} élite`, cera: e * CERA.perElite });
+    if (n) voci.push({ nome: n === 1 ? 'Seth sconfitto' : `Seth sconfitto ${n} volte`, cera: n * CERA.perSeth });
+    if (vittoria) voci.push({ nome: "L'alba", cera: CERA.alba });
+    const totale = voci.reduce((t, v) => t + v.cera, 0);
+    if (this.sim || this.immortale) return { totale, sbloccato: null };
+    const s = carica();
+    s.cera += totale;
+    // imprese che sbloccano i personaggi (prima solo il primo che si sblocca, per avvisarlo)
+    let sbloccato: string | null = null;
+    const fatte: Record<string, boolean> = { becchino: this.secondi >= 300, badessa: this.sethSconfitti > 0, strega: vittoria };
+    for (const p of PERSONAGGI) {
+      if (!SBLOCCHI[p.id] || s.sbloccati.includes(p.id) || !fatte[p.id]) continue;
+      s.sbloccati.push(p.id);
+      sbloccato ??= p.nome;
+    }
+    s.ultimaVeglia = { voci, totale, sbloccato };
+    salva(s);
+    return { totale, sbloccato };
   }
 
   /** Armi e doni posseduti, per le icone in alto e i riepiloghi. */
@@ -587,6 +635,16 @@ export class Gioco extends Phaser.Scene {
     this.sim?.colpito(danno);
     suona('danno');
     vibra('leggera');
+    if (this.salute <= 0 && this.meta.secondaCandela && !this.candelaUsata) {
+      // Seconda candela: una volta per veglia ci si rialza
+      this.candelaUsata = true;
+      this.salute = this.saluteMassima * SECONDA_CANDELA.salute;
+      this.invulnerabile = SECONDA_CANDELA.invulnerabilita;
+      this.hud.avviso('La seconda candela', 'ti rialza');
+      suona('cura');
+      vibra('forte');
+      return;
+    }
     if (this.salute <= 0) {
       this.salute = 0;
       this.morto = this.finito = true;
