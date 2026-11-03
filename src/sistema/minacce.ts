@@ -2,12 +2,14 @@
  * Minacce: i colpi del Mietitore che non sono il suo corpo.
  * Aree con preavviso (falciata, segni della chiamata): un cerchio rosso a retino che pulsa e, allo scadere,
  * colpisce chi c'è dentro. Falci spettrali: proiettili che volano dritti e feriscono al tocco.
+ * Conta anche le schivate perfette (Grazia): uscire da un cerchio all'ultimo istante, farsi sfiorare da una falce.
  * Tutto in pool preparati all'inizio; la logica è separata dal disegno. Posizioni all'altezza dei piedi.
  */
 import Phaser from 'phaser';
 import { PROFONDITA } from './effetti';
 import { EFFETTI } from '../data/effetti';
 import { COLPI } from '../data/armi';
+import { GRAZIA } from '../data/sopravvivenza';
 
 const MAX_AREE = 24;
 const MAX_FALCI = 32;
@@ -21,6 +23,7 @@ export class Minacce {
   readonly aR = new Float32Array(MAX_AREE);
   readonly aAttesa = new Float32Array(MAX_AREE); // secondi al colpo (poi negativo: lampo)
   readonly aDanno = new Float32Array(MAX_AREE);
+  private aDentro = new Float32Array(MAX_AREE); // secondi al colpo l'ultima volta che il personaggio era dentro
   private aChiave: string[] = [];
   private aSprite: Phaser.GameObjects.Image[] = [];
   falci = 0;
@@ -31,9 +34,11 @@ export class Minacce {
   readonly fR = new Float32Array(MAX_FALCI);
   private fVita = new Float32Array(MAX_FALCI);
   private fDanno = new Float32Array(MAX_FALCI);
+  private fSfiorata = new Uint8Array(MAX_FALCI); // 1 = ti è passata vicino senza toccarti
   private fSprite: Phaser.GameObjects.Image[] = [];
   private tempo = 0;
   colpita = false; // una falciata è appena scattata (Gioco la legge per scuotere lo schermo e la rimette a false)
+  schivate = 0; // schivate perfette da quando Gioco le ha lette l'ultima volta (le rimette a 0)
 
   constructor(private scena: Phaser.Scene) {
     for (let i = 0; i < MAX_AREE; i++) {
@@ -55,6 +60,7 @@ export class Minacce {
     this.aR[i] = r;
     this.aAttesa[i] = attesa;
     this.aDanno[i] = danno;
+    this.aDentro[i] = Infinity;
     const chiave = `minaccia-${Math.round(r)}`;
     if (!this.scena.textures.exists(`${chiave}-0`)) creaCerchio(this.scena, chiave, Math.round(r));
     this.aChiave[i] = chiave;
@@ -72,6 +78,7 @@ export class Minacce {
     this.fR[i] = raggio;
     this.fDanno[i] = danno;
     this.fVita[i] = vita;
+    this.fSfiorata[i] = 0;
   }
 
   /** Un passo di logica; restituisce il danno più forte che tocca il personaggio in (gx, gy), di raggio rg. */
@@ -82,10 +89,13 @@ export class Minacce {
     for (let i = this.aree - 1; i >= 0; i--) {
       const prima = this.aAttesa[i];
       this.aAttesa[i] -= dt;
+      const r = this.aR[i] + rg;
+      const dentro = (gx - this.aX[i]) ** 2 + (gy - this.aY[i]) ** 2 < r * r;
+      if (dentro && prima > 0) this.aDentro[i] = prima;
       if (prima > 0 && this.aAttesa[i] <= 0 && this.aDanno[i] > 0) {
         falciata = true;
-        const r = this.aR[i] + rg;
-        if ((gx - this.aX[i]) ** 2 + (gy - this.aY[i]) ** 2 < r * r) colpo = Math.max(colpo, this.aDanno[i]);
+        if (dentro) colpo = Math.max(colpo, this.aDanno[i]);
+        else if (this.aDentro[i] <= GRAZIA.finestra) this.schivate++; // uscito all'ultimo istante
       }
       if (this.aAttesa[i] <= -M.lampo || (this.aAttesa[i] <= 0 && !this.aDanno[i])) this.togliArea(i);
     }
@@ -94,12 +104,19 @@ export class Minacce {
       this.fX[i] += this.fVX[i] * dt;
       this.fY[i] += this.fVY[i] * dt;
       const r = this.fR[i] + rg;
-      if ((gx - this.fX[i]) ** 2 + (gy - this.fY[i]) ** 2 < r * r) {
+      const d2 = (gx - this.fX[i]) ** 2 + (gy - this.fY[i]) ** 2;
+      const vicino = r + GRAZIA.sfioro;
+      if (d2 < r * r) {
         colpo = Math.max(colpo, this.fDanno[i]);
         this.togliFalce(i);
-      } else if ((this.fVita[i] -= dt) <= 0) {
-        this.togliFalce(i);
+        continue;
       }
+      if (d2 < vicino * vicino) this.fSfiorata[i] = 1;
+      else if (this.fSfiorata[i] === 1) {
+        this.fSfiorata[i] = 2; // è passata oltre senza toccarti: schivata perfetta, una volta sola
+        this.schivate++;
+      }
+      if ((this.fVita[i] -= dt) <= 0) this.togliFalce(i);
     }
     return colpo;
   }
@@ -126,6 +143,7 @@ export class Minacce {
     this.aR[i] = this.aR[u];
     this.aAttesa[i] = this.aAttesa[u];
     this.aDanno[i] = this.aDanno[u];
+    this.aDentro[i] = this.aDentro[u];
     this.aChiave[i] = this.aChiave[u];
   }
 
@@ -138,6 +156,7 @@ export class Minacce {
     this.fR[i] = this.fR[u];
     this.fDanno[i] = this.fDanno[u];
     this.fVita[i] = this.fVita[u];
+    this.fSfiorata[i] = this.fSfiorata[u];
   }
 }
 

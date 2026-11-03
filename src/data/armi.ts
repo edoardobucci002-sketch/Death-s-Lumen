@@ -102,11 +102,11 @@ export const LANTERNA: Lanterna = {
 export const PALA: Pala = {
   id: 'pala', nome: 'Pala', icona: 'Icona_Pala', effetto: 'Pala_Impatto', respinta: 423, distanza: 61, ritardoDoppio: 0.22,
   livelli: [
-    { ricarica: 1.35, danno: 34, raggio: 87, doppio: false, testo: 'Colpo potente a corta gittata.' },
-    { ricarica: 1.35, danno: 44, raggio: 87, doppio: false, testo: '+10 danno.' },
-    { ricarica: 1.35, danno: 44, raggio: 95, doppio: false, testo: "Area d'impatto maggiore." },
-    { ricarica: 1.15, danno: 44, raggio: 95, doppio: false, testo: 'Colpi più frequenti.' },
-    { ricarica: 1.15, danno: 56, raggio: 95, doppio: false, testo: '+12 danno.' },
+    { ricarica: 1.35, danno: 34, raggio: 70, doppio: false, testo: 'Colpo potente a corta gittata.' },
+    { ricarica: 1.35, danno: 44, raggio: 70, doppio: false, testo: '+10 danno.' },
+    { ricarica: 1.35, danno: 44, raggio: 87, doppio: false, testo: "Area d'impatto maggiore." },
+    { ricarica: 1.15, danno: 44, raggio: 87, doppio: false, testo: 'Colpi più frequenti.' },
+    { ricarica: 1.15, danno: 56, raggio: 87, doppio: false, testo: '+12 danno.' },
     { ricarica: 1.15, danno: 56, raggio: 103, doppio: false, testo: "Area d'impatto maggiore." },
     { ricarica: 0.95, danno: 56, raggio: 103, doppio: false, testo: 'Colpi più frequenti.' },
     { ricarica: 0.95, danno: 76, raggio: 103, doppio: true, testo: '+20 danno, colpo doppio.' },
@@ -205,14 +205,14 @@ export const FUOCO_FATUO: FuocoFatuo = {
 export const ACQUA_SANTA: AcquaSanta = {
   id: 'acquaSanta', nome: 'Acqua santa', icona: 'Icona_Acqua_santa', effetto: 'Acqua_santa_Pozza', respinta: 0, intervallo: 0.3,
   livelli: [
-    { ricarica: 2.8, quantita: 1, danno: 9, raggio: 89, durata: 2.6, testo: 'Fiale che lasciano pozze benedette sui nemici.' },
-    { ricarica: 2.8, quantita: 2, danno: 9, raggio: 89, durata: 2.6, testo: '+1 fiala.' },
-    { ricarica: 2.8, quantita: 2, danno: 13, raggio: 108, durata: 2.6, testo: 'Pozze più grandi e dannose.' },
-    { ricarica: 2.8, quantita: 3, danno: 13, raggio: 108, durata: 2.6, testo: '+1 fiala.' },
-    { ricarica: 2.3, quantita: 3, danno: 13, raggio: 108, durata: 3.2, testo: 'Ricarica più rapida, pozze più durature.' },
-    { ricarica: 2.3, quantita: 3, danno: 18, raggio: 129, durata: 3.2, testo: 'Pozze più grandi e dannose.' },
-    { ricarica: 2.3, quantita: 4, danno: 18, raggio: 129, durata: 3.2, testo: '+1 fiala.' },
-    { ricarica: 2.3, quantita: 4, danno: 25, raggio: 129, durata: 4.2, testo: 'Durata e danno maggiori.' },
+    { ricarica: 2.8, quantita: 1, danno: 8, raggio: 89, durata: 2.6, testo: 'Fiale che lasciano pozze benedette sui nemici.' },
+    { ricarica: 2.8, quantita: 2, danno: 8, raggio: 89, durata: 2.6, testo: '+1 fiala.' },
+    { ricarica: 2.8, quantita: 2, danno: 11, raggio: 108, durata: 2.6, testo: 'Pozze più grandi e dannose.' },
+    { ricarica: 2.8, quantita: 3, danno: 11, raggio: 108, durata: 2.6, testo: '+1 fiala.' },
+    { ricarica: 2.3, quantita: 3, danno: 11, raggio: 108, durata: 3.2, testo: 'Ricarica più rapida, pozze più durature.' },
+    { ricarica: 2.3, quantita: 3, danno: 15, raggio: 129, durata: 3.2, testo: 'Pozze più grandi e dannose.' },
+    { ricarica: 2.3, quantita: 4, danno: 15, raggio: 129, durata: 3.2, testo: '+1 fiala.' },
+    { ricarica: 2.3, quantita: 4, danno: 21, raggio: 129, durata: 4.2, testo: 'Durata e danno maggiori.' },
   ],
 };
 

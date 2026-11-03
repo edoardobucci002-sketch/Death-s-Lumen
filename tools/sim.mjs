@@ -2,8 +2,8 @@
 // nel gioco vero (build in dist/) dentro un browser invisibile con lo schermo di un telefono Android.
 // Stampa a che minuto muore, il livello minuto per minuto, quanto fa male il Mietitore, quanti pani e calamite
 // raccoglie e quanta salute recupera, e controlla gli obiettivi di CLAUDE.md. Risultati completi in prove/sim.json.
-// Un giocatore umano va più forte del bot (prova di Edoardo del 3/11: livello 60 al minuto 8, il bot 40),
-// quindi il bot deve vincere al massimo VITTORIE_MASSIME delle notti.
+// Un giocatore umano va più forte del bot (prova di Edoardo del 3/11: livello 60 al minuto 8, il bot 40)
+// e arriverà la meta progressione: con la Cappella vuota il bot deve vincere al massimo VITTORIE_MASSIME delle notti.
 // Uso: npm run sim            (3 partite per personaggio)
 //      npm run sim -- 5       (5 partite per personaggio)
 //      npm run sim -- 3 strega,becchino
@@ -14,7 +14,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const PERSONAGGI = ['lampionaio', 'becchino', 'badessa', 'strega'];
 const partite = Number(process.argv[2]) || 3;
 const scelti = process.argv[3] ? process.argv[3].split(',') : PERSONAGGI;
-const VITTORIE_MASSIME = 0.4;
+const VITTORIE_MASSIME = 0.15; // proposta sulla meta progressione: 5–15% con la Cappella vuota
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
 const porta = 4320;
 
@@ -96,7 +96,8 @@ for (const pg of scelti) {
     `; danno subito al minuto ${Math.round(primaAlMinuto)} prima, ${Math.round(durante)} durante` +
     (vinte.length ? `\n     nelle vittorie la salute più bassa è stata in media ${Math.round(saluteMinima)}` : '') +
     `\n     al minuto: ${alMinuto((r) => r.pani).toFixed(1)} pani, ${alMinuto((r) => r.calamite).toFixed(2)} calamite; ` +
-    `salute recuperata ${Math.round(alMinuto((r) => r.curaPane))} col pane, ${Math.round(alMinuto((r) => r.curaAltro))} con rigenerazione e abilità`);
+    `salute recuperata ${Math.round(alMinuto((r) => r.curaPane))} col pane, ${Math.round(alMinuto((r) => r.curaFiaschetta ?? 0))} con la fiaschetta, ${Math.round(alMinuto((r) => r.curaAltro))} con rigenerazione e abilità` +
+    `\n     a notte: ${media(rr.map((r) => r.sorsi ?? 0)).toFixed(1)} sorsi, ${media(rr.map((r) => r.grazie ?? 0)).toFixed(1)} schivate perfette`);
   if (rr.length && vinte.length / rr.length > VITTORIE_MASSIME) problemi.push(`${pg} vince troppo spesso (${vinte.length}/${rr.length}; al massimo ${Math.round(VITTORIE_MASSIME * 100)}%)`);
   if (rr.length && vinte.length === rr.length && saluteMinima > 50) problemi.push(`${pg} vince sempre senza sforzo (salute mai sotto ${Math.round(saluteMinima)})`);
   if (rr.length && morti.length === rr.length && Math.max(...morti) < 300) problemi.push(`${pg} muore sempre prima del minuto 5`);

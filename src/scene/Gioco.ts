@@ -3,6 +3,7 @@
  * i nemici uccisi lasciano anime e a volte pane, calamite e reliquiari; a ogni livello si sceglie un dono.
  * La notte ha i suoi eventi: élite ogni 55 s, sciami a inizio minuto, orde in formazione ogni 80 s dal 2:30,
  * il Mietitore ai minuti 5 e 10 (con le sue mosse), l'alba al 15.
+ * La fiaschetta (pulsante o F) cura a sorsi contati; schivare all'ultimo istante le mosse del Mietitore dà la Grazia.
  * Pausa con il pulsante, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni.
  * La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?pg=becchino (salta il menu), ?minuto=5 (parte da quel minuto),
@@ -40,6 +41,8 @@ import { Minacce } from '../sistema/minacce';
 import { leggiRecord, salvaRecord } from '../sistema/record';
 import { Simulazione } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
+import { Fiaschetta } from '../sistema/fiaschetta';
+import { FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
 import { creaTerreno } from '../sistema/terreno';
 import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 
@@ -89,6 +92,8 @@ export class Gioco extends Phaser.Scene {
   private automatico = false;
   private bot: Bot | null = null; // con ?bot gioca lui
   private sim: Simulazione | null = null;
+  private fiaschetta!: Fiaschetta;
+  private grazia = 0; // secondi di Grazia rimasti
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
@@ -124,6 +129,7 @@ export class Gioco extends Phaser.Scene {
     // finché un personaggio non ha il suo sprite in gioco, usa quello del Lampionaio (segnaposto)
     this.chiaveSprite = this.textures.exists(this.pg.sprite) ? this.pg.sprite : PERSONAGGI[0].sprite;
     for (const q of PASSIVI) this.passivi[q.id] = 0;
+    this.grazia = 0;
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
@@ -195,6 +201,13 @@ export class Gioco extends Phaser.Scene {
       vibra('media');
       return true;
     });
+    this.fiaschetta = new Fiaschetta(interfaccia, `Speciale_${this.pg.nome.replace(/ /g, '_')}`, () => {
+      if (this.finito || this.pausa || this.doni.aperta || this.salute >= this.saluteMassima) return false;
+      suona('cura');
+      vibra('leggera');
+      this.sim?.bevuto();
+      return true;
+    });
     this.aggiornaBuild();
     this.bot = parametri.has('bot') ? new Bot(this.orda, this.anime, this.oggetti, this.minacce, arma) : null;
     this.sim = this.bot ? new Simulazione() : null;
@@ -214,6 +227,7 @@ export class Gioco extends Phaser.Scene {
       this.hud.distruggi();
       this.doni.distruggi();
       this.speciale.distruggi();
+      this.fiaschetta.distruggi();
       this.anims.resumeAll();
     });
     this.disegna();
@@ -285,6 +299,8 @@ export class Gioco extends Phaser.Scene {
       const a = ABILITA[this.pg.abilita];
       if (this.bot.abilita(this.x, this.y - COLPI.corpo, a.raggio * (1 + this.bonus.area), a.cura > 0, this.salute / this.saluteMassima)) this.speciale.prova();
     }
+    if (this.bot && this.salute < this.saluteMassima * BOT.beviSotto) this.fiaschetta.bevi();
+    if (this.grazia > 0 && (this.grazia -= dt) <= 0) this.ricalcola();
 
     const mezzaL = this.scale.width / 2;
     const mezzaA = this.scale.height / 2;
@@ -297,11 +313,18 @@ export class Gioco extends Phaser.Scene {
     const primaCura = this.salute;
     this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + cura) * dt);
     this.sim?.curato('altro', this.salute - primaCura);
+    const primaSorso = this.salute;
+    this.salute = Math.min(this.saluteMassima, this.salute + this.fiaschetta.aggiorna(dt) * this.saluteMassima);
+    this.sim?.curato('fiaschetta', this.salute - primaSorso);
     this.orda.rimuoviMorti(this.muore);
     const minaccia = this.minacce.aggiorna(dt, this.x, this.y, COMBATTIMENTO.raggioGiocatore);
     if (this.minacce.colpita) {
       this.minacce.colpita = false;
       this.effetti.scuoti(EFFETTI.minacce.scossa.forza, EFFETTI.minacce.scossa.durata);
+    }
+    if (this.minacce.schivate) {
+      this.minacce.schivate = 0;
+      this.iniziaGrazia();
     }
     this.contatti(dt, minaccia);
     const raccolte = this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
@@ -368,16 +391,28 @@ export class Gioco extends Phaser.Scene {
     }
   }
 
+  /** Schivata perfetta: qualche secondo di Grazia (più danno, più velocità); un'altra schivata la rinnova. */
+  private iniziaGrazia(): void {
+    const giaAttiva = this.grazia > 0;
+    this.grazia = GRAZIA.durata;
+    if (!giaAttiva) this.ricalcola();
+    this.hud.avviso('Grazia');
+    suona('speciale');
+    vibra('leggera');
+    this.sim?.grazia();
+  }
+
   /** Ricalcola statistiche e bonus delle armi da personaggio e doni passivi (GDD, sezioni 2 e 5). */
   private ricalcola(): void {
     const per = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
     this.saluteMassima = BASE.salute + this.pg.salute + per('cuoreDiCera');
-    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena'));
+    const grazia = this.grazia > 0;
+    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + (grazia ? GRAZIA.velocita : 0));
     this.raccolta = BASE.raccolta * (1 + per('calamita'));
     this.rigenerazione = this.pg.rigenerazione + per('erbeAmare');
     this.armatura = Math.min(BASE.armaturaMassima, BASE.armatura + this.pg.armatura + per('scudoDiFerro'));
     this.moltAnime = 1 + this.passivi.calamita * (PASSIVI.find((q) => q.id === 'calamita')!.anime ?? 0);
-    this.bonus.danno = this.pg.danno + per('saleNero');
+    this.bonus.danno = this.pg.danno + per('saleNero') + (grazia ? GRAZIA.danno : 0);
     this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * (1 - PASSIVI.find((q) => q.id === 'clessidra')!.per) ** this.passivi.clessidra);
     this.bonus.area = this.pg.area + per('stoppinoLungo');
     this.bonus.quantita = per('specchio');
@@ -400,6 +435,9 @@ export class Gioco extends Phaser.Scene {
     this.effetti.scoppio(x, y);
     this.sim?.ucciso();
     for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
+    // la fiaschetta si ricarica: un sorso per un'élite, tutta per il Mietitore
+    if (reliquiari === MIETITORE.reliquiari) this.fiaschetta.ricarica(FIASCHETTA.sorsi);
+    else if (reliquiari > 0) this.fiaschetta.ricarica(FIASCHETTA.perElite);
     const r = this.caso.numero();
     if (r < DROP.pane.probabilita) {
       if (this.secondi < this.prossimoPane) return;
@@ -571,6 +609,7 @@ export class Gioco extends Phaser.Scene {
     // lampo bianco appena colpito; da morto il personaggio lampeggia e poi sparisce
     const lampo = this.invulnerabile > COMBATTIMENTO.invulnerabilita - COMBATTIMENTO.lampo || (this.morto && this.attesaFine > 0 && Math.floor(this.attesaFine * 12) % 2 === 0);
     if (lampo) this.giocatore.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+    else if (this.grazia > 0 && Math.floor(this.secondi * GRAZIA.lampi) % 2 === 0) this.giocatore.setTint(GRAZIA.alone).setTintMode(Phaser.TintModes.ADD);
     else this.giocatore.clearTint();
     this.giocatore.setVisible(!this.morto || this.attesaFine > 0);
     this.anima(this.inMoto ? 'walk' : 'idle');

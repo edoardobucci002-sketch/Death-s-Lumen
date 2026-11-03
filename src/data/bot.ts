@@ -31,7 +31,8 @@ export const BOT = {
   giro: 0.35, // senza obiettivi cammina in cerchio: radianti al secondo
   // abilità: la usa quando ha almeno tanti nemici dentro il raggio, o con il Mietitore vicino
   nemiciPerAbilita: 10,
-  curaSotto: 0.6, // la Benedizione (che cura) anche quando la salute scende sotto il 60%
+  curaSotto: 0.6,
+  beviSotto: 0.4, // beve un sorso della fiaschetta sotto il 40% di salute // la Benedizione (che cura) anche quando la salute scende sotto il 60%
   // carte: più alto = la preferisce
   carte: { armaIniziale: 5, armaPosseduta: 4, armaNuova: 3.6, passivoPosseduto: 2.6, passivoNuovo: 3, pane: 0 },
   massimoArmi: 4, // oltre, non prende armi nuove

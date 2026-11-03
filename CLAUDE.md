@@ -124,7 +124,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 
 ## Mobile (obbligatorio fin dalla prima tappa)
 
-- Controlli touch: joystick virtuale dove si appoggia il dito, pulsante dell'abilità in basso a sinistra, pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio, P, M, 1-2-3.
+- Controlli touch: joystick virtuale dove si appoggia il dito, pulsante dell'abilità in basso a sinistra con la fiaschetta accanto, pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio (abilità), F (fiaschetta), P, M, 1-2-3.
 - Rispetta le safe area (notch, Dynamic Island, barre di sistema). Funziona sia in verticale sia in orizzontale.
 - Comportamento dell'app:
   - pausa automatica quando l'app va in background;

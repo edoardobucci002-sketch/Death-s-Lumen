@@ -44,7 +44,7 @@ export const NEMICI: TipoNemico[] = [
  */
 export const MIETITORE = {
   minuti: [5, 10],
-  saluteSecondo: 1.7, // al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5 (già scalata con il tempo)
+  saluteSecondo: 2, // al minuto 10 ha salute ×2 rispetto a quella del minuto 5 (già scalata con il tempo)
   cammina: [3, 5], // cammina verso di te per 3-5 s, poi una mossa
   camminaSecondo: 0.75, // al minuto 10 cammina meno tra una mossa e l'altra (×0,75)
   mosse: { scatto: 3, falciata: 3, falci: 2, chiamata: 1.5 }, // quanto spesso sceglie ogni mossa

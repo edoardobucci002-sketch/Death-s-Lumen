@@ -38,6 +38,9 @@ export interface RisultatoSim {
   calamite: number;
   curaPane: number; // salute recuperata con il pane
   curaAltro: number; // con rigenerazione e Benedizione
+  curaFiaschetta: number;
+  sorsi: number; // sorsi della fiaschetta bevuti
+  grazie: number; // schivate perfette
 }
 
 export class Simulazione {
@@ -51,6 +54,9 @@ export class Simulazione {
   private calamite = 0;
   private curaPane = 0;
   private curaAltro = 0;
+  private curaFiaschetta = 0;
+  private sorsi = 0;
+  private grazie = 0;
 
   /** Una volta per passo: chiude il minuto quando passa. */
   passo(secondi: number, livello: number, salute: number, orda: Orda): void {
@@ -95,16 +101,26 @@ export class Simulazione {
     else if (tipo === CALAMITA) this.calamite++;
   }
 
-  curato(da: 'pane' | 'altro', quanto: number): void {
+  curato(da: 'pane' | 'fiaschetta' | 'altro', quanto: number): void {
     if (da === 'pane') this.curaPane += quanto;
+    else if (da === 'fiaschetta') this.curaFiaschetta += quanto;
     else this.curaAltro += quanto;
   }
 
-  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro'>): void {
+  bevuto(): void {
+    this.sorsi++;
+  }
+
+  grazia(): void {
+    this.grazie++;
+  }
+
+  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro' | 'curaFiaschetta' | 'sorsi' | 'grazie'>): void {
     for (const m of this.mietitori) m.dannoSubito = Math.round(m.dannoSubito);
     (window as unknown as { __sim: RisultatoSim }).__sim = {
       ...r, minuti: this.minuti, mietitori: this.mietitori,
       pani: this.pani, calamite: this.calamite, curaPane: Math.round(this.curaPane), curaAltro: Math.round(this.curaAltro),
+      curaFiaschetta: Math.round(this.curaFiaschetta), sorsi: this.sorsi, grazie: this.grazie,
     };
   }
 }

@@ -37,9 +37,9 @@ Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 150 px,
 | Personaggio | Motto | Colore | Arma iniziale | Abilità speciale | Modificatori |
 | --- | --- | --- | --- | --- | --- |
 | Il Lampionaio | Guida nel buio | `#e3913a` | Lanterna | Cerchio di luce | +10% velocità, +0,2 salute/s (M8) |
-| Il Becchino | Nulla resta davvero sotto terra | `#b89a74` | Pala | Sepoltura | +30 salute, −25% danno subito, +15% danno, −3% velocità (M8; prima +1 armatura e −8% velocità) |
+| Il Becchino | Nulla resta davvero sotto terra | `#b89a74` | Pala | Sepoltura | +30 salute, −15% danno subito, +5% danno, −3% velocità (M8; prima +1 armatura, +15% danno e −8% velocità) |
 | La Badessa | Preghiere per ciò che è stato | `#dcc07a` | Turibolo | Benedizione | +10 salute, +0,3 salute/s, +15% area |
-| La Strega | Conosce nomi che non dovrebbero essere detti | `#a57ae0` | Bastone | Rito proibito | −15 salute, +10% danno, −10% ricarica |
+| La Strega | Conosce nomi che non dovrebbero essere detti | `#a57ae0` | Bastone | Rito proibito | −5 salute, +20% danno, −10% ricarica (M8; prima −15 salute e +10% danno) |
 
 **Barre della scheda** (su 6: Vitalità, Danno, Velocità, Raggio, Controllo)
 
@@ -99,16 +99,14 @@ Impatto circolare 61 px davanti a te (26 × 2,35), nella direzione di cammino; r
 
 | Lv | Ricarica (s) | Danno | Raggio | Distanza colpo | Colpo doppio | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 1,35 | 34 | 87 | 61 | no | Colpo potente a corta gittata. |
-| 2 | 1,35 | 44 | 87 | 61 | no | +10 danno. |
-| 3 | 1,35 | 44 | 95 | 61 | no | Area d'impatto maggiore. |
-| 4 | 1,15 | 44 | 95 | 61 | no | Colpi più frequenti. |
-| 5 | 1,15 | 56 | 95 | 61 | no | +12 danno. |
+| 1 | 1,35 | 34 | 70 | 61 | no | Colpo potente a corta gittata. |
+| 2 | 1,35 | 44 | 70 | 61 | no | +10 danno. |
+| 3 | 1,35 | 44 | 87 | 61 | no | Area d'impatto maggiore. |
+| 4 | 1,15 | 44 | 87 | 61 | no | Colpi più frequenti. |
+| 5 | 1,15 | 56 | 87 | 61 | no | +12 danno. |
 | 6 | 1,15 | 56 | 103 | 61 | no | Area d'impatto maggiore. |
 | 7 | 0,95 | 56 | 103 | 61 | no | Colpi più frequenti. |
 | 8 | 0,95 | 76 | 103 | 61 | sì | +20 danno, colpo doppio. |
-
-M8: raggi dei livelli 1–5 più ampi (erano 70, 70, 87, 87, 87): il Becchino moriva quasi sempre verso il minuto 3.
 
 
 #### Turibolo
@@ -215,14 +213,14 @@ Ogni fiala cade su un nemico visibile scelto a caso; la pozza ferisce ogni 0,3 s
 
 | Lv | Ricarica (s) | Quantità | Danno | Raggio | Durata (s) | Cosa cambia |
 |---|---|---|---|---|---|---|
-| 1 | 2,8 | 1 | 9 | 89 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
-| 2 | 2,8 | 2 | 9 | 89 | 2,6 | +1 fiala. |
-| 3 | 2,8 | 2 | 13 | 108 | 2,6 | Pozze più grandi e dannose. |
-| 4 | 2,8 | 3 | 13 | 108 | 2,6 | +1 fiala. |
-| 5 | 2,3 | 3 | 13 | 108 | 3,2 | Ricarica più rapida, pozze più durature. |
-| 6 | 2,3 | 3 | 18 | 129 | 3,2 | Pozze più grandi e dannose. |
-| 7 | 2,3 | 4 | 18 | 129 | 3,2 | +1 fiala. |
-| 8 | 2,3 | 4 | 25 | 129 | 4,2 | Durata e danno maggiori. |
+| 1 | 2,8 | 1 | 8 | 89 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
+| 2 | 2,8 | 2 | 8 | 89 | 2,6 | +1 fiala. |
+| 3 | 2,8 | 2 | 11 | 108 | 2,6 | Pozze più grandi e dannose. |
+| 4 | 2,8 | 3 | 11 | 108 | 2,6 | +1 fiala. |
+| 5 | 2,3 | 3 | 11 | 108 | 3,2 | Ricarica più rapida, pozze più durature. |
+| 6 | 2,3 | 3 | 15 | 129 | 3,2 | Pozze più grandi e dannose. |
+| 7 | 2,3 | 4 | 15 | 129 | 3,2 | +1 fiala. |
+| 8 | 2,3 | 4 | 21 | 129 | 4,2 | Durata e danno maggiori. |
 
 #### Lama di luce
 
@@ -239,7 +237,7 @@ Fendente orizzontale alto 103 px verso il lato in cui guardi; il colpo alle spal
 | 7 | 0,85 | 32 | 329 | sì | Ricarica più rapida. |
 | 8 | 0,85 | 44 | 329 | sì | +12 danno. |
 
-M8: danni +30% (erano 7, 7, 10, 10, 10, 14, 14, 19), per compensare le pozze che non si sommano.
+M8: danni +10% (erano 7, 7, 10, 10, 10, 14, 14, 19), per compensare le pozze che non si sommano. Con +30% era presente in tutte le notti vinte dal bot.
 
 ## 5. Doni passivi
 
@@ -272,7 +270,7 @@ Valori al minuto 0; la velocità varia a caso del ±10%. Velocità e raggi conve
 | Il Mietitore | 3600 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici (3200 prima della M8, poi 5500, ora 3600 con le mosse nuove) |
 
 - **Élite**: ogni 55 s compare un nemico normale potenziato: salute ×7, danno ×1,4, anime ×6, dimensione ×1,5, velocità ×0,9, alone ambra. Lascia un reliquiario.
-- **Il Mietitore**: cammina verso di te per 3–5 s (al minuto 10 per ×0,75 di quel tempo), poi si ferma pulsando di rosso e fa una mossa, scelta a caso con questi pesi. Ogni mossa ha un preavviso, il momento per scansarsi. Il danno delle mosse cresce con il tempo come il suo (× danno attuale ÷ 22). Dopo falciata, falci e chiamata resta fermo 0,45 s. Lascia 2 reliquiari. Al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5, già scalata con il tempo.
+- **Il Mietitore**: cammina verso di te per 3–5 s (al minuto 10 per ×0,75 di quel tempo), poi si ferma pulsando di rosso e fa una mossa, scelta a caso con questi pesi. Ogni mossa ha un preavviso, il momento per scansarsi. Il danno delle mosse cresce con il tempo come il suo (× danno attuale ÷ 22). Dopo falciata, falci e chiamata resta fermo 0,45 s. Lascia 2 reliquiari. Al minuto 10 ha salute ×2 rispetto a quella del minuto 5, già scalata con il tempo (×1,7 fino alla M8).
 
 | Mossa | Peso | Preavviso | Cosa fa |
 | --- | --- | --- | --- |
@@ -326,6 +324,12 @@ M8 (prova di Edoardo del 3/11): senza limite di tempo, dal minuto 5 si uccidono 
 Pane, calamita e reliquiari si raccolgono a 40 px dal personaggio, sono disegnati sopra il buio e ingranditi × 3; i reliquiari fuori schermo hanno un segnale lampeggiante sul bordo (M5, `src/data/oggetti.ts`).
 
 Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (valori nuovi della M3, `src/data/progressione.ts`). Al massimo 320 anime a terra: oltre, la nuova nasce comunque dove muore il nemico e prende il posto e il valore dell'anima più lontana dal personaggio (nel gioco nuovo, dal 2/11: prima finivano su un'anima a caso, spesso lontana fuori schermo, e sembrava che i nemici non lasciassero più anime). Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
+
+## 8b. Fiaschetta e Grazia (M8, `src/data/sopravvivenza.ts`)
+
+- **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, il Mietitore riempie la fiaschetta. La fiala è disegnata dal codice (15×27 pixel, ingrandita il triplo dell'anello) finché Edoardo non disegna la sua.
+- **Grazia**: scatta uscendo da un cerchio rosso del Mietitore quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova.
+- Nella simulazione (3/11, 24 notti per personaggio) il bot beve 4–5,4 sorsi a notte e fa 1,5–3,3 schivate perfette.
 
 ## 9. Esperienza e doni
 
