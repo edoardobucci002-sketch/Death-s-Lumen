@@ -9,6 +9,7 @@
     "build": "tsc --noEmit && vite build && node tools/genera-sw.mjs",
     "anteprima": "vite preview --host",
     "asset": "node tools/export-asset.mjs",
+    "bozza": "vite --host --open /bozza-hud.html",
     "icone": "node tools/icone.mjs",
     "prova": "node tools/prova.mjs",
     "sim": "npm run build && node tools/sim.mjs",

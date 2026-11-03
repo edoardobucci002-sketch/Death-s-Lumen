@@ -33,10 +33,11 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 | `npm install` | scarica le dipendenze (la prima volta e dopo ogni cambio di `package.json`) |
 | `npm run dev` | avvia il gioco in locale; l'indirizzo «Network» si apre anche dal telefono sulla stessa Wi-Fi |
 | `npm run asset` | esporta da Aseprite tutti gli sprite (vedi «Asset») |
+| `npm run bozza` | apre la pagina di bozza dell'HUD (`bozza-hud.html`): gli elementi di `HUD/` al loro posto, senza giocare |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
 | `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi); riepilogo a schermo, dettagli in `prove/sim.json` |
-| `npm run prova` | prova automatica su desktop, iPhone e Android emulati; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
+| `npm run prova` | prova automatica su desktop, iPhone e Android emulati, su una porta libera; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run ios` / `npm run android` | build + copia nei progetti nativi + apre Xcode o Android Studio |
 
 ## Struttura delle cartelle (proposta)
@@ -45,20 +46,23 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 DEATH'S LUMEN/
   PERSONAGGI/<Nome personaggio>/   sorgenti Aseprite di Edoardo (non modificarli mai)
   NEMICI/ EFFETTI/ OGGETTI/ ICONE/ stessa logica per gli altri asset (le icone si chiamano Icona_<Nome>)
+  HUD/<Gruppo>/<Elemento>_V#.aseprite  interfaccia (Barre, Pulsanti, Cornici, Pannelli, Emblemi, Segnali);
+                                   HUD/Tavole/ tiene le tavole originali (senza _V#, quindi non esportate)
   gioco/                           questo repository (su GitHub: Death-s-Lumen)
     CLAUDE.md
     docs/                          GDD_base.md, decisioni.md, tappe.md
     src/
       main.ts                      avvio di Phaser in pixel perfect e collegamento al telefono
       scene/                       le scene di Phaser: Avvio, Menu (schede), Gioco
-      sistema/                     pixel perfect, mobile, elenco asset
+      sistema/                     pixel perfect, mobile, elenco asset, arte dell'HUD (arte.ts: immagini e misure a pixel interi)
       data/                        TUTTI i numeri di bilanciamento (personaggi, armi, nemici…)
       stile.css                    interfaccia HTML sopra il gioco e caratteri inclusi
     public/                        manifest, icone
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/PERSONAGGI/ …       sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
                                    (effetti, icone e anime divisi dai file della v0 con tools/dividi-v0.lua)
-    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sim (simulazione di bilanciamento)
+    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sfondi-bozza, sim (simulazione di bilanciamento)
+    bozza-hud.html, src/bozza/     pagina di bozza dell'HUD (solo in sviluppo, non entra nella build); sfondi in bozza/sfondi/
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
 ```
@@ -128,6 +132,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
   - vibrazione sugli eventi importanti, disattivabile;
   - su Android, il tasto Indietro mette in pausa, riprende o torna al menu.
 - Niente zoom con doppio tocco o pizzico; niente selezione di testo nell'interfaccia di gioco.
+- Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia «Verifica tutti i telefoni» nella bozza (`npm run bozza`).
 - Funziona offline: tutti gli asset sono nel pacchetto.
 
 ## Verifica, prima di dire che una tappa è finita

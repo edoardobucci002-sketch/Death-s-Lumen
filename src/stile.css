@@ -35,138 +35,71 @@ html, body {
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 
+/* Arte dell'HUD (src/sistema/arte.ts): immagini a pixel interi; misure e posizioni le mette il codice, in pixel di gioco */
+.arte { display: block; position: absolute; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; pointer-events: none; }
+#interfaccia button { -webkit-appearance: none; appearance: none; }
+
 /* Joystick virtuale: compare dove si appoggia il dito (src/sistema/comandi.ts) */
-.joystick {
-  position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none;
-}
-.joystick::before, .joystick-pomello {
-  content: ''; position: absolute; border-radius: 50%; box-sizing: border-box;
-}
-.joystick::before {
-  width: calc(var(--raggio) * 2 + 28px); height: calc(var(--raggio) * 2 + 28px);
-  left: calc(var(--raggio) * -1 - 14px); top: calc(var(--raggio) * -1 - 14px);
-  border: 2px solid var(--linea); background: rgba(13, 11, 9, 0.35);
-}
-.joystick-pomello {
-  width: 44px; height: 44px; left: -22px; top: -22px;
-  border: 2px solid var(--accento); background: var(--pannello);
-}
+.joystick { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 1; }
 
 /* Interfaccia in partita (src/sistema/hud.ts) */
 /* ordine: pulsante dell'abilità, poi interfaccia (con pausa e fine), poi carte dei doni */
 #interfaccia > .hud { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
-.hud-esperienza {
-  position: absolute; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 6px);
-  background: #1a1510; border-bottom: 2px solid #000;
+.hud > *, .hud-schermo > *, .doni > * { position: absolute; }
+.hud-icone, .hud-altre, .hud-pulsanti, .doni-carte { display: contents; }
+.hud-finestra { position: absolute; overflow: hidden; }
+.hud-orologio { text-align: center; font-family: var(--f-pixel); font-weight: 700; letter-spacing: 1px; color: var(--pergamena); text-shadow: 0 2px 0 #000; }
+.hud-livello-numero { position: absolute; display: grid; place-items: center; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 0 1px 0 #000; }
+.hud-anime { white-space: nowrap; font-family: var(--f-pixel); font-weight: 700; color: #9fe3dc; text-shadow: 0 2px 0 #000; }
+.hud-casella, .hud-icona, .hud-tasto { position: absolute; }
+/* casella in partita: riquadro scuro con il bordo bronzo delle cornici di Edoardo (spessore messo dal codice) */
+.hud-casella { box-sizing: border-box; border: 0 solid #8a5a32; background: #1b1514; }
+.hud-casella > img { position: absolute; }
+/* contorno nero pieno (quattro ombre) per leggere il numero sopra icone e bordi */
+.hud-lv { position: absolute; line-height: 1; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px 0 #000; }
+.hud-icona .hud-lv { right: 0; bottom: 0; }
+.hud-avviso-testo, .hud-avviso-sotto, .hud-nastro h1, .hud-tasto span, .doni-titolo, .doni-rimescola span {
+  position: absolute; margin: 0; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden;
 }
-.hud-esperienza-piena { height: 100%; width: 0; background: var(--accento); }
-.hud-alto {
-  position: absolute; left: 0; right: 0; top: 0; display: grid; gap: 6px;
-  padding: calc(env(safe-area-inset-top) + 14px) calc(env(safe-area-inset-right) + 16px) 0 calc(env(safe-area-inset-left) + 16px);
-}
-.hud-riga { display: flex; justify-content: space-between; align-items: center; }
-.hud-riga > * { flex: 1 1 0; font-family: var(--f-pixel); font-weight: 400; text-shadow: 0 2px 0 #000; }
-.hud-livello { font-size: calc(var(--pixel-font) * 1.25); color: var(--accento); }
-.hud-orologio { font-size: calc(var(--pixel-font) * 1.5); letter-spacing: 1px; color: var(--pergamena); text-align: center; }
-.hud-anime { font-size: calc(var(--pixel-font) * 1.25); color: #9fe3dc; text-align: right; }
-.hud-anime::before { content: '◆ '; font-size: 13px; }
-.hud-icone { display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
-.hud-icona, .hud-voce { position: relative; display: inline-flex; align-items: center; gap: 6px; }
-.hud-icona { padding: 2px; background: rgba(13, 11, 9, 0.6); border: 1px solid var(--linea); }
-.hud-icona img, .hud-voce img { image-rendering: pixelated; display: block; }
-.hud-lv {
-  font: 400 calc(var(--pixel-font) * 0.75) var(--f-pixel); color: var(--pergamena); text-shadow: 0 1px 0 #000;
-}
-.hud-icona .hud-lv { position: absolute; right: 1px; bottom: -2px; }
-.hud-boss { display: grid; gap: 3px; justify-items: center; margin-top: 4px; }
-.hud-boss span { font: 400 16px var(--f-titolo); color: #e8a090; text-shadow: 0 2px 0 #000; }
-.hud-boss-barra { width: min(320px, 80vw); height: 8px; border: 2px solid #000; background: #2a1512; box-sizing: border-box; }
-.hud-boss-piena { height: 100%; width: 100%; background: #c2412d; }
-.hud-avviso {
-  position: absolute; left: 16px; right: 16px; top: 34%; text-align: center; opacity: 0;
-  font: 400 clamp(22px, 5.5vw, 34px) var(--f-titolo); color: var(--pergamena); text-shadow: 0 2px 0 #000, 0 0 12px #000;
-}
-.hud-avviso.visibile { animation: avviso 2.4s steps(6) forwards; }
-@keyframes avviso { 0% { opacity: 0; } 10%, 70% { opacity: 1; } 100% { opacity: 0; } }
-#interfaccia .hud-pausa-tasto {
-  pointer-events: auto; position: fixed; right: calc(env(safe-area-inset-right) + 16px); bottom: calc(env(safe-area-inset-bottom) + 16px);
-  width: 52px; height: 52px; border-radius: 50%; display: flex; gap: 6px; justify-content: center; align-items: center;
-  background: var(--pannello); border: 2px solid var(--linea); padding: 0;
-}
-.hud-pausa-tasto span { width: 5px; height: 18px; background: var(--pergamena); }
+.hud-avviso-testo { font-family: var(--f-titolo); color: #1e1008; }
+.hud-avviso-sotto { font-family: var(--f-pixel); font-weight: 500; color: var(--pergamena); text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 2px 0 #000; }
+#interfaccia .hud-pausa-tasto, .hud-tasto, .doni-carta, .doni-rimescola, .speciale { padding: 0; border: 0; background: none; cursor: pointer; }
+#interfaccia .hud-pausa-tasto { pointer-events: auto; }
+/* area di tocco un po' più grande del disegno: MARGINE_TOCCO in src/data/hud.ts */
+.hud-pausa-tasto::after, .speciale::after { content: ''; position: absolute; inset: -4px; }
 .hud-bordo {
-  position: absolute; inset: 0;
+  inset: 0;
   box-shadow: inset 0 0 0 6px rgba(194, 65, 45, 0.85), inset 0 0 48px rgba(194, 65, 45, 0.55);
   animation: pulsa 0.9s steps(3) infinite alternate;
 }
 @keyframes pulsa { from { opacity: 0.25; } to { opacity: 1; } }
-#interfaccia .hud-schermo {
-  pointer-events: auto; position: absolute; inset: 0; overflow-y: auto;
-  display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; gap: 14px;
-  padding: calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 16px);
-  text-align: center; background: rgba(8, 6, 5, 0.88);
-}
-.hud-schermo h1 { margin: 0; font: 400 clamp(28px, 7vw, 44px) var(--f-titolo); color: var(--accento); }
-.hud-fine.vittoria h1 { color: #f4d58d; }
-.hud-fine-motto { margin: 0; font: italic 20px var(--f-corsivo); color: var(--tenue); }
-.hud-numeri { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin: 0; }
-.hud-numeri div { display: grid; gap: 2px; }
-.hud-numeri dt { font: italic 15px var(--f-corsivo); color: var(--tenue); }
-.hud-numeri dd { margin: 0; font: 400 calc(var(--pixel-font) * 1.25) var(--f-pixel); color: var(--pergamena); }
-.hud-build {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px;
-  width: min(520px, 100%); min-width: 0; text-align: left;
-}
-.hud-voce .hud-lv { order: 3; color: var(--accento); }
-.hud-nome { font-size: 16px; color: var(--pergamena); min-width: 0; }
-.hud-opzioni, .hud-pulsanti { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.hud-schermo button {
-  padding: 10px 22px; min-height: 44px; font: 400 18px var(--f-titolo);
-  background: transparent; border: 2px solid var(--linea); color: var(--pergamena);
-}
-.hud-schermo button.principale { background: var(--pannello); border-color: var(--accento); font-size: 20px; }
+/* pausa e fine: il gioco dietro è oscurato a retino (immagine messa dal codice), niente trasparenze */
+#interfaccia .hud-schermo { pointer-events: auto; position: absolute; inset: 0; background-repeat: repeat; image-rendering: pixelated; }
+.hud-pannello-testo { position: absolute; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+h1.hud-pannello-testo { font-family: var(--f-titolo); font-weight: 400; color: var(--accento); }
+p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: var(--f-testo); color: var(--pergamena); }
+.hud-nastro h1 { font-family: var(--f-titolo); font-weight: 400; color: #1e1008; }
+.hud-tasto span, .doni-rimescola span { font-family: var(--f-titolo); color: var(--pergamena); }
+.hud-tasto[data-arte='Pulsante_Acceso'] span, .hud-tasto[data-arte='Pulsante_Chiaro'] span { color: #2a1a0c; }
+/* pulsante scelto con la tastiera: si accende un po', senza il rettangolo del browser che stona con i disegni */
+.hud-tasto:focus-visible, .doni-rimescola:focus-visible, .speciale:focus-visible, .hud-pausa-tasto:focus-visible { outline: none; filter: brightness(1.25); }
 
 /* Scelta del dono (src/sistema/doni.ts) */
-#interfaccia > .doni {
-  position: fixed; inset: 0; z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center;
-  gap: 14px; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
-  background: rgba(8, 6, 5, 0.86); overflow-y: auto;
-}
-.doni h2 { margin: 0; font: 400 clamp(26px, 6vw, 36px) var(--f-titolo); color: var(--accento); }
-.doni-carte { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: min(460px, 100%); min-width: 0; }
-.doni-carta {
-  display: flex; align-items: center; gap: 14px; min-width: 0; padding: 12px 14px; text-align: left;
-  background: var(--pannello); border: 2px solid var(--linea);
-}
-.doni-carta:hover, .doni-carta:focus-visible { border-color: var(--accento); outline: none; }
-.doni-carta img, .doni-vuota { flex: none; width: 66px; image-rendering: pixelated; }
-.doni-testi { display: grid; gap: 2px; min-width: 0; }
-.doni-testi strong { font: 400 22px var(--f-titolo); color: var(--pergamena); }
-.doni-testi em { font: italic 16px var(--f-corsivo); color: var(--accento); }
-.doni-testi span { font-size: 17px; color: var(--tenue); }
-.doni-tasto { flex: none; font: 400 var(--pixel-font) var(--f-pixel); color: var(--tenue); }
-.doni-rimescola {
-  padding: 8px 20px; min-height: 44px; font: 400 18px var(--f-titolo);
-  background: transparent; border: 2px solid var(--linea); color: var(--pergamena);
-}
-.doni-rimescola:disabled { opacity: 0.4; cursor: default; }
-@media (orientation: landscape) and (max-height: 500px) {
-  .doni-carte { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(860px, 100%); }
-  .doni-carta { flex-direction: column; align-items: flex-start; }
-}
+#interfaccia > .doni { position: fixed; inset: 0; z-index: 3; background-repeat: repeat; image-rendering: pixelated; }
+.doni h2 { margin: 0; text-align: center; font-family: var(--f-titolo); font-weight: 400; color: var(--accento); text-shadow: 0 2px 0 #000; }
+.doni-carta { position: absolute; }
+.doni-carta:focus-visible { outline: none; }
+.doni-scelta { visibility: hidden; }
+.doni-carta:hover .doni-scelta, .doni-carta:focus-visible .doni-scelta { visibility: visible; }
+.doni-titolo { font-family: var(--f-titolo); font-weight: 400; color: var(--pergamena); }
+.doni-testo { position: absolute; overflow: hidden; line-height: 1.2; text-align: center; font-family: var(--f-testo); color: var(--tenue); }
+.doni-testo em { display: block; font-family: var(--f-corsivo); color: var(--accento); }
+.doni-tasto { position: absolute; text-align: center; font-family: var(--f-pixel); font-weight: 700; color: var(--tenue); }
+.doni-rimescola:disabled { filter: grayscale(1) brightness(0.6); cursor: default; }
 
-/* Abilità speciale (src/sistema/speciale.ts) */
-.speciale {
-  position: fixed; left: calc(env(safe-area-inset-left) + 16px); bottom: calc(env(safe-area-inset-bottom) + 16px);
-  width: 68px; height: 68px; padding: 0; border-radius: 50%; display: grid; place-items: center;
-  border: 2px solid var(--linea); touch-action: none;
-  background:
-    radial-gradient(circle, var(--pannello) 0 58%, transparent 59%),
-    conic-gradient(var(--accento) var(--carica, 0%), #2a231c 0);
-}
-.speciale img { image-rendering: pixelated; opacity: 0.45; }
-.speciale.pronta { border-color: var(--accento); }
-.speciale.pronta img { opacity: 1; }
+/* Abilità speciale (src/sistema/speciale.ts): anello disegnato, si colora durante la ricarica */
+.speciale { position: fixed; touch-action: none; z-index: 1; }
+.speciale:not(.pronta) .speciale-icona { filter: grayscale(1) brightness(0.6); }
 
 /* Selezione del personaggio (src/scene/Menu.ts) */
 #interfaccia > .menu {

@@ -4,8 +4,15 @@
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
+import { createServer } from 'node:net';
 
-const porta = 4319;
+// una porta libera: con una porta occupata da un vecchio server si proverebbe una build vecchia senza accorgersene
+const porta = await new Promise((ok) => {
+  const libera = createServer().listen(0, () => {
+    const p = libera.address().port;
+    libera.close(() => ok(p));
+  });
+});
 const server = spawn('npx', ['vite', 'preview', '--port', String(porta), '--strictPort'], { stdio: 'ignore' });
 const url = `http://localhost:${porta}/`;
 await new Promise((r) => setTimeout(r, 2500));

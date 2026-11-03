@@ -1,0 +1,91 @@
+/* Pagina di bozza dell'HUD (bozza-hud.html): solo per vedere gli elementi, non fa parte del gioco. */
+@import '@fontsource/im-fell-english-sc/400.css';
+@import '@fontsource/eb-garamond/400.css';
+@import '@fontsource/eb-garamond/500.css';
+@import '@fontsource/pixelify-sans/500.css';
+
+:root {
+  --sfondo: #0d0b09;
+  --pannello: #15110d;
+  --pergamena: #e8dcc4;
+  --tenue: #9c907c;
+  --linea: rgba(232, 220, 196, 0.15);
+  --accento: #e3913a;
+  --f-titolo: 'IM Fell English SC', Georgia, serif;
+  --f-testo: 'EB Garamond', Georgia, serif;
+  --f-pixel: 'Pixelify Sans', ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--sfondo); color: var(--pergamena); font: 17px/1.45 var(--f-testo); }
+h1, h2 { font: 400 28px var(--f-titolo); margin: 0 0 6px; color: var(--accento); }
+h2 { font-size: 22px; }
+code { font: 14px var(--f-pixel); color: var(--accento); }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.testa { padding: 16px 16px 4px; max-width: 1400px; margin: 0 auto; }
+.testa p { margin: 2px 0; color: var(--tenue); }
+.stato { font: 14px var(--f-pixel); }
+
+.banco {
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px;
+  padding: 8px 16px 16px; max-width: 1400px; margin: 0 auto; align-items: start;
+}
+.telefono { min-width: 0; display: grid; justify-items: center; gap: 6px; position: sticky; top: 8px; }
+.telefono canvas {
+  display: block; image-rendering: pixelated; image-rendering: crisp-edges;
+  outline: 6px solid #000; border-radius: 4px; box-shadow: 0 0 0 7px #2a241d;
+}
+.didascalia { margin: 4px 0 0; font: 13px var(--f-pixel); color: var(--tenue); text-align: center; }
+
+.comandi { display: grid; gap: 10px; min-width: 0; }
+fieldset { border: 1px solid var(--linea); border-radius: 6px; padding: 8px 10px 10px; margin: 0; display: grid; gap: 6px; background: var(--pannello); }
+legend { font: 400 15px var(--f-titolo); color: var(--accento); padding: 0 4px; }
+label { display: flex; gap: 8px; align-items: center; font-size: 15px; }
+label input[type='range'] { flex: 1; accent-color: var(--accento); }
+input[type='checkbox'] { accent-color: var(--accento); }
+.riga { display: grid; gap: 3px; font-size: 14px; color: var(--tenue); }
+.scelte { display: flex; flex-wrap: wrap; gap: 4px; }
+.scelte button {
+  border: 1px solid var(--linea); background: #1d1812; border-radius: 4px; padding: 3px 8px; font-size: 14px;
+}
+.scelte button[aria-pressed='true'] { border-color: var(--accento); color: var(--accento); background: #2a1f14; }
+.misure { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: center; font-size: 14px; }
+.piccolo { justify-self: start; border: 1px solid var(--linea); background: none; border-radius: 4px; padding: 2px 8px; font-size: 13px; color: var(--tenue); }
+
+.sezione { padding: 16px; max-width: 1400px; margin: 0 auto; }
+.riga-comandi { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+.catalogo { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+.voce { border: 1px solid var(--linea); border-radius: 6px; background: var(--pannello); padding: 8px; display: grid; gap: 4px; min-width: 0; }
+.voce .tela { display: grid; place-items: center; min-height: 90px; overflow: auto; border-radius: 4px; padding: 6px; }
+.voce canvas { image-rendering: pixelated; image-rendering: crisp-edges; max-width: none; }
+.voce h3 { margin: 0; font: 500 16px var(--f-testo); }
+.voce p { margin: 0; font-size: 13px; color: var(--tenue); }
+.voce .file { font: 12px var(--f-pixel); color: var(--tenue); overflow-wrap: anywhere; }
+.fondo-scuro .tela { background: #0d0b09; }
+.fondo-chiaro .tela { background: #d8cdb6; }
+.fondo-scacchi .tela { background: repeating-conic-gradient(#3a3a3a 0 25%, #262626 0 50%) 0 0 / 16px 16px; }
+.fondo-cimitero .tela { background: #17130f url('/bozza/sfondi/verticale.png') center / 585px auto; }
+
+select { font: inherit; font-size: 14px; color: inherit; background: #1d1812; border: 1px solid var(--linea); border-radius: 4px; padding: 3px 6px; }
+.spiega { color: var(--tenue); max-width: 900px; margin: 0 0 8px; }
+.grande { border: 1px solid var(--accento); background: #2a1f14; color: var(--accento); border-radius: 6px; padding: 6px 14px; font: 400 16px var(--f-titolo); }
+.esito { border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+.esito th, .esito td { border: 1px solid var(--linea); padding: 5px 10px; text-align: left; }
+.esito td small { display: block; font: 12px var(--f-pixel); color: var(--tenue); }
+.esito td.si { color: #9fd49a; }
+.esito td.no { color: #e8a090; }
+.problemi { font-size: 14px; display: grid; gap: 3px; padding-left: 22px; max-width: 1100px; }
+.note ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 900px; }
+.note li { color: var(--pergamena); }
+.note ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; color: var(--tenue); }
+
+/* telefono più largo dello spazio accanto ai comandi (orizzontale su schermi senza Retina) */
+.banco.largo { grid-template-columns: minmax(0, 1fr); }
+.banco.largo .telefono { position: static; }
+.banco.largo .comandi { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); align-items: start; }
+
+@media (max-width: 860px) {
+  .banco { grid-template-columns: minmax(0, 1fr); }
+  .telefono { position: static; }
+}

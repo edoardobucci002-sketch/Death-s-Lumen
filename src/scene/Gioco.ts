@@ -12,6 +12,8 @@
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
+import { arte, ingr, misureHud } from '../sistema/arte';
+import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, ORDE, SCIAMI } from '../data/nemici';
@@ -98,9 +100,9 @@ export class Gioco extends Phaser.Scene {
   private mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
   private buio!: Phaser.GameObjects.Image;
-  private barraBordo!: Phaser.GameObjects.Rectangle;
-  private barraVuota!: Phaser.GameObjects.Rectangle;
-  private barraPiena!: Phaser.GameObjects.Rectangle;
+  private saluteCornice!: Phaser.GameObjects.Image;
+  private salutePiena!: Phaser.GameObjects.Image;
+  private zSalute = 1;
   private misureBuio = { w: 0, h: 0 };
   private comandi!: Comandi;
   private hud!: Hud;
@@ -170,10 +172,10 @@ export class Gioco extends Phaser.Scene {
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (1 + this.areaLuce));
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     // barra della salute sotto i piedi, sopra il buio così si vede sempre
-    const b = BARRA_SALUTE;
-    this.barraBordo = this.add.rectangle(0, 0, b.larghezza, b.altezza, b.colori.bordo).setOrigin(0).setDepth(PROFONDITA.barra);
-    this.barraVuota = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.vuota).setOrigin(0).setDepth(PROFONDITA.barra + 0.1);
-    this.barraPiena = this.add.rectangle(0, 0, b.larghezza - 2, b.altezza - 2, b.colori.piena).setOrigin(0).setDepth(PROFONDITA.barra + 0.2);
+    // (disegnata da Edoardo: cornice col cuore e riempimento che si taglia da sinistra)
+    this.saluteCornice = this.add.image(0, 0, 'Barra_Salute_Cornice').setOrigin(0).setDepth(PROFONDITA.barra);
+    this.salutePiena = this.add.image(0, 0, 'Barra_Salute_Piena').setOrigin(0).setDepth(PROFONDITA.barra + 0.1);
+    this.scalaSalute();
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
@@ -184,8 +186,8 @@ export class Gioco extends Phaser.Scene {
       riprova: () => this.scene.restart({ pg: this.pg.id }),
       menu: () => this.scene.start('Menu'),
     });
-    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, this);
-    this.speciale = new Speciale(interfaccia, this, ABILITA[this.pg.abilita], () => {
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso);
+    this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.pausa || this.doni.aperta) return false;
       this.arsenale.abilita(ABILITA[this.pg.abilita]);
       suona('speciale');
@@ -443,7 +445,7 @@ export class Gioco extends Phaser.Scene {
       nomi.push(possibili[this.caso.intero(0, possibili.length - 1)]());
     }
     this.aggiornaBuild();
-    this.hud.avviso(`Reliquiario: ${nomi.join(', ')}`);
+    this.hud.avviso('Reliquiario', nomi.join(', '));
     suona('reliquiario');
     vibra('media');
   }
@@ -509,9 +511,9 @@ export class Gioco extends Phaser.Scene {
 
   /** Armi e doni posseduti, per le icone in alto e i riepiloghi. */
   private build(): VoceBuild[] {
-    const voci: VoceBuild[] = this.arsenale.possedute.map((p) => ({ nome: p.arma.nome, immagine: voce(this, p.arma.icona)?.immagine ?? null, livello: p.livello }));
+    const voci: VoceBuild[] = this.arsenale.possedute.map((p) => ({ nome: p.arma.nome, icona: p.arma.icona, livello: p.livello, arma: true }));
     for (const q of PASSIVI) {
-      if (this.passivi[q.id]) voci.push({ nome: q.nome, immagine: voce(this, q.icona)?.immagine ?? null, livello: this.passivi[q.id] });
+      if (this.passivi[q.id]) voci.push({ nome: q.nome, icona: q.icona, livello: this.passivi[q.id], arma: false });
     }
     return voci;
   }
@@ -581,13 +583,12 @@ export class Gioco extends Phaser.Scene {
       px - cam.scrollX - Math.floor(this.misureBuio.w / 2),
       py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2),
     );
-    const b = BARRA_SALUTE;
-    const bx = px - Math.floor(b.larghezza / 2);
-    const by = py + b.distanza;
-    const piena = Math.round((b.larghezza - 2) * (this.salute / this.saluteMassima));
-    this.barraBordo.setPosition(bx, by).setVisible(!this.morto);
-    this.barraVuota.setPosition(bx + 1, by + 1).setVisible(!this.morto);
-    this.barraPiena.setPosition(bx + 1, by + 1).setSize(piena, b.altezza - 2).setVisible(!this.morto && piena > 0);
+    const z = this.zSalute, f = FINESTRE.Barra_Salute_Cornice;
+    const bx = px - Math.floor(((arte('Barra_Salute_Cornice')?.w ?? 0) * z) / 2);
+    const by = py + BARRA_SALUTE.distanza;
+    const piena = Math.round(f.l * Math.max(0, this.salute / this.saluteMassima));
+    this.saluteCornice.setPosition(bx, by).setVisible(!this.morto);
+    this.salutePiena.setPosition(bx + f.x * z, by + f.y * z).setCrop(0, 0, piena, f.a).setVisible(!this.morto && piena > 0);
     const boss = this.orda.mietitore();
     this.hud.aggiorna(
       this.secondi, !this.finito && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello,
@@ -602,7 +603,15 @@ export class Gioco extends Phaser.Scene {
     this.giocatore.play(this.anims.exists(chiave) ? chiave : `${this.chiaveSprite}:idle`, true);
   }
 
+  /** La barra della salute segue l'ingrandimento dell'HUD (×2 sui telefoni con la scala ×1). */
+  private scalaSalute(): void {
+    this.zSalute = ingr('salute', misureHud());
+    this.saluteCornice.setScale(this.zSalute);
+    this.salutePiena.setScale(this.zSalute);
+  }
+
   private ridimensiona(): void {
+    this.scalaSalute();
     this.terreno.setSize(this.scale.width, this.scale.height);
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (1 + this.areaLuce));
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
