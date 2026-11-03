@@ -5,7 +5,7 @@
 @import '@fontsource/eb-garamond/400.css';
 @import '@fontsource/eb-garamond/500.css';
 @import '@fontsource/jersey-10/400.css';
-@import './caratteri/jacquard-12/jacquard-12.css';
+@import './caratteri/tiny5/tiny5.css';
 
 :root {
   --sfondo: #0d0b09;
@@ -88,7 +88,8 @@ h1.hud-pannello-testo { font-family: var(--f-titolo); font-weight: 400; color: v
 p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: var(--f-testo); color: var(--pergamena); }
 .hud-nastro h1 { font-family: var(--f-titolo); font-weight: 400; color: #1e1008; }
 .hud-tasto span, .doni-rimescola span { font-family: var(--f-titolo); color: var(--pergamena); }
-.hud-tasto[data-arte='Pulsante_Acceso'] span, .hud-tasto[data-arte='Pulsante_Chiaro'] span { color: #2a1a0c; }
+.hud-tasto[data-arte='Pulsante_Acceso'] span { color: #fff1dc; }
+.hud-tasto[data-arte='Pulsante_Chiaro'] span { color: #2a1a0c; }
 /* pulsante scelto con la tastiera: si accende un po', senza il rettangolo del browser che stona con i disegni */
 .hud-tasto:focus-visible, .doni-rimescola:focus-visible, .speciale:focus-visible, .hud-pausa-tasto:focus-visible { outline: none; filter: brightness(1.25); }
 

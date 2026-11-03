@@ -1,6 +1,6 @@
 {
   "versione": 1,
-  "esportato": "2026-11-02T22:43:18.846Z",
+  "esportato": "2026-11-03T10:24:05.014Z",
   "asset": [
     {
       "chiave": "Barra_Esperienza_Cornice",
@@ -200,6 +200,14 @@
       "immagine": "assets/hud/Pulsante_Pausa.png",
       "dati": "assets/hud/Pulsante_Pausa.json",
       "versioneFile": 2,
+      "tag": []
+    },
+    {
+      "chiave": "Pulsante_Pericolo",
+      "categoria": "hud",
+      "immagine": "assets/hud/Pulsante_Pericolo.png",
+      "dati": "assets/hud/Pulsante_Pericolo.json",
+      "versioneFile": 1,
       "tag": []
     },
     {

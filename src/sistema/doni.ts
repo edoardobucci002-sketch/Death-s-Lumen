@@ -10,7 +10,7 @@ import type { Caso } from './caso';
 import type { Arsenale } from './armi';
 import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn } from './arte';
 import { INTERNI, TESTI } from '../data/hud';
-import { scritta, scriviNel } from './scritte';
+import { scalaScritta, scritta, scriviNel } from './scritte';
 import { CARTE } from '../data/progressione';
 import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
@@ -164,10 +164,12 @@ export class Doni {
     const h2 = this.radice.querySelector('h2') as HTMLElement;
     posa(h2, 0, y, m);
     Object.assign(h2.style, { width: `${m.W * px}px`, fontSize: `${22 * m.raddoppio * px}px`, lineHeight: `${titolo * px}px` });
-    scriviNel(h2, { x: 0, y: 0, l: m.W, a: titolo }, 1, 2 * m.raddoppio, m, 22 * m.raddoppio, '#000');
+    scriviNel(h2, { x: 0, y: 0, l: m.W, a: titolo }, 1, 4 * m.raddoppio, m, 22 * m.raddoppio, '#000');
     posa(h2, 0, y, m);
     y += titolo;
     const ri = INTERNI.Carta_Dono;
+    // i nomi di tutte le carte alla stessa grandezza: quella del nome più lungo
+    const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
     carte.forEach((el, i) => {
       posa(el, x0 + i * (c.w + 4) * zz, y, m);
       misura(el, c.w, c.h, zz, m);
@@ -177,7 +179,7 @@ export class Doni {
         posa(ic, (ri.icona.x + ri.icona.l / 2) * zz - 12 * zi, (ri.icona.y + ri.icona.a / 2) * zz - 12 * zi, m);
         misura(ic, 24, 24, zi, m);
       }
-      scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, zz, m, TESTI.cartaTitolo, '#000');
+      scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, kTitoli, m, TESTI.cartaTitolo, '#000');
       scriviIn(el.querySelector('.doni-testo') as HTMLElement, ri.testo, zz, TESTI.cartaTesto, m);
       const t = el.querySelector('.doni-tasto') as HTMLElement;
       posa(t, 0, c.h * zz + 2, m);
@@ -190,8 +192,8 @@ export class Doni {
     misura(im, r.w, r.h, zt, m);
     im.style.top = `${su * px}px`;
     const rt = INTERNI.Pulsante_Scuro.testo;
-    scriviNel(this.rimescola.lastElementChild as HTMLElement, { ...rt, y: rt.y + Math.round((riga - r.h) / 2) }, zt, 2, m, TESTI.pulsante, '#000');
-    scriviNel(this.radice.querySelector('.doni-rimaste') as HTMLElement, { x: 0, y: y + riga * zt + 2, l: m.W, a: 12 }, 1, m.raddoppio, m, TESTI.cartaTasto, '#000');
+    scriviNel(this.rimescola.lastElementChild as HTMLElement, { ...rt, y: rt.y + Math.round((riga - r.h) / 2) }, zt, 3, m, TESTI.pulsante, '#000');
+    scriviNel(this.radice.querySelector('.doni-rimaste') as HTMLElement, { x: 0, y: y + riga * zt + 2, l: m.W, a: 12 }, 1, 2 * m.raddoppio, m, TESTI.cartaTasto, '#000');
   }
 
   private chiudi(d: Dono): void {
