@@ -175,6 +175,16 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 - Sul Mac al massimo un server acceso (`npm run anteprima`, porta 4173). Spegnilo quando hai finito.
 - Il service worker tiene separate le copie offline dei due link (`tools/genera-sw.mjs`). Salvataggi e record invece sono in comune, perché il sito è lo stesso.
 
+## Revisioni con gli artifact (deciso il 3 novembre 2026)
+
+Quando una modifica tocca molti elementi (HUD, schermate, scritte, più personaggi), Edoardo la rivede in un **artifact su claude.ai**, separato dall'app, invece di giocare o di aprire pagine sul Mac.
+
+- **Contenuto**: le schermate interessate, fotografate con Playwright dalla build di `prova` su iPhone verticale, iPhone orizzontale e computer (più Android se serve), e tutto quello che c'è da decidere.
+- **Questionario, sempre**: ogni artifact ha un questionario da compilare. Ogni domanda ha «Va bene» / «Cambia» e un campo per la nota o la proposta. In fondo c'è un **riassunto che si aggiorna in tempo reale** a ogni risposta, con il pulsante «Copia il riassunto», da incollare in chat: così sai subito cosa va e cosa no. Quando c'è da dire di più, Edoardo scrive direttamente in chat.
+- **Vita breve**: un artifact si apre quando serve e si **elimina quando non serve più**, cioè quando le risposte sono arrivate e applicate. Proponilo a Edoardo ed elimina solo dopo il suo sì.
+- La bozza dell'HUD (`npm run bozza`, porta 5190) non si tiene accesa per Edoardo: per lui ci sono gli artifact. Resta uno strumento di verifica tuo (per esempio «Verifica tutti i telefoni»): spegnila quando hai finito.
+- Non spegnere un server che Edoardo sta usando senza chiederglielo.
+
 ## Git
 
 - Lavora su `prova` (vedi «I due link») e fai il merge su `main` solo dopo la verifica e l'approvazione di Edoardo.
