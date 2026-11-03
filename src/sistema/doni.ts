@@ -10,6 +10,7 @@ import type { Caso } from './caso';
 import type { Arsenale } from './armi';
 import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn } from './arte';
 import { INTERNI, TESTI } from '../data/hud';
+import { scritta, scriviNel } from './scritte';
 import { CARTE } from '../data/progressione';
 import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
@@ -38,7 +39,8 @@ export class Doni {
     this.radice.innerHTML = `
       <h2>Un nuovo dono</h2>
       <div class="doni-carte"></div>
-      <button type="button" class="doni-rimescola"><span></span></button>`;
+      <button type="button" class="doni-rimescola"><span></span></button>
+      <p class="doni-rimaste"></p>`;
     this.radice.querySelector('.doni-rimescola')!.prepend(immagine('Pulsante_Scuro'));
     this.elenco = this.radice.querySelector('.doni-carte')!;
     this.rimescola = this.radice.querySelector('.doni-rimescola')!;
@@ -106,7 +108,10 @@ export class Doni {
     if (!this.carte.length) this.carte.push({ tipo: 'pane' });
 
     this.elenco.replaceChildren(...this.carte.map((d, n) => this.carta(d, n)));
-    this.rimescola.lastElementChild!.textContent = `Rimescola (${this.rimescolate})`;
+    // «Rimescola (2)» non stava nella targhetta: quante ne restano lo dice la riga sotto
+    scritta(this.rimescola.lastElementChild!, 'Rimescola');
+    this.rimescola.setAttribute('aria-label', `Rimescola, ne restano ${this.rimescolate}`);
+    scritta(this.radice.querySelector('.doni-rimaste')!, this.rimescolate ? `ancora ${this.rimescolate}` : 'finite');
     this.rimescola.disabled = this.rimescolate <= 0;
     this.disponi();
     (this.elenco.firstElementChild as HTMLElement | null)?.focus();
@@ -122,7 +127,7 @@ export class Doni {
       : d.livello === 1 ? (d.tipo === 'arma' ? 'Nuova arma' : 'Nuovo dono') : `Livello ${d.livello}`;
     const testo = d.tipo === 'arma' ? d.arma.livelli[d.livello - 1].testo : d.tipo === 'passivo' ? d.passivo.testo : 'Un ristoro nella notte.';
     b.innerHTML = `<strong class="doni-titolo"></strong><span class="doni-testo"><em></em> <span></span></span><span class="doni-tasto">${n + 1}</span>`;
-    b.querySelector('strong')!.textContent = titolo;
+    scritta(b.querySelector('strong')!, titolo);
     b.querySelector('em')!.textContent = sotto;
     b.querySelector('.doni-testo span')!.textContent = testo;
     b.prepend(immagine('Carta_Dono', 'doni-fondo'), immagine('Carta_Dono_Scelta', 'doni-scelta'));
@@ -145,13 +150,16 @@ export class Doni {
     const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, sotto = (TESTI.cartaTasto + 4) * m.raddoppio, riga = Math.max(r.h, alto.h);
     const carte = [...this.elenco.children] as HTMLElement[], n = carte.length;
     const alta = m.H - b.a - b.b, larga = m.W - b.s - b.d;
-    const zz = adattaZoom(ingr('carte', m), (k) => n * c.w * k + (n - 1) * 4 * k <= larga && titolo + c.h * k + sotto + 8 + riga * zt <= alta);
+    const zz = adattaZoom(ingr('carte', m), (k) => n * c.w * k + (n - 1) * 4 * k <= larga && titolo + c.h * k + sotto + 8 + riga * zt + 14 * m.raddoppio <= alta);
     const tot = n * c.w * zz + (n - 1) * 4 * zz, x0 = Math.round(m.W / 2 - tot / 2);
-    const altezza = titolo + c.h * zz + sotto + 8 + riga * zt;
+    const rimaste = 14 * m.raddoppio; // la riga «ancora 2» sotto Rimescola
+    const altezza = titolo + c.h * zz + sotto + 8 + riga * zt + rimaste;
     let y = b.a + Math.max(0, Math.round((alta - altezza) / 2));
     const h2 = this.radice.querySelector('h2') as HTMLElement;
     posa(h2, 0, y, m);
     Object.assign(h2.style, { width: `${m.W * px}px`, fontSize: `${22 * m.raddoppio * px}px`, lineHeight: `${titolo * px}px` });
+    scriviNel(h2, { x: 0, y: 0, l: m.W, a: titolo }, 1, 2 * m.raddoppio, m, 22 * m.raddoppio, '#000');
+    posa(h2, 0, y, m);
     y += titolo;
     const ri = INTERNI.Carta_Dono;
     carte.forEach((el, i) => {
@@ -163,7 +171,7 @@ export class Doni {
         posa(ic, (ri.icona.x + ri.icona.l / 2) * zz - 12 * zi, (ri.icona.y + ri.icona.a / 2) * zz - 12 * zi, m);
         misura(ic, 24, 24, zi, m);
       }
-      scriviIn(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, TESTI.cartaTitolo, m);
+      scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, zz, m, TESTI.cartaTitolo, '#000');
       scriviIn(el.querySelector('.doni-testo') as HTMLElement, ri.testo, zz, TESTI.cartaTesto, m);
       const t = el.querySelector('.doni-tasto') as HTMLElement;
       posa(t, 0, c.h * zz + 2, m);
@@ -176,7 +184,8 @@ export class Doni {
     misura(im, r.w, r.h, zt, m);
     im.style.top = `${su * px}px`;
     const rt = INTERNI.Pulsante_Scuro.testo;
-    scriviIn(this.rimescola.lastElementChild as HTMLElement, { ...rt, y: rt.y + Math.round((riga - r.h) / 2) }, zt, TESTI.pulsante, m);
+    scriviNel(this.rimescola.lastElementChild as HTMLElement, { ...rt, y: rt.y + Math.round((riga - r.h) / 2) }, zt, 2, m, TESTI.pulsante, '#000');
+    scriviNel(this.radice.querySelector('.doni-rimaste') as HTMLElement, { x: 0, y: y + riga * zt + 2, l: m.W, a: 12 }, 1, m.raddoppio, m, TESTI.cartaTasto, '#000');
   }
 
   private chiudi(d: Dono): void {

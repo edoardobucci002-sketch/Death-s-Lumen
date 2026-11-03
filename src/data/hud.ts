@@ -67,8 +67,8 @@ export const INTERNI: Record<string, Record<string, Riquadro>> = {
   Casella_Arma: { icona: { x: 11, y: 20, l: 40, a: 30 } },
   Stemma_Livello: { numero: { x: 6, y: 10, l: 13, a: 14 } }, // l'interno scuro dello scudo, senza la punta
   // il titolo sta nella parte piatta della targhetta marrone, un pixel dentro il bordo chiaro
-  Carta_Dono: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 37, y: 33, l: 31, a: 9 }, testo: { x: 12, y: 60, l: 59, a: 40 } },
-  Carta_Dono_Scelta: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 37, y: 33, l: 31, a: 9 }, testo: { x: 12, y: 60, l: 59, a: 40 } },
+  Carta_Dono: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 36, y: 33, l: 33, a: 9 }, testo: { x: 12, y: 60, l: 59, a: 40 } },
+  Carta_Dono_Scelta: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 36, y: 33, l: 33, a: 9 }, testo: { x: 12, y: 60, l: 59, a: 40 } },
   Pannello_Grande: {
     testo: { x: 16, y: 34, l: 143, a: 36 },
     casella1: { x: 25, y: 80, l: 25, a: 24 },

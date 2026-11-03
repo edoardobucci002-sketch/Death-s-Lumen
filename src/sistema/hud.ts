@@ -9,6 +9,7 @@ import { CASELLA, FINESTRE, INTERNI, TESTI } from '../data/hud';
 import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn, type MisureHud } from './arte';
 import { audioAttivo, impostaAudio } from './audio';
 import { impostaVibrazione, vibrazione } from './mobile';
+import { scalaScritta, scritta, scriviNel } from './scritte';
 
 /** Un'arma o un dono posseduto, per le caselle e i riepiloghi. */
 export interface VoceBuild {
@@ -39,6 +40,10 @@ export interface AzioniHud {
 const DURATA_AVVISO = 2400; // millisecondi
 const ALTEZZA_OROLOGIO = 24; // pixel di gioco per ogni volta dell'ingrandimento delle barre (testo da 16 più il respiro)
 const PER_FILA = 6; // caselle per fila: 6 armi, poi 6 doni
+const MAX_SCRITTA_PULSANTI = 2; // pixel di gioco per pixel della lettera nei pulsanti (a 3 le maiuscole non stanno nella targhetta)
+const OMBRA = '#000'; // ombra di un pixel sotto le scritte chiare su fondo scuro
+/** Pulsanti chiari: scritta scura, senza ombra. */
+const chiaro = (arte: string): boolean => arte === 'Pulsante_Acceso' || arte === 'Pulsante_Chiaro';
 
 /** Un elemento posizionato a mano dentro l'HUD. */
 function blocco(classe: string, ...figli: HTMLElement[]): HTMLElement {
@@ -89,7 +94,7 @@ function tasto(chiave: string, testo: string, dati: Record<string, string>): HTM
   b.dataset.arte = chiave;
   Object.assign(b.dataset, dati);
   const s = document.createElement('span');
-  s.textContent = testo;
+  scritta(s, testo);
   b.append(immagine(chiave), s);
   return b;
 }
@@ -138,11 +143,11 @@ export class Hud {
       tasto('Pulsante_Acceso', 'Riprendi', { azione: 'riprendi' }),
       tasto('Pulsante_Scuro', '', { opzione: 'audio' }),
       tasto('Pulsante_Scuro', '', { opzione: 'vibrazione' }),
-      tasto('Pulsante_Spento', 'Abbandona', { azione: 'abbandona' }),
+      tasto('Pulsante_Scuro', 'Abbandona', { azione: 'abbandona' }),
     );
     this.fine.querySelector('.hud-pulsanti')!.append(
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
-      tasto('Pulsante_Chiaro', 'Altro personaggio', { azione: 'menu' }),
+      tasto('Pulsante_Chiaro', 'Personaggi', { azione: 'menu' }),
     );
     this.radice.append(this.bordo, this.xp.el, this.orologio, this.livello, this.anime, this.icone, this.mietitore.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
     this.radice.addEventListener('click', (e) => {
@@ -154,7 +159,10 @@ export class Hud {
       else if (azione === 'riprova') this.azioni.riprova();
       if (b.dataset.opzione === 'audio') impostaAudio(!audioAttivo());
       if (b.dataset.opzione === 'vibrazione') impostaVibrazione(!vibrazione());
-      if (b.dataset.opzione) this.opzioni();
+      if (b.dataset.opzione) {
+        this.opzioni();
+        this.disponi();
+      }
     });
     contenitore.append(this.radice);
     window.addEventListener('resize', this.ridimensiona);
@@ -208,8 +216,8 @@ export class Hud {
 
   /** Scritta nel nastro a centro schermo, che sparisce da sola; «sotto» è una riga in più sotto il nastro. */
   avviso(testo: string, sotto = ''): void {
-    this.avvisoEl.children[1].textContent = testo;
-    this.avvisoEl.children[2].textContent = sotto;
+    scritta(this.avvisoEl.children[1], testo);
+    scritta(this.avvisoEl.children[2], sotto);
     this.avvisoEl.hidden = false;
     this.disponi();
     clearTimeout(this.timerAvviso);
@@ -230,9 +238,9 @@ export class Hud {
 
   mostraFine(r: Riepilogo): void {
     this.fine.classList.toggle('vittoria', r.vittoria);
-    this.fine.querySelector('h1')!.textContent = r.vittoria ? "L'alba" : 'La lanterna si è spenta';
+    scritta(this.fine.querySelector('h1')!, r.vittoria ? "L'alba" : 'Si è spenta');
     const numeri = [
-      r.vittoria ? 'Hai attraversato la notte.' : `Hai resistito ${tempo(Math.floor(r.secondi))}`,
+      r.vittoria ? 'Hai attraversato la notte.' : `La lanterna ha resistito ${tempo(Math.floor(r.secondi))}`,
       `Livello ${r.livello} · ${Math.floor(r.anime)} anime · danno ${Math.round(r.danno)}`,
       `Record ${tempo(Math.floor(r.record))}${r.nuovoRecord ? ' · nuovo!' : ''}`,
     ];
@@ -258,18 +266,25 @@ export class Hud {
   };
 
   private opzioni(): void {
-    this.pausa.querySelector('[data-opzione="audio"] span')!.textContent = `Suoni: ${audioAttivo() ? 'sì' : 'no'}`;
-    this.pausa.querySelector('[data-opzione="vibrazione"] span')!.textContent = `Vibrazione: ${vibrazione() ? 'sì' : 'no'}`;
+    // acceso: pulsante scuro con il bordo dorato; spento: pulsante grigio (le scritte lunghe «: sì» non stavano nella targhetta)
+    for (const [opzione, nome, acceso] of [['audio', 'Suoni', audioAttivo()], ['vibrazione', 'Vibrazione', vibrazione()]] as const) {
+      const b = this.pausa.querySelector<HTMLElement>(`[data-opzione="${opzione}"]`)!;
+      b.dataset.arte = acceso ? 'Pulsante_Scuro' : 'Pulsante_Spento';
+      (b.firstElementChild as HTMLImageElement).src = arte(b.dataset.arte)?.url ?? '';
+      b.setAttribute('aria-pressed', String(acceso));
+      scritta(b.lastElementChild!, nome);
+    }
   }
 
   /** Pannello grande: titolo o testo in alto, le prime 4 armi nelle sue caselle, il resto in fila sotto. */
   private riempiPannello(schermo: HTMLElement, build: VoceBuild[], titolo: string, testo: string): void {
     const p = schermo.querySelector('.hud-pannello')!;
-    const scritta = document.createElement(titolo ? 'h1' : 'p');
-    scritta.className = 'hud-pannello-testo';
-    scritta.textContent = titolo || testo;
+    const testoEl = document.createElement(titolo ? 'h1' : 'p');
+    testoEl.className = 'hud-pannello-testo';
+    if (titolo) scritta(testoEl, titolo);
+    else testoEl.textContent = testo;
     const nelle = build.slice(0, 4), altre = build.slice(4);
-    p.replaceChildren(immagine('Pannello_Grande'), scritta, ...nelle.map((v) => icona(v)));
+    p.replaceChildren(immagine('Pannello_Grande'), testoEl, ...nelle.map((v) => icona(v)));
     schermo.querySelector('.hud-altre')!.replaceChildren(...altre.map((v) => icona(v)));
   }
 
@@ -316,9 +331,12 @@ export class Hud {
       posa(this.avvisoEl, xa, ya, m);
       misura(this.avvisoEl, an.w, an.h, za, m);
       misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, za, m);
-      scriviIn(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, za, TESTI.avviso, m);
-      posa(this.avvisoEl.children[2] as HTMLElement, -xa, (an.h - 10) * za, m);
-      Object.assign((this.avvisoEl.children[2] as HTMLElement).style, { width: `${W * px}px`, fontSize: `${TESTI.avvisoSotto * za * px}px` });
+      scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, za, za, m, TESTI.avviso);
+      // la riga sotto il nastro, larga quanto lo schermo, con l'ombra perché sta sopra il gioco
+      const sotto = this.avvisoEl.children[2] as HTMLElement;
+      sotto.style.width = `${W * px}px`;
+      sotto.style.fontSize = `${TESTI.avvisoSotto * za * px}px`;
+      scriviNel(sotto, { x: -xa, y: (an.h - 8) * za, l: W, a: 12 * zb }, 1, zb, m, TESTI.avvisoSotto * za, OMBRA); // mai più grande della scritta nel nastro
     }
     // pausa in basso a destra, con un'area di tocco un po' più grande del disegno (MARGINE_TOCCO, in CSS)
     const ap = arte('Pulsante_Pausa');
@@ -354,14 +372,16 @@ export class Hud {
       posa(n, Math.round(x + (ap.w * zz) / 2 - (an.w * zz) / 2), y, m);
       misura(n, an.w, an.h, zz, m);
       misura(n.firstElementChild as HTMLElement, an.w, an.h, zz, m);
-      scriviIn(n.lastElementChild as HTMLElement, INTERNI.Nastro_Titolo.testo, zz, TESTI.avviso, m);
+      scriviNel(n.lastElementChild as HTMLElement, INTERNI.Nastro_Titolo.testo, zz, zz, m, TESTI.avviso);
       y += nastro(zz);
     }
     const p = schermo.querySelector('.hud-pannello') as HTMLElement, r = INTERNI.Pannello_Grande;
     posa(p, x, y, m);
     misura(p, ap.w, ap.h, zz, m);
     misura(p.firstElementChild as HTMLElement, ap.w, ap.h, zz, m);
-    scriviIn(p.children[1] as HTMLElement, r.testo, zz, conNastro ? 7 : 20, m);
+    // il titolo (Pausa) a pixel grandi quanto quelli del pannello; il riepilogo della fine resta in Garamond, a più righe
+    if (conNastro) scriviIn(p.children[1] as HTMLElement, r.testo, zz, 7, m);
+    else scriviNel(p.children[1] as HTMLElement, r.testo, zz, zz, m, 20, OMBRA);
     [...p.querySelectorAll<HTMLElement>('.hud-icona')].forEach((el, i) => {
       const c = r[`casella${i + 1}`];
       disponiIcona(el, x + (c.x + c.l / 2) * zz - 12 * zz - x, (c.y + c.a / 2) * zz - 12 * zz, zz, m);
@@ -371,6 +391,12 @@ export class Hud {
     // pulsanti: ogni riga alta come il pulsante più alto, si tocca tutta la riga
     const cx = ori ? x + ap.w * zz + 12 + largo / 2 : W / 2;
     let yt = ori ? Math.round(b.a + (alta - altezzaTasti) / 2) : yAltre + hAltre + 6;
+    // tutte le scritte dei pulsanti con lo stesso ingrandimento: quello della più lunga
+    const kTasti = Math.min(...tasti.map((t) => {
+      const rt = INTERNI[t.dataset.arte!]?.testo;
+      const s = t.lastElementChild as HTMLElement;
+      return (rt && scalaScritta(s.dataset.testo ?? '', rt, zt, MAX_SCRITTA_PULSANTI)) || MAX_SCRITTA_PULSANTI;
+    }));
     for (const t of tasti) {
       const a = arte(t.dataset.arte!)!, xt = Math.round(cx - (a.w * zt) / 2);
       posa(t, xt, yt, m);
@@ -379,7 +405,7 @@ export class Hud {
       misura(im, a.w, a.h, zt, m);
       im.style.top = `${Math.round((riga - a.h * zt) / 2) * px}px`;
       const s = t.lastElementChild as HTMLElement, rt = INTERNI[t.dataset.arte!]?.testo ?? { x: 0, y: 0, l: a.w, a: a.h };
-      scriviIn(s, { ...rt, y: rt.y + Math.round((riga / zt - a.h) / 2) }, zt, TESTI.pulsante, m);
+      scriviNel(s, { ...rt, y: rt.y + Math.round((riga / zt - a.h) / 2) }, zt, kTasti, m, TESTI.pulsante, chiaro(t.dataset.arte!) ? null : OMBRA);
       yt += riga + 3 * zt;
     }
   }

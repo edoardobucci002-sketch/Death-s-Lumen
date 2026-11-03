@@ -16,7 +16,7 @@ interface Fotogramma { frame: R4; spriteSourceSize: R4; sourceSize: { w: number;
 interface Sprite { img: HTMLImageElement; fot: Fotogramma[]; w: number; h: number; durata: number; versione: number }
 interface VoceElenco { chiave: string; categoria: string; immagine: string; dati: string; versioneFile: number }
 
-type Testo = { px: number; colore: string; font?: 'pixel' | 'titolo'; allinea?: 'sinistra' | 'centro' | 'destra'; ombra?: boolean };
+type Testo = { px: number; colore: string; font?: 'pixel' | 'titolo' | 'jacquard'; allinea?: 'sinistra' | 'centro' | 'destra'; ombra?: boolean };
 
 // ————— stato della pagina (ricordato nel browser) —————
 const stato = {
@@ -143,17 +143,21 @@ const misura = (k: string): { w: number; h: number } => { const s = sprite(k); r
 function testoTela(t: string, o: Testo): HTMLCanvasElement {
   const id = `testo|${t}|${o.px}|${o.colore}|${o.font}|${o.ombra}`;
   if (cache.has(id)) return cache.get(id)!;
-  const font = o.font === 'titolo' ? `400 ${o.px}px "IM Fell English SC"` : `500 ${o.px}px "Pixelify Sans"`;
+  // Jacquard 12 come nel gioco (src/sistema/scritte.ts): disegnato a 21 px per lettera-pixel e ingrandito k volte, linea di base a 16
+  const jq = o.font === 'jacquard', kj = Math.max(1, Math.round(o.px / 21));
+  const font = jq ? '400 21px "Jacquard 12"' : o.font === 'titolo' ? `400 ${o.px}px "IM Fell English SC"` : `500 ${o.px}px "Pixelify Sans"`;
   const [, m] = tela(1, 1); m.font = font;
-  const w = Math.ceil(m.measureText(t).width) + 3, h = Math.ceil(o.px * 1.35) + 2;
+  const w = Math.ceil(m.measureText(t).width) + (jq ? 1 : 3), h = jq ? 22 : Math.ceil(o.px * 1.35) + 2;
   const [c, x] = tela(w, h); x.font = font; x.textBaseline = 'top';
   const passate: [string, number][] = o.ombra ? [['#000', 1], [o.colore, 0]] : [[o.colore, 0]];
   for (const [col, dy] of passate) {
-    const [cc, xx] = tela(w, h); xx.font = font; xx.textBaseline = 'top'; xx.fillStyle = col; xx.fillText(t, 1, dy);
+    const [cc, xx] = tela(w, h); xx.font = font; xx.fillStyle = col;
+    if (jq) { xx.textBaseline = 'alphabetic'; xx.fillText(t, 0, 16 + dy); } else { xx.textBaseline = 'top'; xx.fillText(t, 1, dy); }
     const d = xx.getImageData(0, 0, w, h);
     for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 110 ? 255 : 0;
     xx.putImageData(d, 0, 0); x.drawImage(cc, 0, 0);
   }
+  if (jq && kj > 1) { const [g2, x2] = tela(w * kj, h * kj); x2.imageSmoothingEnabled = false; x2.drawImage(c, 0, 0, w * kj, h * kj); cache.set(id, g2); return g2; }
   cache.set(id, c); return c;
 }
 
@@ -164,7 +168,21 @@ function scrivi(t: string, x: number, y: number, o: Testo): number {
 }
 
 /** Testo dentro un riquadro: rimpicciolisce finché ci sta, centrato. */
+/** Jacquard: il più grande ingrandimento (fino a kMax) per cui la scritta sta nel riquadro, maiuscole alte 12. */
+function kJacquard(t: string, r: Riquadro, z: number, kMax: number): number {
+  const w = testoTela(t, { px: 21, colore: '#fff', font: 'jacquard' }).width;
+  for (let k = kMax; k > 1; k--) if (w * k <= r.l * z && 12 * k <= (r.a + 1) * z) return k;
+  return 1;
+}
+
 function scriviDentro(t: string, r: Riquadro, ox: number, oy: number, z: number, o: Testo): void {
+  if (o.font === 'jacquard') {
+    const k = kJacquard(t, r, z, Math.max(1, Math.round(o.px / 21))), c = testoTela(t, { ...o, px: 21 * k });
+    const x = Math.round(ox + (r.x + r.l / 2) * z - c.width / 2), y = Math.round(oy + (r.y + r.a / 2) * z - 10 * k);
+    g.drawImage(c, x, y); segna(x, y, c.width, c.height);
+    if (c.width > r.l * z) avvisiTesto.push(`${gruppo}: «${t}» non entra nel riquadro`);
+    return;
+  }
   let px = o.px;
   while (px > 7 && testoTela(t, { ...o, px }).width > r.l * z) px--;
   const c = testoTela(t, { ...o, px });
@@ -343,7 +361,8 @@ function scenaPartita(t: number): void {
     const xa = Math.round(W / 2 - (ma.w * za) / 2), ya = y;
     gruppo = 'avviso';
     disegna(k, xa, ya, za);
-    scriviDentro('Arriva uno sciame', INTERNI[k].testo, xa, ya, za, { px: TESTI.avviso * za, colore: stato.avviso === 'nastro' ? '#1e1008' : '#2a2018', font: 'titolo' }); // come nel gioco
+    scriviDentro('Lo sciame', INTERNI[k].testo, xa, ya, za, { px: 21 * za, colore: stato.avviso === 'nastro' ? '#1e1008' : '#2a2018', font: 'jacquard' }); // come nel gioco
+    scriviDentro('ti circonda', { x: 0, y: 0, l: W, a: 12 * zb }, 0, ya + (ma.h - 8) * za, 1, { px: 21 * zb, colore: '#e8dcc4', font: 'jacquard', ombra: true });
   }
 
   // segnale del reliquiario sul bordo
@@ -395,12 +414,14 @@ function grigioDi(c: HTMLCanvasElement): HTMLCanvasElement {
 /** Pulsanti uno sotto l'altro: ogni riga è alta come il pulsante più alto, e si tocca tutta la riga. */
 function pulsanti(lista: [string, string][], cx: number, y: number, zz: number, rigaMinima = 0): number {
   const riga = Math.max(rigaMinima, ...lista.map(([k]) => misura(k).h)) * zz;
+  // tutte le scritte con lo stesso ingrandimento, quello della più lunga (come nel gioco)
+  const kt = Math.min(...lista.map(([k, testo]) => kJacquard(testo, INTERNI[k]?.testo ?? { x: 0, y: 0, l: misura(k).w, a: misura(k).h }, zz, 2)));
   for (const [k, testo] of lista) {
     const m = misura(k), x = Math.round(cx - (m.w * zz) / 2), yy = Math.round(y + (riga - m.h * zz) / 2);
     gruppo = `pulsante «${testo}»`;
     disegna(k, x, yy, zz);
     segna(x, y, m.w * zz, riga); // la zona che si tocca
-    scriviDentro(testo, INTERNI[k]?.testo ?? { x: 0, y: 0, l: m.w, a: m.h }, x, yy, zz, { px: TESTI.pulsante * zz, colore: k === 'Pulsante_Acceso' || k === 'Pulsante_Chiaro' ? '#2a1a0c' : '#e8dcc4', font: 'titolo' });
+    scriviDentro(testo, INTERNI[k]?.testo ?? { x: 0, y: 0, l: m.w, a: m.h }, x, yy, zz, { px: 21 * kt, colore: k === 'Pulsante_Acceso' || k === 'Pulsante_Chiaro' ? '#2a1a0c' : '#e8dcc4', font: 'jacquard', ombra: !(k === 'Pulsante_Acceso' || k === 'Pulsante_Chiaro') });
     y += riga + 3 * zz;
   }
   return y;
@@ -416,13 +437,13 @@ function scenaDoni(t: number): void {
   scenaPartita(t); retino(11); strato = 1;
   // stessa disposizione del gioco (src/sistema/doni.ts): titolo, tre carte affiancate, numeri, Rimescola
   const m = misura('Carta_Dono'), r = misura('Pulsante_Scuro'), b = bordi(), zt = z('pulsanti');
-  const titolo = 32 * raddoppio(), sotto = (TESTI.cartaTasto + 4) * raddoppio(), alta = H - b.a - b.b, larga = W - b.s - b.d;
+  const titolo = 32 * raddoppio(), sotto = (TESTI.cartaTasto + 4) * raddoppio(), rimaste = 14 * raddoppio(), alta = H - b.a - b.b, larga = W - b.s - b.d;
   const riga = Math.max(r.h, misura('Pulsante_Acceso').h);
-  const zz = adattaZoom(z('carte'), (k) => 3 * m.w * k + 8 * k <= larga && titolo + m.h * k + sotto + 8 + riga * zt <= alta);
+  const zz = adattaZoom(z('carte'), (k) => 3 * m.w * k + 8 * k <= larga && titolo + m.h * k + sotto + 8 + riga * zt + rimaste <= alta);
   const tot = 3 * m.w * zz + 8 * zz, x0 = Math.round(W / 2 - tot / 2);
-  let y = b.a + Math.max(0, Math.round((alta - (titolo + m.h * zz + sotto + 8 + riga * zt)) / 2));
+  let y = b.a + Math.max(0, Math.round((alta - (titolo + m.h * zz + sotto + 8 + riga * zt + rimaste)) / 2));
   gruppo = 'titolo';
-  scrivi('Un nuovo dono', W / 2, y + Math.round((titolo - 22 * raddoppio() * 1.35) / 2), { px: 22 * raddoppio(), colore: pg().colore, font: 'titolo', allinea: 'centro', ombra: true });
+  scriviDentro('Un nuovo dono', { x: 0, y: 0, l: W, a: titolo }, 0, y, 1, { px: 42 * raddoppio(), colore: pg().colore, font: 'jacquard', ombra: true });
   y += titolo;
   const arma = iconaArma();
   const carte: [string, string, string, string][] = [
@@ -436,19 +457,21 @@ function scenaDoni(t: number): void {
     disegna(k, x, y, zz);
     const zi = Math.max(1, zz - 1);
     disegna(icona, x + (ri.icona.x + ri.icona.l / 2) * zz - 12 * zi, y + (ri.icona.y + ri.icona.a / 2) * zz - 12 * zi, zi);
-    scriviDentro(nome, ri.titolo, x, y, zz, { px: TESTI.cartaTitolo * zz, colore: '#e8dcc4' });
+    scriviDentro(nome, ri.titolo, x, y, zz, { px: 21 * zz, colore: '#e8dcc4', font: 'jacquard', ombra: true });
     scriviRighe(testo, ri.testo, x, y, zz, { px: 6 * zz, colore: '#c8bca4' });
     scrivi(String(i + 1), x + (m.w * zz) / 2, y + m.h * zz + 2, { px: TESTI.cartaTasto * raddoppio(), colore: '#9c907c', allinea: 'centro' });
   });
   y += m.h * zz + sotto + 8;
-  pulsanti([['Pulsante_Scuro', 'Rimescola (2)']], W / 2, y, zt, misura('Pulsante_Acceso').h); // come nel gioco: si tocca sull'altezza dei pulsanti più alti
+  const yr = pulsanti([['Pulsante_Scuro', 'Rimescola']], W / 2, y, zt, misura('Pulsante_Acceso').h); // come nel gioco: si tocca sull'altezza dei pulsanti più alti
+  gruppo = 'rimaste';
+  scriviDentro('ancora 2', { x: 0, y: 0, l: W, a: 12 }, 0, yr - 3 * zt + 2, 1, { px: 21 * raddoppio(), colore: '#9c907c', font: 'jacquard', ombra: true });
 }
 
 function scenaPausa(t: number): void {
   scenaPartita(t); retino(12); strato = 1;
   const m = misura('Pannello_Grande'), r = INTERNI.Pannello_Grande, b = bordi();
   const zp = z('pulsanti'), mp = misura('Pulsante_Acceso'), ori = stato.telefono === 'orizzontale';
-  const lista: [string, string][] = [['Pulsante_Acceso', 'Riprendi'], ['Pulsante_Scuro', 'Audio: sì'], ['Pulsante_Scuro', 'Vibrazione: sì'], ['Pulsante_Spento', 'Abbandona']];
+  const lista: [string, string][] = [['Pulsante_Acceso', 'Riprendi'], ['Pulsante_Scuro', 'Suoni'], ['Pulsante_Spento', 'Vibrazione'], ['Pulsante_Scuro', 'Abbandona']];
   const altezza = altezzaPulsanti(lista, zp), alta = H - b.a - b.b;
   const zz = adattaZoom(z('pannelli'), (k) => (ori ? m.h * k <= alta && m.w * k + 12 + mp.w * zp <= W - b.s - b.d : 10 + m.h * k + 6 + altezza <= alta && m.w * k <= W - b.s - b.d));
   // in orizzontale i pulsanti vanno a destra del pannello, perché sotto non c'è posto
@@ -456,7 +479,7 @@ function scenaPausa(t: number): void {
   const x = Math.round(W / 2 - tot / 2), y = ori ? Math.round(b.a + (H - b.a - b.b - m.h * zz) / 2) : b.a + 10;
   gruppo = 'pannello';
   disegna('Pannello_Grande', x, y, zz);
-  scriviDentro('Pausa', r.testo, x, y, zz, { px: 22 * zz, colore: pg().colore, font: 'titolo' });
+  scriviDentro('Pausa', r.testo, x, y, zz, { px: 21 * zz, colore: pg().colore, font: 'jacquard', ombra: true });
   [iconaArma().icona, FALCE.icona, CANDELA.icona, 'Icona_Clessidra'].forEach((ic, i) => {
     const c = r[`casella${i + 1}`]; disegna(ic, x + (c.x + c.l / 2) * zz - 12 * zz, y + (c.y + c.a / 2) * zz - 12 * zz, zz);
   });
@@ -483,7 +506,7 @@ function scenaSelezione(t: number): void {
   const xn = Math.round(cx - (mn.w * zp) / 2);
   gruppo = 'nome';
   disegna('Nastro_Titolo', xn, y, zp);
-  scriviDentro(p.nome, INTERNI.Nastro_Titolo.testo, xn, y, zp, { px: TESTI.avviso * zp, colore: '#1e1008', font: 'titolo' });
+  scriviDentro(p.nome, INTERNI.Nastro_Titolo.testo, xn, y, zp, { px: 21 * zp, colore: '#1e1008', font: 'jacquard' });
   y += mn.h * zp + 2;
   gruppo = 'motto';
   scrivi(p.motto, cx, y, { px: 18, colore: p.colore, font: 'titolo', allinea: 'centro', ombra: true });
@@ -499,14 +522,14 @@ function scenaSelezione(t: number): void {
 function scenaFine(t: number): void {
   scenaPartita(t); retino(13); strato = 1;
   const b = bordi(), mn = misura('Nastro_Titolo'), mp = misura('Pannello_Grande'), r = INTERNI.Pannello_Grande;
-  const zb = z('pulsanti'), mb = misura('Pulsante_Acceso'), lista: [string, string][] = [['Pulsante_Acceso', 'Riprova'], ['Pulsante_Chiaro', 'Menu']];
+  const zb = z('pulsanti'), mb = misura('Pulsante_Acceso'), lista: [string, string][] = [['Pulsante_Acceso', 'Riprova'], ['Pulsante_Chiaro', 'Personaggi']];
   const oriz = stato.telefono === 'orizzontale', alta = H - b.a - b.b;
   const zz = adattaZoom(z('pannelli'), (k) => 6 + mn.h * k - 6 * k + mp.h * k + (oriz ? 0 : 6 + altezzaPulsanti(lista, zb)) <= alta);
   let y = b.a + 6;
   const xn = Math.round(W / 2 - (mn.w * zz) / 2);
   gruppo = 'titolo';
   disegna('Nastro_Titolo', xn, y, zz);
-  scriviDentro("L'alba", INTERNI.Nastro_Titolo.testo, xn, y, zz, { px: TESTI.avviso * zz, colore: '#1e1008', font: 'titolo' });
+  scriviDentro("L'alba", INTERNI.Nastro_Titolo.testo, xn, y, zz, { px: 21 * zz, colore: '#1e1008', font: 'jacquard' });
   y += mn.h * zz - 6 * zz;
   const ori = stato.telefono === 'orizzontale', larghi = ori ? mp.w * zz + 12 + misura('Pulsante_Acceso').w * z('pulsanti') : mp.w * zz;
   const xp = Math.round(W / 2 - larghi / 2);
@@ -733,7 +756,7 @@ const scriviStato = (t: string): void => { document.getElementById('stato')!.tex
 async function avvia(): Promise<void> {
   preparaComandi(); aggiornaComandi();
   // senza i caratteri la pagina funziona lo stesso, con quelli di riserva
-  await Promise.all([document.fonts.load('500 16px "Pixelify Sans"'), document.fonts.load('400 16px "IM Fell English SC"')]).catch(() => undefined);
+  await Promise.all([document.fonts.load('500 16px "Pixelify Sans"'), document.fonts.load('400 16px "IM Fell English SC"'), document.fonts.load('400 21px "Jacquard 12"')]).catch(() => undefined);
   try {
     await caricaTutto();
     scriviStato(`${hud.size} elementi dell'HUD caricati.`);

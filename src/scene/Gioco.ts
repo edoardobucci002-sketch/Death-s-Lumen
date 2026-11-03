@@ -292,13 +292,13 @@ export class Gioco extends Phaser.Scene {
       if (minuto >= 1 && minuto <= SCIAMI.ultimoMinuto && !(SCIAMI.saltaMinuti as readonly number[]).includes(minuto)) {
         const quanti = Math.min(SCIAMI.massimo, SCIAMI.base + SCIAMI.perMinuto * minuto);
         this.orda.sciame(this.secondi, minuto <= SCIAMI.pipistrelliFinoAl ? ID_PIPISTRELLO : ID_FANTASMA, quanti, this.x, this.y, mezzaL, mezzaA);
-        this.hud.avviso('Uno sciame ti circonda');
+        this.hud.avviso('Lo sciame', 'ti circonda');
       }
     }
     if (this.mietitoriArrivati < MIETITORE.minuti.length && this.secondi >= MIETITORE.minuti[this.mietitoriArrivati] * 60) {
       this.orda.nasciMietitore(this.secondi, this.mietitoriArrivati, this.x, this.y, mezzaL, mezzaA);
       this.mietitoriArrivati++;
-      this.hud.avviso('Il Mietitore è venuto per te');
+      this.hud.avviso('Il Mietitore', 'è venuto per te');
       suona('mietitore');
       vibra('forte');
     }
