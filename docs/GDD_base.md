@@ -10,7 +10,7 @@ Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i 
 
 - **Genere**: survivor-like. Ti muovi, l'arma colpisce da sola, raccogli anime, a ogni livello scegli un dono tra tre.
 - **Obiettivo**: sopravvivere 15 minuti, fino all'alba. Si perde quando la salute arriva a zero.
-- **Ambientazione**: un cimitero nella notte di Ognissanti, illuminato dalla lanterna del personaggio. Fuori dall'alone di luce è buio.
+- **Ambientazione**: un cimitero durante una veglia (vedi «Mondo e lore»), illuminato dalla lanterna del personaggio. Fuori dall'alone di luce è buio.
 - **Tono**: gotico malinconico, non splatter. I testi sono brevi, con frasi da epitaffio.
 - **Lingua**: italiano.
 
@@ -29,6 +29,23 @@ Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i 
 | 6:00 | Iniziano i bruti |
 | 10:00 | Secondo Mietitore, molto più resistente |
 | 15:00 | L'alba: vittoria |
+
+## 1b. Mondo e lore (in costruzione, dal 3 novembre 2026)
+
+Mondo inventato: niente riferimenti alla realtà. Le croci dei disegni restano, fanno parte di questo mondo.
+
+**Deciso con Edoardo**
+- **Il Lumen** è la luce che ogni essere vivo porta dentro: la risorsa principale del mondo. Alla morte dovrebbe spegnersi e lasciar riposare.
+- **La piaga**: il Lumen dei morti non si spegne più e li rialza. Nome provvisorio: **il Rinnovo**. Ha diviso la società: c'è chi la aborre e chi la sostiene, perché far tornare un morto può voler dire riavere una persona amata. Va debellata.
+- **La veglia**: ogni partita è una veglia, una notte da tenere fino all'alba.
+- **Il Mietitore** è corrotto e, per ora, immortale: per questo torna come boss ogni notte.
+- **Il Custode della Cappella**: personaggio nuovo, non giocabile. È la guida, una specie di tutorial raccontato dentro il gioco. È lui a riparare l'ampolla della fiaschetta.
+- **La Fiaschetta di Lumen** sarà un oggetto da sbloccare dopo qualche notte, con una questline (proposta sotto). Per ora nel gioco c'è dalla prima notte, con 3 sorsi.
+
+**Proposte da decidere**
+- Le anime che si raccolgono sono il Lumen liberato dai morti abbattuti: farle proprie fa crescere (i livelli) e lascia riposare quei morti.
+- La Cappella è l'ultimo luogo acceso; la Cera tiene vive le sue candele (miglioramenti permanenti).
+- Questline della fiaschetta: ampolla incrinata lasciata da un'élite (dalla terza notte) → riparata dal Custode con la Cera → si riempie per la prima volta battendo il Mietitore (1 sorso) → secondo e terzo sorso più avanti.
 
 ## 2. Personaggi
 

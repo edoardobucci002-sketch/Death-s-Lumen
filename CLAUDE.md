@@ -1,6 +1,6 @@
 # Death's Lumen
 
-Survivor-like in pixel art (sul modello di Vampire Survivors). Notte di Ognissanti, un cimitero: il giocatore cammina, le armi colpiscono da sole, si sopravvive 15 minuti fino all'alba. Quattro personaggi, ognuno con un'arma iniziale esclusiva e un'abilità speciale.
+Survivor-like in pixel art (sul modello di Vampire Survivors). Una veglia in un cimitero: il giocatore cammina, le armi colpiscono da sole, si sopravvive 15 minuti fino all'alba. Quattro personaggi, ognuno con un'arma iniziale esclusiva e un'abilità speciale.
 
 Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagina HTML) è il riferimento per contenuti, numeri e sensazioni di gioco, non per il codice. I valori di partenza sono in `docs/GDD_base.md`.
 
@@ -95,6 +95,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 
 ## Identità visiva
 
+- **Mondo inventato**: niente riferimenti alla realtà (feste, luoghi, nomi storici). La lore è in `docs/GDD_base.md`, sezione «Mondo e lore». Le croci nei disegni restano: fanno parte di questo mondo.
 - Palette notturna calda; ogni personaggio ha il suo colore guida:
   - Lampionaio: ambra `#e3913a`
   - Becchino: seppia `#b89a74`

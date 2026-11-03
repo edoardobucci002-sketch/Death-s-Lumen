@@ -31,7 +31,7 @@ export class Menu extends Phaser.Scene {
     this.radice.innerHTML = `
       <header class="menu-testata">
         <h1>Death's Lumen</h1>
-        <p>Sopravvivi alla notte di Ognissanti, fino all'alba.</p>
+        <p>Sopravvivi alla veglia, fino all'alba.</p>
       </header>
       <nav class="menu-nomi">${PERSONAGGI.map((p, n) => `<button type="button" data-n="${n}" style="--colore:${p.colore}">${p.nome}</button>`).join('')}</nav>
       <div class="menu-scorri">
