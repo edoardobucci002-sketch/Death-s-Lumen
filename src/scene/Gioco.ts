@@ -45,7 +45,9 @@ import { Simulazione } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
 import { FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
-import { CERA, SBLOCCHI, SECONDA_CANDELA } from '../data/meta';
+import { CERA, SBLOCCHI, SBLOCCO_ROSARIO, SECONDA_CANDELA } from '../data/meta';
+import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
+import { iconaAmuleto } from '../sistema/amuleti';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { creaTerreno } from '../sistema/terreno';
 import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
@@ -103,6 +105,14 @@ export class Gioco extends Phaser.Scene {
   private eliteUccise = 0;
   private ceraRaccolta = 0; // gocce di Cera raccolte in questa veglia
   private sethSconfitti = 0;
+  // Rosario: amuleti trovati nei reliquiari e quali sono accesi (si spengono dalla pausa)
+  private amuletiPosseduti: IdAmuleto[] = [];
+  private amuletiAccesi = new Set<IdAmuleto>();
+  private rosarioSbloccato = false;
+  private sangueFreddoAttivo = false;
+  private ultimaDanza = -99; // secondi dell'ultima Grazia data dalla Danza macabra
+  private prossimoAbbaglio = 0;
+  private reliquiariInAttesa = 0; // reliquiari raccolti mentre era già aperta una scelta
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
@@ -142,6 +152,12 @@ export class Gioco extends Phaser.Scene {
     this.candelaUsata = false;
     this.eliteUccise = this.sethSconfitti = this.ceraRaccolta = 0;
     this.meta = bonusMeta(carica(), parametri.get('meta') ?? (parametri.has('bot') ? '0' : null));
+    this.rosarioSbloccato = (this.meta.rosario && !parametri.has('senzarosario')) || parametri.has('rosario'); // ?senzarosario: per confrontare le simulazioni
+    this.amuletiPosseduti = [];
+    this.amuletiAccesi.clear();
+    this.sangueFreddoAttivo = false;
+    this.ultimaDanza = -99;
+    this.prossimoAbbaglio = this.reliquiariInAttesa = 0;
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
@@ -187,8 +203,8 @@ export class Gioco extends Phaser.Scene {
     } else {
       this.giocatore.setOrigin(0.5, 1);
     }
-    this.areaLuce = this.bonus.area;
-    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (1 + this.areaLuce));
+    this.areaLuce = this.fattoreLuce();
+    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * this.areaLuce);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     // barra della salute sotto i piedi, sopra il buio così si vede sempre
     // (disegnata da Edoardo: cornice col cuore e riempimento che si taglia da sinistra)
@@ -204,6 +220,7 @@ export class Gioco extends Phaser.Scene {
       riprendi: () => this.riprendi(),
       riprova: () => this.scene.restart({ pg: this.pg.id }),
       menu: () => this.scene.start('Menu'),
+      amuleto: (id) => this.commutaAmuleto(id),
     });
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso);
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
@@ -215,7 +232,7 @@ export class Gioco extends Phaser.Scene {
       return true;
     });
     this.fiaschetta = new Fiaschetta(interfaccia, `Speciale_${this.pg.nome.replace(/ /g, '_')}`, () => {
-      if (this.finito || this.pausa || this.doni.aperta || this.salute >= this.saluteMassima) return false;
+      if (this.finito || this.pausa || this.doni.aperta || this.salute >= this.saluteMassima || this.ha('pattoDiSangue')) return false;
       suona('cura');
       vibra('leggera');
       this.sim?.bevuto();
@@ -307,8 +324,8 @@ export class Gioco extends Phaser.Scene {
       this.dirX = dx / l;
       this.dirY = dy / l;
     }
-    this.speciale.aggiorna(dt, this.bonus.ricarica * (1 - this.meta.rito));
-    if (this.bot && this.speciale.attesa <= 0) {
+    this.speciale.aggiorna(dt, this.bonus.ricarica * (1 - this.meta.rito) * (this.ha('ceriGemelli') ? 1 + AM.ceriGemelli.ricarica : 1));
+    if (this.bot && this.speciale.cariche > 0) {
       const a = ABILITA[this.pg.abilita];
       if (this.bot.abilita(this.x, this.y - COLPI.corpo, a.raggio * (1 + this.bonus.area), a.cura > 0, this.salute / this.saluteMassima)) this.speciale.prova();
     }
@@ -320,6 +337,10 @@ export class Gioco extends Phaser.Scene {
     this.notte(mezzaL, mezzaA);
     if (this.finito) return;
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, this.velocita, mezzaL, mezzaA);
+    if (this.ha('lucciola') && (this.prossimoAbbaglio -= dt) <= 0) {
+      this.prossimoAbbaglio = AM.lucciola.intervallo;
+      this.arsenale.abbaglia(this.x, this.y - COLPI.corpo, LUCE.raggio * this.areaLuce);
+    }
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, mezzaL, mezzaA);
     const cura = this.arsenale.cura();
     if (cura && this.salute < this.saluteMassima) suona('cura');
@@ -327,7 +348,7 @@ export class Gioco extends Phaser.Scene {
     this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + cura) * dt);
     this.sim?.curato('altro', this.salute - primaCura);
     const primaSorso = this.salute;
-    this.salute = Math.min(this.saluteMassima, this.salute + this.fiaschetta.aggiorna(dt) * this.saluteMassima);
+    this.salute = Math.min(this.saluteMassima, this.salute + this.fiaschetta.aggiorna(dt) * this.saluteMassima * (this.ha('cuoreAvido') ? AM.cuoreAvido.cura : 1));
     this.sim?.curato('fiaschetta', this.salute - primaSorso);
     this.orda.rimuoviMorti(this.muore);
     const minaccia = this.minacce.aggiorna(dt, this.x, this.y, COMBATTIMENTO.raggioGiocatore);
@@ -340,6 +361,11 @@ export class Gioco extends Phaser.Scene {
       this.iniziaGrazia();
     }
     this.contatti(dt, minaccia);
+    const freddo = this.ha('sangueFreddo') && this.salute < this.saluteMassima * AM.sangueFreddo.sotto;
+    if (freddo !== this.sangueFreddoAttivo) {
+      this.sangueFreddoAttivo = freddo;
+      this.ricalcola();
+    }
     const raccolte = this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
     if (raccolte) {
       this.esperienza += raccolte * this.moltAnime;
@@ -407,7 +433,7 @@ export class Gioco extends Phaser.Scene {
   /** Schivata perfetta: qualche secondo di Grazia (più danno, più velocità); un'altra schivata la rinnova. */
   private iniziaGrazia(): void {
     const giaAttiva = this.grazia > 0;
-    this.grazia = GRAZIA.durata;
+    this.grazia = this.ha('danzaMacabra') ? AM.danzaMacabra.durataGrazia : GRAZIA.durata;
     if (!giaAttiva) this.ricalcola();
     this.hud.avviso('Grazia');
     suona('speciale');
@@ -419,26 +445,62 @@ export class Gioco extends Phaser.Scene {
   private ricalcola(): void {
     const per = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
     const m = this.meta;
-    this.saluteMassima = (BASE.salute + this.pg.salute + per('cuoreDiCera')) * (1 + m.salute);
+    this.saluteMassima = (BASE.salute + this.pg.salute + per('cuoreDiCera')) * (1 + m.salute) * (1 + (this.ha('martire') ? AM.martire.salute : 0));
     const grazia = this.grazia > 0;
     this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + m.velocita + (grazia ? GRAZIA.velocita : 0));
     this.raccolta = BASE.raccolta * (1 + per('calamita') + m.raccolta);
     this.rigenerazione = this.pg.rigenerazione + per('erbeAmare');
     this.armatura = Math.min(BASE.armaturaMassima, BASE.armatura + this.pg.armatura + per('scudoDiFerro'));
-    this.moltAnime = 1 + this.passivi.calamita * (PASSIVI.find((q) => q.id === 'calamita')!.anime ?? 0) + m.anime;
-    this.bonus.danno = this.pg.danno + per('saleNero') + m.danno + (grazia ? GRAZIA.danno : 0);
+    this.moltAnime = 1 + this.passivi.calamita * (PASSIVI.find((q) => q.id === 'calamita')!.anime ?? 0) + m.anime + (this.ha('cuoreAvido') ? AM.cuoreAvido.anime : 0);
+    this.bonus.danno = this.pg.danno + per('saleNero') + m.danno + (grazia ? GRAZIA.danno : 0)
+      + (this.ha('lanternaCieca') ? AM.lanternaCieca.danno : 0) + (this.sangueFreddoAttivo ? AM.sangueFreddo.danno : 0);
     this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * (1 - PASSIVI.find((q) => q.id === 'clessidra')!.per) ** this.passivi.clessidra);
     this.bonus.area = this.pg.area + per('stoppinoLungo');
-    this.bonus.quantita = per('specchio');
+    this.bonus.quantita = per('specchio') + (this.ha('specchioRotto') ? AM.specchioRotto.proiettili : 0);
+    if (this.speciale) this.speciale.caricheMassime = this.ha('ceriGemelli') ? AM.ceriGemelli.cariche : 1;
+    if (this.orda) this.orda.moltSaluteElite = this.ha('ossaDelite') ? 1 + AM.ossaDelite.salute : 1;
   }
+
+  // ——— Rosario ———
+  private ha(id: IdAmuleto): boolean {
+    return this.amuletiAccesi.has(id);
+  }
+
+  /** Grani del Rosario: 3, più uno per ogni Seth sconfitto, al massimo 5. */
+  private grani(): number {
+    return Math.min(ROSARIO.massimo, ROSARIO.grani + this.sethSconfitti * ROSARIO.perSeth);
+  }
+
+  private graniUsati(): number {
+    let n = 0;
+    for (const id of this.amuletiAccesi) n += amuleto(id).grani;
+    return n;
+  }
+
+  /** Raggio dell'alone di luce, in multipli di LUCE.raggio: Stoppino lungo e Lucciola lo allargano, la Lanterna cieca lo spegne. */
+  private fattoreLuce(): number {
+    return (1 + this.bonus.area + (this.ha('lucciola') ? AM.lucciola.alone : 0)) * (this.ha('lanternaCieca') ? AM.lanternaCieca.alone : 1);
+  }
+
+  /** Dalla pausa: accende o spegne un amuleto (in Peccato il danno subito raddoppia). */
+  private commutaAmuleto = (id: string): void => {
+    if (!this.amuletiPosseduti.includes(id as IdAmuleto)) return;
+    const a = id as IdAmuleto;
+    if (!this.amuletiAccesi.delete(a)) this.amuletiAccesi.add(a);
+    this.dopoPassivo();
+    this.aggiornaBuild();
+    if (this.pausa) this.hud.mostraPausa(this.build());
+    this.hud.avviso(this.graniUsati() > this.grani() ? 'Peccato' : amuleto(a).nome, this.graniUsati() > this.grani() ? 'spegni un amuleto' : `${this.ha(a) ? 'acceso' : 'spento'} · grani ${this.graniUsati()}/${this.grani()}`);
+  };
 
   /** Dopo un dono passivo: statistiche, salute in più del Cuore di cera, alone più ampio con lo Stoppino lungo. */
   private dopoPassivo(): void {
     const prima = this.saluteMassima;
     this.ricalcola();
-    this.salute += this.saluteMassima - prima;
-    if (this.bonus.area !== this.areaLuce) {
-      this.areaLuce = this.bonus.area;
+    this.salute = Math.min(this.saluteMassima, this.salute + Math.max(0, this.saluteMassima - prima)); // più salute massima: la salute sale; meno (Martire): non supera il nuovo massimo
+    const luce = this.fattoreLuce();
+    if (luce !== this.areaLuce) {
+      this.areaLuce = luce;
       this.ridimensiona();
     }
   }
@@ -448,7 +510,9 @@ export class Gioco extends Phaser.Scene {
     this.anime.aggiungi(x, y, valore, this.x, this.y);
     this.effetti.scoppio(x, y);
     this.sim?.ucciso();
-    for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
+    const daLasciare = reliquiari === MIETITORE.reliquiari || !this.ha('ossaDelite') ? reliquiari : reliquiari * AM.ossaDelite.reliquiari;
+    for (let k = 0; k < daLasciare; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
+    if (this.ha('pattoDiSangue')) this.salute = Math.min(this.saluteMassima, this.salute + AM.pattoDiSangue.cura);
     // gocce di Cera: rare dai nemici comuni, qualcuna in più da élite e Seth
     const gocce = reliquiari === MIETITORE.reliquiari ? DROP.cera.perSeth : reliquiari > 0 ? DROP.cera.perElite : this.caso.numero() < DROP.cera.probabilita ? 1 : 0;
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * 14, y + 10);
@@ -479,7 +543,7 @@ export class Gioco extends Phaser.Scene {
       suona('cera');
     } else if (tipo === PANE) {
       const prima = this.salute;
-      this.salute = Math.min(this.saluteMassima, this.salute + DROP.pane.cura);
+      this.salute = Math.min(this.saluteMassima, this.salute + DROP.pane.cura * (this.ha('cuoreAvido') ? AM.cuoreAvido.cura : 1));
       this.sim?.curato('pane', this.salute - prima);
       suona('cura');
     } else if (tipo === CALAMITA) {
@@ -490,8 +554,54 @@ export class Gioco extends Phaser.Scene {
     }
   };
 
-  /** Reliquiario: 1 potenziamento (75%) o 3 (25%) di ciò che possiedi; se è tutto al massimo, salute. */
+  /**
+   * Reliquiario: se il Rosario è sbloccato e c'è ancora un amuleto da trovare, scegli tra due amuleti e il
+   * potenziamento; altrimenti (o se scegli il potenziamento) vale il potenziamento di prima.
+   */
   private apriReliquiario(): void {
+    const liberi = AMULETI.filter((a) => !this.amuletiPosseduti.includes(a.id));
+    if (!this.rosarioSbloccato || !liberi.length) {
+      this.potenziaReliquiario();
+      return;
+    }
+    if (this.doni.aperta) {
+      this.reliquiariInAttesa++;
+      return;
+    }
+    const carte: Dono[] = [];
+    for (let k = 0; k < ROSARIO.proposte && liberi.length; k++) carte.push({ tipo: 'amuleto', amuleto: liberi.splice(this.caso.intero(0, liberi.length - 1), 1)[0] });
+    carte.push({ tipo: 'potenziamento' });
+    this.anims.pauseAll();
+    this.comandi.lascia();
+    suona('reliquiario');
+    this.doni.mostraReliquiario(carte, (d: Dono) => {
+      if (d.tipo === 'amuleto') {
+        this.amuletiPosseduti.push(d.amuleto.id);
+        this.amuletiAccesi.add(d.amuleto.id);
+        this.dopoPassivo();
+        this.aggiornaBuild();
+        const peccato = this.graniUsati() > this.grani();
+        this.hud.avviso(d.amuleto.nome, peccato ? 'Peccato: spegnine uno' : `Rosario ${this.graniUsati()}/${this.grani()}`);
+      } else {
+        this.potenziaReliquiario();
+      }
+      this.dopoScelta();
+    });
+    if (this.bot) this.doni.scegliCon((c) => this.bot!.amuleto(c, this.grani() - this.graniUsati()));
+    else if (this.automatico) this.doni.scegliPrima();
+  }
+
+  /** Dopo una scelta (dono o reliquiario): la prossima in coda, oppure si riprende a giocare. */
+  private dopoScelta(): void {
+    if (this.livelliDaScegliere > 0) this.apriDoni();
+    else if (this.reliquiariInAttesa > 0) {
+      this.reliquiariInAttesa--;
+      this.apriReliquiario();
+    } else if (!this.pausa) this.anims.resumeAll();
+  }
+
+  /** Il potenziamento del reliquiario: 1 (75%) o 3 (25%) di ciò che possiedi; se è tutto al massimo, salute. */
+  private potenziaReliquiario(): void {
     const quanti = this.caso.numero() < DROP.reliquiario.tre ? 3 : 1;
     const nomi: string[] = [];
     for (let k = 0; k < quanti; k++) {
@@ -517,6 +627,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Ferma il gioco e mostra le carte; dopo la scelta, se ci sono altri livelli da scegliere, le rimostra. */
   private apriDoni(): void {
+    if (this.doni.aperta) return; // un reliquiario è già aperto: i livelli aspettano
     this.anims.pauseAll();
     this.comandi.lascia();
     this.doni.mostra((d: Dono) => {
@@ -531,8 +642,7 @@ export class Gioco extends Phaser.Scene {
       }
       this.aggiornaBuild();
       this.livelliDaScegliere--;
-      if (this.livelliDaScegliere > 0) this.apriDoni();
-      else if (!this.pausa) this.anims.resumeAll();
+      this.dopoScelta();
     });
     if (this.bot) this.doni.scegliCon((carte) => this.bot!.carta(carte, this.arsenale.possedute.length));
     else if (this.automatico) this.doni.scegliPrima();
@@ -588,6 +698,11 @@ export class Gioco extends Phaser.Scene {
     if (this.sim || this.immortale) return { totale, sbloccato: null };
     const s = carica();
     s.cera += totale;
+    let sbloccatoOggetto: string | null = null;
+    if (!s.rosario && this.secondi >= SBLOCCO_ROSARIO.minuti * 60) {
+      s.rosario = true;
+      sbloccatoOggetto = 'Il Rosario';
+    }
     // imprese che sbloccano i personaggi (prima solo il primo che si sblocca, per avvisarlo)
     let sbloccato: string | null = null;
     const fatte: Record<string, boolean> = { becchino: this.secondi >= 300, badessa: this.sethSconfitti > 0, strega: vittoria };
@@ -596,6 +711,7 @@ export class Gioco extends Phaser.Scene {
       s.sbloccati.push(p.id);
       sbloccato ??= p.nome;
     }
+    sbloccato ??= sbloccatoOggetto;
     s.ultimaVeglia = { voci, totale, sbloccato };
     salva(s);
     return { totale, sbloccato };
@@ -606,6 +722,10 @@ export class Gioco extends Phaser.Scene {
     const voci: VoceBuild[] = this.arsenale.possedute.map((p) => ({ nome: p.arma.nome, icona: p.arma.icona, livello: p.livello, arma: true }));
     for (const q of PASSIVI) {
       if (this.passivi[q.id]) voci.push({ nome: q.nome, icona: q.icona, livello: this.passivi[q.id], arma: false });
+    }
+    for (const id of this.amuletiPosseduti) {
+      const a = amuleto(id);
+      voci.push({ nome: a.nome, icona: iconaAmuleto(id), livello: a.grani, arma: false, amuleto: id, acceso: this.ha(id) });
     }
     return voci;
   }
@@ -625,17 +745,31 @@ export class Gioco extends Phaser.Scene {
     }
     const o = this.orda;
     let colpo = minaccia;
+    const sfiora = this.ha('danzaMacabra') ? AM.danzaMacabra.sfiora : 0;
+    let sfiorato = false;
     for (let i = 0; i < o.numero; i++) {
       const r = o.raggio[i] + COMBATTIMENTO.raggioGiocatore;
       const dx = o.x[i] - this.x;
       const dy = o.y[i] - this.y;
-      if (dx * dx + dy * dy < r * r && o.danno[i] > colpo) colpo = o.danno[i];
+      const d2 = dx * dx + dy * dy;
+      if (d2 < r * r) {
+        if (o.danno[i] > colpo) colpo = o.danno[i];
+      } else if (sfiora && !sfiorato && d2 < (r + sfiora) * (r + sfiora)) {
+        sfiorato = true;
+      }
+    }
+    // Danza macabra: sfiorare i nemici senza farsi toccare dà la Grazia (non più di una ogni tanto)
+    if (!colpo && sfiorato && this.secondi - this.ultimaDanza > AM.danzaMacabra.recupero) {
+      this.ultimaDanza = this.secondi;
+      this.iniziaGrazia();
     }
     if (!colpo) return;
     this.invulnerabile = COMBATTIMENTO.invulnerabilita;
     if (this.immortale) return;
-    const danno = Math.max(1, colpo * (1 - this.armatura));
+    // Specchio rotto: +25% danno subito; in Peccato (troppi grani) il doppio
+    const danno = Math.max(1, colpo * (1 - this.armatura)) * (1 + (this.ha('specchioRotto') ? AM.specchioRotto.dannoSubito : 0)) * (1 + (this.graniUsati() > this.grani() ? ROSARIO.peccato : 0));
     this.salute -= danno;
+    if (this.ha('martire') && this.salute > 0) this.arsenale.onda(AM.martire.raggio, AM.martire.danno);
     this.sim?.colpito(danno);
     suona('danno');
     vibra('leggera');
@@ -692,6 +826,7 @@ export class Gioco extends Phaser.Scene {
     const piena = Math.round(f.l * Math.max(0, this.salute / this.saluteMassima));
     this.saluteCornice.setPosition(bx, by).setVisible(!this.morto);
     this.salutePiena.setPosition(bx + f.x * z, by + f.y * z).setCrop(0, 0, piena, f.a).setVisible(!this.morto && piena > 0);
+    this.hud.mostraRosario(this.graniUsati(), this.grani(), this.amuletiPosseduti.length);
     const boss = this.orda.mietitore();
     this.hud.aggiorna(
       this.secondi, !this.finito && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello,
@@ -716,7 +851,7 @@ export class Gioco extends Phaser.Scene {
   private ridimensiona(): void {
     this.scalaSalute();
     this.terreno.setSize(this.scale.width, this.scale.height);
-    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (1 + this.areaLuce));
+    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * this.areaLuce);
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
 

@@ -238,6 +238,25 @@ export class Arsenale {
       0, CODICE_AFFINITA[AFFINITA_ABILITA[a.id]]);
   }
 
+  /** Martire: un'onda sacra intorno al personaggio quando subisce un colpo. */
+  onda(raggio: number, danno: number): void {
+    this.prepara(0, this.px, this.py, raggio, danno, 0);
+    this.cAff = SACRO;
+    this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
+    this.effetti.reazione(this.px, this.py, raggio, REAZIONI.rivelazione.colore, REAZIONI.rivelazione.bordo, REAZIONI.durataEffetto);
+  }
+
+  /** Lucciola: abbaglia i nemici entro raggio dal personaggio (senza danno); le reazioni si eseguono a fine passo. */
+  abbaglia(x: number, y: number, raggio: number): void {
+    const o = this.orda, r2 = raggio * raggio;
+    for (let j = 0; j < o.numero; j++) {
+      const dx = o.x[j] - x, dy = o.y[j] - y;
+      if (dx * dx + dy * dy > r2) continue;
+      const r = o.marca(j, LUCE);
+      if (r) this.accoda(r, j, 0);
+    }
+  }
+
   /** Salute al secondo che il personaggio riceve dalle zone che curano (Benedizione) in cui si trova. */
   cura(): number {
     let c = 0;

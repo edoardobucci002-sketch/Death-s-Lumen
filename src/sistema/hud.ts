@@ -17,6 +17,8 @@ export interface VoceBuild {
   icona: string; // chiave dell'icona (Icona_<Nome>)
   livello: number;
   arma: boolean; // armi nella prima fila, doni nella seconda
+  amuleto?: string; // id dell'amuleto del Rosario (il numero è il suo costo in grani); nella pausa si tocca per accenderlo e spegnerlo
+  acceso?: boolean;
 }
 
 export interface Riepilogo {
@@ -37,6 +39,7 @@ export interface AzioniHud {
   riprendi(): void;
   riprova(): void;
   menu(): void;
+  amuleto(id: string): void; // dalla pausa: accende o spegne un amuleto
 }
 
 const DURATA_AVVISO = 2400; // millisecondi
@@ -109,6 +112,8 @@ export class Hud {
   private livello = blocco('hud-livello', immagine('Stemma_Livello'), blocco('hud-livello-numero'));
   private anime = blocco('hud-anime');
   private cera = blocco('hud-cera');
+  private rosario = blocco('hud-rosario');
+  private ultimoRosario = '';
   private icone = blocco('hud-icone');
   private avvisoEl = blocco('hud-avviso', immagine('Nastro_Titolo'), blocco('hud-avviso-testo'), blocco('hud-avviso-sotto'));
   private pausaTasto = document.createElement('button');
@@ -153,8 +158,13 @@ export class Hud {
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
       tasto('Pulsante_Chiaro', 'Personaggi', { azione: 'menu' }),
     );
-    this.radice.append(this.bordo, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.icone, this.mietitore.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
+    this.radice.append(this.bordo, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
     this.radice.addEventListener('click', (e) => {
+      const am = (e.target as Element).closest<HTMLElement>('[data-amuleto]');
+      if (am?.dataset.amuleto) {
+        this.azioni.amuleto(am.dataset.amuleto);
+        return;
+      }
       const b = (e.target as Element).closest('button');
       if (!b) return;
       const azione = b.dataset.azione;
@@ -213,6 +223,15 @@ export class Hud {
       if (cambia) this.disponi(); // l'avviso scende sotto la barra
     }
     this.bordo.hidden = !saluteBassa;
+  }
+
+  /** Il Rosario: grani usati e grani che si hanno; in rosso se sono troppi (Peccato). Senza amuleti non si vede. */
+  mostraRosario(usati: number, grani: number, amuleti: number): void {
+    const t = amuleti ? `${usati > grani ? 'Peccato' : 'Rosario'} ${usati}/${grani}` : '';
+    if (t === this.ultimoRosario) return;
+    this.ultimoRosario = t;
+    this.rosario.textContent = t;
+    this.rosario.classList.toggle('peccato', usati > grani);
   }
 
   /** Caselle di armi e doni posseduti, con il livello. */
@@ -319,6 +338,7 @@ export class Hud {
     Object.assign(num.style, { fontSize: `${TESTI.livello * zc * px}px`, lineHeight: `${rn.a * zc * px}px` });
     Object.assign(this.anime.style, { right: `${b.d * px}px`, top: `${(b.a + 4) * px}px`, fontSize: `${16 * zc * px}px` });
     Object.assign(this.cera.style, { right: `${b.d * px}px`, top: `${(b.a + 4 + 14 * zc) * px}px`, fontSize: `${14 * zc * px}px` });
+    Object.assign(this.rosario.style, { right: `${b.d * px}px`, top: `${(b.a + 4 + 26 * zc) * px}px`, fontSize: `${12 * zc * px}px` });
     // caselle: armi nella prima fila, doni nella seconda
     const yc = b.a + ms.h * zc + 4, passo = (CASELLA.lato + CASELLA.spazio) * zc;
     let file = 0;
@@ -427,7 +447,8 @@ function casella(v: VoceBuild): HTMLElement {
   const lv = blocco('hud-lv');
   lv.textContent = String(v.livello);
   const d = blocco('hud-casella', immagine(v.icona), lv);
-  d.title = `${v.nome} · livello ${v.livello}`;
+  d.title = v.amuleto ? `${v.nome} · ${v.livello} grani` : `${v.nome} · livello ${v.livello}`;
+  d.classList.toggle('spento', v.acceso === false);
   return d;
 }
 
@@ -448,7 +469,12 @@ function icona(v: VoceBuild): HTMLElement {
   const lv = blocco('hud-lv');
   lv.textContent = String(v.livello);
   const d = blocco('hud-icona', immagine(v.icona), lv);
-  d.title = `${v.nome} · livello ${v.livello}`;
+  d.title = v.amuleto ? `${v.nome} · ${v.livello} grani · tocca per ${v.acceso ? 'spegnere' : 'accendere'}` : `${v.nome} · livello ${v.livello}`;
+  if (v.amuleto) {
+    d.dataset.amuleto = v.amuleto;
+    d.classList.add('hud-amuleto');
+    d.classList.toggle('spento', v.acceso === false);
+  }
   return d;
 }
 

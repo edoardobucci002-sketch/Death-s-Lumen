@@ -24,6 +24,7 @@ export interface Salvataggio {
   secondaCandela: boolean; // comprata
   secondaCandelaSpenta: boolean;
   sbloccati: Personaggio['id'][];
+  rosario: boolean; // il Rosario è sbloccato
   ultimaVeglia: { voci: VoceVeglia[]; totale: number; sbloccato: string | null } | null;
 }
 
@@ -37,12 +38,13 @@ export interface BonusMeta {
   anime: number;
   rimescolate: number;
   secondaCandela: boolean;
+  rosario: boolean;
 }
 
 function nuovo(): Salvataggio {
   const ceri = {} as Record<IdCero, number>;
   for (const c of CERI) ceri[c.id] = 0;
-  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], ultimaVeglia: null };
+  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, ultimaVeglia: null };
 }
 
 /** Porta un salvataggio letto (anche vecchio o incompleto) alla forma di oggi. */
@@ -57,6 +59,7 @@ function aggiorna(dati: Partial<Salvataggio>): Salvataggio {
   s.secondaCandela = !!dati.secondaCandela;
   s.secondaCandelaSpenta = !!dati.secondaCandelaSpenta;
   s.sbloccati = Array.from(new Set(['lampionaio', ...(dati.sbloccati ?? []).filter((id) => id in SBLOCCHI)])) as Personaggio['id'][];
+  s.rosario = !!dati.rosario;
   s.ultimaVeglia = dati.ultimaVeglia ?? null;
   return s;
 }
@@ -107,6 +110,7 @@ export function bonusMeta(s: Salvataggio, meta: string | null = null): BonusMeta
     rito: per('rito'),
     anime: per('anime'),
     rimescolate: Math.ceil(per('scelta')),
+    rosario: finto >= 0 ? finto > 0 : s.rosario,
     secondaCandela: finto >= 0 ? finto === META_SIMULAZIONE.max : s.secondaCandela && !s.secondaCandelaSpenta,
   };
 }

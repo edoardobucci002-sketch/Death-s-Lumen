@@ -60,6 +60,10 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 .hud-livello-numero { position: absolute; display: grid; place-items: center; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 0 1px 0 #000; }
 .hud-anime { white-space: nowrap; font-family: var(--f-pixel); font-weight: 700; color: #9fe3dc; text-shadow: 0 2px 0 #000; }
 .hud-cera { white-space: nowrap; font-family: var(--f-pixel); font-weight: 700; color: #f2cf6a; text-shadow: 0 2px 0 #000; }
+.hud-rosario { white-space: nowrap; font-family: var(--f-pixel); font-weight: 700; color: #c9d6e8; text-shadow: 0 2px 0 #000; }
+.hud-rosario.peccato { color: #ff7a5c; }
+.hud-casella.spento, .hud-icona.spento { filter: grayscale(1) brightness(0.55); }
+.hud-amuleto { cursor: pointer; }
 .hud-casella, .hud-icona, .hud-tasto { position: absolute; }
 /* casella in partita: riquadro scuro con il bordo bronzo delle cornici di Edoardo (spessore messo dal codice) */
 .hud-casella { box-sizing: border-box; border: 0 solid #8a5a32; background: #1b1514; }

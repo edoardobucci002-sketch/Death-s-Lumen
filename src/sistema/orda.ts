@@ -42,6 +42,7 @@ interface AspettoNemico {
 }
 
 export class Orda {
+  moltSaluteElite = 1; // Ossa d'élite: le élite sono più resistenti
   numero = 0; // nemici in campo: occupano i posti da 0 a numero-1
   readonly x = new Float32Array(CAPIENZA); // posizione dei piedi
   readonly y = new Float32Array(CAPIENZA);
@@ -367,7 +368,7 @@ export class Orda {
     if (this.numero >= CAPIENZA) return;
     const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
     this.elite[i] = 1;
-    this.salute[i] = this.saluteMassima[i] *= ELITE.salute;
+    this.salute[i] = this.saluteMassima[i] *= ELITE.salute * this.moltSaluteElite;
     this.danno[i] *= ELITE.danno;
     this.anime[i] *= ELITE.anime;
     this.raggio[i] *= ELITE.dimensione;

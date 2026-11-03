@@ -4,6 +4,7 @@
  */
 import type { IdArma } from './armi';
 import type { IdDono } from './doni';
+import type { IdAmuleto } from './rosario';
 
 export const BOT = {
   direzioni: 16, // a ogni passo prova 16 direzioni e sceglie la più sicura
@@ -35,6 +36,8 @@ export const BOT = {
   beviSotto: 0.4, // beve un sorso della fiaschetta sotto il 40% di salute // la Benedizione (che cura) anche quando la salute scende sotto il 60%
   // carte: più alto = la preferisce
   carte: { armaIniziale: 5, armaPosseduta: 4, armaNuova: 3.6, passivoPosseduto: 2.6, passivoNuovo: 3, pane: 0 },
+  // amuleti del Rosario: più alto = lo preferisce; 0 = non lo prende mai (come un giocatore cauto: solo quelli con rovescio lieve; il bot non va mai in Peccato né spegne amuleti)
+  amuletiPreferiti: { specchioRotto: 0, lanternaCieca: 0, cuoreAvido: 0, sangueFreddo: 0.8, martire: 0, danzaMacabra: 0.7, ceriGemelli: 0.9, lucciola: 1, ossaDelite: 0.8, pattoDiSangue: 0 } satisfies Record<IdAmuleto, number>,
   massimoArmi: 4, // oltre, non prende armi nuove
   passiviPreferiti: { saleNero: 1, cuoreDiCera: 0.8, clessidra: 0.9, stoppinoLungo: 0.7, aliDiFalena: 0.5, calamita: 0.3, erbeAmare: 0.5, scudoDiFerro: 0.6, specchio: 1 } satisfies Record<IdDono, number>,
   // velocità della simulazione: millisecondi di calcolo per ogni fotogramma del browser

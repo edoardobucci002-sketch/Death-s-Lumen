@@ -3,7 +3,7 @@
  * livello per livello e da spegnere a piacere, la Seconda candela, il conto dell'ultima veglia
  * e il codice di salvataggio da copiare o da incollare. Si apre dal menu; ogni acquisto si salva subito.
  */
-import { CERI, COSTI_CERO, SECONDA_CANDELA, type IdCero } from '../data/meta';
+import { CERI, COSTI_CERO, SBLOCCO_ROSARIO, SECONDA_CANDELA, type IdCero } from '../data/meta';
 import { carica, codice, daCodice, salva, type Salvataggio } from './salvataggio';
 
 export class Cappella {
@@ -56,6 +56,14 @@ export class Cappella {
       </li>`;
     }).join('');
     const sc = SECONDA_CANDELA;
+    const sr = SBLOCCO_ROSARIO;
+    const rosario = `<li class="cero">
+          <div class="cero-testo"><h3>Il Rosario</h3><p>Nei reliquiari trovi amuleti con un vantaggio e un rovescio. Si sblocca così: ${sr.impresa.toLowerCase()}, oppure con la Cera.</p></div>
+          <span class="cero-livelli" aria-label="${s.rosario ? 'Sbloccato' : 'Bloccato'}">${s.rosario ? '<b></b>' : '<b class="vuota"></b>'}</span>
+          <div class="cero-azioni">
+            ${s.rosario ? '<span class="cero-pieno">Sbloccato</span>' : `<button type="button" data-compra-rosario ${s.cera < sr.cera ? 'disabled' : ''}>Sblocca · ${sr.cera} Cera</button>`}
+          </div>
+        </li>`;
     this.radice.innerHTML = `
       <header class="cappella-testa">
         <h2>La Cappella</h2>
@@ -65,6 +73,7 @@ export class Cappella {
       <p class="cappella-intro">L'ultimo luogo ancora acceso. La Cera che riporti dalle veglie tiene vive le sue candele: ogni cero acceso ti accompagna in tutte le veglie, con ogni personaggio.</p>
       ${u ? `<section class="cappella-veglia"><h3>Ultima veglia: +${u.totale} Cera</h3><ul>${u.voci.map((v) => `<li><span>${v.nome}</span><span>+${v.cera}</span></li>`).join('')}</ul>${u.sbloccato ? `<p>Sbloccato: ${u.sbloccato}</p>` : ''}</section>` : ''}
       <ul class="cappella-ceri">${ceri}
+        ${rosario}
         <li class="cero${s.secondaCandelaSpenta ? ' spento' : ''}">
           <div class="cero-testo"><h3>Seconda candela</h3><p>Una volta per veglia, a salute zero ti rialzi con il ${Math.round(sc.salute * 100)}% della salute.</p></div>
           <span class="cero-livelli" aria-label="${s.secondaCandela ? 'Accesa' : 'Spenta'}">${s.secondaCandela ? '<b></b>' : '<b class="vuota"></b>'}</span>
@@ -110,6 +119,11 @@ export class Cappella {
     } else if (b.dataset.interruttore) {
       const id = b.dataset.interruttore as IdCero;
       s.spenti = s.spenti.includes(id) ? s.spenti.filter((x) => x !== id) : [...s.spenti, id];
+      this.salvaECambia();
+    } else if ('compraRosario' in b.dataset) {
+      if (s.cera < SBLOCCO_ROSARIO.cera) return;
+      s.cera -= SBLOCCO_ROSARIO.cera;
+      s.rosario = true;
       this.salvaECambia();
     } else if ('compraCandela' in b.dataset) {
       if (s.cera < SECONDA_CANDELA.costo) return;

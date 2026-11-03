@@ -2,13 +2,16 @@
  * Abilità speciale: anello del personaggio in basso a sinistra (o tasto Spazio). In ricarica l'anello è grigio
  * (Speciale_<Nome>_Ricarica) e si colora in senso orario, pixel per pixel; quando è pronto è tutto colorato.
  * Quando è pronta e si preme, chiama usa(); la ricarica segue la Clessidra e il personaggio.
+ * Con i Ceri gemelli (Rosario) ha più cariche: si ricarica una alla volta.
  */
 import { ANELLI } from '../data/hud';
 import { PRONTA_DOPO, type Abilita } from '../data/abilita';
 import { arte, bordiHud, immagine, ingr, misura, misureHud, posa } from './arte';
 
 export class Speciale {
-  attesa: number = PRONTA_DOPO; // secondi alla prossima volta che è pronta
+  attesa: number = PRONTA_DOPO; // secondi alla prossima volta che è pronta (0 se ha tutte le cariche)
+  cariche = 0; // quante volte si può usare adesso
+  caricheMassime = 1;
   private pulsante: HTMLButtonElement;
   private tela: HTMLCanvasElement;
   private icona: HTMLImageElement;
@@ -61,8 +64,16 @@ export class Speciale {
   /** Avanza la ricarica; fattore è il moltiplicatore delle attese (Clessidra, Strega). */
   aggiorna(dt: number, fattore: number): void {
     this.ricaricaAttuale = this.abilita.ricarica * fattore;
-    if (this.attesa > 0) this.attesa = Math.max(0, this.attesa - dt);
-    const parte = this.attesa > 0 ? Math.min(99, Math.round((1 - this.attesa / Math.max(this.ricaricaAttuale, PRONTA_DOPO)) * 100)) : 100;
+    if (this.attesa > 0) {
+      this.attesa = Math.max(0, this.attesa - dt);
+      if (this.attesa <= 0) {
+        this.cariche++;
+        if (this.cariche < this.caricheMassime) this.attesa = this.ricaricaAttuale;
+      }
+    } else if (this.cariche < this.caricheMassime) {
+      this.attesa = this.ricaricaAttuale; // più cariche massime di colpo (amuleto acceso)
+    }
+    const parte = this.cariche > 0 ? 100 : this.attesa > 0 ? Math.min(99, Math.round((1 - this.attesa / Math.max(this.ricaricaAttuale, PRONTA_DOPO)) * 100)) : 100;
     if (parte !== this.ultimaParte) {
       this.ultimaParte = parte;
       this.disegna(parte / 100);
@@ -79,8 +90,9 @@ export class Speciale {
 
   /** Usa l'abilità se è pronta (pulsante, Spazio o bot). */
   prova(): void {
-    if (this.attesa > 0 || !this.usa()) return;
-    this.attesa = this.ricaricaAttuale;
+    if (this.cariche <= 0 || !this.usa()) return;
+    this.cariche--;
+    if (this.attesa <= 0) this.attesa = this.ricaricaAttuale;
   }
 
   /** L'anello colorato fino a «parte» (0 in alto, in senso orario), grigio il resto. */

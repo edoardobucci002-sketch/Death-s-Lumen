@@ -403,6 +403,31 @@ Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è 
 - **Salvataggio** sul dispositivo (chiave `dl-salvataggio`, con numero di versione) e **codice di salvataggio** nella Cappella (testo che comincia con `DL1-`, da copiare e incollare: copia di sicurezza e passaggio tra link e app). Caricare un codice chiede conferma.
 - **Simulazione** (3/11, 12 notti per personaggio): Cappella a metà (livello 3 di ogni cero) il bot vince 20 notti su 48 (42%, obiettivo 30–45%); completa 24 su 48 (50%, obiettivo 60–75%, un po' sotto); vuota 9 su 96. Il bot porta a casa circa 150 Cera a notte con la Cappella vuota e 230–300 con la Cappella piena.
 
+
+## 8e. Il Rosario (tappa 4 della proposta su oggetti e build, M8, `src/data/rosario.ts`)
+
+- **Grani**: si parte con 3, +1 per ogni Seth sconfitto in quella veglia (al massimo 5). Ogni amuleto costa da 1 a 3 grani.
+- **Dove si trovano**: nei reliquiari. Se il Rosario è sbloccato e c'è un amuleto ancora da trovare, il reliquiario mostra tre carte: due amuleti a caso e «Potenziamento» (il potenziamento di prima: 1, a volte 3). Provvisorio: la proposta diceva tre amuleti o un potenziamento (quattro carte), ma la scelta dei doni sarà rifatta per il telefono.
+- **Peccato**: se i grani usati superano quelli che hai, il danno subito raddoppia, finché non spegni un amuleto. Dalla pausa si toccano le icone degli amuleti per accenderli e spegnerli. In partita, sotto la Cera: «Rosario 2/3» (in rosso «Peccato 5/3»).
+- **Sblocco**: nella Cappella, con l'impresa «Sopravvivi 8 minuti» oppure con 300 Cera. Salvato nel salvataggio.
+- **Gli amuleti** (vantaggio / rovescio):
+
+| Amuleto | Grani | Vantaggio | Rovescio |
+| --- | --- | --- | --- |
+| Specchio rotto | 3 | +1 proiettile, nube, fiala, fuoco o falce per tutte le armi | subisci +25% danno |
+| Lanterna cieca | 2 | +35% danno | alone di luce al 15%: buio quasi pieno |
+| Cuore avido | 2 | +30% anime | pane e fiaschetta curano la metà |
+| Sangue freddo | 1 | sotto il 30% di salute, +40% danno | nessuno |
+| Martire | 3 | ogni colpo subito libera un'onda sacra di 150 px (30 di danno base) | −20% salute massima |
+| Danza macabra | 2 | la Grazia scatta anche sfiorando (entro 16 px) i nemici normali, non più di una ogni 4 s | la Grazia dura 2 s invece di 3 |
+| Ceri gemelli | 2 | l'abilità speciale ha 2 cariche | ricarica +30% |
+| Lucciola | 1 | alone di luce +20%; i nemici nell'alone sono abbagliati (controllo ogni 0,5 s) | nessuno |
+| Ossa d'élite | 1 | le élite lasciano 2 reliquiari | le élite hanno +40% salute |
+| Patto di sangue | 2 | ogni uccisione cura 0,2 di salute | non puoi più usare la fiaschetta |
+
+- **Icone**: grani colorati disegnati dal codice (`src/sistema/amuleti.ts`), da sostituire con `Icona_Amuleto_<id>` di Edoardo.
+- **Simulazione** (3/11, 12 notti per personaggio, Cappella a metà): il bot prende solo gli amuleti con rovescio lieve (Sangue freddo, Lucciola, Ceri gemelli, Ossa d'élite, Danza macabra) e non va mai in Peccato: vince 16 notti su 48 (33%), come senza Rosario. Prendendo anche gli altri scendeva a 12 su 48. Cappella completa: 21 su 48 (44%, obiettivo 60–75%: ancora sotto).
+
 ## 9. Esperienza e doni
 
 - Anime per passare dal livello L al successivo: 2 + 3 L + L² (M8; prima ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋)

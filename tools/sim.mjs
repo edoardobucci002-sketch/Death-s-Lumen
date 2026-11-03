@@ -40,7 +40,7 @@ async function gioca({ pg, seme }) {
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}`);
+  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}${process.env.DL_EXTRA ?? ''}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 10 * 60_000, polling: 1000 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();

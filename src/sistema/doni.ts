@@ -3,6 +3,7 @@
  * Si sceglie toccando una carta o con i tasti 1-2-3; «Rimescola» estrae carte nuove (2 volte per partita).
  * Escono: armi possedute da potenziare, armi comuni nuove (fino a 6 armi), doni passivi (fino a 6).
  * Quando non resta nulla da potenziare esce «Pane e vino».
+ * Lo stesso schermo serve ai reliquiari (mostraReliquiario): due amuleti del Rosario e il potenziamento, senza Rimescola.
  * Le carte sono quelle disegnate da Edoardo (Carta_Dono, e Carta_Dono_Scelta sotto il dito o il cursore),
  * messe a pixel di gioco interi; se tre carte non ci stanno, scendono di un ingrandimento intero.
  */
@@ -14,8 +15,15 @@ import { scalaScritta, scritta, scriviNel } from './scritte';
 import { CARTE } from '../data/progressione';
 import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
+import type { Amuleto } from '../data/rosario';
+import { iconaAmuleto } from './amuleti';
 
-export type Dono = { tipo: 'arma'; arma: Arma; livello: number } | { tipo: 'passivo'; passivo: Passivo; livello: number } | { tipo: 'pane' };
+export type Dono =
+  | { tipo: 'arma'; arma: Arma; livello: number }
+  | { tipo: 'passivo'; passivo: Passivo; livello: number }
+  | { tipo: 'pane' }
+  | { tipo: 'amuleto'; amuleto: Amuleto } // dal reliquiario (Rosario)
+  | { tipo: 'potenziamento' }; // dal reliquiario: il potenziamento a caso di prima
 
 export class Doni {
   private radice: HTMLElement;
@@ -70,6 +78,14 @@ export class Doni {
     this.estrai();
   }
 
+  /** Il reliquiario: le carte sono già scelte (amuleti e potenziamento), niente rimescolate. */
+  mostraReliquiario(carte: Dono[], scegli: (d: Dono) => void): void {
+    this.scegli = scegli;
+    this.carte = carte;
+    this.radice.hidden = false;
+    this.disegnaCarte(false);
+  }
+
   /** Sceglie da sola la prima carta (prove automatiche). */
   scegliPrima(): void {
     if (this.carte[0]) this.chiudi(this.carte[0]);
@@ -117,7 +133,14 @@ export class Doni {
       possibili.splice(k, 1);
     }
     if (!this.carte.length) this.carte.push({ tipo: 'pane' });
+    this.disegnaCarte(true);
+  }
 
+  /** Mette le carte sullo schermo; Rimescola e le sue righe solo per i livelli, non per i reliquiari. */
+  private disegnaCarte(conRimescola: boolean): void {
+    this.rimescola.hidden = !conRimescola;
+    (this.radice.querySelector('.doni-rimaste') as HTMLElement).hidden = !conRimescola;
+    scritta(this.radice.querySelector('h2')!, conRimescola ? 'Un nuovo dono' : 'Un reliquiario');
     this.elenco.replaceChildren(...this.carte.map((d, n) => this.carta(d, n)));
     // «Rimescola (2)» non stava nella targhetta: quante ne restano lo dice la riga sotto
     scritta(this.rimescola.lastElementChild!, 'Rimescola');
@@ -132,11 +155,15 @@ export class Doni {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'doni-carta';
-    const icona = d.tipo === 'arma' ? d.arma.icona : d.tipo === 'passivo' ? d.passivo.icona : null;
-    const titolo = d.tipo === 'arma' ? d.arma.nome : d.tipo === 'passivo' ? d.passivo.nome : 'Pane e vino';
+    const icona = d.tipo === 'arma' ? d.arma.icona : d.tipo === 'passivo' ? d.passivo.icona : d.tipo === 'amuleto' ? iconaAmuleto(d.amuleto.id) : null;
+    const titolo = d.tipo === 'arma' ? d.arma.nome : d.tipo === 'passivo' ? d.passivo.nome : d.tipo === 'amuleto' ? d.amuleto.nome : d.tipo === 'potenziamento' ? 'Potenziamento' : 'Pane e vino';
     const sotto = d.tipo === 'pane' ? `+${CARTE.paneEVino} salute`
+      : d.tipo === 'amuleto' ? `Amuleto · ${d.amuleto.grani} ${d.amuleto.grani === 1 ? 'grano' : 'grani'}`
+      : d.tipo === 'potenziamento' ? 'Come prima'
       : d.livello === 1 ? (d.tipo === 'arma' ? 'Nuova arma' : 'Nuovo dono') : `Livello ${d.livello}`;
-    const testo = d.tipo === 'arma' ? d.arma.livelli[d.livello - 1].testo : d.tipo === 'passivo' ? d.passivo.testo : 'Un ristoro nella notte.';
+    const testo = d.tipo === 'arma' ? d.arma.livelli[d.livello - 1].testo : d.tipo === 'passivo' ? d.passivo.testo
+      : d.tipo === 'amuleto' ? `${d.amuleto.vantaggio} Rovescio: ${d.amuleto.rovescio}`
+      : d.tipo === 'potenziamento' ? 'Un\'arma o un dono sale di livello (a volte tre).' : 'Un ristoro nella notte.';
     b.innerHTML = `<strong class="doni-titolo"></strong><span class="doni-testo"><em></em> <span></span></span><span class="doni-tasto">${n + 1}</span>`;
     scritta(b.querySelector('strong')!, titolo);
     b.querySelector('em')!.textContent = sotto;

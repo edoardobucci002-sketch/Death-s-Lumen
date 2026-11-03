@@ -5,6 +5,7 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | Asset | Dove serve | Stato / segnaposto |
 | --- | --- | --- |
 | **Goccia di cera** (oggetto a terra, 8×11 px circa; se vuole anche una versione grande per i mucchi di Seth) | gocce di Cera lasciate dai nemici | disegnata dal codice in `src/sistema/oggetti.ts`; il file `OGGETTI/Goccia_cera_V1.aseprite` la sostituisce |
+| **10 icone degli amuleti** (24×24, `Icona_Amuleto_<id>`: specchioRotto, lanternaCieca, cuoreAvido, sangueFreddo, martire, danzaMacabra, ceriGemelli, lucciola, ossaDelite, pattoDiSangue) e il **grano del Rosario** | Rosario: carte del reliquiario, pausa, HUD | grani colorati disegnati dal codice (`src/sistema/amuleti.ts`) |
 | **Simboli degli stati** (Abbagliato, Consacrato, Maledetto, Sepolto): piccoli, sopra la testa del nemico | stati dei nemici (sostituiscono i lampi di colore, 3/11) | oggi lampeggio a colore pieno |
 | **Nuova scelta dei doni** (carte pensate per stare una accanto all'altra anche su telefono) | schermata di livello | cornici verticali attuali, non adatte al telefono |
 | **Seth, il Rinnovato** (sprite e barra) | boss dei minuti 5 e 10 | `Il_Mietitore` e `Barra_Mietitore` |

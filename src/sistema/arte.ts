@@ -37,6 +37,11 @@ export function preparaArte(scena: Phaser.Scene, chiavi: string[]): void {
   }
 }
 
+/** Registra un'immagine fatta dal codice (per esempio le icone provvisorie degli amuleti), come se fosse stata esportata. */
+export function registraArte(k: string, tela: HTMLCanvasElement): void {
+  arti.set(k, { url: tela.toDataURL(), w: tela.width, h: tela.height, tela, fotogrammi: [tela] });
+}
+
 export const arte = (k: string): Arte | undefined => arti.get(k);
 
 export interface MisureHud {

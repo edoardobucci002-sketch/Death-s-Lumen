@@ -47,5 +47,8 @@ export const SBLOCCHI: Record<Personaggio['id'], { impresa: string; cera: number
   strega: { impresa: 'Arriva all\'alba', cera: 700 },
 };
 
+/** Il Rosario (amuleti nei reliquiari) si sblocca con un'impresa, oppure con la Cera. */
+export const SBLOCCO_ROSARIO = { impresa: 'Sopravvivi 8 minuti', minuti: 8, cera: 300 } as const;
+
 /** Per la simulazione (?meta=): la Cappella a metà (livello 3 di ogni cero) o completa (5 e Seconda candela). */
 export const META_SIMULAZIONE = { meta: 3, max: 5 } as const;

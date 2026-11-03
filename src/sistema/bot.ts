@@ -161,6 +161,21 @@ export class Bot {
     return dentro >= BOT.nemiciPerAbilita;
   }
 
+  /** Reliquiario: l'amuleto migliore che sta nei grani liberi, altrimenti il potenziamento. Restituisce la posizione della carta. */
+  amuleto = (carte: readonly Dono[], graniLiberi: number): number => {
+    let scelta = carte.findIndex((d) => d.tipo === 'potenziamento');
+    let meglio = 0;
+    carte.forEach((d, n) => {
+      if (d.tipo !== 'amuleto' || d.amuleto.grani > graniLiberi) return;
+      const v = BOT.amuletiPreferiti[d.amuleto.id];
+      if (v > meglio) {
+        meglio = v;
+        scelta = n;
+      }
+    });
+    return Math.max(0, scelta);
+  };
+
   /** Quale carta prendere: restituisce la sua posizione. armi è quante ne possiede. */
   carta = (carte: readonly Dono[], armi: number): number => {
     let scelta = 0;
