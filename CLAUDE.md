@@ -36,6 +36,7 @@ Il gioco si **rifà da zero**. La v0 (prototipo "Lumen dei Morti", un'unica pagi
 | `npm run bozza` | apre la pagina di bozza dell'HUD (`bozza-hud.html`): gli elementi di `HUD/` al loro posto, senza giocare |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
+| `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi); riepilogo a schermo, dettagli in `prove/sim.json` |
 | `npm run prova` | prova automatica su desktop, iPhone e Android emulati, su una porta libera; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run ios` / `npm run android` | build + copia nei progetti nativi + apre Xcode o Android Studio |
 
@@ -60,7 +61,7 @@ DEATH'S LUMEN/
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/PERSONAGGI/ …       sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
                                    (effetti, icone e anime divisi dai file della v0 con tools/dividi-v0.lua)
-    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sfondi-bozza (poi: simulazione di bilanciamento)
+    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sfondi-bozza, sim (simulazione di bilanciamento)
     bozza-hud.html, src/bozza/     pagina di bozza dell'HUD (solo in sviluppo, non entra nella build); sfondi in bozza/sfondi/
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
@@ -104,7 +105,7 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
   - Titoli: IM Fell English SC
   - Testi: EB Garamond
   - Corsivi: IM Fell English
-  - Numeri e HUD: Pixelify Sans
+  - Numeri e HUD: Jersey 10 (dal 3 novembre 2026, al posto di Pixelify Sans: il suo 5 sembrava una S)
 
   Nell'app vanno inclusi nel pacchetto, non scaricati da internet.
 - Le schede dei personaggi riprendono lo stile della scheda di Edoardo: nome, motto, ritratto, biografia, fila di sprite, arma iniziale, abilità speciale, barre delle statistiche, citazione sopra un paesaggio.
@@ -138,9 +139,9 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 
 1. `npm run build` senza errori né avvisi di tipo.
 2. Prova nel browser con Playwright in viewport desktop, iPhone verticale e iPhone orizzontale, più un Android: niente errori in console, screenshot controllati a occhio.
-3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`tools/sim`). Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
+3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Il bot gioca 15 minuti con ciascun personaggio; riporta a che minuto muore e il livello raggiunto ogni minuto. Obiettivo:
    - il Mietitore del minuto 5 è il primo vero ostacolo;
-   - nessun personaggio vince sempre senza sforzo;
+   - nessun personaggio vince sempre senza sforzo: il bot vince al massimo il 40% delle notti, perché un giocatore umano va più forte di lui (Edoardo al minuto 8 era al livello 60, il bot al 40);
    - nessuno muore sempre prima del minuto 5.
 4. Riassumi a Edoardo cosa è cambiato e come provarlo.
 
@@ -159,8 +160,23 @@ Il nome della cartella `DEATH'S LUMEN` contiene un apostrofo: negli script e nei
 - `docs/tappe.md`: piano di lavoro e stato. La tappa M0 è fatta: si riparte dalla M1.
 - La v0 giocabile e il compendio della v0 sono artifact su claude.ai (link in `docs/decisioni.md`).
 
+## I due link (deciso il 3 novembre 2026)
+
+Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
+
+| Ramo | Link | Cosa contiene |
+| --- | --- | --- |
+| `prova` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/ | il link personale di Edoardo: **ogni modifica nuova finisce qui**; in basso la scritta «PROVA» |
+| `main` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/ | il link pubblico (e l'APK Android): solo ciò che Edoardo ha approvato |
+
+- Ogni push su `prova` o su `main` ripubblica entrambi i link in un paio di minuti (`.github/workflows/pagine.yml`; per `prova` lo fa partire `prova.yml`, perché GitHub pubblica solo da `main`).
+- Lavora sempre su `prova`, o su un ramo di passaggio che unisci a `prova` appena funziona, nella stessa sessione. Mai rami lasciati a metà o worktree dimenticati: Edoardo deve trovare tutto in `/prova/`.
+- Unisci `prova` in `main` **solo quando Edoardo dice che approva**.
+- Sul Mac al massimo un server acceso (`npm run anteprima`, porta 4173). Spegnilo quando hai finito.
+- Il service worker tiene separate le copie offline dei due link (`tools/genera-sw.mjs`). Salvataggi e record invece sono in comune, perché il sito è lo stesso.
+
 ## Git
 
-- Lavora su un branch per tappa (`m1-movimento`, …) e fai il merge su `main` solo dopo la verifica.
+- Lavora su `prova` (vedi «I due link») e fai il merge su `main` solo dopo la verifica e l'approvazione di Edoardo.
 - Messaggi di commit in italiano, al presente: «Aggiunge la camminata della Strega».
 - Non caricare mai su GitHub chiavi, certificati di firma o il file `.keystore` di Android.

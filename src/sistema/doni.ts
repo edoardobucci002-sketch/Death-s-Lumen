@@ -65,9 +65,15 @@ export class Doni {
     this.estrai();
   }
 
-  /** Sceglie da sola la prima carta (prove automatiche e simulazioni). */
+  /** Sceglie da sola la prima carta (prove automatiche). */
   scegliPrima(): void {
     if (this.carte[0]) this.chiudi(this.carte[0]);
+  }
+
+  /** Sceglie la carta indicata da quale(carte) (il bot delle simulazioni). */
+  scegliCon(quale: (carte: readonly Dono[]) => number): void {
+    const d = this.carte[quale(this.carte)];
+    if (d) this.chiudi(d);
   }
 
   distruggi(): void {

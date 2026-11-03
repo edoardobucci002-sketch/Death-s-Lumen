@@ -27,4 +27,15 @@ export const EFFETTI = {
   impattoPala: 0.22, // durata dell'impatto della pala
   esplosione: 0.18, // durata dell'esplosione dei dardi del bastone
   scossaPala: { forza: 2, durata: 0.1 }, // la pala scuote lo schermo quando colpisce qualcuno
+  // mosse del Mietitore: cerchi rossi a retino che pulsano prima di colpire, falci rosse che girano
+  minacce: {
+    colore: '#c2412d',
+    bordo: '#ff7a5c',
+    pulsazioni: 7, // lampeggi al secondo del preavviso; nell'ultimo tratto resta acceso
+    acceso: 0.3, // secondi finali senza lampeggio
+    lampo: 0.15, // quanto resta il cerchio pieno quando colpisce
+    falce: 0xd8402a, // colore delle falci spettrali
+    giro: 14, // rotazione delle falci (radianti al secondo)
+    scossa: { forza: 3, durata: 0.15 }, // la falciata scuote lo schermo
+  },
 } as const;

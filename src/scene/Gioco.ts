@@ -1,12 +1,14 @@
 /*
  * Gioco: una notte nel cimitero. Il personaggio cammina, le armi colpiscono da sole, i nemici arrivano dal buio;
  * i nemici uccisi lasciano anime e a volte pane, calamite e reliquiari; a ogni livello si sceglie un dono.
- * La notte ha i suoi eventi: élite ogni 55 s, sciami a inizio minuto, il Mietitore ai minuti 5 e 10, l'alba al 15.
+ * La notte ha i suoi eventi: élite ogni 55 s, sciami a inizio minuto, orde in formazione ogni 80 s dal 2:30,
+ * il Mietitore ai minuti 5 e 10 (con le sue mosse), l'alba al 15.
  * Pausa con il pulsante, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni.
  * La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?pg=becchino (salta il menu), ?minuto=5 (parte da quel minuto),
  * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (armi già a quel livello),
- * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle).
+ * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle),
+ * ?seme=7 (un'altra notte), ?bot (gioca il bot, senza disegno e più veloce possibile: lo usa npm run sim).
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
@@ -14,14 +16,17 @@ import { arte, ingr, misureHud } from '../sistema/arte';
 import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
-import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, SCIAMI } from '../data/nemici';
+import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, ORDE, SCIAMI } from '../data/nemici';
+import { EFFETTI } from '../data/effetti';
 import { ARMI_COMUNI, ARMI_INIZIALI, COLPI } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { PASSIVI, RICARICA_MINIMA, type IdDono } from '../data/doni';
 import { animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
+import { BOT } from '../data/bot';
 import { Anime } from '../sistema/anime';
 import { Arsenale, type Bonus } from '../sistema/armi';
+import { Bot } from '../sistema/bot';
 import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
@@ -31,7 +36,9 @@ import { Hud, type VoceBuild } from '../sistema/hud';
 import { vibra } from '../sistema/mobile';
 import { CALAMITA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
 import { Orda } from '../sistema/orda';
+import { Minacce } from '../sistema/minacce';
 import { leggiRecord, salvaRecord } from '../sistema/record';
+import { Simulazione } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { creaTerreno } from '../sistema/terreno';
 import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
@@ -64,6 +71,7 @@ export class Gioco extends Phaser.Scene {
   private livelliDaScegliere = 0;
   private anime!: Anime;
   private oggetti!: Oggetti;
+  private minacce!: Minacce;
   private effetti!: Effetti;
   private doni!: Doni;
   private raccolta = 0;
@@ -78,12 +86,17 @@ export class Gioco extends Phaser.Scene {
   private attesaFine = 0;
   private immortale = false;
   private automatico = false;
+  private bot: Bot | null = null; // con ?bot gioca lui
+  private sim: Simulazione | null = null;
   private inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
   // eventi della notte
   private prossimaElite = 0;
   private ultimoSciame = 0;
+  private prossimaOrda = 0;
+  private prossimoPane = 0; // secondi: prima di allora non cade altro pane
+  private prossimaCalamita = 0;
   private mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
   private buio!: Phaser.GameObjects.Image;
@@ -114,7 +127,7 @@ export class Gioco extends Phaser.Scene {
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
     this.automatico = parametri.has('automatico');
-    this.caso = new Caso(SEME_PREDEFINITO);
+    this.caso = new Caso(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.x = this.y = 0;
     this.secondi = 60 * Number(parametri.get('minuto') ?? 0) || 0;
     this.morto = this.finito = this.pausa = false;
@@ -126,11 +139,14 @@ export class Gioco extends Phaser.Scene {
     // se la partita parte più avanti (prove), gli eventi già passati non si ripetono
     this.prossimaElite = Math.max(ELITE.primo, Math.ceil(this.secondi / ELITE.ogni) * ELITE.ogni);
     this.ultimoSciame = Math.ceil(this.secondi / 60) - 1;
+    this.prossimoPane = this.prossimaCalamita = 0;
+    this.prossimaOrda = ORDE.primo + Math.max(0, Math.ceil((this.secondi - ORDE.primo) / ORDE.ogni)) * ORDE.ogni;
     this.mietitoriArrivati = MIETITORE.minuti.filter((m) => m * 60 < this.secondi).length;
 
     creaTerreno(this, 'terreno', SEME_PREDEFINITO);
     this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
-    this.orda = new Orda(this, this.caso);
+    this.minacce = new Minacce(this);
+    this.orda = new Orda(this, this.caso, this.minacce);
     this.anime = new Anime(this);
     this.oggetti = new Oggetti(this);
     this.effetti = new Effetti(this);
@@ -179,6 +195,9 @@ export class Gioco extends Phaser.Scene {
       return true;
     });
     this.aggiornaBuild();
+    this.bot = parametri.has('bot') ? new Bot(this.orda, this.anime, this.oggetti, this.minacce, arma) : null;
+    this.sim = this.bot ? new Simulazione() : null;
+    this.cameras.main.setVisible(!this.bot);
 
     const riempi = Number(parametri.get('nemici'));
     if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.scale.width / 2, this.scale.height / 2);
@@ -200,6 +219,12 @@ export class Gioco extends Phaser.Scene {
   }
 
   update(_t: number, delta: number): void {
+    if (this.bot) {
+      // simulazione: niente disegno, la logica corre più veloce possibile fino alla fine della partita
+      const fine = performance.now() + BOT.msPerFotogramma;
+      while (!this.hud.fineAperta && performance.now() < fine) this.passo(PASSO);
+      return;
+    }
     this.accumulo = Math.min(this.accumulo + delta, RITARDO_MASSIMO_MS);
     while (this.accumulo >= PASSO_MS) {
       this.passo(PASSO);
@@ -236,31 +261,48 @@ export class Gioco extends Phaser.Scene {
     if (this.fermo()) return;
 
     this.secondi += dt;
-    const c = this.comandi;
-    c.aggiorna();
-    this.x += c.dx * this.velocita * dt;
-    this.y += c.dy * this.velocita * dt;
-    this.inMoto = c.dx !== 0 || c.dy !== 0;
-    if (c.dx < 0) this.versoSinistra = true;
-    else if (c.dx > 0) this.versoSinistra = false;
+    this.comandi.aggiorna();
+    let dx = this.comandi.dx;
+    let dy = this.comandi.dy;
+    if (this.bot) {
+      this.bot.guida(dt, this.x, this.y, this.salute / this.saluteMassima);
+      dx = this.bot.dx;
+      dy = this.bot.dy;
+    }
+    this.x += dx * this.velocita * dt;
+    this.y += dy * this.velocita * dt;
+    this.inMoto = dx !== 0 || dy !== 0;
+    if (dx < 0) this.versoSinistra = true;
+    else if (dx > 0) this.versoSinistra = false;
     if (this.inMoto) {
-      const l = Math.hypot(c.dx, c.dy);
-      this.dirX = c.dx / l;
-      this.dirY = c.dy / l;
+      const l = Math.hypot(dx, dy);
+      this.dirX = dx / l;
+      this.dirY = dy / l;
     }
     this.speciale.aggiorna(dt, this.bonus.ricarica);
+    if (this.bot && this.speciale.attesa <= 0) {
+      const a = ABILITA[this.pg.abilita];
+      if (this.bot.abilita(this.x, this.y - COLPI.corpo, a.raggio * (1 + this.bonus.area), a.cura > 0, this.salute / this.saluteMassima)) this.speciale.prova();
+    }
 
     const mezzaL = this.scale.width / 2;
     const mezzaA = this.scale.height / 2;
     this.notte(mezzaL, mezzaA);
     if (this.finito) return;
-    this.orda.aggiorna(dt, this.secondi, this.x, this.y, c.dx, c.dy, mezzaL, mezzaA);
+    this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, this.velocita, mezzaL, mezzaA);
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, this.versoSinistra ? -1 : 1, mezzaL, mezzaA);
     const cura = this.arsenale.cura();
     if (cura && this.salute < this.saluteMassima) suona('cura');
+    const primaCura = this.salute;
     this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + cura) * dt);
+    this.sim?.curato('altro', this.salute - primaCura);
     this.orda.rimuoviMorti(this.muore);
-    this.contatti(dt);
+    const minaccia = this.minacce.aggiorna(dt, this.x, this.y, COMBATTIMENTO.raggioGiocatore);
+    if (this.minacce.colpita) {
+      this.minacce.colpita = false;
+      this.effetti.scuoti(EFFETTI.minacce.scossa.forza, EFFETTI.minacce.scossa.durata);
+    }
+    this.contatti(dt, minaccia);
     const raccolte = this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
     if (raccolte) {
       this.esperienza += raccolte;
@@ -268,6 +310,7 @@ export class Gioco extends Phaser.Scene {
       suona('anima');
     }
     this.oggetti.aggiorna(this.x, this.y - COLPI.corpo, this.raccogli);
+    this.sim?.passo(this.secondi, this.livello, this.salute, this.orda);
     while (this.esperienza >= animePerLivello(this.livello)) {
       this.esperienza -= animePerLivello(this.livello);
       this.livello++;
@@ -295,9 +338,23 @@ export class Gioco extends Phaser.Scene {
         this.hud.avviso('Lo sciame', 'ti circonda');
       }
     }
+    if (this.secondi >= this.prossimaOrda && this.prossimaOrda <= ORDE.ultimo) {
+      this.prossimaOrda += ORDE.ogni;
+      const m = this.secondi / 60;
+      const quanti = Math.min(ORDE.massimo, Math.round(ORDE.base + ORDE.perMinuto * m));
+      let tipo = ORDE.tipi[0].tipo;
+      for (const t of ORDE.tipi) if (this.secondi >= t.dal) tipo = t.tipo;
+      const id = NEMICI.findIndex((t) => t.id === tipo);
+      const angolo = this.caso.numero() * Math.PI * 2;
+      this.orda.orda(this.secondi, id, quanti, angolo, this.x, this.y, mezzaL, mezzaA);
+      const tenaglia = this.secondi >= ORDE.tenagliaDal;
+      if (tenaglia) this.orda.orda(this.secondi, id, quanti, angolo + Math.PI, this.x, this.y, mezzaL, mezzaA);
+      this.hud.avviso(tenaglia ? 'Due orde ti stringono' : "Un'orda marcia verso di te");
+    }
     if (this.mietitoriArrivati < MIETITORE.minuti.length && this.secondi >= MIETITORE.minuti[this.mietitoriArrivati] * 60) {
       this.orda.nasciMietitore(this.secondi, this.mietitoriArrivati, this.x, this.y, mezzaL, mezzaA);
       this.mietitoriArrivati++;
+      this.sim?.mietitoreArrivato(this.secondi);
       this.hud.avviso('Il Mietitore', 'è venuto per te');
       suona('mietitore');
       vibra('forte');
@@ -339,15 +396,26 @@ export class Gioco extends Phaser.Scene {
   private muore = (x: number, y: number, valore: number, reliquiari: number): void => {
     this.anime.aggiungi(x, y, valore, this.x, this.y);
     this.effetti.scoppio(x, y);
+    this.sim?.ucciso();
     for (let k = 0; k < reliquiari; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
     const r = this.caso.numero();
-    if (r < DROP.pane.probabilita) this.oggetti.aggiungi(PANE, x, y);
-    else if (r < DROP.pane.probabilita + DROP.calamita.probabilita) this.oggetti.aggiungi(CALAMITA, x, y);
+    if (r < DROP.pane.probabilita) {
+      if (this.secondi < this.prossimoPane) return;
+      this.prossimoPane = this.secondi + DROP.pane.ogni;
+      this.oggetti.aggiungi(PANE, x, y);
+    } else if (r < DROP.pane.probabilita + DROP.calamita.probabilita) {
+      if (this.secondi < this.prossimaCalamita) return;
+      this.prossimaCalamita = this.secondi + DROP.calamita.ogni;
+      this.oggetti.aggiungi(CALAMITA, x, y);
+    }
   };
 
   private raccogli = (tipo: number): void => {
+    this.sim?.raccolto(tipo);
     if (tipo === PANE) {
+      const prima = this.salute;
       this.salute = Math.min(this.saluteMassima, this.salute + DROP.pane.cura);
+      this.sim?.curato('pane', this.salute - prima);
       suona('cura');
     } else if (tipo === CALAMITA) {
       this.anime.attiraTutte();
@@ -401,7 +469,8 @@ export class Gioco extends Phaser.Scene {
       if (this.livelliDaScegliere > 0) this.apriDoni();
       else if (!this.pausa) this.anims.resumeAll();
     });
-    if (this.automatico) this.doni.scegliPrima();
+    if (this.bot) this.doni.scegliCon((carte) => this.bot!.carta(carte, this.arsenale.possedute.length));
+    else if (this.automatico) this.doni.scegliPrima();
   }
 
   private apriPausa(): void {
@@ -420,7 +489,13 @@ export class Gioco extends Phaser.Scene {
   }
 
   private mostraFine(vittoria: boolean): void {
-    const nuovo = salvaRecord(this.pg.id, this.secondi);
+    if (this.sim) {
+      this.sim.fine({
+        vittoria, secondi: Math.round(this.secondi), livello: this.livello, anime: this.animeTotali, danno: Math.round(this.arsenale.dannoTotale),
+        build: this.build().map((v) => `${v.nome} ${v.livello}`),
+      });
+    }
+    const nuovo = this.sim ? false : salvaRecord(this.pg.id, this.secondi);
     this.comandi.lascia();
     this.hud.mostraFine({
       vittoria,
@@ -447,14 +522,17 @@ export class Gioco extends Phaser.Scene {
     this.hud.build(this.build());
   }
 
-  /** Danno da contatto: il colpo più forte tra i nemici che toccano il personaggio, poi un attimo di invulnerabilità. */
-  private contatti(dt: number): void {
+  /**
+   * Danno da contatto: il colpo più forte tra i nemici che toccano il personaggio e le mosse del Mietitore
+   * (minaccia), poi un attimo di invulnerabilità.
+   */
+  private contatti(dt: number, minaccia: number): void {
     if (this.invulnerabile > 0) {
       this.invulnerabile -= dt;
       return;
     }
     const o = this.orda;
-    let colpo = 0;
+    let colpo = minaccia;
     for (let i = 0; i < o.numero; i++) {
       const r = o.raggio[i] + COMBATTIMENTO.raggioGiocatore;
       const dx = o.x[i] - this.x;
@@ -464,7 +542,9 @@ export class Gioco extends Phaser.Scene {
     if (!colpo) return;
     this.invulnerabile = COMBATTIMENTO.invulnerabilita;
     if (this.immortale) return;
-    this.salute -= Math.max(1, colpo - this.armatura);
+    const danno = Math.max(1, colpo - this.armatura);
+    this.salute -= danno;
+    this.sim?.colpito(danno);
     suona('danno');
     vibra('leggera');
     if (this.salute <= 0) {
@@ -496,6 +576,7 @@ export class Gioco extends Phaser.Scene {
     this.anime.disegna(cam);
     this.oggetti.disegna(cam, this.fermo() ? 0 : dt);
     this.arsenale.disegna();
+    this.minacce.disegna();
     this.terreno.setTilePosition(cam.scrollX, cam.scrollY);
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
     this.buio.setPosition(

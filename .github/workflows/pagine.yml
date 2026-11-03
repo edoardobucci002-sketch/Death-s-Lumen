@@ -1,4 +1,8 @@
-# Pubblica il gioco su GitHub Pages a ogni push su main.
+# Pubblica il gioco su GitHub Pages a ogni push su main; per i push su prova lo fa partire prova.yml
+# (GitHub accetta pubblicazioni solo da main, quindi questo lavoro gira sempre da main).
+# Due link sullo stesso sito:
+#   main  → https://edoardobucci002-sketch.github.io/Death-s-Lumen/        (pubblico, solo ciò che Edoardo ha approvato)
+#   prova → https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/  (personale, le modifiche nuove da guardare)
 name: Pubblica su GitHub Pages
 on:
   push:
@@ -19,15 +23,33 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main
+          path: pubblico
+      - uses: actions/checkout@v7
+        with:
+          ref: prova
+          path: prova
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm run build
+          cache-dependency-path: |
+            pubblico/package-lock.json
+            prova/package-lock.json
+      - name: Costruisce la versione pubblica
+        working-directory: pubblico
+        run: npm ci && npm run build
+      - name: Costruisce la versione di prova
+        working-directory: prova
+        run: |
+          npm ci && VITE_CANALE=prova npm run build
+          sed -i "s/\"name\": \"Death's Lumen\"/\"name\": \"Death's Lumen (prova)\"/; s/\"short_name\": \"Death's Lumen\"/\"short_name\": \"DL prova\"/" dist/manifest.webmanifest
+      - name: Mette la prova nella sottocartella prova/
+        run: mv prova/dist pubblico/dist/prova
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: dist
+          path: pubblico/dist
       - id: deploy
         uses: actions/deploy-pages@v5

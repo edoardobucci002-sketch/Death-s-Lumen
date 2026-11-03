@@ -12,36 +12,52 @@ export interface TipoNemico {
   anime: number; // esperienza lasciata (dalla M3)
   attraversa: boolean; // passa attraverso gli altri nemici
   pesante: boolean; // subisce solo un quarto della respinta
+  /** Come si muove: dritto verso di te, ti accerchia, ti taglia la strada o vola a zig-zag (vedi IA). */
+  comportamento: 'diretto' | 'accerchia' | 'intercetta' | 'zigzag';
   /** Quanto spesso compare rispetto agli altri, dato il tempo di gioco in secondi (0 = non ancora). */
   peso: (s: number) => number;
 }
 
 export const NEMICI: TipoNemico[] = [
-  { id: 'pipistrello', sprite: 'Pipistrello', salute: 6, velocita: 179, danno: 5, raggio: 16, anime: 1, attraversa: false, pesante: false,
+  { id: 'pipistrello', sprite: 'Pipistrello', salute: 6, velocita: 179, danno: 5, raggio: 16, anime: 1, attraversa: false, pesante: false, comportamento: 'zigzag',
     peso: (s) => Math.max(0.7, 3 - s / 200) },
-  { id: 'zombi', sprite: 'Zombi', salute: 16, velocita: 87, danno: 8, raggio: 21, anime: 2, attraversa: false, pesante: false,
+  { id: 'zombi', sprite: 'Zombi', salute: 16, velocita: 87, danno: 8, raggio: 21, anime: 2, attraversa: false, pesante: false, comportamento: 'diretto',
     peso: (s) => (s < 480 ? 3 : 1.5) },
-  { id: 'fantasma', sprite: 'Fantasma', salute: 13, velocita: 129, danno: 7, raggio: 21, anime: 2, attraversa: true, pesante: false,
+  { id: 'fantasma', sprite: 'Fantasma', salute: 13, velocita: 129, danno: 7, raggio: 21, anime: 2, attraversa: true, pesante: false, comportamento: 'diretto',
     peso: (s) => (s >= 50 ? 2 : 0) },
-  { id: 'scheletro', sprite: 'Scheletro', salute: 34, velocita: 106, danno: 10, raggio: 21, anime: 3, attraversa: false, pesante: false,
+  { id: 'scheletro', sprite: 'Scheletro', salute: 34, velocita: 106, danno: 10, raggio: 21, anime: 3, attraversa: false, pesante: false, comportamento: 'accerchia',
     peso: (s) => (s >= 140 ? 2.6 : 0) },
-  { id: 'segugio', sprite: 'Segugio', salute: 28, velocita: 200, danno: 9, raggio: 21, anime: 3, attraversa: false, pesante: false,
+  { id: 'segugio', sprite: 'Segugio', salute: 28, velocita: 200, danno: 9, raggio: 21, anime: 3, attraversa: false, pesante: false, comportamento: 'intercetta',
     peso: (s) => (s >= 230 ? 2 : 0) },
-  { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false, pesante: true,
+  { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false, pesante: true, comportamento: 'diretto',
     peso: (s) => (s >= 360 ? 1 + s / 600 : 0) },
   // il Mietitore non compare a caso: arriva ai minuti indicati in MIETITORE
-  { id: 'mietitore', sprite: 'Il_Mietitore', salute: 3200, velocita: 118, danno: 22, raggio: 61, anime: 60, attraversa: true, pesante: true,
+  { id: 'mietitore', sprite: 'Il_Mietitore', salute: 5500, velocita: 118, danno: 22, raggio: 61, anime: 60, attraversa: true, pesante: true, comportamento: 'diretto',
     peso: () => 0 },
 ];
 
-/** Il Mietitore, il boss (GDD, sezione 6). Raggio e velocità della v0 × 2,35. */
+/**
+ * Il Mietitore, il boss (GDD, sezione 6). Raggio e velocità della v0 × 2,35.
+ * Cammina verso di te, poi si ferma pulsando di rosso e fa una delle sue mosse, scelta a caso con questi pesi.
+ * Ogni mossa ha un preavviso (carica): è il momento per scansarsi.
+ */
 export const MIETITORE = {
   minuti: [5, 10],
   saluteSecondo: 1.7, // al minuto 10 ha salute ×1,7 rispetto a quella del minuto 5 (già scalata con il tempo)
-  cammina: [3, 5], // cammina verso di te per 3-5 s…
-  carica: 0.7, // …poi si ferma pulsando di rosso…
-  scatto: 0.55, // …e scatta per 0,55 s…
-  velocitaScatto: 3.6, // …a 3,6 volte la sua velocità, verso dove ti trovavi
+  cammina: [3, 5], // cammina verso di te per 3-5 s, poi una mossa
+  camminaSecondo: 0.75, // al minuto 10 cammina meno tra una mossa e l'altra (×0,75)
+  mosse: { scatto: 3, falciata: 3, falci: 2, chiamata: 1.5 }, // quanto spesso sceglie ogni mossa
+  riprende: 0.45, // secondi fermo dopo falciata, falci e chiamata
+  // Scatto: si ferma pulsando, poi scatta verso dove ti trovavi
+  carica: 0.7,
+  scatto: 0.55, // durata dello scatto…
+  velocitaScatto: 3.6, // …a 3,6 volte la sua velocità
+  // Falciata: un cerchio rosso si accende intorno a lui; quando finisce di pulsare, colpisce chi ci è dentro
+  falciata: { carica: 0.95, raggio: 200, danno: 28 },
+  // Falci spettrali: lancia falci rosse a ventaglio verso di te
+  falci: { carica: 0.6, quante: 5, ventaglio: 0.9, velocita: 330, danno: 16, raggio: 18, durata: 3.2 },
+  // Chiamata dei morti: segni rossi a terra intorno a te, poi da lì escono scheletri
+  chiamata: { carica: 1.1, quanti: 8, distanza: 190, tipo: 'scheletro' as TipoNemico['id'] },
   reliquiari: 2,
   rallentamento: 0.5, // subisce i rallentamenti a metà…
   attrazione: 0.25, // …e l'attrazione del Rito a un quarto; la respinta per niente
@@ -72,7 +88,10 @@ export const SCIAMI = {
 
 /** Un nemico prende i valori del momento in cui nasce (m = minuti di gioco). */
 export const DIFFICOLTA = {
-  salutePerMinuto: 0.34, // salute = base × (1 + 0,34 m)
+  // salute = base × (1 + 0,28 m + 0,04 × (m − 3)² dopo il minuto 3): uguale all'inizio, molto più resistenti a metà notte
+  salutePerMinuto: 0.28,
+  saluteDopo: 3, // minuto da cui la crescita accelera
+  saluteAccelera: 0.04,
   dannoPerMinuto: 0.09, // danno = base × (1 + 0,09 m)
   massimiBase: 20, // nemici massimi in campo = min(tetto, 20 + 30 m)
   massimiPerMinuto: 30,
@@ -83,6 +102,37 @@ export const DIFFICOLTA = {
   sogliaRinforzo: 0.4, // sotto il 40% del massimo in campo…
   rinforzoPerFotogramma: 2, // …arrivano 2 nemici in più a ogni fotogramma
   variazioneVelocita: 0.1, // ±10% a caso
+} as const;
+
+/** Come si muovono i nemici più furbi (comportamento in NEMICI). */
+export const IA = {
+  // accerchia: punta a un punto ruotato di lato intorno a te, più vicino a ogni passo: arriva dai fianchi
+  accerchia: { angolo: [0.6, 1.2], stringe: 0.6, vicino: 120 }, // radianti di lato, quota della distanza, sotto i 120 px viene dritto
+  // intercetta: punta dove sarai tra un po' (al massimo 1,1 s), guardando dove stai andando
+  intercetta: { anticipo: 1.1 },
+  // zigzag: ondeggia di lato mentre si avvicina
+  zigzag: { ampiezza: 0.7, frequenza: 5 },
+} as const;
+
+/**
+ * Orde: un muro di nemici in formazione che marcia compatto verso di te e, arrivato vicino, carica tutto insieme.
+ * Dal minuto 7 arrivano in due, da lati opposti (tenaglia).
+ */
+export const ORDE = {
+  primo: 150, // secondi
+  ogni: 80,
+  ultimo: 860, // nessuna orda dopo questo secondo
+  base: 12, // nemici per orda: 12 + 2 per minuto, al massimo 28
+  perMinuto: 2,
+  massimo: 28,
+  perFila: 7, // nemici per fila della formazione
+  spazio: 2.4, // distanza tra due nemici della formazione, in raggi
+  marcia: 80, // velocità della formazione (pixel al secondo)
+  distanzaCarica: 260, // a questa distanza da te carica…
+  carica: 1.35, // …a velocità ×1,35
+  tenagliaDal: 420, // da questo secondo le orde arrivano in due, da lati opposti
+  // di che tipo sono i nemici dell'orda, secondo il tempo (secondi)
+  tipi: [{ dal: 0, tipo: 'zombi' }, { dal: 300, tipo: 'scheletro' }, { dal: 600, tipo: 'segugio' }] as { dal: number; tipo: TipoNemico['id'] }[],
 } as const;
 
 /** Dove nascono i nemici e quando vengono ricollocati. */

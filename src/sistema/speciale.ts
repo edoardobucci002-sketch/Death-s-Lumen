@@ -77,7 +77,8 @@ export class Speciale {
     this.pulsante.remove();
   }
 
-  private prova(): void {
+  /** Usa l'abilità se è pronta (pulsante, Spazio o bot). */
+  prova(): void {
     if (this.attesa > 0 || !this.usa()) return;
     this.attesa = this.ricaricaAttuale;
   }

@@ -3,8 +3,10 @@
  * Valori dal GDD (docs/GDD_base.md, sezioni 1 e 8). Ogni modifica qui va riportata anche nel GDD.
  */
 export const DROP = {
-  pane: { probabilita: 0.009, cura: 30, sprite: 'Pane' }, // da ogni nemico
-  calamita: { probabilita: 0.0025, sprite: 'Calamita_drop' }, // attira tutte le anime della mappa
+  // da ogni nemico, ma al massimo uno ogni tot secondi: dal minuto 5 si uccidono circa 2000 nemici al minuto,
+  // e senza limite cadevano 18 pani e 5 calamite al minuto (M8, dopo la prova di Edoardo)
+  pane: { probabilita: 0.009, ogni: 45, cura: 40, sprite: 'Pane' },
+  calamita: { probabilita: 0.0025, ogni: 180, sprite: 'Calamita_drop' }, // attira tutte le anime della mappa
   reliquiario: {
     sprite: 'Reliquiario',
     tre: 0.25, // 25% tre potenziamenti, altrimenti uno
