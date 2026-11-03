@@ -40,10 +40,10 @@ export interface AzioniHud {
 const DURATA_AVVISO = 2400; // millisecondi
 const ALTEZZA_OROLOGIO = 24; // pixel di gioco per ogni volta dell'ingrandimento delle barre (testo da 16 più il respiro)
 const PER_FILA = 6; // caselle per fila: 6 armi, poi 6 doni
-const MAX_SCRITTA_PULSANTI = 2; // pixel di gioco per pixel della lettera nei pulsanti (a 3 le maiuscole non stanno nella targhetta)
+const MAX_SCRITTA_PULSANTI = 3; // pixel di gioco per pixel della lettera nei pulsanti: come i pixel del pulsante (×3)
 const OMBRA = '#000'; // ombra di un pixel sotto le scritte chiare su fondo scuro
-/** Pulsanti chiari: scritta scura, senza ombra. */
-const chiaro = (arte: string): boolean => arte === 'Pulsante_Acceso' || arte === 'Pulsante_Chiaro';
+/** Pulsante chiaro (pergamena): scritta scura, senza ombra. Sugli altri, anche l'arancio, scritta chiara con l'ombra. */
+const chiaro = (arte: string): boolean => arte === 'Pulsante_Chiaro';
 
 /** Un elemento posizionato a mano dentro l'HUD. */
 function blocco(classe: string, ...figli: HTMLElement[]): HTMLElement {
@@ -143,7 +143,7 @@ export class Hud {
       tasto('Pulsante_Acceso', 'Riprendi', { azione: 'riprendi' }),
       tasto('Pulsante_Scuro', '', { opzione: 'audio' }),
       tasto('Pulsante_Scuro', '', { opzione: 'vibrazione' }),
-      tasto('Pulsante_Scuro', 'Abbandona', { azione: 'abbandona' }),
+      tasto('Pulsante_Pericolo', 'Abbandona', { azione: 'abbandona' }),
     );
     this.fine.querySelector('.hud-pulsanti')!.append(
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
@@ -336,7 +336,7 @@ export class Hud {
       const sotto = this.avvisoEl.children[2] as HTMLElement;
       sotto.style.width = `${W * px}px`;
       sotto.style.fontSize = `${TESTI.avvisoSotto * za * px}px`;
-      scriviNel(sotto, { x: -xa, y: (an.h - 8) * za, l: W, a: 12 * zb }, 1, zb, m, TESTI.avvisoSotto * za, OMBRA); // mai più grande della scritta nel nastro
+      scriviNel(sotto, { x: -xa, y: (an.h - 8) * za, l: W, a: 12 * zb }, 1, 2 * zb, m, TESTI.avvisoSotto * za, OMBRA); // a pixel doppi: a pixel singoli era minuscola
     }
     // pausa in basso a destra, con un'area di tocco un po' più grande del disegno (MARGINE_TOCCO, in CSS)
     const ap = arte('Pulsante_Pausa');
@@ -381,7 +381,7 @@ export class Hud {
     misura(p.firstElementChild as HTMLElement, ap.w, ap.h, zz, m);
     // il titolo (Pausa) a pixel grandi quanto quelli del pannello; il riepilogo della fine resta in Garamond, a più righe
     if (conNastro) scriviIn(p.children[1] as HTMLElement, r.testo, zz, 7, m);
-    else scriviNel(p.children[1] as HTMLElement, r.testo, zz, zz, m, 20, OMBRA);
+    else scriviNel(p.children[1] as HTMLElement, r.testo, zz, 2 * zz, m, 20, OMBRA); // titolo: lettere il doppio dei pixel del pannello
     [...p.querySelectorAll<HTMLElement>('.hud-icona')].forEach((el, i) => {
       const c = r[`casella${i + 1}`];
       disponiIcona(el, x + (c.x + c.l / 2) * zz - 12 * zz - x, (c.y + c.a / 2) * zz - 12 * zz, zz, m);

@@ -1,16 +1,19 @@
 /*
- * Scritte a pixel con Jacquard 12, per i testi dentro gli elementi disegnati (pulsanti, nastri, titoli).
- * Il carattere è disegnato su una griglia: 1 pixel della lettera = 1/21 della sua grandezza, maiuscole alte 12.
+ * Scritte a pixel con Tiny5, sempre in maiuscolo, per i testi dentro gli elementi disegnati (pulsanti, nastri, titoli).
+ * Scelto da Edoardo il 3/11/2026 (Jacquard 12 si leggeva poco). Il carattere è disegnato su una griglia:
+ * 1 pixel della lettera = 1/8 della sua grandezza, maiuscole alte 5.
+ * Nei pulsanti (×3) e nei nastri (×2) un pixel della lettera è grande come un pixel del disegno.
  * Ogni scritta si disegna su una piccola tela a 1 pixel per pixel della lettera, con i bordi tagliati netti,
  * poi si ingrandisce di un numero intero di volte come gli sprite: niente sfumature, niente mezzi pixel.
  */
 import type { Riquadro } from '../data/hud';
 import { misura, posa, scriviIn, type MisureHud } from './arte';
 
-const FONT = '400 21px "Jacquard 12"';
-const ALTO = 21; // la tela: 16 sopra la linea di base, 5 sotto
-const BASE = 16;
-const MAIUSCOLE = 12;
+const FONT = '400 8px "Tiny5"';
+const ALTO = 8; // la tela: 7 sopra la linea di base, 1 sotto
+const BASE = 7;
+const MAIUSCOLE = 5;
+const maiuscolo = (t: string): string => t.toLocaleUpperCase('it');
 
 /** Da chiamare all'avvio: senza il carattere caricato la tela uscirebbe con quello di riserva. */
 export const caricaScritte = (): Promise<unknown> => document.fonts.load(FONT).catch(() => undefined);
@@ -20,7 +23,7 @@ const misuratore = document.createElement('canvas').getContext('2d')!;
 /** Larghezza della scritta in pixel della lettera. */
 function larghezza(testo: string): number {
   misuratore.font = FONT;
-  return Math.ceil(misuratore.measureText(testo).width);
+  return Math.ceil(misuratore.measureText(maiuscolo(testo)).width);
 }
 
 /** Il più grande ingrandimento (fino a kMax) per cui la scritta sta nel riquadro; 0 se non ci sta neanche a 1. */
@@ -44,7 +47,7 @@ function tela(testo: string, colore: string, ombra: string | null): HTMLCanvasEl
     const x = t.getContext('2d', { willReadFrequently: true })!;
     x.font = FONT;
     x.fillStyle = col;
-    x.fillText(testo, 0, BASE + dy);
+    x.fillText(maiuscolo(testo), 0, BASE + dy);
     const d = x.getImageData(0, 0, t.width, t.height);
     for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 110 ? 255 : 0;
     x.putImageData(d, 0, 0);
@@ -55,7 +58,7 @@ function tela(testo: string, colore: string, ombra: string | null): HTMLCanvasEl
 
 /**
  * Scrive dentro el (posizionato in un'arte ingrandita z volte) centrata nel riquadro r, ingrandita k volte.
- * Le maiuscole stanno al centro del riquadro; le gambe di p, q, g possono scendere un po' sotto.
+ * Le maiuscole stanno al centro del riquadro.
  */
 export function scriviPixel(el: HTMLElement, testo: string, r: Riquadro, z: number, k: number, m: MisureHud, colore: string, ombra: string | null = null): void {
   const c = tela(testo, colore, ombra);
@@ -78,7 +81,7 @@ export function scritta(el: Element, testo: string): void {
 }
 
 /**
- * Scrive il testo dell'elemento nel riquadro r con Jacquard 12, ingrandito al massimo kMax volte.
+ * Scrive il testo dell'elemento nel riquadro r con Tiny5, ingrandito al massimo kMax volte.
  * Se non ci sta neanche a 1, torna al carattere del CSS rimpicciolito (scriviIn), grande al massimo «riserva».
  * Restituisce l'ingrandimento usato (0 = carattere di riserva).
  */
