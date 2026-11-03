@@ -5,7 +5,7 @@
  * La disposizione è quella della bozza (bozza-hud.html), verificata su sette telefoni: se cambia qui, cambia anche là.
  * La barra della salute è nel gioco, sotto il personaggio; l'abilità speciale in basso a sinistra (speciale.ts).
  */
-import { FINESTRE, INTERNI } from '../data/hud';
+import { CASELLA, FINESTRE, INTERNI, TESTI } from '../data/hud';
 import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn, type MisureHud } from './arte';
 import { audioAttivo, impostaAudio } from './audio';
 import { impostaVibrazione, vibrazione } from './mobile';
@@ -277,8 +277,8 @@ export class Hud {
   private disponi(): void {
     const m = (this.m = misureHud()), b = bordiHud(m), W = m.W, H = m.H, px = m.px;
     const zb = ingr('barre', m), zc = ingr('caselle', m), za = ingr('avvisi', m), zp = ingr('pausa', m);
-    const me = arte('Barra_Esperienza_Cornice'), ms = arte('Stemma_Livello'), mc = arte('Casella_Arma'), mm = arte('Barra_Mietitore_Cornice');
-    if (!me || !ms || !mc || !mm) return;
+    const me = arte('Barra_Esperienza_Cornice'), ms = arte('Stemma_Livello'), mm = arte('Barra_Mietitore_Cornice');
+    if (!me || !ms || !mm) return;
     const ori = W > H;
     // esperienza al centro in alto, orologio sotto
     const ye = b.a;
@@ -291,33 +291,34 @@ export class Hud {
     const rn = INTERNI.Stemma_Livello.numero, num = this.livello.lastElementChild as HTMLElement;
     posa(num, rn.x * zc, rn.y * zc, m);
     misura(num, rn.l, rn.a, zc, m);
-    Object.assign(num.style, { fontSize: `${11 * zc * px}px`, lineHeight: `${rn.a * zc * px}px` });
+    Object.assign(num.style, { fontSize: `${TESTI.livello * zc * px}px`, lineHeight: `${rn.a * zc * px}px` });
     Object.assign(this.anime.style, { right: `${b.d * px}px`, top: `${(b.a + 4) * px}px`, fontSize: `${16 * zc * px}px` });
     // caselle: armi nella prima fila, doni nella seconda
-    const yc = b.a + Math.max(ms.h * zc, me.h * zb + 2 + ALTEZZA_OROLOGIO * zb) + 4, passo = (mc.w + 2) * zc;
+    const yc = b.a + ms.h * zc + 4, passo = (CASELLA.lato + CASELLA.spazio) * zc;
     let file = 0;
     const armi = this.voci.filter((v) => v.arma).length;
     [...this.icone.children].forEach((el, i) => {
       const fila = i < armi ? Math.floor(i / PER_FILA) : Math.ceil(armi / PER_FILA) + Math.floor((i - armi) / PER_FILA);
       const col = i < armi ? i % PER_FILA : (i - armi) % PER_FILA;
       file = Math.max(file, fila + 1);
-      disponiCasella(el as HTMLElement, b.s + col * passo, yc + fila * (mc.h + 2) * zc, zc, m);
+      disponiCasella(el as HTMLElement, b.s + col * passo, yc + fila * passo, zc, m);
     });
-    let y = yc + file * (mc.h + 2) * zc + 2;
+    // sotto l'orologio, o sotto le caselle se scendono di più
+    let y = Math.max(ye + me.h * zb + 2 + ALTEZZA_OROLOGIO * zb, yc + file * passo) + 2;
     // il Mietitore: in orizzontale sta in alto, sotto l'orologio (le caselle sono a sinistra e c'è posto)
     if (ori) y = ye + me.h * zb + 2 + ALTEZZA_OROLOGIO * zb + 4;
     this.mietitore.disponi(Math.round(W / 2 - (mm.w * zb) / 2), y, zb, m);
     if (!this.mietitore.el.hidden) y += mm.h * zb + 6;
-    // avviso nel nastro
+    // avviso nel nastro: in alto, sotto barre e caselle, per non coprire il personaggio
     const an = arte('Nastro_Titolo');
     if (an) {
-      const xa = Math.round(W / 2 - (an.w * za) / 2), ya = Math.max(y, Math.round(H * 0.3));
+      const xa = Math.round(W / 2 - (an.w * za) / 2), ya = y;
       posa(this.avvisoEl, xa, ya, m);
       misura(this.avvisoEl, an.w, an.h, za, m);
       misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, za, m);
-      scriviIn(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, za, 10, m);
-      posa(this.avvisoEl.children[2] as HTMLElement, -xa, an.h * za, m);
-      Object.assign((this.avvisoEl.children[2] as HTMLElement).style, { width: `${W * px}px`, fontSize: `${8 * za * px}px` });
+      scriviIn(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, za, TESTI.avviso, m);
+      posa(this.avvisoEl.children[2] as HTMLElement, -xa, (an.h - 10) * za, m);
+      Object.assign((this.avvisoEl.children[2] as HTMLElement).style, { width: `${W * px}px`, fontSize: `${TESTI.avvisoSotto * za * px}px` });
     }
     // pausa in basso a destra, con un'area di tocco un po' più grande del disegno (MARGINE_TOCCO, in CSS)
     const ap = arte('Pulsante_Pausa');
@@ -353,7 +354,7 @@ export class Hud {
       posa(n, Math.round(x + (ap.w * zz) / 2 - (an.w * zz) / 2), y, m);
       misura(n, an.w, an.h, zz, m);
       misura(n.firstElementChild as HTMLElement, an.w, an.h, zz, m);
-      scriviIn(n.lastElementChild as HTMLElement, INTERNI.Nastro_Titolo.testo, zz, 14, m);
+      scriviIn(n.lastElementChild as HTMLElement, INTERNI.Nastro_Titolo.testo, zz, TESTI.avviso, m);
       y += nastro(zz);
     }
     const p = schermo.querySelector('.hud-pannello') as HTMLElement, r = INTERNI.Pannello_Grande;
@@ -378,31 +379,31 @@ export class Hud {
       misura(im, a.w, a.h, zt, m);
       im.style.top = `${Math.round((riga - a.h * zt) / 2) * px}px`;
       const s = t.lastElementChild as HTMLElement, rt = INTERNI[t.dataset.arte!]?.testo ?? { x: 0, y: 0, l: a.w, a: a.h };
-      scriviIn(s, { ...rt, y: rt.y + Math.round((riga / zt - a.h) / 2) }, zt, 11, m);
+      scriviIn(s, { ...rt, y: rt.y + Math.round((riga / zt - a.h) / 2) }, zt, TESTI.pulsante, m);
       yt += riga + 3 * zt;
     }
   }
 }
 
-/** Casella di un'arma o di un dono: cornice, icona da 24 px, livello in basso a destra. */
+/** Casella di un'arma o di un dono: riquadro scuro, icona da 24 px, livello in basso a destra. */
 function casella(v: VoceBuild): HTMLElement {
   const lv = blocco('hud-lv');
   lv.textContent = String(v.livello);
-  const d = blocco('hud-casella', immagine('Casella_Arma'), immagine(v.icona), lv);
+  const d = blocco('hud-casella', immagine(v.icona), lv);
   d.title = `${v.nome} · livello ${v.livello}`;
   return d;
 }
 
 function disponiCasella(el: HTMLElement, x: number, y: number, z: number, m: MisureHud): void {
-  const a = arte('Casella_Arma')!, ic = INTERNI.Casella_Arma.icona;
+  const l = CASELLA.lato;
   posa(el, x, y, m);
-  misura(el, a.w, a.h, z, m);
-  misura(el.children[0] as HTMLElement, a.w, a.h, z, m);
-  const im = el.children[1] as HTMLElement;
-  posa(im, (ic.x + ic.l / 2 - 12) * z, (ic.y + ic.a / 2 - 12) * z, m);
+  misura(el, l, l, z, m);
+  el.style.borderWidth = `${CASELLA.bordo * z * m.px}px`;
+  const im = el.children[0] as HTMLElement;
+  posa(im, (l / 2 - 12 - CASELLA.bordo) * z, (l / 2 - 12 - CASELLA.bordo) * z, m);
   misura(im, 24, 24, z, m);
-  const lv = el.children[2] as HTMLElement;
-  Object.assign(lv.style, { right: `${(a.w - ic.x - ic.l) * z * m.px}px`, bottom: `${(a.h - ic.y - ic.a) * z * m.px}px`, fontSize: `${10 * z * m.px}px` });
+  const lv = el.children[1] as HTMLElement;
+  Object.assign(lv.style, { right: `${-2 * z * m.px}px`, bottom: `${-3 * z * m.px}px`, fontSize: `${TESTI.casella * z * m.px}px` });
 }
 
 /** Icona con il livello, senza cornice (pannelli di pausa e fine). */
@@ -418,7 +419,8 @@ function disponiIcona(el: HTMLElement, x: number, y: number, z: number, m: Misur
   posa(el, x, y, m);
   misura(el, 24, 24, z, m);
   misura(el.firstElementChild as HTMLElement, 24, 24, z, m);
-  (el.lastElementChild as HTMLElement).style.fontSize = `${8 * z * m.px}px`;
+  // nel pannello le icone sono ingrandite: il numero cresce meno, per non coprirle
+  (el.lastElementChild as HTMLElement).style.fontSize = `${Math.max(TESTI.casella, 7 * z) * m.px}px`;
 }
 
 export function tempo(s: number): string {

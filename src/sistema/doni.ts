@@ -9,7 +9,7 @@
 import type { Caso } from './caso';
 import type { Arsenale } from './armi';
 import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn } from './arte';
-import { INTERNI } from '../data/hud';
+import { INTERNI, TESTI } from '../data/hud';
 import { CARTE } from '../data/progressione';
 import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
@@ -142,7 +142,7 @@ export class Doni {
     if (!c || !r || !alto) return;
     this.radice.style.backgroundSize = `${4 * px}px ${4 * px}px`;
     // Rimescola si tocca su tutta l'altezza dei pulsanti più alti (il pulsante scuro è disegnato più basso)
-    const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, sotto = 14 * m.raddoppio, riga = Math.max(r.h, alto.h);
+    const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, sotto = (TESTI.cartaTasto + 4) * m.raddoppio, riga = Math.max(r.h, alto.h);
     const carte = [...this.elenco.children] as HTMLElement[], n = carte.length;
     const alta = m.H - b.a - b.b, larga = m.W - b.s - b.d;
     const zz = adattaZoom(ingr('carte', m), (k) => n * c.w * k + (n - 1) * 4 * k <= larga && titolo + c.h * k + sotto + 8 + riga * zt <= alta);
@@ -163,11 +163,11 @@ export class Doni {
         posa(ic, (ri.icona.x + ri.icona.l / 2) * zz - 12 * zi, (ri.icona.y + ri.icona.a / 2) * zz - 12 * zi, m);
         misura(ic, 24, 24, zi, m);
       }
-      scriviIn(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, 8, m);
-      scriviIn(el.querySelector('.doni-testo') as HTMLElement, ri.testo, zz, 7, m);
+      scriviIn(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, TESTI.cartaTitolo, m);
+      scriviIn(el.querySelector('.doni-testo') as HTMLElement, ri.testo, zz, TESTI.cartaTesto, m);
       const t = el.querySelector('.doni-tasto') as HTMLElement;
       posa(t, 0, c.h * zz + 2, m);
-      Object.assign(t.style, { width: `${c.w * zz * px}px`, fontSize: `${10 * m.raddoppio * px}px` });
+      Object.assign(t.style, { width: `${c.w * zz * px}px`, fontSize: `${TESTI.cartaTasto * m.raddoppio * px}px` });
     });
     y += c.h * zz + sotto + 8;
     posa(this.rimescola, Math.round(m.W / 2 - (r.w * zt) / 2), y, m);
@@ -176,7 +176,7 @@ export class Doni {
     misura(im, r.w, r.h, zt, m);
     im.style.top = `${su * px}px`;
     const rt = INTERNI.Pulsante_Scuro.testo;
-    scriviIn(this.rimescola.lastElementChild as HTMLElement, { ...rt, y: rt.y + Math.round((riga - r.h) / 2) }, zt, 11, m);
+    scriviIn(this.rimescola.lastElementChild as HTMLElement, { ...rt, y: rt.y + Math.round((riga - r.h) / 2) }, zt, TESTI.pulsante, m);
   }
 
   private chiudi(d: Dono): void {

@@ -65,9 +65,10 @@ export const ANELLI: Record<string, Cerchio & { esterno: number }> = {
 /** Zone interne delle cornici: dove vanno icone, testi e ritratti. */
 export const INTERNI: Record<string, Record<string, Riquadro>> = {
   Casella_Arma: { icona: { x: 11, y: 20, l: 40, a: 30 } },
-  Stemma_Livello: { numero: { x: 5, y: 9, l: 15, a: 17 } },
-  Carta_Dono: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 35, y: 32, l: 35, a: 11 }, testo: { x: 10, y: 60, l: 63, a: 40 } },
-  Carta_Dono_Scelta: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 35, y: 32, l: 35, a: 11 }, testo: { x: 10, y: 60, l: 63, a: 40 } },
+  Stemma_Livello: { numero: { x: 6, y: 10, l: 13, a: 14 } }, // l'interno scuro dello scudo, senza la punta
+  // il titolo sta nella parte piatta della targhetta marrone, un pixel dentro il bordo chiaro
+  Carta_Dono: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 37, y: 33, l: 31, a: 9 }, testo: { x: 12, y: 60, l: 59, a: 40 } },
+  Carta_Dono_Scelta: { icona: { x: 12, y: 29, l: 21, a: 17 }, titolo: { x: 37, y: 33, l: 31, a: 9 }, testo: { x: 12, y: 60, l: 59, a: 40 } },
   Pannello_Grande: {
     testo: { x: 16, y: 34, l: 143, a: 36 },
     casella1: { x: 25, y: 80, l: 25, a: 24 },
@@ -79,13 +80,33 @@ export const INTERNI: Record<string, Record<string, Riquadro>> = {
   Cornice_Il_Becchino: { ritratto: { x: 11, y: 30, l: 63, a: 96 } },
   Cornice_La_Badessa: { ritratto: { x: 10, y: 30, l: 63, a: 96 } },
   Cornice_La_Strega: { ritratto: { x: 9, y: 32, l: 70, a: 77 } },
-  Nastro_Titolo: { testo: { x: 22, y: 22, l: 78, a: 16 } },
+  Nastro_Titolo: { testo: { x: 29, y: 24, l: 64, a: 11 } }, // la fascia chiara e piatta del nastro, senza le pieghe
   Targa_Lapide: { testo: { x: 25, y: 30, l: 82, a: 22 } },
-  Pulsante_Chiaro: { testo: { x: 16, y: 5, l: 69, a: 13 } }, // la targhetta tra le due croci
-  Pulsante_Acceso: { testo: { x: 16, y: 5, l: 65, a: 13 } },
-  Pulsante_Scuro: { testo: { x: 16, y: 4, l: 66, a: 13 } },
-  Pulsante_Spento: { testo: { x: 16, y: 4, l: 66, a: 13 } },
+  // la parte piatta della targhetta tra le due croci, senza la cornice a quadretti
+  Pulsante_Chiaro: { testo: { x: 19, y: 7, l: 63, a: 9 } },
+  Pulsante_Acceso: { testo: { x: 19, y: 7, l: 59, a: 9 } },
+  Pulsante_Scuro: { testo: { x: 19, y: 6, l: 60, a: 9 } },
+  Pulsante_Spento: { testo: { x: 19, y: 6, l: 60, a: 9 } },
 };
+
+/**
+ * Grandezza dei testi, in pixel di gioco (si moltiplica per l'ingrandimento dell'elemento).
+ * Su un iPhone un pixel di gioco è circa 2/3 di punto: sotto i 12 un numero non si legge più.
+ * Se un testo non ci sta nel suo riquadro, il gioco lo rimpicciolisce da solo.
+ */
+export const TESTI = {
+  livello: 13, // numero nello stemma
+  casella: 12, // livello di un'arma o di un dono nella sua casella
+  avviso: 10, // scritta nel nastro (×2)
+  avvisoSotto: 8, // riga sotto il nastro (×2)
+  pulsante: 8, // scritte dei pulsanti (×3)
+  cartaTitolo: 7, // nome nella carta (×3)
+  cartaTesto: 7,
+  cartaTasto: 18, // il numero 1-2-3 sotto la carta
+};
+
+/** Caselle di armi e doni in partita: piccole, alla Vampire Survivors (la cornice grande sta nel pannello della pausa). */
+export const CASELLA = { lato: 28, bordo: 1, spazio: 2 }; // icona da 24 al centro
 
 /** Quante volte al secondo il segnale del reliquiario si accende e si spegne (come nel gioco). */
 export const LAMPEGGIO_SEGNALE = 3;

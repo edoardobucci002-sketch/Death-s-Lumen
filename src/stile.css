@@ -48,16 +48,20 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 .hud-icone, .hud-altre, .hud-pulsanti, .doni-carte { display: contents; }
 .hud-finestra { position: absolute; overflow: hidden; }
 .hud-orologio { text-align: center; font-family: var(--f-pixel); font-weight: 700; letter-spacing: 1px; color: var(--pergamena); text-shadow: 0 2px 0 #000; }
-.hud-livello-numero { position: absolute; display: grid; place-items: center; font-family: var(--f-pixel); font-weight: 700; color: var(--accento); text-shadow: 0 1px 0 #000; }
+.hud-livello-numero { position: absolute; display: grid; place-items: center; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 0 1px 0 #000; }
 .hud-anime { white-space: nowrap; font-family: var(--f-pixel); font-weight: 700; color: #9fe3dc; text-shadow: 0 2px 0 #000; }
 .hud-casella, .hud-icona, .hud-tasto { position: absolute; }
-.hud-lv { position: absolute; line-height: 1; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 0 1px 0 #000; }
+/* casella in partita: riquadro scuro con il bordo bronzo delle cornici di Edoardo (spessore messo dal codice) */
+.hud-casella { box-sizing: border-box; border: 0 solid #8a5a32; background: #1b1514; }
+.hud-casella > img { position: absolute; }
+/* contorno nero pieno (quattro ombre) per leggere il numero sopra icone e bordi */
+.hud-lv { position: absolute; line-height: 1; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px 0 #000; }
 .hud-icona .hud-lv { right: 0; bottom: 0; }
 .hud-avviso-testo, .hud-avviso-sotto, .hud-nastro h1, .hud-tasto span, .doni-titolo, .doni-rimescola span {
   position: absolute; margin: 0; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden;
 }
-.hud-avviso-testo { font-family: var(--f-titolo); color: #3a2414; }
-.hud-avviso-sotto { font-family: var(--f-pixel); font-weight: 500; color: var(--pergamena); text-shadow: 0 2px 0 #000; }
+.hud-avviso-testo { font-family: var(--f-titolo); color: #1e1008; }
+.hud-avviso-sotto { font-family: var(--f-pixel); font-weight: 500; color: var(--pergamena); text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 2px 0 #000; }
 #interfaccia .hud-pausa-tasto, .hud-tasto, .doni-carta, .doni-rimescola, .speciale { padding: 0; border: 0; background: none; cursor: pointer; }
 #interfaccia .hud-pausa-tasto { pointer-events: auto; }
 /* area di tocco un po' più grande del disegno: MARGINE_TOCCO in src/data/hud.ts */
@@ -73,10 +77,11 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 .hud-pannello-testo { position: absolute; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
 h1.hud-pannello-testo { font-family: var(--f-titolo); font-weight: 400; color: var(--accento); }
 p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: var(--f-testo); color: var(--pergamena); }
-.hud-nastro h1 { font-family: var(--f-titolo); font-weight: 400; color: #3a2414; }
+.hud-nastro h1 { font-family: var(--f-titolo); font-weight: 400; color: #1e1008; }
 .hud-tasto span, .doni-rimescola span { font-family: var(--f-titolo); color: var(--pergamena); }
 .hud-tasto[data-arte='Pulsante_Acceso'] span, .hud-tasto[data-arte='Pulsante_Chiaro'] span { color: #2a1a0c; }
-.hud-tasto:focus-visible, .doni-rimescola:focus-visible, .speciale:focus-visible, .hud-pausa-tasto:focus-visible { outline: 2px solid var(--accento); outline-offset: 2px; }
+/* pulsante scelto con la tastiera: si accende un po', senza il rettangolo del browser che stona con i disegni */
+.hud-tasto:focus-visible, .doni-rimescola:focus-visible, .speciale:focus-visible, .hud-pausa-tasto:focus-visible { outline: none; filter: brightness(1.25); }
 
 /* Scelta del dono (src/sistema/doni.ts) */
 #interfaccia > .doni { position: fixed; inset: 0; z-index: 3; background-repeat: repeat; image-rendering: pixelated; }
