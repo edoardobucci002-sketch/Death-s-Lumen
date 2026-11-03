@@ -352,7 +352,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 
 ## 8b. Fiaschetta e Grazia (M8, `src/data/sopravvivenza.ts`)
 
-- **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, il Mietitore riempie la fiaschetta. La fiala è disegnata dal codice (15×27 pixel, ingrandita il triplo dell'anello) finché Edoardo non disegna la sua.
+- **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, il Mietitore riempie la fiaschetta. La fiala è il disegno di Edoardo (HUD/Pulsanti/Fiaschetta_Lumen_V1, 45×74 pixel, 4 fotogrammi: piena, 2/3, 1/3, vuota), con lo stesso ingrandimento dell'anello dell'abilità e staccata da lui di 12 pixel disegnati.
 - **Grazia**: scatta uscendo da un cerchio rosso del Mietitore quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova.
 - Nella simulazione (3/11, 24 notti per personaggio) il bot beve 4–5,4 sorsi a notte e fa 1,5–3,3 schivate perfette.
 

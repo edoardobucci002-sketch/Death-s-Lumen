@@ -1,6 +1,6 @@
 {
   "versione": 1,
-  "esportato": "2026-11-03T10:24:05.014Z",
+  "esportato": "2026-11-03T14:33:28.135Z",
   "asset": [
     {
       "chiave": "Barra_Esperienza_Cornice",
@@ -136,6 +136,14 @@
       "immagine": "assets/hud/Emblema_La_Strega.png",
       "dati": "assets/hud/Emblema_La_Strega.json",
       "versioneFile": 2,
+      "tag": []
+    },
+    {
+      "chiave": "Fiaschetta_Lumen",
+      "categoria": "hud",
+      "immagine": "assets/hud/Fiaschetta_Lumen.png",
+      "dati": "assets/hud/Fiaschetta_Lumen.json",
+      "versioneFile": 1,
       "tag": []
     },
     {

@@ -14,22 +14,26 @@ export interface Arte {
   url: string;
   w: number; // pixel disegnati, tela intera di Aseprite
   h: number;
-  tela: HTMLCanvasElement;
+  tela: HTMLCanvasElement; // il primo fotogramma
+  fotogrammi: HTMLCanvasElement[]; // tutti, nell'ordine di Aseprite (per esempio la fiaschetta piena, 2/3, 1/3, vuota)
 }
 
 const arti = new Map<string, Arte>();
 
-/** Prepara il primo fotogramma di ogni sprite (già caricato da Phaser) come immagine intera, con i margini. */
+/** Prepara i fotogrammi di ogni sprite (già caricato da Phaser) come immagini intere, con i margini. */
 export function preparaArte(scena: Phaser.Scene, chiavi: string[]): void {
   for (const k of chiavi) {
     if (arti.has(k) || !scena.textures.exists(k)) continue;
-    const f = (scena.cache.json.get(k) as DatiAseprite).frames[0];
     const img = scena.textures.get(k).getSourceImage() as HTMLImageElement;
-    const c = document.createElement('canvas');
-    c.width = f.sourceSize.w;
-    c.height = f.sourceSize.h;
-    c.getContext('2d')!.drawImage(img, f.frame.x, f.frame.y, f.frame.w, f.frame.h, f.spriteSourceSize.x, f.spriteSourceSize.y, f.frame.w, f.frame.h);
-    arti.set(k, { url: c.toDataURL(), w: c.width, h: c.height, tela: c });
+    const fotogrammi = (scena.cache.json.get(k) as DatiAseprite).frames.map((f) => {
+      const c = document.createElement('canvas');
+      c.width = f.sourceSize.w;
+      c.height = f.sourceSize.h;
+      c.getContext('2d')!.drawImage(img, f.frame.x, f.frame.y, f.frame.w, f.frame.h, f.spriteSourceSize.x, f.spriteSourceSize.y, f.frame.w, f.frame.h);
+      return c;
+    });
+    const c = fotogrammi[0];
+    arti.set(k, { url: c.toDataURL(), w: c.width, h: c.height, tela: c, fotogrammi });
   }
 }
 
