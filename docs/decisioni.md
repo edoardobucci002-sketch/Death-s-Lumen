@@ -4,6 +4,7 @@ Una riga per decisione, la più recente in alto.
 
 | Data | Decisione | Motivo |
 | --- | --- | --- |
+| 2026-11-03 | Due link soli: `prova` → github.io/Death-s-Lumen/prova/ (personale, ogni modifica nuova), `main` → github.io/Death-s-Lumen/ (pubblico, solo ciò che Edoardo approva). Rami di tappa vecchi cancellati, un solo server sul Mac | Le modifiche erano sparse su quattro versioni (rami, una cartella nascosta, sette server) ed Edoardo non sapeva dove guardarle |
 | 2026-11-02 | Sprite in gioco dei personaggi alti circa **64 px**. Quando arrivano, lo schermo di gioco sale da 300 a circa 560 px (stessa proporzione della v0: personaggio ≈ 1/9 dell'altezza) e tutte le distanze del GDD si moltiplicano per lo stesso fattore | A 32-48 px lo stile dettagliato di Edoardo non rende; a 100 px anche nemici ed effetti andrebbero disegnati enormi |
 | 2026-11-02 | ~~Sprite in gioco a 32-48 px~~ (superata dalla riga sopra) | I primi ingame_V1 erano alti circa 100 px |
 | 2026-11-02 | Nomi degli sprite in gioco: `Nome_ingame_V#.aseprite`, nella cartella del personaggio accanto al ritratto `Nome_V#.aseprite` | Scelta di Edoardo (prima si era detto `_gioco`): i ritratti già fatti non vanno rinominati |
@@ -41,4 +42,5 @@ Una riga per decisione, la più recente in alto.
 - Gioco v0 (artifact su claude.ai): https://claude.ai/artifact/9BHhRBAgxo9sAnrc2kAGTj
 - Compendio v0 (documento su claude.ai): https://claude.ai/artifact/4uZiNBDLcxrwRCx1UF4aLU
 - Versione web della v0, dopo la rinomina: https://edoardobucci002-sketch.github.io/Death-s-Lumen-v0/www/
-- Versione web del nuovo gioco: https://edoardobucci002-sketch.github.io/Death-s-Lumen/
+- Versione web del nuovo gioco (pubblica, ramo `main`): https://edoardobucci002-sketch.github.io/Death-s-Lumen/
+- Versione di prova del nuovo gioco (personale, ramo `prova`): https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/
