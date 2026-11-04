@@ -52,7 +52,6 @@ Parti della M8 già fatte:
 
 - Nove commenti in `src/data/` rimandano a `docs/GDD_base.md`: il file ora è `docs/GDD.md`. Si aggiornano alla prossima modifica al codice.
 - Il commento in `src/data/nemici.ts` (riga 92) dice «0,04 × (m − 3)²»; il valore vero è 0,06.
-- Testi di gioco che dicono ancora «Mietitore»: la riga del livello 1 del Fuoco fatuo (`armi.ts`). L'unione è già «Falce di Seth» (4/11); l'identificatore interno `falceDelMietitore` e il nome dell'icona restano.
 - Il CSS usa ancora IM Fell English SC per alcuni titoli (`--f-titolo`: avviso, titolo della scelta dei doni, pannelli, nastri); i titoli decisi sono in Tiny5.
 - `@fontsource/pixelify-sans` è ancora tra le dipendenze (lo usa solo la bozza dell'HUD).
 - Disegnare gli asset elencati in [asset_da_creare.md](asset_da_creare.md).

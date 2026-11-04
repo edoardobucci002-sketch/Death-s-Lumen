@@ -223,7 +223,7 @@ export const FUOCO_FATUO: FuocoFatuo = {
   id: 'fuocoFatuo', nome: 'Fuoco fatuo', icona: 'Icona_Fuoco_fatuo', effetto: 'Fuoco_fatuo_Volo', respinta: 0,
   portata: 752, velocita: 470, vita: 3.2, raggio: 9, sterzo: 6,
   livelli: [
-    { ricarica: 1.3, quantita: 1, danno: 12, trapassa: 1, testo: 'Fuochi fatui che inseguono i nemici, prima élite e Mietitore.' },
+    { ricarica: 1.3, quantita: 1, danno: 12, trapassa: 1, testo: 'Fuochi fatui che inseguono i nemici, prima élite e capi.' },
     { ricarica: 1.3, quantita: 2, danno: 12, trapassa: 1, testo: '+1 fuoco.' },
     { ricarica: 1.3, quantita: 2, danno: 18, trapassa: 1, testo: '+6 danno.' },
     { ricarica: 1.3, quantita: 3, danno: 18, trapassa: 1, testo: '+1 fuoco.' },

@@ -196,7 +196,7 @@ Partono a raggiera e girano (fino a 6 radianti al secondo) verso il nemico più 
 
 | Lv | Ricarica (s) | Quantità | Danno | Trapassa | Cosa cambia |
 |---|---|---|---|---|---|
-| 1 | 1,3 | 1 | 12 | 1 | Fuochi fatui che inseguono i nemici, prima élite e Mietitore. |
+| 1 | 1,3 | 1 | 12 | 1 | Fuochi fatui che inseguono i nemici, prima élite e capi. |
 | 2 | 1,3 | 2 | 12 | 1 | +1 fuoco. |
 | 3 | 1,3 | 2 | 18 | 1 | +6 danno. |
 | 4 | 1,3 | 3 | 18 | 1 | +1 fuoco. |
