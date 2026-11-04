@@ -19,5 +19,9 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | Targa lapide, Scrigno, emblemi, anelli grigio/arancio | interfaccia | fuori dal gioco per ora |
 | Pulsante_Pericolo | «Abbandona» | provvisorio |
 | Paesaggio sotto la citazione della scheda | selezione | cielo con colline in CSS |
+| **La Cappella** (navata con i personaggi in piedi), **icona della Cera**, **9 icone dei ceri** | Cappella come hub (dopo i Patti) | schermata a elenco, senza disegni |
+| **5 icone dei Patti** (Falce, Silenzio, Folla, Buio, Ombra) | menu prima della notte (tappa 7) | da creare insieme al codice |
+| **Il Ceraiolo** (custode della Cappella) | guida, questline della fiaschetta | non esiste ancora |
+| **Suoni e musica veri** | tutto il gioco | suoni sintetizzati dal codice (`src/sistema/audio.ts`) |
 | Nemici V1 alla scala nuova | tutti i nemici | segnaposto V0 ×2 |
 | Effetti e icone delle armi alla scala nuova | armi | segnaposto V0 |

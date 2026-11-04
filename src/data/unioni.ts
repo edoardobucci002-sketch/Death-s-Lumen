@@ -33,7 +33,7 @@ export const UNIONI: Unione[] = [
   { id: 'incensiereUltimaOra', arma: 'turibolo', dono: 'erbeAmare', nome: "Incensiere dell'ultima ora", testo: 'Dentro le nubi recuperi 1 salute al secondo.' },
   { id: 'vergaDeiNomi', arma: 'bastone', dono: 'clessidra', nome: 'Verga dei nomi', testo: 'Ogni 5ª raffica colpisce tutti i nemici maledetti sullo schermo.' },
   { id: 'candelabroFunebre', arma: 'candela', dono: 'cuoreDiCera', nome: 'Candelabro funebre', testo: 'Le fiammelle lasciano una scia che brucia.' },
-  { id: 'falceDelMietitore', arma: 'falce', dono: 'saleNero', nome: 'Falce del Mietitore', testo: 'Uccide all\'istante i nemici normali sotto il 15% di salute.' },
+  { id: 'falceDelMietitore', arma: 'falce', dono: 'saleNero', nome: 'Falce di Seth', testo: 'Uccide all\'istante i nemici normali sotto il 15% di salute.' },
   { id: 'campanaAMorto', arma: 'campana', dono: 'ceraVotiva', nome: 'Campana a morto', testo: 'Ogni rintocco ferma i nemici per 0,8 s.' },
   { id: 'fuochiErranti', arma: 'fuocoFatuo', dono: 'calamita', nome: 'Fuochi erranti', testo: 'I fuochi raccolgono le anime che attraversano.' },
   { id: 'acquasantiera', arma: 'acquaSanta', dono: 'lacrimaDiLumen', nome: 'Acquasantiera', testo: 'Ogni 40 uccisioni nelle pozze torna un sorso di fiaschetta.' },
