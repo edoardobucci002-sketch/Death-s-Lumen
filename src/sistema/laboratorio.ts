@@ -48,17 +48,25 @@ function raccogli(): void {
   if (voci.length) return;
   for (const [modulo, esportati] of Object.entries(MODULI)) {
     for (const [nome, valore] of Object.entries(esportati)) {
-      if (typeof valore === 'object' && valore !== null) visita(valore as Nodo, modulo, nome, nome, 0, new Set());
+      if (typeof valore === 'object' && valore !== null) visita(valore as Nodo, modulo, nome, nome, nome, 0, new Set());
     }
   }
 }
 
-function visita(nodo: Nodo, modulo: string, gruppo: string, sotto: string, profondita: number, visti: Set<unknown>): void {
+/** Nelle liste, il nome dell'elemento al posto del numero di posizione («Cero della scelta» invece di «6»). */
+function nomeLeggibile(lista: Nodo, chiave: string, elemento: Nodo): string {
+  if (!Array.isArray(lista)) return chiave;
+  const nome = elemento.nome ?? elemento.id;
+  return typeof nome === 'string' ? nome : chiave;
+}
+
+/** percorso: la chiave con cui il numero si salva, da non cambiare; sotto: il nome che si legge nel pannello. */
+function visita(nodo: Nodo, modulo: string, gruppo: string, percorso: string, sotto: string, profondita: number, visti: Set<unknown>): void {
   if (profondita > 6 || visti.has(nodo)) return;
   visti.add(nodo);
   for (const [k, v] of Object.entries(nodo)) {
-    if (typeof v === 'number') voci.push({ percorso: `${modulo}.${sotto}.${k}`, modulo, gruppo, sotto: `${sotto}.${k}`, padre: nodo, chiave: k, originale: v });
-    else if (typeof v === 'object' && v !== null && !(v instanceof Element)) visita(v as Nodo, modulo, gruppo, `${sotto}.${k}`, profondita + 1, visti);
+    if (typeof v === 'number') voci.push({ percorso: `${modulo}.${percorso}.${k}`, modulo, gruppo, sotto: `${sotto}.${k}`, padre: nodo, chiave: k, originale: v });
+    else if (typeof v === 'object' && v !== null && !(v instanceof Element)) visita(v as Nodo, modulo, gruppo, `${percorso}.${k}`, `${sotto}.${nomeLeggibile(nodo, k, v as Nodo)}`, profondita + 1, visti);
   }
 }
 
@@ -281,7 +289,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     };
     const disegna = (): void => {
       const q = cerca.value.trim().toLowerCase();
-      const trovate = q ? voci.filter((v) => v.percorso.toLowerCase().includes(q)) : voci;
+      const trovate = q ? voci.filter((v) => v.percorso.toLowerCase().includes(q) || v.sotto.toLowerCase().includes(q)) : voci;
       const gruppi = new Map<string, Voce[]>();
       for (const v of trovate.slice(0, q ? 400 : 5000)) {
         const k = `${v.modulo} · ${v.gruppo}`;

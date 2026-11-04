@@ -44,7 +44,7 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ### 4/11 — Unioni (tappa 6)
 - Le unioni non aumentano i numeri dell'arma: danno solo l'effetto. Sblocco: 10 minuti o 500 Cera (*da rivedere*).
-- Simulazione: vuota 10/48 (21%), a metà 25/48 (52%), completa 25/48 (52%). Il bot arriva a un'unione possibile in 7 notti su 48 a Cappella completa (contando l'unione a fine notte).
+- Simulazione: vuota 10/48 (21%), a metà 25/48 (52%), completa 25/48 (52%). ~~Il bot arriva a un'unione possibile in 7 notti su 48 a Cappella completa (contando l'unione a fine notte).~~ Corretto il 4/11: a Cappella completa, su 48 notti, 31 finiscono con almeno un'arma unita (58 unioni fatte in tutto) e 7 con un'unione pronta ma non fatta (5 di queste senza nessuna arma unita); con una o con l'altra 36 notti su 48. Il vecchio «7» contava solo le unioni rimaste pronte. Le notti con un'arma unita sono 25 su 25 tra le vittorie e 6 su 23 tra le sconfitte: chi sopravvive più a lungo fa in tempo a unire, quindi questo non dice da solo quanto aiutano le unioni.
 
 ### 4/11 — Armi e doni nuovi (tappa 5)
 - Le armi nuove, troppo deboli nella prima versione, sono state rinforzate dalle simulazioni (danno, ricarica o area). Corvo: sblocco a 30000 anime invece di 5000 (il bot ne fa circa 25000 a notte). Velo funebre: 3 minuti in tutto dentro le nubi, non «senza uscire» (più facile da contare, meno punitivo).
