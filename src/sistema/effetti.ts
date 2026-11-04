@@ -41,7 +41,8 @@ export class Effetti {
   private numeroVita = new Float32Array(MAX_NUMERI);
   private numeroX = new Float32Array(MAX_NUMERI);
   private numeroY = new Float32Array(MAX_NUMERI);
-  private prossimoNumero = 0;
+  private numeroImportante = new Uint8Array(MAX_NUMERI); // 1 = danno forte, o su élite e Seth
+  private numeriAttivi = 0;
   private scoppi: Phaser.GameObjects.Sprite[] = [];
   private scoppioVita = new Float32Array(MAX_SCOPPI);
   private prossimoScoppio = 0;
@@ -86,17 +87,38 @@ export class Effetti {
     }
   }
 
-  /** Numero del danno che salta fuori da (x, y). */
-  numero(x: number, y: number, danno: number): void {
-    const i = this.prossimoNumero;
-    this.prossimoNumero = (i + 1) % MAX_NUMERI;
+  /** Numero del danno che salta fuori da (x, y), se è sullo schermo e c'è posto (suPesante: colpo su élite o Seth). */
+  numero(x: number, y: number, danno: number, suPesante: boolean): void {
+    const cam = this.scena.cameras.main;
+    if (x < cam.scrollX || x > cam.scrollX + cam.width || y < cam.scrollY || y > cam.scrollY + cam.height) return;
     const n = Math.max(1, Math.min(999, Math.round(danno)));
+    const importante = suPesante || n >= EFFETTI.numeri.forte;
+    const i = this.postoNumero(importante);
+    if (i < 0) return;
+    this.numeroImportante[i] = importante ? 1 : 0;
     this.numeroX[i] = x + (this.caso.numero() * 2 - 1) * EFFETTI.numeri.sparpaglio;
     this.numeroY[i] = y;
     this.numeroVita[i] = EFFETTI.numeri.durata;
     const t = this.numeri[i].setText(TESTI[n]).setVisible(true);
     if (n >= EFFETTI.numeri.forte) t.setTint(EFFETTI.numeri.coloreForte);
     else t.clearTint();
+  }
+
+  /** Un posto libero entro il limite; al limite un numero importante prende il posto del comune più vecchio; −1 se non c'è posto. */
+  private postoNumero(importante: boolean): number {
+    if (this.numeriAttivi < Math.min(EFFETTI.numeri.massimo, MAX_NUMERI)) {
+      for (let i = 0; i < MAX_NUMERI; i++) {
+        if (this.numeroVita[i] > 0) continue;
+        this.numeriAttivi++;
+        return i;
+      }
+    }
+    if (!importante) return -1;
+    let scelto = -1;
+    for (let i = 0; i < MAX_NUMERI; i++) {
+      if (this.numeroVita[i] > 0 && !this.numeroImportante[i] && (scelto < 0 || this.numeroVita[i] < this.numeroVita[scelto])) scelto = i;
+    }
+    return scelto;
   }
 
   /** Scoppio di un nemico che muore. */
@@ -156,6 +178,7 @@ export class Effetti {
       const t = this.numeri[i];
       if (this.numeroVita[i] <= 0) {
         t.setVisible(false);
+        this.numeriAttivi--;
         continue;
       }
       // sale in fretta e rallenta

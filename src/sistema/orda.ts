@@ -64,6 +64,7 @@ export class Orda {
   private lento = new Float32Array(CAPIENZA); // parte di velocità tolta (0,3 = −30%)
   private lentoPer = new Float32Array(CAPIENZA); // secondi rimasti di rallentamento
   private lampo = new Float32Array(CAPIENZA);
+  private pausaLampo = new Float32Array(CAPIENZA); // secondi prima che possa lampeggiare di nuovo
   readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
   readonly pausaNube = new Float32Array(CAPIENZA); // …una nube del Turibolo
   readonly pausaPozza = new Float32Array(CAPIENZA); // …una pozza dell'Acqua santa
@@ -111,7 +112,7 @@ export class Orda {
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
-  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
+  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo,
     this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY];
 
@@ -178,6 +179,7 @@ export class Orda {
       const d = Math.hypot(dx, dy);
       if (this.lentoPer[i] > 0) this.lentoPer[i] -= dt;
       if (this.lampo[i] > 0) this.lampo[i] -= dt;
+      if (this.pausaLampo[i] > 0) this.pausaLampo[i] -= dt;
       if (this.pausaFalce[i] > 0) this.pausaFalce[i] -= dt;
       if (this.pausaNube[i] > 0) this.pausaNube[i] -= dt;
       if (this.pausaPozza[i] > 0) this.pausaPozza[i] -= dt;
@@ -259,11 +261,14 @@ export class Orda {
     }
   }
 
-  /** Colpisce il nemico i: toglie salute, lo illumina e lo spinge nella direzione (dx, dy), lunga 1. */
-  colpisci(i: number, danno: number, respinta: number, dx: number, dy: number): void {
+  /** Colpisce il nemico i: toglie salute, lo illumina (se lampeggia e non l'ha fatto da poco) e lo spinge nella direzione (dx, dy), lunga 1. */
+  colpisci(i: number, danno: number, respinta: number, dx: number, dy: number, lampeggia = true): void {
     // abbagliato e interrato subiscono di più
     this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? REAZIONI.interramento.danno : 0));
-    this.lampo[i] = COLPI.lampoNemico;
+    if (lampeggia && this.pausaLampo[i] <= 0) {
+      this.lampo[i] = COLPI.lampoNemico;
+      this.pausaLampo[i] = COLPI.lampoNemicoPausa;
+    }
     if (respinta && this.tipo[i] !== ID_MIETITORE) {
       const r = respinta * (NEMICI[this.tipo[i]].pesante || this.elite[i] ? COLPI.respintaPesanti : 1);
       this.respintaX[i] = dx * r;
@@ -457,6 +462,7 @@ export class Orda {
     const ex = cam.scrollX + cam.width + margine;
     const ey = cam.scrollY + cam.height + margine * 2;
     this.simboli.inizio();
+    const chiaro = Math.round(255 * COLPI.lampoNemicoPesanti) * 0x010101; // grigio da aggiungere ai pesanti colpiti
     for (let i = 0; i < this.numero; i++) {
       const s = this.sprite[i];
       const x = Math.round(this.x[i]);
@@ -465,7 +471,10 @@ export class Orda {
       s.setVisible(visibile);
       if (!visibile) continue;
       s.setPosition(x, y).setDepth(y).setFlipX(this.versoSinistra[i] === 1);
-      if (this.lampo[i] > 0 || (this.fase[i] === 1 && Math.floor(this.faseTempo[i] * 10) % 2 === 0)) {
+      if (this.lampo[i] > 0 && (this.elite[i] || this.tipo[i] === ID_MIETITORE || NEMICI[this.tipo[i]].pesante)) {
+        // bruti, élite e Seth colpiti si schiariscono e basta: la sagoma resta visibile
+        s.setTint(chiaro).setTintMode(Phaser.TintModes.ADD);
+      } else if (this.lampo[i] > 0 || (this.fase[i] === 1 && Math.floor(this.faseTempo[i] * 10) % 2 === 0)) {
         // colpito: bianco; il Mietitore che sta per scattare pulsa di rosso
         s.setTint(this.lampo[i] > 0 ? 0xffffff : 0xc2412d).setTintMode(Phaser.TintModes.FILL);
       } else if (this.elite[i]) {
@@ -497,7 +506,7 @@ export class Orda {
     this.fianco[i] = (this.caso.numero() < 0.5 ? -1 : 1) * (IA.accerchia.angolo[0] + this.caso.numero() * (IA.accerchia.angolo[1] - IA.accerchia.angolo[0]));
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
-    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
+    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
     this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = 0;
     this.ultimoStato[i] = this.rivelato[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);

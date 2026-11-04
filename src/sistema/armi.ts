@@ -214,6 +214,7 @@ export class Arsenale {
   private cAff = 0; // affinità del colpo in corso
   private cProb: number = STATI.probabilita; // probabilità di lasciare lo stato
   private cFerma = 0; // secondi per cui il colpo in corso ferma i nemici (secondo rintocco)
+  private cLampo = true; // il colpo in corso fa lampeggiare i nemici? (no per chi ferisce a intervalli, come il Velo)
   // coda delle reazioni e delle esplosioni, eseguite alla fine del passo
   private code = 0;
   private qTipo = new Uint8Array(MAX_CODA);
@@ -519,6 +520,7 @@ export class Arsenale {
         this.prepara(0, this.px, this.py, this.raggioVelo, l.danno, 0);
         this.cAff = SACRO;
         this.cProb = RUOLI.veloConsacra;
+        this.cLampo = false;
         this.orda.griglia.nelRaggio(this.cx, this.cy, this.raggioVelo + 40, this.visitaColpo);
         return l.ricarica;
       }
@@ -679,16 +681,16 @@ export class Arsenale {
     return this.bonus.critico && this.casoStati.numero() < this.bonus.critico ? d * MOLTIPLICA_CRITICO : d;
   }
 
-  /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno. */
-  private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita): void {
+  /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno; lampeggia = false per le zone e le aure. */
+  private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true): void {
     const o = this.orda;
     const danno = this.danno(base);
-    o.colpisci(j, danno, respinta, dx, dy);
+    o.colpisci(j, danno, respinta, dx, dy, lampeggia);
     const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
     if (r) this.accoda(r, j, 0);
     this.dannoTotale += danno;
     suona('colpo');
-    this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
+    this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno, o.elite[j] === 1 || o.tipo[j] === ID_MIETITORE);
   }
 
   // ——— Colpi istantanei ———
@@ -816,6 +818,7 @@ export class Arsenale {
     this.cAff = 0;
     this.cProb = STATI.probabilita;
     this.cFerma = 0;
+    this.cLampo = true;
     this.colpo++;
     this.toccati = 0;
   }
@@ -851,7 +854,7 @@ export class Arsenale {
     o.segno[j] = this.colpo;
     this.toccati++;
     const aff = this.cAff, ferma = this.cFerma;
-    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff, this.cProb);
+    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff, this.cProb, this.cLampo);
     if (ferma) o.ferma(j, ferma);
   }
 
@@ -952,7 +955,7 @@ export class Arsenale {
       pausa[j] = this.zIntervallo[i] - 0.01;
     }
     o.segno[j] = this.colpo;
-    this.ferisci(j, this.zDanno[i], 0, 0, 0, this.zAff[i], STATI.probabilitaZone);
+    this.ferisci(j, this.zDanno[i], 0, 0, 0, this.zAff[i], STATI.probabilitaZone, false);
     if (this.zTipo[i] === POZZA && this.unite.acquaSanta && o.salute[j] <= 0 && ++this.uccisiPozze >= U.acquasantiera.uccisioni) {
       this.uccisiPozze = 0;
       this.sorsiGuadagnati++;

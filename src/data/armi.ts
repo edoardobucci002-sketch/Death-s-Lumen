@@ -330,7 +330,10 @@ export const COLPI = {
   casoMassimo: 1.08,
   attrito: 8, // quanto in fretta si ferma la respinta (più alto = si ferma prima)
   respintaPesanti: 0.25, // bruti ed élite subiscono un quarto della respinta
-  lampoNemico: 0.1, // secondi in cui il nemico colpito si illumina di bianco
+  // lampo del nemico colpito (solo da vedere). Valori da rivedere: proposti da Claude, da provare a mano
+  lampoNemico: 0.033, // secondi in cui il nemico colpito si illumina: 2 passi di gioco
+  lampoNemicoPausa: 0.3, // al massimo un lampo ogni tanti secondi per nemico: un colpo che arriva prima non lo fa ripartire
+  lampoNemicoPesanti: 0.5, // bruti, élite e Seth non diventano bianchi: si schiariscono di questa parte (0 = niente, 1 = tutto bianco)
   corpo: 36, // le armi partono da qui, sopra i piedi del personaggio
   // nubi del Turibolo e pozze dell'Acqua santa non si sommano: un nemico subisce una nube e una pozza alla volta
   // (M8: con 11 nubi attive il Turibolo arrivava a 550 danni al secondo sul Mietitore)

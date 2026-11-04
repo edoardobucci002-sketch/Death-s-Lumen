@@ -686,7 +686,9 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Raggio del giocatore', '{} px', CB.raggioGiocatore],
     ['Respinta', 'attrito {} al secondo', CO.attrito],
     ['Respinta', 'la subiscono a {p}', CO.respintaPesanti],
-    ['Lampo del nemico', '{} s', CO.lampoNemico],
+    ['Lampo del nemico', '{} s (2 passi', CO.lampoNemico],
+    ['Lampo del nemico', 'un lampo ogni {} s', CO.lampoNemicoPausa],
+    ['Lampo del nemico', 'si schiariscono del {}%', pct(CO.lampoNemicoPesanti)],
     ['Punto da cui partono', '{} px', CO.corpo],
     ['Salute bassa', 'sotto il {}%', pct(CB.saluteBassa)],
   ];
@@ -697,6 +699,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 
 {
   frase('Numeri del danno', 'numeri del danno (in ambra se {} o più)', E.EFFETTI.numeri.forte);
+  frase('Limite dei numeri del danno', 'al massimo {} numeri del danno sullo schermo', E.EFFETTI.numeri.massimo);
 
   const mondo = tabella('### Mondo, luce e comandi');
   const LU = W.LUCE, TE = W.TERRENO, JO = W.JOYSTICK;

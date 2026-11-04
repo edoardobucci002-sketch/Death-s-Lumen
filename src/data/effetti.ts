@@ -8,7 +8,8 @@ export const EFFETTI = {
     salita: 22, // di quanto sale
     sparpaglio: 8, // spostamento a caso a destra o a sinistra, per non sovrapporli
     ingrandimento: 2, // le cifre sono 3×5 pixel: si disegnano grandi il doppio
-    forte: 40, // da questo danno in su il numero è ambra
+    forte: 40, // da questo danno in su il numero è ambra, e ha la precedenza quando si è al limite
+    massimo: 15, // numeri sullo schermo nello stesso momento: oltre non se ne creano (da rivedere; al massimo 64)
     coloreForte: 0xe3913a,
   },
   scoppio: {

@@ -38,6 +38,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 4/11 — Lampo dei nemici e numeri del danno (solo visivo)
+
+`lampoNemico` da 0,1 a 0,033 s; nuovi `lampoNemicoPausa` 0,3 s, `lampoNemicoPesanti` 0,5 (in `COLPI`, `data/armi.ts`) e `numeri.massimo` 15 (`data/effetti.ts`), tutti *da rivedere*. Nessun numero di gioco cambia. Prova: `npm run sim -- 3 tutti` prima e dopo, stessi semi: 12 notti, 1251 valori confrontati, 0 differenze.
+
 ### 4/11 — Numeri spostati dalla logica ai dati (nessun valore cambiato)
 - In `src/data/` ora ci sono: potenziamenti del reliquiario (`DROP.reliquiario`: 1 o 3, caso raro 25%), reliquiari dell'élite (`ELITE.reliquiari`), amuleti offerti con un'unione (`ROSARIO.proposteConUnione`), rimescolate del Cero della scelta (`per` e `ogniLivelli`). Si cambiano dal Laboratorio.
 - Simulazione prima e dopo, stessi semi (`npm run sim -- 3 tutti`, più `meta=max` per provare anche Rosario e unioni): 24 partite su 24 identiche in ogni campo di `prove/sim.json`. Cappella vuota 3 vittorie su 12, completa 6 su 12; 12 partite per condizione sono solo un confronto, non una misura. Le rimescolate il bot non le usa: i valori ai livelli 1–5 restano 1, 1, 2, 2, 3.
