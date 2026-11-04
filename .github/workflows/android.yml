@@ -1,8 +1,10 @@
-# Compila l'APK Android a ogni push su main (o a mano: Actions → APK Android → Run workflow).
+# Compila l'APK Android a ogni push su main, tranne quelli che toccano solo docs/ (o a mano: Actions → APK Android → Run workflow).
 name: APK Android
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch: {}
 jobs:
   apk:
