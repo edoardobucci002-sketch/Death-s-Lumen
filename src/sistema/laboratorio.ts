@@ -16,7 +16,7 @@ import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
 import { PASSIVI } from '../data/doni';
 import { AMULETI } from '../data/rosario';
 import { PERSONAGGI } from '../data/personaggi';
-import { CERI } from '../data/meta';
+import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
 import { carica, salva } from './salvataggio';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
@@ -231,6 +231,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
       titolo('Scelte'),
       riga(tasto('Scelta del dono', scegli((x) => x.labSceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
+      riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.labOggetti(true)))),
       titolo('Stati sui nemici vicini (due diversi = reazione)'),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.labStatoVicini(a))))),
       el('p', 'lab-nota', 'Per vederli lascia il gioco in corso (scheda Partita) e premi uno stato, poi un altro.'),
@@ -367,6 +368,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(
         tasto('Sblocca tutti i personaggi', () => { const x = carica(); x.sbloccati = PERSONAGGI.map((q) => q.id); salva(x); ridisegna(); }),
         tasto('Sblocca il Rosario', () => { const x = carica(); x.rosario = true; salva(x); ridisegna(); }),
+        tasto('Sblocca armi e doni nuovi', () => { const x = carica(); x.oggetti = SBLOCCHI_OGGETTI.map((o) => o.id); salva(x); ridisegna(); }),
         tasto('Seconda candela', () => { const x = carica(); x.secondaCandela = true; x.secondaCandelaSpenta = false; salva(x); ridisegna(); }),
       ),
       titolo('Ceri votivi'),

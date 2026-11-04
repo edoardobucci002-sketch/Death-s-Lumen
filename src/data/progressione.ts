@@ -34,5 +34,7 @@ export const CARTE = {
   donoPosseduto: 1.2,
   donoNuovo: 0.9,
   livelloMassimo: 8,
+  // armi e doni nuovi non devono diluire i potenziamenti: i loro pesi si dividono come se fossero sempre 6 armi comuni e 9 doni
+  pool: { armi: 6, doni: 9 },
   paneEVino: 40, // salute, quando non resta nulla da potenziare
 } as const;

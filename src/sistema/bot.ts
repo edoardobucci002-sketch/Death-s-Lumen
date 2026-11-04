@@ -185,7 +185,7 @@ export class Bot {
       if (d.tipo === 'arma') {
         if (d.arma === this.armaIniziale) v = BOT.carte.armaIniziale;
         else if (d.livello > 1) v = BOT.carte.armaPosseduta;
-        else v = armi < Math.min(BOT.massimoArmi, MAX_ARMI) ? BOT.carte.armaNuova : -1;
+        else v = armi < Math.min(BOT.massimoArmi, MAX_ARMI) ? BOT.carte.armaNuova * (BOT.armiPreferite[d.arma.id] ?? 1) : -1;
       } else if (d.tipo === 'passivo') {
         v = (d.livello > 1 ? BOT.carte.passivoPosseduto : BOT.carte.passivoNuovo) * BOT.passiviPreferiti[d.passivo.id];
       } else {

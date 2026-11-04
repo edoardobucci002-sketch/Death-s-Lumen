@@ -13,6 +13,7 @@ const C = FIASCHETTA.colori;
 
 export class Fiaschetta {
   sorsi: number = FIASCHETTA.sorsi;
+  massimo: number = FIASCHETTA.sorsi; // la Lacrima di lumen lo alza
   private curaRimasta = 0; // secondi di cura ancora in corso
   private pulsante: HTMLButtonElement;
   private tela: HTMLCanvasElement;
@@ -68,7 +69,7 @@ export class Fiaschetta {
 
   /** Aggiunge sorsi (élite), senza superare il massimo. */
   ricarica(n: number): void {
-    this.sorsi = Math.min(FIASCHETTA.sorsi, this.sorsi + n);
+    this.sorsi = Math.min(this.massimo, this.sorsi + n);
     this.disegna();
   }
 
@@ -87,7 +88,7 @@ export class Fiaschetta {
     g.clearRect(0, 0, this.tela.width, this.tela.height);
     const d = this.disegno;
     if (d) {
-      g.drawImage(d.fotogrammi[Math.min(d.fotogrammi.length - 1, FIASCHETTA.sorsi - this.sorsi)], 0, 0);
+      g.drawImage(d.fotogrammi[Math.min(d.fotogrammi.length - 1, this.massimo - this.sorsi)], 0, 0);
       return;
     }
     // riserva: collo, pancia rotonda, lumen fino all'altezza dei sorsi rimasti, tacche sotto
@@ -96,7 +97,7 @@ export class Fiaschetta {
       const dx = (x + 0.5 - 7.5) / 6.5, dy = (y + 0.5 - 15) / 7.5;
       return y >= 7 && y <= 22 && dx * dx + dy * dy <= 1;
     };
-    const livello = 21 - (this.sorsi / FIASCHETTA.sorsi) * 13; // riga da cui comincia il lumen
+    const livello = 21 - (this.sorsi / this.massimo) * 13; // riga da cui comincia il lumen
     for (let y = 0; y < 23; y++) {
       for (let x = 0; x < L; x++) {
         if (!dentro(x, y)) continue;
@@ -105,7 +106,7 @@ export class Fiaschetta {
         g.fillRect(x, y, 1, 1);
       }
     }
-    for (let k = 0; k < FIASCHETTA.sorsi; k++) {
+    for (let k = 0; k < Math.min(3, this.massimo); k++) {
       const x = 1 + k * 5;
       g.fillStyle = C.bordo;
       g.fillRect(x - 1, 23, 5, 4);

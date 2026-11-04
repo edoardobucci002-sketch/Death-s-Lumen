@@ -3,7 +3,7 @@
  * livello per livello e da spegnere a piacere, la Seconda candela, il conto dell'ultima veglia
  * e il codice di salvataggio da copiare o da incollare. Si apre dal menu; ogni acquisto si salva subito.
  */
-import { CERI, COSTI_CERO, SBLOCCO_ROSARIO, SECONDA_CANDELA, type IdCero } from '../data/meta';
+import { CERI, COSTI_CERO, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SECONDA_CANDELA, type IdCero } from '../data/meta';
 import { carica, codice, daCodice, salva, type Salvataggio } from './salvataggio';
 
 export class Cappella {
@@ -64,6 +64,17 @@ export class Cappella {
             ${s.rosario ? '<span class="cero-pieno">Sbloccato</span>' : `<button type="button" data-compra-rosario ${s.cera < sr.cera ? 'disabled' : ''}>Sblocca · ${sr.cera} Cera</button>`}
           </div>
         </li>`;
+    const oggetti = SBLOCCHI_OGGETTI.map((o) => {
+      const preso = s.oggetti.includes(o.id);
+      const come = o.impresa && o.cera ? `Impresa: ${o.impresa.toLowerCase()}, oppure con la Cera.` : o.impresa ? `Impresa: ${o.impresa.toLowerCase()}.` : 'Si sblocca con la Cera.';
+      return `<li class="cero">
+          <div class="cero-testo"><h3>${o.nome} · ${o.tipo === 'arma' ? 'arma' : 'dono'}</h3><p>${o.testo}${preso ? '' : ` ${come}`}</p></div>
+          <span class="cero-livelli" aria-label="${preso ? 'Sbloccato' : 'Bloccato'}">${preso ? '<b></b>' : '<b class="vuota"></b>'}</span>
+          <div class="cero-azioni">
+            ${preso ? '<span class="cero-pieno">Sbloccato</span>' : o.cera ? `<button type="button" data-compra-oggetto="${o.id}" ${s.cera < o.cera ? 'disabled' : ''}>Sblocca · ${o.cera} Cera</button>` : '<span class="cero-pieno">Da conquistare</span>'}
+          </div>
+        </li>`;
+    }).join('');
     this.radice.innerHTML = `
       <header class="cappella-testa">
         <h2>La Cappella</h2>
@@ -74,6 +85,7 @@ export class Cappella {
       ${u ? `<section class="cappella-veglia"><h3>Ultima veglia: +${u.totale} Cera</h3><ul>${u.voci.map((v) => `<li><span>${v.nome}</span><span>+${v.cera}</span></li>`).join('')}</ul>${u.sbloccato ? `<p>Sbloccato: ${u.sbloccato}</p>` : ''}</section>` : ''}
       <ul class="cappella-ceri">${ceri}
         ${rosario}
+        ${oggetti}
         <li class="cero${s.secondaCandelaSpenta ? ' spento' : ''}">
           <div class="cero-testo"><h3>Seconda candela</h3><p>Una volta per veglia, a salute zero ti rialzi con il ${Math.round(sc.salute * 100)}% della salute.</p></div>
           <span class="cero-livelli" aria-label="${s.secondaCandela ? 'Accesa' : 'Spenta'}">${s.secondaCandela ? '<b></b>' : '<b class="vuota"></b>'}</span>
@@ -124,6 +136,12 @@ export class Cappella {
       if (s.cera < SBLOCCO_ROSARIO.cera) return;
       s.cera -= SBLOCCO_ROSARIO.cera;
       s.rosario = true;
+      this.salvaECambia();
+    } else if (b.dataset.compraOggetto) {
+      const o = SBLOCCHI_OGGETTI.find((x) => x.id === b.dataset.compraOggetto);
+      if (!o?.cera || s.cera < o.cera || s.oggetti.includes(o.id)) return;
+      s.cera -= o.cera;
+      s.oggetti.push(o.id);
       this.salvaECambia();
     } else if ('compraCandela' in b.dataset) {
       if (s.cera < SECONDA_CANDELA.costo) return;

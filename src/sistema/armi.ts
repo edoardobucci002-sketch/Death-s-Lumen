@@ -3,7 +3,8 @@
  * - colpi istantanei: Lanterna (arco), Pala e Campana (cerchio), Lama di luce (fendente);
  * - proiettili: Bastone e Candela (verso il nemico più vicino), Fuoco fatuo (lo insegue);
  * - zone che feriscono a intervalli: nubi del Turibolo, pozze dell'Acqua santa, abilità speciali;
- * - lame che girano intorno al personaggio: Falce.
+ * - lame che girano intorno al personaggio: Falce;
+ * - Lapide (cade dall'alto), Rosario spezzato (grano che rimbalza), Corvo (vola e becca), Velo funebre (aura).
  * Ogni arma ha un'affinità (data/stati.ts): colpendo lascia uno stato; quando due stati fanno una reazione,
  * la reazione va in coda e si esegue alla fine del passo (esplosioni, fiammelle), fuori dalle ricerche nella griglia.
  * Proiettili, zone, coda ed effetti sono pool preparati all'inizio: niente allocazioni durante la partita.
@@ -19,8 +20,10 @@ import { PROFONDITA, type Effetti } from './effetti';
 import { EFFETTI } from '../data/effetti';
 import type { Abilita } from '../data/abilita';
 import {
-  BASTONE, CAMPANA, CANDELA, COLPI, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, PALA, TURIBOLO, type Arma,
+  BASTONE, CAMPANA, CANDELA, COLPI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
 } from '../data/armi';
+import { MOLTIPLICA_CRITICO } from '../data/doni';
+import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_VELO } from './segnaposto-oggetti';
 
 const NUBE = 1;
 const POZZA = 2;
@@ -33,6 +36,10 @@ const MAX_ZONE = 32;
 const MAX_PROIETTILI = 96;
 const MAX_LAME = 8;
 const MAX_RITARDATI = 8;
+const MAX_LAPIDI = 8;
+const MAX_GRANI = 6;
+const MAX_RIMBALZI = 12; // un grano ricorda fino a tanti nemici già colpiti
+const MAX_CORVI = 5;
 // i proiettili della v0 attraversano la tela nei loro fotogrammi: si usa l'ultimo, con l'origine sulla punta
 const PROIETTILI_V0: Record<string, { fotogramma: string; x: number; y: number }> = {
   [BASTONE.effetto]: { fotogramma: '3', x: 88, y: 64 },
@@ -51,12 +58,16 @@ export interface Bonus {
   ricarica: number; // moltiplica le attese: 0,9 = −10%
   area: number; // 0,15 = raggi +15%
   quantita: number; // proiettili, nubi, fiale, fuochi, falci in più (Specchio)
+  durata: number; // 0,15 = zone +15% (Cera votiva)
+  critico: number; // 0,06 = 6% di colpi critici (Chiodo di bara)
 }
 
 export class Arsenale {
   readonly possedute: Posseduta[] = [];
   dannoTotale = 0; // per il riepilogo di fine partita
   reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)
+  eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
+  richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
   private attesa: number[] = [];
   private scena: Phaser.Scene;
   private orda: Orda;
@@ -121,6 +132,39 @@ export class Arsenale {
   private dannoRaffica = 0;
   private trapassaRaffica = 0;
 
+  // lapidi che cadono
+  private lapidi = 0;
+  private lpX = new Float32Array(MAX_LAPIDI);
+  private lpY = new Float32Array(MAX_LAPIDI);
+  private lpR = new Float32Array(MAX_LAPIDI);
+  private lpDanno = new Float32Array(MAX_LAPIDI);
+  private lpVita = new Float32Array(MAX_LAPIDI);
+  private lpCaduta = new Uint8Array(MAX_LAPIDI); // 1 = deve ancora toccare terra
+  private lpCampi = [this.lpX, this.lpY, this.lpR, this.lpDanno, this.lpVita];
+  private lpSprite: Phaser.GameObjects.Sprite[] = [];
+
+  // grani del Rosario spezzato
+  private grani = 0;
+  private grX = new Float32Array(MAX_GRANI);
+  private grY = new Float32Array(MAX_GRANI);
+  private grResto = new Uint8Array(MAX_GRANI);
+  private grTempo = new Float32Array(MAX_GRANI);
+  private grDanno = new Float32Array(MAX_GRANI);
+  private grColpiti = new Uint32Array(MAX_GRANI * MAX_RIMBALZI);
+  private grSprite: Phaser.GameObjects.Sprite[] = [];
+
+  // corvi e aura del Velo
+  private corvi = 0;
+  private angoloCorvi = 0;
+  private cvX = new Float32Array(MAX_CORVI);
+  private cvY = new Float32Array(MAX_CORVI);
+  private cvMX = new Float32Array(MAX_CORVI); // dove sta beccando
+  private cvMY = new Float32Array(MAX_CORVI);
+  private cvMira = new Float32Array(MAX_CORVI); // secondi in cui resta sul bersaglio
+  private cvSprite: Phaser.GameObjects.Sprite[] = [];
+  private velo!: Phaser.GameObjects.Image;
+  private raggioVelo = 0;
+
   // falci
   private angoloFalci = 0;
   private falceCresce = 0; // lama più lunga dopo le uccisioni (0,1 = +10%)
@@ -152,6 +196,7 @@ export class Arsenale {
   private cY1 = 0;
   private cZona = 0;
   private cAff = 0; // affinità del colpo in corso
+  private cProb: number = STATI.probabilita; // probabilità di lasciare lo stato
   private cFerma = 0; // secondi per cui il colpo in corso ferma i nemici (secondo rintocco)
   // coda delle reazioni e delle esplosioni, eseguite alla fine del passo
   private code = 0;
@@ -170,6 +215,7 @@ export class Arsenale {
   private visitaProiettile = (j: number): void => this.toccaProiettile(j);
   private visitaFalce = (j: number): void => this.toccaFalce(j);
   private visitaVicino = (j: number): void => this.vicino(j);
+  private visitaGrano = (j: number): void => this.vicinoGrano(j);
   private scelti = new Int32Array(8); // bersagli già presi dalla raffica di candele
 
   constructor(scena: Phaser.Scene, orda: Orda, caso: Caso, bonus: Bonus, effetti: Effetti) {
@@ -184,6 +230,11 @@ export class Arsenale {
     this.scalaLama = ingrandimento(scena, FALCE.lama);
     for (let i = 0; i < MAX_LAME; i++) this.lame.push(scena.add.sprite(0, 0, FALCE.lama).setScale(this.scalaLama).setVisible(false).setDepth(PROFONDITA.sopra));
     for (let i = 0; i < MAX_RITARDATI; i++) this.rtArma.push(PALA);
+    creaSpriteOggetti(scena);
+    for (let i = 0; i < MAX_LAPIDI; i++) this.lpSprite.push(scena.add.sprite(0, 0, SPRITE_LAPIDE).setOrigin(0.5, 1).setScale(LAPIDE.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
+    for (let i = 0; i < MAX_GRANI; i++) this.grSprite.push(scena.add.sprite(0, 0, SPRITE_GRANO).setDepth(PROFONDITA.sopra).setVisible(false));
+    for (let i = 0; i < MAX_CORVI; i++) this.cvSprite.push(scena.add.sprite(0, 0, SPRITE_CORVO).setScale(CORVO.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
+    this.velo = scena.add.image(0, 0, SPRITE_VELO).setDepth(PROFONDITA.aTerra).setVisible(false);
   }
 
   aggiungi(arma: Arma): void {
@@ -224,6 +275,9 @@ export class Arsenale {
     this.aggiornaFalci(dt);
     this.aggiornaZone(dt);
     this.aggiornaProiettili(dt);
+    this.aggiornaLapidi(dt);
+    this.aggiornaGrani(dt);
+    this.aggiornaCorvi(dt);
     this.eseguiCoda();
     if (this.falceDura > 0 && (this.falceDura -= dt) <= 0) this.falceCresce = 0;
     for (let i = 0; i < MAX_EFFETTI; i++) {
@@ -269,12 +323,29 @@ export class Arsenale {
     return c;
   }
 
+  /** Secondi che il personaggio passa dentro le nubi del Turibolo: 1 se è dentro una nube adesso (impresa del Velo funebre). */
+  dentroNube(): boolean {
+    for (let i = 0; i < this.zone; i++) {
+      if (this.zTipo[i] !== NUBE) continue;
+      const dx = this.px - this.zX[i], dy = this.py - this.zY[i];
+      if (dx * dx + dy * dy <= this.zR[i] * this.zR[i]) return true;
+    }
+    return false;
+  }
+
   /** Disegna ciò che si muove; gli effetti istantanei restano dove sono nati. Posizioni arrotondate al pixel. */
   disegna(): void {
     for (let i = 0; i < this.zone; i++) this.zSprite[i].setPosition(Math.round(this.zX[i]), Math.round(this.zY[i]));
     for (let i = 0; i < this.proiettili; i++) {
       this.prSprite[i].setPosition(Math.round(this.prX[i]), Math.round(this.prY[i])).setRotation(Math.atan2(this.prVY[i], this.prVX[i]));
     }
+    for (let i = 0; i < this.lapidi; i++) {
+      const sale = this.lpCaduta[i] ? (LAPIDE.altezza * (this.lpVita[i] - LAPIDE.resta)) / LAPIDE.caduta : 0;
+      this.lpSprite[i].setPosition(Math.round(this.lpX[i]), Math.round(this.lpY[i] - sale));
+    }
+    for (let i = 0; i < this.grani; i++) this.grSprite[i].setPosition(Math.round(this.grX[i]), Math.round(this.grY[i]));
+    for (let i = 0; i < this.corvi; i++) this.cvSprite[i].setPosition(Math.round(this.cvX[i]), Math.round(this.cvY[i]));
+    if (this.raggioVelo) this.velo.setPosition(Math.round(this.px), Math.round(this.py)).setScale(this.raggioVelo / RAGGIO_VELO).setVisible(true);
   }
 
   /** Fa partire il colpo di un'arma; restituisce la ricarica del suo livello. */
@@ -360,13 +431,196 @@ export class Arsenale {
         for (let k = 0; k < n; k++) this.lancia(a.effetto, -1, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2, OMBRA);
         return l.ricarica;
       }
+      case 'lapide': {
+        const l = a.livelli[p.livello - 1];
+        const n = Math.min(l.quantita + piu, this.scelti.length);
+        for (let k = 0; k < n; k++) {
+          const j = this.piuForte(k);
+          if (j < 0) break;
+          this.scelti[k] = j;
+          this.lapideCade(this.orda.x[j], this.orda.y[j], l.raggio * area, l.danno);
+        }
+        return l.ricarica;
+      }
+      case 'rosarioSpezzato': {
+        const l = a.livelli[p.livello - 1];
+        const n = Math.min(l.quantita + piu, this.scelti.length);
+        for (let k = 0; k < n; k++) {
+          const j = this.piuVicino(a.portata, k);
+          if (j < 0) break;
+          this.scelti[k] = j;
+          this.lanciaGrano(j, l.danno, l.rimbalzi);
+        }
+        return l.ricarica;
+      }
+      case 'corvo': {
+        const l = a.livelli[p.livello - 1];
+        const o = this.orda;
+        this.corvi = Math.min(l.quantita + piu, MAX_CORVI, this.scelti.length);
+        for (let k = 0; k < this.corvi; k++) {
+          const j = this.piuVicino(a.portata, k);
+          if (j < 0) break;
+          this.scelti[k] = j;
+          this.cvMX[k] = o.x[j];
+          this.cvMY[k] = o.y[j] - o.raggio[j];
+          this.cvMira[k] = 0.18;
+          this.ferisci(j, l.danno, 0, 0, 0, LUCE);
+        }
+        this.richiami += l.anime;
+        return l.ricarica;
+      }
+      case 'veloFunebre': {
+        const l = a.livelli[p.livello - 1];
+        this.raggioVelo = l.raggio * area;
+        this.prepara(0, this.px, this.py, this.raggioVelo, l.danno, 0);
+        this.cAff = SACRO;
+        this.cProb = RUOLI.veloConsacra;
+        this.orda.griglia.nelRaggio(this.cx, this.cy, this.raggioVelo + 40, this.visitaColpo);
+        return l.ricarica;
+      }
       case 'falce':
         return 1;
     }
   }
 
+  /** Il nemico sullo schermo con più salute, saltando i primi «salta» già scelti. */
+  private piuForte(salta: number): number {
+    const o = this.orda;
+    let migliore = -1;
+    let massima = 0;
+    for (let j = 0; j < o.numero; j++) {
+      if (o.salute[j] <= massima || Math.abs(o.x[j] - this.px) > this.mezzaL || Math.abs(o.y[j] - this.py) > this.mezzaA) continue;
+      let preso = false;
+      for (let k = 0; k < salta; k++) if (this.scelti[k] === j) preso = true;
+      if (preso) continue;
+      massima = o.salute[j];
+      migliore = j;
+    }
+    return migliore;
+  }
+
+  // ——— Lapide ———
+  private lapideCade(x: number, y: number, raggio: number, danno: number): void {
+    if (this.lapidi >= MAX_LAPIDI) return;
+    const i = this.lapidi++;
+    this.lpX[i] = x;
+    this.lpY[i] = y;
+    this.lpR[i] = raggio;
+    this.lpDanno[i] = danno;
+    this.lpVita[i] = LAPIDE.caduta + LAPIDE.resta;
+    this.lpCaduta[i] = 1;
+    this.lpSprite[i].setVisible(true);
+  }
+
+  private aggiornaLapidi(dt: number): void {
+    for (let i = this.lapidi - 1; i >= 0; i--) {
+      this.lpVita[i] -= dt;
+      if (this.lpCaduta[i] && this.lpVita[i] <= LAPIDE.resta) {
+        this.lpCaduta[i] = 0;
+        this.prepara(0, this.lpX[i], this.lpY[i], this.lpR[i], this.lpDanno[i], 0);
+        this.cAff = TERRA;
+        this.cProb = RUOLI.lapideSeppellisce;
+        this.orda.griglia.nelRaggio(this.cx, this.cy, this.lpR[i] + 40, this.visitaColpo);
+        this.effetto(LAPIDE.effetto, this.cx, this.cy, this.lpR[i], PROFONDITA.aTerra, EFFETTI.impattoPala);
+        if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
+      }
+      if (this.lpVita[i] > 0) continue;
+      const u = --this.lapidi, s = this.lpSprite[i];
+      s.setVisible(false);
+      for (const a of this.lpCampi) a[i] = a[u];
+      this.lpCaduta[i] = this.lpCaduta[u];
+      this.lpSprite[i] = this.lpSprite[u];
+      this.lpSprite[u] = s;
+    }
+  }
+
+  // ——— Rosario spezzato ———
+  private lanciaGrano(j: number, danno: number, rimbalzi: number): void {
+    if (this.grani >= MAX_GRANI) return;
+    const i = this.grani++;
+    this.grColpiti.fill(0, i * MAX_RIMBALZI, (i + 1) * MAX_RIMBALZI);
+    this.grResto[i] = Math.min(rimbalzi, MAX_RIMBALZI);
+    this.grDanno[i] = danno;
+    this.grSprite[i].setVisible(true);
+    this.rimbalza(i, j);
+  }
+
+  /** Il grano i colpisce il nemico j e ci si posa sopra. */
+  private rimbalza(i: number, j: number): void {
+    const o = this.orda;
+    this.grX[i] = o.x[j];
+    this.grY[i] = o.y[j] - o.raggio[j];
+    this.grColpiti[i * MAX_RIMBALZI + this.grResto[i] - 1] = o.id[j];
+    this.grResto[i]--;
+    this.grTempo[i] = ROSARIO_SPEZZATO.intervallo;
+    this.ferisci(j, this.grDanno[i], 0, 0, 0, OMBRA, RUOLI.rosarioMaledice);
+  }
+
+  private aggiornaGrani(dt: number): void {
+    for (let i = this.grani - 1; i >= 0; i--) {
+      this.grTempo[i] -= dt;
+      if (this.grTempo[i] > 0) continue;
+      let j = -1;
+      if (this.grResto[i] > 0) {
+        this.cProiettile = i;
+        this.cMigliore = -1;
+        this.cDistanza = ROSARIO_SPEZZATO.salto * ROSARIO_SPEZZATO.salto;
+        this.cx = this.grX[i];
+        this.cy = this.grY[i];
+        this.orda.griglia.nelRaggio(this.cx, this.cy, ROSARIO_SPEZZATO.salto, this.visitaGrano);
+        j = this.cMigliore;
+      }
+      if (j >= 0) {
+        this.rimbalza(i, j);
+        continue;
+      }
+      const u = --this.grani, s = this.grSprite[i];
+      s.setVisible(false);
+      this.grX[i] = this.grX[u];
+      this.grY[i] = this.grY[u];
+      this.grResto[i] = this.grResto[u];
+      this.grTempo[i] = this.grTempo[u];
+      this.grDanno[i] = this.grDanno[u];
+      this.grColpiti.copyWithin(i * MAX_RIMBALZI, u * MAX_RIMBALZI, (u + 1) * MAX_RIMBALZI);
+      this.grSprite[i] = this.grSprite[u];
+      this.grSprite[u] = s;
+    }
+  }
+
+  private vicinoGrano(j: number): void {
+    const o = this.orda, i = this.cProiettile;
+    if (o.salute[j] <= 0) return;
+    for (let k = 0; k < MAX_RIMBALZI; k++) if (this.grColpiti[i * MAX_RIMBALZI + k] === o.id[j]) return;
+    const ex = o.x[j] - this.cx, ey = o.y[j] - o.raggio[j] - this.cy, d2 = ex * ex + ey * ey;
+    if (d2 < this.cDistanza) {
+      this.cDistanza = d2;
+      this.cMigliore = j;
+    }
+  }
+
+  // ——— Corvo ———
+  private aggiornaCorvi(dt: number): void {
+    if (!this.corvi) return;
+    this.angoloCorvi = (this.angoloCorvi + CORVO.giri * Math.PI * 2 * dt) % (Math.PI * 2);
+    for (let k = 0; k < this.corvi; k++) {
+      let mx = this.cvMX[k], my = this.cvMY[k];
+      if (this.cvMira[k] > 0) this.cvMira[k] -= dt;
+      else {
+        const ang = this.angoloCorvi + (k / this.corvi) * Math.PI * 2;
+        mx = this.px + Math.cos(ang) * CORVO.orbita;
+        my = this.py + Math.sin(ang) * CORVO.orbita;
+      }
+      const dx = mx - this.cvX[k], dy = my - this.cvY[k], d = Math.hypot(dx, dy) || 1, passo = Math.min(d, CORVO.velocita * dt);
+      this.cvX[k] += (dx / d) * passo;
+      this.cvY[k] += (dy / d) * passo;
+      if (Math.abs(dx) > 1) this.cvSprite[k].setFlipX(dx < 0);
+      this.cvSprite[k].setVisible(true);
+    }
+  }
+
   private danno(base: number): number {
-    return base * (1 + this.bonus.danno) * (COLPI.casoMinimo + this.caso.numero() * (COLPI.casoMassimo - COLPI.casoMinimo));
+    const d = base * (1 + this.bonus.danno) * (COLPI.casoMinimo + this.caso.numero() * (COLPI.casoMassimo - COLPI.casoMinimo));
+    return this.bonus.critico && this.casoStati.numero() < this.bonus.critico ? d * MOLTIPLICA_CRITICO : d;
   }
 
   /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno. */
@@ -417,6 +671,7 @@ export class Arsenale {
         this.prepara(0, x, y, r, this.qDanno[k], 0);
         if (t === ESPLOSIONE) o.segno[j] = this.colpo; // il dardo l'ha già colpito
         this.orda.griglia.nelRaggio(x, y, r + 40, this.visitaColpo);
+        if (t === ECLISSI) this.eclissi++;
         if (t === ECLISSI) this.effetti.reazione(x, y, r, REAZIONI.eclissi.colore, REAZIONI.eclissi.bordo, REAZIONI.durataEffetto);
       } else if (t === ESORCISMO) {
         const e = REAZIONI.esorcismo;
@@ -498,6 +753,7 @@ export class Arsenale {
     this.cDanno = danno;
     this.cRespinta = respinta;
     this.cAff = 0;
+    this.cProb = STATI.probabilita;
     this.cFerma = 0;
     this.colpo++;
     this.toccati = 0;
@@ -534,7 +790,7 @@ export class Arsenale {
     o.segno[j] = this.colpo;
     this.toccati++;
     const aff = this.cAff, ferma = this.cFerma;
-    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff);
+    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff, this.cProb);
     if (ferma) o.ferma(j, ferma);
   }
 
@@ -574,7 +830,7 @@ export class Arsenale {
     this.zY[i] = y;
     this.zR[i] = raggio;
     this.zDanno[i] = danno;
-    this.zVita[i] = durata;
+    this.zVita[i] = durata * (1 + this.bonus.durata);
     this.zIntervallo[i] = intervallo;
     this.zTick[i] = 0;
     this.zRallenta[i] = rallenta;

@@ -264,6 +264,17 @@ Fendente orizzontale alto 103 px verso il lato in cui guardi; il colpo alle spal
 
 M8: danni +10% (erano 7, 7, 10, 10, 10, 14, 14, 19), per compensare le pozze che non si sommano. Con +30% era presente in tutte le notti vinte dal bot.
 
+### Armi nuove (tappa 5, M8)
+
+Si trovano tra le armi comuni, ma solo dopo averle sbloccate (sezione 8d). I numeri sono in `src/data/armi.ts`; la prima versione era troppo debole e dalle simulazioni sono state rinforzate (danno, ricarica o area).
+
+| Arma | Affinità | Cosa fa | Livello 1 | Livello 8 |
+| --- | --- | --- | --- | --- |
+| Lapide | Terra | cade sul nemico con più salute in vista; chi è sotto resta sempre Sepolto | 120 danni, ogni 3,2 s, raggio 84 | 260 danni, 2 lapidi, ogni 2,4 s, raggio 110 |
+| Rosario spezzato | Ombra | un grano rimbalza tra i nemici vicini (entro 190 px); 35% di maledire a ogni rimbalzo | 18 danni, 4 rimbalzi, ogni 1,6 s | 40 danni, 8 rimbalzi, 2 grani, ogni 1,2 s |
+| Corvo | Luce | vola intorno, becca il nemico più vicino (entro 330 px) e fa tornare le anime ferme più lontane | 26 danni, 1 corvo, ogni 1 s, 1 anima | 44 danni, 3 corvi, ogni 0,75 s, 4 anime |
+| Velo funebre | Sacro | aura intorno al personaggio; 20% di consacrare a ogni colpo | 7 danni, raggio 110, ogni 0,5 s | 21 danni, raggio 160, ogni 0,4 s |
+
 ## 5. Doni passivi
 
 Al massimo 6 doni passivi diversi.
@@ -279,6 +290,12 @@ Al massimo 6 doni passivi diversi.
 | Erbe amare | +0,25 salute al secondo | 5 |
 | Scudo di ferro | −6% danno subito (M8; prima +1 armatura) | 4 |
 | Specchio | +1 proiettile, nube, fiala, fuoco o falce | 1 (2 fino alla M8) |
+| Cera votiva | +15% durata di zone e stati | 5 |
+| Chiodo di bara | +6% probabilità di colpo critico (danno doppio) | 5 |
+| Lacrima di lumen | +1 sorso della fiaschetta (si riempie anche quel sorso) | 2 |
+| Campanella d'argento | +0,1 s di finestra per la schivata perfetta | 2 |
+
+Gli oggetti nuovi non diluiscono i potenziamenti: il peso delle armi e dei doni non ancora presi si divide come se fossero sempre 6 e 9 (`CARTE.pool`, `src/data/progressione.ts`).
 
 ## 6. Nemici
 
@@ -403,6 +420,22 @@ Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è 
 - Il cero della fiaschetta della proposta non c'è: aspetta la questline della fiaschetta.
 - **Personaggi**: si parte con il solo Lampionaio. Becchino: sopravvivi 5 minuti, oppure 200 Cera. Badessa: sconfiggi Seth, oppure 400 Cera. Strega: arriva all'alba, oppure 700 Cera. Le imprese valgono con qualsiasi personaggio.
 - **Salvataggio** sul dispositivo (chiave `dl-salvataggio`, con numero di versione) e **codice di salvataggio** nella Cappella (testo che comincia con `DL1-`, da copiare e incollare: copia di sicurezza e passaggio tra link e app). Caricare un codice chiede conferma.
+- **Armi e doni nuovi** (tappa 5, `SBLOCCHI_OGGETTI` in `src/data/meta.ts`; le imprese si contano veglia per veglia). Cera votiva: libera da subito.
+
+| Oggetto | Si sblocca |
+| --- | --- |
+| Lapide | sconfiggi Seth con il Becchino |
+| Rosario spezzato | fai 10 Eclissi in una veglia |
+| Corvo | raccogli 30000 anime in una veglia (la proposta diceva 5000, ma il bot ne fa circa 25000 a notte) |
+| Velo funebre | resta 3 minuti in tutto dentro le tue nubi in una veglia (la proposta diceva «senza uscire»: più semplice da contare e meno punitivo) |
+| Campanella d'argento | fai 20 schivate perfette in una veglia, oppure 120 Cera |
+| Chiodo di bara | 120 Cera |
+| Lacrima di lumen | 120 Cera |
+
+- **Simulazione tappa 5** (4/11, 12 notti per personaggio; a metà Cappella 4 sblocchi su 7, completa tutti; il bot ha preferenze anche sulle armi): vuota 10 su 48 (21%, obiettivo 5–15%: sopra, ma il solo Lampionaio, che è l'unico disponibile all'inizio, vince 1 su 12), a metà 18 su 48 (37,5%, obiettivo 30–45%), completa 23 su 48 (48%, obiettivo 60–75%: sotto). La distanza tra Cappella vuota e completa è ancora troppo piccola.
+
+Le «reliquie dimenticate» della proposta (oggetti trovati in partita e pagati dopo) sono state semplificate: si sblocca tutto dalla Cappella.
+
 - **Simulazione** (3/11, 12 notti per personaggio): Cappella a metà (livello 3 di ogni cero) il bot vince 20 notti su 48 (42%, obiettivo 30–45%); completa 24 su 48 (50%, obiettivo 60–75%, un po' sotto); vuota 9 su 96. Il bot porta a casa circa 150 Cera a notte con la Cappella vuota e 230–300 con la Cappella piena.
 
 

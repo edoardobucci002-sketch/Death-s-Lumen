@@ -41,6 +41,7 @@ export class Doni {
     private caso: Caso,
     private rosario: () => { usati: number; totale: number },
     private legenda: () => void,
+    private disponibile: (id: string) => boolean, // armi e doni nuovi: solo se sbloccati nella Cappella
   ) {
     creaStrisce();
     this.radice = document.createElement('div');
@@ -111,6 +112,9 @@ export class Doni {
   private estrai(): void {
     // possibili doni con il loro peso
     const possibili: { dono: Dono; peso: number }[] = [];
+    // sbloccare oggetti aggiunge varietà, non toglie potenziamenti: il peso degli oggetti nuovi si divide tra tutti quelli disponibili
+    const fattoreArmi = CARTE.pool.armi / ARMI_COMUNI.filter((a) => this.disponibile(a.id)).length;
+    const fattoreDoni = CARTE.pool.doni / PASSIVI.filter((q) => this.disponibile(q.id)).length;
     for (const p of this.arsenale.possedute) {
       if (p.livello >= CARTE.livelloMassimo) continue;
       possibili.push({
@@ -119,13 +123,13 @@ export class Doni {
       });
     }
     if (this.arsenale.possedute.length < MAX_ARMI) {
-      for (const a of ARMI_COMUNI) if (!this.arsenale.livello(a)) possibili.push({ dono: { tipo: 'arma', arma: a, livello: 1 }, peso: CARTE.armaNuova });
+      for (const a of ARMI_COMUNI) if (!this.arsenale.livello(a) && this.disponibile(a.id)) possibili.push({ dono: { tipo: 'arma', arma: a, livello: 1 }, peso: CARTE.armaNuova * fattoreArmi });
     }
     const posseduti = PASSIVI.filter((q) => this.passivi[q.id] > 0).length;
     for (const q of PASSIVI) {
       const l = this.passivi[q.id];
-      if (l >= q.massimo || (!l && posseduti >= MAX_PASSIVI)) continue;
-      possibili.push({ dono: { tipo: 'passivo', passivo: q, livello: l + 1 }, peso: l ? CARTE.donoPosseduto : CARTE.donoNuovo });
+      if (l >= q.massimo || (!l && (posseduti >= MAX_PASSIVI || !this.disponibile(q.id)))) continue;
+      possibili.push({ dono: { tipo: 'passivo', passivo: q, livello: l + 1 }, peso: l ? CARTE.donoPosseduto : CARTE.donoNuovo * fattoreDoni });
     }
     this.carte = [];
     while (this.carte.length < CARTE.quante && possibili.length) {

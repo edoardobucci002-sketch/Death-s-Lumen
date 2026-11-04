@@ -56,6 +56,8 @@ export const CAMPI_ARMA: Record<string, { nome: string; unita?: string; meglioBa
   durata: { nome: 'Durata', unita: ' s' },
   trapassa: { nome: 'Trapassa' },
   giri: { nome: 'Giri' },
+  rimbalzi: { nome: 'Rimbalzi' },
+  anime: { nome: 'Anime' },
 };
 
 /** Il dato principale di ogni dono passivo a un dato livello. */
@@ -71,6 +73,10 @@ export const DATI_DONI: Record<IdDono, (q: Passivo, l: number) => { nome: string
   erbeAmare: (q, l) => [{ nome: 'Salute/s', valore: `+${virgola(q.per * l)}` }],
   scudoDiFerro: (q, l) => [{ nome: 'Danno subito', valore: meno(q.per * l) }],
   specchio: (q, l) => [{ nome: 'Quantità', valore: `+${q.per * l}` }],
+  ceraVotiva: (q, l) => [{ nome: 'Durata', valore: piu(q.per * l) }],
+  chiodoDiBara: (q, l) => [{ nome: 'Critico', valore: percento(q.per * l) }],
+  lacrimaDiLumen: (q, l) => [{ nome: 'Sorsi', valore: `+${q.per * l}` }],
+  campanellaDArgento: (q, l) => [{ nome: 'Schivata', valore: `+${virgola(q.per * l)} s` }],
 };
 
 /** Che cosa fa ogni dono, in parole: i numeri stanno già nei dati grandi. */
@@ -84,6 +90,10 @@ export const SPIEGA_DONI: Record<IdDono, string> = {
   erbeAmare: 'Ti curi da solo, piano piano.',
   scudoDiFerro: 'Ogni colpo pesa meno.',
   specchio: '+1 proiettile, nube, fiala, fuoco o falce.',
+  ceraVotiva: 'Nubi, pozze, abilità e stati durano di più.',
+  chiodoDiBara: 'Ogni colpo può fare il doppio del danno.',
+  lacrimaDiLumen: 'Una fiaschetta più capiente, subito piena di un sorso.',
+  campanellaDArgento: 'Più tempo per la Grazia: uscire dai cerchi rossi all\'ultimo istante è più facile.',
 };
 
 export const AFFINITA_TUTTE = Object.keys(INFO_AFFINITA) as IdAffinita[];

@@ -54,6 +54,23 @@ export class Anime {
     for (let i = 0; i < this.numero; i++) if (!this.volo[i]) this.volo[i] = ANIME.volo;
   }
 
+  /** Corvo: le n anime ferme più lontane dal personaggio volano verso di lui. */
+  richiama(n: number, gx: number, gy: number): void {
+    for (let k = 0; k < n; k++) {
+      let scelta = -1, d2max = -1;
+      for (let i = 0; i < this.numero; i++) {
+        if (this.volo[i]) continue;
+        const dx = this.x[i] - gx, dy = this.y[i] - gy, d2 = dx * dx + dy * dy;
+        if (d2 > d2max) {
+          d2max = d2;
+          scelta = i;
+        }
+      }
+      if (scelta < 0) return;
+      this.volo[scelta] = ANIME.volo;
+    }
+  }
+
   /** Muove le anime verso il personaggio (gx, gy) e restituisce quante ne ha raccolte in questo passo. */
   aggiorna(dt: number, gx: number, gy: number, raccolta: number): number {
     let raccolte = 0;

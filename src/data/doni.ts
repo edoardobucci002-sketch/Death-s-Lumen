@@ -2,7 +2,7 @@
  * Doni passivi: si scelgono tra le carte a ogni livello e migliorano il personaggio e tutte le armi.
  * Valori dal GDD (docs/GDD_base.md, sezione 5). Ogni modifica qui va riportata anche nel GDD.
  */
-export type IdDono = 'cuoreDiCera' | 'saleNero' | 'clessidra' | 'stoppinoLungo' | 'aliDiFalena' | 'calamita' | 'erbeAmare' | 'scudoDiFerro' | 'specchio';
+export type IdDono = 'cuoreDiCera' | 'saleNero' | 'clessidra' | 'stoppinoLungo' | 'aliDiFalena' | 'calamita' | 'erbeAmare' | 'scudoDiFerro' | 'specchio' | 'ceraVotiva' | 'chiodoDiBara' | 'lacrimaDiLumen' | 'campanellaDArgento';
 
 export interface Passivo {
   id: IdDono;
@@ -24,7 +24,12 @@ export const PASSIVI: Passivo[] = [
   { id: 'erbeAmare', nome: 'Erbe amare', icona: 'Icona_Erbe_amare', massimo: 5, per: 0.25, testo: '+0,25 salute al secondo.' },
   { id: 'scudoDiFerro', nome: 'Scudo di ferro', icona: 'Icona_Scudo_di_ferro', massimo: 4, per: 0.06, testo: '−6% danno subito.' },
   { id: 'specchio', nome: 'Specchio', icona: 'Icona_Specchio', massimo: 1, per: 1, testo: '+1 proiettile, nube, fiala, fuoco o falce.' },
+  { id: 'ceraVotiva', nome: 'Cera votiva', icona: 'Icona_Cera_votiva', massimo: 5, per: 0.15, testo: '+15% durata di zone e stati.' },
+  { id: 'chiodoDiBara', nome: 'Chiodo di bara', icona: 'Icona_Chiodo_di_bara', massimo: 5, per: 0.06, testo: '+6% probabilità di colpo critico (danno doppio).' },
+  { id: 'lacrimaDiLumen', nome: 'Lacrima di lumen', icona: 'Icona_Lacrima_di_lumen', massimo: 2, per: 1, testo: '+1 sorso della fiaschetta.' },
+  { id: 'campanellaDArgento', nome: "Campanella d'argento", icona: 'Icona_Campanella_d_argento', massimo: 2, per: 0.1, testo: '+0,1 s di tempo per la schivata perfetta.' },
 ];
 
 export const MAX_PASSIVI = 6;
+export const MOLTIPLICA_CRITICO = 2; // un colpo critico (Chiodo di bara) fa il doppio del danno
 export const RICARICA_MINIMA = 0.4; // la Clessidra non scende sotto il 40% della ricarica base

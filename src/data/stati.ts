@@ -15,6 +15,7 @@ export const AFFINITA_ARMI: Record<IdArma, IdAffinita> = {
   turibolo: 'sacro', acquaSanta: 'sacro', campana: 'sacro',
   bastone: 'ombra', fuocoFatuo: 'ombra', falce: 'ombra',
   pala: 'terra',
+  lapide: 'terra', rosarioSpezzato: 'ombra', corvo: 'luce', veloFunebre: 'sacro',
 };
 export const AFFINITA_ABILITA: Record<IdAbilita, IdAffinita> = {
   cerchioDiLuce: 'luce', benedizione: 'sacro', ritoProibito: 'ombra', sepoltura: 'terra',
@@ -58,4 +59,7 @@ export const RUOLI = {
   fuocoFatuoPreda: 0.25, // il fuoco fatuo vede élite e Mietitore 4 volte più vicini di quanto sono: li insegue per primi
   falceCrescita: { perUccisione: 0.02, massimo: 0.3, durata: 5 }, // ogni uccisione allunga la lama del 2% per 5 s
   campanaFermo: 0.6, // il secondo rintocco ferma i nemici per 0,6 s
+  lapideSeppellisce: 1, // probabilità di lasciare Sepolto a chi è sotto la lapide
+  rosarioMaledice: 0.35, // probabilità di maledire a ogni rimbalzo
+  veloConsacra: 0.2, // probabilità di consacrare a ogni colpo dell'aura
 } as const;

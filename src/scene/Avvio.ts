@@ -6,6 +6,7 @@
 import Phaser from 'phaser';
 import { preparaArte } from '../sistema/arte';
 import { creaIconeAmuleti } from '../sistema/amuleti';
+import { creaIconeOggetti } from '../sistema/segnaposto-oggetti';
 import { caricaScritte } from '../sistema/scritte';
 import type { ElencoAsset } from '../sistema/asset';
 
@@ -53,6 +54,7 @@ export class Avvio extends Phaser.Scene {
     const hud = this.cache.json.get('elencoHud') as ElencoAsset;
     preparaArte(this, [...hud.asset.map((a) => a.chiave), ...elenco.asset.filter((a) => a.categoria === 'icone').map((a) => a.chiave)]);
     creaIconeAmuleti();
+    creaIconeOggetti();
     // le scritte a pixel si disegnano su tela: prima serve il carattere caricato
     void caricaScritte().then(() => this.scene.start(new URLSearchParams(location.search).has('pg') ? 'Gioco' : 'Menu'));
   }

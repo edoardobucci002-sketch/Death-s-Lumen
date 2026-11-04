@@ -3,7 +3,7 @@
  * con distanze e velocità della v0 × 2,35. Ogni modifica qui va riportata anche nel GDD.
  * «testo» è la riga mostrata sulla carta quando l'arma sale a quel livello.
  */
-export type IdArma = 'lanterna' | 'pala' | 'turibolo' | 'bastone' | 'candela' | 'falce' | 'campana' | 'fuocoFatuo' | 'acquaSanta' | 'lamaDiLuce';
+export type IdArma = 'lanterna' | 'pala' | 'turibolo' | 'bastone' | 'candela' | 'falce' | 'campana' | 'fuocoFatuo' | 'acquaSanta' | 'lamaDiLuce' | 'lapide' | 'rosarioSpezzato' | 'corvo' | 'veloFunebre';
 
 interface Comune {
   nome: string;
@@ -83,7 +83,39 @@ export interface LamaDiLuce extends Comune {
   durataEffetto: number;
   livelli: { ricarica: number; danno: number; lunghezza: number; spalle: boolean; testo: string }[];
 }
-export type Arma = Lanterna | Pala | Turibolo | Bastone | Candela | Falce | Campana | FuocoFatuo | AcquaSanta | LamaDiLuce;
+/** Cade sul nemico con più salute in vista. */
+export interface Lapide extends Comune {
+  id: 'lapide';
+  caduta: number; // secondi di caduta prima del colpo
+  resta: number; // secondi a terra dopo il colpo
+  altezza: number; // da quanti pixel cade
+  ingrandimento: number; // dello sprite
+  livelli: { ricarica: number; danno: number; raggio: number; quantita: number; testo: string }[];
+}
+/** Un grano rimbalza di nemico in nemico. */
+export interface RosarioSpezzato extends Comune {
+  id: 'rosarioSpezzato';
+  portata: number; // primo bersaglio entro questa distanza
+  salto: number; // il grano rimbalza su nemici entro questa distanza
+  intervallo: number; // secondi tra un rimbalzo e l'altro
+  livelli: { ricarica: number; danno: number; rimbalzi: number; quantita: number; testo: string }[];
+}
+/** Vola intorno, becca il nemico più vicino e richiama le anime più lontane. */
+export interface Corvo extends Comune {
+  id: 'corvo';
+  portata: number;
+  orbita: number; // distanza dal personaggio
+  giri: number; // giri al secondo
+  velocita: number; // del volo
+  ingrandimento: number;
+  livelli: { ricarica: number; danno: number; quantita: number; anime: number; testo: string }[];
+}
+/** Aura intorno al personaggio. */
+export interface VeloFunebre extends Comune {
+  id: 'veloFunebre';
+  livelli: { ricarica: number; danno: number; raggio: number; testo: string }[];
+}
+export type Arma = Lanterna | Pala | Turibolo | Bastone | Candela | Falce | Campana | FuocoFatuo | AcquaSanta | LamaDiLuce | Lapide | RosarioSpezzato | Corvo | VeloFunebre;
 
 export const LANTERNA: Lanterna = {
   id: 'lanterna', nome: 'Lanterna', icona: 'Icona_Lanterna', effetto: 'Lanterna_Arco', respinta: 259,
@@ -231,9 +263,65 @@ export const LAMA_DI_LUCE: LamaDiLuce = {
   ],
 };
 
+export const LAPIDE: Lapide = {
+  id: 'lapide', nome: 'Lapide', icona: 'Icona_Lapide', effetto: 'Pala_Impatto', respinta: 0, caduta: 0.2, resta: 0.5, altezza: 180, ingrandimento: 3,
+  livelli: [
+    { ricarica: 3.2, danno: 120, raggio: 84, quantita: 1, testo: 'Cade sul nemico con più salute in vista e lo seppellisce.' },
+    { ricarica: 3.2, danno: 150, raggio: 84, quantita: 1, testo: '+30 danno.' },
+    { ricarica: 3.2, danno: 150, raggio: 96, quantita: 1, testo: 'Impatto più largo.' },
+    { ricarica: 2.8, danno: 150, raggio: 96, quantita: 1, testo: 'Cade più spesso.' },
+    { ricarica: 2.8, danno: 190, raggio: 96, quantita: 1, testo: '+40 danno.' },
+    { ricarica: 2.8, danno: 190, raggio: 96, quantita: 2, testo: '+1 lapide.' },
+    { ricarica: 2.4, danno: 190, raggio: 110, quantita: 2, testo: 'Cade più spesso, impatto più largo.' },
+    { ricarica: 2.4, danno: 260, raggio: 110, quantita: 2, testo: '+70 danno.' },
+  ],
+};
+
+export const ROSARIO_SPEZZATO: RosarioSpezzato = {
+  id: 'rosarioSpezzato', nome: 'Rosario spezzato', icona: 'Icona_Rosario_spezzato', effetto: 'Bastone_Proiettile', respinta: 0, portata: 420, salto: 190, intervallo: 0.09,
+  livelli: [
+    { ricarica: 1.6, danno: 18, rimbalzi: 4, quantita: 1, testo: 'Un grano rimbalza tra i nemici vicini e li maledice.' },
+    { ricarica: 1.6, danno: 23, rimbalzi: 4, quantita: 1, testo: '+5 danno.' },
+    { ricarica: 1.6, danno: 23, rimbalzi: 5, quantita: 1, testo: '+1 rimbalzo.' },
+    { ricarica: 1.4, danno: 23, rimbalzi: 5, quantita: 1, testo: 'Ricarica più rapida.' },
+    { ricarica: 1.4, danno: 30, rimbalzi: 5, quantita: 1, testo: '+7 danno.' },
+    { ricarica: 1.4, danno: 30, rimbalzi: 6, quantita: 2, testo: '+1 grano, +1 rimbalzo.' },
+    { ricarica: 1.2, danno: 30, rimbalzi: 6, quantita: 2, testo: 'Ricarica più rapida.' },
+    { ricarica: 1.2, danno: 40, rimbalzi: 8, quantita: 2, testo: '+10 danno, +2 rimbalzi.' },
+  ],
+};
+
+export const CORVO: Corvo = {
+  id: 'corvo', nome: 'Corvo', icona: 'Icona_Corvo', effetto: 'Candela_Fiammella', respinta: 0, portata: 330, orbita: 90, giri: 0.35, velocita: 1100, ingrandimento: 2,
+  livelli: [
+    { ricarica: 1, danno: 26, quantita: 1, anime: 1, testo: 'Becca il nemico più vicino e ti riporta le anime lontane.' },
+    { ricarica: 1, danno: 33, quantita: 1, anime: 1, testo: '+7 danno.' },
+    { ricarica: 1, danno: 33, quantita: 1, anime: 2, testo: 'Riporta più anime.' },
+    { ricarica: 0.9, danno: 33, quantita: 1, anime: 2, testo: 'Becca più spesso.' },
+    { ricarica: 0.9, danno: 33, quantita: 2, anime: 2, testo: '+1 corvo.' },
+    { ricarica: 0.9, danno: 44, quantita: 2, anime: 3, testo: '+11 danno, riporta più anime.' },
+    { ricarica: 0.75, danno: 44, quantita: 2, anime: 3, testo: 'Becca più spesso.' },
+    { ricarica: 0.75, danno: 44, quantita: 3, anime: 4, testo: '+1 corvo, riporta più anime.' },
+  ],
+};
+
+export const VELO_FUNEBRE: VeloFunebre = {
+  id: 'veloFunebre', nome: 'Velo funebre', icona: 'Icona_Velo_funebre', effetto: 'Turibolo_Nube', respinta: 0,
+  livelli: [
+    { ricarica: 0.5, danno: 7, raggio: 110, testo: 'Un\'aura intorno a te consacra chi entra.' },
+    { ricarica: 0.5, danno: 9, raggio: 110, testo: '+2 danno.' },
+    { ricarica: 0.5, danno: 9, raggio: 125, testo: 'Aura più grande.' },
+    { ricarica: 0.5, danno: 12, raggio: 125, testo: '+2 danno.' },
+    { ricarica: 0.5, danno: 12, raggio: 140, testo: 'Aura più grande.' },
+    { ricarica: 0.4, danno: 12, raggio: 140, testo: 'Colpisce più spesso.' },
+    { ricarica: 0.4, danno: 16, raggio: 140, testo: '+4 danno.' },
+    { ricarica: 0.4, danno: 21, raggio: 160, testo: '+5 danno, aura più grande.' },
+  ],
+};
+
 export const ARMI_INIZIALI: Record<'lanterna' | 'pala' | 'turibolo' | 'bastone', Arma> = { lanterna: LANTERNA, pala: PALA, turibolo: TURIBOLO, bastone: BASTONE };
 /** Armi che si trovano tra i doni di livello (le iniziali sono esclusive del loro personaggio). */
-export const ARMI_COMUNI: Arma[] = [CANDELA, FALCE, CAMPANA, FUOCO_FATUO, ACQUA_SANTA, LAMA_DI_LUCE];
+export const ARMI_COMUNI: Arma[] = [CANDELA, FALCE, CAMPANA, FUOCO_FATUO, ACQUA_SANTA, LAMA_DI_LUCE, LAPIDE, ROSARIO_SPEZZATO, CORVO, VELO_FUNEBRE];
 export const MAX_ARMI = 6;
 
 /** Regole comuni a tutte le armi (GDD, sezione 10). */

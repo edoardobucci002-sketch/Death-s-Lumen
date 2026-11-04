@@ -4,6 +4,8 @@
  * Proposta: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Ogni modifica qui va riportata anche nel GDD.
  */
 import type { Personaggio } from './personaggi';
+import type { IdArma } from './armi';
+import type { IdDono } from './doni';
 
 /**
  * Cera di una veglia: le gocce raccolte durante la partita (cadono da nemici, élite e Seth: vedi DROP.cera in
@@ -50,5 +52,23 @@ export const SBLOCCHI: Record<Personaggio['id'], { impresa: string; cera: number
 /** Il Rosario (amuleti nei reliquiari) si sblocca con un'impresa, oppure con la Cera. */
 export const SBLOCCO_ROSARIO = { impresa: 'Sopravvivi 8 minuti', minuti: 8, cera: 300 } as const;
 
+/**
+ * Armi e doni nuovi (tappa 5) da sbloccare: le armi con un'impresa, i doni con un'impresa o con la Cera.
+ * Tutto il resto è disponibile da subito, compresa la Cera votiva. Le imprese si contano veglia per veglia.
+ */
+export type IdOggetto = Extract<IdArma, 'lapide' | 'rosarioSpezzato' | 'corvo' | 'veloFunebre'> | Extract<IdDono, 'campanellaDArgento' | 'chiodoDiBara' | 'lacrimaDiLumen'>;
+export interface SbloccoOggetto { id: IdOggetto; nome: string; tipo: 'arma' | 'dono'; impresa?: string; soglia?: number; cera?: number; testo: string }
+export const SBLOCCHI_OGGETTI: SbloccoOggetto[] = [
+  { id: 'lapide', nome: 'Lapide', tipo: 'arma', impresa: 'Sconfiggi Seth con il Becchino', testo: 'Cade sul nemico più forte in vista.' },
+  { id: 'rosarioSpezzato', nome: 'Rosario spezzato', tipo: 'arma', impresa: 'Fai 10 Eclissi in una veglia', soglia: 10, testo: 'Un grano rimbalza tra i nemici.' },
+  { id: 'corvo', nome: 'Corvo', tipo: 'arma', impresa: 'Raccogli 30000 anime in una veglia', soglia: 30000, testo: 'Becca i nemici e ti riporta le anime.' },
+  { id: 'veloFunebre', nome: 'Velo funebre', tipo: 'arma', impresa: 'Resta 3 minuti dentro le tue nubi in una veglia', soglia: 180, testo: 'Un\'aura che consacra chi entra.' },
+  { id: 'campanellaDArgento', nome: "Campanella d'argento", tipo: 'dono', impresa: 'Fai 20 schivate perfette in una veglia', soglia: 20, cera: 120, testo: 'Più tempo per la schivata perfetta.' },
+  { id: 'chiodoDiBara', nome: 'Chiodo di bara', tipo: 'dono', cera: 120, testo: 'Colpi critici.' },
+  { id: 'lacrimaDiLumen', nome: 'Lacrima di lumen', tipo: 'dono', cera: 120, testo: 'Più sorsi nella fiaschetta.' },
+];
+
 /** Per la simulazione (?meta=): la Cappella a metà (livello 3 di ogni cero) o completa (5 e Seconda candela). */
 export const META_SIMULAZIONE = { meta: 3, max: 5 } as const;
+/** A metà Cappella si è sbloccata circa metà di armi e doni nuovi; completa, tutti. */
+export const OGGETTI_A_META: IdOggetto[] = ['lapide', 'rosarioSpezzato', 'chiodoDiBara', 'lacrimaDiLumen'];

@@ -38,6 +38,7 @@ export class Minacce {
   private fSprite: Phaser.GameObjects.Image[] = [];
   private tempo = 0;
   colpita = false; // una falciata è appena scattata (Gioco la legge per scuotere lo schermo e la rimette a false)
+  finestra: number = GRAZIA.finestra; // secondi per la schivata perfetta (la Campanella d'argento la allunga)
   schivate = 0; // schivate perfette da quando Gioco le ha lette l'ultima volta (le rimette a 0)
 
   constructor(private scena: Phaser.Scene) {
@@ -95,7 +96,7 @@ export class Minacce {
       if (prima > 0 && this.aAttesa[i] <= 0 && this.aDanno[i] > 0) {
         falciata = true;
         if (dentro) colpo = Math.max(colpo, this.aDanno[i]);
-        else if (this.aDentro[i] <= GRAZIA.finestra) this.schivate++; // uscito all'ultimo istante
+        else if (this.aDentro[i] <= this.finestra) this.schivate++; // uscito all'ultimo istante
       }
       if (this.aAttesa[i] <= -M.lampo || (this.aAttesa[i] <= 0 && !this.aDanno[i])) this.togliArea(i);
     }

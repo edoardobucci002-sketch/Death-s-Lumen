@@ -47,7 +47,7 @@ import { Simulazione } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
 import { FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
-import { CERA, SBLOCCHI, SBLOCCO_ROSARIO, SECONDA_CANDELA } from '../data/meta';
+import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SECONDA_CANDELA, type IdOggetto } from '../data/meta';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
@@ -59,6 +59,9 @@ const PASSO_MS = 1000 * PASSO;
 const RITARDO_MASSIMO_MS = 250; // dopo un blocco lungo non recupera all'infinito
 const ID_PIPISTRELLO = NEMICI.findIndex((t) => t.id === 'pipistrello');
 const ID_FANTASMA = NEMICI.findIndex((t) => t.id === 'fantasma');
+
+/** Quanto chiede l'impresa dell'oggetto id. */
+const SOGLIA = (id: IdOggetto): number => SBLOCCHI_OGGETTI.find((o) => o.id === id)!.soglia ?? Infinity;
 
 export class Gioco extends Phaser.Scene {
   pg!: Personaggio;
@@ -88,7 +91,7 @@ export class Gioco extends Phaser.Scene {
   private legenda!: Legenda;
   private raccolta = 0;
   private rigenerazione = 0;
-  private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0 };
+  private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
   private areaLuce = 0;
   private dirX = 1; // ultima direzione in cui ha camminato (le armi colpiscono da quella parte)
   private dirY = 0;
@@ -107,6 +110,9 @@ export class Gioco extends Phaser.Scene {
   private candelaUsata = false; // Seconda candela
   private eliteUccise = 0;
   private ceraRaccolta = 0; // gocce di Cera raccolte in questa veglia
+  private schivateNotte = 0; // schivate perfette in questa veglia (imprese)
+  private secondiNubi = 0; // secondi passati dentro le nubi in questa veglia (imprese)
+  private oggettiSbloccati = new Set<string>();
   private sethSconfitti = 0;
   // Rosario: amuleti trovati nei reliquiari e quali sono accesi (si spengono dalla pausa)
   private amuletiPosseduti: IdAmuleto[] = [];
@@ -156,6 +162,8 @@ export class Gioco extends Phaser.Scene {
     this.candelaUsata = false;
     this.eliteUccise = this.sethSconfitti = this.ceraRaccolta = 0;
     this.meta = bonusMeta(carica(), parametri.get('meta') ?? (parametri.has('bot') ? '0' : null));
+    this.oggettiSbloccati = new Set(parametri.has('senzaoggetti') ? [] : parametri.has('oggetti') ? SBLOCCHI_OGGETTI.map((o) => o.id) : this.meta.oggetti); // ?senzaoggetti, ?oggetti: per confrontare le simulazioni
+    for (const id of (parametri.get('blocca') ?? '').split(',')) this.oggettiSbloccati.delete(id as IdOggetto); // ?blocca=corvo,lapide: per le simulazioni
     this.rosarioSbloccato = (this.meta.rosario && !parametri.has('senzarosario')) || parametri.has('rosario'); // ?senzarosario: per confrontare le simulazioni
     this.amuletiPosseduti = [];
     this.amuletiAccesi.clear();
@@ -229,7 +237,7 @@ export class Gioco extends Phaser.Scene {
       legenda: () => this.legenda.apri(),
     });
     this.legenda = new Legenda(interfaccia);
-    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani() }), () => this.legenda.apri());
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani() }), () => this.legenda.apri(), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.pausa || this.doni.aperta) return false;
@@ -364,6 +372,7 @@ export class Gioco extends Phaser.Scene {
       this.effetti.scuoti(EFFETTI.minacce.scossa.forza, EFFETTI.minacce.scossa.durata);
     }
     if (this.minacce.schivate) {
+      this.schivateNotte += this.minacce.schivate;
       this.minacce.schivate = 0;
       this.iniziaGrazia();
     }
@@ -373,6 +382,11 @@ export class Gioco extends Phaser.Scene {
       this.sangueFreddoAttivo = freddo;
       this.ricalcola();
     }
+    if (this.arsenale.richiami) {
+      this.anime.richiama(this.arsenale.richiami, this.x, this.y);
+      this.arsenale.richiami = 0;
+    }
+    if (this.arsenale.dentroNube()) this.secondiNubi += dt;
     const raccolte = this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
     if (raccolte) {
       this.esperienza += raccolte * this.moltAnime;
@@ -464,6 +478,8 @@ export class Gioco extends Phaser.Scene {
     this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * (1 - PASSIVI.find((q) => q.id === 'clessidra')!.per) ** this.passivi.clessidra);
     this.bonus.area = this.pg.area + per('stoppinoLungo');
     this.bonus.quantita = per('specchio') + (this.ha('specchioRotto') ? AM.specchioRotto.proiettili : 0);
+    this.bonus.durata = per('ceraVotiva');
+    this.bonus.critico = per('chiodoDiBara');
     if (this.speciale) this.speciale.caricheMassime = this.ha('ceriGemelli') ? AM.ceriGemelli.cariche : 1;
     if (this.orda) this.orda.moltSaluteElite = this.ha('ossaDelite') ? 1 + AM.ossaDelite.salute : 1;
   }
@@ -585,6 +601,11 @@ export class Gioco extends Phaser.Scene {
     this.arsenale.abbaglia(this.x, this.y - COLPI.corpo, 260, { luce: LUCE_AFF, sacro: SACRO_AFF, ombra: OMBRA_AFF, terra: TERRA_AFF }[aff]);
   }
 
+  /** Sblocca (o ripristina) armi e doni nuovi in questa partita, così escono subito nella scelta. */
+  labOggetti(on: boolean): void {
+    this.oggettiSbloccati = new Set(on ? SBLOCCHI_OGGETTI.map((o) => o.id) : this.meta.oggetti);
+  }
+
   labPausa(): void {
     this.apriPausa();
   }
@@ -592,6 +613,11 @@ export class Gioco extends Phaser.Scene {
   labLegenda(): void {
     this.apriPausa();
     this.legenda.apri();
+  }
+
+  /** Può uscire nella scelta: tutto ciò che non è in SBLOCCHI_OGGETTI, o quello che è stato sbloccato. */
+  private disponibile(id: string): boolean {
+    return this.oggettiSbloccati.has(id) || !SBLOCCHI_OGGETTI.some((o) => o.id === id);
   }
 
   // ——— Rosario ———
@@ -630,6 +656,12 @@ export class Gioco extends Phaser.Scene {
   private dopoPassivo(): void {
     const prima = this.saluteMassima;
     this.ricalcola();
+    const dono = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
+    this.orda.durataStati = 1 + dono('ceraVotiva');
+    this.minacce.finestra = GRAZIA.finestra + dono('campanellaDArgento');
+    const sorsi = FIASCHETTA.sorsi + dono('lacrimaDiLumen'), inPiu = sorsi - this.fiaschetta.massimo;
+    this.fiaschetta.massimo = sorsi;
+    if (inPiu > 0) this.fiaschetta.ricarica(inPiu);
     this.salute = Math.min(this.saluteMassima, this.salute + Math.max(0, this.saluteMassima - prima)); // più salute massima: la salute sale; meno (Martire): non supera il nuovo massimo
     const luce = this.fattoreLuce();
     if (luce !== this.areaLuce) {
@@ -651,7 +683,7 @@ export class Gioco extends Phaser.Scene {
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * 14, y + 10);
     // la fiaschetta si ricarica: un sorso per un'élite, tutta per il Mietitore
     if (reliquiari === MIETITORE.reliquiari) {
-      this.fiaschetta.ricarica(FIASCHETTA.sorsi);
+      this.fiaschetta.ricarica(this.fiaschetta.massimo);
       this.sethSconfitti++;
     } else if (reliquiari > 0) {
       this.fiaschetta.ricarica(FIASCHETTA.perElite);
@@ -832,9 +864,22 @@ export class Gioco extends Phaser.Scene {
     const s = carica();
     s.cera += totale;
     let sbloccatoOggetto: string | null = null;
+    // imprese di armi e doni nuovi (SBLOCCHI_OGGETTI)
+    const imprese: Partial<Record<IdOggetto, boolean>> = {
+      lapide: this.pg.id === 'becchino' && this.sethSconfitti > 0,
+      rosarioSpezzato: this.arsenale.eclissi >= SOGLIA('rosarioSpezzato'),
+      corvo: this.animeTotali >= SOGLIA('corvo'),
+      veloFunebre: this.secondiNubi >= SOGLIA('veloFunebre'),
+      campanellaDArgento: this.schivateNotte >= SOGLIA('campanellaDArgento'),
+    };
+    const nuovi = SBLOCCHI_OGGETTI.filter((o) => imprese[o.id] && !s.oggetti.includes(o.id));
+    if (nuovi.length) {
+      s.oggetti.push(...nuovi.map((o) => o.id));
+      sbloccatoOggetto = nuovi.map((o) => o.nome).join(', ');
+    }
     if (!s.rosario && this.secondi >= SBLOCCO_ROSARIO.minuti * 60) {
       s.rosario = true;
-      sbloccatoOggetto = 'Il Rosario';
+      sbloccatoOggetto = sbloccatoOggetto ? `Il Rosario, ${sbloccatoOggetto}` : 'Il Rosario';
     }
     // imprese che sbloccano i personaggi (prima solo il primo che si sblocca, per avvisarlo)
     let sbloccato: string | null = null;

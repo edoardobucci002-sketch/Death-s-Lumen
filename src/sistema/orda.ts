@@ -102,6 +102,7 @@ export class Orda {
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private aspetto: AspettoNemico[];
   private simboli: Simboli;
+  durataStati = 1; // la Cera votiva allunga gli stati
   private daFare = 0; // comparse accumulate (frazioni di nemico)
   private prossimoId = 1;
   // usati dentro la separazione, per non creare funzioni nel ciclo di gioco
@@ -295,9 +296,9 @@ export class Orda {
       }
       return r;
     }
-    if (aff === LUCE) this.sAbbagliato[i] = STATI.durata;
-    else if (aff === SACRO) this.sConsacrato[i] = STATI.durata;
-    else if (aff === OMBRA) this.sMaledetto[i] = STATI.durata;
+    if (aff === LUCE) this.sAbbagliato[i] = STATI.durata * this.durataStati;
+    else if (aff === SACRO) this.sConsacrato[i] = STATI.durata * this.durataStati;
+    else if (aff === OMBRA) this.sMaledetto[i] = STATI.durata * this.durataStati;
     else {
       this.sSepolto[i] = STATI.sepolto.fermo * resiste;
       this.pausaSepolto[i] = STATI.sepolto.pausa;

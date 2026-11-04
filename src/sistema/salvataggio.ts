@@ -4,7 +4,7 @@
  * si aggiorna invece di perdersi. Il codice di salvataggio (testo da copiare e incollare) è la copia di sicurezza,
  * e serve anche a passare dal link web all'app. I record per personaggio restano in record.ts.
  */
-import { CERI, META_SIMULAZIONE, SBLOCCHI, type IdCero } from '../data/meta';
+import { CERI, META_SIMULAZIONE, OGGETTI_A_META, SBLOCCHI, SBLOCCHI_OGGETTI, type IdCero, type IdOggetto } from '../data/meta';
 import type { Personaggio } from '../data/personaggi';
 
 const CHIAVE = 'dl-salvataggio';
@@ -25,6 +25,7 @@ export interface Salvataggio {
   secondaCandelaSpenta: boolean;
   sbloccati: Personaggio['id'][];
   rosario: boolean; // il Rosario è sbloccato
+  oggetti: IdOggetto[]; // armi e doni nuovi sbloccati
   ultimaVeglia: { voci: VoceVeglia[]; totale: number; sbloccato: string | null } | null;
 }
 
@@ -39,12 +40,13 @@ export interface BonusMeta {
   rimescolate: number;
   secondaCandela: boolean;
   rosario: boolean;
+  oggetti: IdOggetto[];
 }
 
 function nuovo(): Salvataggio {
   const ceri = {} as Record<IdCero, number>;
   for (const c of CERI) ceri[c.id] = 0;
-  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, ultimaVeglia: null };
+  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], ultimaVeglia: null };
 }
 
 /** Porta un salvataggio letto (anche vecchio o incompleto) alla forma di oggi. */
@@ -60,6 +62,7 @@ function aggiorna(dati: Partial<Salvataggio>): Salvataggio {
   s.secondaCandelaSpenta = !!dati.secondaCandelaSpenta;
   s.sbloccati = Array.from(new Set(['lampionaio', ...(dati.sbloccati ?? []).filter((id) => id in SBLOCCHI)])) as Personaggio['id'][];
   s.rosario = !!dati.rosario;
+  s.oggetti = (dati.oggetti ?? []).filter((id) => SBLOCCHI_OGGETTI.some((o) => o.id === id));
   s.ultimaVeglia = dati.ultimaVeglia ?? null;
   return s;
 }
@@ -111,6 +114,7 @@ export function bonusMeta(s: Salvataggio, meta: string | null = null): BonusMeta
     anime: per('anime'),
     rimescolate: Math.ceil(per('scelta')),
     rosario: finto >= 0 ? finto > 0 : s.rosario,
+    oggetti: finto === META_SIMULAZIONE.max ? SBLOCCHI_OGGETTI.map((o) => o.id) : finto > 0 ? OGGETTI_A_META : finto === 0 ? [] : s.oggetti,
     secondaCandela: finto >= 0 ? finto === META_SIMULAZIONE.max : s.secondaCandela && !s.secondaCandelaSpenta,
   };
 }
