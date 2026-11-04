@@ -9,6 +9,7 @@ Regole del registro (4 novembre 2026, scelte di Edoardo):
 
 | Data | Decisione | Motivo |
 | --- | --- | --- |
+| 2026-11-04 | **Eccezione alla regola dei due link: la correzione del blocco al colpo subito e al salire di livello va su `main` da sola**, senza unire `prova`. Vibrazione e suoni non possono più fermare la partita se danno errore. | Il gioco si bloccava a un amico di Edoardo che provava da PC; Edoardo ha approvato solo questa correzione, non le altre novità di `prova`. |
 | 2026-11-04 | **`main` riportato dentro `prova` una volta.** L'obbligo di riportare `docs/` su `main` subito prima di unire **resta** nella Verifica. | Edoardo l'avrebbe tolto se non fosse servito più: la prova sulla copia mostra che il ritorno da solo regge fino alla sincronizzazione successiva, poi i documenti tornano in conflitto. |
 | 2026-11-04 | **I push su `main` che toccano solo `docs/` non fanno partire né le pagine né l'APK.** Un commit che tocca anche altro li fa partire come sempre. | La sincronizzazione dei documenti avviene a ogni tappa e non cambia il gioco: ricompilarlo sarebbe lavoro inutile. |
 | 2026-11-04 | **`CLAUDE.md` e `LEGGIMI.md` restano come sono su `main` fino all'unione**: su `main` possono rimandare a documenti che non ci sono più. | Con i documenti arriva solo `docs/`; il resto aspetta l'approvazione di Edoardo. |
