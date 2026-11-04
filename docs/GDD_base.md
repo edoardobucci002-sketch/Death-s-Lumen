@@ -464,6 +464,27 @@ Le «reliquie dimenticate» della proposta (oggetti trovati in partita e pagati 
 - **Simulazione** (3/11, 12 notti per personaggio, Cappella a metà): il bot prende solo gli amuleti con rovescio lieve (Sangue freddo, Lucciola, Ceri gemelli, Ossa d'élite, Danza macabra) e non va mai in Peccato: vince 16 notti su 48 (33%), come senza Rosario. Prendendo anche gli altri scendeva a 12 su 48. Cappella completa: 21 su 48 (44%, obiettivo 60–75%: ancora sotto).
 - **Simulazione con 3 amuleti offerti** (4/11, 12 notti per personaggio, Cappella a metà): 21 vittorie su 48 (44%, obiettivo 30–45%), contro 16 su 48 con 2 amuleti. Lampionaio 3, Becchino 4, Badessa 7, Strega 7: su 12 notti i singoli personaggi oscillano molto (con 2 amuleti erano 2, 6, 6, 2).
 
+## 8f. Le Unioni (tappa 6 della proposta su oggetti e build, M8, `src/data/unioni.ts`)
+
+Un'arma al livello 8 più il suo dono al livello 3 (o al massimo del dono, se è più basso: Lacrima di lumen arriva a 2): il reliquiario successivo offre l'unione come prima striscia. L'arma tiene i suoi numeri e guadagna un effetto. Una sola unione per reliquiario; con l'unione gli amuleti offerti scendono a 2, per restare a quattro strisce.
+
+| Arma | + Dono | Arma unita | Effetto |
+| --- | --- | --- | --- |
+| Lanterna | Stoppino lungo | Faro dei morti | l'arco diventa un cerchio; abbaglia un nemico su due |
+| Pala | Scudo di ferro | Vanga del custode | ogni colpo pianta una lapide: chi è sotto resta fermo 3 s (Seth a metà) |
+| Turibolo | Erbe amare | Incensiere dell'ultima ora | dentro le nubi +1 salute al secondo (non si somma tra nubi) |
+| Bastone | Clessidra | Verga dei nomi | ogni 5ª raffica colpisce tutti i maledetti sullo schermo, con il danno di un dardo |
+| Candela | Cuore di cera | Candelabro funebre | le fiammelle lasciano una scia: una fiamma ogni 0,12 s, 36 px, 1 s, 40% del danno ogni 0,3 s |
+| Falce | Sale nero | Falce del Mietitore | uccide i nemici normali sotto il 15% di salute (non élite e Seth) |
+| Campana | Cera votiva | Campana a morto | ogni rintocco ferma per 0,8 s |
+| Fuoco fatuo | Calamita | Fuochi erranti | i fuochi raccolgono le anime entro 120 px |
+| Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso |
+| Lama di luce | Ali di falena | Lama dell'alba | un secondo fendente parte da dove eri 0,5 s prima |
+
+**Simulazione** (4/11, 12 notti per personaggio; unioni sbloccate a metà Cappella e completa): vuota 10 su 48 (21%, obiettivo 5–15%), a metà 25 su 48 (52%, obiettivo 30–45%), completa 25 su 48 (52%, obiettivo 60–75%). Il bot arriva a un'unione possibile in poche notti (7 su 48 a Cappella completa, contando l'unione a fine notte): a metà e completa la differenza non si vede ancora, e su 48 notti l'oscillazione è di qualche vittoria.
+
+Le 4 armi nuove della tappa 5 non hanno unioni. **Sblocco**: nella Cappella, con l'impresa «Sopravvivi 10 minuti» oppure con 500 Cera (nella proposta non c'era: scelta per farne un premio della meta, da confermare). Le strisce di arma e dono dicono a che livelli si unisce; la legenda elenca tutte le unioni. Icone provvisorie: l'icona dell'arma con quattro angoli d'oro.
+
 ## 9. Esperienza e doni
 
 - Anime per passare dal livello L al successivo: 2 + 3 L + L² (M8; prima ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋)

@@ -68,6 +68,9 @@ export const SBLOCCHI_OGGETTI: SbloccoOggetto[] = [
   { id: 'lacrimaDiLumen', nome: 'Lacrima di lumen', tipo: 'dono', cera: 120, testo: 'Più sorsi nella fiaschetta.' },
 ];
 
+/** Le unioni delle armi si sbloccano con un'impresa, oppure con la Cera. */
+export const SBLOCCO_UNIONI = { impresa: 'Sopravvivi 10 minuti', minuti: 10, cera: 500 } as const;
+
 /** Per la simulazione (?meta=): la Cappella a metà (livello 3 di ogni cero) o completa (5 e Seconda candela). */
 export const META_SIMULAZIONE = { meta: 3, max: 5 } as const;
 /** A metà Cappella si è sbloccata circa metà di armi e doni nuovi; completa, tutti. */

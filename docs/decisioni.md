@@ -74,6 +74,7 @@ Una riga per decisione, la più recente in alto.
 | 2026-11-04 | Stati e affinità più chiari: nome della reazione sopra il nemico quando scatta, legenda «Stati e reazioni» dalla pausa e dal «?» della scelta | Edoardo: affinità e stati non erano intuitivi |
 | 2026-11-04 | Tappa 5: 4 armi (Lapide, Rosario spezzato, Corvo, Velo funebre) e 4 doni (Cera votiva, Chiodo di bara, Lacrima di lumen, Campanella d'argento). Cera votiva libera; armi con un'impresa; Campanella con impresa o 120 Cera; Chiodo e Lacrima 120 Cera. Corvo a 30000 anime invece di 5000; Velo con 3 minuti in tutto nelle nubi; reliquie dimenticate semplificate in acquisti dalla Cappella | Valori della proposta sulla meta, adattati ai numeri veri; da rivedere alla prova di Edoardo |
 | 2026-11-04 | I pesi delle carte contano armi e doni come se fossero sempre 6 e 9: sbloccare oggetti aggiunge varietà senza togliere potenziamenti. In simulazione la Cappella a metà ha 4 sblocchi su 7, completa tutti | Con tutti gli sblocchi insieme il bot crollava da 21 a 5 vittorie su 48 perché l'arma principale saliva troppo piano |
+| 2026-11-04 | Tappa 6: 10 unioni (arma al 8 + dono al 3, o al massimo del dono), offerte come striscia del reliquiario invece che automatiche, così si legge cosa cambia. Sblocco nella Cappella: sopravvivi 10 minuti o 500 Cera. Le unioni non aumentano i numeri dell'arma: danno solo l'effetto | Decisione di Edoardo di partire dalle unioni; lo sblocco è una proposta mia, perché la Cappella pesi di più: da confermare |
 
 ## Riferimenti della v0
 

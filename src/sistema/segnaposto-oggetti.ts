@@ -4,6 +4,8 @@
  * Le stesse immagini servono da sprite provvisori in partita: la lapide che cade, il grano, il corvo.
  */
 import type Phaser from 'phaser';
+import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
+import { iconaUnione, UNIONI } from '../data/unioni';
 import { arte, registraArte } from './arte';
 
 const COLORI: Record<string, string> = {
@@ -37,6 +39,23 @@ export function creaIconeOggetti(): void {
   }
 }
 
+/** Icone provvisorie delle unioni: l'icona dell'arma con quattro angoli d'oro (24×24). */
+export function creaIconeUnioni(): void {
+  const armi = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
+  for (const u of UNIONI) {
+    const k = iconaUnione(u.id), base = arte(armi.find((a) => a.id === u.arma)!.icona);
+    if (arte(k) || !base) continue;
+    const t = document.createElement('canvas');
+    t.width = t.height = 24;
+    const g = t.getContext('2d')!;
+    g.drawImage(base.tela, Math.round((24 - base.w) / 2), Math.round((24 - base.h) / 2));
+    g.fillStyle = '#f2cf6a';
+    for (const [x, y, w, h] of [[0, 0, 7, 2], [0, 0, 2, 7], [17, 0, 7, 2], [22, 0, 2, 7], [0, 22, 7, 2], [0, 17, 2, 7], [17, 22, 7, 2], [22, 17, 2, 7]]) g.fillRect(x, y, w, h);
+    registraArte(k, t);
+  }
+}
+
+export const SPRITE_SCIA = 'Volo_Scia';
 export const SPRITE_LAPIDE = 'Volo_Lapide';
 export const SPRITE_GRANO = 'Volo_Grano';
 export const SPRITE_CORVO = 'Volo_Corvo';
@@ -47,6 +66,19 @@ export const RAGGIO_VELO = 64;
 export function creaSpriteOggetti(scena: Phaser.Scene): void {
   for (const [k, icona] of [[SPRITE_LAPIDE, 'Icona_Lapide'], [SPRITE_GRANO, 'Icona_Rosario_spezzato'], [SPRITE_CORVO, 'Icona_Corvo']] as const) {
     if (!scena.textures.exists(k)) scena.textures.addCanvas(k, arte(icona)!.tela);
+  }
+  if (!scena.textures.exists(SPRITE_SCIA)) {
+    // una fiammella della scia del Candelabro funebre, 7×9
+    const c = document.createElement('canvas');
+    c.width = 7;
+    c.height = 9;
+    const g = c.getContext('2d')!;
+    ['...O...', '..OFO..', '..OFO..', '.OFYFO.', '.OFYFO.', 'OFYWYFO', 'OFYWYFO', '.OFYFO.', '..OOO..'].forEach((r, y) => [...r].forEach((ch, x) => {
+      if (ch === '.') return;
+      g.fillStyle = COLORI[ch];
+      g.fillRect(x, y, 1, 1);
+    }));
+    scena.textures.addCanvas(SPRITE_SCIA, c);
   }
   if (scena.textures.exists(SPRITE_VELO)) return;
   // l'aura del Velo: bordo pieno e interno a retino rado, come i cerchi delle reazioni

@@ -7,6 +7,8 @@ import type { Arma } from '../data/armi';
 import { AFFINITA_ARMI } from '../data/stati';
 import { CARTE } from '../data/progressione';
 import { ROSARIO } from '../data/rosario';
+import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI } from '../data/unioni';
+import { PASSIVI, type IdDono } from '../data/doni';
 import { CAMPI_ARMA, DATI_DONI, INFO_AFFINITA, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { STRISCIA } from '../data/hud';
 import { arte, registraArte } from './arte';
@@ -27,6 +29,8 @@ export interface Contesto {
   armi: readonly Arma[]; // quelle che hai già
   graniUsati: number;
   graniTotali: number;
+  doni: Record<IdDono, number>; // livello di ogni dono
+  unioni: boolean; // le unioni sono sbloccate
 }
 
 const tagLivello = (l: number, massimo: number, nuovo: string): string => (l === 1 ? nuovo : `Liv ${l - 1} › ${l === massimo ? 'MAX' : l}`);
@@ -58,6 +62,10 @@ function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
       break;
     }
   }
+  const u = c.unioni ? unioneDi(arma.id) : undefined;
+  if (u && (l === CARTE.livelloMassimo || c.doni[u.dono])) {
+    righe.push({ testo: `Al liv ${CARTE.livelloMassimo}, con ${PASSIVI.find((q) => q.id === u.dono)!.nome} al liv ${livelloDonoUnione(u.dono)}: ${u.nome}`, tono: 'reazione' });
+  }
   return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, CARTE.livelloMassimo, 'Nuova arma'), dati, righe };
 }
 
@@ -67,10 +75,12 @@ export function schedaDono(d: Dono, c: Contesto): Scheda {
     case 'arma': return schedaArma(d.arma, d.livello, c);
     case 'passivo': {
       const q = d.passivo, ora = DATI_DONI[q.id](q, d.livello), prima = d.livello > 1 ? DATI_DONI[q.id](q, d.livello - 1) : null;
+      const u = c.unioni ? UNIONI.find((x) => x.dono === q.id && c.armi.some((a) => a.id === x.arma)) : undefined;
+      const arma = u && c.armi.find((a) => a.id === u.arma);
       return {
         nome: q.nome, icona: q.icona, categoria: 'dono', tag: tagLivello(d.livello, q.massimo, 'Nuovo dono'),
         dati: ora.map((v, i) => ({ nome: v.nome, prima: prima?.[i].valore, dopo: v.valore, tono: 'bene' })),
-        righe: [{ testo: SPIEGA_DONI[q.id] }],
+        righe: [{ testo: SPIEGA_DONI[q.id] }, ...(u && arma ? [{ testo: `Al liv ${livelloDonoUnione(q.id)}, con ${arma.nome} al liv ${CARTE.livelloMassimo}: ${u.nome}`, tono: 'reazione' as const }] : [])],
       };
     }
     case 'amuleto': {
@@ -80,6 +90,14 @@ export function schedaDono(d: Dono, c: Contesto): Scheda {
       return {
         nome: a.nome, icona: iconaAmuleto(a.id), categoria: 'amuleto', tag: `${a.grani} ${a.grani === 1 ? 'grano' : 'grani'}`, dati,
         righe: [{ testo: a.vantaggio, tono: 'bene' }, a.rovescio === 'Nessuno.' ? { testo: 'Nessun rovescio.' } : { testo: `Rovescio: ${a.rovescio}`, tono: 'male' }],
+      };
+    }
+    case 'unione': {
+      const u = d.unione;
+      return {
+        nome: u.nome, icona: iconaUnione(u.id), categoria: 'arma', tag: 'Unione',
+        dati: [{ nome: d.arma.nome, dopo: 'si unisce', tono: 'bene' }],
+        righe: [{ testo: u.testo, tono: 'bene' }, { testo: `${d.arma.nome} + ${PASSIVI.find((q) => q.id === u.dono)!.nome}` }],
       };
     }
     case 'potenziamento':

@@ -26,6 +26,7 @@ export interface Salvataggio {
   sbloccati: Personaggio['id'][];
   rosario: boolean; // il Rosario è sbloccato
   oggetti: IdOggetto[]; // armi e doni nuovi sbloccati
+  unioni: boolean; // le unioni delle armi sono sbloccate
   ultimaVeglia: { voci: VoceVeglia[]; totale: number; sbloccato: string | null } | null;
 }
 
@@ -41,12 +42,13 @@ export interface BonusMeta {
   secondaCandela: boolean;
   rosario: boolean;
   oggetti: IdOggetto[];
+  unioni: boolean;
 }
 
 function nuovo(): Salvataggio {
   const ceri = {} as Record<IdCero, number>;
   for (const c of CERI) ceri[c.id] = 0;
-  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], ultimaVeglia: null };
+  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], unioni: false, ultimaVeglia: null };
 }
 
 /** Porta un salvataggio letto (anche vecchio o incompleto) alla forma di oggi. */
@@ -62,6 +64,7 @@ function aggiorna(dati: Partial<Salvataggio>): Salvataggio {
   s.secondaCandelaSpenta = !!dati.secondaCandelaSpenta;
   s.sbloccati = Array.from(new Set(['lampionaio', ...(dati.sbloccati ?? []).filter((id) => id in SBLOCCHI)])) as Personaggio['id'][];
   s.rosario = !!dati.rosario;
+  s.unioni = !!dati.unioni;
   s.oggetti = (dati.oggetti ?? []).filter((id) => SBLOCCHI_OGGETTI.some((o) => o.id === id));
   s.ultimaVeglia = dati.ultimaVeglia ?? null;
   return s;
@@ -114,6 +117,7 @@ export function bonusMeta(s: Salvataggio, meta: string | null = null): BonusMeta
     anime: per('anime'),
     rimescolate: Math.ceil(per('scelta')),
     rosario: finto >= 0 ? finto > 0 : s.rosario,
+    unioni: finto >= 0 ? finto > 0 : s.unioni,
     oggetti: finto === META_SIMULAZIONE.max ? SBLOCCHI_OGGETTI.map((o) => o.id) : finto > 0 ? OGGETTI_A_META : finto === 0 ? [] : s.oggetti,
     secondaCandela: finto >= 0 ? finto === META_SIMULAZIONE.max : s.secondaCandela && !s.secondaCandelaSpenta,
   };

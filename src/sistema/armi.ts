@@ -23,7 +23,9 @@ import {
   BASTONE, CAMPANA, CANDELA, COLPI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
 } from '../data/armi';
 import { MOLTIPLICA_CRITICO } from '../data/doni';
-import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_VELO } from './segnaposto-oggetti';
+import { NUMERI_UNIONI as U } from '../data/unioni';
+import type { Anime } from './anime';
+import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SCIA, SPRITE_VELO } from './segnaposto-oggetti';
 
 const NUBE = 1;
 const POZZA = 2;
@@ -32,7 +34,7 @@ const MAX_CODA = 48;
 const CODICE_AFFINITA = { luce: LUCE, sacro: SACRO, ombra: OMBRA, terra: TERRA } as const;
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 const MAX_EFFETTI = 48;
-const MAX_ZONE = 32;
+const MAX_ZONE = 64;
 const MAX_PROIETTILI = 96;
 const MAX_LAME = 8;
 const MAX_RITARDATI = 8;
@@ -40,6 +42,9 @@ const MAX_LAPIDI = 8;
 const MAX_GRANI = 6;
 const MAX_RIMBALZI = 12; // un grano ricorda fino a tanti nemici già colpiti
 const MAX_CORVI = 5;
+const PASSI_STORIA = 64; // posizioni ricordate per la Lama dell'alba (più di un secondo)
+const SCIA = 1; // proiettile che lascia una scia (Candelabro funebre)
+const RACCOGLIE = 2; // proiettile che raccoglie le anime (Fuochi erranti)
 // i proiettili della v0 attraversano la tela nei loro fotogrammi: si usa l'ultimo, con l'origine sulla punta
 const PROIETTILI_V0: Record<string, { fotogramma: string; x: number; y: number }> = {
   [BASTONE.effetto]: { fotogramma: '3', x: 88, y: 64 },
@@ -50,6 +55,7 @@ const PROIETTILI_V0: Record<string, { fotogramma: string; x: number; y: number }
 export interface Posseduta {
   arma: Arma;
   livello: number; // da 1 a 8
+  unita?: boolean; // arma unita (data/unioni.ts)
 }
 
 /** I bonus del personaggio e dei doni passivi che cambiano le armi (li aggiorna la scena). */
@@ -68,6 +74,15 @@ export class Arsenale {
   reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
   richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
+  sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
+  anime: Anime | null = null; // per i Fuochi erranti
+  private unite: Partial<Record<Arma['id'], boolean>> = {};
+  private raffiche = 0; // raffiche del Bastone (Verga dei nomi)
+  private uccisiPozze = 0; // uccisioni nelle pozze (Acquasantiera)
+  private attesaScia = 0;
+  private storiaX = new Float32Array(PASSI_STORIA); // dove era il personaggio (Lama dell'alba)
+  private storiaY = new Float32Array(PASSI_STORIA);
+  private storiaI = 0;
   private attesa: number[] = [];
   private scena: Phaser.Scene;
   private orda: Orda;
@@ -125,6 +140,7 @@ export class Arsenale {
   private prEsplode = new Uint8Array(MAX_PROIETTILI);
   private prAff = new Uint8Array(MAX_PROIETTILI);
   private prResto = new Uint8Array(MAX_PROIETTILI); // nemici che può ancora trapassare
+  private prUnione = new Uint8Array(MAX_PROIETTILI); // SCIA o RACCOGLIE
   private prColpiti = new Uint32Array(MAX_PROIETTILI * 4); // id dei nemici già colpiti (fino a 4)
   private prSprite: Phaser.GameObjects.Sprite[] = [];
   private raffica = 0; // dardi del bastone ancora da sparare nella raffica in corso
@@ -247,6 +263,16 @@ export class Arsenale {
     return 0;
   }
 
+  /** L'arma diventa la sua versione unita. */
+  unisci(arma: Arma): void {
+    for (const p of this.possedute) if (p.arma === arma) p.unita = true;
+    this.unite[arma.id] = true;
+  }
+
+  unita(arma: Arma): boolean {
+    return !!this.unite[arma.id];
+  }
+
   potenzia(arma: Arma): void {
     for (const p of this.possedute) if (p.arma === arma) p.livello++;
   }
@@ -262,6 +288,9 @@ export class Arsenale {
     this.dy = dy;
     this.mezzaL = mezzaL;
     this.mezzaA = mezzaA;
+    this.storiaI = (this.storiaI + 1) % PASSI_STORIA;
+    this.storiaX[this.storiaI] = this.px;
+    this.storiaY[this.storiaI] = this.py;
     for (let n = 0; n < this.possedute.length; n++) {
       const p = this.possedute[n];
       if (p.arma.id === 'falce') continue; // sempre attiva
@@ -313,14 +342,16 @@ export class Arsenale {
 
   /** Salute al secondo che il personaggio riceve dalle zone che curano (Benedizione) in cui si trova. */
   cura(): number {
-    let c = 0;
+    let c = 0, nube = 0;
     for (let i = 0; i < this.zone; i++) {
       if (!this.zCura[i]) continue;
       const dx = this.px - this.zX[i];
       const dy = this.py - this.zY[i];
-      if (dx * dx + dy * dy <= this.zR[i] * this.zR[i]) c += this.zCura[i];
+      if (dx * dx + dy * dy > this.zR[i] * this.zR[i]) continue;
+      if (this.zTipo[i] === NUBE) nube = this.zCura[i]; // le nubi non si sommano
+      else c += this.zCura[i];
     }
-    return c;
+    return c + nube;
   }
 
   /** Secondi che il personaggio passa dentro le nubi del Turibolo: 1 se è dentro una nube adesso (impresa del Velo funebre). */
@@ -356,6 +387,10 @@ export class Arsenale {
     switch (a.id) {
       case 'lanterna': {
         const l = a.livelli[p.livello - 1];
+        if (this.unite.lanterna) {
+          this.arco(this.dx, this.dy, l.raggio * area, 360, l.danno, U.faro.abbaglia);
+          return l.ricarica;
+        }
         this.arco(this.dx, this.dy, l.raggio * area, l.ampiezza, l.danno);
         if (l.spalle) this.arco(-this.dx, -this.dy, l.raggio * area, l.ampiezza, l.danno);
         return l.ricarica;
@@ -368,7 +403,7 @@ export class Arsenale {
       }
       case 'campana': {
         const l = a.livelli[p.livello - 1];
-        this.rintocco(l.raggio * area, l.danno);
+        this.rintocco(l.raggio * area, l.danno, this.unite.campana ? U.campana.fermo : 0);
         if (l.doppio) this.ritarda(a, a.ritardoDoppio, l.raggio * area, l.danno, 1); // il secondo rintocco ferma
         return l.ricarica;
       }
@@ -376,6 +411,10 @@ export class Arsenale {
         const l = a.livelli[p.livello - 1];
         // il fendente segue la direzione in cui cammini (prima solo destra o sinistra)
         this.fendente(this.dx, this.dy, l.lunghezza * area, l.danno);
+        if (this.unite.lamaDiLuce) {
+          const k = (this.storiaI + PASSI_STORIA - Math.min(PASSI_STORIA - 1, Math.round(U.lama.ritardo * 60))) % PASSI_STORIA;
+          this.fendente(this.dx, this.dy, l.lunghezza * area, l.danno, this.storiaX[k], this.storiaY[k]);
+        }
         if (l.spalle) this.ritarda(a, a.ritardoSpalle, l.lunghezza * area, l.danno, Math.atan2(-this.dy, -this.dx));
         return l.ricarica;
       }
@@ -390,7 +429,7 @@ export class Arsenale {
             nx = this.px + Math.cos(ang) * d;
             ny = this.py + Math.sin(ang) * d;
           }
-          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, a.rallenta, 0, 0, false, false, NUBE, SACRO);
+          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, a.rallenta, 0, this.unite.turibolo ? U.incensiere.cura : 0, false, false, NUBE, SACRO);
         }
         return l.ricarica;
       }
@@ -410,6 +449,7 @@ export class Arsenale {
         this.attesaRaffica = 0;
         this.dannoRaffica = l.danno;
         this.trapassaRaffica = l.trapassa;
+        if (this.unite.bastone && ++this.raffiche % U.verga.ogni === 0) this.colpisciMaledetti(l.danno * U.verga.danno);
         return l.ricarica;
       }
       case 'candela': {
@@ -421,6 +461,7 @@ export class Arsenale {
           if (j < 0) break;
           this.scelti[k] = j;
           this.lancia(a.effetto, j, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, 0, 0, false, 0, LUCE);
+          if (this.unite.candela && this.proiettili) this.prUnione[this.proiettili - 1] = SCIA;
         }
         return l.ricarica;
       }
@@ -428,7 +469,10 @@ export class Arsenale {
         const l = a.livelli[p.livello - 1];
         const n = l.quantita + piu;
         // partono a raggiera e poi girano verso i nemici
-        for (let k = 0; k < n; k++) this.lancia(a.effetto, -1, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2, OMBRA);
+        for (let k = 0; k < n; k++) {
+          this.lancia(a.effetto, -1, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2, OMBRA);
+          if (this.unite.fuocoFatuo && this.proiettili) this.prUnione[this.proiettili - 1] = RACCOGLIE;
+        }
         return l.ricarica;
       }
       case 'lapide': {
@@ -483,6 +527,16 @@ export class Arsenale {
     }
   }
 
+  /** Verga dei nomi: colpisce tutti i nemici maledetti sullo schermo. */
+  private colpisciMaledetti(danno: number): void {
+    const o = this.orda;
+    for (let j = 0; j < o.numero; j++) {
+      if (o.salute[j] <= 0 || !o.maledetto(j) || Math.abs(o.x[j] - this.px) > this.mezzaL || Math.abs(o.y[j] - this.py) > this.mezzaA) continue;
+      this.ferisci(j, danno, 0, 0, 0);
+      this.effetti.scoppio(o.x[j], o.y[j] - o.raggio[j]);
+    }
+  }
+
   /** Il nemico sullo schermo con più salute, saltando i primi «salta» già scelti. */
   private piuForte(salta: number): number {
     const o = this.orda;
@@ -517,12 +571,14 @@ export class Arsenale {
       this.lpVita[i] -= dt;
       if (this.lpCaduta[i] && this.lpVita[i] <= LAPIDE.resta) {
         this.lpCaduta[i] = 0;
-        this.prepara(0, this.lpX[i], this.lpY[i], this.lpR[i], this.lpDanno[i], 0);
-        this.cAff = TERRA;
-        this.cProb = RUOLI.lapideSeppellisce;
-        this.orda.griglia.nelRaggio(this.cx, this.cy, this.lpR[i] + 40, this.visitaColpo);
-        this.effetto(LAPIDE.effetto, this.cx, this.cy, this.lpR[i], PROFONDITA.aTerra, EFFETTI.impattoPala);
-        if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
+        if (this.lpDanno[i]) this.prepara(0, this.lpX[i], this.lpY[i], this.lpR[i], this.lpDanno[i], 0);
+        if (this.lpDanno[i]) {
+          this.cAff = TERRA;
+          this.cProb = RUOLI.lapideSeppellisce;
+          this.orda.griglia.nelRaggio(this.cx, this.cy, this.lpR[i] + 40, this.visitaColpo);
+          this.effetto(LAPIDE.effetto, this.cx, this.cy, this.lpR[i], PROFONDITA.aTerra, EFFETTI.impattoPala);
+          if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
+        }
       }
       if (this.lpVita[i] > 0) continue;
       const u = --this.lapidi, s = this.lpSprite[i];
@@ -636,12 +692,13 @@ export class Arsenale {
   }
 
   // ——— Colpi istantanei ———
-  private arco(dx: number, dy: number, raggio: number, ampiezza: number, danno: number): void {
+  private arco(dx: number, dy: number, raggio: number, ampiezza: number, danno: number, probabilita: number = STATI.probabilita): void {
     this.prepara(1, this.px, this.py, raggio, danno, LANTERNA.respinta);
     this.cDX = dx;
     this.cDY = dy;
     this.cCos = Math.cos(((ampiezza / 2) * Math.PI) / 180);
     this.cAff = LUCE;
+    this.cProb = probabilita;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
     this.effetti.arco(this.px, this.py, Math.atan2(dy, dx), raggio, ampiezza);
   }
@@ -695,6 +752,10 @@ export class Arsenale {
   private impatto(dx: number, dy: number, raggio: number, danno: number): void {
     this.prepara(0, this.px + dx * PALA.distanza, this.py + dy * PALA.distanza, raggio, danno, PALA.respinta);
     this.cAff = TERRA;
+    if (this.unite.pala) {
+      this.cFerma = U.vanga.fermo;
+      this.lapideCade(this.cx, this.cy, raggio, 0); // solo da vedere: il colpo è già questo
+    }
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
     this.effetto(PALA.effetto, this.cx, this.cy, raggio, PROFONDITA.aTerra, EFFETTI.impattoPala);
     if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
@@ -710,12 +771,12 @@ export class Arsenale {
   }
 
   /** Fendente dritto nella direzione (dx, dy), lunga 1: un rettangolo che parte dal personaggio. */
-  private fendente(dx: number, dy: number, lunghezza: number, danno: number): void {
+  private fendente(dx: number, dy: number, lunghezza: number, danno: number, ox = this.px, oy = this.py): void {
     const h = LAMA_DI_LUCE.altezza / 2;
-    this.prepara(2, this.px + (dx * lunghezza) / 2, this.py + (dy * lunghezza) / 2, Math.hypot(lunghezza / 2, h), danno, LAMA_DI_LUCE.respinta);
+    this.prepara(2, ox + (dx * lunghezza) / 2, oy + (dy * lunghezza) / 2, Math.hypot(lunghezza / 2, h), danno, LAMA_DI_LUCE.respinta);
     this.cAff = LUCE;
-    this.cX0 = this.px; // inizio del fendente
-    this.cY0 = this.py;
+    this.cX0 = ox; // inizio del fendente
+    this.cY0 = oy;
     this.cX1 = lunghezza;
     this.cY1 = h;
     this.cDX = dx;
@@ -723,7 +784,7 @@ export class Arsenale {
     this.orda.griglia.nelRaggio(this.cx, this.cy, this.cr + 40, this.visitaColpo);
     // il fendente della v0 parte dal bordo sinistro della tela e va a destra: si allunga e si gira nella direzione;
     // verso sinistra si capovolge anche in verticale, così il disegno non resta sottosopra
-    const s = this.effetto(LAMA_DI_LUCE.effetto, this.px, this.py, 0, PROFONDITA.aTerra, LAMA_DI_LUCE.durataEffetto);
+    const s = this.effetto(LAMA_DI_LUCE.effetto, ox, oy, 0, PROFONDITA.aTerra, LAMA_DI_LUCE.durataEffetto);
     if (!s) return;
     const m = this.misureLama();
     s.setOrigin(m.x / m.l, 0.5).setScale(lunghezza / m.lunghezza, LAMA_DI_LUCE.altezza / m.altezza).setRotation(Math.atan2(dy, dx)).setFlipY(dx < 0);
@@ -810,7 +871,7 @@ export class Arsenale {
       if (this.rtTempo[i] > 0) continue;
       const arma = this.rtArma[i];
       if (arma === PALA) this.impatto(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
-      else if (arma === CAMPANA) this.rintocco(this.rtA[i], this.rtB[i], this.rtC[i] ? RUOLI.campanaFermo : 0);
+      else if (arma === CAMPANA) this.rintocco(this.rtA[i], this.rtB[i], Math.max(this.rtC[i] ? RUOLI.campanaFermo : 0, this.unite.campana ? U.campana.fermo : 0));
       else this.fendente(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
       const u = --this.ritardati;
       this.rtTempo[i] = this.rtTempo[u];
@@ -840,6 +901,11 @@ export class Arsenale {
     this.zTipo[i] = tipo;
     this.zAff[i] = aff;
     const s = this.zSprite[i];
+    if (chiave === SPRITE_SCIA) {
+      s.stop();
+      s.setTexture(chiave).setScale(2).setVisible(true);
+      return;
+    }
     s.setTexture(chiave).setScale(raggio / this.raggioDi(chiave)).setVisible(true);
     s.play(ciclo ? { key: `${chiave}:idle`, repeat: -1 } : { key: `${chiave}:idle`, duration: durata * 1000, repeat: 0 });
   }
@@ -887,6 +953,10 @@ export class Arsenale {
     }
     o.segno[j] = this.colpo;
     this.ferisci(j, this.zDanno[i], 0, 0, 0, this.zAff[i], STATI.probabilitaZone);
+    if (this.zTipo[i] === POZZA && this.unite.acquaSanta && o.salute[j] <= 0 && ++this.uccisiPozze >= U.acquasantiera.uccisioni) {
+      this.uccisiPozze = 0;
+      this.sorsiGuadagnati++;
+    }
     if (this.zRallenta[i]) o.rallenta(j, this.zRallenta[i], this.zIntervallo[i] + 0.05);
   }
 
@@ -944,6 +1014,7 @@ export class Arsenale {
     const ey = o.y[j] - o.raggio[j] - this.py;
     const d = Math.hypot(ex, ey) || 1;
     this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
+    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < U.falce.sotto * o.saluteMassima[j]) o.colpisci(j, o.salute[j], 0, 0, 0);
     if (o.salute[j] <= 0) {
       // ogni uccisione allunga la lama per qualche secondo
       const c = RUOLI.falceCrescita;
@@ -978,6 +1049,7 @@ export class Arsenale {
     this.prSterzo[i] = sterzo;
     this.prPortata[i] = portata;
     this.prEsplode[i] = esplode ? 1 : 0;
+    this.prUnione[i] = 0;
     this.prResto[i] = trapassa;
     this.prColpiti.fill(0, i * 4, i * 4 + 4);
     const v0 = PROIETTILI_V0[chiave];
@@ -1032,11 +1104,18 @@ export class Arsenale {
   }
 
   private aggiornaProiettili(dt: number): void {
+    const scia = (this.attesaScia -= dt) <= 0;
+    if (scia) this.attesaScia += U.candelabro.ogni;
     for (let i = this.proiettili - 1; i >= 0; i--) {
       this.prVita[i] -= dt;
       if (this.prSterzo[i]) this.sterza(i, dt);
       this.prX[i] += this.prVX[i] * dt;
       this.prY[i] += this.prVY[i] * dt;
+      if (this.prUnione[i] === RACCOGLIE) this.anime?.attiraVicino(this.prX[i], this.prY[i], U.fuochi.raggio);
+      else if (scia && this.prUnione[i] === SCIA) {
+        const c = U.candelabro;
+        this.zona(SPRITE_SCIA, this.prX[i], this.prY[i], c.raggio, this.prDanno[i] * c.danno, c.durata, c.intervallo, 0, 0, 0, false, false, 0, LUCE);
+      }
       if (this.prVita[i] > 0) {
         this.cProiettile = i;
         this.cx = this.prX[i];
@@ -1115,6 +1194,7 @@ export class Arsenale {
     this.prEsplode[i] = this.prEsplode[u];
     this.prAff[i] = this.prAff[u];
     this.prResto[i] = this.prResto[u];
+    this.prUnione[i] = this.prUnione[u];
     this.prColpiti.copyWithin(i * 4, u * 4, u * 4 + 4);
     this.prSprite[i] = this.prSprite[u];
     this.prSprite[u] = s;

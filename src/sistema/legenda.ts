@@ -3,12 +3,15 @@
  * da due stati diversi. Si apre dalla pausa («Stati») e dal «?» della scelta dei doni. I testi vengono dai numeri veri.
  */
 import { AFFINITA_TUTTE, INFO_AFFINITA, INFO_REAZIONI } from '../data/spiegazioni';
+import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
+import { PASSIVI } from '../data/doni';
+import { iconaUnione, livelloDonoUnione, UNIONI } from '../data/unioni';
 import { immagine, misura, misureHud, retino } from './arte';
 
 export class Legenda {
   private radice = document.createElement('div');
 
-  constructor(contenitore: HTMLElement) {
+  constructor(contenitore: HTMLElement, private unioni: () => boolean) {
     this.radice.className = 'legenda';
     this.radice.hidden = true;
     this.radice.style.backgroundImage = `url(${retino(14)})`;
@@ -60,6 +63,16 @@ export class Legenda {
         r.stati[1] ? [simbolo(INFO_AFFINITA[r.stati[0]].simbolo), simbolo(INFO_AFFINITA[r.stati[1]].simbolo)] : [simbolo(INFO_AFFINITA[r.stati[0]].simbolo)],
         r.nome, r.colore, `${r.stati[1] ? '' : '(con qualsiasi altro stato) '}${r.effetto()}`,
       )),
+      ...(this.unioni() ? [
+        titolo('Unioni'),
+        nota('Con arma e dono ai livelli indicati, il reliquiario li unisce.'),
+        ...UNIONI.map((u) => {
+          const im = immagine(iconaUnione(u.id));
+          misura(im, 24, 24, Math.max(1, Math.round(k / 2)), m);
+          const armi = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
+          return voce([im], u.nome, '#ffe08a', `${armi.find((a) => a.id === u.arma)!.nome} 8 + ${PASSIVI.find((q) => q.id === u.dono)!.nome} ${livelloDonoUnione(u.dono)}`);
+        }),
+      ] : []),
       chiudi,
     );
     this.radice.hidden = false;

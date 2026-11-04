@@ -17,6 +17,7 @@ import { PASSIVI } from '../data/doni';
 import { AMULETI } from '../data/rosario';
 import { PERSONAGGI } from '../data/personaggi';
 import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
+import { UNIONI } from '../data/unioni';
 import { carica, salva } from './salvataggio';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
@@ -248,6 +249,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const livelloArma = (a: (typeof ARMI_COMUNI)[number]): number => liv.armi.find((x) => x.arma === a)?.livello ?? 0;
     const tutteLeArme = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
     const am = p.labAmuletiSnapshot();
+    const unite = p.labStatoUnioni().unite;
     return [
       titolo('Armi (si sale di livello; per toglierle riavvia la partita)'),
       ...tutteLeArme.map((a) => riga(el('b', '', `${a.nome} · ${livelloArma(a) || '—'}`), tasto('+1', fai((x) => x.labArma(a, livelloArma(a) + 1)), 'piccolo'), tasto('Liv. 8', fai((x) => x.labArma(a, 8)), 'piccolo'))),
@@ -255,6 +257,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       ...PASSIVI.map((q) => riga(el('b', '', `${q.nome} · ${liv.doni[q.id] || '—'}`), tasto('−1', fai((x) => x.labDono(q.id, (liv.doni[q.id] || 0) - 1)), 'piccolo'), tasto('+1', fai((x) => x.labDono(q.id, (liv.doni[q.id] || 0) + 1)), 'piccolo'), tasto('Max', fai((x) => x.labDono(q.id, q.massimo)), 'piccolo'))),
       titolo('Amuleti del Rosario'),
       ...AMULETI.map((a) => riga(el('b', '', `${a.nome} (${a.grani})`), tasto(am.posseduti.includes(a.id) ? 'Presente' : 'Aggiungi', fai((x) => x.labAmuleto(a.id, !am.posseduti.includes(a.id))), am.posseduti.includes(a.id) ? 'acceso piccolo' : 'piccolo'))),
+      titolo('Unioni (Prepara: arma 8 e dono 3, poi apri un reliquiario)'),
+      ...UNIONI.map((u) => riga(el('b', '', u.nome), tasto('Prepara', fai((x) => x.labUnione(u.id, false)), 'piccolo'), tasto(unite.includes(u.id) ? 'Unita' : 'Unisci', fai((x) => x.labUnione(u.id, true)), unite.includes(u.id) ? 'acceso piccolo' : 'piccolo'))),
     ];
   }
 
@@ -369,6 +373,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Sblocca tutti i personaggi', () => { const x = carica(); x.sbloccati = PERSONAGGI.map((q) => q.id); salva(x); ridisegna(); }),
         tasto('Sblocca il Rosario', () => { const x = carica(); x.rosario = true; salva(x); ridisegna(); }),
         tasto('Sblocca armi e doni nuovi', () => { const x = carica(); x.oggetti = SBLOCCHI_OGGETTI.map((o) => o.id); salva(x); ridisegna(); }),
+        tasto('Sblocca le Unioni', () => { const x = carica(); x.unioni = true; salva(x); ridisegna(); }),
         tasto('Seconda candela', () => { const x = carica(); x.secondaCandela = true; x.secondaCandelaSpenta = false; salva(x); ridisegna(); }),
       ),
       titolo('Ceri votivi'),

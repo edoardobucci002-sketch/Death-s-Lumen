@@ -308,6 +308,10 @@ export class Orda {
   }
 
   /** Ferma il nemico i per qualche secondo, senza stato (secondo rintocco della Campana); il Mietitore a metà. */
+  maledetto(i: number): boolean {
+    return this.sMaledetto[i] > 0;
+  }
+
   ferma(i: number, secondi: number): void {
     const s = secondi * (this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1);
     if (s > this.fermo[i]) this.fermo[i] = s;
