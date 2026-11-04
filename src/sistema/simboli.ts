@@ -6,6 +6,7 @@
  * Si disegnano sopra il buio, come le anime, e con un numero fisso di sprite: niente allocazioni nel ciclo di gioco.
  */
 import type Phaser from 'phaser';
+import { preparaArte, registraArte } from './arte';
 import { PROFONDITA } from './effetti';
 import { STATI } from '../data/stati';
 
@@ -22,7 +23,10 @@ const esadecimale = (c: number, f = 1): string => `rgb(${Math.round((c >> 16 & 2
 
 function creaTexture(scena: Phaser.Scene): void {
   for (const d of DISEGNI) {
-    if (scena.textures.exists(d.sprite)) continue;
+    if (scena.textures.exists(d.sprite)) {
+      if (scena.cache.json.has(d.sprite)) preparaArte(scena, [d.sprite]); // quello di Edoardo, anche per legenda e strisce
+      continue;
+    }
     const c = scena.textures.createCanvas(d.sprite, LATO + 2, LATO + 2)!;
     const piena = (x: number, y: number): boolean => (d.righe[y]?.[x] ?? '.') !== '.';
     for (let y = -1; y <= LATO; y++) {
@@ -36,6 +40,7 @@ function creaTexture(scena: Phaser.Scene): void {
       }
     }
     c.refresh();
+    registraArte(d.sprite, c.canvas);
   }
 }
 

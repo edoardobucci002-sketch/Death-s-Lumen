@@ -429,7 +429,10 @@ export class Arsenale {
       } else if (t === INTERRAMENTO) {
         this.effetti.reazione(x, y, REAZIONI.interramento.raggio, REAZIONI.interramento.colore, REAZIONI.interramento.bordo, REAZIONI.durataEffetto);
       }
-      if (t !== ESPLOSIONE) this.reazioni++;
+      if (t !== ESPLOSIONE) {
+        this.reazioni++;
+        this.effetti.etichetta(t, x, y - 24);
+      }
     }
     this.code = 0;
   }

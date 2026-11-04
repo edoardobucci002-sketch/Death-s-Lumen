@@ -110,6 +110,22 @@ export const TESTI = {
   cartaTitolo: 7, // nome nella carta (×3)
   cartaTesto: 7,
   cartaTasto: 18, // il numero 1-2-3 sotto la carta
+  strisciaDato: 13, // numeri grandi della striscia
+  strisciaTag: 8, // «Nuova arma», «Liv 3 › 4»
+  strisciaRiga: 7.5, // righe di spiegazione
+};
+
+/** Striscia della scelta dei doni (pixel disegnati): una sotto l'altra, così anche sul telefono testo e numeri restano grandi. */
+export const STRISCIA = {
+  l: 170, a: 62, // 170 × 3 sta in un telefono largo 360 punti (Galaxy S25)
+  spazio: 3, ingrandimentoMassimo: 4,
+  interni: {
+    icona: { x: 5, y: 5, l: 34, a: 52 },
+    titolo: { x: 44, y: 5, l: 78, a: 9 },
+    tag: { x: 122, y: 4, l: 43, a: 10 },
+    dati: { x: 44, y: 16, l: 121, a: 15 },
+    righe: { x: 44, y: 32, l: 121, a: 27 },
+  },
 };
 
 /** Caselle di armi e doni in partita: piccole, alla Vampire Survivors (la cornice grande sta nel pannello della pausa). */

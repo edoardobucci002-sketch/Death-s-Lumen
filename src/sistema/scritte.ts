@@ -34,7 +34,7 @@ export function scalaScritta(testo: string, r: Riquadro, z: number, kMax: number
 }
 
 /** La tela della scritta, con un'ombra di un pixel sotto se serve (per i testi su fondo scuro). */
-function tela(testo: string, colore: string, ombra: string | null): HTMLCanvasElement {
+export function tela(testo: string, colore: string, ombra: string | null): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = larghezza(testo) + 1;
   c.height = ALTO + 1;
@@ -56,11 +56,27 @@ function tela(testo: string, colore: string, ombra: string | null): HTMLCanvasEl
   return c;
 }
 
+/** La scritta con un contorno pieno di un pixel: si legge sopra qualsiasi sfondo (nomi delle reazioni). */
+export function telaContorno(testo: string, colore: string, bordo: string): HTMLCanvasElement {
+  const t = tela(testo, colore, null);
+  const c = document.createElement('canvas');
+  c.width = t.width + 2;
+  c.height = t.height + 2;
+  const g = c.getContext('2d')!;
+  const d = t.getContext('2d')!.getImageData(0, 0, t.width, t.height);
+  g.fillStyle = bordo;
+  for (let y = 0; y < t.height; y++) {
+    for (let x = 0; x < t.width; x++) if (d.data[(y * t.width + x) * 4 + 3]) g.fillRect(x, y, 3, 3);
+  }
+  g.drawImage(t, 1, 1);
+  return c;
+}
+
 /**
  * Scrive dentro el (posizionato in un'arte ingrandita z volte) centrata nel riquadro r, ingrandita k volte.
  * Le maiuscole stanno al centro del riquadro.
  */
-export function scriviPixel(el: HTMLElement, testo: string, r: Riquadro, z: number, k: number, m: MisureHud, colore: string, ombra: string | null = null): void {
+export function scriviPixel(el: HTMLElement, testo: string, r: Riquadro, z: number, k: number, m: MisureHud, colore: string, ombra: string | null = null, sinistra = false): void {
   const c = tela(testo, colore, ombra);
   c.className = 'scritta';
   el.replaceChildren(c);
@@ -68,7 +84,7 @@ export function scriviPixel(el: HTMLElement, testo: string, r: Riquadro, z: numb
   el.style.overflow = 'visible';
   posa(el, 0, 0, m);
   misura(el, 0, 0, z, m);
-  const x = Math.round(r.x * z + (r.l * z - c.width * k) / 2);
+  const x = sinistra ? r.x * z : Math.round(r.x * z + (r.l * z - c.width * k) / 2);
   const y = Math.round(r.y * z + (r.a * z) / 2 - (BASE - MAIUSCOLE / 2) * k);
   posa(c, x, y, m);
   misura(c, c.width, c.height, k, m);
@@ -85,12 +101,12 @@ export function scritta(el: Element, testo: string): void {
  * Se non ci sta neanche a 1, torna al carattere del CSS rimpicciolito (scriviIn), grande al massimo «riserva».
  * Restituisce l'ingrandimento usato (0 = carattere di riserva).
  */
-export function scriviNel(el: HTMLElement, r: Riquadro, z: number, kMax: number, m: MisureHud, riserva: number, ombra: string | null = null): number {
+export function scriviNel(el: HTMLElement, r: Riquadro, z: number, kMax: number, m: MisureHud, riserva: number, ombra: string | null = null, sinistra = false): number {
   const testo = el.dataset.testo ?? el.textContent ?? '';
   el.dataset.testo = testo;
   const k = scalaScritta(testo, r, z, kMax);
   if (k) {
-    scriviPixel(el, testo, r, z, k, m, getComputedStyle(el).color, ombra);
+    scriviPixel(el, testo, r, z, k, m, getComputedStyle(el).color, ombra, sinistra);
     return k;
   }
   el.replaceChildren(testo);

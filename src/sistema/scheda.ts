@@ -1,0 +1,113 @@
+/*
+ * Che cosa dice una striscia della scelta dei doni: dai dati veri ricava nome, numeri che cambiano
+ * e righe di spiegazione (stato che lascia l'arma, reazione con le armi che hai, vantaggio e rovescio).
+ * Qui c'è anche la striscia provvisoria, disegnata dal codice finché Edoardo non esporta Striscia_Dono.
+ */
+import type { Arma } from '../data/armi';
+import { AFFINITA_ARMI } from '../data/stati';
+import { CARTE } from '../data/progressione';
+import { ROSARIO } from '../data/rosario';
+import { CAMPI_ARMA, DATI_DONI, INFO_AFFINITA, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
+import { STRISCIA } from '../data/hud';
+import { arte, registraArte } from './arte';
+import { iconaAmuleto } from './amuleti';
+import type { Dono } from './doni';
+
+export interface Dato { nome: string; prima?: string; dopo: string; tono?: 'bene' | 'male' }
+export interface Riga { testo: string; tono?: 'bene' | 'male' | 'reazione'; simbolo?: string; colore?: string }
+export interface Scheda {
+  nome: string;
+  icona: string | null;
+  categoria: 'arma' | 'dono' | 'amuleto' | 'altro';
+  tag: string;
+  dati: Dato[];
+  righe: Riga[];
+}
+export interface Contesto {
+  armi: readonly Arma[]; // quelle che hai già
+  graniUsati: number;
+  graniTotali: number;
+}
+
+const tagLivello = (l: number, massimo: number, nuovo: string): string => (l === 1 ? nuovo : `Liv ${l - 1} › ${l === massimo ? 'MAX' : l}`);
+
+function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
+  const ora = arma.livelli[l - 1] as unknown as Record<string, number | boolean | string>;
+  const prima = l > 1 ? arma.livelli[l - 2] as unknown as Record<string, number | boolean | string> : null;
+  const dati: Dato[] = [];
+  let novita = l === 1; // un'abilità nuova (non un numero) si racconta a parole
+  for (const k of Object.keys(ora)) {
+    const campo = CAMPI_ARMA[k], v = ora[k];
+    if (typeof v === 'boolean') novita ||= !!prima && v !== prima[k];
+    if (!campo || typeof v !== 'number') continue;
+    const unita = campo.unita ?? '';
+    if (!prima) {
+      if (k === 'danno' || k === 'ricarica' || (k === 'quantita' && v > 1)) dati.push({ nome: campo.nome, dopo: virgola(v) + unita, tono: 'bene' });
+    } else if (prima[k] !== v) {
+      dati.push({ nome: campo.nome, prima: virgola(prima[k] as number), dopo: virgola(v) + unita, tono: 'bene' });
+    }
+  }
+  const righe: Riga[] = [];
+  if (novita || !dati.length) righe.push({ testo: String(ora.testo) });
+  const aff = AFFINITA_ARMI[arma.id], info = INFO_AFFINITA[aff];
+  righe.push({ testo: `${info.verbo} il nemico: ${info.effetto()}`, simbolo: info.simbolo, colore: info.colore });
+  for (const a of c.armi) {
+    const r = a !== arma ? reazioneTra(aff, AFFINITA_ARMI[a.id]) : undefined;
+    if (r) {
+      righe.push({ testo: `Con ${a.nome}: ${r.nome.toUpperCase()}, ${r.effetto()}`, tono: 'reazione' });
+      break;
+    }
+  }
+  return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, CARTE.livelloMassimo, 'Nuova arma'), dati, righe };
+}
+
+/** Che cosa raccontano le strisce del dono d. */
+export function schedaDono(d: Dono, c: Contesto): Scheda {
+  switch (d.tipo) {
+    case 'arma': return schedaArma(d.arma, d.livello, c);
+    case 'passivo': {
+      const q = d.passivo, ora = DATI_DONI[q.id](q, d.livello), prima = d.livello > 1 ? DATI_DONI[q.id](q, d.livello - 1) : null;
+      return {
+        nome: q.nome, icona: q.icona, categoria: 'dono', tag: tagLivello(d.livello, q.massimo, 'Nuovo dono'),
+        dati: ora.map((v, i) => ({ nome: v.nome, prima: prima?.[i].valore, dopo: v.valore, tono: 'bene' })),
+        righe: [{ testo: SPIEGA_DONI[q.id] }],
+      };
+    }
+    case 'amuleto': {
+      const a = d.amuleto, dopo = c.graniUsati + a.grani, peccato = dopo > c.graniTotali;
+      const dati: Dato[] = [{ nome: 'Rosario', prima: `${c.graniUsati}/${c.graniTotali}`, dopo: `${dopo}/${c.graniTotali}`, tono: peccato ? 'male' : 'bene' }];
+      if (peccato) dati.push({ nome: 'Peccato', dopo: `danno subito ×${1 + ROSARIO.peccato}`, tono: 'male' });
+      return {
+        nome: a.nome, icona: iconaAmuleto(a.id), categoria: 'amuleto', tag: `${a.grani} ${a.grani === 1 ? 'grano' : 'grani'}`, dati,
+        righe: [{ testo: a.vantaggio, tono: 'bene' }, a.rovescio === 'Nessuno.' ? { testo: 'Nessun rovescio.' } : { testo: `Rovescio: ${a.rovescio}`, tono: 'male' }],
+      };
+    }
+    case 'potenziamento':
+      return { nome: 'Potenziamento', icona: null, categoria: 'altro', tag: 'Reliquiario', dati: [], righe: [{ testo: 'Un\'arma o un dono sale di livello (a volte tre).' }] };
+    case 'pane':
+      return { nome: 'Pane e vino', icona: null, categoria: 'altro', tag: 'Ristoro', dati: [{ nome: 'Salute', dopo: `+${CARTE.paneEVino}`, tono: 'bene' }], righe: [{ testo: 'Un ristoro nella notte.' }] };
+  }
+}
+
+/** La striscia provvisoria (normale e sotto il dito), a pixel interi, con il pozzetto per l'icona. */
+export function creaStrisce(): void {
+  const { l, a } = STRISCIA;
+  for (const [chiave, bordo, fondo] of [['Striscia_Dono', '#8a6a3a', '#1a1410'], ['Striscia_Dono_Scelta', '#f2cf6a', '#2c2116']] as const) {
+    if (arte(chiave)) continue;
+    const t = document.createElement('canvas');
+    t.width = l;
+    t.height = a;
+    const g = t.getContext('2d')!;
+    const piena = (c: string, x: number, y: number, w: number, h: number): void => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+    piena('#0b0807', 1, 0, l - 2, a);
+    piena('#0b0807', 0, 1, l, a - 2);
+    piena(bordo, 2, 1, l - 4, a - 2);
+    piena(bordo, 1, 2, l - 2, a - 4);
+    piena(fondo, 2, 2, l - 4, a - 4);
+    const w = STRISCIA.interni.icona;
+    piena('#0b0807', w.x, w.y, w.l, w.a);
+    piena(bordo, w.x, w.y, w.l, 1);
+    piena(bordo, w.x, w.y + w.a - 1, w.l, 1);
+    registraArte(chiave, t);
+  }
+}

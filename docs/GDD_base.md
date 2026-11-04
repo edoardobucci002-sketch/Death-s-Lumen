@@ -380,6 +380,8 @@ Ruoli nuovi delle armi (M8): l'esplosione del dardo del Bastone ferisce in 40 px
 
 Simulazione (3/11, 24 notti per personaggio): circa 300–1000 reazioni a notte. Con ogni colpo che lasciava uno stato erano 19.000–32.000 e il bot vinceva 85 notti su 96; la forza viene sia dagli stati sia dalle reazioni, e per compensare la seconda metà della notte è diventata più dura (sezioni 6 e 7).
 
+La **scelta dei doni** è fatta di strisce orizzontali una sotto l'altra (`src/sistema/scheda.ts`, parole in `src/data/spiegazioni.ts`): nome, numeri grandi che cambiano («Danno 24 › 32»), il simbolo dello stato che lascia l'arma con il suo effetto, la reazione che si otterrebbe con un'arma già posseduta. Gli amuleti mostrano i grani dopo averli presi, vantaggio in verde, rovescio in rosso e l'avviso di Peccato se si sfora. Quando scatta una reazione il suo nome sale sopra il nemico. La **legenda** di stati e reazioni si apre dalla pausa («Stati») e dal «?» della scelta dei doni.
+
 ## 8d. Meta progressione di base (M8, `src/data/meta.ts`)
 
 Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è la prima parte: Cera, Cappella a elenco, ceri votivi, Seconda candela, personaggi da sbloccare, salvataggio.
@@ -407,7 +409,7 @@ Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è 
 ## 8e. Il Rosario (tappa 4 della proposta su oggetti e build, M8, `src/data/rosario.ts`)
 
 - **Grani**: si parte con 3, +1 per ogni Seth sconfitto in quella veglia (al massimo 5). Ogni amuleto costa da 1 a 3 grani.
-- **Dove si trovano**: nei reliquiari. Se il Rosario è sbloccato e c'è un amuleto ancora da trovare, il reliquiario mostra tre carte: due amuleti a caso e «Potenziamento» (il potenziamento di prima: 1, a volte 3). Provvisorio: la proposta diceva tre amuleti o un potenziamento (quattro carte), ma la scelta dei doni sarà rifatta per il telefono.
+- **Dove si trovano**: nei reliquiari. Se il Rosario è sbloccato e c'è un amuleto ancora da trovare, il reliquiario offre gli amuleti a caso e «Potenziamento» (il potenziamento di prima: 1, a volte 3). Con le strisce ci stanno quattro scelte: il reliquiario mostra tre amuleti e «Potenziamento».
 - **Peccato**: se i grani usati superano quelli che hai, il danno subito raddoppia, finché non spegni un amuleto. Dalla pausa si toccano le icone degli amuleti per accenderli e spegnerli. In partita, sotto la Cera: «Rosario 2/3» (in rosso «Peccato 5/3»).
 - **Sblocco**: nella Cappella, con l'impresa «Sopravvivi 8 minuti» oppure con 300 Cera. Salvato nel salvataggio.
 - **Gli amuleti** (vantaggio / rovescio):
@@ -415,7 +417,7 @@ Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è 
 | Amuleto | Grani | Vantaggio | Rovescio |
 | --- | --- | --- | --- |
 | Specchio rotto | 3 | +1 proiettile, nube, fiala, fuoco o falce per tutte le armi | subisci +25% danno |
-| Lanterna cieca | 2 | +35% danno | alone di luce al 15%: buio quasi pieno |
+| Lanterna cieca | 2 | +35% danno | alone di luce al 15%: quasi spento |
 | Cuore avido | 2 | +30% anime | pane e fiaschetta curano la metà |
 | Sangue freddo | 1 | sotto il 30% di salute, +40% danno | nessuno |
 | Martire | 3 | ogni colpo subito libera un'onda sacra di 150 px (30 di danno base) | −20% salute massima |
@@ -427,6 +429,7 @@ Proposta completa: https://claude.ai/artifact/VKX48n68RY3LhBKW8SBqBD. Questa è 
 
 - **Icone**: grani colorati disegnati dal codice (`src/sistema/amuleti.ts`), da sostituire con `Icona_Amuleto_<id>` di Edoardo.
 - **Simulazione** (3/11, 12 notti per personaggio, Cappella a metà): il bot prende solo gli amuleti con rovescio lieve (Sangue freddo, Lucciola, Ceri gemelli, Ossa d'élite, Danza macabra) e non va mai in Peccato: vince 16 notti su 48 (33%), come senza Rosario. Prendendo anche gli altri scendeva a 12 su 48. Cappella completa: 21 su 48 (44%, obiettivo 60–75%: ancora sotto).
+- **Simulazione con 3 amuleti offerti** (4/11, 12 notti per personaggio, Cappella a metà): 21 vittorie su 48 (44%, obiettivo 30–45%), contro 16 su 48 con 2 amuleti. Lampionaio 3, Becchino 4, Badessa 7, Strega 7: su 12 notti i singoli personaggi oscillano molto (con 2 amuleti erano 2, 6, 6, 2).
 
 ## 9. Esperienza e doni
 

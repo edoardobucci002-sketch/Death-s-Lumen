@@ -40,6 +40,7 @@ export interface AzioniHud {
   riprova(): void;
   menu(): void;
   amuleto(id: string): void; // dalla pausa: accende o spegne un amuleto
+  legenda(): void; // dalla pausa: spiega stati e reazioni
 }
 
 const DURATA_AVVISO = 2400; // millisecondi
@@ -150,6 +151,7 @@ export class Hud {
     }
     this.pausa.querySelector('.hud-pulsanti')!.append(
       tasto('Pulsante_Acceso', 'Riprendi', { azione: 'riprendi' }),
+      tasto('Pulsante_Scuro', 'Stati', { azione: 'legenda' }),
       tasto('Pulsante_Scuro', '', { opzione: 'audio' }),
       tasto('Pulsante_Scuro', '', { opzione: 'vibrazione' }),
       tasto('Pulsante_Pericolo', 'Abbandona', { azione: 'abbandona' }),
@@ -171,6 +173,7 @@ export class Hud {
       if (azione === 'riprendi') this.azioni.riprendi();
       else if (azione === 'abbandona' || azione === 'menu') this.azioni.menu();
       else if (azione === 'riprova') this.azioni.riprova();
+      else if (azione === 'legenda') this.azioni.legenda();
       if (b.dataset.opzione === 'audio') impostaAudio(!audioAttivo());
       if (b.dataset.opzione === 'vibrazione') impostaVibrazione(!vibrazione());
       if (b.dataset.opzione) {

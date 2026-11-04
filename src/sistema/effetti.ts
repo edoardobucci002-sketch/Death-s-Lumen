@@ -9,6 +9,8 @@ import Phaser from 'phaser';
 import { Caso } from './caso';
 import { EFFETTI } from '../data/effetti';
 import { REAZIONI } from '../data/stati';
+import { INFO_REAZIONI } from '../data/spiegazioni';
+import { telaContorno } from './scritte';
 
 /** Ordine di disegno, dal basso verso l'alto. Personaggio e nemici stanno in mezzo, ordinati per i piedi. */
 export const PROFONDITA = {
@@ -24,6 +26,7 @@ const MAX_NUMERI = 64;
 const MAX_SCOPPI = 48;
 const MAX_ARCHI = 4;
 const MAX_REAZIONI = 24;
+const MAX_ETICHETTE = 8;
 // cifre 3×5: ogni riga è una cifra, 1 = pixel acceso
 const CIFRE = [
   '111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001',
@@ -49,6 +52,10 @@ export class Effetti {
   private reazioni: Phaser.GameObjects.Image[] = [];
   private reazioneVita = new Float32Array(MAX_REAZIONI);
   private reazioneChiave: string[] = [];
+  private etichette: Phaser.GameObjects.Image[] = [];
+  private etichettaVita = new Float32Array(MAX_ETICHETTE);
+  private prossimaEtichetta = 0;
+  private pausaEtichetta = new Float32Array(INFO_REAZIONI.length + 1);
   private prossimaReazione = 0;
   private durataReazione = 0.25;
   private scossa = 0; // secondi rimasti
@@ -68,6 +75,11 @@ export class Effetti {
       this.reazioni.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.sopra).setVisible(false));
       this.reazioneChiave.push('');
     }
+    for (const r of INFO_REAZIONI) {
+      const k = `Nome_${r.nome}`;
+      if (!scena.textures.exists(k)) scena.textures.addCanvas(k, telaContorno(r.nome, '#fff4dc', '#120c0a'));
+    }
+    for (let i = 0; i < MAX_ETICHETTE; i++) this.etichette.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.barra).setScale(REAZIONI.etichetta.ingrandimento).setVisible(false));
     for (let i = 0; i < MAX_ARCHI; i++) {
       this.archi.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.aTerra + 1).setVisible(false));
       this.arcoChiave.push('');
@@ -120,6 +132,16 @@ export class Effetti {
     this.reazioni[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setVisible(true);
   }
 
+  /** Il nome della reazione (1 = Eclissi, come in orda.ts) sale sopra il punto (x, y). */
+  etichetta(reazione: number, x: number, y: number): void {
+    if (this.pausaEtichetta[reazione] > 0) return;
+    this.pausaEtichetta[reazione] = REAZIONI.etichetta.pausa;
+    const i = this.prossimaEtichetta;
+    this.prossimaEtichetta = (i + 1) % MAX_ETICHETTE;
+    this.etichettaVita[i] = REAZIONI.etichetta.durata;
+    this.etichette[i].setTexture(`Nome_${INFO_REAZIONI[reazione - 1].nome}`).setScale(REAZIONI.etichetta.ingrandimento).setPosition(Math.round(x), Math.round(y)).setVisible(true);
+  }
+
   /** Scuote lo schermo; resta la scossa più forte tra quelle in corso. */
   scuoti(forza: number, durata: number): void {
     if (this.scossa <= 0 || forza >= this.forzaScossa) this.forzaScossa = forza;
@@ -150,6 +172,13 @@ export class Effetti {
       // seconda metà della vita: lo stesso arco a retino, poi sparisce
       if (this.arcoVita[i] <= 0) this.archi[i].setVisible(false);
       else if (this.arcoVita[i] < EFFETTI.arco.durata / 2) this.archi[i].setTexture(`${this.arcoChiave[i]}-1`);
+    }
+    for (let i = 1; i < this.pausaEtichetta.length; i++) if (this.pausaEtichetta[i] > 0) this.pausaEtichetta[i] -= dt;
+    for (let i = 0; i < MAX_ETICHETTE; i++) {
+      if (this.etichettaVita[i] <= 0) continue;
+      this.etichettaVita[i] -= dt;
+      if (this.etichettaVita[i] <= 0) this.etichette[i].setVisible(false);
+      else this.etichette[i].setY(Math.round(this.etichette[i].y - (REAZIONI.etichetta.sale / REAZIONI.etichetta.durata) * dt - 1e-6));
     }
     for (let i = 0; i < MAX_REAZIONI; i++) {
       if (this.reazioneVita[i] <= 0) continue;

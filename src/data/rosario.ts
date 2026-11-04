@@ -15,7 +15,7 @@ export const ROSARIO = {
   perSeth: 1, // grani in più per ogni Seth sconfitto…
   massimo: 5, // …fino a questo totale
   peccato: 1, // danno subito in più oltre i grani (1 = il doppio)
-  proposte: 2, // amuleti offerti da un reliquiario, accanto al potenziamento
+  proposte: 3, // amuleti offerti da un reliquiario, accanto al potenziamento
   // all'inizio nessuno li ha: il Rosario si sblocca nella Cappella (data/meta.ts, SBLOCCO_ROSARIO)
 } as const;
 
@@ -44,10 +44,10 @@ export interface Amuleto {
 
 export const AMULETI: Amuleto[] = [
   { id: 'specchioRotto', nome: 'Specchio rotto', grani: 3, vantaggio: '+1 proiettile, nube, fiala, fuoco o falce per tutte le armi.', rovescio: 'Subisci +25% danno.', colore: '#c9d6e8' },
-  { id: 'lanternaCieca', nome: 'Lanterna cieca', grani: 2, vantaggio: '+35% danno.', rovescio: 'Niente alone di luce: buio pieno.', colore: '#6a5a8a' },
+  { id: 'lanternaCieca', nome: 'Lanterna cieca', grani: 2, vantaggio: '+35% danno.', rovescio: 'Alone di luce quasi spento.', colore: '#6a5a8a' },
   { id: 'cuoreAvido', nome: 'Cuore avido', grani: 2, vantaggio: '+30% anime.', rovescio: 'Pane e fiaschetta curano la metà.', colore: '#c2412d' },
   { id: 'sangueFreddo', nome: 'Sangue freddo', grani: 1, vantaggio: 'Sotto il 30% di salute, +40% danno.', rovescio: 'Nessuno.', colore: '#4f8fb8' },
-  { id: 'martire', nome: 'Martire', grani: 3, vantaggio: 'Ogni colpo subito libera un\'onda sacra di 150 px.', rovescio: '−20% salute massima.', colore: '#dcc07a' },
+  { id: 'martire', nome: 'Martire', grani: 3, vantaggio: 'Ogni colpo subito libera un\'onda sacra intorno a te.', rovescio: '−20% salute massima.', colore: '#dcc07a' },
   { id: 'danzaMacabra', nome: 'Danza macabra', grani: 2, vantaggio: 'La Grazia scatta anche sfiorando i nemici normali.', rovescio: 'La Grazia dura 2 s invece di 3.', colore: '#a57ae0' },
   { id: 'ceriGemelli', nome: 'Ceri gemelli', grani: 2, vantaggio: 'L\'abilità speciale ha 2 cariche.', rovescio: 'Ricarica +30%.', colore: '#e3913a' },
   { id: 'lucciola', nome: 'Lucciola', grani: 1, vantaggio: 'Alone di luce più grande del 20%; i nemici nell\'alone sono abbagliati.', rovescio: 'Nessuno.', colore: '#f2e46a' },

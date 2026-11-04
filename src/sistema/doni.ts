@@ -1,22 +1,22 @@
 /*
  * Scelta del dono a ogni livello: il gioco si ferma e mostra fino a 3 carte estratte a caso con i pesi del GDD.
- * Si sceglie toccando una carta o con i tasti 1-2-3; «Rimescola» estrae carte nuove (2 volte per partita).
+ * Si sceglie toccando una striscia o con i tasti 1-2-3 (4 nei reliquiari); «Rimescola» estrae carte nuove (2 volte per partita).
  * Escono: armi possedute da potenziare, armi comuni nuove (fino a 6 armi), doni passivi (fino a 6).
  * Quando non resta nulla da potenziare esce «Pane e vino».
- * Lo stesso schermo serve ai reliquiari (mostraReliquiario): due amuleti del Rosario e il potenziamento, senza Rimescola.
- * Le carte sono quelle disegnate da Edoardo (Carta_Dono, e Carta_Dono_Scelta sotto il dito o il cursore),
- * messe a pixel di gioco interi; se tre carte non ci stanno, scendono di un ingrandimento intero.
+ * Lo stesso schermo serve ai reliquiari (mostraReliquiario): tre amuleti del Rosario e il potenziamento, senza Rimescola.
+ * Le scelte sono strisce orizzontali una sotto l'altra (Striscia_Dono, e Striscia_Dono_Scelta sotto il dito o il cursore):
+ * icona, nome, numeri che cambiano e spiegazione, a colpo d'occhio (src/sistema/scheda.ts). Se non ci stanno, scendono di un ingrandimento intero.
  */
 import type { Caso } from './caso';
 import type { Arsenale } from './armi';
 import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn } from './arte';
-import { INTERNI, TESTI } from '../data/hud';
+import { INTERNI, STRISCIA, TESTI } from '../data/hud';
 import { scalaScritta, scritta, scriviNel } from './scritte';
 import { CARTE } from '../data/progressione';
 import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import type { Amuleto } from '../data/rosario';
-import { iconaAmuleto } from './amuleti';
+import { creaStrisce, schedaDono, type Riga } from './scheda';
 
 export type Dono =
   | { tipo: 'arma'; arma: Arma; livello: number }
@@ -39,7 +39,10 @@ export class Doni {
     private armaIniziale: Arma,
     private passivi: Record<IdDono, number>, // livello di ogni dono passivo (0 = non posseduto)
     private caso: Caso,
+    private rosario: () => { usati: number; totale: number },
+    private legenda: () => void,
   ) {
+    creaStrisce();
     this.radice = document.createElement('div');
     this.radice.className = 'doni';
     this.radice.hidden = true;
@@ -48,6 +51,7 @@ export class Doni {
       <h2>Un nuovo dono</h2>
       <div class="doni-carte"></div>
       <button type="button" class="doni-rimescola"><span></span></button>
+      <button type="button" class="doni-aiuto" aria-label="Stati e reazioni">?</button>
       <p class="doni-rimaste"></p>`;
     this.radice.querySelector('.doni-rimescola')!.prepend(immagine('Pulsante_Scuro'));
     this.elenco = this.radice.querySelector('.doni-carte')!;
@@ -57,6 +61,7 @@ export class Doni {
       this.rimescolate--;
       this.estrai();
     });
+    this.radice.querySelector('.doni-aiuto')!.addEventListener('click', () => this.legenda());
     contenitore.append(this.radice);
     window.addEventListener('keydown', this.tasto);
     window.addEventListener('resize', this.ridimensiona);
@@ -152,72 +157,103 @@ export class Doni {
   }
 
   private carta(d: Dono, n: number): HTMLElement {
+    const r = this.rosario();
+    const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale });
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'doni-carta';
-    const icona = d.tipo === 'arma' ? d.arma.icona : d.tipo === 'passivo' ? d.passivo.icona : d.tipo === 'amuleto' ? iconaAmuleto(d.amuleto.id) : null;
-    const titolo = d.tipo === 'arma' ? d.arma.nome : d.tipo === 'passivo' ? d.passivo.nome : d.tipo === 'amuleto' ? d.amuleto.nome : d.tipo === 'potenziamento' ? 'Potenziamento' : 'Pane e vino';
-    const sotto = d.tipo === 'pane' ? `+${CARTE.paneEVino} salute`
-      : d.tipo === 'amuleto' ? `Amuleto · ${d.amuleto.grani} ${d.amuleto.grani === 1 ? 'grano' : 'grani'}`
-      : d.tipo === 'potenziamento' ? 'Come prima'
-      : d.livello === 1 ? (d.tipo === 'arma' ? 'Nuova arma' : 'Nuovo dono') : `Livello ${d.livello}`;
-    const testo = d.tipo === 'arma' ? d.arma.livelli[d.livello - 1].testo : d.tipo === 'passivo' ? d.passivo.testo
-      : d.tipo === 'amuleto' ? `${d.amuleto.vantaggio} Rovescio: ${d.amuleto.rovescio}`
-      : d.tipo === 'potenziamento' ? 'Un\'arma o un dono sale di livello (a volte tre).' : 'Un ristoro nella notte.';
-    b.innerHTML = `<strong class="doni-titolo"></strong><span class="doni-testo"><em></em> <span></span></span><span class="doni-tasto">${n + 1}</span>`;
-    scritta(b.querySelector('strong')!, titolo);
-    b.querySelector('em')!.textContent = sotto;
-    b.querySelector('.doni-testo span')!.textContent = testo;
-    b.prepend(immagine('Carta_Dono', 'doni-fondo'), immagine('Carta_Dono_Scelta', 'doni-scelta'));
-    if (icona && arte(icona)) b.querySelector('strong')!.before(immagine(icona, 'doni-icona'));
+    b.className = `doni-carta ${sc.categoria}`;
+    const pezzo = (tag: string, classe: string, testo = ''): HTMLElement => {
+      const e = document.createElement(tag);
+      e.className = classe;
+      e.textContent = testo;
+      return e;
+    };
+    const titolo = pezzo('strong', 'doni-titolo');
+    scritta(titolo, sc.nome);
+    const dati = pezzo('span', 'doni-dati');
+    for (const x of sc.dati) {
+      const e = pezzo('span', `doni-dato ${x.tono ?? ''}`);
+      e.append(pezzo('i', '', x.nome), ...(x.prima ? [pezzo('s', '', x.prima), pezzo('u', '', '›')] : []), pezzo('b', '', x.dopo));
+      dati.append(e);
+    }
+    const righe = pezzo('span', 'doni-righe');
+    righe.append(...sc.righe.map((x) => this.riga(x)));
+    b.append(immagine('Striscia_Dono', 'doni-fondo'), immagine('Striscia_Dono_Scelta', 'doni-scelta'));
+    if (sc.icona && arte(sc.icona)) b.append(immagine(sc.icona, 'doni-icona'));
+    else b.append(pezzo('span', 'doni-segno', '+'));
+    b.append(titolo, pezzo('span', 'doni-tag', sc.tag), dati, righe, pezzo('span', 'doni-tasto', String(n + 1)));
     b.addEventListener('click', () => this.chiudi(d));
     return b;
+  }
+
+  private riga(x: Riga): HTMLElement {
+    const e = document.createElement('span');
+    e.className = `doni-riga ${x.tono ?? ''}`;
+    if (x.colore) e.style.color = x.colore;
+    if (x.simbolo && arte(x.simbolo)) e.append(immagine(x.simbolo, 'doni-simbolo'));
+    e.append(x.testo);
+    return e;
   }
 
   private ridimensiona = (): void => {
     if (this.aperta) this.disponi();
   };
 
-  /** Titolo, tre carte affiancate e Rimescola, in pixel di gioco interi (come nella bozza). */
+  /** Titolo, strisce una sotto l'altra e Rimescola, in pixel di gioco interi. */
   private disponi(): void {
     const m = misureHud(), b = bordiHud(m), px = m.px;
-    const c = arte('Carta_Dono'), r = arte('Pulsante_Scuro'), alto = arte('Pulsante_Acceso');
+    const c = arte('Striscia_Dono'), r = arte('Pulsante_Scuro'), alto = arte('Pulsante_Acceso');
     if (!c || !r || !alto) return;
     this.radice.style.backgroundSize = `${4 * px}px ${4 * px}px`;
     // Rimescola si tocca su tutta l'altezza dei pulsanti più alti (il pulsante scuro è disegnato più basso)
-    const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, sotto = (TESTI.cartaTasto + 4) * m.raddoppio, riga = Math.max(r.h, alto.h);
+    const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, riga = Math.max(r.h, alto.h), rimaste = 14 * m.raddoppio;
     const carte = [...this.elenco.children] as HTMLElement[], n = carte.length;
     const alta = m.H - b.a - b.b, larga = m.W - b.s - b.d;
-    const zz = adattaZoom(ingr('carte', m), (k) => n * c.w * k + (n - 1) * 4 * k <= larga && titolo + c.h * k + sotto + 8 + riga * zt + 14 * m.raddoppio <= alta);
-    const tot = n * c.w * zz + (n - 1) * 4 * zz, x0 = Math.round(m.W / 2 - tot / 2);
-    const rimaste = 14 * m.raddoppio; // la riga «ancora 2» sotto Rimescola
-    const altezza = titolo + c.h * zz + sotto + 8 + riga * zt + rimaste;
-    let y = b.a + Math.max(0, Math.round((alta - altezza) / 2));
+    const sottoCarte = this.rimescola.hidden ? 0 : 8 + riga * zt + rimaste;
+    const totale = (k: number): number => titolo + n * c.h * k + (n - 1) * STRISCIA.spazio * k + sottoCarte;
+    const zz = adattaZoom(STRISCIA.ingrandimentoMassimo * m.raddoppio, (k) => c.w * k <= larga && totale(k) <= alta);
+    const x0 = Math.round(m.W / 2 - (c.w * zz) / 2);
+    let y = b.a + Math.max(0, Math.round((alta - totale(zz)) / 2));
     const h2 = this.radice.querySelector('h2') as HTMLElement;
     posa(h2, 0, y, m);
     Object.assign(h2.style, { width: `${m.W * px}px`, fontSize: `${22 * m.raddoppio * px}px`, lineHeight: `${titolo * px}px` });
     scriviNel(h2, { x: 0, y: 0, l: m.W, a: titolo }, 1, 4 * m.raddoppio, m, 22 * m.raddoppio, '#000');
     posa(h2, 0, y, m);
+    // il «?» apre la legenda: almeno 44 punti di lato, in alto a destra delle strisce
+    const aiuto = this.radice.querySelector('.doni-aiuto') as HTMLElement, lato = Math.ceil(44 / px);
+    posa(aiuto, Math.min(m.W - b.d - lato, x0 + c.w * zz - lato), y + titolo - lato - 2, m);
+    misura(aiuto, lato, lato, 1, m);
+    aiuto.style.fontSize = `${28 * px}px`;
     y += titolo;
-    const ri = INTERNI.Carta_Dono;
-    // i nomi di tutte le carte alla stessa grandezza: quella del nome più lungo
+    const ri = STRISCIA.interni;
+    // i nomi di tutte le strisce alla stessa grandezza: quella del nome più lungo
     const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
     carte.forEach((el, i) => {
-      posa(el, x0 + i * (c.w + 4) * zz, y, m);
+      posa(el, x0, y + i * (c.h + STRISCIA.spazio) * zz, m);
       misura(el, c.w, c.h, zz, m);
       for (const im of el.querySelectorAll<HTMLElement>('.doni-fondo, .doni-scelta')) misura(im, c.w, c.h, zz, m);
-      const ic = el.querySelector<HTMLElement>('.doni-icona'), zi = Math.max(1, zz - 1);
-      if (ic) {
-        posa(ic, (ri.icona.x + ri.icona.l / 2) * zz - 12 * zi, (ri.icona.y + ri.icona.a / 2) * zz - 12 * zi, m);
-        misura(ic, 24, 24, zi, m);
+      const se = el.querySelector<HTMLElement>('.doni-segno');
+      if (se) {
+        posa(se, ri.icona.x * zz, ri.icona.y * zz, m);
+        misura(se, ri.icona.l, ri.icona.a, zz, m);
+        se.style.fontSize = `${TESTI.strisciaDato * 2 * zz * px}px`;
       }
-      scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, kTitoli, m, TESTI.cartaTitolo, '#000');
-      scriviIn(el.querySelector('.doni-testo') as HTMLElement, ri.testo, zz, TESTI.cartaTesto, m);
+      const ic = el.querySelector<HTMLElement>('.doni-icona');
+      if (ic) {
+        posa(ic, (ri.icona.x + ri.icona.l / 2 - 12) * zz, (ri.icona.y + ri.icona.a / 2 - 12) * zz, m);
+        misura(ic, 24, 24, zz, m);
+      }
+      for (const s of el.querySelectorAll<HTMLElement>('.doni-simbolo')) misura(s, 11, 11, Math.max(1, zz - 1), m);
+      scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, kTitoli, m, TESTI.cartaTitolo, '#000', true);
+      scriviIn(el.querySelector('.doni-tag') as HTMLElement, ri.tag, zz, TESTI.strisciaTag, m);
+      scriviIn(el.querySelector('.doni-dati') as HTMLElement, ri.dati, zz, TESTI.strisciaDato, m);
+      scriviIn(el.querySelector('.doni-righe') as HTMLElement, ri.righe, zz, TESTI.strisciaRiga, m);
       const t = el.querySelector('.doni-tasto') as HTMLElement;
-      posa(t, 0, c.h * zz + 2, m);
-      Object.assign(t.style, { width: `${c.w * zz * px}px`, fontSize: `${TESTI.cartaTasto * m.raddoppio * px}px` });
+      posa(t, (ri.icona.x + 2) * zz, (ri.icona.y + 1) * zz, m);
+      t.style.fontSize = `${TESTI.strisciaTag * zz * px}px`;
     });
-    y += c.h * zz + sotto + 8;
+    if (this.rimescola.hidden) return;
+    y += n * (c.h + STRISCIA.spazio) * zz - STRISCIA.spazio * zz + 8;
     posa(this.rimescola, Math.round(m.W / 2 - (r.w * zt) / 2), y, m);
     misura(this.rimescola, r.w, riga, zt, m);
     const im = this.rimescola.firstElementChild as HTMLElement, su = Math.round(((riga - r.h) * zt) / 2);
@@ -238,7 +274,7 @@ export class Doni {
 
   private tasto = (e: KeyboardEvent): void => {
     if (!this.aperta) return;
-    const n = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
+    const n = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
     if (n >= 0 && this.carte[n]) {
       e.preventDefault();
       this.chiudi(this.carte[n]);

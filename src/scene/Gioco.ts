@@ -34,6 +34,7 @@ import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Doni, type Dono } from '../sistema/doni';
+import { Legenda } from '../sistema/legenda';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Hud, type VoceBuild } from '../sistema/hud';
 import { vibra } from '../sistema/mobile';
@@ -84,6 +85,7 @@ export class Gioco extends Phaser.Scene {
   private minacce!: Minacce;
   private effetti!: Effetti;
   private doni!: Doni;
+  private legenda!: Legenda;
   private raccolta = 0;
   private rigenerazione = 0;
   private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0 };
@@ -224,8 +226,10 @@ export class Gioco extends Phaser.Scene {
       riprova: () => this.scene.restart({ pg: this.pg.id }),
       menu: () => this.scene.start('Menu'),
       amuleto: (id) => this.commutaAmuleto(id),
+      legenda: () => this.legenda.apri(),
     });
-    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso);
+    this.legenda = new Legenda(interfaccia);
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani() }), () => this.legenda.apri());
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.pausa || this.doni.aperta) return false;
@@ -583,6 +587,11 @@ export class Gioco extends Phaser.Scene {
 
   labPausa(): void {
     this.apriPausa();
+  }
+
+  labLegenda(): void {
+    this.apriPausa();
+    this.legenda.apri();
   }
 
   // ——— Rosario ———

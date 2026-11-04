@@ -101,15 +101,44 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 /* Scelta del dono (src/sistema/doni.ts) */
 #interfaccia > .doni { position: fixed; inset: 0; z-index: 3; background-repeat: repeat; image-rendering: pixelated; }
 .doni h2 { margin: 0; text-align: center; font-family: var(--f-titolo); font-weight: 400; color: var(--accento); text-shadow: 0 2px 0 #000; }
-.doni-carta { position: absolute; }
+.doni-carta { position: absolute; text-align: left; }
 .doni-carta:focus-visible { outline: none; }
 .doni-scelta { visibility: hidden; }
 .doni-carta:hover .doni-scelta, .doni-carta:focus-visible .doni-scelta { visibility: visible; }
-.doni-titolo { font-family: var(--f-titolo); font-weight: 400; color: var(--pergamena); }
-.doni-testo { position: absolute; overflow: hidden; line-height: 1.2; text-align: center; font-family: var(--f-testo); color: var(--tenue); }
-.doni-testo em { display: block; font-family: var(--f-corsivo); color: var(--accento); }
+.doni-fondo, .doni-scelta, .doni-icona { position: absolute; left: 0; top: 0; }
+.doni-titolo { position: absolute; font-family: var(--f-titolo); font-weight: 400; color: var(--pergamena); }
+.doni-carta.arma .doni-titolo { color: #ffc98a; }
+.doni-carta.dono .doni-titolo { color: #a8e0d0; }
+.doni-carta.amuleto .doni-titolo { color: #d8bcff; }
+.doni-tag { position: absolute; overflow: hidden; display: flex; justify-content: flex-end; align-items: center; white-space: nowrap; font-family: var(--f-pixel); color: var(--tenue); text-transform: uppercase; }
+.doni-dati { position: absolute; overflow: hidden; display: flex; align-items: baseline; gap: 0.6em; white-space: nowrap; font-family: var(--f-pixel); line-height: 1; }
+.doni-dato { display: inline-flex; align-items: baseline; gap: 0.22em; }
+.doni-dato i { font-style: normal; font-size: 0.62em; text-transform: uppercase; color: var(--pergamena); }
+.doni-dato s { text-decoration: none; font-size: 0.8em; color: var(--tenue); }
+.doni-dato u { text-decoration: none; font-size: 0.8em; color: var(--tenue); }
+.doni-dato b { font-weight: 400; color: #8fe388; }
+.doni-dato.male b { color: #ff7a66; }
+.doni-righe { position: absolute; overflow: hidden; display: block; line-height: 1.12; font-family: var(--f-testo); color: var(--pergamena); }
+.doni-riga { display: block; }
+.doni-riga.bene { color: #8fe388; }
+.doni-riga.male { color: #ff7a66; }
+.doni-riga.reazione { color: #ffe08a; }
+.doni-simbolo { position: static; display: inline-block; vertical-align: text-bottom; margin-right: 0.25em; }
+.doni-segno { position: absolute; display: flex; justify-content: center; align-items: center; font-family: var(--f-pixel); color: var(--accento); line-height: 1; }
 .doni-rimaste { margin: 0; color: var(--tenue); }
-.doni-tasto { position: absolute; text-align: center; font-family: var(--f-pixel); font-weight: 700; color: var(--tenue); }
+.doni-tasto { position: absolute; font-family: var(--f-pixel); color: var(--tenue); line-height: 1; }
+@media (hover: none) { .doni-tasto { display: none; } }
+.doni-aiuto { position: absolute; padding: 0; background: #1a1410; border: 2px solid var(--accento); color: var(--accento); font-family: var(--f-pixel); line-height: 1; cursor: pointer; }
+
+/* Legenda di stati e reazioni (src/sistema/legenda.ts) */
+#interfaccia > .legenda { position: fixed; inset: 0; z-index: 4; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; gap: 8px; padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 12px); background-color: #050403; color: var(--pergamena); font-family: var(--f-testo); font-size: 17px; line-height: 1.2; }
+.legenda h2 { margin: 8px 0 0; font: 400 24px var(--f-titolo); color: var(--accento); }
+.legenda p { margin: 0; max-width: 460px; text-align: center; color: var(--tenue); }
+.legenda-voce { width: 100%; max-width: 460px; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.legenda-voce .arte { position: static; flex: none; }
+.legenda-voce span { min-width: 0; }
+.legenda-voce b { font-weight: 400; font-family: var(--f-pixel); font-size: 1.2em; }
+.legenda-chiudi { min-width: 160px; min-height: 44px; margin-top: 8px; background: #1a1410; border: 2px solid var(--accento); color: var(--accento); font: 400 20px var(--f-pixel); cursor: pointer; }
 .doni-rimescola:disabled { filter: grayscale(1) brightness(0.6); cursor: default; }
 
 /* Abilità speciale (src/sistema/speciale.ts): anello disegnato, si colora durante la ricarica */

@@ -46,6 +46,8 @@ export const REAZIONI = {
   esorcismo: { fiammelle: 3, danno: 18, velocita: 420, vita: 1.6, raggio: 36, colore: '#e8dcc4', bordo: '#ffffff' },
   // Terra + qualsiasi altro: fermo a lungo e più vulnerabile
   interramento: { fermo: 1.5, danno: 0.3, raggio: 44, colore: '#b89a74', bordo: '#2a1f17' },
+  // il nome della reazione sale sopra il nemico; lo stesso nome non torna prima di «pausa» secondi
+  etichetta: { ingrandimento: 4, durata: 0.9, sale: 44, pausa: 0.3 },
   durataEffetto: 0.5, // il cerchio della reazione: metà pieno, metà a retino (era 0,25: non si faceva in tempo a vederlo)
   ingrandimentoEffetto: 1.35, // il cerchio si disegna più largo dell'area vera, per leggerlo meglio
 } as const;
