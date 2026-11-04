@@ -9,6 +9,7 @@ Regole del registro (4 novembre 2026, scelte di Edoardo):
 
 | Data | Decisione | Motivo |
 | --- | --- | --- |
+| 2026-11-04 | **`main` riportato dentro `prova` una volta.** L'obbligo di riportare `docs/` su `main` subito prima di unire **resta** nella Verifica. | Edoardo l'avrebbe tolto se non fosse servito più: la prova sulla copia mostra che il ritorno da solo regge fino alla sincronizzazione successiva, poi i documenti tornano in conflitto. |
 | 2026-11-04 | **I push su `main` che toccano solo `docs/` non fanno partire né le pagine né l'APK.** Un commit che tocca anche altro li fa partire come sempre. | La sincronizzazione dei documenti avviene a ogni tappa e non cambia il gioco: ricompilarlo sarebbe lavoro inutile. |
 | 2026-11-04 | **`CLAUDE.md` e `LEGGIMI.md` restano come sono su `main` fino all'unione**: su `main` possono rimandare a documenti che non ci sono più. | Con i documenti arriva solo `docs/`; il resto aspetta l'approvazione di Edoardo. |
 | 2026-11-04 | **`docs/` è l'unica cosa che arriva su `main` senza approvazione**: alla fine di ogni tappa, dopo `npm run controlla-gdd`, si porta su `main` solo quella cartella di `prova`. Su `main` i documenti possono descrivere contenuti non ancora pubblicati, quindi lì `controlla-gdd` non si lancia. | Il Progetto su claude.ai legge i documenti da GitHub, ma solo dal ramo `main`. |
