@@ -508,7 +508,7 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
 | Ricollocamento | oltre 2,2 × 48 px fuori dallo schermo | torna davanti al giocatore, entro ±0,7 radianti dalla direzione in cui cammina |
 | Separazione tra nemici | forza 0,5; si toccano sotto il 75% della somma dei raggi | i fantasmi attraversano gli altri |
 | Sprite segnaposto V0 | ingranditi × 2 | disegnati per personaggi di 34 px |
-| Barra della salute | 40 × 4 px, 5 px sotto i piedi | decisa da Edoardo: sotto il personaggio, non in alto (`src/data/mondo.ts`) |
+| Barra della salute | riempimento 47 × 6 pixel disegnati, 5 px sotto i piedi | decisa da Edoardo: sotto il personaggio, non in alto (`src/data/mondo.ts`) |
 | Lampo quando sei colpito | 0,1 s | bianco pieno |
 | Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 

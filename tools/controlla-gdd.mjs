@@ -1,11 +1,18 @@
-// Controllo del GDD: confronta le tabelle e i numeri di docs/GDD.md con src/data/.
+// Controllo del GDD: confronta docs/GDD.md con i valori veri del gioco.
 //
-// Come funziona: trascrive i file di src/data/ in una cartella temporanea (con il
-// compilatore TypeScript già installato), li carica e li confronta con quello che c'è
-// scritto nelle tabelle del GDD. I numeri «attesi» sono scritti qui sotto, nello
-// stesso modo in cui compaiono nel GDD: se cambi un numero nel codice e lo aggiorni nel
-// GDD, aggiorna anche il valore atteso qui (o lo script segnala una differenza).
-// Il testo discorsivo del GDD non si controlla con lo script: si controlla a lettura.
+// Come funziona: carica gli stessi file che usa il gioco (src/data/ e src/sistema/pixel.ts,
+// trascritti in una cartella temporanea con il compilatore TypeScript già installato), legge i numeri
+// scritti nel GDD e li confronta. Qui dentro NON ci sono valori attesi: c'è solo la corrispondenza
+// tra le colonne e le frasi del GDD e i campi dei dati.
+//
+// Segnaposto nei modelli di frase:
+//   {}   un numero del GDD, da confrontare con il valore dato accanto
+//   {t}  un momento nel formato m:ss, confrontato in secondi
+//   {p}  un numero scritto a parole («metà», «un quarto», «doppio»…, vedi PAROLE)
+//   {?}  un numero del GDD che non sta nei dati e non si confronta (elenco in fondo al file)
+//
+// Se si riscrive una frase del GDD, lo script dice «frase non trovata»: va aggiornato il modello qui sotto.
+// Il testo discorsivo fuori dai modelli non si controlla con lo script: si controlla a lettura.
 //
 // Esce con codice 1 se trova differenze: in quel caso la tappa non è finita.
 // Uso: npm run controlla-gdd
@@ -19,179 +26,721 @@ import ts from 'typescript';
 
 const radice = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-// --- Trascrive src/data/*.ts in JS, in una cartella temporanea -----------------------
+// --- Carica i file del gioco -----------------------------------------------------------------
+
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'controlla-gdd-'));
-for (const f of fs.readdirSync(path.join(radice, 'src/data')).filter((x) => x.endsWith('.ts'))) {
-  const testo = fs.readFileSync(path.join(radice, 'src/data', f), 'utf8');
+function trascrivi(file) {
+  const testo = fs.readFileSync(file, 'utf8');
   const js = ts.transpileModule(testo, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  fs.writeFileSync(path.join(tmp, f.replace(/\.ts$/, '.js')), js);
+  fs.writeFileSync(path.join(tmp, path.basename(file).replace(/\.ts$/, '.js')), js);
 }
+for (const f of fs.readdirSync(path.join(radice, 'src/data'))) if (f.endsWith('.ts')) trascrivi(path.join(radice, 'src/data', f));
+trascrivi(path.join(radice, 'src/sistema/pixel.ts'));
 fs.writeFileSync(path.join(tmp, 'package.json'), '{"type":"commonjs"}');
 const richiedi = createRequire(path.join(tmp, 'x.js'));
 const D = (nome) => richiedi('./' + nome + '.js');
 
-const A = D('armi'), N = D('nemici'), AB = D('abilita'), P = D('personaggi'), DO = D('doni'), M = D('meta'), R = D('rosario'), U = D('unioni'), ST = D('stati'), PR = D('progressione'), SO = D('sopravvivenza'), OG = D('oggetti'), W = D('mondo');
+const A = D('armi'), N = D('nemici'), AB = D('abilita'), P = D('personaggi'), DO = D('doni'), M = D('meta');
+const R = D('rosario'), U = D('unioni'), ST = D('stati'), PR = D('progressione'), SO = D('sopravvivenza');
+const OG = D('oggetti'), W = D('mondo'), E = D('effetti'), H = D('hud'), PX = D('pixel');
+
 const gdd = fs.readFileSync(path.join(radice, 'docs/GDD.md'), 'utf8');
+const righeGdd = gdd.split('\n');
 const diff = [];
 let controlli = 0;
 
-// --- Parte 1: armi, nemici, personaggi, abilità, doni, ceri, drop, carte, stati, unioni ---
-const num=(t)=>{ t=t.trim().replace(/\*/g,'').replace(',','.').replace('−','-'); const m=t.match(/^-?[\d.]+/); return m?parseFloat(m[0]):NaN; };
-const bool=(t)=>t.trim()==='sì'?true:t.trim()==='no'?false:null;
-function sezione(titolo){ const i=gdd.indexOf(titolo); if(i<0){diff.push('manca sezione '+titolo);return [];} const rest=gdd.slice(i+titolo.length); const righe=[]; for(const l of rest.split('\n')){ if(/^#{1,4} /.test(l)&&righe.length) break; if(/^\| \d/.test(l)) righe.push(l.split('|').slice(1,-1).map(c=>c.trim())); } return righe; }
-function conf(nome,arma,titolo,cols){ // cols: chiavi per colonna dopo il livello; null = salta; 'testo'
-  const righe=sezione(titolo); if(righe.length!==8) diff.push(`${nome}: righe trovate ${righe.length}`);
-  righe.forEach((r,i)=>{ const L=arma.livelli[i]; if(!L){diff.push(`${nome} lv${i+1}: manca nel codice`);return;}
-    cols.forEach((k,c)=>{ if(!k) return; const g=r[c+1]; controlli++;
-      if(k==='testo'){ if(g!==L.testo) diff.push(`${nome} lv${i+1} testo: GDD «${g}» ≠ codice «${L.testo}»`); }
-      else if(typeof L[k]==='boolean'){ if(bool(g)!==L[k]) diff.push(`${nome} lv${i+1} ${k}: GDD ${g} ≠ codice ${L[k]}`); }
-      else { const v=num(g); if(Math.abs(v-L[k])>0.0051) diff.push(`${nome} lv${i+1} ${k}: GDD ${g} ≠ codice ${L[k]}`); } }); });
+// --- Strumenti --------------------------------------------------------------------------------
+
+// Numeri scritti a parole nel GDD: è un dizionario della lingua, non valori di bilanciamento.
+const PAROLE = { 'metà': 1 / 2, 'un quarto': 1 / 4, 'un': 1, 'doppio': 2, 'raddoppia': 2, 'due': 2, 'tre': 3 };
+
+const SEGNAPOSTO = {
+  '{}': '(-?\\d+(?:,\\d+)?)',
+  '{t}': '(\\d+:\\d\\d)',
+  '{p}': '(' + Object.keys(PAROLE).join('|') + ')',
+  '{?}': '(?:-?\\d+(?:,\\d+)?)',
+};
+const numero = (t) => parseFloat(String(t).replace(',', '.').replace('−', '-'));
+const secondi = (t) => { const [m, s] = t.split(':').map(Number); return m * 60 + s; };
+const uguali = (a, b) => Math.abs(a - b) < 1e-6;
+const pct = (x) => x * 100; // nel GDD le parti si scrivono in percentuale
+const italiano = (x) => String(Math.round(x * 1e6) / 1e6).replace('.', ',');
+
+function regexDi(modello) {
+  return modello.split(/(\{\}|\{t\}|\{p\}|\{\?\})/)
+    .map((pezzo) => SEGNAPOSTO[pezzo] ?? pezzo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('');
 }
-conf('Lanterna',A.LANTERNA,'#### Lanterna',['ricarica','danno','raggio','ampiezza','spalle','testo']);
-conf('Pala',A.PALA,'#### Pala',['ricarica','danno','raggio',null,'doppio','testo']);
-conf('Turibolo',A.TURIBOLO,'#### Turibolo',['ricarica','quantita','danno','raggio','durata','testo']);
-conf('Bastone',A.BASTONE,'#### Bastone',['ricarica','quantita','danno','trapassa',null,'testo']);
-conf('Candela',A.CANDELA,'#### Candela',['ricarica','danno','quantita','trapassa',null,'testo']);
-conf('Falce',A.FALCE,'#### Falce',['quantita','danno','raggio','giri','testo']);
-conf('Campana',A.CAMPANA,'#### Campana',['ricarica','danno','raggio','doppio','testo']);
-conf('Fuoco fatuo',A.FUOCO_FATUO,'#### Fuoco fatuo',['ricarica','quantita','danno','trapassa','testo']);
-conf('Acqua santa',A.ACQUA_SANTA,'#### Acqua santa',['ricarica','quantita','danno','raggio','durata','testo']);
-conf('Lama di luce',A.LAMA_DI_LUCE,'#### Lama di luce',['ricarica','danno','lunghezza','spalle','testo']);
-// costanti d'arma citate nel testo
-const k=(nome,g,c)=>{controlli++; if(Math.abs(g-c)>0.0051) diff.push(`${nome}: GDD ${g} ≠ codice ${c}`);};
-k('Lanterna respinta',259,A.LANTERNA.respinta); k('Pala respinta',423,A.PALA.respinta); k('Pala distanza',61,A.PALA.distanza); k('Pala ritardo doppio',0.22,A.PALA.ritardoDoppio);
-k('Turibolo distanza prima',47,A.TURIBOLO.distanzaPrima); k('Turibolo distanza altre',94,A.TURIBOLO.distanzaAltre); k('Turibolo intervallo',0.3,A.TURIBOLO.intervallo); k('Turibolo rallenta',0.3,A.TURIBOLO.rallenta);
-k('Bastone portata',611,A.BASTONE.portata); k('Bastone velocità',541,A.BASTONE.velocita); k('Bastone raggio',9,A.BASTONE.raggio); k('Bastone intervallo',0.08,A.BASTONE.intervallo); k('Bastone vita',1.3,A.BASTONE.vita);
-k('Candela portata',700,A.CANDELA.portata); k('Candela velocità',705,A.CANDELA.velocita); k('Candela vita',1.4,A.CANDELA.vita); k('Candela raggio',9,A.CANDELA.raggio);
-k('Falce pausa',0.45,A.FALCE.pausa); k('Falce respinta',165,A.FALCE.respinta); k('Falce raggio lama',24,A.FALCE.raggioLama);
-k('Campana respinta',470,A.CAMPANA.respinta); k('Campana ritardo',0.35,A.CAMPANA.ritardoDoppio);
-k('Fuoco fatuo portata',752,A.FUOCO_FATUO.portata); k('Fuoco fatuo velocità',470,A.FUOCO_FATUO.velocita); k('Fuoco fatuo vita',3.2,A.FUOCO_FATUO.vita); k('Fuoco fatuo sterzo',6,A.FUOCO_FATUO.sterzo);
-k('Lama altezza',103,A.LAMA_DI_LUCE.altezza); k('Lama ritardo spalle',0.12,A.LAMA_DI_LUCE.ritardoSpalle); k('Lama respinta',259,A.LAMA_DI_LUCE.respinta);
-k('Acqua santa intervallo',0.3,A.ACQUA_SANTA.intervallo);
-k('Armi massime',6,A.MAX_ARMI);
-// armi nuove (prosa)
-const nuove=[['Lapide',A.LAPIDE,'| Lapide |','120 danni, ogni 3,2 s, raggio 84','260 danni, 2 lapidi, ogni 2,4 s, raggio 110'],
- ['Rosario spezzato',A.ROSARIO_SPEZZATO,'| Rosario spezzato |','18 danni, 4 rimbalzi, ogni 1,6 s','40 danni, 8 rimbalzi, 2 grani, ogni 1,2 s'],
- ['Corvo',A.CORVO,'| Corvo |','26 danni, 1 corvo, ogni 1 s, 1 anima','44 danni, 3 corvi, ogni 0,75 s, 4 anime'],
- ['Velo funebre',A.VELO_FUNEBRE,'| Velo funebre |','7 danni, raggio 110, ogni 0,5 s','21 danni, raggio 160, ogni 0,4 s']];
-for(const [n,a,key,l1,l8] of nuove){ const riga=gdd.split('\n').find(l=>l.startsWith(key)); if(!riga){diff.push('manca riga arma nuova '+n);continue;}
-  const c=riga.split('|').map(x=>x.trim()); controlli+=2;
-  if(c[4]!==l1) diff.push(`${n} livello 1 nel GDD «${c[4]}» ≠ atteso «${l1}»`);
-  const e1=a.livelli[0], e8=a.livelli[7];
-  const nums=(t)=>(t.match(/[\d]+(?:,\d+)?/g)||[]).map(x=>parseFloat(x.replace(',','.')));
-  // la «quantità 1» (un oggetto solo) il GDD può scriverla o sottintenderla: valgono tutte e due le forme
-  const set=(L,con1)=>[L.danno,L.ricarica,L.raggio,L.rimbalzi,(L.quantita===1&&!con1)?undefined:L.quantita,L.anime].filter(x=>x!==undefined).sort((a,b)=>a-b).join();
-  const gs1=nums(c[4]).sort((a,b)=>a-b).join(), gs8=nums(c[5]).sort((a,b)=>a-b).join();
-  if(gs1!==set(e1,false)&&gs1!==set(e1,true)) diff.push(`${n} liv.1: numeri GDD [${gs1}] ≠ codice [${set(e1,false)}]`);
-  if(gs8!==set(e8,false)&&gs8!==set(e8,true)) diff.push(`${n} liv.8: numeri GDD [${gs8}] ≠ codice [${set(e8,false)}]`); }
-// nemici
-const mapN={'Pipistrello':'pipistrello','Zombi':'zombi','Fantasma':'fantasma','Scheletro':'scheletro','Segugio':'segugio','Bruto':'bruto'};
-for(const l of gdd.split('\n')){ const c=l.split('|').map(x=>x.trim()); const id=mapN[c[1]]||(c[1]&&c[1].startsWith('Seth')?'mietitore':null); if(!id||c.length<9) continue;
-  const T=N.NEMICI.find(t=>t.id===id); [['salute',2],['velocita',3],['danno',4],['raggio',5],['anime',6]].forEach(([key,i])=>{controlli++; if(num(c[i])!==T[key]) diff.push(`Nemico ${id} ${key}: GDD ${c[i]} ≠ codice ${T[key]}`);}); }
-// difficoltà e costanti
-const D2=N.DIFFICOLTA; k('salute/min',0.28,D2.salutePerMinuto); k('salute accelera',0.06,D2.saluteAccelera); k('salute dopo min',3,D2.saluteDopo); k('danno/min',0.16,D2.dannoPerMinuto); k('tetto',380,D2.tetto); k('massimi base',20,D2.massimiBase); k('massimi/min',30,D2.massimiPerMinuto); k('comparse base',1.2,D2.comparseBase); k('comparse/min',2.5,D2.comparsePerMinuto); k('per fotogramma',8,D2.comparsePerFotogramma);
-const E=N.ELITE; k('élite salute',7,E.salute); k('élite danno',1.4,E.danno); k('élite anime',6,E.anime); k('élite dimensione',1.5,E.dimensione); k('élite vel',0.9,E.velocita); k('élite ogni',55,E.ogni);
-const O=N.ORDE; k('orde primo',150,O.primo); k('orde ogni',80,O.ogni); k('orde base',12,O.base); k('orde/min',2,O.perMinuto); k('orde max',28,O.massimo); k('orde per fila',7,O.perFila); k('orde spazio',2.4,O.spazio); k('orde marcia',80,O.marcia); k('orde carica dist',260,O.distanzaCarica); k('orde carica',1.35,O.carica); k('orde tenaglia',420,O.tenagliaDal);
-const S=N.SCIAMI; k('sciami base',14,S.base); k('sciami/min',3,S.perMinuto); k('sciami max',56,S.massimo); k('sciami vel',1.12,S.velocita);
-const MI=N.MIETITORE; k('Seth salute×',3.5,MI.saluteSecondo); k('Seth riprende',0.45,MI.riprende); k('scatto carica',0.7,MI.carica); k('scatto durata',0.55,MI.scatto); k('scatto vel',3.6,MI.velocitaScatto);
-k('falciata carica',0.95,MI.falciata.carica); k('falciata raggio',200,MI.falciata.raggio); k('falciata danno',22,MI.falciata.danno);
-k('falci carica',0.6,MI.falci.carica); k('falci quante',5,MI.falci.quante); k('falci ventaglio',0.9,MI.falci.ventaglio); k('falci vel',330,MI.falci.velocita); k('falci raggio',18,MI.falci.raggio); k('falci danno',16,MI.falci.danno); k('falci durata',3.2,MI.falci.durata);
-k('chiamata carica',1.1,MI.chiamata.carica); k('chiamata quanti',8,MI.chiamata.quanti); k('chiamata dist',190,MI.chiamata.distanza);
-k('pesi mosse scatto',3,MI.mosse.scatto); k('pesi falciata',3,MI.mosse.falciata); k('pesi falci',2,MI.mosse.falci); k('pesi chiamata',1.5,MI.mosse.chiamata); k('Seth reliquiari',2,MI.reliquiari);
-const IA=N.IA; k('accerchia stringe',0.6,IA.accerchia.stringe); k('accerchia vicino',120,IA.accerchia.vicino); k('intercetta',1.1,IA.intercetta.anticipo); k('zigzag amp',0.7,IA.zigzag.ampiezza); k('zigzag freq',5,IA.zigzag.frequenza);
-// personaggi
-const PG=P.PERSONAGGI; const pg=(id)=>PG.find(p=>p.id===id);
-k('base salute',100,P.BASE.salute); k('base velocità',245,P.BASE.velocita); k('base raccolta',150,P.BASE.raccolta);
-const barre={lampionaio:[3,3,4,3,4],becchino:[5,5,2,2,3],badessa:[4,2,3,5,3],strega:[2,4,3,4,5]};
-for(const id in barre){controlli++; if(barre[id].join()!==pg(id).barre.join()) diff.push(`Barre ${id}: GDD ${barre[id]} ≠ codice ${pg(id).barre}`);}
-const mod={lampionaio:{velocita:0.1,rigenerazione:0.2},becchino:{salute:30,armatura:0.1,danno:0.05,velocita:-0.03},badessa:{salute:10,rigenerazione:0.3,area:0.15},strega:{salute:-5,danno:0.1,ricarica:0.1}};
-for(const id in mod) for(const key of ['salute','velocita','danno','ricarica','area','armatura','rigenerazione']){controlli++; if((mod[id][key]||0)!==pg(id)[key]) diff.push(`Personaggio ${id} ${key}: GDD ${mod[id][key]||0} ≠ codice ${pg(id)[key]}`);}
-// abilità
-for(const l of gdd.split('\n')){ const c=l.split('|').map(x=>x.trim()); const a=Object.values(AB.ABILITA).find(x=>x.nome===c[1]); if(!a||c.length<8) continue;
-  [['ricarica',2],['durata',3],['raggio',4]].forEach(([key,i])=>{controlli++; if(num(c[i])!==a[key]) diff.push(`Abilità ${a.id} ${key}: GDD ${c[i]} ≠ codice ${a[key]}`);});
-  const m=c[5].match(/^(\d+) ogni ([\d,]+) s/); controlli+=2; if(!m||+m[1]!==a.danno||num(m[2])!==a.intervallo) diff.push(`Abilità ${a.id} danno/intervallo: GDD ${c[5]} ≠ codice ${a.danno} ogni ${a.intervallo}`); }
-// doni
-// solo la tabella dei doni (3 colonne): la Calamita compare anche nei drop
-for(const l of gdd.split('\n')){ const c=l.split('|').map(x=>x.trim()); const d=DO.PASSIVI.find(x=>x.nome===c[1]); if(!d||c.length!==5) continue; controlli++; if(num(c[3])!==d.massimo) diff.push(`Dono ${d.id} massimo: GDD ${c[3]} ≠ codice ${d.massimo}`); }
-const dnum={cuoreDiCera:'+20',saleNero:'+10%',clessidra:'−7%',stoppinoLungo:'+10%',aliDiFalena:'+8%',calamita:'+30%',erbeAmare:'+0,25',scudoDiFerro:'−6%',ceraVotiva:'+15%',chiodoDiBara:'+6%',lacrimaDiLumen:'+1',campanellaDArgento:'+0,1'};
-for(const d of DO.PASSIVI){ const riga=gdd.split('\n').find(l=>l.startsWith('| '+d.nome+' |')); controlli++; if(!riga) {diff.push('Dono mancante nel GDD: '+d.nome); continue;} if(!riga.includes(dnum[d.id]??'+1')) diff.push(`Dono ${d.id}: la riga del GDD non contiene ${dnum[d.id]}`); }
-k('doni massimi',6,DO.MAX_PASSIVI); k('clessidra minimo',0.4,DO.RICARICA_MINIMA);
-// ceri
-const costi=M.COSTI_CERO.join(); controlli++; if(costi!=='30,60,100,150,220') diff.push('Costi ceri codice '+costi);
-k('Seconda candela costo',400,M.SECONDA_CANDELA.costo); k('Seconda candela salute',0.3,M.SECONDA_CANDELA.salute); k('Seconda candela invulnerabilità',2,M.SECONDA_CANDELA.invulnerabilita); k('Cera alba',100,M.CERA.alba);
-const sb={becchino:[5,200],badessa:[0,400],strega:[0,700]}; for(const id in sb){controlli++; if(M.SBLOCCHI[id].cera!==sb[id][1]) diff.push(`Sblocco ${id} Cera ${M.SBLOCCHI[id].cera} ≠ GDD ${sb[id][1]}`);}
-k('Rosario sblocco minuti',8,M.SBLOCCO_ROSARIO.minuti); k('Rosario sblocco Cera',300,M.SBLOCCO_ROSARIO.cera); k('Unioni sblocco minuti',10,M.SBLOCCO_UNIONI.minuti); k('Unioni sblocco Cera',500,M.SBLOCCO_UNIONI.cera);
-const so={lapide:null,rosarioSpezzato:10,corvo:30000,veloFunebre:180,campanellaDArgento:20}; for(const s of M.SBLOCCHI_OGGETTI){ if(s.id in so&&so[s.id]!==null){controlli++; if(s.soglia!==so[s.id]) diff.push(`Sblocco ${s.id} soglia ${s.soglia} ≠ ${so[s.id]}`);} }
-const cera={chiodoDiBara:120,lacrimaDiLumen:120,campanellaDArgento:120}; for(const id in cera){controlli++; const s=M.SBLOCCHI_OGGETTI.find(x=>x.id===id); if(s.cera!==cera[id]) diff.push(`Sblocco ${id} Cera ${s.cera} ≠ ${cera[id]}`);}
-// drop
-k('pane prob',0.009,OG.DROP.pane.probabilita); k('pane ogni',45,OG.DROP.pane.ogni); k('pane cura',40,OG.DROP.pane.cura); k('calamita prob',0.0025,OG.DROP.calamita.probabilita); k('calamita ogni',180,OG.DROP.calamita.ogni); k('cera prob',0.004,OG.DROP.cera.probabilita); k('cera élite',3,OG.DROP.cera.perElite); k('cera Seth',10,OG.DROP.cera.perSeth); k('reliquiario tre',0.25,OG.DROP.reliquiario.tre); k('presa',40,OG.DROP.presa); k('alba',900,OG.ALBA);
-// esperienza e carte
-const pl=PR.animePerLivello; [[1,6],[5,42],[10,132],[20,462],[40,1722],[60,3782]].forEach(([l,v])=>k('anime livello '+l,v,pl(l)));
-const C=PR.CARTE; k('carte quante',3,C.quante); k('rimescolate',2,C.rimescolate); k('arma iniziale',2,C.armaIniziale); k('arma posseduta',1.5,C.armaPosseduta); k('arma nuova',1,C.armaNuova); k('dono posseduto',1.2,C.donoPosseduto); k('dono nuovo',0.9,C.donoNuovo); k('pane e vino',40,C.paneEVino); k('pool armi',6,C.pool.armi); k('pool doni',9,C.pool.doni);
-k('anime a terra max',320,PR.ANIME.massimeATerra); k('anime media',6,PR.ANIME.media); k('anime grande',20,PR.ANIME.grande); k('anime volo',420,PR.ANIME.volo); k('anime accel',900,PR.ANIME.accelerazione); k('anime presa',24,PR.ANIME.presa);
-// combattimento
-const CB=N.COMBATTIMENTO; k('raggio giocatore',21,CB.raggioGiocatore); k('invulnerabilità',0.45,CB.invulnerabilita); k('salute bassa',0.35,CB.saluteBassa); k('attesa fine',0.9,CB.attesaFine);
-k('armatura massima',0.6,P.BASE.armaturaMassima); k('casoMin',0.92,A.COLPI.casoMinimo); k('casoMax',1.08,A.COLPI.casoMassimo); k('attrito',8,A.COLPI.attrito); k('respinta pesanti',0.25,A.COLPI.respintaPesanti); k('lampo nemico',0.1,A.COLPI.lampoNemico); k('corpo',36,A.COLPI.corpo);
-// fiaschetta e grazia
-k('sorsi',3,SO.FIASCHETTA.sorsi); k('cura sorso',0.35,SO.FIASCHETTA.cura); k('durata sorso',1,SO.FIASCHETTA.durata); k('distanza fiaschetta',12,SO.FIASCHETTA.distanza); k('Grazia finestra',0.25,SO.GRAZIA.finestra); k('Grazia sfioro',30,SO.GRAZIA.sfioro); k('Grazia durata',3,SO.GRAZIA.durata); k('Grazia danno',0.3,SO.GRAZIA.danno); k('Grazia velocità',0.15,SO.GRAZIA.velocita); k('Grazia lampi',10,SO.GRAZIA.lampi);
-// stati e reazioni
-const S2=ST.STATI; k('stato durata',3,S2.durata); k('stato prob',0.1,S2.probabilita); k('stato prob zone',0.05,S2.probabilitaZone); k('abbagliato',0.15,S2.abbagliato.danno); k('consacrato',0.25,S2.consacrato.lento); k('maledetto',0.02,S2.maledetto.perSecondo); k('sepolto fermo',0.6,S2.sepolto.fermo); k('sepolto pausa',4,S2.sepolto.pausa); k('simboli max',200,S2.simboli.massimi); k('Seth fermo',0.5,S2.mietitore.fermo); k('Seth maledetto',0.1,S2.mietitore.maledetto); k('élite maledetto',0.4,S2.elite.maledetto);
-const RZ=ST.REAZIONI; k('eclissi raggio',64,RZ.eclissi.raggio); k('eclissi parte',0.1,RZ.eclissi.parte); k('eclissi tetto',80,RZ.eclissi.tetto); k('rivelazione anime',2,RZ.rivelazione.anime); k('esorcismo fiammelle',3,RZ.esorcismo.fiammelle); k('esorcismo danno',18,RZ.esorcismo.danno); k('interramento fermo',1.5,RZ.interramento.fermo); k('interramento danno',0.3,RZ.interramento.danno);
-const RU=ST.RUOLI; k('esplosione raggio',40,RU.esplosioneBastone.raggio); k('esplosione danno',0.35,RU.esplosioneBastone.danno); k('preda',0.25,RU.fuocoFatuoPreda); k('falce cresce',0.02,RU.falceCrescita.perUccisione); k('falce max',0.3,RU.falceCrescita.massimo); k('falce durata',5,RU.falceCrescita.durata); k('campana fermo',0.6,RU.campanaFermo); k('rosario maledice',0.35,RU.rosarioMaledice); k('velo consacra',0.2,RU.veloConsacra);
-// rosario e amuleti
-k('grani',3,R.ROSARIO.grani); k('grani per Seth',1,R.ROSARIO.perSeth); k('grani max',5,R.ROSARIO.massimo); k('peccato',1,R.ROSARIO.peccato); k('proposte',3,R.ROSARIO.proposte);
-const am={specchioRotto:[3,'+25%'],lanternaCieca:[2,'+35%'],cuoreAvido:[2,'+30%'],sangueFreddo:[1,'+40%'],martire:[3,'−20%'],danzaMacabra:[2,'2 s'],ceriGemelli:[2,'+30%'],lucciola:[1,'+20%'],ossaDelite:[1,'+40%'],pattoDiSangue:[2,'0,2']};
-for(const a of R.AMULETI){ const riga=gdd.split('\n').find(l=>l.startsWith('| '+a.nome+' |')); controlli++; if(!riga){diff.push('Amuleto mancante nel GDD: '+a.nome);continue;} const c=riga.split('|').map(x=>x.trim()); if(+c[2]!==a.grani) diff.push(`Amuleto ${a.id} grani: GDD ${c[2]} ≠ codice ${a.grani}`); if(!riga.includes(am[a.id][1])) diff.push(`Amuleto ${a.id}: la riga non contiene ${am[a.id][1]}`); }
-const AN=R.AMULETI_NUMERI; k('Specchio rotto danno subito',0.25,AN.specchioRotto.dannoSubito); k('Lanterna cieca danno',0.35,AN.lanternaCieca.danno); k('Lanterna cieca alone',0.15,AN.lanternaCieca.alone); k('Cuore avido anime',0.3,AN.cuoreAvido.anime); k('Cuore avido cura',0.5,AN.cuoreAvido.cura); k('Sangue freddo sotto',0.3,AN.sangueFreddo.sotto); k('Sangue freddo danno',0.4,AN.sangueFreddo.danno); k('Martire raggio',150,AN.martire.raggio); k('Martire danno',30,AN.martire.danno); k('Martire salute',-0.2,AN.martire.salute); k('Danza sfiora',16,AN.danzaMacabra.sfiora); k('Danza durata Grazia',2,AN.danzaMacabra.durataGrazia); k('Danza recupero (GDD «una ogni 3 s»)',3,AN.danzaMacabra.recupero); k('Ceri gemelli cariche',2,AN.ceriGemelli.cariche); k('Ceri gemelli ricarica',0.3,AN.ceriGemelli.ricarica); k('Lucciola alone',0.2,AN.lucciola.alone); k('Lucciola intervallo',0.5,AN.lucciola.intervallo); k('Ossa reliquiari',2,AN.ossaDelite.reliquiari); k('Ossa salute',0.4,AN.ossaDelite.salute); k('Patto cura',0.2,AN.pattoDiSangue.cura);
-// unioni
-const nomiArma={lanterna:'Lanterna',pala:'Pala',turibolo:'Turibolo',bastone:'Bastone',candela:'Candela',falce:'Falce',campana:'Campana',fuocoFatuo:'Fuoco fatuo',acquaSanta:'Acqua santa',lamaDiLuce:'Lama di luce'};
-const nomiDono={}; DO.PASSIVI.forEach(d=>nomiDono[d.id]=d.nome);
-for(const u of U.UNIONI){ const attesa=`| ${nomiArma[u.arma]} | ${nomiDono[u.dono]} | ${u.nome} |`; controlli++; if(!gdd.includes(attesa)) diff.push(`Unione ${u.id}: nel GDD manca la riga «${attesa}»`); }
-const NU=U.NUMERI_UNIONI; k('faro abbaglia',0.5,NU.faro.abbaglia); k('vanga fermo',3,NU.vanga.fermo); k('incensiere cura',1,NU.incensiere.cura); k('verga ogni',5,NU.verga.ogni); k('candelabro ogni',0.12,NU.candelabro.ogni); k('candelabro danno',0.4,NU.candelabro.danno); k('candelabro raggio',36,NU.candelabro.raggio); k('candelabro durata',1,NU.candelabro.durata); k('candelabro intervallo',0.3,NU.candelabro.intervallo); k('falce sotto',0.15,NU.falce.sotto); k('campana fermo unione',0.8,NU.campana.fermo); k('fuochi raggio',120,NU.fuochi.raggio); k('acquasantiera uccisioni',40,NU.acquasantiera.uccisioni); k('lama ritardo',0.5,NU.lama.ritardo); k('livello dono unione',3,U.LIVELLO_DONO_UNIONE);
-// abilità: pronta dopo
-k('abilità pronta dopo',4,AB.PRONTA_DOPO);
-// --- Parte 2: ceri (dal GDD), mondo, cronologia dei nemici e pesi di comparsa -------------
+const leggi = (g) => (g in PAROLE ? PAROLE[g] : g.includes(':') ? secondi(g) : numero(g));
+
+/** Cerca il modello nel testo e restituisce i numeri del GDD (null se la frase non c'è). */
+function estrai(testo, etichetta, modello) {
+  const m = testo.match(new RegExp(regexDi(modello)));
+  if (!m) { diff.push(`${etichetta}: frase non trovata nel GDD («${modello}»)`); return null; }
+  return m.slice(1);
+}
+
+/** Confronta i numeri del modello con i valori dei dati, in tutti i punti in cui la frase compare nel testo. */
+function inTesto(testo, etichetta, modello, ...attesi) {
+  const trovate = [...testo.matchAll(new RegExp(regexDi(modello), 'g'))];
+  controlli += Math.max(attesi.length, 1);
+  if (!trovate.length) { diff.push(`${etichetta}: frase non trovata nel GDD («${modello}»)`); return; }
+  for (const m of trovate) {
+    if (m.length - 1 !== attesi.length) throw new Error(`Modello sbagliato: ${modello}`);
+    attesi.forEach((v, i) => {
+      if (!uguali(leggi(m[i + 1]), v)) diff.push(`${etichetta}: GDD ${m[i + 1]} ≠ dati ${italiano(v)}`);
+    });
+  }
+}
+const frase = (etichetta, modello, ...attesi) => inTesto(gdd, etichetta, modello, ...attesi);
+
+/** Il testo di una sezione: dal titolo al titolo successivo. */
+function sezione(titolo) {
+  const i = righeGdd.findIndex((l) => l.startsWith(titolo));
+  if (i < 0) { diff.push(`Sezione mancante nel GDD: ${titolo}`); return ''; }
+  let j = i + 1;
+  while (j < righeGdd.length && !/^#{1,4} /.test(righeGdd[j])) j++;
+  return righeGdd.slice(i, j).join('\n');
+}
+
+/** La prima tabella dopo la riga indicata: elenco di righe, ognuna {colonna: testo}. */
+function tabella(ancora) {
+  const vuota = { colonne: [], righe: [] };
+  let i = righeGdd.findIndex((l) => l.startsWith(ancora));
+  if (i < 0) { diff.push(`Tabella mancante nel GDD: ${ancora}`); return vuota; }
+  while (i < righeGdd.length && !righeGdd[i].startsWith('|')) i++;
+  const blocco = [];
+  while (righeGdd[i]?.startsWith('|')) blocco.push(righeGdd[i++].split('|').slice(1, -1).map((c) => c.trim()));
+  const [colonne, , ...corpo] = blocco;
+  return { colonne, righe: corpo.map((c) => Object.fromEntries(colonne.map((nome, k) => [nome, c[k]]))) };
+}
+
+/** Passa la riga di tabella il cui primo campo comincia con «nome»; segnala se manca. */
+function conRiga(t, nome, fai) {
+  const r = t.righe.find((x) => x[t.colonne[0]].startsWith(nome));
+  controlli++;
+  if (!r) { diff.push(`Riga mancante nel GDD: ${nome}`); return; }
+  fai(r);
+}
+
+/** Le righe della tabella devono essere esattamente quelle dei dati. */
+function stessiNomi(etichetta, t, nomi) {
+  const gddNomi = t.righe.map((r) => r[t.colonne[0]]);
+  controlli++;
+  for (const n of nomi) if (!gddNomi.some((g) => g.startsWith(n))) diff.push(`${etichetta}: «${n}» è nei dati ma non nel GDD`);
+  for (const g of gddNomi) if (!nomi.some((n) => g.startsWith(n))) diff.push(`${etichetta}: «${g}» è nel GDD ma non nei dati`);
+}
+
+function testoUguale(etichetta, gddTesto, dato) {
+  controlli++;
+  if (gddTesto !== dato) diff.push(`${etichetta}: GDD «${gddTesto}» ≠ dati «${dato}»`);
+}
+function vero(etichetta, condizione, spiegazione) {
+  controlli++;
+  if (!condizione) diff.push(`${etichetta}: ${spiegazione}`);
+}
+
+/** Il momento scritto nel GDD deve essere quello in cui il peso del nemico smette di essere zero. */
+function compareDa(etichetta, tipo, testo) {
+  const s = secondi(testo);
+  vero(etichetta, s === 0 ? tipo.peso(1) > 0 : tipo.peso(s - 1) === 0 && tipo.peso(s + 1) > 0, `GDD ${testo}, ma nei dati il peso non comincia lì`);
+}
+const tipo = (id) => N.NEMICI.find((t) => t.id === id);
+
+// --- 1. Cronologia ----------------------------------------------------------------------------
+
 {
-const num2=(t)=>parseFloat(String(t).replace(',','.').replace('−','-').match(/-?[\d.,]+/)[0].replace(',','.'));
-const riga=(pref)=>gdd.split('\n').find(l=>l.startsWith(pref));
-// ceri: per livello e massimo dal GDD
-for(const c of M.CERI){ const r=riga('| '+c.nome+' |'); controlli++; if(!r){diff.push('Cero mancante '+c.nome);continue;} const cc=r.split('|').map(x=>x.trim()); const per=Math.abs(num2(cc[2])), max=Math.abs(num2(cc[3]));
-  if(c.id==='scelta'){ if(max!==3) diff.push('Cero scelta massimo '+max); continue;} 
-  if(Math.round(c.per*100)!==per) diff.push(`Cero ${c.id}: per livello GDD ${per}% ≠ codice ${c.per*100}%`); if(per*5!==max) diff.push(`Cero ${c.id}: massimo GDD ${max} ≠ 5 livelli × ${per}`); }
-const rc=riga('| Cero della scelta'); 
-const mCosti=gdd.match(/costo 30, 60, 100, 150, 220 Cera \((\d+) per cero\)/); controlli++; if(!mCosti||+mCosti[1]!==M.COSTI_CERO.reduce((a,b)=>a+b)) diff.push('Costo totale cero GDD '+(mCosti&&mCosti[1])+' ≠ '+M.COSTI_CERO.reduce((a,b)=>a+b));
-// mondo §11
-const pair=(pref,val,nome)=>{const r=riga(pref); controlli++; if(!r){diff.push('manca riga '+pref);return;} const cc=r.split('|').map(x=>x.trim()); const g=num2(cc[2]); if(Math.abs(g-val)>0.0051) diff.push(`${nome}: GDD ${cc[2]} ≠ codice ${val}`);};
-pair('| Raggio della luce',W.LUCE.raggio,'raggio luce'); pair('| Sfumatura del buio',W.LUCE.sfumatura,'sfumatura'); pair('| Centro della luce',W.LUCE.altezza,'centro luce');
-const rb=riga('| Buio massimo'); controlli++; if(!rb.includes(String(W.LUCE.buioMassimo*100)+'%')) diff.push('buio massimo');
-const rt=riga('| Terreno'); controlli++; if(!(rt.includes('1120')&&rt.includes('56')&&rt.includes('4%')&&rt.includes('2%')&&rt.includes('24%'))) diff.push('terreno');
-const rj=riga('| Joystick'); controlli++; if(!(rj.includes('44')&&rj.includes('18%'))) diff.push('joystick');
-const rg=riga('| Dove nascono'); controlli++; if(!rg.includes(String(N.COMPARSA.margine))) diff.push('margine comparsa');
-const rs=riga('| Separazione'); controlli++; if(!(rs.includes('0,5')&&rs.includes('75%'))) diff.push('separazione');
-const rba=riga('| Barra della salute'); controlli++; if(!rba.includes('5 px')) diff.push('barra salute distanza');
-const re=riga('| Numeri del danno'); controlli++; if(!(re.includes('0,55')&&re.includes('22')&&re.includes('40'))) diff.push('numeri danno');
-const rsc=riga('| Scoppio'); controlli++; if(!rsc.includes('0,2 s')) diff.push('scoppio');
-// cronologia e pesi
-const cron=[['0:50',50,'fantasma'],['2:20',140,'scheletro'],['3:50',230,'segugio'],['6:00',360,'bruto']];
-for(const [t,s,id] of cron){ controlli++; const T=N.NEMICI.find(x=>x.id===id); if(T.peso(s-1)!==0||T.peso(s+1)===0) diff.push(`Comparsa ${id}: non parte a ${t} (${s} s)`); if(!gdd.includes(`| ${t} |`)&&!gdd.includes(`| ${t}, `)) diff.push('cronologia: manca '+t); }
-controlli++; if(N.ELITE.primo!==55||!gdd.includes('| 0:55, poi ogni 55 s |')) diff.push('élite 0:55');
-controlli++; if(N.ORDE.primo!==150||N.ORDE.ogni!==80||!gdd.includes('| 2:30, poi ogni 80 s fino a 14:20 |')||N.ORDE.ultimo!==860) diff.push('orde cronologia');
-controlli++; if(JSON.stringify(N.MIETITORE.minuti)!=='[5,10]') diff.push('Seth minuti');
-// pesi di comparsa dal GDD
-const T=(id)=>N.NEMICI.find(x=>x.id===id); controlli+=6;
-if(T('pipistrello').peso(0)!==3||T('pipistrello').peso(1000)!==0.7) diff.push('peso pipistrello (3 − s/200, min 0,7)');
-if(T('zombi').peso(100)!==3||T('zombi').peso(500)!==1.5) diff.push('peso zombi (3, poi 1,5 dall\'8° minuto)');
-if(T('fantasma').peso(100)!==2) diff.push('peso fantasma'); if(T('scheletro').peso(200)!==2.6) diff.push('peso scheletro'); if(T('segugio').peso(300)!==2) diff.push('peso segugio');
-const b=T('bruto'); if(Math.abs(b.peso(400)-Math.min(1+400/600,(400-360)/75))>1e-9) diff.push('peso bruto');
-// salute/danno nemici al minuto 10 e 15
-const sal=(m)=>1+0.28*m+(m>3?0.06*(m-3)**2:0); controlli+=2; if(Math.abs(sal(10)-6.74)>0.01||Math.abs(sal(15)-13.84)>0.01) diff.push('salute ×6,7 e ×13,8');
+  const t = tabella('| Momento | Evento |');
+  const evento = (inizio, fai) => {
+    const r = t.righe.find((x) => x.Evento.startsWith(inizio));
+    controlli++;
+    if (!r) diff.push(`Cronologia: manca «${inizio}»`); else fai(r);
+  };
+  frase('Durata della notte', 'sopravvivere {} minuti, fino all', OG.ALBA / 60);
+  frase('Abilità pronta', 'abilità speciale pronta dopo {} s', AB.PRONTA_DOPO);
+  for (const [id, parola] of [['fantasma', 'i fantasmi'], ['scheletro', 'gli scheletri'], ['segugio', 'i segugi'], ['bruto', 'i bruti']]) {
+    evento('Iniziano ' + parola, (r) => compareDa('Cronologia ' + id, tipo(id), r.Momento));
+  }
+  evento('Un nemico élite', (r) => inTesto(r.Momento, 'Cronologia élite', '{t}, poi ogni {} s', N.ELITE.primo, N.ELITE.ogni));
+  evento('Sciame', (r) => {
+    inTesto(r.Momento, 'Cronologia sciami', 'tranne il {}° e il {}°, fino al {}°', ...N.SCIAMI.saltaMinuti, N.SCIAMI.ultimoMinuto);
+    inTesto(r.Evento, 'Cronologia sciami', 'pipistrelli fino al {}° minuto, fantasmi dal {}°', N.SCIAMI.pipistrelliFinoAl, N.SCIAMI.pipistrelliFinoAl + 1);
+  });
+  evento('Un\'orda', (r) => {
+    inTesto(r.Momento, 'Cronologia orde', '{t}, poi ogni {} s fino a {t}', N.ORDE.primo, N.ORDE.ogni, N.ORDE.ultimo);
+    inTesto(r.Evento, 'Cronologia orde', 'dalle {t} due orde', N.ORDE.tenagliaDal);
+  });
+  evento('Prima apparizione', (r) => inTesto(r.Momento, 'Cronologia Seth', '{t}', N.MIETITORE.minuti[0] * 60));
+  evento('Seconda apparizione', (r) => inTesto(r.Momento, 'Cronologia Seth', '{t}', N.MIETITORE.minuti[1] * 60));
+  evento('L\'alba', (r) => inTesto(r.Momento, 'Cronologia alba', '{t}', OG.ALBA));
 }
+
+// --- 2. Personaggi -----------------------------------------------------------------------------
+
+{
+  frase('Valori di base', 'Valori di base comuni: {} salute, velocità {}, raccolta delle anime a {} px, armatura {}.', P.BASE.salute, P.BASE.velocita, P.BASE.raccolta, P.BASE.armatura);
+  const t = tabella('| Personaggio | Motto |');
+  const barre = tabella('**Barre della scheda**');
+  stessiNomi('Personaggi', t, P.PERSONAGGI.map((p) => p.nome));
+  stessiNomi('Barre', barre, P.PERSONAGGI.map((p) => p.nome));
+  // colonna «Modificatori»: come si legge ogni campo. segno = -1 se il dato è una riduzione scritta con il meno.
+  const MODIFICATORI = [
+    ['salute', /([+−]\d+) salute(?!\/s)/, (x) => x],
+    ['rigenerazione', /([+−]\d+(?:,\d+)?) salute\/s/, (x) => x],
+    ['velocita', /([+−]\d+(?:,\d+)?)% velocità/, pct],
+    ['danno', /([+−]\d+(?:,\d+)?)% danno(?! subito)/, pct],
+    ['area', /([+−]\d+(?:,\d+)?)% area/, pct],
+    ['armatura', /([+−]\d+(?:,\d+)?)% danno subito/, (x) => -pct(x)],
+    ['ricarica', /([+−]\d+(?:,\d+)?)% ricarica/, (x) => -pct(x)],
+  ];
+  for (const p of P.PERSONAGGI) {
+    conRiga(t, p.nome, (r) => {
+      testoUguale(`${p.nome}: motto`, r.Motto, p.motto);
+      testoUguale(`${p.nome}: colore`, r.Colore.replaceAll('`', ''), p.colore);
+      testoUguale(`${p.nome}: arma iniziale`, r['Arma iniziale'], A.ARMI_INIZIALI[p.armaIniziale].nome);
+      testoUguale(`${p.nome}: abilità`, r['Abilità speciale'], AB.ABILITA[p.abilita].nome);
+      for (const [campo, rx, conv] of MODIFICATORI) {
+        const m = r.Modificatori.match(rx);
+        const g = m ? numero(m[1]) : 0; // non scritto nel GDD = nessun modificatore
+        vero(`${p.nome}: ${campo}`, uguali(g, conv(p[campo])), `GDD ${m ? m[1] : 'non scritto'} ≠ dati ${italiano(conv(p[campo]))}`);
+      }
+    });
+    conRiga(barre, p.nome, (r) => {
+      ['Vit.', 'Dan.', 'Vel.', 'Rag.', 'Con.'].forEach((col, i) => vero(`${p.nome}: barra ${col}`, numero(r[col]) === p.barre[i], `GDD ${r[col]} ≠ dati ${p.barre[i]}`));
+    });
+    vero(`${p.nome}: biografia`, gdd.includes(`«${p.biografia}»`), 'nel GDD il testo è diverso');
+    vero(`${p.nome}: citazione`, gdd.includes(`*«${p.citazione}»*`), 'nel GDD il testo è diverso');
+  }
+}
+
+// --- 3. Abilità --------------------------------------------------------------------------------
+
+{
+  const t = tabella('| Abilità | Ricarica |');
+  const lista = Object.values(AB.ABILITA);
+  stessiNomi('Abilità', t, lista.map((a) => a.nome));
+  for (const a of lista) {
+    conRiga(t, a.nome, (r) => {
+      inTesto(r.Ricarica, `${a.nome}: ricarica`, '{} s', a.ricarica);
+      inTesto(r.Durata, `${a.nome}: durata`, '{} s', a.durata);
+      inTesto(r.Raggio, `${a.nome}: raggio`, '{}', a.raggio);
+      inTesto(r.Danno, `${a.nome}: danno`, '{} ogni {} s', a.danno, a.intervallo);
+      if (a.rallenta) inTesto(r.Effetto, `${a.nome}: rallenta`, /rallenta dell'/.test(r.Effetto) ? 'rallenta dell\'{}%' : 'rallenta del {}%', pct(a.rallenta));
+      if (a.cura) inTesto(r.Effetto, `${a.nome}: cura`, 'cura {} salute/s', a.cura);
+      if (a.attira) inTesto(r.Effetto, `${a.nome}: attira`, 'attira i nemici a {} px/s', a.attira);
+      vero(`${a.nome}: segue`, r.Effetto.startsWith('ti segue') === a.segue, 'nel GDD «ti segue/fissa» è diverso dai dati');
+    });
+  }
+  frase('Seth e le abilità', 'Seth subisce il rallentamento a {p} e l\'attrazione a {p}; bruti ed élite l\'attrazione a {p}', N.MIETITORE.rallentamento, N.MIETITORE.attrazione, AB.ATTRAZIONE_PESANTI);
+}
+
+// --- 4. Armi -----------------------------------------------------------------------------------
+
+{
+  frase('Armi massime', 'Al massimo {} armi, ognuna fino al livello {}', A.MAX_ARMI, PR.CARTE.livelloMassimo);
+
+  // tabelle livello per livello: colonna del GDD → campo del livello, oppure funzione per i valori fissi dell'arma
+  const LIVELLI = [
+    ['Lanterna', A.LANTERNA, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio', 'Ampiezza arco (°)': 'ampiezza', 'Colpo alle spalle': 'spalle' }],
+    ['Pala', A.PALA, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio', 'Distanza colpo': () => A.PALA.distanza, 'Colpo doppio': 'doppio' }],
+    ['Turibolo', A.TURIBOLO, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Danno: 'danno', Raggio: 'raggio', 'Durata (s)': 'durata' }],
+    ['Bastone', A.BASTONE, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Danno: 'danno', Trapassa: 'trapassa', 'Velocità proiettile': () => A.BASTONE.velocita }],
+    ['Candela', A.CANDELA, { 'Ricarica (s)': 'ricarica', Danno: 'danno', 'Quantità': 'quantita', Trapassa: 'trapassa', 'Velocità proiettile': () => A.CANDELA.velocita }],
+    ['Falce', A.FALCE, { 'Quantità': 'quantita', Danno: 'danno', Raggio: 'raggio', 'Rotazione (giri/s)': 'giri' }],
+    ['Campana', A.CAMPANA, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio', 'Colpo doppio': 'doppio' }],
+    ['Fuoco fatuo', A.FUOCO_FATUO, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Danno: 'danno', Trapassa: 'trapassa' }],
+    ['Acqua santa', A.ACQUA_SANTA, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Danno: 'danno', Raggio: 'raggio', 'Durata (s)': 'durata' }],
+    ['Lama di luce', A.LAMA_DI_LUCE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Lunghezza: 'lunghezza', 'Colpo alle spalle': 'spalle' }],
+  ];
+  for (const [nome, arma, colonne] of LIVELLI) {
+    const t = tabella('#### ' + nome);
+    vero(nome, t.righe.length === arma.livelli.length, `${t.righe.length} righe nel GDD, ${arma.livelli.length} livelli nei dati`);
+    for (const col of t.colonne) {
+      if (col !== 'Lv' && col !== 'Cosa cambia' && !(col in colonne)) diff.push(`${nome}: colonna «${col}» senza corrispondenza nello script`);
+    }
+    t.righe.forEach((r, i) => {
+      const L = arma.livelli[i];
+      if (!L) return;
+      testoUguale(`${nome} liv. ${i + 1}: testo`, r['Cosa cambia'], L.testo);
+      for (const [col, campo] of Object.entries(colonne)) {
+        const dato = typeof campo === 'function' ? campo() : L[campo];
+        const g = typeof dato === 'boolean' ? r[col] === 'sì' : numero(r[col]);
+        vero(`${nome} liv. ${i + 1}: ${col}`, typeof dato === 'boolean' ? g === dato : uguali(g, dato), `GDD ${r[col]} ≠ dati ${dato}`);
+      }
+    });
+  }
+
+  // numeri nelle frasi sopra ogni tabella
+  const s = (nome) => sezione('#### ' + nome);
+  const frasi = [
+    ['Lanterna', 'misurato dal personaggio; respinge di {} (', A.LANTERNA.respinta],
+    ['Pala', 'Impatto circolare {} px davanti a te', A.PALA.distanza],
+    ['Pala', 'respinge di {} (', A.PALA.respinta],
+    ['Pala', 'un secondo colpo alle spalle {} s dopo', A.PALA.ritardoDoppio],
+    ['Turibolo', 'La prima nube nasce {} px davanti a te, le altre a caso fino a {} px', A.TURIBOLO.distanzaPrima, A.TURIBOLO.distanzaAltre],
+    ['Turibolo', 'ogni nube ferisce ogni {} s e rallenta del {}%', A.TURIBOLO.intervallo, pct(A.TURIBOLO.rallenta)],
+    ['Bastone', 'Mira al nemico più vicino entro {} px', A.BASTONE.portata],
+    ['Bastone', 'proiettili a {} px/s, raggio {} px; i proiettili partono a {} s l\'uno dall\'altro e svaniscono dopo {} s', A.BASTONE.velocita, A.BASTONE.raggio, A.BASTONE.intervallo, A.BASTONE.vita],
+    ['Candela', 'entro {} px (circa lo schermo)', A.CANDELA.portata],
+    ['Candela', 'le fiammelle durano {} s, raggio {} px', A.CANDELA.vita, A.CANDELA.raggio],
+    ['Falce', 'colpito da una falce ogni {} s; respinge di {} (', A.FALCE.pausa, A.FALCE.respinta],
+    ['Falce', 'la lama tocca entro {} px', A.FALCE.raggioLama],
+    ['Campana', 'respinge di {} (', A.CAMPANA.respinta],
+    ['Campana', 'il secondo rintocco arriva {} s dopo', A.CAMPANA.ritardoDoppio],
+    ['Fuoco fatuo', 'girano (fino a {} radianti al secondo)', A.FUOCO_FATUO.sterzo],
+    ['Fuoco fatuo', 'entro {} px, a {} px/s; durano {} s', A.FUOCO_FATUO.portata, A.FUOCO_FATUO.velocita, A.FUOCO_FATUO.vita],
+    ['Acqua santa', 'la pozza ferisce ogni {} s', A.ACQUA_SANTA.intervallo],
+    ['Lama di luce', 'Fendente orizzontale alto {} px', A.LAMA_DI_LUCE.altezza],
+    ['Lama di luce', 'il colpo alle spalle parte {} s dopo; respinge di {}.', A.LAMA_DI_LUCE.ritardoSpalle, A.LAMA_DI_LUCE.respinta],
+  ];
+  for (const [nome, modello, ...attesi] of frasi) inTesto(s(nome), nome, modello, ...attesi);
+
+  // armi nuove: livello 1 e livello 8 stanno in una cella ciascuno
+  const t = tabella('| Arma | Affinità |');
+  const NUOVE = [
+    [A.LAPIDE, '{} danni, ogni {} s, raggio {}', ['danno', 'ricarica', 'raggio'], '{} danni, {} lapidi, ogni {} s, raggio {}', ['danno', 'quantita', 'ricarica', 'raggio']],
+    [A.ROSARIO_SPEZZATO, '{} danni, {} rimbalzi, ogni {} s', ['danno', 'rimbalzi', 'ricarica'], '{} danni, {} rimbalzi, {} grani, ogni {} s', ['danno', 'rimbalzi', 'quantita', 'ricarica']],
+    [A.CORVO, '{} danni, {} corvo, ogni {} s, {} anima', ['danno', 'quantita', 'ricarica', 'anime'], '{} danni, {} corvi, ogni {} s, {} anime', ['danno', 'quantita', 'ricarica', 'anime']],
+    [A.VELO_FUNEBRE, '{} danni, raggio {}, ogni {} s', ['danno', 'raggio', 'ricarica'], '{} danni, raggio {}, ogni {} s', ['danno', 'raggio', 'ricarica']],
+  ];
+  stessiNomi('Armi nuove', t, NUOVE.map(([a]) => a.nome));
+  for (const [arma, m1, c1, m8, c8] of NUOVE) {
+    conRiga(t, arma.nome, (r) => {
+      const primo = arma.livelli[0], ultimo = arma.livelli[arma.livelli.length - 1];
+      inTesto(r['Livello 1'], `${arma.nome}: primo livello`, m1, ...c1.map((c) => primo[c]));
+      inTesto(r['Livello 8'], `${arma.nome}: ultimo livello`, m8, ...c8.map((c) => ultimo[c]));
+      testoUguale(`${arma.nome}: affinità`, r['Affinità'].toLowerCase(), ST.AFFINITA_ARMI[arma.id]);
+    });
+  }
+  conRiga(t, 'Rosario spezzato', (r) => inTesto(r['Cosa fa'], 'Rosario spezzato', '(entro {} px); {}% di maledire', A.ROSARIO_SPEZZATO.salto, pct(ST.RUOLI.rosarioMaledice)));
+  conRiga(t, 'Corvo', (r) => inTesto(r['Cosa fa'], 'Corvo', '(entro {} px)', A.CORVO.portata));
+  conRiga(t, 'Velo funebre', (r) => inTesto(r['Cosa fa'], 'Velo funebre', '{}% di consacrare', pct(ST.RUOLI.veloConsacra)));
+  conRiga(t, 'Lapide', (r) => vero('Lapide', (ST.RUOLI.lapideSeppellisce === 1) === r['Cosa fa'].includes('resta sempre Sepolto'), 'nei dati la probabilità di seppellire non è «sempre»'));
+}
+
+// --- 5. Doni -----------------------------------------------------------------------------------
+
+{
+  frase('Doni massimi', 'Al massimo {} doni passivi diversi', DO.MAX_PASSIVI);
+  frase('Peso degli oggetti nuovi', 'come se fossero sempre {} e {}', PR.CARTE.pool.armi, PR.CARTE.pool.doni);
+  const t = tabella('| Dono | Effetto per livello |');
+  stessiNomi('Doni', t, DO.PASSIVI.map((d) => d.nome));
+  const dono = (id) => DO.PASSIVI.find((d) => d.id === id);
+  const EFFETTI_DONI = {
+    cuoreDiCera: (d) => ['+{} salute massima', d.per],
+    saleNero: (d) => ['+{}% danno', pct(d.per)],
+    clessidra: (d) => ['−{}% ricarica, si moltiplica (minimo {}% della ricarica base)', pct(d.per), pct(DO.RICARICA_MINIMA)],
+    stoppinoLungo: (d) => ['+{}% area', pct(d.per)],
+    aliDiFalena: (d) => ['+{}% velocità', pct(d.per)],
+    calamita: (d) => ['+{}% raggio di raccolta e +{}% anime', pct(d.per), pct(d.anime)],
+    erbeAmare: (d) => ['+{} salute al secondo', d.per],
+    scudoDiFerro: (d) => ['−{}% danno subito', pct(d.per)],
+    specchio: (d) => ['+{} proiettile', d.per],
+    ceraVotiva: (d) => ['+{}% durata', pct(d.per)],
+    chiodoDiBara: (d) => ['+{}% probabilità di colpo critico (danno {p})', pct(d.per), DO.MOLTIPLICA_CRITICO],
+    lacrimaDiLumen: (d) => ['+{} sorso', d.per],
+    campanellaDArgento: (d) => ['+{} s di finestra', d.per],
+  };
+  for (const d of DO.PASSIVI) {
+    conRiga(t, d.nome, (r) => {
+      inTesto(r['Livello max'], `${d.nome}: livello massimo`, '{}', d.massimo);
+      if (!EFFETTI_DONI[d.id]) { diff.push(`Dono ${d.id}: senza corrispondenza nello script`); return; }
+      const [modello, ...attesi] = EFFETTI_DONI[d.id](dono(d.id));
+      inTesto(r['Effetto per livello'], d.nome, modello, ...attesi);
+    });
+  }
+}
+
+// --- 6. Nemici ---------------------------------------------------------------------------------
+
+{
+  frase('Velocità a caso', 'la velocità varia a caso del ±{}%', pct(N.DIFFICOLTA.variazioneVelocita));
+  const t = tabella('| Nemico | Salute |');
+  const NOMI = { pipistrello: 'Pipistrello', zombi: 'Zombi', fantasma: 'Fantasma', scheletro: 'Scheletro', segugio: 'Segugio', bruto: 'Bruto', mietitore: 'Seth' };
+  stessiNomi('Nemici', t, N.NEMICI.map((x) => NOMI[x.id]));
+  for (const x of N.NEMICI) {
+    conRiga(t, NOMI[x.id], (r) => {
+      for (const [col, campo] of [['Salute', 'salute'], ['Velocità', 'velocita'], ['Danno', 'danno'], ['Raggio', 'raggio'], ['Anime', 'anime']]) {
+        vero(`${NOMI[x.id]}: ${col}`, uguali(numero(r[col]), x[campo]), `GDD ${r[col]} ≠ dati ${x[campo]}`);
+      }
+      if (x.id === 'mietitore') inTesto(r['Compare da'], 'Seth: minuti', '{t} e {t}', N.MIETITORE.minuti[0] * 60, N.MIETITORE.minuti[1] * 60);
+      else compareDa(`${NOMI[x.id]}: compare da`, x, r['Compare da']);
+    });
+  }
+
+  const EL = N.ELITE, MI = N.MIETITORE;
+  frase('Élite', '**Élite**: ogni {} s compare un nemico normale potenziato: salute ×{}, danno ×{}, anime ×{}, dimensione ×{}, velocità ×{},', EL.ogni, EL.salute, EL.danno, EL.anime, EL.dimensione, EL.velocita);
+  frase('Élite: dimensione', 'ingrandite × {} anche nel raggio dei contatti', EL.dimensione);
+  frase('Seth: cammina', 'cammina verso di te per {}–{} s (al minuto {} per ×{} di quel tempo)', MI.cammina[0], MI.cammina[1], MI.minuti[1], MI.camminaSecondo);
+  frase('Seth: danno delle mosse', '(× danno attuale ÷ {})', tipo('mietitore').danno);
+  frase('Seth: pausa', 'resta fermo {} s. Lascia {} reliquiari. Al minuto {} ha salute ×{}', MI.riprende, MI.reliquiari, MI.minuti[1], MI.saluteSecondo);
+
+  const mosse = tabella('| Mossa | Peso |');
+  const MOSSE = [
+    ['Scatto', MI.mosse.scatto, MI.carica, 'scatta per {} s a {} volte la sua velocità', MI.scatto, MI.velocitaScatto],
+    ['Falciata', MI.mosse.falciata, MI.falciata.carica, 'un cerchio rosso di raggio {} si accende intorno a lui; allo scadere ferisce di {} chi', MI.falciata.raggio, MI.falciata.danno],
+    ['Falci spettrali', MI.mosse.falci, MI.falci.carica, 'lancia {} falci rosse a ventaglio ({} radianti) verso di te: {} px/s, raggio {}, danno {}, durano {} s', MI.falci.quante, MI.falci.ventaglio, MI.falci.velocita, MI.falci.raggio, MI.falci.danno, MI.falci.durata],
+    ['Chiamata dei morti', MI.mosse.chiamata, MI.chiamata.carica, '{} segni rossi a terra in cerchio a {} px da te; allo scadere ne escono {} scheletri', MI.chiamata.quanti, MI.chiamata.distanza, MI.chiamata.quanti],
+  ];
+  stessiNomi('Mosse di Seth', mosse, MOSSE.map((m) => m[0]));
+  for (const [nome, peso, preavviso, modello, ...attesi] of MOSSE) {
+    conRiga(mosse, nome, (r) => {
+      inTesto(r.Peso, `${nome}: peso`, '{}', peso);
+      inTesto(r.Preavviso, `${nome}: preavviso`, '{} s', preavviso);
+      inTesto(r['Cosa fa'], nome, modello, ...attesi);
+    });
+  }
+
+  const IA = N.IA;
+  frase('IA accerchia', 'girato di lato intorno a te di {}–{} radianti e al {}% della distanza, così arriva dai fianchi; sotto i {} px', IA.accerchia.angolo[0], IA.accerchia.angolo[1], pct(IA.accerchia.stringe), IA.accerchia.vicino);
+  frase('IA intercetta', 'fino a {} s in anticipo', IA.intercetta.anticipo);
+  frase('IA zig-zag', '(ampiezza {}, {} oscillazioni al secondo', IA.zigzag.ampiezza, IA.zigzag.frequenza);
+
+  const O = N.ORDE;
+  frase('Orde', '**Orde**: dalle {t}, ogni {} s fino alle {t}, un\'orda di {} + {} nemici per minuto (al massimo {})', O.primo, O.ogni, O.ultimo, O.base, O.perMinuto, O.massimo);
+  frase('Orde: formazione', 'file di {}, distanziate di {} raggi. Marcia compatta verso di te a {} px/s; a {} px carica tutta insieme a velocità ×{}.', O.perFila, O.spazio, O.marcia, O.distanzaCarica, O.carica);
+  frase('Orde: tipi', 'Zombi fino alle {t}, poi scheletri, dalle {t} segugi. Dalle {t} arrivano due orde', O.tipi[1].dal, O.tipi[2].dal, O.tenagliaDal);
+  vero('Orde: tipi', O.tipi.map((x) => x.tipo).join() === ['zombi', 'scheletro', 'segugio'].join(), 'nei dati i tipi sono diversi dalla frase del GDD');
+
+  const S = N.SCIAMI;
+  frase('Sciami', '**Sciami**: {} + {} nemici per minuto, fino a {}, a +{}% di velocità', S.base, S.perMinuto, S.massimo, pct(S.velocita - 1));
+  frase('Sciami: dove', 'grande quanto lo schermo, {} px fuori dal bordo', N.COMPARSA.margine);
+
+  // pesi di comparsa: la forma della formula è qui, i suoi numeri vengono dal GDD; si confronta secondo per secondo con il gioco
+  const pesi = tabella('**Pesi di comparsa**');
+  const inNumeri = (a) => a?.map(leggi);
+  const uguaglianza = (id, formula) => {
+    let ok = true;
+    for (let s = 0; s <= OG.ALBA; s++) if (!uguali(formula(s), tipo(id).peso(s))) ok = false;
+    vero(`Peso di comparsa ${id}`, ok, 'la formula del GDD non dà gli stessi valori dei dati');
+  };
+  conRiga(pesi, 'Pipistrello', (r) => {
+    const v = inNumeri(estrai(r.Peso, 'Peso pipistrello', '{} − s/{}, minimo {}'));
+    if (v) uguaglianza('pipistrello', (s) => Math.max(v[2], v[0] - s / v[1]));
+  });
+  conRiga(pesi, 'Zombi', (r) => {
+    const v = inNumeri(estrai(r.Peso, 'Peso zombi', '{}, poi {} dall\'{}° minuto'));
+    if (v) uguaglianza('zombi', (s) => (s < v[2] * 60 ? v[0] : v[1]));
+  });
+  for (const [nome, id] of [['Fantasma', 'fantasma'], ['Scheletro', 'scheletro'], ['Segugio', 'segugio']]) {
+    conRiga(pesi, nome, (r) => {
+      const v = inNumeri(estrai(r.Peso, `Peso ${id}`, '{} dopo {} s'));
+      if (v) uguaglianza(id, (s) => (s >= v[1] ? v[0] : 0));
+    });
+  }
+  conRiga(pesi, 'Bruto', (r) => {
+    const v = inNumeri(estrai(r.Peso, 'Peso bruto', 'dopo {} s: il minore tra {} + s/{} e (s − {})/{}'));
+    if (v) uguaglianza('bruto', (s) => (s >= v[0] ? Math.min(v[1] + s / v[2], (s - v[3]) / v[4]) : 0));
+  });
+}
+
+// --- 7. Difficoltà -----------------------------------------------------------------------------
+
+{
+  const F = N.DIFFICOLTA;
+  const salute = (m) => 1 + F.salutePerMinuto * m + (m > F.saluteDopo ? F.saluteAccelera * (m - F.saluteDopo) ** 2 : 0);
+  frase('Salute nel tempo', 'salute = base × (1 + {} m + {} × (m − {})²), l\'ultimo termine solo dopo il minuto {}', F.salutePerMinuto, F.saluteAccelera, F.saluteDopo, F.saluteDopo);
+  const v = estrai(gdd, 'Salute nel tempo', 'Al minuto {} ≈ ×{}, al {} ≈ ×{}');
+  if (v) {
+    // due esempi di calcolo, arrotondati a una cifra come nel GDD
+    const [m1, x1, m2, x2] = v.map(leggi);
+    const decimo = (x) => Math.round(x * 10) / 10;
+    vero('Salute: esempio', uguali(x1, decimo(salute(m1))), `GDD ×${v[1]} ≠ dati ×${italiano(decimo(salute(m1)))}`);
+    vero('Salute: esempio', uguali(x2, decimo(salute(m2))), `GDD ×${v[3]} ≠ dati ×${italiano(decimo(salute(m2)))}`);
+  }
+  frase('Danno nel tempo', 'danno = base × (1 + {} m)', F.dannoPerMinuto);
+  frase('Nemici massimi', 'nemici massimi in campo = min({}, {} + {} m)', F.tetto, F.massimiBase, F.massimiPerMinuto);
+  frase('Comparse', 'comparse al secondo = {} + {} m (al massimo {} per fotogramma)', F.comparseBase, F.comparsePerMinuto, F.comparsePerFotogramma);
+  frase('Rinforzo', 'Se in campo c\'è meno del {}% del massimo, arrivano {} nemici in più', pct(F.sogliaRinforzo), F.rinforzoPerFotogramma);
+}
+
+// --- 8. Drop, fiaschetta, Grazia ---------------------------------------------------------------
+
+{
+  const G = OG.DROP;
+  const t = tabella('| Oggetto | Fonte | Probabilità |');
+  conRiga(t, 'Pane', (r) => {
+    inTesto(r['Probabilità'], 'Pane', '{}%, al massimo uno ogni {} s', pct(G.pane.probabilita), G.pane.ogni);
+    inTesto(r.Effetto, 'Pane: cura', '+{} salute', G.pane.cura);
+  });
+  conRiga(t, 'Calamita', (r) => inTesto(r['Probabilità'], 'Calamita', '{}%, al massimo una ogni {} minuti', pct(G.calamita.probabilita), G.calamita.ogni / 60));
+  conRiga(t, 'Reliquiario', (r) => {
+    inTesto(r.Fonte, 'Reliquiari di Seth', 'Seth ({})', N.MIETITORE.reliquiari);
+    inTesto(r.Effetto, 'Reliquiario', '({}%) o {?} ({}%)', pct(1 - G.reliquiario.tre), pct(G.reliquiario.tre));
+    inTesto(r.Effetto, 'Reliquiario: cura', '+{} salute', G.reliquiario.cura);
+  });
+  frase('Raccolta degli oggetti', 'si raccolgono a {} px dal personaggio, sono disegnati sopra il buio e ingranditi × {}', G.presa, G.ingrandimento);
+  const AN = PR.ANIME;
+  frase('Colore delle anime', 'azzurro sotto {}, verde da {} a {}, ambra da {} in su', AN.media, AN.media, AN.grande - 1, AN.grande);
+  frase('Volo delle anime', 'volano verso il personaggio a {} px/s, accelerando di {} px/s al secondo; sono raccolte a {} px', AN.volo, AN.accelerazione, AN.presa);
+  frase('Anime a terra', 'Al massimo {} anime a terra', AN.massimeATerra);
+
+  const FI = SO.FIASCHETTA, GR = SO.GRAZIA;
+  frase('Fiaschetta', '{} sorsi all\'inizio della notte', FI.sorsi);
+  frase('Fiaschetta: cura', 'Un sorso cura il {}% della salute massima in {} s', pct(FI.cura), FI.durata);
+  frase('Fiaschetta: élite', 'Un\'élite uccisa ridà {} sorso', FI.perElite);
+  frase('Fiaschetta: distanza', 'staccata da lui di {} pixel disegnati', FI.distanza);
+  frase('Grazia: finestra', 'quando mancavano al massimo {} s al colpo', GR.finestra);
+  frase('Grazia: sfioro', '(entro {} px oltre il bordo)', GR.sfioro);
+  frase('Grazia: effetto', 'Dura {} s: +{}% danno, +{}% velocità, il personaggio lampeggia di chiaro ({} volte al secondo)', GR.durata, pct(GR.danno), pct(GR.velocita), GR.lampi);
+}
+
+// --- 8c. Affinità, stati e reazioni ------------------------------------------------------------
+
+{
+  const S = ST.STATI, RZ = ST.REAZIONI, RU = ST.RUOLI;
+  frase('Stati', 'uno stato di {} s, nel {}% dei colpi ({}% per nubi, pozze e abilità', S.durata, pct(S.probabilita), pct(S.probabilitaZone));
+  frase('Simboli', 'grande il {p} dei suoi', S.simboli.ingrandimento);
+  frase('Simboli massimi', 'al massimo {} simboli', S.simboli.massimi);
+
+  const t = tabella('| Affinità | Armi e abilità |');
+  const tutte = [...Object.values(A.ARMI_INIZIALI), ...A.ARMI_COMUNI];
+  for (const r of t.righe) {
+    const aff = r['Affinità'].toLowerCase();
+    for (const nome of r['Armi e abilità'].split(', ')) {
+      const arma = tutte.find((a) => a.nome === nome), abilita = Object.values(AB.ABILITA).find((a) => a.nome === nome);
+      const dato = arma ? ST.AFFINITA_ARMI[arma.id] : abilita ? ST.AFFINITA_ABILITA[abilita.id] : null;
+      testoUguale(`Affinità di ${nome}`, aff, dato);
+    }
+  }
+  conRiga(t, 'Luce', (r) => inTesto(r.Effetto, 'Abbagliato', '+{}% danno', pct(S.abbagliato.danno)));
+  conRiga(t, 'Sacro', (r) => inTesto(r.Effetto, 'Consacrato', 'più lento del {}% (Seth a {p})', pct(S.consacrato.lento), N.MIETITORE.rallentamento));
+  conRiga(t, 'Ombra', (r) => inTesto(r.Effetto, 'Maledetto', 'perde il {}% della salute massima al secondo (élite {}% di questo, Seth {}%)', pct(S.maledetto.perSecondo), pct(S.elite.maledetto), pct(S.mietitore.maledetto)));
+  conRiga(t, 'Terra', (r) => inTesto(r.Effetto, 'Sepolto', 'resta fermo {} s; poi per {} s non può esserlo di nuovo', S.sepolto.fermo, S.sepolto.pausa));
+
+  const rz = tabella('| Stati | Reazione |');
+  const reazione = (nome, fai) => {
+    const r = rz.righe.find((x) => x.Reazione === nome);
+    controlli++;
+    if (!r) diff.push(`Riga mancante nel GDD: ${nome}`); else fai(r);
+  };
+  reazione('Eclissi', (r) => inTesto(r.Effetto, 'Eclissi', 'esplosione di {} px; danno = {}% della salute massima del nemico, al massimo {} (Seth sempre {})', RZ.eclissi.raggio, pct(RZ.eclissi.parte), RZ.eclissi.tetto, RZ.eclissi.tetto));
+  reazione('Rivelazione', (r) => inTesto(r.Effetto, 'Rivelazione', 'lascia il {p} delle anime', RZ.rivelazione.anime));
+  reazione('Esorcismo', (r) => inTesto(r.Effetto, 'Esorcismo', 'partono {} fiammelle che inseguono i vicini ({} danni l\'una)', RZ.esorcismo.fiammelle, RZ.esorcismo.danno));
+  reazione('Interramento', (r) => inTesto(r.Effetto, 'Interramento', 'fermo {} s e +{}% danno subito (Seth a {p} durata)', RZ.interramento.fermo, pct(RZ.interramento.danno), S.mietitore.fermo));
+
+  frase('Esplosione del Bastone', 'ferisce in {} px al {}% del danno', RU.esplosioneBastone.raggio, pct(RU.esplosioneBastone.danno));
+  frase('Fuoco fatuo: preda', '(li vede {} volte più vicini)', 1 / RU.fuocoFatuoPreda);
+  frase('Falce: crescita', 'allunga la lama del {}% per {} s (al massimo +{}%)', pct(RU.falceCrescita.perUccisione), RU.falceCrescita.durata, pct(RU.falceCrescita.massimo));
+  frase('Campana: fermo', 'ferma i nemici per {} s', RU.campanaFermo);
+}
+
+// --- 8d. Meta progressione ---------------------------------------------------------------------
+
+{
+  const G = OG.DROP.cera;
+  frase('Cera a terra', '{}% dei nemici comuni, {} gocce da un\'élite, {} da Seth; ogni goccia vale {}. Più {} per l\'alba.', pct(G.probabilita), G.perElite, G.perSeth, M.CERA.goccia, M.CERA.alba);
+  const costi = M.COSTI_CERO, livelli = costi.length;
+  const totale = costi.reduce((a, b) => a + b);
+  frase('Ceri: costi', `**Ceri votivi**: {} livelli, costo ${costi.map(() => '{}').join(', ')} Cera ({} per cero)`, livelli, ...costi, totale);
+
+  const t = tabella('| Cero | Per livello |');
+  stessiNomi('Ceri', t, M.CERI.map((c) => c.nome));
+  for (const c of M.CERI) {
+    conRiga(t, c.nome, (r) => {
+      if (c.id === 'scelta') { // «per» è in frazione di rimescolata: si arrotonda in su
+        inTesto(r['Per livello'], `${c.nome}: per livello`, '+{?} rimescolata ogni {} livelli', 1 / c.per);
+        inTesto(r['Al massimo'], `${c.nome}: massimo`, '+{}', Math.ceil(livelli * c.per));
+      } else {
+        inTesto(r['Per livello'], `${c.nome}: per livello`, c.id === 'rito' ? '−{}%' : '+{}%', pct(c.per));
+        inTesto(r['Al massimo'], `${c.nome}: massimo`, c.id === 'rito' ? '−{}%' : '+{}%', pct(c.per) * livelli);
+      }
+    });
+  }
+  const SC = M.SECONDA_CANDELA;
+  frase('Seconda candela', '**Seconda candela**: {} Cera; una volta per veglia, a salute zero ci si rialza con il {}% della salute e {} s di invulnerabilità', SC.costo, pct(SC.salute), SC.invulnerabilita);
+  const primoNumero = (testo) => numero(testo.match(/\d+/)[0]);
+  frase('Sblocco personaggi', 'Becchino: sopravvivi {} minuti, oppure {} Cera. Badessa: sconfiggi Seth, oppure {} Cera. Strega: arriva all\'alba, oppure {} Cera.', primoNumero(M.SBLOCCHI.becchino.impresa), M.SBLOCCHI.becchino.cera, M.SBLOCCHI.badessa.cera, M.SBLOCCHI.strega.cera);
+
+  const so = tabella('| Oggetto | Si sblocca |');
+  stessiNomi('Sblocchi di armi e doni', so, M.SBLOCCHI_OGGETTI.map((s) => s.nome));
+  const sblocco = (id) => M.SBLOCCHI_OGGETTI.find((s) => s.id === id);
+  const CONDIZIONI = {
+    lapide: () => ['sconfiggi Seth con il Becchino'],
+    rosarioSpezzato: (s) => ['fai {} Eclissi', s.soglia],
+    corvo: (s) => ['raccogli {} anime', s.soglia],
+    veloFunebre: (s) => ['resta {} minuti', s.soglia / 60],
+    campanellaDArgento: (s) => ['fai {} schivate perfette in una veglia, oppure {} Cera', s.soglia, s.cera],
+    chiodoDiBara: (s) => ['{} Cera', s.cera],
+    lacrimaDiLumen: (s) => ['{} Cera', s.cera],
+  };
+  for (const s of M.SBLOCCHI_OGGETTI) {
+    conRiga(so, s.nome, (r) => {
+      if (!CONDIZIONI[s.id]) { diff.push(`Sblocco ${s.id}: senza corrispondenza nello script`); return; }
+      const [modello, ...attesi] = CONDIZIONI[s.id](sblocco(s.id));
+      inTesto(r['Si sblocca'], `Sblocco ${s.nome}`, modello, ...attesi);
+    });
+  }
+}
+
+// --- 8e. Rosario -------------------------------------------------------------------------------
+
+{
+  const s = sezione('## 8e.');
+  const RO = R.ROSARIO, AN = R.AMULETI_NUMERI;
+  const grani = R.AMULETI.map((a) => a.grani);
+  inTesto(s, 'Grani', '**Grani**: si parte con {}, +{} per ogni Seth sconfitto in quella veglia (al massimo {}). Ogni amuleto costa da {} a {} grani', RO.grani, RO.perSeth, RO.massimo, Math.min(...grani), Math.max(...grani));
+  inTesto(s, 'Amuleti offerti', 'il reliquiario mostra {p} amuleti', RO.proposte);
+  inTesto(s, 'Peccato', 'il danno subito {p}', 1 + RO.peccato);
+  inTesto(s, 'Sblocco del Rosario', 'con l\'impresa «Sopravvivi {} minuti» oppure con {} Cera', M.SBLOCCO_ROSARIO.minuti, M.SBLOCCO_ROSARIO.cera);
+
+  const t = tabella('| Amuleto | Grani |');
+  stessiNomi('Amuleti', t, R.AMULETI.map((a) => a.nome));
+  const MODELLI = {
+    specchioRotto: [['Vantaggio', '+{} proiettile', AN.specchioRotto.proiettili], ['Rovescio', 'subisci +{}% danno', pct(AN.specchioRotto.dannoSubito)]],
+    lanternaCieca: [['Vantaggio', '+{}% danno', pct(AN.lanternaCieca.danno)], ['Rovescio', 'alone di luce al {}%', pct(AN.lanternaCieca.alone)]],
+    cuoreAvido: [['Vantaggio', '+{}% anime', pct(AN.cuoreAvido.anime)], ['Rovescio', 'curano la {p}', AN.cuoreAvido.cura]],
+    sangueFreddo: [['Vantaggio', 'sotto il {}% di salute, +{}% danno', pct(AN.sangueFreddo.sotto), pct(AN.sangueFreddo.danno)]],
+    martire: [['Vantaggio', 'onda sacra di {} px ({} di danno base)', AN.martire.raggio, AN.martire.danno], ['Rovescio', '−{}% salute massima', -pct(AN.martire.salute)]],
+    danzaMacabra: [['Vantaggio', '(entro {} px) i nemici normali, non più di una ogni {} s', AN.danzaMacabra.sfiora, AN.danzaMacabra.recupero], ['Rovescio', 'la Grazia dura {} s invece di {}', AN.danzaMacabra.durataGrazia, SO.GRAZIA.durata]],
+    ceriGemelli: [['Vantaggio', '{} cariche', AN.ceriGemelli.cariche], ['Rovescio', 'ricarica +{}%', pct(AN.ceriGemelli.ricarica)]],
+    lucciola: [['Vantaggio', 'alone di luce +{}%', pct(AN.lucciola.alone)], ['Vantaggio', '(controllo ogni {} s)', AN.lucciola.intervallo]],
+    ossaDelite: [['Vantaggio', 'lasciano {} reliquiari', AN.ossaDelite.reliquiari], ['Rovescio', '+{}% salute', pct(AN.ossaDelite.salute)]],
+    pattoDiSangue: [['Vantaggio', 'cura {} di salute', AN.pattoDiSangue.cura]],
+  };
+  for (const a of R.AMULETI) {
+    conRiga(t, a.nome, (r) => {
+      inTesto(r.Grani, `${a.nome}: grani`, '{}', a.grani);
+      if (!MODELLI[a.id]) { diff.push(`Amuleto ${a.id}: senza corrispondenza nello script`); return; }
+      for (const [col, modello, ...attesi] of MODELLI[a.id]) inTesto(r[col], a.nome, modello, ...attesi);
+    });
+  }
+}
+
+// --- 8f. Unioni --------------------------------------------------------------------------------
+
+{
+  const s = sezione('## 8f.');
+  const lacrima = DO.PASSIVI.find((d) => d.id === 'lacrimaDiLumen');
+  inTesto(s, 'Unioni: requisiti', 'Un\'arma al livello {} più il suo dono al livello {} (o al massimo del dono, se è più basso: Lacrima di lumen arriva a {})', PR.CARTE.livelloMassimo, U.LIVELLO_DONO_UNIONE, lacrima.massimo);
+  inTesto(s, 'Sblocco delle Unioni', 'con l\'impresa «Sopravvivi {} minuti» oppure con {} Cera', M.SBLOCCO_UNIONI.minuti, M.SBLOCCO_UNIONI.cera);
+
+  const t = tabella('| Arma | + Dono |');
+  const armi = [...Object.values(A.ARMI_INIZIALI), ...A.ARMI_COMUNI];
+  const NU = U.NUMERI_UNIONI;
+  const MODELLI = {
+    faroDeiMorti: ['abbaglia un nemico su {p}', 1 / NU.faro.abbaglia],
+    vangaDelCustode: ['resta fermo {} s (Seth a {p})', NU.vanga.fermo, ST.STATI.mietitore.fermo],
+    incensiereUltimaOra: ['+{} salute al secondo', NU.incensiere.cura],
+    vergaDeiNomi: ['ogni {}ª raffica colpisce tutti i maledetti sullo schermo, con il danno di {p} dardo', NU.verga.ogni, NU.verga.danno],
+    candelabroFunebre: ['una fiamma ogni {} s, {} px, {} s, {}% del danno ogni {} s', NU.candelabro.ogni, NU.candelabro.raggio, NU.candelabro.durata, pct(NU.candelabro.danno), NU.candelabro.intervallo],
+    falceDelMietitore: ['sotto il {}% di salute', pct(NU.falce.sotto)],
+    campanaAMorto: ['ferma per {} s', NU.campana.fermo],
+    fuochiErranti: ['entro {} px', NU.fuochi.raggio],
+    acquasantiera: ['ogni {} uccisioni', NU.acquasantiera.uccisioni],
+    lamaDellAlba: ['da dove eri {} s prima', NU.lama.ritardo],
+  };
+  stessiNomi('Unioni', t, U.UNIONI.map((u) => armi.find((a) => a.id === u.arma).nome));
+  for (const u of U.UNIONI) {
+    const arma = armi.find((a) => a.id === u.arma), dono = DO.PASSIVI.find((d) => d.id === u.dono);
+    conRiga(t, arma.nome, (r) => {
+      testoUguale(`Unione di ${arma.nome}: dono`, r['+ Dono'], dono.nome);
+      testoUguale(`Unione di ${arma.nome}: nome`, r['Arma unita'], u.nome);
+      if (!MODELLI[u.id]) { diff.push(`Unione ${u.id}: senza corrispondenza nello script`); return; }
+      const [modello, ...attesi] = MODELLI[u.id];
+      inTesto(r.Effetto, u.nome, modello, ...attesi);
+    });
+  }
+}
+
+// --- 9. Esperienza e doni ----------------------------------------------------------------------
+
+{
+  const L = PR.LIVELLI, C = PR.CARTE;
+  frase('Anime per livello', 'Anime per passare dal livello L al successivo: {} + {} L + L²', L.base, L.perLivello);
+  const valori = righeGdd.find((l) => l.includes('Valori: livello'));
+  vero('Anime per livello', !!valori, 'manca la riga dei valori');
+  for (const m of (valori ?? '').matchAll(/livello (\d+): (\d+)/g)) {
+    vero(`Anime al livello ${m[1]}`, numero(m[2]) === PR.animePerLivello(numero(m[1])), `GDD ${m[2]} ≠ dati ${PR.animePerLivello(numero(m[1]))}`);
+  }
+  frase('Carte', 'Ogni livello mostra {} carte', C.quante);
+  frase('Peso arma posseduta', 'arma posseduta {} (l\'arma iniziale {})', C.armaPosseduta, C.armaIniziale);
+  frase('Peso arma nuova', 'arma nuova {}\n', C.armaNuova);
+  frase('Peso dono posseduto', 'dono posseduto {}\n', C.donoPosseduto);
+  frase('Peso dono nuovo', 'dono nuovo {}\n', C.donoNuovo);
+  frase('Rimescolate', '{} rimescolate per partita', C.rimescolate);
+  frase('Pane e vino', '«Pane e vino» (+{} salute)', C.paneEVino);
+}
+
+// --- 10. Combattimento -------------------------------------------------------------------------
+
+{
+  const t = tabella('| Regola | Valore |');
+  const CB = N.COMBATTIMENTO, CO = A.COLPI;
+  const REGOLE = [
+    ['Danno inflitto', 'caso tra {} e {}', CO.casoMinimo, CO.casoMassimo],
+    ['Danno subito', 'al massimo {}%', pct(P.BASE.armaturaMassima)],
+    ['Invulnerabilità', '{} s', CB.invulnerabilita],
+    ['Raggio del giocatore', '{} px', CB.raggioGiocatore],
+    ['Respinta', 'attrito {} al secondo', CO.attrito],
+    ['Respinta', 'la subiscono a {p}', CO.respintaPesanti],
+    ['Lampo del nemico', '{} s', CO.lampoNemico],
+    ['Punto da cui partono', '{} px', CO.corpo],
+    ['Salute bassa', 'sotto il {}%', pct(CB.saluteBassa)],
+  ];
+  for (const [nome, modello, ...attesi] of REGOLE) conRiga(t, nome, (r) => inTesto(r.Valore, nome, modello, ...attesi));
+}
+
+// --- 11. Interfaccia, mondo e impatto dei colpi --------------------------------------------------
+
+{
+  frase('Numeri del danno', 'numeri del danno (in ambra se {} o più)', E.EFFETTI.numeri.forte);
+
+  const mondo = tabella('### Mondo, luce e comandi');
+  const LU = W.LUCE, TE = W.TERRENO, JO = W.JOYSTICK;
+  const RIGHE_MONDO = [
+    ['Pixel di gioco', 'Numero', '{} in verticale, {} in orizzontale', PX.ALTEZZA_MINIMA, PX.LARGHEZZA_MINIMA],
+    ['Raggio della luce', 'Numero', '{}', LU.raggio],
+    ['Sfumatura del buio', 'Numero', '{}', LU.sfumatura],
+    ['Buio massimo', 'Numero', '{}% dei pixel', pct(LU.buioMassimo)],
+    ['Centro della luce', 'Numero', '{} px sopra i piedi', LU.altezza],
+    ['Tremolio', 'Numero', '±{} px ogni {} s', LU.tremolio, LU.intervalloTremolio],
+    ['Terreno', 'Numero', 'riquadro di {} px che si ripete, celle di {} px', TE.lato, TE.cella],
+    ['Terreno', 'Note', 'tombe {}%, croci {}%, erba {}% per cella', pct(TE.tombe), pct(TE.croci), pct(TE.erba)],
+    ['Joystick', 'Numero', 'raggio {} px dello schermo, zona morta {}%', JO.raggio, pct(JO.zonaMorta)],
+  ];
+  for (const [nome, col, modello, ...attesi] of RIGHE_MONDO) conRiga(mondo, nome, (r) => inTesto(r[col], nome, modello, ...attesi));
+
+  const campo = tabella('### Nemici in campo');
+  const CP = N.COMPARSA, SP = N.SEPARAZIONE, CB = N.COMBATTIMENTO;
+  const RIGHE_CAMPO = [
+    ['Dove nascono', 'Numero', '{} px fuori dal bordo', CP.margine],
+    ['Ricollocamento', 'Numero', 'oltre {} × {} px', CP.lontananza, CP.margine],
+    ['Ricollocamento', 'Note', 'entro ±{} radianti', CP.ventaglio],
+    ['Separazione', 'Numero', 'forza {}; si toccano sotto il {}%', SP.forza, pct(SP.tolleranza)],
+    ['Sprite segnaposto', 'Numero', 'ingranditi × {}', W.INGRANDIMENTO_SEGNAPOSTO],
+    ['Barra della salute', 'Numero', 'riempimento {} × {} pixel disegnati, {} px sotto i piedi', H.FINESTRE.Barra_Salute_Cornice.l, H.FINESTRE.Barra_Salute_Cornice.a, W.BARRA_SALUTE.distanza],
+    ['Lampo quando sei colpito', 'Numero', '{} s', CB.lampo],
+    ['Dalla morte', 'Numero', '{} s', CB.attesaFine],
+  ];
+  for (const [nome, col, modello, ...attesi] of RIGHE_CAMPO) conRiga(campo, nome, (r) => inTesto(r[col], nome, modello, ...attesi));
+
+  const impatto = tabella('### Impatto dei colpi');
+  const EF = E.EFFETTI;
+  const RIGHE_IMPATTO = [
+    ['Numeri del danno', 'Numero', 'durano {} s, salgono di {} px, cifre {?}×{?} ingrandite × {}', EF.numeri.durata, EF.numeri.salita, EF.numeri.ingrandimento],
+    ['Numeri del danno', 'Note', 'ambra da {} in su', EF.numeri.forte],
+    ['Scoppio', 'Numero', '{} s', EF.scoppio.durata],
+    ['Arco della Lanterna', 'Numero', '{} s, spessore {} px', EF.arco.durata, EF.arco.spessore],
+    ['Impatto della pala', 'Numero', '{} s; scossa dello schermo di {} px per {} s', EF.impattoPala, EF.scossaPala.forza, EF.scossaPala.durata],
+    ['Esplosione dei dardi', 'Numero', '{} s', EF.esplosione],
+    ['Anime a terra', 'Numero', 'ingranditi × {}', PR.ANIME.ingrandimento],
+  ];
+  for (const [nome, col, modello, ...attesi] of RIGHE_IMPATTO) conRiga(impatto, nome, (r) => inTesto(r[col], nome, modello, ...attesi));
+}
+
+// Numeri del GDD che non stanno in src/data/ e quindi non si confrontano ({?} nei modelli, oppure frasi non controllate):
+// - Reliquiario: «1 potenziamento o 3» e «élite (1)»: sono scritti nella logica del gioco;
+// - Numeri del danno: cifre 3×5, sono la forma del disegno;
+// - misure dei disegni citate nel testo (fiala 45×74, simboli 11×11) e scala 2,35 con i valori della v0, che sono storia;
+// - livelli intermedi delle armi nuove e numeri che il GDD non cita: non c'è niente da confrontare;
+// - «Barre su 6», «unioni: amuleti che scendono a 2», «+1 rimescolata»: sono scritti nella logica o solo nella scheda.
 
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`Controlli fatti: ${controlli}`);
 console.log(`Differenze: ${diff.length}`);
 diff.forEach((d) => console.log('- ' + d));
 if (diff.length) {
-  console.log('\nIl GDD e src/data/ non coincidono: la tappa non è finita.');
+  console.log('\nIl GDD e i dati del gioco non coincidono: la tappa non è finita.');
   process.exit(1);
 }
