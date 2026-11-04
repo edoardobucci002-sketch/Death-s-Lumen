@@ -82,6 +82,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
    - Il testo discorsivo del GDD lo script non lo vede: resta controllato a lettura.
 5. **Decisioni che spettano a Edoardo**: alla fine di ogni tappa elencale, una per riga, in un blocco con questo titolo. Non scegliere tu i valori: se devi metterne uno per andare avanti, segnalo **«da rivedere»** nel GDD e nella roadmap («Da confermare»).
 6. Riassumi a Edoardo cosa è cambiato e come provarlo.
+7. **Ultimo punto di ogni tappa: porta `docs/` su `main`** (vedi «I due link»), dopo `npm run controlla-gdd`. Su `main`: `git restore --source=origin/prova --staged --worktree -- docs/` (a differenza di `git checkout prova -- docs/` toglie anche i file eliminati su `prova`), commit «Aggiorna i documenti da prova», push. Va fatto anche subito prima di unire `prova` in `main`: se i documenti delle due parti sono diversi, l'unione va in conflitto.
 
 ## Documentazione
 
@@ -112,6 +113,7 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 - Ogni push su `prova` o su `main` ripubblica entrambi i link in un paio di minuti (`.github/workflows/pagine.yml`; per `prova` lo fa partire `prova.yml`, perché GitHub pubblica solo da `main`).
 - Lavora sempre su `prova`, o su un ramo di passaggio che unisci a `prova` appena funziona, nella stessa sessione. Mai rami lasciati a metà o worktree dimenticati: Edoardo deve trovare tutto in `/prova/`.
 - Unisci `prova` in `main` **solo quando Edoardo dice che approva**.
+- **Eccezione**: `docs/` è l'unica cosa che arriva su `main` senza approvazione: alla fine di ogni tappa, dopo `npm run controlla-gdd`, si porta `docs/` di `prova` su `main` (solo quella cartella). Su `main` i documenti possono descrivere contenuti non ancora pubblicati: lì `controlla-gdd` non va lanciato.
 - Sul Mac al massimo un server acceso (`npm run anteprima`, porta 4173). Spegnilo quando hai finito; non spegnere un server che Edoardo sta usando senza chiederglielo.
 - Il service worker tiene separate le copie offline dei due link (`tools/genera-sw.mjs`). Salvataggi e record invece sono in comune, perché il sito è lo stesso.
 
