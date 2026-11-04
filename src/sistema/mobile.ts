@@ -23,11 +23,15 @@ export function vibrazione(): boolean {
 /** Vibrazione breve: 'leggera' per i colpi subiti, 'media' per i livelli, 'forte' per boss e abilità. */
 export function vibra(forza: 'leggera' | 'media' | 'forte'): void {
   if (!vibrazioneAttiva) return;
-  if (nativo) {
-    const stile = forza === 'leggera' ? ImpactStyle.Light : forza === 'forte' ? ImpactStyle.Heavy : ImpactStyle.Medium;
-    Haptics.impact({ style: stile }).catch(() => {});
-  } else if ('vibrate' in navigator) {
-    navigator.vibrate(forza === 'leggera' ? 12 : forza === 'forte' ? [30, 40, 60] : 25);
+  try {
+    if (nativo) {
+      const stile = forza === 'leggera' ? ImpactStyle.Light : forza === 'forte' ? ImpactStyle.Heavy : ImpactStyle.Medium;
+      Haptics.impact({ style: stile }).catch(() => {});
+    } else if ('vibrate' in navigator) {
+      navigator.vibrate(forza === 'leggera' ? 12 : forza === 'forte' ? [30, 40, 60] : 25);
+    }
+  } catch {
+    /* un errore qui fermerebbe tutto il ciclo di gioco: la vibrazione è solo un di più */
   }
 }
 
