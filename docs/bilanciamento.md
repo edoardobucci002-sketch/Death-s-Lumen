@@ -4,7 +4,9 @@ Registro dei ritocchi ai numeri e delle simulazioni con il bot. I numeri **attua
 
 Il bot gioca dentro il gioco vero (`npm run sim`, vedi [LEGGIMI.md](../LEGGIMI.md)); un giocatore umano va più forte di lui (Edoardo al minuto 8 era al livello 60, il bot al 40). Il bilanciamento a occhio non funziona, le simulazioni sì.
 
-## Obiettivi
+## Obiettivi (provvisori, non vincolanti)
+
+Decisione di Edoardo (4/11): gli obiettivi della tabella sono **provvisori**. Non si ritocca nessun contenuto per inseguirli finché i contenuti del gioco non sono completi; il bilanciamento vero si fa alla fine, con tutti i contenuti. Le simulazioni servono intanto a vedere dove siamo.
 
 | Cappella (`meta=`) | Corrisponde a | Vittorie del bot |
 | --- | --- | --- |
@@ -13,9 +15,9 @@ Il bot gioca dentro il gioco vero (`npm run sim`, vedi [LEGGIMI.md](../LEGGIMI.m
 | completa (`max`) | 120–150 notti | 60–75% |
 | completa + 3 patti | sfida finale | 10–25% (quando i Patti esisteranno) |
 
-In tutte le condizioni: Seth del minuto 5 è il primo vero ostacolo; nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota.
+**Restano vincolanti, in tutte le condizioni, solo due cose:** Seth del minuto 5 è il primo vero ostacolo; nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota.
 
-## Stato: aperto
+## Stato: fuori dagli obiettivi provvisori (non si corregge ora)
 
 Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti per condizione):
 
@@ -25,7 +27,7 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 | a metà | 25 su 48 (52%) | 30–45% | **sopra** |
 | completa | 25 su 48 (52%) | 60–75% | **sotto** |
 
-- La distanza tra Cappella vuota e completa è troppo piccola (21% → 52%, voluto 5–15% → 60–75%): a metà e completa la differenza non si vede ancora. Da decidere con Edoardo come far pesare la Cappella completa.
+- La distanza tra Cappella vuota e completa è troppo piccola (21% → 52%, voluto 5–15% → 60–75%): a metà e completa la differenza non si vede ancora. Non si ritocca nulla ora: se ne riparla a contenuti completi, con i Patti e le notti diverse.
 - Il Lampionaio, personaggio di partenza, con la Cappella vuota vince 1 notte su 12 e muore ancora presto in circa 3 notti su 24.
 - Su 48 notti l'oscillazione è di qualche vittoria: i singoli personaggi variano molto.
 - Il cero della fiaschetta e i Patti non ci sono ancora: ricontrollare quando arrivano.

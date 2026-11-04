@@ -32,9 +32,11 @@ Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i 
 
 ## 1b. Mondo e lore
 
-Il mondo, i personaggi e la trama sono in [lore.md](lore.md). In gioco il boss dei minuti 5 e 10 è **Seth, il Rinnovato**; nel codice e nei numeri si chiama ancora `mietitore`.
+Il mondo, i personaggi e la trama sono in [lore.md](lore.md). In gioco il boss dei minuti 5 e 10 è **Seth, il Rinnovato** («Rinnovato» compare dal primo Seth come primo indizio); nel codice e nei numeri si chiama ancora `mietitore`.
 
 ## 2. Personaggi
+
+Personaggi giocabili oggi: quattro. Previsti: la Veggente e la Sguattera (vedi [roadmap.md](roadmap.md)).
 
 Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 150 px, armatura 0.
 

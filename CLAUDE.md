@@ -1,6 +1,6 @@
 # Death's Lumen
 
-Survivor-like in pixel art (sul modello di Vampire Survivors). Una veglia in un cimitero: il giocatore cammina, le armi colpiscono da sole, si sopravvive 15 minuti fino all'alba. Quattro personaggi, ognuno con un'arma iniziale esclusiva e un'abilità speciale.
+Survivor-like in pixel art (sul modello di Vampire Survivors). Una veglia in un cimitero: il giocatore cammina, le armi colpiscono da sole, si sopravvive 15 minuti fino all'alba. Quattro personaggi giocabili oggi, ognuno con un'arma iniziale esclusiva e un'abilità speciale (la Veggente e la Sguattera sono previsti: vedi `docs/roadmap.md`).
 
 Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioco com'è oggi: `docs/GDD.md`. Comandi, cartelle e stack: `LEGGIMI.md`. Il codice (`src/data/` e `src/`) è la fonte di verità.
 
@@ -39,7 +39,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 ## Identità visiva
 
-- **Mondo inventato**: niente riferimenti alla realtà (feste, luoghi, nomi storici). La lore è in `docs/lore.md`. Le croci nei disegni restano: fanno parte di questo mondo. Nell'interfaccia di gioco «veglia» e «Seth»; i termini «Rinnovo» e «Ricaduta» arrivano più avanti nella trama.
+- **Mondo inventato**: niente riferimenti alla realtà (feste, luoghi, nomi storici). La lore è in `docs/lore.md`. Le croci nei disegni restano: fanno parte di questo mondo. Nell'interfaccia di gioco «veglia» e «Seth»; «Rinnovato» compare dal primo Seth come primo indizio; «Rinnovo» e «Ricaduta» arrivano più avanti nella trama. Nei testi che il giocatore legge, parlando dei boss in generale si usano termini generici («capi»), non «Seth»: gli altri boss non vanno anticipati.
 - Palette notturna calda. Ogni personaggio ha il suo colore guida (nel GDD) e l'interfaccia prende il colore del personaggio scelto.
 - **Caratteri**: titoli, nastri e scritte dentro i pulsanti in **Tiny5 tutto maiuscolo**, a pixel interi (`src/sistema/scritte.ts`); numeri e HUD in Jersey 10; testi lunghi (schede, pannelli, legenda) in EB Garamond. Vanno inclusi nel pacchetto, non scaricati da internet.
 - Le schede dei personaggi riprendono lo stile della scheda di Edoardo: nome, motto, ritratto, biografia, fila di sprite, arma iniziale, abilità speciale, barre delle statistiche, citazione sopra un paesaggio.
@@ -75,9 +75,10 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 2. Prova nel browser con Playwright (`npm run prova`) in viewport desktop e iPhone verticale, più un Android verticale: niente errori in console.
    - **Guarda gli screenshot solo se la modifica cambia quello che si vede** (HUD, schermate, scritte, sprite, effetti). Per logica e bilanciamento basta che la prova passi senza errori.
    - Le immagini consumano molti token e restano nella conversazione: aprine il minimo indispensabile (di solito una per viewport toccato).
-3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Leggi il riepilogo a schermo; apri `prove/sim.json` solo per indagare un risultato strano. Gli **obiettivi** (vittorie del bot per Cappella vuota, a metà e completa, e il ruolo di Seth) sono in `docs/bilanciamento.md`, con il loro stato «aperto» o «rispettato». Riporta a Edoardo a che minuto muore il bot e il livello raggiunto.
+3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Leggi il riepilogo a schermo; apri `prove/sim.json` solo per indagare un risultato strano. Gli obiettivi (vittorie del bot per Cappella vuota, a metà e completa) sono in `docs/bilanciamento.md` e sono **provvisori, non vincolanti**: non ritoccare i contenuti per inseguirli finché i contenuti non sono completi. Restano **vincolanti** solo due cose: Seth del minuto 5 è il primo vero ostacolo; nessun personaggio muore sempre prima del minuto 5. Riporta a Edoardo a che minuto muore il bot e il livello raggiunto.
 4. **Una tappa non è finita finché `docs/GDD.md`, `docs/roadmap.md` e `docs/asset_da_creare.md` non riflettono il codice.** Prima di dire «fatto» controlla che i contenuti, i numeri e gli asset segnaposto descritti lì coincidano con `src/data/`, e riporta le simulazioni in `docs/bilanciamento.md`.
-5. Riassumi a Edoardo cosa è cambiato e come provarlo.
+5. **Decisioni che spettano a Edoardo**: alla fine di ogni tappa elencale, una per riga, in un blocco con questo titolo. Non scegliere tu i valori: se devi metterne uno per andare avanti, segnalo **«da rivedere»** nel GDD e nella roadmap («Da confermare»).
+6. Riassumi a Edoardo cosa è cambiato e come provarlo.
 
 ## Documentazione
 
@@ -93,7 +94,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 | `docs/proposte/` | archivio congelato delle proposte approvate: non si modifica |
 
 - **Decisioni superate**: non si cancellano, si ~~barrano~~ con l'indicazione di cosa le ha superate. Quello che Edoardo dice o propone dopo una decisione e che entra nel gioco diventa la novità (riga nuova, la vecchia barrata).
-- Un valore proposto da Claude e non ancora confermato da Edoardo si segna **«da rivedere»**.
+- Un valore proposto da Claude e non ancora confermato da Edoardo si segna **«da rivedere»** dove compare, e va raccolto nell'elenco «Da confermare» di `docs/roadmap.md`.
 - Ogni scelta presa con Edoardo va in `docs/decisioni.md` (data, decisione, motivo); i ritocchi numerici vanno in `docs/bilanciamento.md`, non lì.
 
 ## I due link

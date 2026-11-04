@@ -1,6 +1,6 @@
 # Death's Lumen
 
-Survivor-like in pixel art per iOS e Android: una veglia in un cimitero, 15 minuti fino all'alba, quattro personaggi. Le regole per lavorare al progetto sono in [CLAUDE.md](CLAUDE.md); il gioco com'è oggi in [docs/GDD.md](docs/GDD.md); il piano in [docs/roadmap.md](docs/roadmap.md).
+Survivor-like in pixel art per iOS e Android: una veglia in un cimitero, 15 minuti fino all'alba (si vince sopravvivendo), quattro personaggi giocabili oggi (la Veggente e la Sguattera sono previsti). Le regole per lavorare al progetto sono in [CLAUDE.md](CLAUDE.md); il gioco com'è oggi in [docs/GDD.md](docs/GDD.md); il piano in [docs/roadmap.md](docs/roadmap.md).
 
 **Gioca (versione approvata):** https://edoardobucci002-sketch.github.io/Death-s-Lumen/
 **Prova (modifiche nuove, con il Laboratorio «LAB»):** https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/
