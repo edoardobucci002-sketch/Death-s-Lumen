@@ -187,6 +187,13 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const p = partita();
     if (p) { f(p); ridisegna(); }
   };
+  // le scelte si fanno a pannello chiuso: aperto, il pannello tiene ferma la partita anche dopo aver scelto
+  const scegli = (f: (p: Gioco) => void): (() => void) => () => {
+    const p = partita();
+    if (!p) return;
+    mostra(false);
+    f(p);
+  };
 
   // ——— Partita ———
   function schedaPartita(): HTMLElement[] {
@@ -199,7 +206,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(...[1, 3, 5, 8, 10, 12, 14].map((m) => tasto(`${m}'`, fai((x) => x.labMinuto(m))))),
       riga('Minuto', min, tasto('Vai', fai((x) => x.labMinuto(Number(min.value) || 0)))),
       titolo('Livello'),
-      riga('Livello', liv, tasto('Vai', fai((x) => x.labLivello(Number(liv.value) || 1))), tasto('+1 con scelta', fai((x) => x.labSceltaDono()))),
+      riga('Livello', liv, tasto('Vai', fai((x) => x.labLivello(Number(liv.value) || 1))), tasto('+1 con scelta', scegli((x) => x.labSceltaDono()))),
       titolo('Stato'),
       riga(
         tasto(s.fermo ? 'Gioco fermo: riprendi' : 'Gioco in corso: ferma', () => { p.labFerma(!s.fermo); ridisegna(); }, s.fermo ? 'acceso' : ''),
@@ -223,7 +230,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Drop a terra'),
       riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
       titolo('Scelte'),
-      riga(tasto('Scelta del dono', fai((x) => x.labSceltaDono())), tasto('Apri un reliquiario', fai((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
+      riga(tasto('Scelta del dono', scegli((x) => x.labSceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
       titolo('Stati sui nemici vicini (due diversi = reazione)'),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.labStatoVicini(a))))),
       el('p', 'lab-nota', 'Per vederli lascia il gioco in corso (scheda Partita) e premi uno stato, poi un altro.'),
