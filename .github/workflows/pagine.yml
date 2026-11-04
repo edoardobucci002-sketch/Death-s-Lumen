@@ -1,4 +1,4 @@
-# Pubblica il gioco su GitHub Pages a ogni push su main; per i push su prova lo fa partire prova.yml
+# Pubblica il gioco su GitHub Pages a ogni push su main (tranne quelli che toccano solo docs/); per i push su prova lo fa partire prova.yml
 # (GitHub accetta pubblicazioni solo da main, quindi questo lavoro gira sempre da main).
 # Due link sullo stesso sito:
 #   main  → https://edoardobucci002-sketch.github.io/Death-s-Lumen/        (pubblico, solo ciò che Edoardo ha approvato)
@@ -7,6 +7,8 @@ name: Pubblica su GitHub Pages
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch: {}
 permissions:
   contents: read

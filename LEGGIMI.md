@@ -82,6 +82,6 @@ La CLI di Aseprite su Mac è in `/Applications/Aseprite.app/Contents/MacOS/asepr
 
 ## Telefono
 
-- **Web:** ogni push su `main` o su `prova` ripubblica i due link (un paio di minuti). Aprili in Safari o Chrome e aggiungili alla schermata Home.
+- **Web:** ogni push su `main` o su `prova` ripubblica i due link (un paio di minuti); i push su `main` che toccano solo `docs/` non ripubblicano nulla e non ricompilano l'APK. Aprili in Safari o Chrome e aggiungili alla schermata Home.
 - **APK Android:** GitHub → Actions → «APK Android» → scarica l'artefatto.
 - **iPhone:** `npm run ios`, poi in Xcode scegli il tuo Team in *Signing & Capabilities* e premi ▶︎ con l'iPhone collegato (iOS per ora rimandato: manca Xcode sul Mac).
