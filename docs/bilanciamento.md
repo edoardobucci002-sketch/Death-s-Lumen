@@ -38,6 +38,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 5/11 — Ordine di disegno, precedenza dei simboli, numeri ambra (solo visivo)
+
+`AVVISO.scala` da 0,6 a 0,5 (sui telefoni resta ×2: si vede uguale). Nuovo `EFFETTI.numeri.ambra` 1,5 (*da rivedere*); `numeri.forte` 40 ora decide solo la precedenza. Nessun numero di gioco cambia. Prova: `npm run sim -- 3 tutti` prima e dopo, stessi semi: 12 notti, 1251 valori confrontati, 0 differenze.
+
 ### 4/11 — Reazioni, simboli, numeri su élite e Seth, avvisi, orologio (solo visivo)
 
 Nuovi o cambiati, tutti *da rivedere*: `REAZIONI.etichetta` (`ingrandimento` da 4 a 2, `pausa` da 0,3 a 2 s, `massimi` 3, `lontano` 90, `colori`), `STATI.simboli.massimi` da 200 a 40, `EFFETTI.numeri.somma` (`finestra` 0,5 s, `sopra` 30 px), `AVVISO` (`scala` 0,6, `minimo` 2, `durata` da 2,4 a 1,45 s, `dissolvenza` 0,3 s, `passi` 3, `margine` 6 px), `OROLOGIO.sopra` 40. Nessun numero di gioco cambia. Prova: `npm run sim -- 3 tutti` prima e dopo, stessi semi: 12 notti, 1251 valori confrontati, 0 differenze.

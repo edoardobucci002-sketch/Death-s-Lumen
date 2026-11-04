@@ -406,7 +406,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
-Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa di bruti, élite e Seth compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole ambra, croce oro, teschio viola, lapide seppia (la lapide resta anche durante l'Interramento). Sui nemici comuni lo stato funziona lo stesso, ma senza simbolo. Niente cambi di colore né intermittenza; al massimo 40 simboli sullo schermo (*da rivedere*).
+Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa di bruti, élite e Seth compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole ambra, croce oro, teschio viola, lapide seppia (la lapide resta anche durante l'Interramento). Sui nemici comuni lo stato funziona lo stesso, ma senza simbolo. Niente cambi di colore né intermittenza; al massimo 40 simboli sullo schermo (*da rivedere*), con questa precedenza: prima Seth, poi le élite, poi i bruti più vicini al personaggio.
 
 | Affinità | Armi e abilità | Stato | Effetto |
 | --- | --- | --- | --- |
@@ -538,11 +538,11 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
   - barra del boss quando c'è Seth;
   - in basso a sinistra: l'abilità speciale con la ricarica circolare; in basso a destra: la pausa.
 - **Feedback**:
-  - numeri del danno (in ambra se 40 o più);
+  - numeri del danno (in ambra i critici e i colpi da 1,5 volte il danno attuale dell'arma);
   - il personaggio lampeggia quando viene colpito;
   - leggero tremolio dello schermo;
   - bordo rosso quando la salute è bassa;
-  - avvisi nel cartiglio (sciami, orde, Seth, reliquiari), subito sotto barre e caselle, con la riga secondaria subito sotto. Il cartiglio è ridotto a 0,6 volte, arrotondato a un ingrandimento intero e mai sotto × 2: sui telefoni normali è la metà; su computer, tablet e iPhone SE resta com'era, perché a × 1 le lettere non si leggono (*da rivedere*). Non scende mai sul personaggio: se le caselle sono tante, sale sopra di loro. Durano 1,45 s, compresi 0,3 s di dissolvenza a retino (*da rivedere*).
+  - avvisi nel cartiglio (sciami, orde, Seth, reliquiari), subito sotto barre e caselle, con la riga secondaria subito sotto. Il cartiglio è ridotto a 0,5 volte, arrotondato a un ingrandimento intero e mai sotto × 2: sui telefoni normali è la metà; su computer, tablet e iPhone SE resta com'era, perché a × 1 le lettere non si leggono (*da rivedere*). Non scende mai sul personaggio: se le caselle sono tante, sale sopra di loro. Durano 1,45 s, compresi 0,3 s di dissolvenza a retino (*da rivedere*).
 - **Audio** (sintetizzato dal codice): colpo, sparo, anima con tono che sale nelle serie, danno subito, campana, livello, reliquiario, Seth, cura, speciale. Da sostituire con suoni veri (vedi [roadmap.md](roadmap.md)).
 - **In partita**: HUD in alto con livello, orologio, anime, Cera, Rosario, icone di armi e doni con il livello, barra di Seth; avvisi «Lo sciame» (ti circonda), «Seth» (il Rinnovato è venuto per te), «Reliquiario» (…); pausa con il pulsante in basso a destra, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni; 1-2-3-4 scelgono la striscia del dono; F beve dalla fiaschetta; Spazio usa l'abilità.
 - **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.
@@ -576,13 +576,13 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
 
 | Valore | Numero | Note |
 | --- | --- | --- |
-| Numeri del danno | durano 0,55 s, salgono di 22 px, cifre 3×5 ingrandite × 2 | ambra da 40 in su; al massimo 15 numeri del danno sullo schermo (*da rivedere*): oltre non si creano, ma quelli da 40 in su e quelli su élite e Seth prendono il posto del numero comune più vecchio |
-| Numeri su élite e Seth | i colpi entro 0,5 s si sommano in un solo numero, 30 px sopra la cima dello sprite | segue la testa del nemico e sale quando la somma si chiude: non sta mai sul corpo, nemmeno mentre Seth pulsa di rosso (*da rivedere*) |
+| Numeri del danno | durano 0,55 s, salgono di 22 px, cifre 3×5 ingrandite × 2 | ambra solo i colpi critici (Chiodo di bara) e i colpi che valgono almeno 1,5 volte il danno attuale dell'arma, cioè con i bonus al danno, contando anche se il nemico è vulnerabile (*da rivedere*); al massimo 15 numeri del danno sullo schermo (*da rivedere*): oltre non si creano, ma i numeri da 40 in su e quelli su élite e Seth prendono il posto del numero comune più vecchio, e quelli ambra del più vecchio tra i non ambra |
+| Numeri su élite e Seth | i colpi entro 0,5 s si sommano in un solo numero, 30 px sopra la cima dello sprite | segue la testa del nemico e sale quando la somma si chiude: non sta mai sul corpo, nemmeno mentre Seth pulsa di rosso; è ambra se lo è almeno uno dei colpi sommati (*da rivedere*) |
 | Scoppio del nemico che muore | 0,2 s | anello chiaro che si sfalda a retino |
 | Arco della Lanterna | 0,12 s, spessore 6 px | disegnato dal codice, metà pieno e metà a retino |
 | Impatto della pala | 0,22 s; scossa dello schermo di 2 px per 0,1 s se colpisce qualcuno | |
 | Esplosione dei dardi | 0,18 s | |
-| Ordine di disegno | arco, impatto e nubi sotto i nemici; anime sopra il buio | decisione di Edoardo: i colpi non devono coprire i nemici, le anime devono vedersi |
+| Ordine di disegno | arco, impatto e nubi sotto i nemici; il personaggio sopra tutti i nemici, Seth compreso; cerchi e falci di Seth sopra il personaggio; anime sopra il buio | decisione di Edoardo: i colpi non devono coprire i nemici, il personaggio non deve sparire, le anime devono vedersi |
 | Anime a terra | cristalli della v0 ingranditi × 3 | |
 
 ## 12. Da fare e da decidere

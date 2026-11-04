@@ -1041,7 +1041,7 @@ export class Gioco extends Phaser.Scene {
     const py = Math.round(this.y);
     const cam = this.cameras.main;
     cam.setScroll(px - Math.floor(w / 2) + this.effetti.scossaX, py - Math.floor(h / 2) + this.effetti.scossaY);
-    this.giocatore.setPosition(px, py).setDepth(py).setFlipX(this.versoSinistra);
+    this.giocatore.setPosition(px, py).setDepth(PROFONDITA.personaggio).setFlipX(this.versoSinistra);
     // lampo bianco appena colpito; da morto il personaggio lampeggia e poi sparisce
     const lampo = this.invulnerabile > COMBATTIMENTO.invulnerabilita - COMBATTIMENTO.lampo || (this.morto && this.attesaFine > 0 && Math.floor(this.attesaFine * 12) % 2 === 0);
     if (lampo) this.giocatore.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
@@ -1049,7 +1049,7 @@ export class Gioco extends Phaser.Scene {
     else this.giocatore.clearTint();
     this.giocatore.setVisible(!this.morto || this.attesaFine > 0);
     this.anima(this.inMoto ? 'walk' : 'idle');
-    this.orda.disegna(cam, COMPARSA.margine);
+    this.orda.disegna(cam, COMPARSA.margine, px, py);
     this.anime.disegna(cam);
     this.oggetti.disegna(cam, this.fermo() ? 0 : dt);
     this.arsenale.disegna();

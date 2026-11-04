@@ -16,6 +16,7 @@ import { telaContorno } from './scritte';
 export const PROFONDITA = {
   terreno: -1e7,
   aTerra: -1e6, // archi, impatti, nubi: sotto i nemici, così non li coprono
+  personaggio: 4e6, // sopra tutti i nemici, Seth compreso: non deve mai sparire sotto di loro
   sopra: 5e6, // proiettili, esplosioni, scoppi, numeri
   buio: 1e7,
   anime: 1e7 + 1, // brillano anche nel buio
@@ -41,7 +42,7 @@ export class Effetti {
   private numeroVita = new Float32Array(MAX_NUMERI);
   private numeroX = new Float32Array(MAX_NUMERI);
   private numeroY = new Float32Array(MAX_NUMERI);
-  private numeroImportante = new Uint8Array(MAX_NUMERI); // 1 = danno forte, o su élite e Seth
+  private numeroImportante = new Uint8Array(MAX_NUMERI); // 0 = comune, 1 = danno forte o su élite e Seth, 2 = ambra
   private numeriAttivi = 0;
   private numeroId = new Uint32Array(MAX_NUMERI); // il nemico di un numero sommato (0 = numero normale)
   private numeroSomma = new Float32Array(MAX_NUMERI);
@@ -97,32 +98,33 @@ export class Effetti {
     return x >= cam.scrollX && x <= cam.scrollX + cam.width && y >= cam.scrollY && y <= cam.scrollY + cam.height;
   }
 
-  /** Numero del danno che salta fuori da (x, y), se è sullo schermo e c'è posto. */
-  numero(x: number, y: number, danno: number): void {
+  /** Numero del danno che salta fuori da (x, y), se è sullo schermo e c'è posto; ambra: colpo critico o molto sopra il normale. */
+  numero(x: number, y: number, danno: number, ambra: boolean): void {
     if (!this.sulloSchermo(x, y)) return;
     const n = Math.max(1, Math.min(999, Math.round(danno)));
-    const i = this.postoNumero(n >= EFFETTI.numeri.forte);
+    const importanza = ambra ? 2 : n >= EFFETTI.numeri.forte ? 1 : 0;
+    const i = this.postoNumero(importanza);
     if (i < 0) return;
-    this.numeroImportante[i] = n >= EFFETTI.numeri.forte ? 1 : 0;
+    this.numeroImportante[i] = importanza;
     this.numeroId[i] = 0;
     this.numeroFinestra[i] = 0;
     this.numeroX[i] = x + (this.caso.numero() * 2 - 1) * EFFETTI.numeri.sparpaglio;
     this.numeroY[i] = y;
     this.numeroVita[i] = EFFETTI.numeri.durata;
     const t = this.numeri[i].setText(TESTI[n]).setVisible(true);
-    if (n >= EFFETTI.numeri.forte) t.setTint(EFFETTI.numeri.coloreForte);
+    if (ambra) t.setTint(EFFETTI.numeri.coloreForte);
     else t.clearTint();
   }
 
   /** Colpo su un'élite o su Seth (id = il suo numero unico; y = la cima dello sprite): si somma nel suo numero aperto, o ne apre uno. */
-  sommaDanno(id: number, x: number, y: number, danno: number): void {
+  sommaDanno(id: number, x: number, y: number, danno: number, ambra: boolean): void {
     if (!this.sulloSchermo(x, y)) return;
     let i = -1;
     for (let k = 0; k < MAX_NUMERI; k++) {
       if (this.numeroId[k] === id && this.numeroFinestra[k] > 0 && this.numeroVita[k] > 0) i = k;
     }
     if (i < 0) {
-      i = this.postoNumero(true);
+      i = this.postoNumero(ambra ? 2 : 1);
       if (i < 0) return;
       this.numeroImportante[i] = 1;
       this.numeroId[i] = id;
@@ -132,10 +134,11 @@ export class Effetti {
       this.numeroY[i] = y - EFFETTI.numeri.somma.sopra;
     }
     this.numeroSomma[i] += danno;
+    if (ambra) this.numeroImportante[i] = 2; // basta un colpo ambra perché lo sia tutta la somma
     this.numeroVita[i] = EFFETTI.numeri.durata; // finché si somma resta fermo sopra la testa; sale quando la finestra si chiude
     const n = Math.max(1, Math.min(TESTI.length - 1, Math.round(this.numeroSomma[i])));
     const t = this.numeri[i].setText(TESTI[n]).setVisible(true);
-    if (n >= EFFETTI.numeri.forte) t.setTint(EFFETTI.numeri.coloreForte);
+    if (this.numeroImportante[i] === 2) t.setTint(EFFETTI.numeri.coloreForte);
     else t.clearTint();
   }
 
@@ -148,8 +151,8 @@ export class Effetti {
     }
   }
 
-  /** Un posto libero entro il limite; al limite un numero importante prende il posto del comune più vecchio; −1 se non c'è posto. */
-  private postoNumero(importante: boolean): number {
+  /** Un posto libero entro il limite; al limite un numero prende il posto del più vecchio tra i meno importanti di lui; −1 se non c'è posto. */
+  private postoNumero(importanza: number): number {
     if (this.numeriAttivi < Math.min(EFFETTI.numeri.massimo, MAX_NUMERI)) {
       for (let i = 0; i < MAX_NUMERI; i++) {
         if (this.numeroVita[i] > 0) continue;
@@ -157,10 +160,9 @@ export class Effetti {
         return i;
       }
     }
-    if (!importante) return -1;
     let scelto = -1;
     for (let i = 0; i < MAX_NUMERI; i++) {
-      if (this.numeroVita[i] > 0 && !this.numeroImportante[i] && (scelto < 0 || this.numeroVita[i] < this.numeroVita[scelto])) scelto = i;
+      if (this.numeroVita[i] > 0 && this.numeroImportante[i] < importanza && (scelto < 0 || this.numeroVita[i] < this.numeroVita[scelto])) scelto = i;
     }
     return scelto;
   }

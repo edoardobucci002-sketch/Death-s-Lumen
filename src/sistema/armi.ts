@@ -214,6 +214,7 @@ export class Arsenale {
   private cAff = 0; // affinità del colpo in corso
   private cProb: number = STATI.probabilita; // probabilità di lasciare lo stato
   private cFerma = 0; // secondi per cui il colpo in corso ferma i nemici (secondo rintocco)
+  private critico = false; // l'ultimo colpo calcolato è un critico?
   private cLampo = true; // il colpo in corso fa lampeggiare i nemici? (no per chi ferisce a intervalli, come il Velo)
   // coda delle reazioni e delle esplosioni, eseguite alla fine del passo
   private code = 0;
@@ -683,20 +684,23 @@ export class Arsenale {
 
   private danno(base: number): number {
     const d = base * (1 + this.bonus.danno) * (COLPI.casoMinimo + this.caso.numero() * (COLPI.casoMassimo - COLPI.casoMinimo));
-    return this.bonus.critico && this.casoStati.numero() < this.bonus.critico ? d * MOLTIPLICA_CRITICO : d;
+    this.critico = this.bonus.critico > 0 && this.casoStati.numero() < this.bonus.critico;
+    return this.critico ? d * MOLTIPLICA_CRITICO : d;
   }
 
   /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno; lampeggia = false per le zone e le aure. */
   private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true): void {
     const o = this.orda;
     const danno = this.danno(base);
+    // ambra: i critici e i colpi molto sopra il danno attuale dell'arma, contando anche quanto il nemico è vulnerabile
+    const ambra = this.critico || danno * o.vulnerabile(j) >= EFFETTI.numeri.ambra * base * (1 + this.bonus.danno);
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
     const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
     if (r) this.accoda(r, j, 0);
     this.dannoTotale += danno;
     suona('colpo');
-    if (o.elite[j] || o.tipo[j] === ID_MIETITORE) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno);
-    else this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
+    if (o.elite[j] || o.tipo[j] === ID_MIETITORE) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno, ambra);
+    else this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno, ambra);
   }
 
   // ——— Colpi istantanei ———

@@ -698,7 +698,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 // --- 11. Interfaccia, mondo e impatto dei colpi --------------------------------------------------
 
 {
-  frase('Numeri del danno', 'numeri del danno (in ambra se {} o più)', E.EFFETTI.numeri.forte);
+  frase('Numeri del danno', 'numeri del danno (in ambra i critici e i colpi da {} volte il danno attuale', E.EFFETTI.numeri.ambra);
   frase('Limite dei numeri del danno', 'al massimo {} numeri del danno sullo schermo', E.EFFETTI.numeri.massimo);
   frase('Somma dei numeri', 'i colpi entro {} s si sommano in un solo numero, {} px sopra la cima dello sprite', E.EFFETTI.numeri.somma.finestra, E.EFFETTI.numeri.somma.sopra);
   frase('Nomi delle reazioni', 'ingrandito × {}, nel colore dello stato', ST.REAZIONI.etichetta.ingrandimento);
@@ -741,7 +741,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const EF = E.EFFETTI;
   const RIGHE_IMPATTO = [
     ['Numeri del danno', 'Numero', 'durano {} s, salgono di {} px, cifre {?}×{?} ingrandite × {}', EF.numeri.durata, EF.numeri.salita, EF.numeri.ingrandimento],
-    ['Numeri del danno', 'Note', 'ambra da {} in su', EF.numeri.forte],
+    ['Numeri del danno', 'Note', 'almeno {} volte il danno attuale', EF.numeri.ambra],
+    ['Numeri del danno', 'Note', 'i numeri da {} in su', EF.numeri.forte],
     ['Scoppio', 'Numero', '{} s', EF.scoppio.durata],
     ['Arco della Lanterna', 'Numero', '{} s, spessore {} px', EF.arco.durata, EF.arco.spessore],
     ['Impatto della pala', 'Numero', '{} s; scossa dello schermo di {} px per {} s', EF.impattoPala, EF.scossaPala.forza, EF.scossaPala.durata],

@@ -105,6 +105,10 @@ export class Orda {
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private aspetto: AspettoNemico[];
   private simboli: Simboli;
+  // chi ha uno stato da mostrare, scelto a ogni disegno senza creare elenchi nuovi: élite, poi i bruti più vicini
+  private eliteStato = new Uint16Array(STATI.simboli.massimi);
+  private brutiStato = new Uint16Array(STATI.simboli.massimi);
+  private distanzaStato = new Float32Array(STATI.simboli.massimi); // in ordine crescente, come brutiStato
   durataStati = 1; // la Cera votiva allunga gli stati
   private daFare = 0; // comparse accumulate (frazioni di nemico)
   private prossimoId = 1;
@@ -261,10 +265,14 @@ export class Orda {
     }
   }
 
+  /** Abbagliato e interrato subiscono di più: per quanto si moltiplica il danno che il nemico i riceve. */
+  vulnerabile(i: number): number {
+    return 1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? REAZIONI.interramento.danno : 0);
+  }
+
   /** Colpisce il nemico i: toglie salute, lo illumina (se lampeggia e non l'ha fatto da poco) e lo spinge nella direzione (dx, dy), lunga 1. */
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number, lampeggia = true): void {
-    // abbagliato e interrato subiscono di più
-    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? REAZIONI.interramento.danno : 0));
+    this.salute[i] -= danno * this.vulnerabile(i);
     if (lampeggia && this.pausaLampo[i] <= 0) {
       this.lampo[i] = COLPI.lampoNemico;
       this.pausaLampo[i] = COLPI.lampoNemicoPausa;
@@ -460,14 +468,16 @@ export class Orda {
     while (this.numero < Math.min(quanti, CAPIENZA)) this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
   }
 
-  /** Disegna: posizioni arrotondate al pixel, profondità secondo i piedi, niente disegno fuori schermo. */
-  disegna(cam: Phaser.Cameras.Scene2D.Camera, margine: number): void {
+  /** Disegna: posizioni arrotondate al pixel, profondità secondo i piedi, niente disegno fuori schermo; (gx, gy) è il personaggio. */
+  disegna(cam: Phaser.Cameras.Scene2D.Camera, margine: number, gx: number, gy: number): void {
     const sx = cam.scrollX - margine;
     const sy = cam.scrollY - margine;
     const ex = cam.scrollX + cam.width + margine;
     const ey = cam.scrollY + cam.height + margine * 2;
     this.simboli.inizio();
     const chiaro = Math.round(255 * COLPI.lampoNemicoPesanti) * 0x010101; // grigio da aggiungere ai pesanti colpiti
+    const posti = this.brutiStato.length;
+    let seth = -1, elite = 0, bruti = 0;
     for (let i = 0; i < this.numero; i++) {
       const s = this.sprite[i];
       const x = Math.round(this.x[i]);
@@ -488,11 +498,37 @@ export class Orda {
       } else if (s.tintMode !== Phaser.TintModes.MULTIPLY) {
         s.clearTint();
       }
-      // su bruti, élite e Seth lo stato si legge dal simbolo sopra la testa (l'Interramento è la lapide, come Sepolto); sui comuni non si mostra
-      const stato = this.ultimoStato[i] || (this.sInterrato[i] > 0 ? TERRA : 0);
-      if (stato && pesante) this.simboli.mostra(stato, x, y - this.aspetto[this.tipo[i]].testa);
+      // lo stato si legge dal simbolo solo su bruti, élite e Seth; sui comuni non si mostra
+      if (!pesante || !this.statoDaMostrare(i)) continue;
+      if (this.tipo[i] === ID_MIETITORE) seth = i;
+      else if (this.elite[i]) {
+        if (elite < posti) this.eliteStato[elite++] = i;
+      } else {
+        const d = (x - gx) * (x - gx) + (y - gy) * (y - gy);
+        if (bruti === posti && (!posti || d >= this.distanzaStato[bruti - 1])) continue;
+        let k = bruti < posti ? bruti++ : posti - 1;
+        for (; k > 0 && this.distanzaStato[k - 1] > d; k--) {
+          this.distanzaStato[k] = this.distanzaStato[k - 1];
+          this.brutiStato[k] = this.brutiStato[k - 1];
+        }
+        this.distanzaStato[k] = d;
+        this.brutiStato[k] = i;
+      }
     }
+    // precedenza: prima Seth, poi le élite, poi i bruti più vicini; oltre il massimo non si disegnano
+    if (seth >= 0) this.mostraSimbolo(seth);
+    for (let k = 0; k < elite; k++) this.mostraSimbolo(this.eliteStato[k]);
+    for (let k = 0; k < bruti; k++) this.mostraSimbolo(this.brutiStato[k]);
     this.simboli.fine();
+  }
+
+  /** L'affinità da mostrare sul nemico i (0 = nessuna); l'Interramento è la lapide, come Sepolto. */
+  private statoDaMostrare(i: number): number {
+    return this.ultimoStato[i] || (this.sInterrato[i] > 0 ? TERRA : 0);
+  }
+
+  private mostraSimbolo(i: number): void {
+    this.simboli.mostra(this.statoDaMostrare(i), Math.round(this.x[i]), Math.round(this.y[i]) - this.aspetto[this.tipo[i]].testa);
   }
 
   private nasci(secondi: number, gx: number, gy: number, dirX: number, dirY: number, mezzaL: number, mezzaA: number, tipoScelto = -1): number {

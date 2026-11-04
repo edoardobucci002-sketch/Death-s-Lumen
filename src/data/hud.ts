@@ -57,8 +57,8 @@ export const MARGINE_TOCCO = 4;
  * scala: parte dell'ingrandimento normale; il risultato si arrotonda a un numero intero per non deformare i pixel del disegno.
  */
 export const AVVISO = {
-  scala: 0.6,
-  minimo: 2, // ingrandimento più piccolo: a ×1 le lettere sono alte 5 pixel e sul computer non si leggono
+  scala: 0.5,
+  minimo: 2, // ingrandimento più piccolo: a ×1 le lettere sono alte 5 pixel; così computer e tablet restano a grandezza normale
   durata: 1.45, // secondi in tutto, dissolvenza compresa: un filo sotto 1,5 perché il browser può fare tardi di un fotogramma o due
   dissolvenza: 0.3, // secondi finali in cui sparisce a retino
   passi: 3, // gradini del retino
