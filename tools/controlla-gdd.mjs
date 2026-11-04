@@ -161,7 +161,10 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   for (const [id, parola] of [['fantasma', 'i fantasmi'], ['scheletro', 'gli scheletri'], ['segugio', 'i segugi'], ['bruto', 'i bruti']]) {
     evento('Iniziano ' + parola, (r) => compareDa('Cronologia ' + id, tipo(id), r.Momento));
   }
-  evento('Un nemico élite', (r) => inTesto(r.Momento, 'Cronologia élite', '{t}, poi ogni {} s', N.ELITE.primo, N.ELITE.ogni));
+  evento('Un nemico élite', (r) => {
+    inTesto(r.Momento, 'Cronologia élite', '{t}, poi ogni {} s', N.ELITE.primo, N.ELITE.ogni);
+    inTesto(r.Evento, 'Cronologia élite', 'che lascia {p} reliquiario', N.ELITE.reliquiari);
+  });
   evento('Sciame', (r) => {
     inTesto(r.Momento, 'Cronologia sciami', 'tranne il {}° e il {}°, fino al {}°', ...N.SCIAMI.saltaMinuti, N.SCIAMI.ultimoMinuto);
     inTesto(r.Evento, 'Cronologia sciami', 'pipistrelli fino al {}° minuto, fantasmi dal {}°', N.SCIAMI.pipistrelliFinoAl, N.SCIAMI.pipistrelliFinoAl + 1);
@@ -251,6 +254,10 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Fuoco fatuo', A.FUOCO_FATUO, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Danno: 'danno', Trapassa: 'trapassa' }],
     ['Acqua santa', A.ACQUA_SANTA, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Danno: 'danno', Raggio: 'raggio', 'Durata (s)': 'durata' }],
     ['Lama di luce', A.LAMA_DI_LUCE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Lunghezza: 'lunghezza', 'Colpo alle spalle': 'spalle' }],
+    ['Lapide', A.LAPIDE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio', 'Quantità': 'quantita' }],
+    ['Rosario spezzato', A.ROSARIO_SPEZZATO, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Rimbalzi: 'rimbalzi', 'Quantità': 'quantita' }],
+    ['Corvo', A.CORVO, { 'Ricarica (s)': 'ricarica', Danno: 'danno', 'Quantità': 'quantita', 'Anime riportate': 'anime' }],
+    ['Velo funebre', A.VELO_FUNEBRE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio' }],
   ];
   for (const [nome, arma, colonne] of LIVELLI) {
     const t = tabella('#### ' + nome);
@@ -292,6 +299,9 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Acqua santa', 'la pozza ferisce ogni {} s', A.ACQUA_SANTA.intervallo],
     ['Lama di luce', 'Fendente orizzontale alto {} px', A.LAMA_DI_LUCE.altezza],
     ['Lama di luce', 'il colpo alle spalle parte {} s dopo; respinge di {}.', A.LAMA_DI_LUCE.ritardoSpalle, A.LAMA_DI_LUCE.respinta],
+    ['Lapide', 'scende da {} px in {} s, colpisce e resta a terra {} s', A.LAPIDE.altezza, A.LAPIDE.caduta, A.LAPIDE.resta],
+    ['Rosario spezzato', 'Cerca il primo bersaglio entro {} px, poi rimbalza sui nemici entro {} px, un rimbalzo ogni {} s', A.ROSARIO_SPEZZATO.portata, A.ROSARIO_SPEZZATO.salto, A.ROSARIO_SPEZZATO.intervallo],
+    ['Corvo', 'Vola intorno a te a {} px, a {} giri al secondo; becca il nemico più vicino entro {} px, volando a {} px/s', A.CORVO.orbita, A.CORVO.giri, A.CORVO.portata, A.CORVO.velocita],
   ];
   for (const [nome, modello, ...attesi] of frasi) inTesto(s(nome), nome, modello, ...attesi);
 
@@ -370,6 +380,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 
   const EL = N.ELITE, MI = N.MIETITORE;
   frase('Élite', '**Élite**: ogni {} s compare un nemico normale potenziato: salute ×{}, danno ×{}, anime ×{}, dimensione ×{}, velocità ×{},', EL.ogni, EL.salute, EL.danno, EL.anime, EL.dimensione, EL.velocita);
+  frase('Élite: reliquiari', 'alone ambra. Lascia {p} reliquiario.', EL.reliquiari);
   frase('Élite: dimensione', 'ingrandite × {} anche nel raggio dei contatti', EL.dimensione);
   frase('Seth: cammina', 'cammina verso di te per {}–{} s (al minuto {} per ×{} di quel tempo)', MI.cammina[0], MI.cammina[1], MI.minuti[1], MI.camminaSecondo);
   frase('Seth: danno delle mosse', '(× danno attuale ÷ {})', tipo('mietitore').danno);
@@ -465,8 +476,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   });
   conRiga(t, 'Calamita', (r) => inTesto(r['Probabilità'], 'Calamita', '{}%, al massimo una ogni {} minuti', pct(G.calamita.probabilita), G.calamita.ogni / 60));
   conRiga(t, 'Reliquiario', (r) => {
-    inTesto(r.Fonte, 'Reliquiari di Seth', 'Seth ({})', N.MIETITORE.reliquiari);
-    inTesto(r.Effetto, 'Reliquiario', '({}%) o {?} ({}%)', pct(1 - G.reliquiario.tre), pct(G.reliquiario.tre));
+    inTesto(r.Fonte, 'Reliquiari lasciati', 'élite ({}), Seth ({})', N.ELITE.reliquiari, N.MIETITORE.reliquiari);
+    inTesto(r.Effetto, 'Reliquiario', '{} potenziamento ({}%) o {} ({}%)', G.reliquiario.potenziamenti, pct(1 - G.reliquiario.raro), G.reliquiario.potenziamentiRari, pct(G.reliquiario.raro));
     inTesto(r.Effetto, 'Reliquiario: cura', '+{} salute', G.reliquiario.cura);
   });
   frase('Raccolta degli oggetti', 'si raccolgono a {} px dal personaggio, sono disegnati sopra il buio e ingranditi × {}', G.presa, G.ingrandimento);
@@ -538,9 +549,9 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   stessiNomi('Ceri', t, M.CERI.map((c) => c.nome));
   for (const c of M.CERI) {
     conRiga(t, c.nome, (r) => {
-      if (c.id === 'scelta') { // «per» è in frazione di rimescolata: si arrotonda in su
-        inTesto(r['Per livello'], `${c.nome}: per livello`, '+{?} rimescolata ogni {} livelli', 1 / c.per);
-        inTesto(r['Al massimo'], `${c.nome}: massimo`, '+{}', Math.ceil(livelli * c.per));
+      if (c.id === 'scelta') {
+        inTesto(r['Per livello'], `${c.nome}: per livello`, '+{} rimescolata ogni {} livelli', c.per, c.ogniLivelli);
+        inTesto(r['Al massimo'], `${c.nome}: massimo`, '+{}', M.rimescolateCero(livelli));
       } else {
         inTesto(r['Per livello'], `${c.nome}: per livello`, c.id === 'rito' ? '−{}%' : '+{}%', pct(c.per));
         inTesto(r['Al massimo'], `${c.nome}: massimo`, c.id === 'rito' ? '−{}%' : '+{}%', pct(c.per) * livelli);
@@ -613,6 +624,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const s = sezione('## 8f.');
   const lacrima = DO.PASSIVI.find((d) => d.id === 'lacrimaDiLumen');
   inTesto(s, 'Unioni: requisiti', 'Un\'arma al livello {} più il suo dono al livello {} (o al massimo del dono, se è più basso: Lacrima di lumen arriva a {})', PR.CARTE.livelloMassimo, U.LIVELLO_DONO_UNIONE, lacrima.massimo);
+  inTesto(s, 'Unioni: amuleti offerti', 'con l\'unione gli amuleti offerti scendono a {}', R.ROSARIO.proposteConUnione);
   inTesto(s, 'Sblocco delle Unioni', 'con l\'impresa «Sopravvivi {} minuti» oppure con {} Cera', M.SBLOCCO_UNIONI.minuti, M.SBLOCCO_UNIONI.cera);
 
   const t = tabella('| Arma | + Dono |');
@@ -730,11 +742,9 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 }
 
 // Numeri del GDD che non stanno in src/data/ e quindi non si confrontano ({?} nei modelli, oppure frasi non controllate):
-// - Reliquiario: «1 potenziamento o 3» e «élite (1)»: sono scritti nella logica del gioco;
 // - Numeri del danno: cifre 3×5, sono la forma del disegno;
 // - misure dei disegni citate nel testo (fiala 45×74, simboli 11×11) e scala 2,35 con i valori della v0, che sono storia;
-// - livelli intermedi delle armi nuove e numeri che il GDD non cita: non c'è niente da confrontare;
-// - «Barre su 6», «unioni: amuleti che scendono a 2», «+1 rimescolata»: sono scritti nella logica o solo nella scheda.
+// - «Barre su 6»: è scritto solo nella scheda.
 
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`Controlli fatti: ${controlli}`);

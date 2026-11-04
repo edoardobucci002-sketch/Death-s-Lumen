@@ -16,6 +16,7 @@ export const ROSARIO = {
   massimo: 5, // …fino a questo totale
   peccato: 1, // danno subito in più oltre i grani (1 = il doppio)
   proposte: 3, // amuleti offerti da un reliquiario, accanto al potenziamento
+  proposteConUnione: 2, // amuleti offerti quando il reliquiario offre anche un'unione
   // all'inizio nessuno li ha: il Rosario si sblocca nella Cappella (data/meta.ts, SBLOCCO_ROSARIO)
 } as const;
 

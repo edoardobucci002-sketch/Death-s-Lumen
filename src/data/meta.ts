@@ -21,7 +21,8 @@ export type IdCero = 'vita' | 'forza' | 'passo' | 'raccolto' | 'rito' | 'anime' 
 export interface Cero {
   id: IdCero;
   nome: string;
-  per: number; // effetto per livello (0,05 = +5%; per la Scelta: rimescolate)
+  per: number; // effetto per livello (0,05 = +5%; per la Scelta: rimescolate ogni «ogniLivelli» livelli)
+  ogniLivelli?: number; // solo per la Scelta
   testo: string; // cosa fa un livello, per la Cappella
 }
 
@@ -35,8 +36,14 @@ export const CERI: Cero[] = [
   { id: 'raccolto', nome: 'Cero del raccolto', per: 0.1, testo: '+10% raggio di raccolta delle anime' },
   { id: 'rito', nome: 'Cero del rito', per: 0.04, testo: '−4% ricarica dell\'abilità speciale' },
   { id: 'anime', nome: 'Cero delle anime', per: 0.04, testo: '+4% anime' },
-  { id: 'scelta', nome: 'Cero della scelta', per: 0.5, testo: '+1 rimescolata ogni 2 livelli' }, // 1, 1, 2, 2, 3 (arrotondato in su)
+  { id: 'scelta', nome: 'Cero della scelta', per: 1, ogniLivelli: 2, testo: '+1 rimescolata ogni 2 livelli' }, // ai livelli 1-5: 1, 1, 2, 2, 3
 ];
+
+/** Rimescolate in più date dal Cero della scelta a quel livello (un gruppo di livelli appena cominciato vale già). */
+export function rimescolateCero(livello: number): number {
+  const c = CERI.find((x) => x.id === 'scelta')!;
+  return c.per * Math.ceil(livello / c.ogniLivelli!);
+}
 
 /** Una volta per veglia, a salute zero ti rialzi con una parte della salute. */
 export const SECONDA_CANDELA = { costo: 400, salute: 0.3, invulnerabilita: 2 } as const;

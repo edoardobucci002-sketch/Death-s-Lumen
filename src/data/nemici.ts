@@ -73,6 +73,7 @@ export const ELITE = {
   anime: 6,
   dimensione: 1.5,
   velocita: 0.9,
+  reliquiari: 1, // quanti ne lascia (il Mietitore: MIETITORE.reliquiari)
   alone: 0x6a3a00, // colore aggiunto allo sprite (ambra)
 } as const;
 

@@ -3,7 +3,7 @@
  * livello per livello e da spegnere a piacere, la Seconda candela, il conto dell'ultima veglia
  * e il codice di salvataggio da copiare o da incollare. Si apre dal menu; ogni acquisto si salva subito.
  */
-import { CERI, COSTI_CERO, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECONDA_CANDELA, type IdCero } from '../data/meta';
+import { CERI, COSTI_CERO, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECONDA_CANDELA, rimescolateCero, type IdCero } from '../data/meta';
 import { carica, codice, daCodice, salva, type Salvataggio } from './salvataggio';
 
 export class Cappella {
@@ -45,7 +45,7 @@ export class Cappella {
     const u = s.ultimaVeglia;
     const ceri = CERI.map((c) => {
       const l = s.ceri[c.id], spento = s.spenti.includes(c.id), costo = COSTI_CERO[l];
-      const effetto = c.id === 'scelta' ? `+${Math.ceil(l * c.per)} rimescolate` : `${c.testo.startsWith('−') ? '−' : '+'}${Math.round(l * c.per * 100)}%`;
+      const effetto = c.id === 'scelta' ? `+${rimescolateCero(l)} rimescolate` : `${c.testo.startsWith('−') ? '−' : '+'}${Math.round(l * c.per * 100)}%`;
       return `<li class="cero${spento ? ' spento' : ''}">
         <div class="cero-testo"><h3>${c.nome}</h3><p>${c.testo} per livello${l ? ` · ora ${effetto}` : ''}</p></div>
         <span class="cero-livelli" aria-label="Livello ${l} su 5">${'<b></b>'.repeat(l)}${'<b class="vuota"></b>'.repeat(5 - l)}</span>

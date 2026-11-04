@@ -23,6 +23,8 @@ import { COLPI } from '../data/armi';
 
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici, alle orde e alla chiamata dei morti. */
 export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + SCIAMI.massimo + 2 * ORDE.massimo + MIETITORE.chiamata.quanti + 20;
+/** Che tipo di nemico è morto: decide reliquiari, Cera e fiaschetta. */
+export type CategoriaNemico = 'comune' | 'elite' | 'seth';
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 const ID_CHIAMATA = NEMICI.findIndex((t) => t.id === MIETITORE.chiamata.tipo);
 const COMPORTAMENTO = NEMICI.map((t) => ['diretto', 'accerchia', 'intercetta', 'zigzag'].indexOf(t.comportamento));
@@ -363,12 +365,12 @@ export class Orda {
     this.y[i] += (dy / d) * p;
   }
 
-  /** Toglie dal campo i nemici senza salute; per ognuno chiama muore(x, y, anime, reliquiari). */
-  rimuoviMorti(muore: (x: number, y: number, anime: number, reliquiari: number) => void): void {
+  /** Toglie dal campo i nemici senza salute; per ognuno chiama muore(x, y, anime, categoria). */
+  rimuoviMorti(muore: (x: number, y: number, anime: number, categoria: CategoriaNemico) => void): void {
     for (let i = this.numero - 1; i >= 0; i--) {
       if (this.salute[i] > 0) continue;
-      const reliquiari = this.tipo[i] === ID_MIETITORE ? MIETITORE.reliquiari : this.elite[i] ? 1 : 0;
-      muore(this.x[i], this.y[i] - this.raggio[i], this.anime[i], reliquiari);
+      const categoria = this.tipo[i] === ID_MIETITORE ? 'seth' : this.elite[i] ? 'elite' : 'comune';
+      muore(this.x[i], this.y[i] - this.raggio[i], this.anime[i], categoria);
       this.togli(i);
     }
   }

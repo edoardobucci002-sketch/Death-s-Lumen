@@ -12,7 +12,9 @@ export const DROP = {
   cera: { probabilita: 0.004, perElite: 3, perSeth: 10, ingrandimento: 2, volo: 260, sprite: 'Goccia_cera' },
   reliquiario: {
     sprite: 'Reliquiario',
-    tre: 0.25, // 25% tre potenziamenti, altrimenti uno
+    potenziamenti: 1, // quanti potenziamenti dà di solito…
+    potenziamentiRari: 3, // …e quanti nel caso raro
+    raro: 0.25, // probabilità del caso raro
     cura: 40, // se è già tutto al massimo
   },
   presa: 40, // a questa distanza dal personaggio l'oggetto è raccolto

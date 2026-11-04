@@ -4,7 +4,7 @@
  * si aggiorna invece di perdersi. Il codice di salvataggio (testo da copiare e incollare) è la copia di sicurezza,
  * e serve anche a passare dal link web all'app. I record per personaggio restano in record.ts.
  */
-import { CERI, META_SIMULAZIONE, OGGETTI_A_META, SBLOCCHI, SBLOCCHI_OGGETTI, type IdCero, type IdOggetto } from '../data/meta';
+import { CERI, META_SIMULAZIONE, OGGETTI_A_META, SBLOCCHI, SBLOCCHI_OGGETTI, rimescolateCero, type IdCero, type IdOggetto } from '../data/meta';
 import type { Personaggio } from '../data/personaggi';
 
 const CHIAVE = 'dl-salvataggio';
@@ -115,7 +115,7 @@ export function bonusMeta(s: Salvataggio, meta: string | null = null): BonusMeta
     raccolta: per('raccolto'),
     rito: per('rito'),
     anime: per('anime'),
-    rimescolate: Math.ceil(per('scelta')),
+    rimescolate: rimescolateCero(livello('scelta')),
     rosario: finto >= 0 ? finto > 0 : s.rosario,
     unioni: finto >= 0 ? finto > 0 : s.unioni,
     oggetti: finto === META_SIMULAZIONE.max ? SBLOCCHI_OGGETTI.map((o) => o.id) : finto > 0 ? OGGETTI_A_META : finto === 0 ? [] : s.oggetti,

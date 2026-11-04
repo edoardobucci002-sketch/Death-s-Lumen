@@ -40,7 +40,7 @@ import { Hud, type VoceBuild } from '../sistema/hud';
 import { vibra } from '../sistema/mobile';
 import { CALAMITA, CERA_GOCCIA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
 import { LUCE as LUCE_AFF, OMBRA as OMBRA_AFF, SACRO as SACRO_AFF, TERRA as TERRA_AFF } from '../sistema/orda';
-import { Orda } from '../sistema/orda';
+import { Orda, type CategoriaNemico } from '../sistema/orda';
 import { Minacce } from '../sistema/minacce';
 import { leggiRecord, salvaRecord } from '../sistema/record';
 import { Simulazione } from '../sistema/simulazione';
@@ -709,21 +709,22 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Un nemico muore: anime, scoppio, e a volte pane, calamita o reliquiari. */
-  private muore = (x: number, y: number, valore: number, reliquiari: number): void => {
+  private muore = (x: number, y: number, valore: number, categoria: CategoriaNemico): void => {
     this.anime.aggiungi(x, y, valore, this.x, this.y);
     this.effetti.scoppio(x, y);
     this.sim?.ucciso();
-    const daLasciare = reliquiari === MIETITORE.reliquiari || !this.ha('ossaDelite') ? reliquiari : reliquiari * AM.ossaDelite.reliquiari;
+    const seth = categoria === 'seth', elite = categoria === 'elite';
+    const daLasciare = seth ? MIETITORE.reliquiari : elite ? ELITE.reliquiari * (this.ha('ossaDelite') ? AM.ossaDelite.reliquiari : 1) : 0;
     for (let k = 0; k < daLasciare; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
     if (this.ha('pattoDiSangue')) this.salute = Math.min(this.saluteMassima, this.salute + AM.pattoDiSangue.cura);
     // gocce di Cera: rare dai nemici comuni, qualcuna in più da élite e Seth
-    const gocce = reliquiari === MIETITORE.reliquiari ? DROP.cera.perSeth : reliquiari > 0 ? DROP.cera.perElite : this.caso.numero() < DROP.cera.probabilita ? 1 : 0;
+    const gocce = seth ? DROP.cera.perSeth : elite ? DROP.cera.perElite : this.caso.numero() < DROP.cera.probabilita ? 1 : 0;
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * 14, y + 10);
     // la fiaschetta si ricarica: un sorso per un'élite, tutta per il Mietitore
-    if (reliquiari === MIETITORE.reliquiari) {
+    if (seth) {
       this.fiaschetta.ricarica(this.fiaschetta.massimo);
       this.sethSconfitti++;
-    } else if (reliquiari > 0) {
+    } else if (elite) {
       this.fiaschetta.ricarica(FIASCHETTA.perElite);
       this.eliteUccise++;
     }
@@ -772,9 +773,10 @@ export class Gioco extends Phaser.Scene {
       this.reliquiariInAttesa++;
       return;
     }
-    // prima l'unione pronta (una per reliquiario), poi gli amuleti: al massimo quattro strisce con il potenziamento
+    // prima l'unione pronta (una per reliquiario), poi gli amuleti: con l'unione se ne offrono meno, per restare a quattro strisce
     const carte: Dono[] = pronte.slice(0, 1).map((u) => ({ tipo: 'unione', unione: u, arma: this.armaDi(u.arma)! }));
-    for (let k = carte.length; k < ROSARIO.proposte && liberi.length; k++) carte.push({ tipo: 'amuleto', amuleto: liberi.splice(this.caso.intero(0, liberi.length - 1), 1)[0] });
+    const proposte = carte.length ? ROSARIO.proposteConUnione : ROSARIO.proposte;
+    for (let k = 0; k < proposte && liberi.length; k++) carte.push({ tipo: 'amuleto', amuleto: liberi.splice(this.caso.intero(0, liberi.length - 1), 1)[0] });
     carte.push({ tipo: 'potenziamento' });
     this.anims.pauseAll();
     this.comandi.lascia();
@@ -809,9 +811,9 @@ export class Gioco extends Phaser.Scene {
     } else if (!this.pausa) this.anims.resumeAll();
   }
 
-  /** Il potenziamento del reliquiario: 1 (75%) o 3 (25%) di ciò che possiedi; se è tutto al massimo, salute. */
+  /** Il potenziamento del reliquiario: di solito pochi, a volte di più (DROP.reliquiario), scelti tra ciò che possiedi; se è tutto al massimo, salute. */
   private potenziaReliquiario(): void {
-    const quanti = this.caso.numero() < DROP.reliquiario.tre ? 3 : 1;
+    const quanti = this.caso.numero() < DROP.reliquiario.raro ? DROP.reliquiario.potenziamentiRari : DROP.reliquiario.potenziamenti;
     const nomi: string[] = [];
     for (let k = 0; k < quanti; k++) {
       const possibili: (() => string)[] = [];

@@ -249,6 +249,66 @@ Si trovano tra le armi comuni, ma solo dopo averle sbloccate (sezione 8d). I num
 | Corvo | Luce | vola intorno, becca il nemico più vicino (entro 330 px) e fa tornare le anime ferme più lontane | 26 danni, 1 corvo, ogni 1 s, 1 anima | 44 danni, 3 corvi, ogni 0,75 s, 4 anime |
 | Velo funebre | Sacro | aura intorno al personaggio; 20% di consacrare a ogni colpo | 7 danni, raggio 110, ogni 0,5 s | 21 danni, raggio 160, ogni 0,4 s |
 
+#### Lapide
+
+Cade sul nemico con più salute in vista: scende da 180 px in 0,2 s, colpisce e resta a terra 0,5 s. Chi è sotto resta sempre Sepolto.
+
+| Lv | Ricarica (s) | Danno | Raggio | Quantità | Cosa cambia |
+|---|---|---|---|---|---|
+| 1 | 3,2 | 120 | 84 | 1 | Cade sul nemico con più salute in vista e lo seppellisce. |
+| 2 | 3,2 | 150 | 84 | 1 | +30 danno. |
+| 3 | 3,2 | 150 | 96 | 1 | Impatto più largo. |
+| 4 | 2,8 | 150 | 96 | 1 | Cade più spesso. |
+| 5 | 2,8 | 190 | 96 | 1 | +40 danno. |
+| 6 | 2,8 | 190 | 96 | 2 | +1 lapide. |
+| 7 | 2,4 | 190 | 110 | 2 | Cade più spesso, impatto più largo. |
+| 8 | 2,4 | 260 | 110 | 2 | +70 danno. |
+
+#### Rosario spezzato
+
+Cerca il primo bersaglio entro 420 px, poi rimbalza sui nemici entro 190 px, un rimbalzo ogni 0,09 s.
+
+| Lv | Ricarica (s) | Danno | Rimbalzi | Quantità | Cosa cambia |
+|---|---|---|---|---|---|
+| 1 | 1,6 | 18 | 4 | 1 | Un grano rimbalza tra i nemici vicini e li maledice. |
+| 2 | 1,6 | 23 | 4 | 1 | +5 danno. |
+| 3 | 1,6 | 23 | 5 | 1 | +1 rimbalzo. |
+| 4 | 1,4 | 23 | 5 | 1 | Ricarica più rapida. |
+| 5 | 1,4 | 30 | 5 | 1 | +7 danno. |
+| 6 | 1,4 | 30 | 6 | 2 | +1 grano, +1 rimbalzo. |
+| 7 | 1,2 | 30 | 6 | 2 | Ricarica più rapida. |
+| 8 | 1,2 | 40 | 8 | 2 | +10 danno, +2 rimbalzi. |
+
+#### Corvo
+
+Vola intorno a te a 90 px, a 0,35 giri al secondo; becca il nemico più vicino entro 330 px, volando a 1100 px/s.
+
+| Lv | Ricarica (s) | Danno | Quantità | Anime riportate | Cosa cambia |
+|---|---|---|---|---|---|
+| 1 | 1 | 26 | 1 | 1 | Becca il nemico più vicino e ti riporta le anime lontane. |
+| 2 | 1 | 33 | 1 | 1 | +7 danno. |
+| 3 | 1 | 33 | 1 | 2 | Riporta più anime. |
+| 4 | 0,9 | 33 | 1 | 2 | Becca più spesso. |
+| 5 | 0,9 | 33 | 2 | 2 | +1 corvo. |
+| 6 | 0,9 | 44 | 2 | 3 | +11 danno, riporta più anime. |
+| 7 | 0,75 | 44 | 2 | 3 | Becca più spesso. |
+| 8 | 0,75 | 44 | 3 | 4 | +1 corvo, riporta più anime. |
+
+#### Velo funebre
+
+Aura intorno al personaggio: la ricarica dice ogni quanto ferisce chi è dentro.
+
+| Lv | Ricarica (s) | Danno | Raggio | Cosa cambia |
+|---|---|---|---|---|
+| 1 | 0,5 | 7 | 110 | Un'aura intorno a te consacra chi entra. |
+| 2 | 0,5 | 9 | 110 | +2 danno. |
+| 3 | 0,5 | 9 | 125 | Aura più grande. |
+| 4 | 0,5 | 12 | 125 | +2 danno. |
+| 5 | 0,5 | 12 | 140 | Aura più grande. |
+| 6 | 0,4 | 12 | 140 | Colpisce più spesso. |
+| 7 | 0,4 | 16 | 140 | +4 danno. |
+| 8 | 0,4 | 21 | 160 | +5 danno, aura più grande. |
+
 ## 5. Doni passivi
 
 Al massimo 6 doni passivi diversi.
