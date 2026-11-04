@@ -700,6 +700,13 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 {
   frase('Numeri del danno', 'numeri del danno (in ambra se {} o più)', E.EFFETTI.numeri.forte);
   frase('Limite dei numeri del danno', 'al massimo {} numeri del danno sullo schermo', E.EFFETTI.numeri.massimo);
+  frase('Somma dei numeri', 'i colpi entro {} s si sommano in un solo numero, {} px sopra la cima dello sprite', E.EFFETTI.numeri.somma.finestra, E.EFFETTI.numeri.somma.sopra);
+  frase('Nomi delle reazioni', 'ingrandito × {}, nel colore dello stato', ST.REAZIONI.etichetta.ingrandimento);
+  frase('Nomi delle reazioni', 'Lo stesso nome torna al massimo ogni {} s, al massimo {} nomi sullo schermo', ST.REAZIONI.etichetta.pausa, ST.REAZIONI.etichetta.massimi);
+  frase('Nomi delle reazioni', 'fuori da {} px intorno al personaggio', ST.REAZIONI.etichetta.lontano);
+  frase('Simboli degli stati', 'al massimo {} simboli sullo schermo', ST.STATI.simboli.massimi);
+  frase('Avvisi', 'Durano {} s, compresi {} s di dissolvenza', H.AVVISO.durata, H.AVVISO.dissolvenza);
+  frase('Avvisi', 'mai sotto × {}: sui telefoni', H.AVVISO.minimo);
 
   const mondo = tabella('### Mondo, luce e comandi');
   const LU = W.LUCE, TE = W.TERRENO, JO = W.JOYSTICK;

@@ -28,15 +28,16 @@ export interface InfoReazione {
   nome: string;
   stati: [IdAffinita, IdAffinita | null]; // null = con qualsiasi altro stato
   colore: string;
+  coloreNome: number; // colore del nome che compare sul campo
   effetto(): string;
 }
 
 /** Nello stesso ordine dei numeri delle reazioni in orda.ts (ECLISSI = 1, RIVELAZIONE, ESORCISMO, INTERRAMENTO). */
 export const INFO_REAZIONI: InfoReazione[] = [
-  { nome: 'Eclissi', stati: ['luce', 'ombra'], colore: REAZIONI.eclissi.colore, effetto: () => 'esplosione intorno al nemico' },
-  { nome: 'Rivelazione', stati: ['luce', 'sacro'], colore: REAZIONI.rivelazione.colore, effetto: () => `anime ×${REAZIONI.rivelazione.anime}` },
-  { nome: 'Esorcismo', stati: ['sacro', 'ombra'], colore: REAZIONI.esorcismo.colore, effetto: () => `${REAZIONI.esorcismo.fiammelle} fiammelle inseguono i vicini` },
-  { nome: 'Interramento', stati: ['terra', null], colore: REAZIONI.interramento.colore, effetto: () => `fermo ${virgola(REAZIONI.interramento.fermo)} s e +${percento(REAZIONI.interramento.danno)} danno subito` },
+  { nome: 'Eclissi', stati: ['luce', 'ombra'], coloreNome: REAZIONI.etichetta.colori.eclissi, colore: REAZIONI.eclissi.colore, effetto: () => 'esplosione intorno al nemico' },
+  { nome: 'Rivelazione', stati: ['luce', 'sacro'], coloreNome: REAZIONI.etichetta.colori.rivelazione, colore: REAZIONI.rivelazione.colore, effetto: () => `anime ×${REAZIONI.rivelazione.anime}` },
+  { nome: 'Esorcismo', stati: ['sacro', 'ombra'], coloreNome: REAZIONI.etichetta.colori.esorcismo, colore: REAZIONI.esorcismo.colore, effetto: () => `${REAZIONI.esorcismo.fiammelle} fiammelle inseguono i vicini` },
+  { nome: 'Interramento', stati: ['terra', null], coloreNome: REAZIONI.etichetta.colori.interramento, colore: REAZIONI.interramento.colore, effetto: () => `fermo ${virgola(REAZIONI.interramento.fermo)} s e +${percento(REAZIONI.interramento.danno)} danno subito` },
 ];
 
 /** La reazione tra due affinità diverse. */

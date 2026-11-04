@@ -10,6 +10,11 @@ export const EFFETTI = {
     ingrandimento: 2, // le cifre sono 3×5 pixel: si disegnano grandi il doppio
     forte: 40, // da questo danno in su il numero è ambra, e ha la precedenza quando si è al limite
     massimo: 15, // numeri sullo schermo nello stesso momento: oltre non se ne creano (da rivedere; al massimo 64)
+    // élite e Seth: i colpi che arrivano entro «finestra» secondi si sommano in un solo numero, che segue la testa del nemico (da rivedere)
+    somma: {
+      finestra: 0.5,
+      sopra: 30, // pixel di gioco sopra la cima dello sprite: lascia il posto al simbolo dello stato
+    },
     coloreForte: 0xe3913a,
   },
   scoppio: {

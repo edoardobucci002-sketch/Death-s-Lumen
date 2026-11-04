@@ -31,7 +31,9 @@ export const STATI = {
   consacrato: { lento: 0.25, colore: 0xdcc07a }, // Sacro: va più lento del 25% (oro della Badessa)
   maledetto: { perSecondo: 0.02, colore: 0xa57ae0 }, // Ombra: perde il 2% della salute massima al secondo (viola della Strega)
   sepolto: { fermo: 0.6, pausa: 4, colore: 0xb89a74 }, // Terra: fermo 0,6 s, poi non può esserlo di nuovo per 4 s (seppia del Becchino)
-  simboli: { ingrandimento: 2, distanza: 2, massimi: 200 }, // grandezza (numero intero), pixel sopra la testa, quanti al massimo sullo schermo
+  // grandezza (numero intero), pixel sopra la testa, quanti al massimo sullo schermo (da rivedere; vale dalla prossima partita).
+  // Il simbolo si vede solo su bruti, élite e Seth: sui nemici comuni lo stato funziona lo stesso, senza simbolo
+  simboli: { ingrandimento: 2, distanza: 2, massimi: 40 },
   // il Mietitore resiste: stati di Terra (e Interramento) a metà durata, maledizione a un decimo
   mietitore: { fermo: 0.5, maledetto: 0.1 },
   elite: { maledetto: 0.4 }, // le élite perdono il 40% di quello che perde un nemico normale
@@ -47,8 +49,13 @@ export const REAZIONI = {
   esorcismo: { fiammelle: 3, danno: 18, velocita: 420, vita: 1.6, raggio: 36, colore: '#e8dcc4', bordo: '#ffffff' },
   // Terra + qualsiasi altro: fermo a lungo e più vulnerabile
   interramento: { fermo: 1.5, danno: 0.3, raggio: 44, colore: '#b89a74', bordo: '#2a1f17' },
-  // il nome della reazione sale sopra il nemico; lo stesso nome non torna prima di «pausa» secondi
-  etichetta: { ingrandimento: 4, durata: 0.9, sale: 44, pausa: 0.3 },
+  // il nome della reazione sale sopra il nemico; lo stesso nome non torna prima di «pausa» secondi.
+  // Valori da rivedere: massimi = nomi insieme sullo schermo (oltre non si creano, la reazione avviene lo stesso);
+  // lontano = pixel di gioco dal personaggio dentro cui il nome non entra; colori = quelli degli stati (valgono dal prossimo avvio)
+  etichetta: {
+    ingrandimento: 2, durata: 0.9, sale: 44, pausa: 2, massimi: 3, lontano: 90,
+    colori: { eclissi: STATI.maledetto.colore, rivelazione: STATI.consacrato.colore, esorcismo: STATI.abbagliato.colore, interramento: STATI.sepolto.colore },
+  },
   durataEffetto: 0.5, // il cerchio della reazione: metà pieno, metà a retino (era 0,25: non si faceva in tempo a vederlo)
   ingrandimentoEffetto: 1.35, // il cerchio si disegna più largo dell'area vera, per leggerlo meglio
 } as const;

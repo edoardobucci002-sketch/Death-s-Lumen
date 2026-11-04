@@ -7,7 +7,7 @@
 import './bozza.css';
 import { ABILITA } from '../data/abilita';
 import { ARMI_INIZIALI, CAMPANA, CANDELA, FALCE } from '../data/armi';
-import { ANELLI, CASELLA, FINESTRE, INGRANDIMENTO, INTERNI, TESTI, LAMPEGGIO_SEGNALE, MARGINE_TOCCO, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
+import { ANELLI, AVVISO, CASELLA, FINESTRE, INGRANDIMENTO, INTERNI, OROLOGIO, TESTI, LAMPEGGIO_SEGNALE, MARGINE_TOCCO, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
 import { PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { TELEFONI, misureTelefono, type Bordi, type MisureTelefono, type Telefono } from './telefoni';
 
@@ -321,7 +321,7 @@ function scenaPartita(t: number): void {
   const piena = stato.esperienzaColore === 'tavola' ? null : ricolora('Barra_Esperienza_Piena', p.colore);
   disegna('Barra_Esperienza_Piena', xe + fe.x * zb, ye + fe.y * zb, zb, Math.round((fe.l * stato.esperienza) / 100), piena);
   gruppo = 'orologio';
-  scrivi('7:42', W / 2, ye + me.h * zb + 2, { px: 16 * zb, colore: '#e8dcc4', allinea: 'centro', ombra: true });
+  scrivi('7:42', W - b.d, b.a + OROLOGIO.sopra * zc, { px: 16 * zb, colore: '#e8dcc4', allinea: 'destra', ombra: true });
   const ms = misura('Stemma_Livello');
   gruppo = 'livello';
   disegna('Stemma_Livello', b.s, b.a, zc);
@@ -358,12 +358,12 @@ function scenaPartita(t: number): void {
 
   // avviso in alto, sotto barre e caselle, per non coprire il personaggio
   if (stato.avviso !== 'nessuno') {
-    const k = stato.avviso === 'nastro' ? 'Nastro_Titolo' : 'Targa_Lapide', za = z('avvisi'), ma = misura(k);
+    const k = stato.avviso === 'nastro' ? 'Nastro_Titolo' : 'Targa_Lapide', za = Math.max(AVVISO.minimo, Math.round(z('avvisi') * AVVISO.scala)), ma = misura(k);
     const xa = Math.round(W / 2 - (ma.w * za) / 2), ya = y;
     gruppo = 'avviso';
     disegna(k, xa, ya, za);
     scriviDentro('Lo sciame', INTERNI[k].testo, xa, ya, za, { px: 8 * za, colore: stato.avviso === 'nastro' ? '#1e1008' : '#2a2018', font: 'scritta' }); // come nel gioco
-    scriviDentro('ti circonda', { x: 0, y: 0, l: W, a: 12 * zb }, 0, ya + (ma.h - 8) * za, 1, { px: 16 * zb, colore: '#e8dcc4', font: 'scritta', ombra: true });
+    scriviDentro('ti circonda', { x: 0, y: 0, l: W, a: 6 * za }, 0, ya + (ma.h - 8) * za, 1, { px: 8 * za, colore: '#e8dcc4', font: 'scritta', ombra: true });
   }
 
   // segnale del reliquiario sul bordo

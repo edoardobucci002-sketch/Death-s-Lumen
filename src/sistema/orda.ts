@@ -444,6 +444,11 @@ export class Orda {
     }
   }
 
+  /** Quanto sta in alto la cima dello sprite del nemico i, in pixel di gioco dai piedi (le élite sono più grandi). */
+  altezza(i: number): number {
+    return this.aspetto[this.tipo[i]].testa * (this.elite[i] ? ELITE.dimensione : 1);
+  }
+
   /** Il Mietitore in campo (−1 se non c'è). */
   mietitore(): number {
     for (let i = 0; i < this.numero; i++) if (this.tipo[i] === ID_MIETITORE) return i;
@@ -471,7 +476,8 @@ export class Orda {
       s.setVisible(visibile);
       if (!visibile) continue;
       s.setPosition(x, y).setDepth(y).setFlipX(this.versoSinistra[i] === 1);
-      if (this.lampo[i] > 0 && (this.elite[i] || this.tipo[i] === ID_MIETITORE || NEMICI[this.tipo[i]].pesante)) {
+      const pesante = this.elite[i] === 1 || this.tipo[i] === ID_MIETITORE || NEMICI[this.tipo[i]].pesante;
+      if (this.lampo[i] > 0 && pesante) {
         // bruti, élite e Seth colpiti si schiariscono e basta: la sagoma resta visibile
         s.setTint(chiaro).setTintMode(Phaser.TintModes.ADD);
       } else if (this.lampo[i] > 0 || (this.fase[i] === 1 && Math.floor(this.faseTempo[i] * 10) % 2 === 0)) {
@@ -482,9 +488,9 @@ export class Orda {
       } else if (s.tintMode !== Phaser.TintModes.MULTIPLY) {
         s.clearTint();
       }
-      // lo stato si legge dal simbolo sopra la testa; l'Interramento è la lapide, come Sepolto
+      // su bruti, élite e Seth lo stato si legge dal simbolo sopra la testa (l'Interramento è la lapide, come Sepolto); sui comuni non si mostra
       const stato = this.ultimoStato[i] || (this.sInterrato[i] > 0 ? TERRA : 0);
-      if (stato) this.simboli.mostra(stato, x, y - this.aspetto[this.tipo[i]].testa);
+      if (stato && pesante) this.simboli.mostra(stato, x, y - this.aspetto[this.tipo[i]].testa);
     }
     this.simboli.fine();
   }

@@ -238,6 +238,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(e('elite', 'Élite'), e('seth1', 'Seth (1ª volta)'), e('seth2', 'Seth (2ª volta)'), e('orda', 'Orda'), e('sciame', 'Sciame')),
       titolo('Drop a terra'),
       riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
+      titolo('Avvisi nel cartiglio'),
+      riga(tasto('Seth', fai((x) => x.labAvviso('Seth', 'il Rinnovato è venuto per te'))), tasto('Sciame', fai((x) => x.labAvviso('Lo sciame', 'ti circonda'))), tasto('Due orde', fai((x) => x.labAvviso('Due orde', 'ti stringono'))), tasto('Reliquiario', fai((x) => x.labAvviso('Reliquiario', 'Lanterna, Candela, Falce')))),
       titolo('Scelte'),
       riga(tasto('Scelta del dono', scegli((x) => x.labSceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
       riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.labOggetti(true)))),

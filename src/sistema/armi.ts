@@ -378,6 +378,11 @@ export class Arsenale {
     for (let i = 0; i < this.grani; i++) this.grSprite[i].setPosition(Math.round(this.grX[i]), Math.round(this.grY[i]));
     for (let i = 0; i < this.corvi; i++) this.cvSprite[i].setPosition(Math.round(this.cvX[i]), Math.round(this.cvY[i]));
     if (this.raggioVelo) this.velo.setPosition(Math.round(this.px), Math.round(this.py)).setScale(this.raggioVelo / RAGGIO_VELO).setVisible(true);
+    // il numero sommato segue la testa di élite e Seth, così non finisce mai sul loro corpo
+    const o = this.orda;
+    for (let j = 0; j < o.numero; j++) {
+      if (o.elite[j] || o.tipo[j] === ID_MIETITORE) this.effetti.seguiSomma(o.id[j], o.x[j], o.y[j] - o.altezza(j));
+    }
   }
 
   /** Fa partire il colpo di un'arma; restituisce la ricarica del suo livello. */
@@ -690,7 +695,8 @@ export class Arsenale {
     if (r) this.accoda(r, j, 0);
     this.dannoTotale += danno;
     suona('colpo');
-    this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno, o.elite[j] === 1 || o.tipo[j] === ID_MIETITORE);
+    if (o.elite[j] || o.tipo[j] === ID_MIETITORE) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno);
+    else this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno);
   }
 
   // ——— Colpi istantanei ———

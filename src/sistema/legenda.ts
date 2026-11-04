@@ -52,7 +52,7 @@ export class Legenda {
     chiudi.textContent = 'Chiudi';
     this.radice.replaceChildren(
       titolo('Stati'),
-      nota('Le armi a volte lasciano un simbolo sopra il nemico.'),
+      nota('Le armi a volte lasciano uno stato sul nemico. Sui nemici più grossi si vede il simbolo.'),
       ...AFFINITA_TUTTE.map((a) => {
         const i = INFO_AFFINITA[a];
         return voce([simbolo(i.simbolo)], i.stato, i.colore, `(${i.nome}): ${i.effetto()}`);

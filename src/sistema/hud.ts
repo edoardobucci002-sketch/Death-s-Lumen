@@ -1,12 +1,12 @@
 /*
  * Interfaccia in partita (HTML sopra il gioco), con gli elementi disegnati da Edoardo (cartella HUD/), a pixel interi.
- * In alto: stemma del livello, barra dell'esperienza, orologio, anime, caselle di armi e doni, barra del Mietitore.
- * Al centro: avvisi nel nastro. In basso a destra: pausa. Poi le schermate di pausa e di fine partita.
+ * In alto: stemma del livello, barra dell'esperienza, anime e orologio a destra, caselle di armi e doni, barra del Mietitore,
+ * e sotto gli avvisi nel nastro. In basso a destra: pausa. Poi le schermate di pausa e di fine partita.
  * La disposizione è quella della bozza (bozza-hud.html), verificata su sette telefoni: se cambia qui, cambia anche là.
  * La barra della salute è nel gioco, sotto il personaggio; l'abilità speciale in basso a sinistra (speciale.ts).
  */
-import { CASELLA, FINESTRE, INTERNI, TESTI } from '../data/hud';
-import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn, type MisureHud } from './arte';
+import { AVVISO, CASELLA, FINESTRE, INTERNI, OROLOGIO, TESTI } from '../data/hud';
+import { adattaZoom, arte, bordiHud, immagine, ingr, mascheraRetino, misura, misureHud, posa, retino, scriviIn, type MisureHud } from './arte';
 import { audioAttivo, impostaAudio } from './audio';
 import { impostaVibrazione, vibrazione } from './mobile';
 import { scalaScritta, scritta, scriviNel } from './scritte';
@@ -43,7 +43,6 @@ export interface AzioniHud {
   legenda(): void; // dalla pausa: spiega stati e reazioni
 }
 
-const DURATA_AVVISO = 2400; // millisecondi
 const ALTEZZA_OROLOGIO = 24; // pixel di gioco per ogni volta dell'ingrandimento delle barre (testo da 16 più il respiro)
 const PER_FILA = 6; // caselle per fila: 6 armi, poi 6 doni
 const MAX_SCRITTA_PULSANTI = 3; // pixel di gioco per pixel della lettera nei pulsanti: come i pixel del pulsante (×3)
@@ -129,6 +128,10 @@ export class Hud {
   private ultimeAnime = -1;
   private ultimoBoss = -2;
   private timerAvviso = 0;
+  private passoAvviso = 0;
+  private inizioAvviso = 0;
+  private altezzaPersonaggio = 0; // pixel di gioco dai piedi (a metà schermo) alla testa
+  private lamaAvviso = 1; // pixel dello schermo per quadretto del retino
   private attesa = 0;
 
   constructor(contenitore: HTMLElement, private azioni: AzioniHud) {
@@ -244,14 +247,46 @@ export class Hud {
     this.disponi();
   }
 
-  /** Scritta nel nastro a centro schermo, che sparisce da sola; «sotto» è una riga in più sotto il nastro. */
+  /** L'avviso non deve mai scendere sulla testa del personaggio: serve sapere quanto è alto. */
+  impostaPersonaggio(altezza: number): void {
+    this.altezzaPersonaggio = altezza;
+    this.disponi();
+  }
+
+  /** Scritta nel nastro in alto, che sparisce da sola a retino; «sotto» è una riga in più sotto il nastro. */
   avviso(testo: string, sotto = ''): void {
     scritta(this.avvisoEl.children[1], testo);
     scritta(this.avvisoEl.children[2], sotto);
     this.avvisoEl.hidden = false;
+    this.mascheraAvviso('');
+    this.passoAvviso = 0;
     this.disponi();
     clearTimeout(this.timerAvviso);
-    this.timerAvviso = window.setTimeout(() => (this.avvisoEl.hidden = true), DURATA_AVVISO);
+    this.inizioAvviso = performance.now();
+    this.prossimoGradino();
+  }
+
+  /** Un gradino della dissolvenza a retino; dopo l'ultimo l'avviso sparisce. */
+  private sfumaAvviso = (): void => {
+    const passi = Math.max(1, Math.round(AVVISO.passi));
+    if (++this.passoAvviso > passi) {
+      this.avvisoEl.hidden = true;
+      this.mascheraAvviso('');
+      return;
+    }
+    this.mascheraAvviso(mascheraRetino(Math.round(16 * (1 - this.passoAvviso / (passi + 1))), this.lamaAvviso));
+    this.prossimoGradino();
+  };
+
+  /** I tempi si contano dall'inizio dell'avviso: così i ritardi del browser non si sommano. */
+  private prossimoGradino(): void {
+    const quando = AVVISO.durata - AVVISO.dissolvenza + (this.passoAvviso * AVVISO.dissolvenza) / Math.max(1, Math.round(AVVISO.passi));
+    this.timerAvviso = window.setTimeout(this.sfumaAvviso, Math.max(0, this.inizioAvviso + quando * 1000 - performance.now()));
+  }
+
+  private mascheraAvviso(url: string): void {
+    const lato = (4 * this.lamaAvviso) / this.m.dpr;
+    Object.assign(this.avvisoEl.style, { maskImage: url ? `url(${url})` : '', webkitMaskImage: url ? `url(${url})` : '', maskSize: `${lato}px`, webkitMaskSize: `${lato}px` });
   }
 
   mostraPausa(build: VoceBuild[]): void {
@@ -327,11 +362,9 @@ export class Hud {
     const me = arte('Barra_Esperienza_Cornice'), ms = arte('Stemma_Livello'), mm = arte('Barra_Mietitore_Cornice');
     if (!me || !ms || !mm) return;
     const ori = W > H;
-    // esperienza al centro in alto, orologio sotto
+    // esperienza al centro in alto
     const ye = b.a;
     this.xp.disponi(Math.round(W / 2 - (me.w * zb) / 2), ye, zb, m);
-    posa(this.orologio, 0, ye + me.h * zb + 2, m);
-    Object.assign(this.orologio.style, { width: `${W * px}px`, fontSize: `${16 * zb * px}px`, lineHeight: `${ALTEZZA_OROLOGIO * zb * px}px` });
     // livello a sinistra, anime a destra
     posa(this.livello, b.s, b.a, m);
     misura(this.livello.firstElementChild as HTMLElement, ms.w, ms.h, zc, m);
@@ -342,6 +375,8 @@ export class Hud {
     Object.assign(this.anime.style, { right: `${b.d * px}px`, top: `${(b.a + 4) * px}px`, fontSize: `${16 * zc * px}px` });
     Object.assign(this.cera.style, { right: `${b.d * px}px`, top: `${(b.a + 4 + 14 * zc) * px}px`, fontSize: `${14 * zc * px}px` });
     Object.assign(this.rosario.style, { right: `${b.d * px}px`, top: `${(b.a + 4 + 26 * zc) * px}px`, fontSize: `${12 * zc * px}px` });
+    // orologio nella stessa colonna: le caselle non ci arrivano mai
+    Object.assign(this.orologio.style, { right: `${b.d * px}px`, top: `${(b.a + OROLOGIO.sopra * zc) * px}px`, fontSize: `${16 * zb * px}px`, lineHeight: `${16 * zb * px}px` });
     // caselle: armi nella prima fila, doni nella seconda
     const yc = b.a + ms.h * zc + 4, passo = (CASELLA.lato + CASELLA.spazio) * zc;
     let file = 0;
@@ -361,16 +396,20 @@ export class Hud {
     // avviso nel nastro: in alto, sotto barre e caselle, per non coprire il personaggio
     const an = arte('Nastro_Titolo');
     if (an) {
-      const xa = Math.round(W / 2 - (an.w * za) / 2), ya = y;
+      const z = Math.max(AVVISO.minimo, Math.round(za * AVVISO.scala)); // numero intero: il disegno non si deforma
+      const xa = Math.round(W / 2 - (an.w * z) / 2);
+      // sotto barre e caselle; se sono troppe sale sopra di loro per non toccare il personaggio (la testa viene prima)
+      const ya = Math.max(b.a, Math.min(y, Math.floor(H / 2) - this.altezzaPersonaggio - AVVISO.margine - (an.h + 3) * z));
+      this.lamaAvviso = Math.max(1, Math.round(z * px * m.dpr));
       posa(this.avvisoEl, xa, ya, m);
-      misura(this.avvisoEl, an.w, an.h, za, m);
-      misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, za, m);
-      scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, za, za, m, TESTI.avviso);
-      // la riga sotto il nastro, larga quanto lo schermo, con l'ombra perché sta sopra il gioco
+      misura(this.avvisoEl, an.w, an.h, z, m);
+      misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, z, m);
+      scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, z, z, m, TESTI.avviso);
+      // la riga subito sotto il nastro, larga quanto lo schermo, con l'ombra perché sta sopra il gioco
       const sotto = this.avvisoEl.children[2] as HTMLElement;
       sotto.style.width = `${W * px}px`;
-      sotto.style.fontSize = `${TESTI.avvisoSotto * za * px}px`;
-      scriviNel(sotto, { x: -xa, y: (an.h - 8) * za, l: W, a: 12 * zb }, 1, 2 * zb, m, TESTI.avvisoSotto * za, OMBRA); // a pixel doppi: a pixel singoli era minuscola
+      sotto.style.fontSize = `${TESTI.avvisoSotto * z * px}px`;
+      scriviNel(sotto, { x: -xa, y: (an.h - 8) * z, l: W, a: 6 * z }, 1, z, m, TESTI.avvisoSotto * z, OMBRA);
     }
     // pausa in basso a destra, con un'area di tocco un po' più grande del disegno (MARGINE_TOCCO, in CSS)
     const ap = arte('Pulsante_Pausa');

@@ -52,6 +52,22 @@ export const SENZA_RADDOPPIO = ['ritratto'];
 /** Area di tocco invisibile attorno a pausa e abilità, in punti per lato: il dito li prende anche appena fuori dal disegno. */
 export const MARGINE_TOCCO = 4;
 
+/**
+ * Avvisi nel cartiglio (Nastro_Titolo), in alto sotto barre e caselle. Valori da rivedere.
+ * scala: parte dell'ingrandimento normale; il risultato si arrotonda a un numero intero per non deformare i pixel del disegno.
+ */
+export const AVVISO = {
+  scala: 0.6,
+  minimo: 2, // ingrandimento più piccolo: a ×1 le lettere sono alte 5 pixel e sul computer non si leggono
+  durata: 1.45, // secondi in tutto, dissolvenza compresa: un filo sotto 1,5 perché il browser può fare tardi di un fotogramma o due
+  dissolvenza: 0.3, // secondi finali in cui sparisce a retino
+  passi: 3, // gradini del retino
+  margine: 6, // pixel di gioco che restano tra l'avviso e la testa del personaggio
+};
+
+/** Orologio: nella colonna di destra, sotto anime, Cera e Rosario, dove le caselle non arrivano mai (da rivedere). */
+export const OROLOGIO = { sopra: 40 }; // dal bordo alto dell'HUD, per ogni volta dell'ingrandimento delle caselle
+
 /** Dove scorre il riempimento dentro ogni cornice di barra (il riempimento ha già queste misure). */
 export const FINESTRE: Record<string, Riquadro> = {
   Barra_Esperienza_Cornice: { x: 21, y: 16, l: 184, a: 5 },

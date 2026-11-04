@@ -240,6 +240,9 @@ export class Gioco extends Phaser.Scene {
       amuleto: (id) => this.commutaAmuleto(id),
       legenda: () => this.legenda.apri(),
     });
+    // altezza vera del personaggio: dalla riga più alta a quella più bassa usate nei fotogrammi
+    const fotogrammi = (this.cache.json.get(this.chiaveSprite) as { frames: { spriteSourceSize: { y: number; h: number } }[] }).frames;
+    this.hud.impostaPersonaggio((Math.max(...fotogrammi.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h)) - Math.min(...fotogrammi.map((f) => f.spriteSourceSize.y))) * this.giocatore.scaleY);
     this.legenda = new Legenda(interfaccia, () => this.unioniSbloccate);
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate }), () => this.legenda.apri(), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
@@ -294,7 +297,7 @@ export class Gioco extends Phaser.Scene {
       this.passo(PASSO);
       this.accumulo -= PASSO_MS;
     }
-    if (!this.fermo()) this.effetti.aggiorna(delta / 1000);
+    if (!this.fermo()) this.effetti.aggiorna(delta / 1000, this.x, this.y - COLPI.corpo);
     this.disegna(delta / 1000);
   }
 
@@ -441,7 +444,8 @@ export class Gioco extends Phaser.Scene {
       this.orda.orda(this.secondi, id, quanti, angolo, this.x, this.y, mezzaL, mezzaA);
       const tenaglia = this.secondi >= ORDE.tenagliaDal;
       if (tenaglia) this.orda.orda(this.secondi, id, quanti, angolo + Math.PI, this.x, this.y, mezzaL, mezzaA);
-      this.hud.avviso(tenaglia ? 'Due orde ti stringono' : "Un'orda marcia verso di te");
+      if (tenaglia) this.hud.avviso('Due orde', 'ti stringono');
+      else this.hud.avviso("Un'orda", 'marcia verso di te');
     }
     if (this.mietitoriArrivati < MIETITORE.minuti.length && this.secondi >= MIETITORE.minuti[this.mietitoriArrivati] * 60) {
       this.orda.nasciMietitore(this.secondi, this.mietitoriArrivati, this.x, this.y, mezzaL, mezzaA);
@@ -567,6 +571,11 @@ export class Gioco extends Phaser.Scene {
 
   labLivelli(): { armi: { arma: Arma; livello: number }[]; doni: Record<IdDono, number> } {
     return { armi: this.arsenale.possedute.map((p) => ({ arma: p.arma, livello: p.livello })), doni: { ...this.passivi } };
+  }
+
+  /** Mostra un avviso nel cartiglio, per provarne posto e durata. */
+  labAvviso(testo: string, sotto: string): void {
+    this.hud.avviso(testo, sotto);
   }
 
   labRosario(on: boolean): void {

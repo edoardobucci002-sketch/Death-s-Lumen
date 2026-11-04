@@ -32,7 +32,7 @@ const CIFRE = [
   '111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001',
   '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111',
 ];
-const TESTI = Array.from({ length: 1000 }, (_, n) => String(n)); // preparati: niente stringhe nuove durante la partita
+const TESTI = Array.from({ length: 10000 }, (_, n) => String(n)); // preparati: niente stringhe nuove durante la partita
 
 export class Effetti {
   private scena: Phaser.Scene;
@@ -43,6 +43,9 @@ export class Effetti {
   private numeroY = new Float32Array(MAX_NUMERI);
   private numeroImportante = new Uint8Array(MAX_NUMERI); // 1 = danno forte, o su élite e Seth
   private numeriAttivi = 0;
+  private numeroId = new Uint32Array(MAX_NUMERI); // il nemico di un numero sommato (0 = numero normale)
+  private numeroSomma = new Float32Array(MAX_NUMERI);
+  private numeroFinestra = new Float32Array(MAX_NUMERI); // secondi in cui il numero sommato accetta altri colpi
   private scoppi: Phaser.GameObjects.Sprite[] = [];
   private scoppioVita = new Float32Array(MAX_SCOPPI);
   private prossimoScoppio = 0;
@@ -55,7 +58,9 @@ export class Effetti {
   private reazioneChiave: string[] = [];
   private etichette: Phaser.GameObjects.Image[] = [];
   private etichettaVita = new Float32Array(MAX_ETICHETTE);
-  private prossimaEtichetta = 0;
+  private etichettaX = new Float32Array(MAX_ETICHETTE);
+  private etichettaY = new Float32Array(MAX_ETICHETTE);
+  private etichetteAttive = 0;
   private pausaEtichetta = new Float32Array(INFO_REAZIONI.length + 1);
   private prossimaReazione = 0;
   private durataReazione = 0.25;
@@ -78,7 +83,7 @@ export class Effetti {
     }
     for (const r of INFO_REAZIONI) {
       const k = `Nome_${r.nome}`;
-      if (!scena.textures.exists(k)) scena.textures.addCanvas(k, telaContorno(r.nome, '#fff4dc', '#120c0a'));
+      if (!scena.textures.exists(k)) scena.textures.addCanvas(k, telaContorno(r.nome, `#${r.coloreNome.toString(16).padStart(6, '0')}`, '#120c0a'));
     }
     for (let i = 0; i < MAX_ETICHETTE; i++) this.etichette.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.barra).setScale(REAZIONI.etichetta.ingrandimento).setVisible(false));
     for (let i = 0; i < MAX_ARCHI; i++) {
@@ -87,21 +92,60 @@ export class Effetti {
     }
   }
 
-  /** Numero del danno che salta fuori da (x, y), se è sullo schermo e c'è posto (suPesante: colpo su élite o Seth). */
-  numero(x: number, y: number, danno: number, suPesante: boolean): void {
+  private sulloSchermo(x: number, y: number): boolean {
     const cam = this.scena.cameras.main;
-    if (x < cam.scrollX || x > cam.scrollX + cam.width || y < cam.scrollY || y > cam.scrollY + cam.height) return;
+    return x >= cam.scrollX && x <= cam.scrollX + cam.width && y >= cam.scrollY && y <= cam.scrollY + cam.height;
+  }
+
+  /** Numero del danno che salta fuori da (x, y), se è sullo schermo e c'è posto. */
+  numero(x: number, y: number, danno: number): void {
+    if (!this.sulloSchermo(x, y)) return;
     const n = Math.max(1, Math.min(999, Math.round(danno)));
-    const importante = suPesante || n >= EFFETTI.numeri.forte;
-    const i = this.postoNumero(importante);
+    const i = this.postoNumero(n >= EFFETTI.numeri.forte);
     if (i < 0) return;
-    this.numeroImportante[i] = importante ? 1 : 0;
+    this.numeroImportante[i] = n >= EFFETTI.numeri.forte ? 1 : 0;
+    this.numeroId[i] = 0;
+    this.numeroFinestra[i] = 0;
     this.numeroX[i] = x + (this.caso.numero() * 2 - 1) * EFFETTI.numeri.sparpaglio;
     this.numeroY[i] = y;
     this.numeroVita[i] = EFFETTI.numeri.durata;
     const t = this.numeri[i].setText(TESTI[n]).setVisible(true);
     if (n >= EFFETTI.numeri.forte) t.setTint(EFFETTI.numeri.coloreForte);
     else t.clearTint();
+  }
+
+  /** Colpo su un'élite o su Seth (id = il suo numero unico; y = la cima dello sprite): si somma nel suo numero aperto, o ne apre uno. */
+  sommaDanno(id: number, x: number, y: number, danno: number): void {
+    if (!this.sulloSchermo(x, y)) return;
+    let i = -1;
+    for (let k = 0; k < MAX_NUMERI; k++) {
+      if (this.numeroId[k] === id && this.numeroFinestra[k] > 0 && this.numeroVita[k] > 0) i = k;
+    }
+    if (i < 0) {
+      i = this.postoNumero(true);
+      if (i < 0) return;
+      this.numeroImportante[i] = 1;
+      this.numeroId[i] = id;
+      this.numeroSomma[i] = 0;
+      this.numeroFinestra[i] = EFFETTI.numeri.somma.finestra;
+      this.numeroX[i] = x;
+      this.numeroY[i] = y - EFFETTI.numeri.somma.sopra;
+    }
+    this.numeroSomma[i] += danno;
+    this.numeroVita[i] = EFFETTI.numeri.durata; // finché si somma resta fermo sopra la testa; sale quando la finestra si chiude
+    const n = Math.max(1, Math.min(TESTI.length - 1, Math.round(this.numeroSomma[i])));
+    const t = this.numeri[i].setText(TESTI[n]).setVisible(true);
+    if (n >= EFFETTI.numeri.forte) t.setTint(EFFETTI.numeri.coloreForte);
+    else t.clearTint();
+  }
+
+  /** Porta il numero sommato del nemico id sopra la cima del suo sprite, che è in (x, y). */
+  seguiSomma(id: number, x: number, y: number): void {
+    for (let i = 0; i < MAX_NUMERI; i++) {
+      if (this.numeroId[i] !== id || this.numeroVita[i] <= 0) continue;
+      this.numeroX[i] = x;
+      this.numeroY[i] = y - EFFETTI.numeri.somma.sopra;
+    }
   }
 
   /** Un posto libero entro il limite; al limite un numero importante prende il posto del comune più vecchio; −1 se non c'è posto. */
@@ -154,14 +198,31 @@ export class Effetti {
     this.reazioni[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setVisible(true);
   }
 
-  /** Il nome della reazione (1 = Eclissi, come in orda.ts) sale sopra il punto (x, y). */
+  /** Il nome della reazione (1 = Eclissi, come in orda.ts) sale sopra il punto (x, y); oltre il limite non si crea. */
   etichetta(reazione: number, x: number, y: number): void {
-    if (this.pausaEtichetta[reazione] > 0) return;
+    if (this.pausaEtichetta[reazione] > 0 || this.etichetteAttive >= Math.min(REAZIONI.etichetta.massimi, MAX_ETICHETTE)) return;
+    let i = 0;
+    while (i < MAX_ETICHETTE - 1 && this.etichettaVita[i] > 0) i++;
     this.pausaEtichetta[reazione] = REAZIONI.etichetta.pausa;
-    const i = this.prossimaEtichetta;
-    this.prossimaEtichetta = (i + 1) % MAX_ETICHETTE;
+    this.etichetteAttive++;
     this.etichettaVita[i] = REAZIONI.etichetta.durata;
-    this.etichette[i].setTexture(`Nome_${INFO_REAZIONI[reazione - 1].nome}`).setScale(REAZIONI.etichetta.ingrandimento).setPosition(Math.round(x), Math.round(y)).setVisible(true);
+    this.etichettaX[i] = x;
+    this.etichettaY[i] = y;
+    this.etichette[i].setTexture(`Nome_${INFO_REAZIONI[reazione - 1].nome}`).setScale(REAZIONI.etichetta.ingrandimento).setVisible(false);
+  }
+
+  /** Mette il nome al suo posto: sale, resta fuori dal cerchio intorno al personaggio (sopra di esso) e dentro lo schermo. */
+  private posaEtichetta(i: number, gx: number, gy: number): void {
+    const e = REAZIONI.etichetta, im = this.etichette[i], cam = this.scena.cameras.main;
+    const x = this.etichettaX[i];
+    let y = this.etichettaY[i] - e.sale * (1 - this.etichettaVita[i] / e.durata);
+    const dx = x - gx, dy = y - gy;
+    if (dx * dx + dy * dy < e.lontano * e.lontano) y = gy - Math.sqrt(e.lontano * e.lontano - dx * dx) - im.displayHeight / 2;
+    const mezzaL = im.displayWidth / 2, mezzaA = im.displayHeight / 2;
+    im.setPosition(
+      Math.round(Math.max(cam.scrollX + mezzaL, Math.min(cam.scrollX + cam.width - mezzaL, x))),
+      Math.round(Math.max(cam.scrollY + mezzaA, Math.min(cam.scrollY + cam.height - mezzaA, y))),
+    ).setVisible(true);
   }
 
   /** Scuote lo schermo; resta la scossa più forte tra quelle in corso. */
@@ -170,8 +231,8 @@ export class Effetti {
     this.scossa = Math.max(this.scossa, durata);
   }
 
-  /** Avanza gli effetti (si chiama al disegno: sono solo da vedere). */
-  aggiorna(dt: number): void {
+  /** Avanza gli effetti (si chiama al disegno: sono solo da vedere); (gx, gy) è il centro del personaggio. */
+  aggiorna(dt: number, gx: number, gy: number): void {
     for (let i = 0; i < MAX_NUMERI; i++) {
       if (this.numeroVita[i] <= 0) continue;
       this.numeroVita[i] -= dt;
@@ -179,8 +240,10 @@ export class Effetti {
       if (this.numeroVita[i] <= 0) {
         t.setVisible(false);
         this.numeriAttivi--;
+        this.numeroId[i] = 0;
         continue;
       }
+      if (this.numeroFinestra[i] > 0) this.numeroFinestra[i] -= dt;
       // sale in fretta e rallenta
       const fatto = 1 - this.numeroVita[i] / EFFETTI.numeri.durata;
       const su = EFFETTI.numeri.salita * (1 - (1 - fatto) * (1 - fatto));
@@ -200,8 +263,10 @@ export class Effetti {
     for (let i = 0; i < MAX_ETICHETTE; i++) {
       if (this.etichettaVita[i] <= 0) continue;
       this.etichettaVita[i] -= dt;
-      if (this.etichettaVita[i] <= 0) this.etichette[i].setVisible(false);
-      else this.etichette[i].setY(Math.round(this.etichette[i].y - (REAZIONI.etichetta.sale / REAZIONI.etichetta.durata) * dt - 1e-6));
+      if (this.etichettaVita[i] <= 0) {
+        this.etichette[i].setVisible(false);
+        this.etichetteAttive--;
+      } else this.posaEtichetta(i, gx, gy);
     }
     for (let i = 0; i < MAX_REAZIONI; i++) {
       if (this.reazioneVita[i] <= 0) continue;

@@ -112,14 +112,24 @@ export function adattaZoom(z: number, ciSta: (k: number) => boolean): number {
   return k;
 }
 
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
 /** Retino scuro (Bayer 4×4) per oscurare il gioco dietro pausa, doni e fine: niente trasparenze. */
 export function retino(livello: number): string {
-  const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   const c = document.createElement('canvas');
   c.width = c.height = 4;
   const g = c.getContext('2d')!;
   g.fillStyle = '#050403';
-  B.forEach((b, i) => { if (b < livello) g.fillRect(i % 4, i >> 2, 1, 1); });
+  BAYER.forEach((b, i) => { if (b < livello) g.fillRect(i % 4, i >> 2, 1, 1); });
+  return c.toDataURL();
+}
+
+/** Maschera a retino (Bayer 4×4) per le dissolvenze: restano visibili i pixel con valore sotto livello (0-16); cella = pixel dello schermo per quadretto. */
+export function mascheraRetino(livello: number, cella: number): string {
+  const c = document.createElement('canvas');
+  c.width = c.height = 4 * cella;
+  const g = c.getContext('2d')!;
+  BAYER.forEach((b, i) => { if (b < livello) g.fillRect((i % 4) * cella, (i >> 2) * cella, cella, cella); });
   return c.toDataURL();
 }
 
