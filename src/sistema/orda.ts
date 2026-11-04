@@ -18,6 +18,7 @@ import type { Minacce } from './minacce';
 import { COMPARSA, DIFFICOLTA, ELITE, IA, MIETITORE, NEMICI, ORDE, SCIAMI, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { REAZIONI, STATI } from '../data/stati';
+import { Simboli } from './simboli';
 import { COLPI } from '../data/armi';
 
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici, alle orde e alla chiamata dei morti. */
@@ -34,11 +35,11 @@ const MAX_BRANCHI = 4; // orde in campo insieme
 export const [LUCE, SACRO, OMBRA, TERRA] = [1, 2, 3, 4];
 /** Reazioni, come le restituisce marca (0 = nessuna). */
 export const [ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO] = [1, 2, 3, 4];
-const COLORE_STATO = [0, STATI.abbagliato.colore, STATI.consacrato.colore, STATI.maledetto.colore, STATI.sepolto.colore];
 
 interface AspettoNemico {
   ingrandimento: number;
   piedi: number; // origine verticale (0-1) all'altezza dei piedi
+  testa: number; // pixel di gioco dai piedi alla cima dello sprite
 }
 
 export class Orda {
@@ -100,6 +101,7 @@ export class Orda {
   private versoSinistra = new Uint8Array(CAPIENZA);
   private sprite: Phaser.GameObjects.Sprite[] = [];
   private aspetto: AspettoNemico[];
+  private simboli: Simboli;
   private daFare = 0; // comparse accumulate (frazioni di nemico)
   private prossimoId = 1;
   // usati dentro la separazione, per non creare funzioni nel ciclo di gioco
@@ -119,11 +121,14 @@ export class Orda {
       // i piedi sono la riga più bassa usata in tutti i fotogrammi (negli sprite V0 non è il bordo della tela)
       const dati = scena.cache.json.get(t.sprite) as { frames: { spriteSourceSize: { y: number; h: number }; sourceSize: { h: number } }[] };
       const fondo = Math.max(...dati.frames.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h));
-      return { ingrandimento: ingrandimento(scena, t.sprite), piedi: fondo / dati.frames[0].sourceSize.h };
+      const cima = Math.min(...dati.frames.map((f) => f.spriteSourceSize.y));
+      const ing = ingrandimento(scena, t.sprite);
+      return { ingrandimento: ing, piedi: fondo / dati.frames[0].sourceSize.h, testa: (fondo - cima) * ing };
     });
     for (let i = 0; i < CAPIENZA; i++) {
       this.sprite.push(scena.add.sprite(0, 0, NEMICI[0].sprite).setVisible(false).setActive(false));
     }
+    this.simboli = new Simboli(scena);
   }
 
   /**
@@ -444,6 +449,7 @@ export class Orda {
     const sy = cam.scrollY - margine;
     const ex = cam.scrollX + cam.width + margine;
     const ey = cam.scrollY + cam.height + margine * 2;
+    this.simboli.inizio();
     for (let i = 0; i < this.numero; i++) {
       const s = this.sprite[i];
       const x = Math.round(this.x[i]);
@@ -455,14 +461,16 @@ export class Orda {
       if (this.lampo[i] > 0 || (this.fase[i] === 1 && Math.floor(this.faseTempo[i] * 10) % 2 === 0)) {
         // colpito: bianco; il Mietitore che sta per scattare pulsa di rosso
         s.setTint(this.lampo[i] > 0 ? 0xffffff : 0xc2412d).setTintMode(Phaser.TintModes.FILL);
-      } else if (this.ultimoStato[i] && Math.floor(this.tempo * STATI.lampi * 2) % 2 === 0) {
-        s.setTint(COLORE_STATO[this.ultimoStato[i]]).setTintMode(Phaser.TintModes.FILL); // lo stato lampeggia del suo colore pieno
       } else if (this.elite[i]) {
         s.setTint(ELITE.alone).setTintMode(Phaser.TintModes.ADD);
       } else if (s.tintMode !== Phaser.TintModes.MULTIPLY) {
         s.clearTint();
       }
+      // lo stato si legge dal simbolo sopra la testa; l'Interramento è la lapide, come Sepolto
+      const stato = this.ultimoStato[i] || (this.sInterrato[i] > 0 ? TERRA : 0);
+      if (stato) this.simboli.mostra(stato, x, y - this.aspetto[this.tipo[i]].testa);
     }
+    this.simboli.fine();
   }
 
   private nasci(secondi: number, gx: number, gy: number, dirX: number, dirY: number, mezzaL: number, mezzaA: number, tipoScelto = -1): number {

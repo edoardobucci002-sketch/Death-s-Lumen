@@ -358,7 +358,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 
 ## 8c. Affinità, stati e reazioni (M8, `src/data/stati.ts`)
 
-Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Il nemico lampeggia del colore dello stato (4 volte al secondo, per distinguerlo dall'alone fisso delle élite).
+Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa del nemico compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole ambra, croce oro, teschio viola, lapide seppia (la lapide resta anche durante l'Interramento). Niente cambi di colore né intermittenza; al massimo 200 simboli sullo schermo.
 
 | Affinità | Armi e abilità | Stato | Effetto |
 | --- | --- | --- | --- |

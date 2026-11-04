@@ -20,7 +20,7 @@ export const AFFINITA_ABILITA: Record<IdAbilita, IdAffinita> = {
   cerchioDiLuce: 'luce', benedizione: 'sacro', ritoProibito: 'ombra', sepoltura: 'terra',
 };
 
-/** Gli stati: durano STATI.durata secondi (tranne Sepolto); il colore è quello del personaggio dell'affinità e tinge tutto il nemico a lampi (pieno, non sfumato: si vede anche sui fantasmi bianchi). */
+/** Gli stati: durano STATI.durata secondi (tranne Sepolto); si leggono da un simbolo sopra la testa del nemico, del colore del personaggio dell'affinità. */
 export const STATI = {
   durata: 3,
   // un colpo lascia lo stato solo con questa probabilità: con ogni colpo le reazioni erano circa 2000 al minuto
@@ -30,7 +30,7 @@ export const STATI = {
   consacrato: { lento: 0.25, colore: 0xdcc07a }, // Sacro: va più lento del 25% (oro della Badessa)
   maledetto: { perSecondo: 0.02, colore: 0xa57ae0 }, // Ombra: perde il 2% della salute massima al secondo (viola della Strega)
   sepolto: { fermo: 0.6, pausa: 4, colore: 0xb89a74 }, // Terra: fermo 0,6 s, poi non può esserlo di nuovo per 4 s (seppia del Becchino)
-  lampi: 4, // il colore lampeggia tante volte al secondo, per distinguerlo dall'alone fisso delle élite
+  simboli: { ingrandimento: 2, distanza: 2, massimi: 200 }, // grandezza (numero intero), pixel sopra la testa, quanti al massimo sullo schermo
   // il Mietitore resiste: stati di Terra (e Interramento) a metà durata, maledizione a un decimo
   mietitore: { fermo: 0.5, maledetto: 0.1 },
   elite: { maledetto: 0.4 }, // le élite perdono il 40% di quello che perde un nemico normale
