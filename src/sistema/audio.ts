@@ -51,6 +51,14 @@ export function preparaAudio(): void {
 }
 
 export function suona(s: Suono): void {
+  try {
+    produci(s);
+  } catch {
+    /* un errore qui fermerebbe tutto il ciclo di gioco: il suono è solo un di più */
+  }
+}
+
+function produci(s: Suono): void {
   if (!attivo || !ctx || !uscita || ctx.state !== 'running') return;
   const t = ctx.currentTime;
   if (t - (ultimo.get(s) ?? -1) < PAUSA_MINIMA[s]) return;
