@@ -1,0 +1,79 @@
+# Roadmap
+
+Un solo piano di lavoro, aggiornato a ogni tappa (4 novembre 2026). Ogni tappa finisce con qualcosa che Edoardo può provare, di norma dal Laboratorio sul link di prova (vedi «Verifica» in `CLAUDE.md`). Il dettaglio dei contenuti è nel [GDD](GDD.md), le scelte in [decisioni.md](decisioni.md), i numeri e le simulazioni in [bilanciamento.md](bilanciamento.md).
+
+## Fatto
+
+| Tappa | Cosa | Stato |
+| --- | --- | --- |
+| M0 · Fondamenta | Stack, progetto, export da Aseprite, PWA su GitHub Pages | fatta (30/10) |
+| M1 · Camminare | Joystick e tastiera, telecamera, cimitero, buio e alone di luce, pixel perfect; sprite in gioco V5 con `idle` e `walk` | fatta (2/11) |
+| M2 · La notte arriva | Nemici, comparse, griglia spaziale, danno da contatto, morte; 400 nemici a 60 fps | fatta (2/11) |
+| M3 · Combattere | 4 armi iniziali, anime, esperienza, scelta dei doni | fatta (2/11) |
+| M4 · L'arsenale | Armi comuni, doni passivi, 4 abilità speciali | fatta (2/11) |
+| M5 · La notte intera | Élite, sciami, Seth ai minuti 5 e 10, drop, reliquiari, alba e vittoria | fatta (2/11) |
+| M6 · Facciata | Menu con le schede, HUD, pause, fine partita, audio sintetizzato, record | fatta (2/11) |
+| HUD di Edoardo | Barre, stemma, caselle, anello dell'abilità, joystick, pausa, carte, pannelli, salute col cuore: nel gioco su `prova` | fatta (3/11) |
+
+## In corso
+
+| Tappa | Cosa | Stato |
+| --- | --- | --- |
+| M7 · App | Capacitor iOS e Android, icone, avvio, vibrazione, schermo acceso, tasto Indietro | **in prova**: APK costruita da GitHub Actions, provata sul Galaxy S25 di Edoardo; iOS rimandato (manca Xcode) |
+| M8 · Bilanciamento e oggetti | Bot di simulazione, ritocco dei numeri, meta progressione e oggetti della [proposta](proposte/oggetti-build-sinergie.md) | **in corso**, vedi sotto. Obiettivi del bot **provvisori e non vincolanti** (oggi Cappella vuota 21%, completa 52%): si tara alla fine, a contenuti completi ([bilanciamento.md](bilanciamento.md)). Da riprovare a mano |
+
+Parti della M8 già fatte:
+- Tappa 1 · ritocchi agli oggetti esistenti (3/11)
+- Tappa 2 · Fiaschetta di lumen e Grazia (3/11)
+- Tappa 3 · affinità, stati, reazioni e ruoli nuovi delle armi (3/11); stati come simboli sopra la testa, scelta dei doni a strisce, legenda (4/11)
+- Meta di base · Cera, Cappella a elenco con 7 ceri e Seconda candela, personaggi da sbloccare, salvataggio e codice (3/11); Cera a terra (3/11)
+- Tappa 4 · Rosario, 10 amuleti, Peccato (3/11)
+- Tappa 5 · 4 armi e 4 doni nuovi con i loro sblocchi (4/11)
+- Tappa 6 · 10 unioni (4/11)
+- Laboratorio (LAB) sul link di prova (3/11)
+
+## Prossime tappe
+
+L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (vedi «Da confermare»).
+
+1. **Tappa 7 · Patti**: regole scelte nel menu prima della notte, che la rendono più dura e più ricca. Proposti tutti e cinque (Falce, Silenzio, Folla, Buio, Ombra) in [proposte/oggetti-build-sinergie.md](proposte/oggetti-build-sinergie.md); da creare. **Si costruiscono senza tararli**: lo sblocco per ora si raggiunge dal Laboratorio (la scheda LAB nasce insieme ai Patti); la regola di sblocco si decide con il bilanciamento finale. Disegni: 5 icone.
+2. **Cappella come hub**: i personaggi nella navata, la scheda con le statistiche vere, la Cera disegnata, 9 icone dei ceri. Viene **dopo** i Patti. Disegni: la Cappella, l'icona della Cera, le icone dei ceri.
+3. **Devozione e notti diverse**: 8 livelli di Devozione per personaggio; notti che si sbloccano (nebbia, luna piena, notte dei morti), ognuna con un Seth dalle mosse diverse. Dettagli in [proposte/meta-progressione.md](proposte/meta-progressione.md).
+4. **Cero della fiaschetta e questline** con il Ceraiolo (ampolla incrinata → riparata → si riempie battendo Seth). Oggi la fiaschetta c'è dalla prima notte con 3 sorsi. Quando la fiaschetta diventerà uno sblocco, rilanciare la simulazione.
+5. **Veggente e Sguattera**: i due personaggi giocabili previsti. Da decidere con Edoardo: la loro affinità (vedi [lore.md](lore.md), *Aperto*), arma iniziale, abilità, ritratto e sprite, come si sbloccano.
+6. **Redesign dell'intero gioco** (da collocare nell'ordine con Edoardo): HUD, personaggi, animazioni (`attack`, `special`, `hurt`, `death`), effetti, mosse di Seth, hub, nemici V1 alla scala nuova, scheda del personaggio (con statistiche vere), cornici dei ritratti e Pannello scheda.
+7. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
+
+## Idee non ancora decise
+
+- Suoni e musica originali al posto di quelli sintetizzati.
+- Lingua del gioco: solo italiano, oppure anche inglese (il titolo è in inglese).
+- Nemici con uno stile grafico diverso da quello dei personaggi.
+- Torce o lumini sparsi nel cimitero, con un loro alone di luce: oggi l'unica luce è la lanterna e la mappa risulta molto buia (osservazione di Edoardo, 2 novembre).
+
+## Piccole cose da sistemare nel codice (non fatte nel riordino dei documenti)
+
+- Nove commenti in `src/data/` rimandano a `docs/GDD_base.md`: il file ora è `docs/GDD.md`. Si aggiornano alla prossima modifica al codice.
+- Il commento in `src/data/nemici.ts` (riga 92) dice «0,04 × (m − 3)²»; il valore vero è 0,06.
+- Il CSS usa ancora IM Fell English SC per alcuni titoli (`--f-titolo`: avviso, titolo della scelta dei doni, pannelli, nastri); i titoli decisi sono in Tiny5.
+- `@fontsource/pixelify-sans` è ancora tra le dipendenze (lo usa solo la bozza dell'HUD).
+- Disegnare gli asset elencati in [asset_da_creare.md](asset_da_creare.md).
+
+## Da confermare
+
+Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da Claude e non ancora confermati da Edoardo. Quando Edoardo ne conferma una, si toglie da qui e dall'etichetta nel testo.
+
+| Voce | Dove è scritta |
+| --- | --- |
+| Leggibilità nella folla: lampo del nemico (0,033 s, uno ogni 0,3 s, 50% su bruti/élite/Seth) e al massimo 15 numeri del danno; si provano dal LAB | GDD §10 e «Impatto dei colpi»; decisioni 4/11 |
+| Sblocco delle Unioni: «Sopravvivi 10 minuti» o 500 Cera | GDD §8f; bilanciamento 4/11 |
+| Sblocchi di armi e doni nuovi (tappa 5): imprese (10 Eclissi, 30000 anime per il Corvo, 3 minuti nelle nubi per il Velo, 20 schivate perfette) e costi (120 Cera; Campanella con impresa o 120) | GDD §8d |
+| «Reliquie dimenticate» semplificate in acquisti dalla Cappella (nella proposta si trovavano in partita) | GDD §8d; decisioni 4/11 |
+| Rosario: 3 grani di partenza, Peccato ×2, sblocco «Sopravvivi 8 minuti» o 300 Cera, 3 amuleti per reliquiario | GDD §8e; decisioni 3/11 |
+| Patti: valori dei cinque patti e regola di sblocco (decisa con il bilanciamento finale) | tappa 7 qui sopra; proposte |
+| Obiettivi di vittoria del bot per Cappella (provvisori) | bilanciamento |
+| «Capi» come parola generica per i boss nel testo del Fuoco fatuo | decisioni 4/11 |
+| Posto del redesign nell'ordine delle tappe | qui sopra |
+| Ordine delle tappe dopo i Patti (Cappella hub, Devozione e notti, questline, Veggente e Sguattera, redesign): proposto da Claude | «Prossime tappe» qui sopra |
+| Danza macabra: recupero di 3 s, da provare a mano da Edoardo | GDD §8e (amuleti) |
+| Affinità della Veggente e della Sguattera | lore (*Aperto*) |
