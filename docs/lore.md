@@ -22,10 +22,10 @@ Il documento ha tre parti:
 | **La piaga**: il Lumen dei morti non si spegne più e li rialza. Ha diviso la società: chi la sostiene la chiama **il Rinnovo** (far tornare un morto può voler dire riavere una persona amata), chi la combatte **la Ricaduta**. Va debellata. I due nomi non compaiono nell'interfaccia delle prime notti. | più avanti («Rinnovo» e «Ricaduta»; da descrizioni e dialoghi) |
 | **Le anime sono Lumen liberato** dai rinnovati abbattuti: farle proprie fa crescere (i livelli) e lascia riposare quei morti. All'inizio è un gesto puro. | subito (come gesto puro) |
 | **Il Ceraiolo**: custode della Cappella, personaggio guida non giocabile, una specie di tutorial raccontato dentro il gioco. Fa le candele con la Cera che si riporta dalle veglie ed è lui a riparare l'ampolla della fiaschetta. | più avanti (con la Cappella come hub) |
-| **La Fiaschetta di Lumen**: oggi c'è dalla prima notte con 3 sorsi; diventerà un oggetto da sbloccare dopo qualche notte, con una questline. | più avanti (la questline) |
+| **La Fiaschetta di Lumen**: un'ampolla con dei sorsi di Lumen; è il Ceraiolo a ripararla. | più avanti (la questline) |
 | **Le altre aberrazioni** (animali, mostri…) sono un miscuglio di Lumen e sentimenti contrastanti che ha dato vita a mostruosità. | più avanti |
 | **Chi sostiene il Rinnovo** tiene in piedi i propri cari con il Lumen dei vivi. Si cita qualche volta, solo in dialoghi e descrizioni: è ambiguo ma mostrato con tenerezza, l'ingenuità dei vivi davanti ai propri morti. Nessuna delle due parti ha del tutto torto. | più avanti |
-| **I quattro personaggi giocabili oggi** hanno posizioni diverse nel conflitto: il Lampionaio accompagna i morti a spegnersi; il Becchino forse ha visto tornare un caro; la Badessa è combattuta perché la sua fede promette un ritorno; la Strega forse sa come è cominciato il Rinnovo. | più avanti (la loro storia si riprende più avanti) |
+| **I quattro personaggi** hanno posizioni diverse nel conflitto: il Lampionaio accompagna i morti a spegnersi; il Becchino forse ha visto tornare un caro; la Badessa è combattuta perché la sua fede promette un ritorno; la Strega forse sa come è cominciato il Rinnovo. | più avanti (la loro storia si riprende più avanti) |
 
 ## Direzione
 

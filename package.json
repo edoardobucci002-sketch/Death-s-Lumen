@@ -13,6 +13,7 @@
     "icone": "node tools/icone.mjs",
     "prova": "node tools/prova.mjs",
     "sim": "npm run build && node tools/sim.mjs",
+    "controlla-gdd": "node tools/controlla-gdd.mjs",
     "app": "npm run build && cap sync",
     "ios": "npm run app && cap open ios",
     "android": "npm run app && cap open android"

@@ -8,12 +8,16 @@ Il bot gioca dentro il gioco vero (`npm run sim`, vedi [LEGGIMI.md](../LEGGIMI.m
 
 Decisione di Edoardo (4/11): gli obiettivi della tabella sono **provvisori**. Non si ritocca nessun contenuto per inseguirli finché i contenuti del gioco non sono completi; il bilanciamento vero si fa alla fine, con tutti i contenuti. Le simulazioni servono intanto a vedere dove siamo.
 
-| Cappella (`meta=`) | Corrisponde a | Vittorie del bot |
+| Cappella (`meta=`) | Cosa simula il bot | Vittorie del bot |
 | --- | --- | --- |
-| vuota (`0`) | prime notti | 5–15% |
-| a metà (`meta`) | circa 60 notti | 30–45% |
-| completa (`max`) | 120–150 notti | 60–75% |
-| completa + 3 patti | sfida finale | 10–25% (quando i Patti esisteranno) |
+| vuota (`0`) | nessun cero | 5–15% |
+| a metà (`meta`) | livello 3 di ogni cero | 30–45% |
+| completa (`max`) | tutti i ceri al massimo e la Seconda candela | 60–75% |
+| completa + 3 patti | come «completa», con 3 Patti attivi (quando i Patti esisteranno) | 10–25% |
+
+Quante notti servono per completare la Cappella è una domanda aperta: si decide con il bilanciamento finale, a contenuti completi.
+
+**Il campione.** Con 48 notti per condizione l'incertezza è di circa ±12 punti: differenze più piccole sono rumore. Per il bilanciamento finale servono almeno 200 notti per condizione (circa 50 per personaggio).
 
 **Restano vincolanti, in tutte le condizioni, solo due cose:** Seth del minuto 5 è il primo vero ostacolo; nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota.
 
