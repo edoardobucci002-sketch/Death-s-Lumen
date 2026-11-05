@@ -575,7 +575,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - nel link, chiudere la scheda fa perdere la partita (vedi la tappa «Salvataggio della partita in corso» in [roadmap.md](roadmap.md)).
 - **Audio** (sintetizzato dal codice): colpo, sparo, anima con tono che sale nelle serie, danno subito, campana, livello, reliquiario, Seth, cura, speciale. Da sostituire con suoni veri (vedi [roadmap.md](roadmap.md)).
 - **In partita** (computer e tablet; sul telefono vedi sopra): HUD in alto con livello, orologio, anime, Cera, Rosario, icone di armi e doni con il livello, barra di Seth; avvisi «Lo sciame» (ti circonda), «Seth» (il Rinnovato è venuto per te), «Reliquiario» (…); pausa con il pulsante in basso a destra, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni; 1-2-3-4 scelgono la striscia del dono; F beve dalla fiaschetta; Spazio usa l'abilità.
-- **Pausa e scelte**: il pulsante della pausa resta visibile e premibile sopra lo strato delle carte; la pausa si apre sopra la scelta di doni e reliquiari e chiudendola si ritrova la stessa scelta, con le stesse carte. Fiaschetta, abilità e pausa rispondono anche a un secondo dito, mentre l'altro tiene il joystick.
+- **Pausa e scelte**: sul telefono in verticale le scelte di doni e reliquiari stanno dentro il campo e non sbordano sulle fasce. Il pulsante della pausa resta visibile e premibile sopra lo strato delle carte; la pausa si apre sopra la scelta di doni e reliquiari e chiudendola si ritrova la stessa scelta, con le stesse carte. Fiaschetta, abilità e pausa rispondono anche a un secondo dito, mentre l'altro tiene il joystick.
 - **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, sul telefono anche anime, Cera e Rosario, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.
 
 ### Mondo, luce e comandi (`src/data/mondo.ts`)
@@ -588,6 +588,8 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Buio massimo | 88% dei pixel | nel buio più fitto il terreno si intravede ancora |
 | Centro della luce | 42 px sopra i piedi | |
 | Tremolio della fiamma | ±7 px ogni 0,12 s | |
+| Frequenza dello schermo | la logica fa sempre 60 passi al secondo, il disegno segue lo schermo | nessun limite ai fotogrammi: a 60, 90 e 120 Hz la notte è identica (`npm run prova`) |
+| Prova prestazioni | minuto 14, 400 nemici, lanterna in vista, 6 armi al livello 8, 60 s; la notte si ferma a 14:30 | `PRESTAZIONI`; obiettivo sul telefono minimo: media 60 fps, peggiore mai sotto 45 (*da rivedere*) |
 | Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |
 | Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito; sul telefono in verticale base da 56 pixel disegnati, opacità 50% quando copre un pulsante (*da rivedere*) |
 

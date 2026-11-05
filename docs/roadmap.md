@@ -52,8 +52,9 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
 5. **Cero della fiaschetta e questline** con il Ceraiolo (ampolla incrinata → riparata → si riempie battendo Seth). Oggi la fiaschetta c'è dalla prima notte con 3 sorsi. Quando la fiaschetta diventerà uno sblocco, rilanciare la simulazione.
 6. **Veggente e Sguattera**: i due personaggi giocabili previsti. Da decidere con Edoardo: la loro affinità (vedi [lore.md](lore.md), *Aperto*), arma iniziale, abilità, ritratto e sprite, come si sbloccano.
 7. **Redesign dell'intero gioco** (da collocare nell'ordine con Edoardo): HUD, personaggi, animazioni (`attack`, `special`, `hurt`, `death`), effetti, mosse di Seth, hub, nemici V1 alla scala nuova, scheda del personaggio (con statistiche vere), cornici dei ritratti e Pannello scheda.
-8. **Prestazioni su un telefono di fascia bassa** (senza data): Edoardo decide il telefono minimo; prova a fine notte con fori nel buio e picchi da circa 200 ms da spiegare (visti in emulazione, mai sul S25).
-9. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
+8. **Prove sui telefoni degli amici con Prova prestazioni** (senza data): telefono minimo MediaTek Helio G99 con Mali-G57 MC2 e 4 GB (Galaxy A16 4G, Redmi Note 14 4G); almeno tre famiglie di processore grafico: Mali, Adreno, un telefono di 3–4 anni fa; più avanti un iPhone. Se un telefono non regge si riducono solo gli effetti visivi. I picchi da circa 200 ms hanno una causa: la luce si ricostruisce quando un dono la allarga (Stoppino lungo, Lucciola), con le carte aperte; da riguardare su un telefono lento.
+9. **Account sviluppatore Google Play** (da decidere): test interno (aggiornamenti senza Blocco automatico) e rapporto automatico pre-lancio. Firebase Test Lab è escluso: chiude il 30/09/2027.
+10. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
 
 ## Idee non ancora decise
 
@@ -84,7 +85,8 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Pausa piccola al centro della fascia bassa, senza area di tocco invisibile (`PAUSA_PICCOLA.margineTocco` 0) | GDD §11; decisioni 5/11 |
 | Tacche (`TACCHE`: lato 4, raggio 31, arco 150°, lampo 0,25 s) e pulsante tondo della fiaschetta composto dalla cornice dell'abilità | GDD §8b e §11 |
 | Area sicura fissata dopo 1,5 s dall'apertura (`AREA_SICURA.assestamento`) | GDD §11 |
-| Telefono minimo: quale telefono di fascia bassa deve reggere il gioco; lo decide Edoardo | «Prossime tappe», Prestazioni |
+| Obiettivo sul telefono minimo: media 60 fps, peggiore mai sotto 45, al minuto 14 con 400 nemici e lanterna in vista | decisioni 5/11 |
+| Prova prestazioni: 60 s di misura, 3 s di avvio, blocchi sopra 100 ms, build con 6 armi al livello 8 (`PRESTAZIONI`) | GDD «Mondo, luce e comandi» |
 | Link pubblico: stessa protezione dalla ricarica in partita del link di prova, quando Edoardo approverà l'unione con `main` | decisioni 5/11 |
 | Link di prova: controllo della versione nuova ogni 120 s (`AGGIORNAMENTI.ogni`) | decisioni 5/11 |
 | Opacità della base del joystick quando copre un pulsante: 50% (`JOYSTICK_PICCOLO.opacitaSuiPulsanti`) | GDD §11 |
