@@ -52,7 +52,7 @@ Misure sul Mac, schermo del S25, stesse schermate. Il Mac non è il telefono: va
 
 - Scheda Schermo, ascolto di Indietro, fasce e controllo del joystick non pesano in modo misurabile.
 - Con lanterne o fuochi in vista il buio si ridisegna per intero a ogni fotogramma per aprirne i fori: 36 ms a fotogramma contro 27 ms senza fori. Senza nulla in vista 25 ms, come prima. Gli aloni pesano circa 3 ms.
-- Il picco da 200 ms capita una volta sola, ai primi fotogrammi della partita.
+- Picchi singoli da circa 200 ms compaiono ogni tanto al minuto 14, più spesso nella prima misura ma non solo (una volta 217 ms a metà prova): causa non trovata.
 - Nella selezione il difetto non si riproduce sul Mac: `main` e `prova` sono uguali e il processore è quasi fermo. Serve la lettura sul S25.
 
 ### 5/11 — Rompibili, seconda prova e luce
