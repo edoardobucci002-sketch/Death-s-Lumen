@@ -553,10 +553,10 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 - **HUD sul telefono in verticale: due fasce fisse fuori dal campo** (misure in `FASCE`, `src/data/hud.ts`, tutte *da rivedere*). Il campo è vero: finisce al bordo delle fasce per la telecamera, la comparsa e il ricollocamento dei nemici e tutte le armi che scelgono bersagli «sullo schermo».
   - altezza calcolata per ogni telefono: area sicura (la più grande tra `env()` e Capacitor, fissata 1,5 s dopo l'apertura, *da rivedere*: le barre di sistema temporanee non spostano niente) + contenuto. Sul Galaxy S25 (area sicura in alto 105 pixel fisici, in basso 0): fascia alta 81 pixel disegnati (324 fisici), fascia bassa 94 (376 fisici), campo 540×820 pixel di gioco. Un pixel disegnato vale 4 pixel fisici;
   - fascia alta: stemma del livello ed esperienza; sotto, la riga dell'orologio e della barra sottile di Seth. Il cartiglio sale fino al bordo e copre il centro della prima riga per la sua durata; la sua scritta resta sempre fuori dall'area sicura (sul S25 parte a 108 fisici) e la riga dell'orologio resta libera;
-  - fascia bassa: fiaschetta nell'angolo a sinistra e abilità nell'angolo a destra, scambiabili dal LAB, con cornice rotonda uguale; l'abilità tiene l'anello continuo della ricarica e, con più cariche (Ceri gemelli), anche una tacca per carica; pausa piccola al centro, senza area di tocco invisibile (*da rivedere*). Il joystick può nascere anche nella fascia bassa: oggi tra i pulsanti restano 160 fisici e la base ne misura 224, quindi la base sale sopra la riga (*da rivedere*);
+  - fascia bassa: fiaschetta nell'angolo a sinistra e abilità nell'angolo a destra, scambiabili dal LAB, con cornice rotonda uguale; l'abilità tiene l'anello continuo della ricarica e, con più cariche (Ceri gemelli), anche una tacca per carica; pausa piccola al centro, senza area di tocco invisibile (*da rivedere*). Il joystick può nascere anche nella fascia bassa;
   - fuori dall'HUD di partita: anime, Cera, Rosario e griglia degli oggetti, che stanno nella pausa e nella schermata di fine;
   - segnali sul bordo del campo: salute bassa (rosso che pulsa), Peccato (cornice viola a retino), reliquiario fuori vista (freccia al confine con le fasce);
-  - joystick con base più piccola: non nasce mai sopra un pulsante, la base si sposta di quanto basta (sopra la riga dei pulsanti, se di lato non c'è posto) e il centro della direzione resta sotto il dito.
+  - joystick con base più piccola, sempre centrata sotto il dito. Il tocco non inizia mai su un pulsante; se la base copre fiaschetta, pausa o abilità si disegna sopra di loro, mezza trasparente (*da rivedere*), solo finché il dito trascina, e i pulsanti coperti non ricevono il tocco.
 - **HUD su computer, tablet e telefono in orizzontale** (invariato):
   - in alto: barra dell'esperienza, armi e doni con il loro livello, livello e anime; l'orologio sta nella colonna di destra, sotto anime e Cera, dove le caselle non arrivano mai (*da rivedere*);
   - barra del boss quando c'è Seth;
@@ -589,7 +589,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Centro della luce | 42 px sopra i piedi | |
 | Tremolio della fiamma | ±7 px ogni 0,12 s | |
 | Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |
-| Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito; sul telefono in verticale base da 56 pixel disegnati, mai sopra un pulsante (*da rivedere*) |
+| Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito; sul telefono in verticale base da 56 pixel disegnati, opacità 50% quando copre un pulsante (*da rivedere*) |
 
 ### Nemici in campo (`src/data/nemici.ts`)
 
