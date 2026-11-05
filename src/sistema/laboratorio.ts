@@ -6,6 +6,7 @@
  *  · Oggetti: armi, doni e amuleti a qualsiasi livello
  *  · Numeri: tutti i numeri di src/data/ si cambiano al volo (restano finché non li azzeri) e si copiano per Claude
  *  · Schermate: menu, Cappella, pausa, scelta dei doni, reliquiario, fine
+ *  · Schermo: aree sicure, punti, scala e campo con le fasce, letti dal telefono vero
  *  · Salvataggio: Cera, sblocchi, ceri
  * Si apre con il pulsante LAB sul bordo sinistro dello schermo.
  */
@@ -18,6 +19,7 @@ import { AMULETI } from '../data/rosario';
 import { PERSONAGGI } from '../data/personaggi';
 import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
 import { UNIONI } from '../data/unioni';
+import { letturaSchermo } from './lettura-schermo';
 import { carica, salva } from './salvataggio';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
@@ -146,8 +148,8 @@ const STILE = `
 .lab-cerca { width: 100%; min-height: 44px; padding: 6px 10px; border: 1px solid #7a54a4; border-radius: 6px; background: #100a16; color: #fff; font: inherit; user-select: text; }
 `;
 
-type Scheda = 'partita' | 'eventi' | 'oggetti' | 'numeri' | 'schermate' | 'salvataggio';
-const SCHEDE: [Scheda, string][] = [['partita', 'Partita'], ['eventi', 'Eventi'], ['oggetti', 'Oggetti'], ['numeri', 'Numeri'], ['schermate', 'Schermate'], ['salvataggio', 'Salvataggio']];
+type Scheda = 'partita' | 'eventi' | 'oggetti' | 'numeri' | 'schermate' | 'schermo' | 'salvataggio';
+const SCHEDE: [Scheda, string][] = [['partita', 'Partita'], ['eventi', 'Eventi'], ['oggetti', 'Oggetti'], ['numeri', 'Numeri'], ['schermate', 'Schermate'], ['schermo', 'Schermo'], ['salvataggio', 'Salvataggio']];
 
 export function avviaLaboratorio(gioco: Phaser.Game): void {
   applicaSalvati();
@@ -183,7 +185,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const p = partita();
     const s = p?.labStato();
     stato.textContent = s ? `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS` : 'Laboratorio · non sei in partita';
-    corpo.replaceChildren(...({ partita: schedaPartita, eventi: schedaEventi, oggetti: schedaOggetti, numeri: schedaNumeri, schermate: schedaSchermate, salvataggio: schedaSalvataggio })[scheda]());
+    corpo.replaceChildren(...({ partita: schedaPartita, eventi: schedaEventi, oggetti: schedaOggetti, numeri: schedaNumeri, schermate: schedaSchermate, schermo: schedaSchermo, salvataggio: schedaSalvataggio })[scheda]());
   };
   const mostra = (aperto: boolean): void => {
     pannello.hidden = !aperto;
@@ -359,6 +361,28 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         vai('Fine: sconfitta', () => p?.labEvento('morte')),
       ),
       el('p', 'lab-nota', 'Il pannello si chiude da solo per mostrarti la schermata. Riaprilo con LAB.'),
+    ];
+  }
+
+  // ——— Schermo ———
+  function schedaSchermo(): HTMLElement[] {
+    const righe = letturaSchermo();
+    const copia = el('textarea', 'lab-testo');
+    copia.readOnly = true;
+    copia.hidden = true;
+    return [
+      el('p', 'lab-nota', 'Quello che il telefono dichiara adesso. Tienilo in verticale e, nell\'app o nel link in Home, senza barre visibili.'),
+      riga(
+        tasto('Copia le misure per Claude', () => {
+          copia.value = righe.map(([nome, valore]) => (valore ? `${nome}: ${valore}` : `\n${nome}`)).join('\n').trim();
+          copia.hidden = false;
+          copia.select();
+          void navigator.clipboard?.writeText(copia.value).catch(() => {});
+        }),
+        tasto('Aggiorna', ridisegna),
+      ),
+      copia,
+      ...righe.map(([nome, valore]) => (valore ? el('div', 'lab-voce', '', [el('span', '', `${nome}: ${valore}`)]) : titolo(nome))),
     ];
   }
 

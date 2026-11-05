@@ -68,6 +68,20 @@ export const AVVISO = {
 /** Orologio: nella colonna di destra, sotto anime, Cera e Rosario, dove le caselle non arrivano mai (da rivedere). */
 export const OROLOGIO = { sopra: 40 }; // dal bordo alto dell'HUD, per ogni volta dell'ingrandimento delle caselle
 
+/**
+ * Fasce fisse del telefono in verticale, in pixel disegnati (sul Galaxy S25 uno vale 4 pixel fisici). Tutto da rivedere.
+ * Per ora le legge solo il Laboratorio (scheda Schermo): la partita non le usa ancora.
+ */
+export const FASCE = {
+  alta: 80, // 320 fisici sul S25, area sicura compresa
+  bassa: 95, // 380 fisici sul S25, area sicura compresa
+  campoMinimo: 700, // pixel di gioco del campo, in altezza
+  righeAlta: 53, // contenuto: 3 di respiro + 32 stemma + 2 + 16 riga dell'orologio e di Seth
+  righeCartiglio: 78, // cartiglio 59 + 2 + 16 riga dell'orologio + 1 di respiro; può salire fino al bordo dello schermo
+  testoCartiglio: 24, // riga del cartiglio dove inizia la scritta: deve stare sotto il foro della fotocamera
+  righeBassa: 89, // abilità 86 + 3 di respiro
+};
+
 /** Dove scorre il riempimento dentro ogni cornice di barra (il riempimento ha già queste misure). */
 export const FINESTRE: Record<string, Riquadro> = {
   Barra_Esperienza_Cornice: { x: 21, y: 16, l: 184, a: 5 },

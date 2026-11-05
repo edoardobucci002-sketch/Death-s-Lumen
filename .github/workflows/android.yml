@@ -1,14 +1,19 @@
 # Compila l'APK Android a ogni push su main, tranne quelli che toccano solo docs/ (o a mano: Actions → APK Android → Run workflow).
+# Con un'etichetta apk-prova-… (o a mano sul ramo prova) compila l'APK di prova: ha il Laboratorio e un nome di pacchetto suo,
+# così si installa accanto all'app normale e non tocca il suo salvataggio.
 name: APK Android
 on:
   push:
     branches: [main]
     paths-ignore:
       - 'docs/**'
+    tags: ['apk-prova-*']
   workflow_dispatch: {}
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      VITE_CANALE: ${{ (github.ref_name == 'prova' || startsWith(github.ref_name, 'apk-prova-')) && 'prova' || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -21,6 +26,11 @@ jobs:
           java-version: 21
       - run: npm ci
       - run: npm run app
+      - name: Fa dell'APK di prova un'app separata
+        if: env.VITE_CANALE == 'prova'
+        run: |
+          sed -i 's/applicationId "com.deathslumen.game"/applicationId "com.deathslumen.game.prova"/' android/app/build.gradle
+          sed -i -E 's/(<string name="(app_name|title_activity_main)">)[^<]*/\1DL prova/' android/app/src/main/res/values/strings.xml
       - name: Compila l'APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
