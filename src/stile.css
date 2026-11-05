@@ -162,6 +162,8 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
   background: radial-gradient(ellipse at 50% 0%, #1d1712 0%, var(--sfondo) 70%);
 }
 .menu-testata { text-align: center; }
+/* firma delle versioni di prova: nell'angolo, senza intralciare i tocchi */
+.firma { position: fixed; z-index: 10; top: calc(env(safe-area-inset-top) + 2px); left: 4px; font: 12px/1 var(--f-pixel); color: var(--tenue); pointer-events: none; }
 .menu-testata h1 { margin: 0; font: 400 clamp(34px, 9vw, 54px) var(--f-titolo); color: var(--accento); letter-spacing: 1px; }
 .menu-testata p { margin: 2px 0 0; font: italic 17px var(--f-corsivo); color: var(--tenue); }
 .menu-nomi { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }

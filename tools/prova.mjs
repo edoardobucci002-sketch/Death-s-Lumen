@@ -426,6 +426,18 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
+// la firma della versione esiste solo nelle versioni di prova: questa build è quella normale
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });
+  const pag = await ctx.newPage();
+  await pag.goto(url);
+  await pag.waitForSelector('.menu', { timeout: 15000 }).catch(() => {});
+  const ok = !(await pag.$('.firma'));
+  if (!ok) falliti++;
+  console.log(`${ok ? '✓' : '✗'} nessuna firma nella versione normale`);
+  await ctx.close();
+}
+
 // le barre di sistema temporanee non spostano niente: area sicura e altezza della finestra cambiano, le fasce no
 {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });

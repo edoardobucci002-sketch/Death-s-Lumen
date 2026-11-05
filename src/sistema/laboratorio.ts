@@ -20,6 +20,7 @@ import { PERSONAGGI } from '../data/personaggi';
 import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
 import { UNIONI } from '../data/unioni';
 import { accendiContatore, contatoreAcceso, riprendiContatore } from './contatore';
+import { FIRMA } from './firma';
 import { letturaSchermo } from './lettura-schermo';
 import { carica, salva } from './salvataggio';
 import * as abilita from '../data/abilita';
@@ -134,6 +135,7 @@ const STILE = `
 .lab * { box-sizing: border-box; }
 .lab-testa { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: #2b1a3a; }
 .lab-testa b { flex: 1; font-size: 14px; }
+.lab-firma { flex: none; font: 11px/1.2 ui-monospace, monospace; color: #c9b0ee; }
 .lab-schede { display: flex; gap: 4px; padding: 6px 8px; overflow-x: auto; background: #231630; flex: none; }
 .lab-scheda { flex: none; min-height: 40px; padding: 6px 12px; border: 1px solid #5a3a78; border-radius: 6px; background: #1a1220; color: inherit; font: inherit; cursor: pointer; }
 .lab-scheda[aria-selected="true"] { background: #a57ae0; color: #1a1220; font-weight: 700; }
@@ -176,7 +178,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   const corpo = el('div', 'lab-corpo');
   const stato = el('b', '', 'Laboratorio');
   const chiudi = tasto('Chiudi', () => mostra(false), 'piccolo');
-  pannello.append(el('div', 'lab-testa', '', [stato, chiudi]), schede, corpo);
+  pannello.append(el('div', 'lab-testa', '', [stato, el('span', 'lab-firma', FIRMA), chiudi]), schede, corpo);
   document.head.append(stile);
   document.body.append(apri, pannello);
   // i tocchi sul pannello non devono muovere il joystick o far partire l'abilità

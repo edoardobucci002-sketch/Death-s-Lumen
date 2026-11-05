@@ -81,5 +81,5 @@ La CLI di Aseprite su Mac è in `/Applications/Aseprite.app/Contents/MacOS/asepr
 ## Telefono
 
 - **Web:** ogni push su `main` o su `prova` ripubblica i due link (un paio di minuti); i push su `main` che toccano solo `docs/` non ripubblicano nulla e non ricompilano l'APK. Aprili in Safari o Chrome e aggiungili alla schermata Home.
-- **APK Android:** GitHub → Actions → «APK Android» → scarica l'artefatto. L'APK di prova (con il Laboratorio, si chiama «DL prova» e si installa accanto all'app normale) parte con un'etichetta `apk-prova-…` o a mano sul ramo `prova`.
+- **APK Android:** GitHub → Actions → «APK Android» → scarica l'artefatto. L'APK di prova «DL prova» (con il Laboratorio, si installa accanto all'app normale) si compila a ogni push su `prova` e si scarica da https://github.com/edoardobucci002-sketch/Death-s-Lumen/releases/download/apk-prova/dl-prova.apk.
 - **iPhone:** `npm run ios`, poi in Xcode scegli il tuo Team in *Signing & Capabilities* e premi ▶︎ con l'iPhone collegato (iOS per ora rimandato: manca Xcode sul Mac).

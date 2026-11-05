@@ -10,6 +10,9 @@ export const INGRANDIMENTO_SEGNAPOSTO = 2;
 /** Seme del caso: a parità di seme il cimitero è sempre uguale. */
 export const SEME_PREDEFINITO = 1031;
 
+/** Link di prova: ogni quanti secondi controlla se c'è una versione nuova (da rivedere). */
+export const AGGIORNAMENTI = { ogni: 120 };
+
 /** Alone della lanterna: fuori dal raggio il buio cresce a retino. */
 export const LUCE = {
   raggio: 260, // dove comincia il buio

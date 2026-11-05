@@ -82,8 +82,10 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
    - Il testo discorsivo del GDD lo script non lo vede: resta controllato a lettura.
 5. **Decisioni che spettano a Edoardo**: alla fine di ogni tappa elencale, una per riga, in un blocco con questo titolo. Non scegliere tu i valori: se devi metterne uno per andare avanti, segnalo **«da rivedere»** nel GDD e nella roadmap («Da confermare»).
 6. Riassumi a Edoardo cosa è cambiato e come provarlo.
-7. **Salvataggio della partita in corso** (appena la tappa esiste): il controllo con il bot (salva, ricarica, la notte finisce identica) è parte fissa di `npm run prova`, e **ogni sistema nuovo nasce già salvabile**.
-8. **Ultimo punto di ogni tappa: porta `docs/` su `main`** (vedi «I due link»), dopo `npm run controlla-gdd`. Su `main`: `git restore --source=origin/prova --staged --worktree -- docs/` (a differenza di `git checkout prova -- docs/` toglie anche i file eliminati su `prova`), commit «Aggiorna i documenti da prova», push. Va fatto anche subito prima di unire `prova` in `main`: se i documenti delle due parti sono diversi, l'unione va in conflitto.
+7. **Il comportamento sul telefono si prova solo sull'APK**; il link serve per computer e amici. Ogni istruzione di prova per Edoardo indica una sola app e la firma da controllare.
+8. **Ogni resoconto finisce con «Versione da provare: <codice> <ora>»**: la firma che compare nell'angolo del menu e in cima al LAB dell'APK di prova.
+9. **Salvataggio della partita in corso** (appena la tappa esiste): il controllo con il bot (salva, ricarica, la notte finisce identica) è parte fissa di `npm run prova`, e **ogni sistema nuovo nasce già salvabile**.
+10. **Ultimo punto di ogni tappa: porta `docs/` su `main`** (vedi «I due link»), dopo `npm run controlla-gdd`. Su `main`: `git restore --source=origin/prova --staged --worktree -- docs/` (a differenza di `git checkout prova -- docs/` toglie anche i file eliminati su `prova`), commit «Aggiorna i documenti da prova», push. Va fatto anche subito prima di unire `prova` in `main`: se i documenti delle due parti sono diversi, l'unione va in conflitto.
 
 ## Documentazione
 
@@ -111,10 +113,11 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 | `prova` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/ | il link personale di Edoardo: **ogni modifica nuova finisce qui**; in basso la scritta «PROVA» |
 | `main` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/ | il link pubblico (e l'APK Android): solo ciò che Edoardo ha approvato |
 
+- **APK di prova** («DL prova», con il Laboratorio): si compila a ogni push su `prova` che non tocca solo `docs/` e si scarica dal telefono, senza accedere a GitHub, da https://github.com/edoardobucci002-sketch/Death-s-Lumen/releases/download/apk-prova/dl-prova.apk. Il link `prova/` aggiunto alla Home si chiama «DL link». Le versioni di prova mostrano la firma (commit e ora della build, Europe/Rome) nell'angolo del menu e in cima al LAB.
 - Ogni push su `prova` o su `main` ripubblica entrambi i link in un paio di minuti, tranne i push su `main` che toccano solo `docs/`: quelli non fanno partire né le pagine né l'APK (`.github/workflows/pagine.yml`; per `prova` lo fa partire `prova.yml`, perché GitHub pubblica solo da `main`).
 - Su `prova` lavora una sola sessione alla volta. All'inizio di ogni sessione leggi i commit di `prova` delle ultime ore e di' a Edoardo se c'è lavoro di un'altra sessione che non conosci.
 - Lavora sempre su `prova`, o su un ramo di passaggio che unisci a `prova` appena funziona, nella stessa sessione. Mai rami lasciati a metà o worktree dimenticati: Edoardo deve trovare tutto in `/prova/`.
-- Unisci `prova` in `main` **solo quando Edoardo dice che approva**. Il primo passo dell'unione è sempre riportare `docs/` di `prova` su `main` (procedura al punto 8 della «Verifica»): altrimenti i documenti vanno in conflitto. Lo fa Claude ogni volta, senza che Edoardo debba ricordarlo.
+- Unisci `prova` in `main` **solo quando Edoardo dice che approva**. Il primo passo dell'unione è sempre riportare `docs/` di `prova` su `main` (procedura al punto 10 della «Verifica»): altrimenti i documenti vanno in conflitto. Lo fa Claude ogni volta, senza che Edoardo debba ricordarlo.
 - **Eccezione**: `docs/` è l'unica cosa che arriva su `main` senza approvazione: alla fine di ogni tappa, dopo `npm run controlla-gdd`, si porta `docs/` di `prova` su `main` (solo quella cartella). Su `main` i documenti possono descrivere contenuti non ancora pubblicati: lì `controlla-gdd` non va lanciato.
 - Sul Mac al massimo un server acceso (`npm run anteprima`, porta 4173). Spegnilo quando hai finito; non spegnere un server che Edoardo sta usando senza chiederglielo.
 - Il service worker tiene separate le copie offline dei due link (`tools/genera-sw.mjs`). Salvataggi e record invece sono in comune, perché il sito è lo stesso.

@@ -9,6 +9,7 @@ import { Gioco } from './scene/Gioco';
 import { Menu } from './scene/Menu';
 import { preparaAudio } from './sistema/audio';
 import { calcolaMisure } from './sistema/pixel';
+import { avviaAggiornamenti } from './sistema/aggiornamenti';
 import { avviaIndietro } from './sistema/indietro';
 import { avviaMobile, nativo, schermoAcceso } from './sistema/mobile';
 
@@ -81,8 +82,10 @@ if (import.meta.env.VITE_CANALE === 'prova' || import.meta.env.DEV) {
 // PWA: lavoro offline e installazione (non serve dentro l'app nativa)
 if ('serviceWorker' in navigator && import.meta.env.PROD && !nativo) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-  // quando arriva una versione nuova del gioco, ricarica la pagina una volta per mostrarla
-  if (navigator.serviceWorker.controller) {
+  // quando arriva una versione nuova del gioco, ricarica la pagina una volta per mostrarla;
+  // sul link di prova lo decide aggiornamenti.ts, che aspetta la fine della partita
+  if (import.meta.env.VITE_CANALE === 'prova') avviaAggiornamenti(() => gioco.scene.isActive('Gioco'));
+  else if (navigator.serviceWorker.controller) {
     let ricaricato = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!ricaricato) { ricaricato = true; location.reload(); }

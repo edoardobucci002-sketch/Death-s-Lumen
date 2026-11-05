@@ -10,6 +10,7 @@ import { PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { ARMI_INIZIALI } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { voce } from '../sistema/asset';
+import { FIRMA } from '../sistema/firma';
 import { leggiRecord } from '../sistema/record';
 import { TelaAnimata } from '../sistema/ritratto';
 import { tempo } from '../sistema/hud';
@@ -37,6 +38,7 @@ export class Menu extends Phaser.Scene {
     this.radice.className = 'menu';
     this.radice.innerHTML = `
       <header class="menu-testata">
+        ${FIRMA ? `<span class="firma">${FIRMA}</span>` : ''}
         <h1>Death's Lumen</h1>
         <p>Sopravvivi alla veglia, fino all'alba.</p>
       </header>
