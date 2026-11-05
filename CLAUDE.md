@@ -58,7 +58,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 ## Mobile (obbligatorio)
 
-- Controlli touch: joystick virtuale dove si appoggia il dito, pulsante dell'abilità in basso a sinistra con la fiaschetta accanto, pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio (abilità), F (fiaschetta), P (pausa), M (suoni), 1-2-3-4 (scelta del dono).
+- Controlli touch: joystick virtuale dove si appoggia il dito; sul telefono in verticale, nella fascia bassa, abilità e fiaschetta affiancate a destra (mai l'abilità nell'angolo a sinistra) e pausa accanto a loro; altrove abilità in basso a sinistra con la fiaschetta accanto e pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio (abilità), F (fiaschetta), P (pausa), M (suoni), 1-2-3-4 (scelta del dono).
 - Rispetta le safe area (notch, Dynamic Island, barre di sistema). **Su telefono il gioco è solo in verticale**; su computer e tablet è in orizzontale, come Vampire Survivors. Non si adatta l'HUD al telefono in orizzontale.
 - Comportamento dell'app:
   - pausa automatica quando l'app va in background;

@@ -15,7 +15,8 @@
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
-import { arte, ingr, misureHud } from '../sistema/arte';
+import { arte, fasce, ingr, misureHud } from '../sistema/arte';
+import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
 import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
@@ -136,6 +137,8 @@ export class Gioco extends Phaser.Scene {
   private prossimaCalamita = 0;
   private mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
+  private campoL = 0; // pixel di gioco del campo: sul telefono in verticale è meno dello schermo
+  private campoA = 0;
   private buio!: Phaser.GameObjects.Image;
   private saluteCornice!: Phaser.GameObjects.Image;
   private salutePiena!: Phaser.GameObjects.Image;
@@ -194,8 +197,9 @@ export class Gioco extends Phaser.Scene {
     this.prossimaOrda = ORDE.primo + Math.max(0, Math.ceil((this.secondi - ORDE.primo) / ORDE.ogni)) * ORDE.ogni;
     this.mietitoriArrivati = MIETITORE.minuti.filter((m) => m * 60 < this.secondi).length;
 
+    this.misuraCampo();
     creaTerreno(this, 'terreno', SEME_PREDEFINITO);
-    this.terreno = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
+    this.terreno = this.add.tileSprite(0, 0, this.campoL, this.campoA, 'terreno').setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.terreno);
     this.minacce = new Minacce(this);
     this.orda = new Orda(this, this.caso, this.minacce);
     this.anime = new Anime(this);
@@ -221,7 +225,7 @@ export class Gioco extends Phaser.Scene {
       this.giocatore.setOrigin(0.5, 1);
     }
     this.areaLuce = this.fattoreLuce();
-    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * this.areaLuce);
+    this.misureBuio = creaBuio(this, this.campoL, this.campoA, LUCE.raggio * this.areaLuce);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     // barra della salute sotto i piedi, sopra il buio così si vede sempre
     // (disegnata da Edoardo: cornice col cuore e riempimento che si taglia da sinistra)
@@ -230,6 +234,7 @@ export class Gioco extends Phaser.Scene {
     this.scalaSalute();
 
     const interfaccia = document.getElementById('interfaccia')!;
+    preparaSegnapostoFasce();
     interfaccia.replaceChildren();
     this.comandi = new Comandi(interfaccia);
     this.hud = new Hud(interfaccia, {
@@ -266,7 +271,7 @@ export class Gioco extends Phaser.Scene {
     this.cameras.main.setVisible(!this.bot);
 
     const riempi = Number(parametri.get('nemici'));
-    if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.scale.width / 2, this.scale.height / 2);
+    if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.campoL / 2, this.campoA / 2);
 
     this.scale.on('resize', this.ridimensiona, this);
     this.game.events.on('sfondo', this.apriPausa, this);
@@ -354,8 +359,8 @@ export class Gioco extends Phaser.Scene {
     if (this.bot && this.salute < this.saluteMassima * BOT.beviSotto) this.fiaschetta.bevi();
     if (this.grazia > 0 && (this.grazia -= dt) <= 0) this.ricalcola();
 
-    const mezzaL = this.scale.width / 2;
-    const mezzaA = this.scale.height / 2;
+    const mezzaL = this.campoL / 2;
+    const mezzaA = this.campoA / 2;
     this.notte(mezzaL, mezzaA);
     if (this.finito) return;
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, this.velocita, mezzaL, mezzaA);
@@ -573,6 +578,11 @@ export class Gioco extends Phaser.Scene {
     return { armi: this.arsenale.possedute.map((p) => ({ arma: p.arma, livello: p.livello })), doni: { ...this.passivi } };
   }
 
+  /** Accende o spegne a mano il segnale del Peccato sul bordo del campo, per vederlo senza comporre un Rosario. */
+  labPeccato(acceso: boolean): void {
+    this.hud.provaPeccato(acceso);
+  }
+
   /** Mostra un avviso nel cartiglio, per provarne posto e durata. */
   labAvviso(testo: string, sotto: string): void {
     this.hud.avviso(testo, sotto);
@@ -582,8 +592,8 @@ export class Gioco extends Phaser.Scene {
     this.rosarioSbloccato = on;
   }
 
-  labEvento(nome: 'elite' | 'seth1' | 'seth2' | 'orda' | 'sciame' | 'pane' | 'calamita' | 'reliquiarioATerra' | 'cera' | 'anime' | 'cura' | 'grazia' | 'eliminaNemici' | 'riempi' | 'vittoria' | 'morte'): void {
-    const mezzaL = this.scale.width / 2, mezzaA = this.scale.height / 2, s = this.secondi;
+  labEvento(nome: 'elite' | 'seth1' | 'seth2' | 'orda' | 'sciame' | 'pane' | 'calamita' | 'reliquiarioATerra' | 'reliquiarioLontano' | 'cera' | 'anime' | 'cura' | 'grazia' | 'eliminaNemici' | 'riempi' | 'vittoria' | 'morte'): void {
+    const mezzaL = this.campoL / 2, mezzaA = this.campoA / 2, s = this.secondi;
     switch (nome) {
       case 'elite': this.orda.nasciElite(s, this.x, this.y, mezzaL, mezzaA); break;
       case 'seth1': this.orda.nasciMietitore(s, 0, this.x, this.y, mezzaL, mezzaA); break;
@@ -593,6 +603,7 @@ export class Gioco extends Phaser.Scene {
       case 'pane': this.oggetti.aggiungi(PANE, this.x + 40, this.y - 40); break;
       case 'calamita': this.oggetti.aggiungi(CALAMITA, this.x - 40, this.y - 40); break;
       case 'reliquiarioATerra': this.oggetti.aggiungi(RELIQUIARIO, this.x, this.y - 70); break;
+      case 'reliquiarioLontano': this.oggetti.aggiungi(RELIQUIARIO, this.x + 200, this.y - this.campoA); break;
       case 'cera': for (let k = 0; k < 10; k++) this.oggetti.aggiungi(CERA_GOCCIA, this.x - 60 + k * 14, this.y + 40); break;
       case 'anime': this.anime.aggiungi(this.x + 60, this.y, 50, this.x, this.y); break;
       case 'cura': this.salute = this.saluteMassima; break;
@@ -1035,8 +1046,8 @@ export class Gioco extends Phaser.Scene {
 
   /** Disegna lo stato attuale, con tutte le posizioni arrotondate al pixel. */
   private disegna(dt = 0): void {
-    const w = this.scale.width;
-    const h = this.scale.height;
+    const w = this.campoL;
+    const h = this.campoA;
     const px = Math.round(this.x);
     const py = Math.round(this.y);
     const cam = this.cameras.main;
@@ -1088,10 +1099,19 @@ export class Gioco extends Phaser.Scene {
     this.salutePiena.setScale(this.zSalute);
   }
 
+  /** Il campo vero: sul telefono in verticale finisce al bordo delle fasce, per la telecamera e per tutta la logica «sullo schermo». */
+  private misuraCampo(): void {
+    const f = fasce(misureHud());
+    this.campoL = this.scale.width;
+    this.campoA = this.scale.height - f.alta - f.bassa;
+    this.cameras.main.setViewport(0, f.alta, this.campoL, this.campoA);
+  }
+
   private ridimensiona(): void {
     this.scalaSalute();
-    this.terreno.setSize(this.scale.width, this.scale.height);
-    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * this.areaLuce);
+    this.misuraCampo();
+    this.terreno.setSize(this.campoL, this.campoA);
+    this.misureBuio = creaBuio(this, this.campoL, this.campoA, LUCE.raggio * this.areaLuce);
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
 

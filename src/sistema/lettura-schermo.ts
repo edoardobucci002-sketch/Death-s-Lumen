@@ -1,10 +1,10 @@
 /*
  * Lettura dello schermo per il Laboratorio (scheda «Schermo»): quello che il telefono dichiara davvero
- * (dove gira il gioco, punti, pixel fisici, aree sicure) e quanto campo resterebbe con le fasce di FASCE in src/data/hud.ts.
+ * (dove gira il gioco, punti, pixel fisici, aree sicure) e le fasce che ne risultano (fasce() in arte.ts).
  * Solo lettura: non cambia niente nel gioco. Serve a misurare sul telefono vero ciò che l'emulatore non sa.
  */
 import { FASCE } from '../data/hud';
-import { ingr, misureHud } from './arte';
+import { fasce, ingr, misureHud } from './arte';
 import { nativo } from './mobile';
 
 type Lati = { alto: number; destra: number; basso: number; sinistra: number };
@@ -45,17 +45,12 @@ export function letturaSchermo(): [string, string][] {
   const env = areeEnv(), cap = areeCapacitor();
   const testoLati = (a: Lati): string => `alto ${a.alto}, destra ${a.destra}, basso ${a.basso}, sinistra ${a.sinistra} punti (alto ${fis(a.alto)}, basso ${fis(a.basso)} fisici)`;
   // l'area sicura che conta è la più grande tra le due fonti
-  const sicuraAlta = fis(Math.max(env.alto, cap?.alto ?? 0)), sicuraBassa = fis(Math.max(env.basso, cap?.basso ?? 0));
+  const sicuraAlta = fis(Math.max(env.alto, cap?.alto ?? 0));
 
-  const z = ingr('barre', m); // pixel di gioco per pixel disegnato
+  const f = fasce(m);
+  const z = f.attive ? f.z : ingr('barre', m); // pixel di gioco per pixel disegnato
   const fisiciRiga = z * m.scala; // pixel fisici per pixel disegnato
-  const alta = FASCE.alta * z, bassa = FASCE.bassa * z;
-  const campo = m.H - alta - bassa;
-  const minimoAlta = sicuraAlta + FASCE.righeAlta * fisiciRiga;
-  const minimoCartiglio = FASCE.righeCartiglio * fisiciRiga;
-  const minimoBassa = sicuraBassa + FASCE.righeBassa * fisiciRiga;
-  const altaFis = alta * m.scala, bassaFis = bassa * m.scala;
-  const esito = (ok: boolean): string => (ok ? 'ci sta' : 'NON ci sta');
+  const scrittaCartiglio = f.sopraCartiglio * m.scala + FASCE.testoCartiglio * fisiciRiga;
 
   return [
     ['Dove gira', ''],
@@ -73,12 +68,13 @@ export function letturaSchermo(): [string, string][] {
     ['Scala', ''],
     ['Scala', `×${m.scala}: ${m.W}×${m.H} pixel di gioco`],
     ['Pixel disegnato', `×${z}: ${fisiciRiga} fisici`],
-    ['Fasce (src/data/hud.ts)', ''],
-    ['Fascia alta', `${FASCE.alta} disegnati = ${altaFis} fisici`],
-    ['Fascia bassa', `${FASCE.bassa} disegnati = ${bassaFis} fisici`],
-    ['Campo', `${m.W}×${campo} pixel di gioco (minimo ${FASCE.campoMinimo}: ${campo >= FASCE.campoMinimo ? 'sì' : 'NO'})`],
-    ['Contenuto alto', `serve ${minimoAlta} fisici compresa l'area sicura: ${esito(minimoAlta <= altaFis)}`],
-    ['Cartiglio', `serve ${minimoCartiglio} fisici: ${esito(minimoCartiglio <= altaFis)}; la sua scritta inizia a ${FASCE.testoCartiglio * fisiciRiga} fisici dal bordo, area sicura ${sicuraAlta}: ${FASCE.testoCartiglio * fisiciRiga >= sicuraAlta ? 'libera' : 'COPERTA'}`],
-    ['Contenuto basso', `serve ${minimoBassa} fisici compresa l'area sicura: ${esito(minimoBassa <= bassaFis)}`],
+    ['Gesti di sistema', ''],
+    ['Zone dei gesti', 'non raggiungibili da qui: servono codice nativo Android, che non è stato aggiunto'],
+    ['Fasce', ''],
+    ['Fasce attive', f.attive ? 'sì' : 'no: computer, tablet o telefono in orizzontale'],
+    ['Fascia alta', `${f.alta / z} disegnati = ${f.alta * m.scala} fisici`],
+    ['Fascia bassa', `${f.bassa / z} disegnati = ${f.bassa * m.scala} fisici`],
+    ['Campo', `${m.W}×${f.campoA} pixel di gioco (minimo ${FASCE.campoMinimo}: ${f.campoA >= FASCE.campoMinimo ? 'sì' : 'NO'})`],
+    ['Cartiglio', `scritta a ${scrittaCartiglio} fisici dal bordo, area sicura ${sicuraAlta}: ${scrittaCartiglio >= sicuraAlta ? 'libera' : 'COPERTA'}`],
   ];
 }

@@ -5,7 +5,7 @@
  * La sensibilità resta in punti dello schermo (JOYSTICK.raggio); il pomello disegnato si sposta fino al bordo della base.
  */
 import { JOYSTICK } from '../data/mondo';
-import { arte, immagine, ingr, misura, misureHud, type MisureHud } from './arte';
+import { arte, fasce, immagine, ingr, misura, misureHud, type MisureHud } from './arte';
 
 const SU = new Set(['KeyW', 'ArrowUp']);
 const GIU = new Set(['KeyS', 'ArrowDown']);
@@ -27,6 +27,8 @@ export class Comandi {
   private base: HTMLElement;
   private pomello: HTMLElement;
   private m: MisureHud = misureHud();
+  private chiaveBase = 'Joystick_Base'; // sul telefono in verticale: la base piccola
+  private chiavePomello = 'Joystick_Pomello';
 
   constructor(contenitore: HTMLElement) {
     this.base = document.createElement('div');
@@ -104,7 +106,8 @@ export class Comandi {
     this.misure();
     // il centro della base va su un pixel di gioco intero
     const px = this.m.px;
-    this.base.style.transform = `translate(${Math.round(this.ox / px) * px}px, ${Math.round(this.oy / px) * px}px)`;
+    const [cx, cy] = this.lontanoDaiPulsanti(this.ox, this.oy);
+    this.base.style.transform = `translate(${Math.round(cx / px) * px}px, ${Math.round(cy / px) * px}px)`;
     this.pomello.style.transform = '';
     this.base.hidden = false;
   };
@@ -121,22 +124,53 @@ export class Comandi {
     this.jx = x;
     this.jy = y;
     // corsa del pomello disegnato: dal centro fino al bordo della base, in pixel di gioco interi
-    const z = ingr('joystick', this.m), b = arte('Joystick_Base'), p = arte('Joystick_Pomello');
+    const z = ingr('joystick', this.m), b = arte(this.chiaveBase), p = arte(this.chiavePomello);
     const corsa = b && p ? ((b.w - p.w) / 2) * z : 0, px = this.m.px;
     this.pomello.style.transform = `translate(${Math.round(x * corsa) * px}px, ${Math.round(y * corsa) * px}px)`;
   };
 
   /** Misure della base e del pomello per questo telefono (centrati sul punto del dito). */
   private misure(): void {
-    const m = (this.m = misureHud()), z = ingr('joystick', m), b = arte('Joystick_Base'), p = arte('Joystick_Pomello');
+    const m = (this.m = misureHud()), z = ingr('joystick', m), piccolo = fasce(m).attive;
+    this.chiaveBase = piccolo ? 'Joystick_Base_Piccola' : 'Joystick_Base';
+    this.chiavePomello = piccolo ? 'Joystick_Pomello_Piccolo' : 'Joystick_Pomello';
+    const b = arte(this.chiaveBase), p = arte(this.chiavePomello);
     if (!b || !p) return;
-    const base = this.base.firstElementChild as HTMLElement;
+    const base = this.base.firstElementChild as HTMLImageElement;
+    base.src = b.url;
+    (this.pomello as HTMLImageElement).src = p.url;
     misura(base, b.w, b.h, z, m);
     misura(this.pomello, p.w, p.h, z, m);
     base.style.left = `${-Math.floor((b.w * z) / 2) * m.px}px`;
     base.style.top = `${-Math.floor((b.h * z) / 2) * m.px}px`;
     this.pomello.style.left = `${-Math.floor((p.w * z) / 2) * m.px}px`;
     this.pomello.style.top = `${-Math.floor((p.h * z) / 2) * m.px}px`;
+  }
+
+  /**
+   * Sul telefono in verticale la base non nasce mai sopra un pulsante: si sposta di quanto basta,
+   * mentre il centro della direzione resta dove si è appoggiato il dito, così il personaggio non parte da solo.
+   */
+  private lontanoDaiPulsanti(x: number, y: number): [number, number] {
+    const b = arte(this.chiaveBase);
+    if (!b || !fasce(this.m).attive) return [x, y];
+    const r = (b.w * ingr('joystick', this.m) * this.m.px) / 2 + this.m.px; // un pixel in più: poi la base si arrotonda al pixel di gioco
+    x = Math.min(Math.max(x, r), window.innerWidth - r); // anche dentro lo schermo
+    y = Math.min(Math.max(y, r), window.innerHeight - r);
+    const pulsanti = [...document.querySelectorAll('.speciale, .fiaschetta, .hud-pausa-tasto')].map((e) => e.getBoundingClientRect());
+    for (let giro = 0; giro < pulsanti.length + 1; giro++) {
+      let fermo = true;
+      for (const q of pulsanti) {
+        const sinistra = q.left - r - x, destra = q.right + r - x, su = q.top - r - y, giu = q.bottom + r - y;
+        if (sinistra >= 0 || destra <= 0 || su >= 0 || giu <= 0) continue; // non si toccano
+        const dx = -sinistra < destra ? sinistra : destra, dy = -su < giu ? su : giu;
+        if (Math.abs(dx) <= Math.abs(dy)) x += dx;
+        else y += dy;
+        fermo = false;
+      }
+      if (fermo) break;
+    }
+    return [x, y];
   }
 
   private solleva = (e?: PointerEvent): void => {

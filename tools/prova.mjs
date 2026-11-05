@@ -308,6 +308,58 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
+// fasce del telefono in verticale: campo oltre il minimo, pulsanti grandi per un dito, abilità mai nell'angolo a sinistra,
+// joystick mai sopra un pulsante; sul Galaxy S25, con l'area sicura misurata, le misure esatte decise con Edoardo
+{
+  const telefoni = [['iPhone SE', 375, 667, 2, 20], ['iPhone 13', 390, 844, 3, 47], ['iPhone 15 Pro Max', 430, 932, 3, 59], ['Galaxy S25', 360, 780, 3, 35], ['Pixel 7', 412, 915, 2.625, 40], ['Android piccolo', 360, 780, 2, 28]];
+  for (const [nome, width, height, deviceScaleFactor, sicura] of telefoni) {
+    const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor, isMobile: true, hasTouch: true });
+    const pag = await ctx.newPage();
+    const errori = [];
+    pag.on('pageerror', (e) => errori.push(e.message));
+    await pag.goto(`${url}?pg=lampionaio&automatico&sicura=${sicura}`);
+    await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+    await pag.waitForTimeout(400);
+    const tocca = () => pag.evaluate(() => {
+      const r = (q) => document.querySelector(q).getBoundingClientRect();
+      const b = r('.joystick-base');
+      return ['.speciale', '.fiaschetta', '.hud-pausa-tasto'].filter((q) => { const p = r(q); return b.left < p.right && b.right > p.left && b.top < p.bottom && b.bottom > p.top; });
+    });
+    const d = await pag.evaluate(() => {
+      const r = (q) => document.querySelector(q).getBoundingClientRect(), c = window.__dl.scene.getScene('Gioco').cameras.main;
+      return { y: c.y, a: c.height, l: c.width, H: window.__dl.scale.height, pausa: r('.hud-pausa-tasto').toJSON(), abilita: r('.speciale').toJSON(), fiaschetta: r('.fiaschetta').toJSON(), vw: innerWidth };
+    });
+    if (d.a < 700) errori.push(`campo di ${d.a} pixel, sotto il minimo`);
+    if (nome === 'Galaxy S25' && (d.y !== 162 || d.H - d.y - d.a !== 188 || d.a !== 820 || d.l !== 540)) errori.push(`misure del S25 sbagliate: alta ${d.y}, bassa ${d.H - d.y - d.a}, campo ${d.l}×${d.a}`);
+    for (const [q, p] of Object.entries({ pausa: d.pausa, abilita: d.abilita, fiaschetta: d.fiaschetta })) if (p.width < 44 || p.height < 44) errori.push(`${q} sotto i 44 punti`);
+    if (d.abilita.left < d.vw / 2 - 1) errori.push("l'abilità è nella metà sinistra");
+    for (const p of [d.pausa, d.fiaschetta, d.abilita]) {
+      await pag.mouse.move(p.left + p.width / 2, p.top - 6); // appena sopra il pulsante, fuori dalla sua area di tocco
+      await pag.mouse.down();
+      await pag.waitForTimeout(40);
+      const sopra = await tocca();
+      await pag.mouse.up();
+      if (sopra.length) errori.push(`joystick sopra ${sopra.join(', ')}`);
+    }
+    if (errori.length) falliti++;
+    console.log(`${errori.length ? '✗' : '✓'} fasce ${nome}: alta ${d.y}, bassa ${d.H - d.y - d.a}, campo ${d.l}×${d.a}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+    await ctx.close();
+  }
+  // computer e tablet: nessuna fascia
+  for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['tablet in verticale', { width: 744, height: 1133 }]]) {
+    const ctx = await browser.newContext({ viewport });
+    const pag = await ctx.newPage();
+    await pag.goto(`${url}?pg=lampionaio&automatico`);
+    await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => {});
+    await pag.waitForTimeout(300);
+    const senza = await pag.evaluate(() => [window.__dl.scene.getScene('Gioco').cameras.main.height === window.__dl.scale.height, [...document.querySelectorAll('.hud-fascia')].every((f) => f.hidden)]);
+    const ok = senza.every(Boolean);
+    if (!ok) falliti++;
+    console.log(`${ok ? '✓' : '✗'} nessuna fascia su ${nome}`);
+    await ctx.close();
+  }
+}
+
 await browser.close();
 server.kill();
 console.log(falliti ? `\n${falliti} prove fallite` : '\nTutto a posto. Screenshot in prove/.');

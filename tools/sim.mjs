@@ -1,5 +1,5 @@
 // Simulazione di bilanciamento: il bot gioca la notte intera con ogni personaggio, su più semi,
-// nel gioco vero (build in dist/) dentro un browser invisibile con lo schermo di un telefono Android.
+// nel gioco vero (build in dist/) dentro un browser invisibile con lo schermo del Galaxy S25 di Edoardo (misurato il 5/11).
 // Stampa a che minuto muore, il livello minuto per minuto, quanto fa male il Mietitore, quanti pani e calamite
 // raccoglie e quanta salute recupera, e controlla gli obiettivi di CLAUDE.md. Risultati completi in prove/sim.json.
 // Un giocatore umano va più forte del bot (prova di Edoardo del 3/11: livello 60 al minuto 8, il bot 40)
@@ -22,9 +22,13 @@ const scelti = altri[1] && altri[1] !== 'tutti' ? altri[1].split(',') : PERSONAG
 const OBIETTIVI = { 0: [0.05, 0.15], meta: [0.3, 0.45], max: [0.6, 0.75] };
 const VITTORIE_MASSIME = (OBIETTIVI[meta] ?? OBIETTIVI[0])[1];
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
-const porta = 4320;
+const porta = Number(process.env.DL_PORTA) || 4320;
+// il Galaxy S25: 360×780 punti, 3 pixel fisici per punto, area sicura in alto di 35 punti (105 fisici)
+const TELEFONO = { ...devices['Pixel 7'], viewport: { width: 360, height: 780 }, screen: { width: 360, height: 780 }, deviceScaleFactor: 3 };
+const AREA_SICURA = 35;
 
-const server = spawn('npx', ['vite', 'preview', '--port', String(porta), '--strictPort'], { stdio: 'ignore' });
+// DL_DIST: un'altra build da provare (per confrontare prima e dopo con gli stessi semi)
+const server = spawn('npx', ['vite', 'preview', '--port', String(porta), '--strictPort', ...(process.env.DL_DIST ? ['--outDir', process.env.DL_DIST] : [])], { stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 2500));
 const browser = await chromium.launch();
 const inizio = Date.now();
@@ -36,11 +40,11 @@ const risultati = [];
 let fatte = 0;
 
 async function gioca({ pg, seme }) {
-  const ctx = await browser.newContext({ ...devices['Pixel 7'], serviceWorkers: 'block' });
+  const ctx = await browser.newContext({ ...TELEFONO, serviceWorkers: 'block' });
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}${process.env.DL_EXTRA ?? ''}`);
+  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}&sicura=${AREA_SICURA}${process.env.DL_EXTRA ?? ''}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 10 * 60_000, polling: 1000 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();

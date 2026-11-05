@@ -31,6 +31,7 @@ Parti della M8 già fatte:
 - Tappa 5 · 4 armi e 4 doni nuovi con i loro sblocchi (4/11)
 - Tappa 6 · 10 unioni (4/11)
 - Leggibilità del campo, solo visiva (4–5/11): lampo dei nemici, numeri del danno (limite di 15, ambra in tre casi, somma su élite, Seth e reazioni), nomi delle reazioni, simboli degli stati, cartiglio degli avvisi, orologio, personaggio sopra i nemici. Sul link di prova, non ancora sul link pubblico
+- Fasce del telefono in verticale con il campo vero, segnaposto dal codice (5/11). Sul link di prova e sull'APK di prova, non ancora sul link pubblico; poi pausa, scelta dei doni e menu
 - Laboratorio (LAB) sul link di prova (3/11)
 
 ## Prossime tappe
@@ -66,7 +67,11 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Fasce del telefono: alta 80 e bassa 95 pixel disegnati (320 e 380 fisici sul S25), campo minimo 700. Valori in `FASCE`, `src/data/hud.ts`; per ora li legge solo la scheda Schermo del LAB, in attesa delle misure sul S25 | `src/data/hud.ts`; decisioni 5/11 |
+| Fasce del telefono: tutte le misure di `FASCE`, `PAUSA_PICCOLA`, `JOYSTICK_PICCOLO`, `SEGNALE_PECCATO` in `src/data/hud.ts`, provate da Edoardo sul S25 | GDD §11; decisioni 5/11 |
+| Pausa piccola subito a sinistra di abilità e fiaschetta: al centro esatto si sovrapporrebbe al gruppo | GDD §11; decisioni 5/11 |
+| Cartiglio largo 240 pixel di gioco: copre il centro di esperienza, non lo stemma né le estremità della barra | GDD §11 |
+| Zone dei gesti di sistema nella scheda Schermo: servono codice nativo Android; esclusione dei gesti rimandata alla prova a mano di Edoardo | decisioni 5/11 |
+| Bozza dell'HUD (`npm run bozza`): non conosce le fasce, le controlla `npm run prova` sul gioco vero. Aggiornarla o ritirarla? | `CLAUDE.md`, «Mobile» |
 | Leggibilità, secondo passo: nomi delle reazioni (× 2, ogni 2 s, 3 insieme, 90 px), 40 simboli solo sui pesanti, somma dei numeri su élite e Seth (0,5 s, 30 px sopra), cartiglio (scala 0,5, minimo × 2; 1,45 s; dissolvenza 0,3 s), orologio nella colonna di destra. Confermati da Edoardo il 5/11, restano da provare sul suo telefono | GDD §8c, §11 e «Impatto dei colpi»; decisioni 4/11 e 5/11 |
 | Scritte delle reazioni: il nome parte 34 px sopra il punto e sta 16 px sopra il numero quando viene spostato | GDD «Impatto dei colpi»; bilanciamento 5/11 |
 | Numeri ambra: se una build rende critici la maggior parte dei colpi, rivedere l'ambra. Al massimo livello il Chiodo di bara dà circa il 30% di numeri ambra | GDD «Impatto dei colpi»; decisioni 5/11 |

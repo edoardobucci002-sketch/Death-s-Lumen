@@ -4,6 +4,12 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 
 | Asset | Dove serve | Stato / segnaposto |
 | --- | --- | --- |
+| **Fascia_Alta_V1** (`HUD/Pannelli/`, tela 376×124 px) | fascia alta del telefono: una sola, neutra, per tutti i personaggi | disegnata dal codice in `src/sistema/segnaposto-fasce.ts`. Sul S25 si vedono i 270×81 centrali in fondo alla tela; **filo chiaro di 1 px sull'ultima riga**, verso il campo, visibile anche contro il buio più fitto; le prime 27 righe visibili sono nell'area sicura (foro della fotocamera): niente dettagli lì |
+| **Fascia_Bassa_V1** (`HUD/Pannelli/`, tela 376×124 px) | fascia bassa del telefono | come sopra. Sul S25 si vedono i 270×94 centrali in cima alla tela; **filo chiaro di 1 px sulla prima riga**, verso il campo; niente incavi per i pulsanti finché la disposizione non è confermata |
+| **Barra_Seth_Cornice_V1** (`HUD/Barre/`, 225×14 px, finestra in x 10, y 4, 205×6) e **Barra_Seth_Piena_V1** (205×6 px) | barra sottile di Seth, nella riga dell'orologio | disegnate dal codice; se la finestra cambia va aggiornato `FINESTRE.Barra_Seth_Cornice` in `src/data/hud.ts` |
+| **Pulsante_Pausa_Piccolo_V1** (`HUD/Pulsanti/`, 34×34 px) | pausa nella fascia bassa | disegnato dal codice |
+| Joystick_Base_Piccola (56×56 px) e Joystick_Pomello_Piccolo (24×24 px), in `HUD/Pulsanti/` | joystick sul telefono in verticale | cerchi dal codice |
+| Targhetta dell'orologio (circa 38×16 px), facoltativa | riga dell'orologio | nessuna: solo le cifre |
 | **Goccia di cera** (oggetto a terra, 8×11 px circa; se vuole anche una versione grande per i mucchi di Seth) | gocce di Cera lasciate dai nemici | disegnata dal codice in `src/sistema/oggetti.ts`; il file `OGGETTI/Goccia_cera_V1.aseprite` la sostituisce |
 | **10 icone degli amuleti** (24×24, `Icona_Amuleto_<id>`: specchioRotto, lanternaCieca, cuoreAvido, sangueFreddo, martire, danzaMacabra, ceriGemelli, lucciola, ossaDelite, pattoDiSangue) e il **grano del Rosario** | Rosario: carte del reliquiario, pausa, HUD | grani colorati disegnati dal codice (`src/sistema/amuleti.ts`) |
 | **Simboli degli stati** (circa 11×11 px: `EFFETTI/Simbolo_Abbagliato_V1.aseprite`, `Simbolo_Consacrato`, `Simbolo_Maledetto`, `Simbolo_Sepolto`) | sopra la testa dei nemici | disegnati dal codice in `src/sistema/simboli.ts` (sole, croce, teschio, lapide); ogni file li sostituisce da solo |

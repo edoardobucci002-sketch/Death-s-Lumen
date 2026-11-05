@@ -79,6 +79,14 @@ const scriviSalvati = (m: Record<string, number>): void => {
   try { localStorage.setItem(CHIAVE_NUMERI, JSON.stringify(m)); } catch { /* niente memoria */ }
 };
 
+/** Cambia un numero e lo ricorda, come nella scheda Numeri. */
+function imposta(v: Voce, n: number): void {
+  v.padre[v.chiave] = n;
+  const m = salvati();
+  if (n === v.originale) delete m[v.percorso]; else m[v.percorso] = n;
+  scriviSalvati(m);
+}
+
 /** Rimette i numeri cambiati in una sessione precedente (da chiamare prima che parta il gioco). */
 function applicaSalvati(): void {
   raccogli();
@@ -239,7 +247,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Nemici'),
       riga(e('elite', 'Élite'), e('seth1', 'Seth (1ª volta)'), e('seth2', 'Seth (2ª volta)'), e('orda', 'Orda'), e('sciame', 'Sciame')),
       titolo('Drop a terra'),
-      riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
+      riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('reliquiarioLontano', 'Reliquiario fuori vista'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
       titolo('Avvisi nel cartiglio'),
       riga(tasto('Seth', fai((x) => x.labAvviso('Seth', 'il Rinnovato è venuto per te'))), tasto('Sciame', fai((x) => x.labAvviso('Lo sciame', 'ti circonda'))), tasto('Due orde', fai((x) => x.labAvviso('Due orde', 'ti stringono'))), tasto('Reliquiario', fai((x) => x.labAvviso('Reliquiario', 'Lanterna, Candela, Falce')))),
       titolo('Scelte'),
@@ -248,6 +256,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Stati sui nemici vicini (due diversi = reazione)'),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.labStatoVicini(a))))),
       el('p', 'lab-nota', 'Per vederli lascia il gioco in corso (scheda Partita) e premi uno stato, poi un altro.'),
+      titolo('Segnali sul bordo del campo'),
+      riga(tasto('Peccato: accendi', fai((x) => x.labPeccato(true))), tasto('Peccato: spegni', fai((x) => x.labPeccato(false)))),
       titolo('Altro'),
       riga(e('grazia', 'Grazia'), e('vittoria', "Alba: vittoria", ''), e('morte', 'Morte', 'rosso')),
     ];
@@ -285,12 +295,6 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     copia.readOnly = true;
     copia.hidden = true;
     const modifiche = (): [Voce, number][] => voci.filter((v) => v.padre[v.chiave] !== v.originale).map((v) => [v, v.padre[v.chiave] as number]);
-    const imposta = (v: Voce, n: number): void => {
-      v.padre[v.chiave] = n;
-      const m = salvati();
-      if (n === v.originale) delete m[v.percorso]; else m[v.percorso] = n;
-      scriviSalvati(m);
-    };
     const disegna = (): void => {
       const q = cerca.value.trim().toLowerCase();
       const trovate = q ? voci.filter((v) => v.percorso.toLowerCase().includes(q) || v.sotto.toLowerCase().includes(q)) : voci;
@@ -370,7 +374,16 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const copia = el('textarea', 'lab-testo');
     copia.readOnly = true;
     copia.hidden = true;
+    raccogli();
+    const scambio = voci.find((v) => v.percorso === 'hud.FASCE.abilitaAlCentro')!, alCentro = hud.FASCE.abilitaAlCentro === 1;
     return [
+      titolo('Fascia bassa'),
+      riga(tasto(alCentro ? 'Abilità al centro: tocca per metterla a destra' : 'Abilità a destra: tocca per metterla al centro', () => {
+        imposta(scambio, alCentro ? 0 : 1);
+        window.dispatchEvent(new Event('resize')); // abilità, fiaschetta e HUD si rimettono al loro posto
+        ridisegna();
+      }, alCentro ? 'acceso' : '')),
+      titolo('Misure'),
       el('p', 'lab-nota', 'Quello che il telefono dichiara adesso. Tienilo in verticale e, nell\'app o nel link in Home, senza barre visibili.'),
       riga(
         tasto('Copia le misure per Claude', () => {

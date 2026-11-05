@@ -5,7 +5,7 @@
  * la fiala è fatta dal codice: il lumen ambra cala a ogni sorso e sotto ci sono le tacche dei sorsi rimasti.
  */
 import { FIASCHETTA } from '../data/sopravvivenza';
-import { arte, bordiHud, ingr, misura, misureHud, posa, type Arte } from './arte';
+import { arte, bordiHud, fasce, ingr, misura, misureHud, posa, postoPulsanti, type Arte } from './arte';
 
 const L = 15; // misure della fiala fatta dal codice (riserva), in pixel dell'immagine
 const A = 27;
@@ -125,8 +125,11 @@ export class Fiaschetta {
     const m = misureHud(), b = bordiHud(m), za = ingr('speciale', m), anello = arte(this.chiaveSpeciale);
     const z = this.disegno ? za : za * FIASCHETTA.ingrandimentoSegnaposto;
     const w = this.tela.width, h = this.tela.height;
-    const dopo = anello ? anello.w * za : 0;
-    posa(this.pulsante, b.s + 4 + dopo + FIASCHETTA.distanza * za, m.H - b.b - h * z, m);
+    const dopo = anello ? anello.w * za : 0, f = fasce(m);
+    if (f.attive) {
+      const p = postoPulsanti(m, f, anello?.w ?? 0);
+      posa(this.pulsante, p.fiaschetta, p.centroY - Math.round((h * z) / 2), m);
+    } else posa(this.pulsante, b.s + 4 + dopo + FIASCHETTA.distanza * za, m.H - b.b - h * z, m);
     misura(this.pulsante, w, h, z, m);
     misura(this.tela, w, h, z, m);
   }

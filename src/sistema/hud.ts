@@ -1,12 +1,15 @@
 /*
  * Interfaccia in partita (HTML sopra il gioco), con gli elementi disegnati da Edoardo (cartella HUD/), a pixel interi.
- * In alto: stemma del livello, barra dell'esperienza, anime e orologio a destra, caselle di armi e doni, barra del Mietitore,
+ * Sul telefono in verticale tutto sta in due fasce fisse fuori dal campo (disponiFasce): in alto stemma, esperienza,
+ * orologio e barra sottile di Seth, con il cartiglio che copre stemma ed esperienza finché dura; in basso la pausa.
+ * Anime, Cera, Rosario e caselle stanno nella pausa e nella fine; salute bassa e Peccato sono segnali sul bordo del campo.
+ * Altrove, in alto: stemma del livello, barra dell'esperienza, anime e orologio a destra, caselle di armi e doni, barra del Mietitore,
  * e sotto gli avvisi nel nastro. In basso a destra: pausa. Poi le schermate di pausa e di fine partita.
- * La disposizione è quella della bozza (bozza-hud.html), verificata su sette telefoni: se cambia qui, cambia anche là.
+ * Quella senza fasce è la disposizione della bozza (bozza-hud.html): se cambia qui, cambia anche là.
  * La barra della salute è nel gioco, sotto il personaggio; l'abilità speciale in basso a sinistra (speciale.ts).
  */
-import { AVVISO, CASELLA, FINESTRE, INTERNI, OROLOGIO, TESTI } from '../data/hud';
-import { adattaZoom, arte, bordiHud, immagine, ingr, mascheraRetino, misura, misureHud, posa, retino, scriviIn, type MisureHud } from './arte';
+import { AVVISO, CASELLA, FASCE, FINESTRE, INTERNI, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
+import { adattaZoom, arte, bordiHud, fasce, immagine, ingr, mascheraRetino, misura, misureHud, posa, postoPulsanti, retino, scriviIn, type Fasce, type MisureHud } from './arte';
 import { audioAttivo, impostaAudio } from './audio';
 import { impostaVibrazione, vibrazione } from './mobile';
 import { scalaScritta, scritta, scriviNel } from './scritte';
@@ -108,6 +111,14 @@ export class Hud {
   private radice: HTMLElement;
   private xp = new Barra('hud-xp', 'Barra_Esperienza_Cornice', 'Barra_Esperienza_Piena');
   private mietitore = new Barra('hud-boss', 'Barra_Mietitore_Cornice', 'Barra_Mietitore_Piena');
+  private seth = new Barra('hud-boss', 'Barra_Seth_Cornice', 'Barra_Seth_Piena'); // la barra sottile della fascia alta
+  private fasciaAlta = blocco('hud-fascia', immagine('Fascia_Alta'));
+  private fasciaBassa = blocco('hud-fascia', immagine('Fascia_Bassa'));
+  private peccato = blocco('hud-peccato');
+  private sintesi = blocco('hud-sintesi'); // anime, Cera e Rosario nella pausa, solo con le fasce
+  private conFasce = false;
+  private inPeccato = false;
+  private peccatoProva = false;
   private orologio = blocco('hud-orologio');
   private livello = blocco('hud-livello', immagine('Stemma_Livello'), blocco('hud-livello-numero'));
   private anime = blocco('hud-anime');
@@ -138,6 +149,8 @@ export class Hud {
     this.radice = blocco('hud');
     this.bordo.hidden = true;
     this.mietitore.el.hidden = true;
+    this.seth.el.hidden = true;
+    this.peccato.hidden = true;
     this.mietitore.el.setAttribute('aria-label', 'Seth, il Rinnovato');
     this.avvisoEl.hidden = true;
     this.avvisoEl.setAttribute('aria-live', 'polite');
@@ -146,7 +159,7 @@ export class Hud {
     this.pausaTasto.setAttribute('aria-label', 'Pausa');
     this.pausaTasto.append(immagine('Pulsante_Pausa'));
     this.pausaTasto.addEventListener('click', () => this.azioni.pausa());
-    this.pausa = blocco('hud-schermo hud-pausa', blocco('hud-pannello'), blocco('hud-altre'), blocco('hud-pulsanti'));
+    this.pausa = blocco('hud-schermo hud-pausa', blocco('hud-pannello'), blocco('hud-altre'), this.sintesi, blocco('hud-pulsanti'));
     this.fine = blocco('hud-schermo hud-fine', blocco('hud-nastro', immagine('Nastro_Titolo'), document.createElement('h1')), blocco('hud-pannello'), blocco('hud-altre'), blocco('hud-pulsanti'));
     for (const s of [this.pausa, this.fine]) {
       s.hidden = true;
@@ -163,7 +176,7 @@ export class Hud {
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
       tasto('Pulsante_Chiaro', 'Personaggi', { azione: 'menu' }),
     );
-    this.radice.append(this.bordo, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
+    this.radice.append(this.bordo, this.peccato, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.seth.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
     this.radice.addEventListener('click', (e) => {
       const am = (e.target as Element).closest<HTMLElement>('[data-amuleto]');
       if (am?.dataset.amuleto) {
@@ -184,7 +197,7 @@ export class Hud {
         this.disponi();
       }
     });
-    contenitore.append(this.radice);
+    contenitore.append(this.fasciaAlta, this.fasciaBassa, this.radice);
     window.addEventListener('resize', this.ridimensiona);
     window.visualViewport?.addEventListener('resize', this.ridimensiona);
     this.disponi();
@@ -224,8 +237,12 @@ export class Hud {
     if (b !== this.ultimoBoss) {
       const cambia = (b < 0) !== (this.ultimoBoss < 0);
       this.ultimoBoss = b;
-      this.mietitore.el.hidden = b < 0;
-      if (b >= 0) this.mietitore.mostra(b / 100, this.m);
+      this.mietitore.el.hidden = b < 0 || this.conFasce;
+      this.seth.el.hidden = b < 0 || !this.conFasce;
+      if (b >= 0) {
+        this.mietitore.mostra(b / 100, this.m);
+        this.seth.mostra(b / 100, this.m);
+      }
       if (cambia) this.disponi(); // l'avviso scende sotto la barra
     }
     this.bordo.hidden = !saluteBassa;
@@ -238,6 +255,19 @@ export class Hud {
     this.ultimoRosario = t;
     this.rosario.textContent = t;
     this.rosario.classList.toggle('peccato', usati > grani);
+    this.inPeccato = usati > grani;
+    this.segnalePeccato();
+  }
+
+  /** Con le fasce il Peccato non è una scritta: è una cornice a retino sul bordo del campo. */
+  private segnalePeccato(): void {
+    this.peccato.hidden = !this.conFasce || !(this.inPeccato || this.peccatoProva);
+  }
+
+  /** Dal Laboratorio: accende il segnale senza dover comporre un Rosario. */
+  provaPeccato(acceso: boolean): void {
+    this.peccatoProva = acceso;
+    this.segnalePeccato();
   }
 
   /** Caselle di armi e doni posseduti, con il livello. */
@@ -291,6 +321,7 @@ export class Hud {
 
   mostraPausa(build: VoceBuild[]): void {
     this.riempiPannello(this.pausa, build, 'Pausa', '');
+    this.sintesi.textContent = [`◆ ${this.ultimeAnime}`, `Cera ${this.ultimaCera}`, this.ultimoRosario].filter(Boolean).join(' · ');
     this.opzioni();
     this.pausa.hidden = false;
     this.disponi();
@@ -325,6 +356,8 @@ export class Hud {
     window.removeEventListener('resize', this.ridimensiona);
     window.visualViewport?.removeEventListener('resize', this.ridimensiona);
     this.radice.remove();
+    this.fasciaAlta.remove();
+    this.fasciaBassa.remove();
   }
 
   private ridimensiona = (): void => {
@@ -357,7 +390,77 @@ export class Hud {
 
   /** Mette ogni elemento al suo posto, in pixel di gioco interi (come nella bozza). */
   private disponi(): void {
-    const m = (this.m = misureHud()), b = bordiHud(m), W = m.W, H = m.H, px = m.px;
+    const m = (this.m = misureHud()), b = bordiHud(m), px = m.px;
+    const f = fasce(m);
+    this.conFasce = f.attive;
+    // con le fasce restano fuori anime, Cera, Rosario e caselle; display, perché nel CSS le caselle hanno il loro
+    for (const el of [this.anime, this.cera, this.rosario, this.icone]) el.style.display = f.attive ? 'none' : '';
+    this.fasciaAlta.hidden = this.fasciaBassa.hidden = !f.attive;
+    this.mietitore.el.hidden = this.ultimoBoss < 0 || f.attive;
+    this.seth.el.hidden = this.ultimoBoss < 0 || !f.attive;
+    this.segnalePeccato();
+    this.bordo.style.inset = f.attive ? `${f.alta * px}px 0 ${f.bassa * px}px` : '';
+    if (f.attive) this.disponiFasce(m, f);
+    else this.disponiSenzaFasce(m, b);
+    if (!this.pausa.hidden) this.disponiPannello(this.pausa, false, m);
+    if (!this.fine.hidden) this.disponiPannello(this.fine, true, m);
+  }
+
+  /** Telefono in verticale: tutto nelle fasce, a pixel disegnati interi. Le altezze le calcola fasce() per ogni telefono. */
+  private disponiFasce(m: MisureHud, f: Fasce): void {
+    const { W, H, px } = m, z = f.z, margine = FASCE.margine * z;
+    const ms = arte('Stemma_Livello'), me = arte('Barra_Esperienza_Cornice'), an = arte('Nastro_Titolo');
+    const su = arte('Fascia_Alta'), giu = arte('Fascia_Bassa'), ap = arte('Pulsante_Pausa_Piccolo');
+    if (!ms || !me || !an || !su || !giu || !ap) return;
+    // le due fasce: la parte che tocca il campo è quella che si vede, il resto della tela è per i telefoni più grandi
+    for (const [el, a, y, h, top] of [[this.fasciaAlta, su, 0, f.alta, f.alta - su.h * z], [this.fasciaBassa, giu, H - f.bassa, f.bassa, 0]] as const) {
+      posa(el, 0, y, m);
+      el.style.width = `${W * px}px`;
+      el.style.height = `${h * px}px`;
+      const im = el.firstElementChild as HTMLElement;
+      misura(im, a.w, a.h, z, m);
+      posa(im, Math.round((W - a.w * z) / 2), top, m);
+    }
+    // dal basso verso l'alto: filo, riga dell'orologio e di Seth, poi stemma ed esperienza
+    const yRiga = f.alta - 17 * z, yStemma = yRiga - (ms.h + 2) * z;
+    posa(this.livello, margine, yStemma, m);
+    misura(this.livello.firstElementChild as HTMLElement, ms.w, ms.h, z, m);
+    const rn = INTERNI.Stemma_Livello.numero, num = this.livello.lastElementChild as HTMLElement;
+    posa(num, rn.x * z, rn.y * z, m);
+    misura(num, rn.l, rn.a, z, m);
+    num.style.fontSize = `${TESTI.livello * z * px}px`;
+    this.xp.disponi(margine + (ms.w + 2) * z, yStemma + Math.round(((ms.h - me.h) * z) / 2), z, m);
+    Object.assign(this.orologio.style, { right: `${margine * px}px`, top: `${yRiga * px}px`, fontSize: `${16 * z * px}px`, lineHeight: `${16 * z * px}px` });
+    this.seth.disponi(margine, yRiga + z, z, m);
+    // cartiglio: sale fino al bordo e copre stemma ed esperienza; la riga dell'orologio e di Seth resta libera
+    const xa = Math.round(W / 2 - (an.w * z) / 2);
+    this.lamaAvviso = Math.max(1, Math.round(z * px * m.dpr));
+    posa(this.avvisoEl, xa, f.sopraCartiglio, m);
+    misura(this.avvisoEl, an.w, an.h, z, m);
+    misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, z, m);
+    scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, z, z, m, TESTI.avviso);
+    const sotto = this.avvisoEl.children[2] as HTMLElement;
+    sotto.style.width = `${W * px}px`;
+    sotto.style.fontSize = `${TESTI.avvisoSotto * z * px}px`;
+    scriviNel(sotto, { x: -xa, y: (an.h - 8 - FASCE.sottoCartiglio) * z, l: W, a: 6 * z }, 1, z, m, TESTI.avvisoSotto * z, OMBRA);
+    // Peccato: cornice a retino sul bordo del campo
+    const lama = Math.max(1, Math.round(z * px * m.dpr)), lato = (4 * lama) / m.dpr, url = mascheraRetino(SEGNALE_PECCATO.livello, lama);
+    Object.assign(this.peccato.style, {
+      inset: `${f.alta * px}px 0 ${f.bassa * px}px`, boxShadow: `inset 0 0 0 ${SEGNALE_PECCATO.spessore * z * px}px ${SEGNALE_PECCATO.colore}`,
+      maskImage: `url(${url})`, webkitMaskImage: `url(${url})`, maskSize: `${lato}px`, webkitMaskSize: `${lato}px`,
+    });
+    // pausa piccola: si ingrandisce solo se così non arriverebbe alla misura di un dito
+    const zp = z * Math.ceil(TOCCO_MINIMO / (PAUSA_PICCOLA.lato * z * px) - 1e-9);
+    const p = postoPulsanti(m, f, FASCE.larghezzaAbilita, ap.w * zp);
+    (this.pausaTasto.firstElementChild as HTMLImageElement).src = ap.url;
+    posa(this.pausaTasto, p.pausa, p.centroY - Math.round((ap.h * zp) / 2), m);
+    misura(this.pausaTasto, ap.w, ap.h, zp, m);
+    misura(this.pausaTasto.firstElementChild as HTMLElement, ap.w, ap.h, zp, m);
+  }
+
+  /** Computer, tablet e telefono in orizzontale: la disposizione di sempre. */
+  private disponiSenzaFasce(m: MisureHud, b: ReturnType<typeof bordiHud>): void {
+    const { W, H, px } = m;
     const zb = ingr('barre', m), zc = ingr('caselle', m), za = ingr('avvisi', m), zp = ingr('pausa', m);
     const me = arte('Barra_Esperienza_Cornice'), ms = arte('Stemma_Livello'), mm = arte('Barra_Mietitore_Cornice');
     if (!me || !ms || !mm) return;
@@ -414,17 +517,16 @@ export class Hud {
     // pausa in basso a destra, con un'area di tocco un po' più grande del disegno (MARGINE_TOCCO, in CSS)
     const ap = arte('Pulsante_Pausa');
     if (ap) {
+      (this.pausaTasto.firstElementChild as HTMLImageElement).src = ap.url;
       posa(this.pausaTasto, W - b.d - ap.w * zp, H - b.b - ap.h * zp, m);
       misura(this.pausaTasto, ap.w, ap.h, zp, m);
       misura(this.pausaTasto.firstElementChild as HTMLElement, ap.w, ap.h, zp, m);
     }
-    if (!this.pausa.hidden) this.disponiPannello(this.pausa, false, m);
-    if (!this.fine.hidden) this.disponiPannello(this.fine, true, m);
   }
 
   /** Pausa e fine: pannello (con il nastro del titolo nella fine), icone in più, pulsanti sotto o a destra. */
   private disponiPannello(schermo: HTMLElement, conNastro: boolean, m: MisureHud): void {
-    const b = bordiHud(m), W = m.W, H = m.H, px = m.px, ori = W > H;
+    const b = bordiHud(m), W = m.W, H = m.H, px = m.px, ori = W > H, conFasce = fasce(m).attive;
     const ap = arte('Pannello_Grande'), an = arte('Nastro_Titolo'), zt = ingr('pulsanti', m), zc = ingr('caselle', m);
     if (!ap || !an) return;
     schermo.style.backgroundSize = `${4 * px}px ${4 * px}px`;
@@ -432,11 +534,16 @@ export class Hud {
     const riga = Math.max(...tasti.map((t) => arte(t.dataset.arte!)?.h ?? 0)) * zt, largo = Math.max(...tasti.map((t) => arte(t.dataset.arte!)?.w ?? 0)) * zt;
     const altezzaTasti = tasti.length * (riga + 3 * zt) - 3 * zt;
     const altre = [...schermo.querySelector('.hud-altre')!.children] as HTMLElement[];
-    const hAltre = altre.length ? 24 * zc + 4 : 0, alta = H - b.a - b.b, larga = W - b.s - b.d;
+    const alta = H - b.a - b.b, larga = W - b.s - b.d;
+    // con le fasce la pausa è l'unico posto dove vedere la build: le icone vanno a capo invece di uscire dallo schermo
+    const perRiga = conFasce ? Math.max(1, Math.floor(larga / (26 * zc))) : altre.length || 1;
+    const hAltre = altre.length ? Math.ceil(altre.length / perRiga) * 26 * zc + 4 - 2 * zc : 0;
+    const sintesi = schermo.querySelector<HTMLElement>('.hud-sintesi'), hSintesi = sintesi && conFasce ? 20 * zc : 0;
+    if (sintesi) sintesi.hidden = !conFasce;
     const nastro = (k: number): number => (conNastro ? an.h * k - 6 * k : 0);
     const zz = adattaZoom(ingr('pannelli', m), (k) => (ori
       ? nastro(k) + ap.h * k + hAltre <= alta && ap.w * k + 12 + largo <= larga
-      : nastro(k) + ap.h * k + hAltre + 6 + altezzaTasti <= alta && ap.w * k <= larga));
+      : nastro(k) + ap.h * k + hAltre + hSintesi + 6 + altezzaTasti <= alta && ap.w * k <= larga));
     const tot = ori ? ap.w * zz + 12 + largo : ap.w * zz;
     const x = Math.round(W / 2 - tot / 2);
     let y = ori ? Math.round(b.a + (alta - nastro(zz) - ap.h * zz - hAltre) / 2) : b.a + 6;
@@ -460,10 +567,15 @@ export class Hud {
       disponiIcona(el, x + (c.x + c.l / 2) * zz - 12 * zz - x, (c.y + c.a / 2) * zz - 12 * zz, zz, m);
     });
     const yAltre = y + ap.h * zz + 4;
-    altre.forEach((el, i) => disponiIcona(el, x + i * 26 * zc, yAltre, zc, m));
+    if (conFasce) altre.forEach((el, i) => disponiIcona(el, b.s + (i % perRiga) * 26 * zc, yAltre + Math.floor(i / perRiga) * 26 * zc, zc, m));
+    else altre.forEach((el, i) => disponiIcona(el, x + i * 26 * zc, yAltre, zc, m));
+    if (sintesi && conFasce) {
+      posa(sintesi, 0, yAltre + hAltre, m);
+      Object.assign(sintesi.style, { width: `${W * px}px`, height: `${hSintesi * px}px`, lineHeight: `${hSintesi * px}px`, fontSize: `${14 * zc * px}px` });
+    }
     // pulsanti: ogni riga alta come il pulsante più alto, si tocca tutta la riga
     const cx = ori ? x + ap.w * zz + 12 + largo / 2 : W / 2;
-    let yt = ori ? Math.round(b.a + (alta - altezzaTasti) / 2) : yAltre + hAltre + 6;
+    let yt = ori ? Math.round(b.a + (alta - altezzaTasti) / 2) : yAltre + hAltre + hSintesi + 6;
     // tutte le scritte dei pulsanti con lo stesso ingrandimento: quello della più lunga
     const kTasti = Math.min(...tasti.map((t) => {
       const rt = INTERNI[t.dataset.arte!]?.testo;

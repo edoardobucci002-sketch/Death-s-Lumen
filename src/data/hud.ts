@@ -2,7 +2,7 @@
  * HUD disegnato da Edoardo (cartella HUD/ accanto al repository): quanto ingrandire ogni elemento
  * e dove stanno le sue parti interne (la finestra che si riempie, il cerchio dell'abilità, la casella dell'icona).
  * Misure in pixel dell'immagine Aseprite, a partire dall'angolo in alto a sinistra della tela.
- * Per ora lo usa solo la pagina di bozza (bozza-hud.html); quando l'HUD entra nel gioco, lo userà anche lui.
+ * Lo usano il gioco e la pagina di bozza (bozza-hud.html); le fasce del telefono le ha solo il gioco.
  */
 
 export interface Riquadro {
@@ -69,23 +69,40 @@ export const AVVISO = {
 export const OROLOGIO = { sopra: 40 }; // dal bordo alto dell'HUD, per ogni volta dell'ingrandimento delle caselle
 
 /**
- * Fasce fisse del telefono in verticale, in pixel disegnati (sul Galaxy S25 uno vale 4 pixel fisici). Tutto da rivedere.
- * Per ora le legge solo il Laboratorio (scheda Schermo): la partita non le usa ancora.
+ * Fasce fisse del telefono in verticale, fuori dal campo di gioco. Tutto in pixel disegnati, tutto da rivedere.
+ * L'altezza si calcola per ogni telefono: area sicura misurata + contenuto (arte.ts, fasce()).
+ * Sul Galaxy S25 un pixel disegnato vale 4 pixel fisici: fascia alta 81, fascia bassa 94, campo 540×820 pixel di gioco.
+ * Computer e tablet non hanno fasce.
  */
 export const FASCE = {
-  alta: 80, // 320 fisici sul S25, area sicura compresa
-  bassa: 95, // 380 fisici sul S25, area sicura compresa
-  campoMinimo: 700, // pixel di gioco del campo, in altezza
-  righeAlta: 53, // contenuto: 3 di respiro + 32 stemma + 2 + 16 riga dell'orologio e di Seth
-  righeCartiglio: 78, // cartiglio 59 + 2 + 16 riga dell'orologio + 1 di respiro; può salire fino al bordo dello schermo
-  testoCartiglio: 24, // riga del cartiglio dove inizia la scritta: deve stare sotto il foro della fotocamera
-  righeBassa: 89, // abilità 86 + 3 di respiro
+  larghezzaMassima: 500, // punti: in verticale e non più largo di così è un telefono
+  campoMinimo: 700, // pixel di gioco del campo in altezza: sotto, la scheda Schermo del LAB avvisa
+  righeAlta: 54, // sotto l'area sicura: 3 di respiro + 32 stemma + 2 + 16 riga dell'orologio e di Seth + 1 filo
+  righeCartiglio: 78, // cartiglio 59 + 2 + 16 riga dell'orologio e di Seth + 1 filo
+  testoCartiglio: 24, // riga del cartiglio dove inizia la scritta: il cartiglio scende quanto basta a tenerla fuori dall'area sicura
+  sottoCartiglio: 3, // la riga sotto il cartiglio sale di tante righe, per non toccare la riga dell'orologio e di Seth
+  righeBassa: 94, // filo, abilità (86 al massimo) e respiro; l'area sicura in basso si aggiunge
+  margine: 3, // dal bordo dello schermo
+  spazio: 6, // tra abilità, fiaschetta e pausa
+  larghezzaAbilita: 77, // l'anello più largo: tiene fermo il posto della pausa con ogni personaggio
+  larghezzaFiaschetta: 45,
+  abilitaAlCentro: 0, // 0: abilità a destra, fiaschetta accanto; 1: scambiate (dal LAB, scheda Schermo)
 };
+
+/** Pulsante della pausa nella fascia bassa: più piccolo, per lasciare posto al joystick. */
+export const PAUSA_PICCOLA = { lato: 34 };
+/** Misura minima di un pulsante da toccare, in punti: se il disegno è più piccolo si ingrandisce di un numero intero di volte. */
+export const TOCCO_MINIMO = 44;
+/** Joystick sul telefono in verticale: base più piccola, in pixel disegnati (la sensibilità resta JOYSTICK.raggio). */
+export const JOYSTICK_PICCOLO = { base: 56, pomello: 24 };
+/** Segnale del Peccato: cornice a retino sul bordo del campo. Spessore in pixel disegnati, livello del retino da 0 a 16. */
+export const SEGNALE_PECCATO = { spessore: 3, livello: 8, colore: '#8f4fd0' };
 
 /** Dove scorre il riempimento dentro ogni cornice di barra (il riempimento ha già queste misure). */
 export const FINESTRE: Record<string, Riquadro> = {
   Barra_Esperienza_Cornice: { x: 21, y: 16, l: 184, a: 5 },
   Barra_Mietitore_Cornice: { x: 20, y: 31, l: 204, a: 8 },
+  Barra_Seth_Cornice: { x: 10, y: 4, l: 205, a: 6 }, // la barra sottile della fascia alta (225×14)
   Barra_Salute_Cornice: { x: 26, y: 7, l: 47, a: 6 },
 };
 

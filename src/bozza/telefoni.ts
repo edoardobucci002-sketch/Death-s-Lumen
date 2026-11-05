@@ -22,7 +22,7 @@ export const TELEFONI: Telefono[] = [
   { id: 'iphone-se', nome: 'iPhone SE', l: 375, a: 667, dpr: 2, verticale: { a: 20, b: 0, s: 0, d: 0 }, orizzontale: { a: 0, b: 0, s: 0, d: 0 }, taglio: 'nessuno' },
   { id: 'iphone-13', nome: 'iPhone 13', l: 390, a: 844, dpr: 3, verticale: { a: 47, b: 34, s: 0, d: 0 }, orizzontale: { a: 0, b: 21, s: 47, d: 47 }, taglio: 'tacca' },
   { id: 'iphone-15-pro-max', nome: 'iPhone 15 Pro Max', l: 430, a: 932, dpr: 3, verticale: { a: 59, b: 34, s: 0, d: 0 }, orizzontale: { a: 0, b: 21, s: 59, d: 59 }, taglio: 'isola' },
-  { id: 'galaxy-s25', nome: 'Galaxy S25 (Edoardo)', l: 384, a: 832, dpr: 2.8125, verticale: { a: 32, b: 24, s: 0, d: 0 }, orizzontale: { a: 0, b: 24, s: 32, d: 0 }, taglio: 'foro' },
+  { id: 'galaxy-s25', nome: 'Galaxy S25 (Edoardo)', l: 360, a: 780, dpr: 3, verticale: { a: 35, b: 0, s: 0, d: 0 }, orizzontale: { a: 0, b: 24, s: 32, d: 0 }, taglio: 'foro' },
   { id: 'pixel-7', nome: 'Pixel 7', l: 412, a: 915, dpr: 2.625, verticale: { a: 40, b: 24, s: 0, d: 0 }, orizzontale: { a: 0, b: 24, s: 40, d: 0 }, taglio: 'foro' },
   { id: 'android-piccolo', nome: 'Android piccolo (720×1560)', l: 360, a: 780, dpr: 2, verticale: { a: 28, b: 24, s: 0, d: 0 }, orizzontale: { a: 0, b: 24, s: 28, d: 0 }, taglio: 'foro' },
   { id: 'ipad-mini', nome: 'iPad mini', l: 744, a: 1133, dpr: 2, verticale: { a: 24, b: 20, s: 0, d: 0 }, orizzontale: { a: 24, b: 20, s: 0, d: 0 }, taglio: 'nessuno' },

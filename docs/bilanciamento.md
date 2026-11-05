@@ -21,6 +21,8 @@ Quante notti servono per completare la Cappella è una domanda aperta: si decide
 
 **Restano vincolanti, in tutte le condizioni, solo due cose:** Seth del minuto 5 è il primo vero ostacolo; nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota.
 
+Le righe qui sotto sono del 4/11, con il bot su un Pixel 7 e prima delle fasce: l'ultima simulazione è nel registro, alla voce «Campo vero».
+
 ## Stato: fuori dagli obiettivi provvisori (non si corregge ora)
 
 Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti per condizione):
@@ -37,6 +39,20 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - Il cero della fiaschetta e i Patti non ci sono ancora: ricontrollare quando arrivano.
 
 ## Registro
+
+### 5/11 — Campo vero con le fasce del telefono
+
+Nessun numero di gioco cambia; cambia il campo: sul telefono in verticale `mezzaA` passa da 585 a 410, quindi comparsa, ricollocamento e armi «sullo schermo» finiscono al bordo delle fasce. Il bot ora gioca sempre con lo schermo del Galaxy S25 (`tools/sim.mjs`). Computer e tablet: tre notti con lo stesso seme identiche a prima.
+
+Stessi semi, 12 notti per personaggio (48 per condizione), bot sul S25, 540×1170 prima e 540×820 dopo:
+
+| Cappella | Prima | Dopo | Morti prima del minuto 5 (prima → dopo) | Seth del 5 ucciso (prima → dopo) | Mediana della morte (prima → dopo) | Livello finale medio (prima → dopo) |
+| --- | --- | --- | --- | --- | --- | --- |
+| vuota | 15/48 (31%) | 2/48 (4%) | 3 → 5 | 37/45 → 37/43 | 10:16 → 10:16 | 55 → 55 |
+| a metà | 29/48 (60%) | 26/48 (54%) | 1 → 1 | 42/47 → 44/47 | 8:32 → 8:18 | 66 → 69 |
+| completa | 26/48 (54%) | 20/48 (42%) | 0 → 0 | 44/48 → 44/48 | 9:09 → 8:55 | 68 → 67 |
+
+Regole vincolanti: **nessuno muore sempre prima del minuto 5**: rispettata. **Seth del minuto 5 primo vero ostacolo**: rispettata per il controllo della simulazione (il danno subito al minuto cresce quando arriva, per tutti in tutte le condizioni), ma da tenere d'occhio: a Cappella vuota muoiono prima di lui 2 notti su 12 del Lampionaio (erano 3) e 3 su 12 del Becchino (erano 0). A Cappella vuota Badessa e Strega non vincono più (da 5 e 3 a 0): muoiono intorno al minuto 10, con il secondo Seth. Un personaggio ha 12 notti, quindi queste sono indicazioni e non misure.
 
 ### 5/11 — Oltre i 15 i numeri bianchi non si creano (solo visivo)
 

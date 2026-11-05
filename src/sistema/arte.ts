@@ -4,7 +4,7 @@
  * Le posizioni si danno sempre in pixel di gioco interi (posa), mai centrando con il CSS, che lascerebbe mezzi pixel.
  */
 import type Phaser from 'phaser';
-import { GRUPPI_PARTITA, INGRANDIMENTO, PUNTI_MINIMI_PARTITA, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
+import { FASCE, GRUPPI_PARTITA, INGRANDIMENTO, PUNTI_MINIMI_PARTITA, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
 import { calcolaMisure } from './pixel';
 
 interface R4 { x: number; y: number; w: number; h: number }
@@ -56,6 +56,11 @@ export interface MisureHud {
 }
 
 let sonda: HTMLElement | null = null;
+// ?sicura=35: area sicura in alto finta, in punti, per le prove e il bot (nel browser invisibile non ce n'è una vera)
+const SICURA_DI_PROVA = Number(new URLSearchParams(location.search).get('sicura')) || 0;
+
+/** L'area sicura scritta da Capacitor nell'app Android (0 altrove), in punti. */
+const capacitor = (st: CSSStyleDeclaration, lato: string): number => parseFloat(st.getPropertyValue(`--safe-area-inset-${lato}`)) || 0;
 
 /** Misure di adesso: le stesse del gioco (pixel.ts) più la safe area del telefono. */
 export function misureHud(): MisureHud {
@@ -66,11 +71,12 @@ export function misureHud(): MisureHud {
     sonda.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
     document.body.append(sonda);
   }
-  const st = getComputedStyle(sonda);
-  const p = (v: string): number => Math.ceil((parseFloat(v) * dpr) / m.scala - 1e-6);
+  const st = getComputedStyle(sonda), radice = getComputedStyle(document.documentElement);
+  // la più grande tra env() e Capacitor: sul Galaxy S25 sono 105 e 102 pixel fisici
+  const p = (v: string, lato: string, prova = 0): number => Math.ceil((Math.max(parseFloat(v), capacitor(radice, lato), prova) * dpr) / m.scala - 1e-6);
   return {
     W: m.larghezza, H: m.altezza, px: m.zoom, scala: m.scala, dpr,
-    safe: { a: p(st.paddingTop), b: p(st.paddingBottom), s: p(st.paddingLeft), d: p(st.paddingRight) },
+    safe: { a: p(st.paddingTop, 'top', SICURA_DI_PROVA), b: p(st.paddingBottom, 'bottom'), s: p(st.paddingLeft, 'left'), d: p(st.paddingRight, 'right') },
     raddoppioPartita: Math.max(1, Math.ceil(PUNTI_MINIMI_PARTITA / (m.scala / dpr) - 1e-9)),
     raddoppio: Math.max(1, Math.ceil(PUNTI_MINIMI_PER_PIXEL / (m.scala / dpr) - 1e-9)),
   };
@@ -81,6 +87,34 @@ export const ingr = (gruppo: string, m: MisureHud): number => (INGRANDIMENTO[gru
 
 /** Dove l'HUD può stare: la safe area più 6 pixel di respiro (come nella bozza). */
 export const bordiHud = (m: MisureHud): { a: number; b: number; s: number; d: number } => ({ a: m.safe.a + 6, b: m.safe.b + 6, s: m.safe.s + 6, d: m.safe.d + 6 });
+
+export interface Fasce {
+  attive: boolean; // solo telefono in verticale
+  z: number; // pixel di gioco per pixel disegnato
+  alta: number; // pixel di gioco
+  bassa: number;
+  campoA: number; // altezza del campo, in pixel di gioco
+  sopraCartiglio: number; // pixel di gioco tra il bordo dello schermo e il cartiglio
+}
+
+/** Fasce fisse del telefono in verticale: area sicura + contenuto. Altrove non ci sono e il campo è tutto lo schermo. */
+export function fasce(m: MisureHud): Fasce {
+  if (m.H <= m.W || m.W * m.px > FASCE.larghezzaMassima) return { attive: false, z: 1, alta: 0, bassa: 0, campoA: m.H, sopraCartiglio: 0 };
+  const z = ingr('barre', m), sicura = Math.ceil(m.safe.a / z), sicuraBassa = Math.ceil(m.safe.b / z);
+  const sopra = Math.max(0, sicura - FASCE.testoCartiglio); // la scritta del cartiglio resta sempre fuori dall'area sicura
+  const alta = Math.max(sicura + FASCE.righeAlta, sopra + FASCE.righeCartiglio) * z, bassa = (sicuraBassa + FASCE.righeBassa) * z;
+  return { attive: true, z, alta, bassa, campoA: m.H - alta - bassa, sopraCartiglio: sopra * z };
+}
+
+/** Dove stanno i pulsanti nella fascia bassa: abilità e fiaschetta affiancate a destra, pausa subito prima. L'abilità non va mai nell'angolo a sinistra. */
+export function postoPulsanti(m: MisureHud, f: Fasce, larghezzaAbilita: number, larghezzaPausa = 0): { abilita: number; fiaschetta: number; pausa: number; centroY: number } {
+  const fine = m.W - Math.max(FASCE.margine * f.z, m.safe.d), spazio = FASCE.spazio * f.z;
+  const lA = larghezzaAbilita * f.z, lF = FASCE.larghezzaFiaschetta * f.z;
+  const fiaschetta = FASCE.abilitaAlCentro ? fine - lF : fine - lA - spazio - lF;
+  const abilita = FASCE.abilitaAlCentro ? fine - lF - spazio - lA : fine - lA;
+  const gruppo = fine - (FASCE.larghezzaAbilita + FASCE.larghezzaFiaschetta) * f.z - spazio;
+  return { abilita, fiaschetta, pausa: gruppo - spazio - larghezzaPausa, centroY: m.H - f.bassa + Math.round((FASCE.righeBassa * f.z) / 2) };
+}
 
 /** Mette un elemento in (x, y) pixel di gioco, interi. */
 export function posa(el: HTMLElement, x: number, y: number, m: MisureHud): void {

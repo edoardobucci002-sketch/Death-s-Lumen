@@ -108,8 +108,10 @@ export class Oggetti {
       const fuori = x < cam.scrollX || x > cam.scrollX + cam.width || y < cam.scrollY || y > cam.scrollY + cam.height;
       if (!fuori || this.tipo[i] !== RELIQUIARIO || segnale >= MAX_SEGNALI) continue;
       // segnale sul bordo, nella direzione del reliquiario
-      const sx = Math.min(Math.max(x - cam.scrollX, m), cam.width - m);
-      const sy = Math.min(Math.max(y - cam.scrollY, m), cam.height - m);
+      // mai meno di mezzo segnale dal bordo: il campo finisce alle fasce e il disegno verrebbe tagliato
+      const mx = Math.max(m, (this.segnali[segnale].width * this.zSegnale) / 2), my = Math.max(m, (this.segnali[segnale].height * this.zSegnale) / 2);
+      const sx = Math.min(Math.max(x - cam.scrollX, mx), cam.width - mx);
+      const sy = Math.min(Math.max(y - cam.scrollY, my), cam.height - my);
       // la freccia disegnata punta in alto a destra: si ribalta verso il quarto dove sta il reliquiario
       const sinistra = x < cam.scrollX + cam.width / 2, sotto = y > cam.scrollY + cam.height / 2;
       this.segnali[segnale++].setPosition(Math.round(sx), Math.round(sy)).setFlip(sinistra, sotto).setScale(this.zSegnale)

@@ -1,12 +1,12 @@
 /*
- * Abilità speciale: anello del personaggio in basso a sinistra (o tasto Spazio). In ricarica l'anello è grigio
+ * Abilità speciale: anello del personaggio in basso (o tasto Spazio). In ricarica l'anello è grigio
  * (Speciale_<Nome>_Ricarica) e si colora in senso orario, pixel per pixel; quando è pronto è tutto colorato.
  * Quando è pronta e si preme, chiama usa(); la ricarica segue la Clessidra e il personaggio.
  * Con i Ceri gemelli (Rosario) ha più cariche: si ricarica una alla volta.
  */
 import { ANELLI } from '../data/hud';
 import { PRONTA_DOPO, type Abilita } from '../data/abilita';
-import { arte, bordiHud, immagine, ingr, misura, misureHud, posa } from './arte';
+import { arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa, postoPulsanti } from './arte';
 
 export class Speciale {
   attesa: number = PRONTA_DOPO; // secondi alla prossima volta che è pronta (0 se ha tutte le cariche)
@@ -118,11 +118,15 @@ export class Speciale {
     this.attesaMisure = requestAnimationFrame(() => this.disponi());
   };
 
-  /** In basso a sinistra, come nella bozza; l'icona dell'abilità al centro del disco. */
+  /** In basso a sinistra, come nella bozza (sul telefono in verticale nella fascia bassa); l'icona dell'abilità al centro del disco. */
   private disponi(): void {
     const m = misureHud(), b = bordiHud(m), z = ingr('speciale', m), a = arte(this.chiave), c = ANELLI[this.chiave];
     if (!a || !c) return;
-    posa(this.pulsante, b.s + 4, m.H - b.b - a.h * z, m);
+    const f = fasce(m);
+    if (f.attive) {
+      const p = postoPulsanti(m, f, a.w);
+      posa(this.pulsante, p.abilita, p.centroY - Math.round((a.h * z) / 2), m);
+    } else posa(this.pulsante, b.s + 4, m.H - b.b - a.h * z, m);
     misura(this.pulsante, a.w, a.h, z, m);
     misura(this.tela, a.w, a.h, z, m);
     posa(this.icona, (c.x - 12) * z, (c.y - 12) * z, m);
