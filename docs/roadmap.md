@@ -36,7 +36,7 @@ Parti della M8 già fatte:
 
 ### Oggetti rompibili (prova, 5/11)
 
-Urne, giare e lanterne con la loro luce sono su `/prova/`: LAB → Eventi → Rompibili. Da decidere cosa lasciano e se le armi devono romperli senza un nemico vicino (vedi «Da confermare»).
+Su `/prova/`: urne con frammenti, giare con Cera, lanterne con luce e chiazze d'olio che bruciano; le armi li rompono; luce e alone si vedono sul telefono. LAB → Eventi → Rompibili. Da decidere durate, armi di fuoco, frammenti e Cera dei nemici (vedi «Da confermare»).
 
 ## Prossime tappe
 
@@ -71,8 +71,11 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Rompibili: densità, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
-| Rompibili: la Cera dai nemici resta uguale per ora; cosa lasciano davvero | GDD 8g |
+| Rompibili: percentuali, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
+| Chiazze: olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s; armi di fuoco: Candela e Fuoco fatuo | GDD 8g |
+| Frammenti: 3 per un reliquiario, contatore fisso nell'HUD sì o no | GDD 8g |
+| Cera dei nemici: resta uguale per ora | GDD 8g |
+| Luce: sfumatura 1,5, buio 88%, raggio 36% del lato corto, alone caldo | GDD 11, `src/data/mondo.ts` |
 | Fasce del telefono: tutte le misure di `FASCE`, `PAUSA_PICCOLA`, `JOYSTICK_PICCOLO`, `SEGNALE_PECCATO` in `src/data/hud.ts`, provate da Edoardo sul S25 | GDD §11; decisioni 5/11 |
 | Pausa piccola subito a sinistra di abilità e fiaschetta: al centro esatto si sovrapporrebbe al gruppo | GDD §11; decisioni 5/11 |
 | Cartiglio largo 240 pixel di gioco: copre il centro di esperienza, non lo stemma né le estremità della barra | GDD §11 |
