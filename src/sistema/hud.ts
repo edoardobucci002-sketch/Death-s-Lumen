@@ -46,6 +46,7 @@ export interface AzioniHud {
 }
 
 const ALTEZZA_OROLOGIO = 24; // pixel di gioco per ogni volta dell'ingrandimento delle barre (testo da 16 più il respiro)
+const CLIC_FANTASMA_MS = 60; // quanto dopo l'alzata del dito arriva il clic generato dal telefono
 const PER_FILA = 6; // caselle per fila: 6 armi, poi 6 doni
 const MAX_SCRITTA_PULSANTI = 3; // pixel di gioco per pixel della lettera nei pulsanti: come i pixel del pulsante (×3)
 const OMBRA = '#000'; // ombra di un pixel sotto le scritte chiare su fondo scuro
@@ -116,6 +117,7 @@ export class Hud {
   private peccato = blocco('hud-peccato');
   private sintesi = blocco('hud-sintesi'); // anime, Cera e Rosario nella pausa, solo con le fasce
   private conFasce = false;
+  private clicFantasma = false; // il dito che ha aperto la pausa non si è ancora alzato del tutto
   private inPeccato = false;
   private peccatoProva = false;
   private orologio = blocco('hud-orologio');
@@ -157,7 +159,22 @@ export class Hud {
     this.pausaTasto.className = 'hud-pausa-tasto';
     this.pausaTasto.setAttribute('aria-label', 'Pausa');
     this.pausaTasto.append(immagine('Pulsante_Pausa'));
-    this.pausaTasto.addEventListener('click', () => this.azioni.pausa());
+    // appena il dito si appoggia, come abilità e fiaschetta: il «clic» il telefono lo genera solo per il primo dito
+    this.pausaTasto.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      this.azioni.pausa();
+      // alzando il dito il telefono genera un clic, che cadrebbe sul pulsante apparso sotto il dito (su iPhone SE «Abbandona»)
+      this.clicFantasma = true;
+      const fine = (u: PointerEvent): void => {
+        if (u.pointerId !== e.pointerId) return;
+        window.removeEventListener('pointerup', fine);
+        window.removeEventListener('pointercancel', fine);
+        window.setTimeout(() => (this.clicFantasma = false), CLIC_FANTASMA_MS);
+      };
+      window.addEventListener('pointerup', fine);
+      window.addEventListener('pointercancel', fine);
+    });
+    this.pausaTasto.addEventListener('click', (e) => { if (e.detail === 0) this.azioni.pausa(); }); // con la tastiera
     this.pausa = blocco('hud-schermo hud-pausa', blocco('hud-pannello'), blocco('hud-altre'), this.sintesi, blocco('hud-pulsanti'));
     this.fine = blocco('hud-schermo hud-fine', blocco('hud-nastro', immagine('Nastro_Titolo'), document.createElement('h1')), blocco('hud-pannello'), blocco('hud-altre'), blocco('hud-pulsanti'));
     for (const s of [this.pausa, this.fine]) {
@@ -175,8 +192,9 @@ export class Hud {
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
       tasto('Pulsante_Chiaro', 'Personaggi', { azione: 'menu' }),
     );
-    this.radice.append(this.bordo, this.peccato, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.seth.el, this.avvisoEl, this.pausaTasto, this.pausa, this.fine);
+    this.radice.append(this.bordo, this.peccato, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.seth.el, this.avvisoEl, this.pausa, this.fine);
     this.radice.addEventListener('click', (e) => {
+      if (this.clicFantasma) return;
       const am = (e.target as Element).closest<HTMLElement>('[data-amuleto]');
       if (am?.dataset.amuleto) {
         this.azioni.amuleto(am.dataset.amuleto);
@@ -196,7 +214,7 @@ export class Hud {
         this.disponi();
       }
     });
-    contenitore.append(this.fasciaAlta, this.fasciaBassa, this.radice);
+    contenitore.append(this.fasciaAlta, this.fasciaBassa, this.radice, this.pausaTasto); // la pausa ha il suo strato: sta sopra le carte dei doni
     window.addEventListener('resize', this.ridimensiona);
     window.visualViewport?.addEventListener('resize', this.ridimensiona);
     this.disponi();
@@ -323,6 +341,7 @@ export class Hud {
     this.sintesi.textContent = [`◆ ${this.ultimeAnime}`, `Cera ${this.ultimaCera}`, this.ultimoRosario].filter(Boolean).join(' · ');
     this.opzioni();
     this.pausa.hidden = false;
+    this.pausaTasto.hidden = true;
     this.radice.classList.add('sopra');
     this.disponi();
     (this.pausa.querySelector('[data-azione="riprendi"]') as HTMLElement).focus();
@@ -330,6 +349,7 @@ export class Hud {
 
   nascondiPausa(): void {
     this.pausa.hidden = true;
+    this.pausaTasto.hidden = false;
     this.radice.classList.remove('sopra');
   }
 
@@ -346,6 +366,7 @@ export class Hud {
     this.riempiPannello(this.fine, r.build, '', numeri.join('\n'));
     this.bordo.hidden = true;
     this.pausa.hidden = true;
+    this.pausaTasto.hidden = true;
     this.fine.hidden = false;
     this.disponi();
     (this.fine.querySelector('[data-azione="riprova"]') as HTMLElement).focus();
@@ -357,6 +378,7 @@ export class Hud {
     window.removeEventListener('resize', this.ridimensiona);
     window.visualViewport?.removeEventListener('resize', this.ridimensiona);
     this.radice.remove();
+    this.pausaTasto.remove();
     this.fasciaAlta.remove();
     this.fasciaBassa.remove();
   }

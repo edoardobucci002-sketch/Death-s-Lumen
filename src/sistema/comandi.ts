@@ -163,7 +163,7 @@ export class Comandi {
       const q = e.getBoundingClientRect();
       return q.left - r < x && q.right + r > x && q.top - r < y && q.bottom + r > y;
     });
-    stile.zIndex = copre ? '3' : '';
+    stile.zIndex = copre ? '5' : '';
     stile.opacity = copre ? String(JOYSTICK_PICCOLO.opacitaSuiPulsanti) : '';
   }
 

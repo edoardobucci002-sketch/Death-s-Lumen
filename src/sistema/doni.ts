@@ -9,7 +9,7 @@
  */
 import type { Caso } from './caso';
 import type { Arsenale } from './armi';
-import { adattaZoom, arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino, scriviIn } from './arte';
+import { adattaZoom, arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa, retino, scriviIn } from './arte';
 import { INTERNI, STRISCIA, TESTI } from '../data/hud';
 import { scalaScritta, scritta, scriviNel } from './scritte';
 import { CARTE } from '../data/progressione';
@@ -215,7 +215,9 @@ export class Doni {
     // Rimescola si tocca su tutta l'altezza dei pulsanti più alti (il pulsante scuro è disegnato più basso)
     const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, riga = Math.max(r.h, alto.h), rimaste = 14 * m.raddoppio;
     const carte = [...this.elenco.children] as HTMLElement[], n = carte.length;
-    const alta = m.H - b.a - b.b, larga = m.W - b.s - b.d;
+    // le carte si fermano sopra il pulsante della pausa, che resta in vista sopra questo strato
+    const pausa = document.querySelector('.hud-pausa-tasto')?.getBoundingClientRect();
+    const alta = (fasce(m).attive && pausa?.height ? Math.round(pausa.top / px) - 4 : m.H - b.b) - b.a, larga = m.W - b.s - b.d;
     const sottoCarte = this.rimescola.hidden ? 0 : 8 + riga * zt + rimaste;
     const totale = (k: number): number => titolo + n * c.h * k + (n - 1) * STRISCIA.spazio * k + sottoCarte;
     const zz = adattaZoom(STRISCIA.ingrandimentoMassimo * m.raddoppio, (k) => c.w * k <= larga && totale(k) <= alta);

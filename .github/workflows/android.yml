@@ -2,7 +2,8 @@
 # Su prova compila l'APK di prova «DL prova»: ha il Laboratorio e un nome di pacchetto suo, così si installa accanto all'app normale.
 # Lo pubblica a un indirizzo fisso, scaricabile dal telefono senza accedere a GitHub (etichetta apk-prova, file dl-prova.apk).
 # La chiave di firma resta la stessa da una compilazione all'altra: altrimenti Android rifiuta l'aggiornamento.
-# GitHub cancella la copia della chiave se per 7 giorni non si compila: la chiave nuova richiede di disinstallare «DL prova» una volta.
+# La chiave sta nel segreto del repository KEYSTORE_PROVA_BASE64. Se il segreto manca si usa una copia nella cache di GitHub,
+# che sparisce dopo 7 giorni senza compilazioni: la chiave nuova richiede di disinstallare «DL prova» una volta.
 name: APK Android
 on:
   push:
@@ -18,6 +19,7 @@ jobs:
     env:
       VITE_CANALE: ${{ github.ref_name == 'prova' && 'prova' || '' }}
       ANDROID_USER_HOME: ${{ github.workspace }}/.casa-android # qui Android cerca la chiave di firma
+      CHIAVE_PROVA: ${{ github.ref_name == 'prova' && secrets.KEYSTORE_PROVA_BASE64 || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -28,17 +30,25 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Riprende la chiave di firma dell'APK di prova
-        if: env.VITE_CANALE == 'prova'
+      - name: Riprende la chiave di firma dalla cache, se il segreto non c'è
+        if: env.VITE_CANALE == 'prova' && env.CHIAVE_PROVA == ''
         uses: actions/cache@v4
         with:
           path: .casa-android/debug.keystore
           key: chiave-apk-prova-v2
-      - name: Crea la chiave di firma, se è la prima volta
+      - name: Prepara la chiave di firma
         if: env.VITE_CANALE == 'prova'
         run: |
           mkdir -p "$ANDROID_USER_HOME"
-          [ -f "$ANDROID_USER_HOME/debug.keystore" ] || keytool -genkeypair -keystore "$ANDROID_USER_HOME/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          file="$ANDROID_USER_HOME/debug.keystore"
+          if [ -n "$CHIAVE_PROVA" ]; then
+            echo "$CHIAVE_PROVA" | base64 -d > "$file"
+            echo "ORIGINE_CHIAVE=segreto" >> "$GITHUB_ENV"
+          else
+            [ -f "$file" ] || keytool -genkeypair -keystore "$file" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            echo "ORIGINE_CHIAVE=cache" >> "$GITHUB_ENV"
+          fi
+          keytool -list -keystore "$file" -storepass android -alias androiddebugkey > /dev/null # se la chiave non è valida, si ferma qui
       - run: npm ci
       - run: npm run app
       - name: Fa dell'APK di prova un'app separata
@@ -62,4 +72,4 @@ jobs:
           cp android/app/build/outputs/apk/debug/app-debug.apk dl-prova.apk
           gh release view apk-prova >/dev/null 2>&1 || gh release create apk-prova --prerelease --target prova --title "APK di prova" --notes "in preparazione"
           gh release upload apk-prova dl-prova.apk --clobber
-          gh release edit apk-prova --notes "Versione: $(node -p "require('./dist/versione.json').firma")"
+          gh release edit apk-prova --notes "Versione: $(node -p "require('./dist/versione.json').firma") · chiave: $ORIGINE_CHIAVE"

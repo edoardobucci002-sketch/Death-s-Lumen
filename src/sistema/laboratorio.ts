@@ -186,7 +186,6 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
 
   let scheda: Scheda = 'partita';
   let foriSpenti = false; // prove sui fotogrammi: durano finché non si ricarica
-  let telaSpenta = false;
   const partita = (): Gioco | null => (gioco.scene.isActive('Gioco') ? (gioco.scene.getScene('Gioco') as Gioco) : null);
   const menu = (): Menu | null => (gioco.scene.isActive('Menu') ? (gioco.scene.getScene('Menu') as Menu) : null);
   const ridisegna = (): void => {
@@ -400,7 +399,6 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       el('p', 'lab-nota', 'Resta acceso in tutte le schermate, anche nella selezione: media e peggiore dell\'ultimo secondo. Le prove qui sotto servono a capire cosa pesa sul telefono.'),
       riga(
         tasto(foriSpenti ? 'Fori nel buio: spenti' : 'Fori nel buio: accesi', () => { foriSpenti = !foriSpenti; partita()?.labForiBuio(!foriSpenti); ridisegna(); }, foriSpenti ? 'acceso' : ''),
-        tasto(telaSpenta ? 'Tela del gioco nel menu: spenta' : 'Tela del gioco nel menu: accesa', () => { telaSpenta = !telaSpenta; const t = document.querySelector<HTMLElement>('#gioco canvas'); if (t) t.style.visibility = telaSpenta && menu() ? 'hidden' : ''; ridisegna(); }, telaSpenta ? 'acceso' : ''),
       ),
       titolo('Misure'),
       el('p', 'lab-nota', 'Quello che il telefono dichiara adesso. Tienilo in verticale e, nell\'app o nel link in Home, senza barre visibili.'),

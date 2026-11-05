@@ -344,7 +344,7 @@ for (const [nome, indirizzo, prova] of eventi) {
       if (j.nascosto) errori.push('il joystick non nasce accanto a un pulsante');
       if (Math.abs(j.x - x) > 1.5 || Math.abs(j.y - y) > 1.5) errori.push('la base non è centrata sotto il dito');
       if (j.opacita) coperti++;
-      if (j.opacita && j.z !== '3') errori.push('la base che copre un pulsante non sta sopra');
+      if (j.opacita && j.z !== '5') errori.push('la base che copre un pulsante non sta sopra');
       await pag.mouse.move(x, y - 30, { steps: 2 }); // trascinando sopra e via: il pulsante non scatta
       await pag.mouse.up();
       await pag.waitForTimeout(40);
@@ -426,6 +426,33 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
+// secondo dito: mentre uno tiene il joystick, l'altro preme la pausa, come abilità e fiaschetta
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const pag = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(pag);
+  const errori = [];
+  await pag.goto(`${url}?pg=lampionaio&sicura=35`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(300);
+  const b = await pag.evaluate(() => { const r = document.querySelector('.hud-pausa-tasto').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  const primo = { x: 60, y: 450, id: 0 }, secondo = { ...b, id: 1 };
+  const tocco = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
+  await tocco('touchStart', [primo]);
+  await tocco('touchMove', [{ ...primo, x: 90 }]);
+  await pag.waitForTimeout(60);
+  if (await pag.evaluate(() => document.querySelector('.joystick').hidden)) errori.push('il joystick non è nato');
+  await tocco('touchStart', [{ ...primo, x: 90 }, secondo]);
+  await pag.waitForTimeout(60);
+  await tocco('touchEnd', [{ ...primo, x: 90 }]);
+  await tocco('touchEnd', []);
+  await pag.waitForTimeout(120);
+  if (!(await pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])')))) errori.push('il secondo dito non apre la pausa');
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} secondo dito sulla pausa con il joystick tenuto${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
 // la firma della versione esiste solo nelle versioni di prova: questa build è quella normale
 {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });
@@ -467,20 +494,31 @@ for (const [nome, indirizzo, prova] of eventi) {
 }
 
 // pausa durante la scelta dei doni e dei reliquiari: si apre sopra e chiudendola si ritrova la stessa scelta
-for (const [nome, metodo] of [['dono', 'labSceltaDono'], ['reliquiario', 'labReliquiario']]) {
-  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono', 'labSceltaDono', 360, 780, 3, 35], ['reliquiario', 'labReliquiario', 360, 780, 3, 35], ['reliquiario su iPhone SE', 'labReliquiario', 375, 667, 2, 20]]) {
+  const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor, isMobile: true, hasTouch: true });
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`${url}?pg=lampionaio&sicura=35`);
+  await pag.goto(`${url}?pg=lampionaio&sicura=${sicura}`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(300);
   await pag.evaluate((m) => { const g = window.__dl.scene.getScene('Gioco'); g.labRosario(true); g[m](); }, metodo); // senza Rosario il reliquiario non offre scelte
   await pag.waitForSelector('.doni:not([hidden])', { timeout: 2000 }).catch(() => errori.push('la scelta non si apre'));
   const carte = () => pag.evaluate(() => document.querySelector('.doni').innerText);
   const prime = await carte();
-  await pag.evaluate(() => window.__dl.scene.getScene('Gioco').indietro());
+  // il pulsante si vede sopra lo strato delle carte, non copre scelte, e si tocca davvero
+  const pulsante = await pag.evaluate(() => {
+    const b = document.querySelector('.hud-pausa-tasto').getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;
+    const copre = [...document.querySelectorAll('.doni-carta, .doni-rimescola, .doni-aiuto')].filter((e) => !e.hidden).some((e) => { const q = e.getBoundingClientRect(); return q.left < b.right && q.right > b.left && q.top < b.bottom && q.bottom > b.top; });
+    return { x, y, sopra: !!document.elementFromPoint(x, y)?.closest('.hud-pausa-tasto'), copre };
+  });
+  if (!pulsante.sopra) errori.push('il pulsante della pausa resta sotto le carte');
+  if (pulsante.copre) errori.push('il pulsante della pausa copre una scelta');
+  await pag.touchscreen.tap(pulsante.x, pulsante.y);
   await pag.waitForTimeout(150);
+  await pag.waitForTimeout(150); // il clic generato alzando il dito non deve premere ciò che è apparso sotto (su iPhone SE «Abbandona»)
+  if (!(await pag.evaluate(() => window.__dl.scene.isActive('Gioco')))) { errori.push('il tocco sulla pausa ha chiuso la partita'); throw new Error(errori[0]); }
+  if (!(await pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])')))) errori.push('toccando il pulsante la pausa non si apre');
   const inCima = await pag.evaluate(() => { const r = document.querySelector('[data-azione="riprendi"]').getBoundingClientRect(); return !!document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.hud-pausa'); });
   if (!inCima) errori.push('la pausa si apre sotto le carte');
   await pag.click('[data-azione="riprendi"]');

@@ -575,7 +575,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - nel link, chiudere la scheda fa perdere la partita (vedi la tappa «Salvataggio della partita in corso» in [roadmap.md](roadmap.md)).
 - **Audio** (sintetizzato dal codice): colpo, sparo, anima con tono che sale nelle serie, danno subito, campana, livello, reliquiario, Seth, cura, speciale. Da sostituire con suoni veri (vedi [roadmap.md](roadmap.md)).
 - **In partita** (computer e tablet; sul telefono vedi sopra): HUD in alto con livello, orologio, anime, Cera, Rosario, icone di armi e doni con il livello, barra di Seth; avvisi «Lo sciame» (ti circonda), «Seth» (il Rinnovato è venuto per te), «Reliquiario» (…); pausa con il pulsante in basso a destra, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni; 1-2-3-4 scelgono la striscia del dono; F beve dalla fiaschetta; Spazio usa l'abilità.
-- **Pausa e scelte**: la pausa si apre sopra la scelta di doni e reliquiari e chiudendola si ritrova la stessa scelta, con le stesse carte.
+- **Pausa e scelte**: il pulsante della pausa resta visibile e premibile sopra lo strato delle carte; la pausa si apre sopra la scelta di doni e reliquiari e chiudendola si ritrova la stessa scelta, con le stesse carte. Fiaschetta, abilità e pausa rispondono anche a un secondo dito, mentre l'altro tiene il joystick.
 - **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, sul telefono anche anime, Cera e Rosario, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.
 
 ### Mondo, luce e comandi (`src/data/mondo.ts`)
