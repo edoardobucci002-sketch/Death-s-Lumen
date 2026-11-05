@@ -54,6 +54,8 @@ export const REAZIONI = {
   // lontano = pixel di gioco dal personaggio dentro cui il nome non entra; colori = quelli degli stati (valgono dal prossimo avvio)
   etichetta: {
     ingrandimento: 2, durata: 0.9, sale: 44, pausa: 2, massimi: 3, lontano: 90,
+    sopra: 34, // il nome parte così in alto sul punto della reazione, per non toccare il numero che sale (da rivedere)
+    staccoNumero: 16, // quando il nome viene spostato sopra il cerchio, sta così più in alto del numero della reazione (da rivedere)
     colori: { eclissi: STATI.maledetto.colore, rivelazione: STATI.consacrato.colore, esorcismo: STATI.abbagliato.colore, interramento: STATI.sepolto.colore },
   },
   durataEffetto: 0.5, // il cerchio della reazione: metà pieno, metà a retino (era 0,25: non si faceva in tempo a vederlo)

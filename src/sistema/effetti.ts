@@ -42,9 +42,10 @@ export class Effetti {
   private numeroVita = new Float32Array(MAX_NUMERI);
   private numeroX = new Float32Array(MAX_NUMERI);
   private numeroY = new Float32Array(MAX_NUMERI);
-  private numeroImportante = new Uint8Array(MAX_NUMERI); // 0 = bianco, 1 = bianco da danno forte, 2 = ambra
+  private numeroAmbra = new Uint8Array(MAX_NUMERI); // 1 = ambra: al limite non viene sostituito
+  private numeroReazione = new Uint8Array(MAX_NUMERI); // 1 = somma di una reazione: resta fuori dal cerchio del personaggio e dentro lo schermo
   private numeriAttivi = 0;
-  private numeroId = new Uint32Array(MAX_NUMERI); // il nemico di un numero sommato (0 = numero normale)
+  private numeroId = new Uint32Array(MAX_NUMERI); // il nemico o la reazione di un numero sommato (0 = numero normale)
   private numeroSomma = new Float32Array(MAX_NUMERI);
   private numeroFinestra = new Float32Array(MAX_NUMERI); // secondi in cui il numero sommato accetta altri colpi
   private scoppi: Phaser.GameObjects.Sprite[] = [];
@@ -64,6 +65,8 @@ export class Effetti {
   private etichetteAttive = 0;
   private pausaEtichetta = new Float32Array(INFO_REAZIONI.length + 1);
   private prossimaReazione = 0;
+  private posaX = 0; // risultato di dentroLeRegole, per non creare oggetti nel ciclo
+  private posaY = 0;
   private durataReazione = 0.25;
   private scossa = 0; // secondi rimasti
   private forzaScossa = 0;
@@ -102,17 +105,17 @@ export class Effetti {
   numero(x: number, y: number, danno: number, ambra: boolean): void {
     if (!this.sulloSchermo(x, y)) return;
     const n = Math.max(1, Math.min(999, Math.round(danno)));
-    const importanza = ambra ? 2 : n >= EFFETTI.numeri.forte ? 1 : 0;
-    const i = this.postoNumero(importanza);
+    const i = this.postoNumero();
     if (i < 0) return;
-    this.numeroImportante[i] = importanza;
+    this.numeroAmbra[i] = ambra ? 1 : 0;
+    this.numeroReazione[i] = 0;
     this.numeroId[i] = 0;
     this.numeroFinestra[i] = 0;
     this.numeroX[i] = x + (this.caso.numero() * 2 - 1) * EFFETTI.numeri.sparpaglio;
     this.numeroY[i] = y;
     this.numeroVita[i] = EFFETTI.numeri.durata;
     const t = this.numeri[i].setText(TESTI[n]).setVisible(true);
-    if (ambra) t.setTint(EFFETTI.numeri.coloreForte);
+    if (ambra) t.setTint(EFFETTI.numeri.coloreAmbra);
     else t.clearTint();
   }
 
@@ -124,9 +127,10 @@ export class Effetti {
       if (this.numeroId[k] === id && this.numeroFinestra[k] > 0 && this.numeroVita[k] > 0) i = k;
     }
     if (i < 0) {
-      i = this.postoNumero(2);
+      i = this.postoNumero();
       if (i < 0) return;
-      this.numeroImportante[i] = 2;
+      this.numeroAmbra[i] = 1;
+      this.numeroReazione[i] = 0;
       this.numeroId[i] = id;
       this.numeroSomma[i] = 0;
       this.numeroFinestra[i] = EFFETTI.numeri.somma.finestra;
@@ -136,7 +140,38 @@ export class Effetti {
     this.numeroSomma[i] += danno;
     this.numeroVita[i] = EFFETTI.numeri.durata; // finché si somma resta fermo sopra la testa; sale quando la finestra si chiude
     const n = Math.max(1, Math.min(TESTI.length - 1, Math.round(this.numeroSomma[i])));
-    this.numeri[i].setText(TESTI[n]).setVisible(true).setTint(EFFETTI.numeri.coloreForte);
+    this.numeri[i].setText(TESTI[n]).setVisible(true).setTint(EFFETTI.numeri.coloreAmbra);
+  }
+
+  /**
+   * Danno di una reazione (id = il suo numero unico): tutti i colpi vanno in un solo numero ambra al centro della zona (x, y).
+   * Con aperta > 0 il numero resta fermo per quei secondi, o finché non arriva chiudiReazione: le fiammelle colpiscono in momenti diversi.
+   */
+  sommaReazione(id: number, x: number, y: number, danno: number, aperta: number): void {
+    let i = -1;
+    for (let k = 0; k < MAX_NUMERI; k++) {
+      if (this.numeroId[k] === id && this.numeroVita[k] > 0) i = k;
+    }
+    if (i < 0) {
+      i = this.postoNumero();
+      if (i < 0) return;
+      this.numeroAmbra[i] = this.numeroReazione[i] = 1;
+      this.numeroId[i] = id;
+      this.numeroSomma[i] = 0;
+      this.numeroFinestra[i] = aperta;
+      this.numeroX[i] = x;
+      this.numeroY[i] = y;
+      this.numeri[i].setVisible(false); // lo mette a posto e lo mostra aggiorna()
+    }
+    this.numeroSomma[i] += danno;
+    this.numeroVita[i] = EFFETTI.numeri.durata;
+    const n = Math.max(1, Math.min(TESTI.length - 1, Math.round(this.numeroSomma[i])));
+    this.numeri[i].setText(TESTI[n]).setTint(EFFETTI.numeri.coloreAmbra);
+  }
+
+  /** La reazione id non può più colpire: il suo numero sale e sparisce. */
+  chiudiReazione(id: number): void {
+    for (let i = 0; i < MAX_NUMERI; i++) if (this.numeroId[i] === id) this.numeroFinestra[i] = 0;
   }
 
   /** Porta il numero sommato del nemico id sopra la cima del suo sprite, che è in (x, y). */
@@ -148,8 +183,8 @@ export class Effetti {
     }
   }
 
-  /** Un posto libero entro il limite; al limite un numero prende il posto del più vecchio tra i meno importanti di lui; −1 se non c'è posto. */
-  private postoNumero(importanza: number): number {
+  /** Un posto libero entro il limite; al limite il posto del bianco più vecchio; −1 se sono tutti ambra. */
+  private postoNumero(): number {
     if (this.numeriAttivi < Math.min(EFFETTI.numeri.massimo, MAX_NUMERI)) {
       for (let i = 0; i < MAX_NUMERI; i++) {
         if (this.numeroVita[i] > 0) continue;
@@ -159,7 +194,7 @@ export class Effetti {
     }
     let scelto = -1;
     for (let i = 0; i < MAX_NUMERI; i++) {
-      if (this.numeroVita[i] > 0 && this.numeroImportante[i] < importanza && (scelto < 0 || this.numeroVita[i] < this.numeroVita[scelto])) scelto = i;
+      if (this.numeroVita[i] > 0 && !this.numeroAmbra[i] && (scelto < 0 || this.numeroVita[i] < this.numeroVita[scelto])) scelto = i;
     }
     return scelto;
   }
@@ -210,18 +245,20 @@ export class Effetti {
     this.etichette[i].setTexture(`Nome_${INFO_REAZIONI[reazione - 1].nome}`).setScale(REAZIONI.etichetta.ingrandimento).setVisible(false);
   }
 
-  /** Mette il nome al suo posto: sale, resta fuori dal cerchio intorno al personaggio (sopra di esso) e dentro lo schermo. */
+  /** Mette il nome al suo posto: sale, fuori dal cerchio intorno al personaggio e dentro lo schermo; se viene spostato sta più in alto del numero. */
   private posaEtichetta(i: number, gx: number, gy: number): void {
-    const e = REAZIONI.etichetta, im = this.etichette[i], cam = this.scena.cameras.main;
-    const x = this.etichettaX[i];
-    let y = this.etichettaY[i] - e.sale * (1 - this.etichettaVita[i] / e.durata);
-    const dx = x - gx, dy = y - gy;
-    if (dx * dx + dy * dy < e.lontano * e.lontano) y = gy - Math.sqrt(e.lontano * e.lontano - dx * dx) - im.displayHeight / 2;
-    const mezzaL = im.displayWidth / 2, mezzaA = im.displayHeight / 2;
-    im.setPosition(
-      Math.round(Math.max(cam.scrollX + mezzaL, Math.min(cam.scrollX + cam.width - mezzaL, x))),
-      Math.round(Math.max(cam.scrollY + mezzaA, Math.min(cam.scrollY + cam.height - mezzaA, y))),
-    ).setVisible(true);
+    const e = REAZIONI.etichetta, im = this.etichette[i];
+    const y = this.etichettaY[i] - e.sale * (1 - this.etichettaVita[i] / e.durata);
+    this.dentroLeRegole(this.etichettaX[i], y, im.displayWidth / 2, im.displayHeight / 2, e.lontano + e.staccoNumero, gx, gy);
+    im.setPosition(Math.round(this.posaX), Math.round(this.posaY)).setVisible(true);
+  }
+
+  /** Regole delle scritte sul campo: una scritta con centro (x, y) sale sopra il cerchio di raggio r intorno al personaggio e resta dentro lo schermo. */
+  private dentroLeRegole(x: number, y: number, mezzaL: number, mezzaA: number, r: number, gx: number, gy: number): void {
+    const cam = this.scena.cameras.main, dx = x - gx, dy = y - gy;
+    const su = dx * dx + dy * dy < r * r ? gy - Math.sqrt(r * r - dx * dx) - mezzaA : y;
+    this.posaX = Math.max(cam.scrollX + mezzaL, Math.min(cam.scrollX + cam.width - mezzaL, x));
+    this.posaY = Math.max(cam.scrollY + mezzaA, Math.min(cam.scrollY + cam.height - mezzaA, su));
   }
 
   /** Scuote lo schermo; resta la scossa più forte tra quelle in corso. */
@@ -242,11 +279,18 @@ export class Effetti {
         this.numeroId[i] = 0;
         continue;
       }
-      if (this.numeroFinestra[i] > 0) this.numeroFinestra[i] -= dt;
+      if (this.numeroFinestra[i] > 0) {
+        this.numeroFinestra[i] -= dt;
+        if (this.numeroReazione[i]) this.numeroVita[i] = EFFETTI.numeri.durata; // la reazione può ancora colpire
+      }
       // sale in fretta e rallenta
       const fatto = 1 - this.numeroVita[i] / EFFETTI.numeri.durata;
       const su = EFFETTI.numeri.salita * (1 - (1 - fatto) * (1 - fatto));
-      t.setPosition(Math.round(this.numeroX[i]), Math.round(this.numeroY[i] - su));
+      if (this.numeroReazione[i]) {
+        const mezzaA = t.height / 2; // il punto di appoggio del numero è in basso al centro
+        this.dentroLeRegole(this.numeroX[i], this.numeroY[i] - su - mezzaA, t.width / 2, mezzaA, REAZIONI.etichetta.lontano, gx, gy);
+        t.setPosition(Math.round(this.posaX), Math.round(this.posaY + mezzaA)).setVisible(true);
+      } else t.setPosition(Math.round(this.numeroX[i]), Math.round(this.numeroY[i] - su));
     }
     for (let i = 0; i < MAX_SCOPPI; i++) {
       if (this.scoppioVita[i] > 0 && (this.scoppioVita[i] -= dt) <= 0) this.scoppi[i].stop().setVisible(false);

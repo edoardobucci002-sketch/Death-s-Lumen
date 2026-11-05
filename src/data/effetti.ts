@@ -8,14 +8,13 @@ export const EFFETTI = {
     salita: 22, // di quanto sale
     sparpaglio: 8, // spostamento a caso a destra o a sinistra, per non sovrapporli
     ingrandimento: 2, // le cifre sono 3×5 pixel: si disegnano grandi il doppio
-    forte: 40, // da questo danno in su un numero bianco ha la precedenza sugli altri bianchi quando si è al limite
-    massimo: 15, // numeri sullo schermo nello stesso momento: oltre non se ne creano (da rivedere; al massimo 64)
+    massimo: 15, // numeri sullo schermo nello stesso momento: al limite uno nuovo prende il posto del bianco più vecchio (da rivedere; al massimo 64)
     // élite e Seth: i colpi che arrivano entro «finestra» secondi si sommano in un solo numero, che segue la testa del nemico (da rivedere)
     somma: {
       finestra: 0.5,
       sopra: 30, // pixel di gioco sopra la cima dello sprite: lascia il posto al simbolo dello stato
     },
-    coloreForte: 0xe3913a, // l'ambra: solo critici, danno delle reazioni e numero sommato su élite e Seth; gli altri numeri sono bianchi
+    coloreAmbra: 0xe3913a, // solo critici, danno delle reazioni e numero sommato su élite e Seth; gli altri numeri sono bianchi
   },
   scoppio: {
     durata: 0.2, // nemico che muore

@@ -737,10 +737,11 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   for (const [nome, col, modello, ...attesi] of RIGHE_CAMPO) conRiga(campo, nome, (r) => inTesto(r[col], nome, modello, ...attesi));
 
   const impatto = tabella('### Impatto dei colpi');
-  const EF = E.EFFETTI;
+  const EF = E.EFFETTI, RE = ST.REAZIONI.etichetta;
   const RIGHE_IMPATTO = [
     ['Numeri del danno', 'Numero', 'durano {} s, salgono di {} px, cifre {?}×{?} ingrandite × {}', EF.numeri.durata, EF.numeri.salita, EF.numeri.ingrandimento],
-    ['Numeri del danno', 'Note', 'un bianco da {} in su', EF.numeri.forte],
+    ['Numero delle reazioni', 'Note', 'mai entro {} px dal personaggio', RE.lontano],
+    ['Numero delle reazioni', 'Note', 'sta {} px più in alto del numero', RE.staccoNumero],
     ['Scoppio', 'Numero', '{} s', EF.scoppio.durata],
     ['Arco della Lanterna', 'Numero', '{} s, spessore {} px', EF.arco.durata, EF.arco.spessore],
     ['Impatto della pala', 'Numero', '{} s; scossa dello schermo di {} px per {} s', EF.impattoPala, EF.scossaPala.forza, EF.scossaPala.durata],
