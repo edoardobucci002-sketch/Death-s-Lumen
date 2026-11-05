@@ -10,6 +10,12 @@ export const INGRANDIMENTO_SEGNAPOSTO = 2;
 /** Seme del caso: a parità di seme il cimitero è sempre uguale. */
 export const SEME_PREDEFINITO = 1031;
 
+/**
+ * Prova prestazioni del LAB (da rivedere). Obiettivo sul telefono minimo: media 60 fps, peggiore mai sotto 45.
+ * La notte si ferma a secondiFine, prima dell'alba: così la prova non arriva mai alla fine e non salva niente.
+ */
+export const PRESTAZIONI = { personaggio: 'lampionaio', minuto: 14, secondiFine: 870, nemici: 400, secondi: 60, avvio: 3, blocco: 100, livello: 100, livelloArmi: 8, lanterna: { dx: 110, dy: -120 } };
+
 /** Link di prova: ogni quanti secondi controlla se c'è una versione nuova (da rivedere). */
 export const AGGIORNAMENTI = { ogni: 120 };
 

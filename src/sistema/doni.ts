@@ -215,14 +215,14 @@ export class Doni {
     // Rimescola si tocca su tutta l'altezza dei pulsanti più alti (il pulsante scuro è disegnato più basso)
     const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, riga = Math.max(r.h, alto.h), rimaste = 14 * m.raddoppio;
     const carte = [...this.elenco.children] as HTMLElement[], n = carte.length;
-    // le carte si fermano sopra il pulsante della pausa, che resta in vista sopra questo strato
-    const pausa = document.querySelector('.hud-pausa-tasto')?.getBoundingClientRect();
-    const alta = (fasce(m).attive && pausa?.height ? Math.round(pausa.top / px) - 4 : m.H - b.b) - b.a, larga = m.W - b.s - b.d;
+    // sul telefono in verticale le scelte stanno dentro il campo: non sbordano sulle fasce e la pausa resta libera
+    const f = fasce(m), sopra = f.attive ? f.alta : b.a, sotto = f.attive ? m.H - f.bassa : m.H - b.b;
+    const alta = sotto - sopra, larga = m.W - b.s - b.d;
     const sottoCarte = this.rimescola.hidden ? 0 : 8 + riga * zt + rimaste;
     const totale = (k: number): number => titolo + n * c.h * k + (n - 1) * STRISCIA.spazio * k + sottoCarte;
     const zz = adattaZoom(STRISCIA.ingrandimentoMassimo * m.raddoppio, (k) => c.w * k <= larga && totale(k) <= alta);
     const x0 = Math.round(m.W / 2 - (c.w * zz) / 2);
-    let y = b.a + Math.max(0, Math.round((alta - totale(zz)) / 2));
+    let y = sopra + Math.max(0, Math.round((alta - totale(zz)) / 2));
     const h2 = this.radice.querySelector('h2') as HTMLElement;
     posa(h2, 0, y, m);
     Object.assign(h2.style, { width: `${m.W * px}px`, fontSize: `${22 * m.raddoppio * px}px`, lineHeight: `${titolo * px}px` });

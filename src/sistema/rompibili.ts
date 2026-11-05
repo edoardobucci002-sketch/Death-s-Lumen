@@ -32,6 +32,7 @@ export class Rompibili {
   private cy = Infinity;
   private fori: { chiavi: string[]; lato: number };
   private telaBuio: Phaser.Textures.DynamicTexture | null = null;
+  private fissa = -1; // l'oggetto che non si rompe (Prova prestazioni)
   private fuochi = 0; // fori aperti in questo disegno
 
   constructor(private scena: Phaser.Scene, private seme: number, private quandoRotto: (tipo: number, x: number, y: number) => void) {
@@ -63,6 +64,12 @@ export class Rompibili {
       const dx = this.x[i] - x, dy = this.y[i] - ROMPIBILI.centro - y;
       if (dx * dx + dy * dy < r * r) this.rompi(i);
     }
+  }
+
+  /** Prova prestazioni: una lanterna che non si rompe, così resta in vista per tutta la misura. */
+  piazzaFissa(tipo: number, x: number, y: number): void {
+    this.fissa = this.stato.indexOf(LIBERO);
+    this.occupa(tipo, x, y, LAB);
   }
 
   /** Laboratorio: mette un oggetto lì dov'è chiesto. */
@@ -180,6 +187,7 @@ export class Rompibili {
   }
 
   rompi(i: number): void {
+    if (i === this.fissa) return;
     this.stato[i] = ROTTO;
     if (this.settore[i] !== LAB) this.rotti.add(this.settore[i]);
     this.settore[i] = 0;

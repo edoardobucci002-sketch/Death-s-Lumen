@@ -22,6 +22,7 @@ import { UNIONI } from '../data/unioni';
 import { accendiContatore, contatoreAcceso, riprendiContatore } from './contatore';
 import { FIRMA } from './firma';
 import { letturaSchermo } from './lettura-schermo';
+import { avviaProvaPrestazioni } from './prova-prestazioni';
 import { carica, salva } from './salvataggio';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
@@ -158,6 +159,9 @@ const STILE = `
 .lab-gruppo > div { padding: 0 8px 8px; }
 .lab-testo { width: 100%; min-height: 120px; border: 1px solid #7a54a4; border-radius: 6px; background: #100a16; color: #fff; font: 12px/1.4 ui-monospace, monospace; padding: 6px; user-select: text; }
 .lab-contatore { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 2px); right: 2px; z-index: 96; padding: 2px 6px; background: #000; color: #9f9; font: 700 12px/1.3 ui-monospace, monospace; pointer-events: none; }
+.lab-prova-avviso { position: fixed; left: 8px; right: 8px; top: calc(env(safe-area-inset-top, 0px) + 28px); z-index: 96; padding: 8px; background: #1a1220; color: #efe6f7; font: 700 15px/1.3 system-ui, sans-serif; text-align: center; pointer-events: none; }
+.lab-prova { position: fixed; left: 8px; right: 8px; bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); z-index: 97; display: grid; gap: 8px; padding: 8px; background: #1a1220; color: #efe6f7; font: 15px/1.35 system-ui, sans-serif; border: 3px solid #a57ae0; }
+.lab-prova .lab-testo { min-height: 260px; }
 .lab-cerca { width: 100%; min-height: 44px; padding: 6px 10px; border: 1px solid #7a54a4; border-radius: 6px; background: #100a16; color: #fff; font: inherit; user-select: text; }
 `;
 
@@ -394,6 +398,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         window.dispatchEvent(new Event('resize')); // abilità, fiaschetta e HUD si rimettono al loro posto
         ridisegna();
       }, scambiati ? 'acceso' : '')),
+      titolo('Prova prestazioni'),
+      el('p', 'lab-nota', 'Un tocco e aspetta un minuto senza toccare niente: alla fine c\'è un testo da copiare. La partita in corso si perde; Cera, record e sblocchi non cambiano.'),
+      riga(tasto('Prova prestazioni', () => { mostra(false); void avviaProvaPrestazioni(gioco); }, 'acceso')),
       titolo('Fotogrammi al secondo'),
       riga(tasto(contatoreAcceso() ? 'Contatore: acceso' : 'Contatore: spento', () => { accendiContatore(!contatoreAcceso()); ridisegna(); }, contatoreAcceso() ? 'acceso' : '')),
       el('p', 'lab-nota', 'Resta acceso in tutte le schermate, anche nella selezione: media e peggiore dell\'ultimo secondo. Le prove qui sotto servono a capire cosa pesa sul telefono.'),

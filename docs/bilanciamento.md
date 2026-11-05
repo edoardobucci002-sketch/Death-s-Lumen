@@ -52,7 +52,7 @@ Misure sul Mac, schermo del S25, stesse schermate. Il Mac non è il telefono: va
 
 - Scheda Schermo, ascolto di Indietro, fasce e controllo del joystick non pesano in modo misurabile.
 - Con lanterne o fuochi in vista il buio si ridisegna per intero a ogni fotogramma per aprirne i fori: 36 ms a fotogramma contro 27 ms senza fori. Senza nulla in vista 25 ms, come prima. Gli aloni pesano circa 3 ms.
-- Picchi singoli da circa 200 ms compaiono ogni tanto al minuto 14, più spesso nella prima misura ma non solo (una volta 217 ms a metà prova): causa non trovata.
+- Picchi singoli da circa 200 ms al minuto 14. Causa trovata con la Prova prestazioni: quando un dono allarga la luce (Stoppino lungo, Lucciola) il buio si ricostruisce pixel per pixel, 150–217 ms sul Mac; vale per le scelte che abbiamo visto in quella prova, non è escluso che ce ne siano altri. Capita con le carte aperte, a partita ferma.
 - Nella selezione il difetto non si riproduce sul Mac: `main` e `prova` sono uguali e il processore è quasi fermo.
 - **Sul Galaxy S25 (versione 5c1d869):** 60 fps fissi in tutte e quattro le prove, minuto 14 con 400 nemici e lanterne, con e senza fori; 59 fps nella selezione. I fori restano come sono (decisioni 5/11).
 

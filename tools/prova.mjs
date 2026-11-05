@@ -453,6 +453,49 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
+// la notte dura uguale a ogni frequenza dello schermo: a 60, 90 e 120 Hz stessa logica allo stesso secondo, in tempo reale
+{
+  const risultati = [];
+  for (const hz of [60, 90, 120]) {
+    const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+    const pag = await ctx.newPage();
+    await pag.addInitScript((hz) => {
+      let prossimo = performance.now();
+      window.__disegni = 0;
+      window.requestAnimationFrame = (f) => {
+        prossimo = Math.max(prossimo + 1000 / hz, performance.now());
+        return setTimeout(() => { window.__disegni++; f(performance.now()); }, Math.max(0, prossimo - performance.now()));
+      };
+    }, hz);
+    await pag.goto(`${url}?pg=lampionaio&automatico&seme=7&sicura=35`);
+    await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 });
+    // 6 secondi di notte: fermo, il personaggio muore poco dopo. Se la notte non avanza il test fallisce invece di restare appeso
+    const r = await pag.evaluate(() => new Promise((ok, no) => {
+      setTimeout(() => no(new Error('la notte non avanza')), 20000);
+      const s = window.__dl.scene.getScene('Gioco'), avanti = s.passo.bind(s), inizio = performance.now(), secondi0 = s.secondi, disegni0 = window.__disegni;
+      s.passo = (dt) => {
+        avanti(dt);
+        if (s.secondi - secondi0 < 6) return;
+        s.passo = avanti;
+        const stato = [s.x, s.y, s.livello, s.orda.numero, ...Array.from(s.orda.x.slice(0, s.orda.numero))].join();
+        let h = 0;
+        for (let i = 0; i < stato.length; i++) h = (Math.imul(h, 31) + stato.charCodeAt(i)) | 0;
+        ok({ reali: (performance.now() - inizio) / 1000, disegni: (window.__disegni - disegni0) / 6, nemici: s.orda.numero, impronta: h });
+      };
+    }));
+    risultati.push({ hz, ...r });
+    await ctx.close();
+  }
+  const errori = [];
+  for (const r of risultati) {
+    if (Math.abs(r.reali - 6) > 0.6) errori.push(`a ${r.hz} Hz 6 s di notte durano ${r.reali.toFixed(1)} s veri`);
+    if (Math.abs(r.disegni - r.hz) > r.hz * 0.2) errori.push(`a ${r.hz} Hz disegna ${r.disegni.toFixed(0)} volte al secondo`);
+    if (r.impronta !== risultati[0].impronta) errori.push(`a ${r.hz} Hz la notte va diversamente`);
+  }
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} frequenza dello schermo: ${risultati.map((r) => `${r.hz} Hz ${r.reali.toFixed(1)} s, ${r.disegni.toFixed(0)} disegni/s`).join(' · ')}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
 // la firma della versione esiste solo nelle versioni di prova: questa build è quella normale
 {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });
@@ -494,7 +537,7 @@ for (const [nome, indirizzo, prova] of eventi) {
 }
 
 // pausa durante la scelta dei doni e dei reliquiari: si apre sopra e chiudendola si ritrova la stessa scelta
-for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono', 'labSceltaDono', 360, 780, 3, 35], ['reliquiario', 'labReliquiario', 360, 780, 3, 35], ['reliquiario su iPhone SE', 'labReliquiario', 375, 667, 2, 20]]) {
+for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono', 'labSceltaDono', 360, 780, 3, 35], ['reliquiario', 'labReliquiario', 360, 780, 3, 35], ['reliquiario su iPhone SE', 'labReliquiario', 375, 667, 2, 20], ['reliquiario su iPhone 13', 'labReliquiario', 390, 844, 3, 47], ['reliquiario su Android piccolo', 'labReliquiario', 360, 780, 2, 28]]) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor, isMobile: true, hasTouch: true });
   const pag = await ctx.newPage();
   const errori = [];
@@ -506,6 +549,12 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   await pag.waitForSelector('.doni:not([hidden])', { timeout: 2000 }).catch(() => errori.push('la scelta non si apre'));
   const carte = () => pag.evaluate(() => document.querySelector('.doni').innerText);
   const prime = await carte();
+  // le scelte stanno dentro il campo, senza sbordare sulle fasce
+  const fuori = await pag.evaluate(() => {
+    const [su, giu] = [...document.querySelectorAll('.hud-fascia')].map((f) => f.getBoundingClientRect());
+    return [...document.querySelectorAll('.doni h2, .doni-carta, .doni-rimescola, .doni-rimaste')].filter((e) => { const q = e.getBoundingClientRect(); return q.height && (q.top < su.bottom - 1 || q.bottom > giu.top + 1); }).map((e) => e.className || e.tagName);
+  });
+  if (fuori.length) errori.push(`sborda sulle fasce: ${fuori.join(', ')}`);
   // il pulsante si vede sopra lo strato delle carte, non copre scelte, e si tocca davvero
   const pulsante = await pag.evaluate(() => {
     const b = document.querySelector('.hud-pausa-tasto').getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;

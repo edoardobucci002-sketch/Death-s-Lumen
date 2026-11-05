@@ -20,10 +20,10 @@ import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
 import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
-import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
+import { BARRA_SALUTE, LUCE, PRESTAZIONI, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, ORDE, SCIAMI } from '../data/nemici';
 import { EFFETTI } from '../data/effetti';
-import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, type Arma } from '../data/armi';
+import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, MAX_ARMI, type Arma } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { PASSIVI, RICARICA_MINIMA, type IdDono } from '../data/doni';
 import { animePerLivello, CARTE } from '../data/progressione';
@@ -145,6 +145,7 @@ export class Gioco extends Phaser.Scene {
   private prossimaCalamita = 0;
   private mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
+  private fineFinta = 0; // Prova prestazioni: la notte non va oltre questi secondi
   private foriBuio = true; // solo il Laboratorio li spegne
   private campoL = 0; // pixel di gioco del campo: sul telefono in verticale è meno dello schermo
   private campoA = 0;
@@ -354,6 +355,10 @@ export class Gioco extends Phaser.Scene {
     if (this.fermo()) return;
 
     this.secondi += dt;
+    if (this.fineFinta > 0) { // Prova prestazioni: l'alba non arriva e non si sale di livello, le scelte falserebbero la misura
+      this.secondi = Math.min(this.secondi, this.fineFinta);
+      this.esperienza = 0;
+    }
     this.comandi.aggiorna();
     let dx = this.comandi.dx;
     let dy = this.comandi.dy;
@@ -599,6 +604,23 @@ export class Gioco extends Phaser.Scene {
 
   labLivelli(): { armi: { arma: Arma; livello: number }[]; doni: Record<IdDono, number> } {
     return { armi: this.arsenale.possedute.map((p) => ({ arma: p.arma, livello: p.livello })), doni: { ...this.passivi } };
+  }
+
+  /** Prova prestazioni: la scena più pesante, senza poter morire né arrivare all'alba; i doni si scelgono da soli. */
+  labProvaPrestazioni(): void {
+    const P = PRESTAZIONI;
+    this.labImmortale(true);
+    this.automatico = true;
+    this.labMinuto(P.minuto);
+    this.fineFinta = P.secondiFine;
+    this.labLivello(P.livello);
+    for (const a of ARMI_COMUNI.slice(0, MAX_ARMI - 1)) this.labArma(a, P.livelloArmi);
+    this.rompibili?.piazzaFissa(ROMPIBILI.tipi.findIndex((t) => t.luce > 0), this.x + P.lanterna.dx, this.y + P.lanterna.dy);
+    this.labProvaRiempi();
+  }
+
+  labProvaRiempi(): void {
+    this.orda.riempi(PRESTAZIONI.nemici, this.secondi, this.x, this.y, this.campoL / 2, this.campoA / 2);
   }
 
   /** Diagnosi dei fotogrammi: spegne i fori di lanterne e fuochi nel buio, per misurarne il costo sul telefono. */
