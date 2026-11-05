@@ -1,28 +1,51 @@
 /*
  * Oggetti rompibili del cimitero: urne, giare e lanterne sparse a caso (prova: tutti i valori sono da rivedere).
- * Il mondo è diviso in settori quadrati: in ogni settore può esserci un oggetto, sempre lo stesso in quella notte.
- * Distanze in pixel di gioco.
+ * Il mondo è diviso in settori quadrati: ogni settore ha una sola estrazione, quindi le percentuali qui sotto
+ * si leggono direttamente. Urna 24% + Giara 24% + Lanterna 12% + vuoto 40% = 100%.
+ * Distanze in pixel di gioco, tempi in secondi.
  */
 export const ROMPIBILI = {
-  settore: 700, // lato di un settore
-  probabilita: 0.6, // quanti settori hanno un oggetto
+  settore: 700, // lato di un settore (sul telefono il campo è circa 585×700: più o meno uno schermo)
   bordo: 110, // distanza minima dal bordo del settore: così due oggetti non finiscono attaccati
   raggioSettori: 2, // quanti settori intorno al personaggio sono attivi
   partenza: 320, // niente oggetti così vicini al punto di partenza
   tocco: 34, // il personaggio lo rompe a questa distanza
-  colpo: 70, // lo rompe anche un colpo d'arma su un nemico entro questa distanza
+  raggio: 18, // quanto è grosso per i colpi delle armi
+  centro: 20, // il centro dell'oggetto sta tanti pixel sopra la base
   dispersione: 14, // distanza tra le gocce di Cera che lascia
   tipi: [
-    { id: 'urna', nome: 'Urna', sprite: 'Urna', peso: 4, gocce: 1, luce: 0 },
-    { id: 'giara', nome: 'Giara', sprite: 'Giara', peso: 4, gocce: 2, luce: 0 },
-    { id: 'lanterna', nome: 'Lanterna', sprite: 'Lanterna', peso: 2, gocce: 1, luce: 1 },
+    { id: 'urna', nome: 'Urna', sprite: 'Urna', probabilita: 0.24, gocce: 0, frammenti: 1, olio: 0, luce: 0 },
+    { id: 'giara', nome: 'Giara', sprite: 'Giara', probabilita: 0.24, gocce: 2, frammenti: 0, olio: 0, luce: 0 },
+    { id: 'lanterna', nome: 'Lanterna', sprite: 'Lanterna', probabilita: 0.12, gocce: 0, frammenti: 0, olio: 1, luce: 1 },
   ],
 } as const;
 
-/** Luce delle lanterne a terra: un foro nel buio, con lo stesso retino dell'alone del personaggio. */
+/** Luce delle lanterne a terra: un foro nel buio più un alone caldo sul terreno. */
 export const LUCE_LANTERNA = {
-  raggio: 120, // fin qui si vede pieno
+  raggio: 120, // fin qui il buio è tolto del tutto
   sfumatura: 0.9, // quanto in fretta si richiude il buio
   altezza: 22, // centro della luce sopra la base della lanterna
   tremolio: 4, // di quanti pixel varia il raggio con la fiamma
+  raggioAlone: 170, // fin dove arriva il calore sul terreno
+  densitaAlone: 0.9, // parte di pixel accesi al centro dell'alone
+} as const;
+
+/** La chiazza d'olio di una lanterna rotta: rallenta i nemici; un'arma di fuoco la accende e brucia. */
+export const CHIAZZE = {
+  raggio: 96,
+  olio: 12, // secondi prima che l'olio si asciughi
+  fuoco: 5, // secondi di fuoco, da quando si accende: poi la chiazza finisce
+  dissolvenza: 1.2, // ultimi secondi: l'olio svanisce a retino
+  intervallo: 0.4, // ogni quanto agisce sui nemici
+  rallenta: 0.4, // parte di velocità tolta (Seth la subisce a metà, come ogni rallentamento)
+  danno: 14, // danno del fuoco a ogni intervallo; cresce con i bonus di danno del personaggio
+  scintilla: 0.12, // ogni quanto cambia il disegno del fuoco
+  // le armi di fuoco, indicate dal loro proiettile: Candela e Fuoco fatuo
+  accendono: ['Candela_Fiammella', 'Fuoco_fatuo_Volo'],
+} as const;
+
+/** I frammenti di reliquia delle urne: riuniti danno un reliquiario. */
+export const FRAMMENTI = {
+  perReliquiario: 3,
+  titolo: 'Frammento di reliquia',
 } as const;

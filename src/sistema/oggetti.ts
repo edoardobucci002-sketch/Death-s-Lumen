@@ -1,6 +1,6 @@
 /*
- * Oggetti a terra: pane (salute), calamita (attira tutte le anime), reliquiari (potenziamenti) e gocce di Cera
- * (la valuta della Cappella: rare, volano verso il personaggio come le anime ma più piano).
+ * Oggetti a terra: pane (salute), calamita (attira tutte le anime), reliquiari (potenziamenti), gocce di Cera
+ * (la valuta della Cappella: rare, volano verso il personaggio come le anime ma più piano) e frammenti di reliquia.
  * Si raccolgono passandoci sopra. Si disegnano sopra il buio, come le anime;
  * un reliquiario fuori dallo schermo è indicato da un segnale lampeggiante sul bordo (HUD/Segnali/Segnale_Reliquiario).
  */
@@ -14,7 +14,8 @@ export const PANE = 0;
 export const CALAMITA = 1;
 export const RELIQUIARIO = 2;
 export const CERA_GOCCIA = 3;
-const SPRITE = [DROP.pane.sprite, DROP.calamita.sprite, DROP.reliquiario.sprite, DROP.cera.sprite];
+export const FRAMMENTO = 4;
+const SPRITE = [DROP.pane.sprite, DROP.calamita.sprite, DROP.reliquiario.sprite, DROP.cera.sprite, DROP.frammento.sprite];
 const MAX_OGGETTI = 128;
 
 /** La goccia di cera, provvisoria, disegnata qui in pixel art (8×11) finché Edoardo non ne disegna una. */
@@ -31,11 +32,23 @@ const GOCCIA = [
   '.OAAAAO.',
   '..OOOO..',
 ];
-function creaTexturaGoccia(scena: Phaser.Scene): void {
-  if (scena.textures.exists(DROP.cera.sprite)) return;
-  const c = scena.textures.createCanvas(DROP.cera.sprite, 8, GOCCIA.length)!;
+/** Il frammento di reliquia, provvisorio: una scheggia d'oro con un bordo rotto. */
+const SCHEGGIA = [
+  '....OO....',
+  '...OWYO...',
+  '..OWYYAO..',
+  '.OWYYYAO..',
+  '.OWYOYYAO.',
+  '.OYYOOYAO.',
+  'OYYOAAOAAO',
+  'OAAO..OAO.',
+  '.OO....O..',
+];
+function creaDisegno(scena: Phaser.Scene, chiave: string, righe: string[]): void {
+  if (scena.textures.exists(chiave)) return;
+  const c = scena.textures.createCanvas(chiave, righe[0].length, righe.length)!;
   const colori: Record<string, string> = { O: '#3a2208', Y: '#f2cf6a', W: '#fff4c8', A: '#c98a2c' };
-  GOCCIA.forEach((riga, y) => [...riga].forEach((ch, x) => {
+  righe.forEach((riga, y) => [...riga].forEach((ch, x) => {
     if (ch === '.') return;
     c.context.fillStyle = colori[ch];
     c.context.fillRect(x, y, 1, 1);
@@ -55,7 +68,8 @@ export class Oggetti {
   private zSegnale = ingr('segnale', misureHud());
 
   constructor(scena: Phaser.Scene) {
-    creaTexturaGoccia(scena);
+    creaDisegno(scena, DROP.cera.sprite, GOCCIA);
+    creaDisegno(scena, DROP.frammento.sprite, SCHEGGIA);
     for (let i = 0; i < MAX_OGGETTI; i++) {
       this.sprite.push(scena.add.sprite(0, 0, DROP.pane.sprite).setScale(DROP.ingrandimento).setDepth(PROFONDITA.anime).setVisible(false));
     }
@@ -72,6 +86,7 @@ export class Oggetti {
     this.tipo[i] = tipo;
     const s = this.sprite[i].setTexture(SPRITE[tipo]).setVisible(true);
     if (tipo === CERA_GOCCIA) s.stop().setScale(DROP.cera.ingrandimento);
+    else if (tipo === FRAMMENTO) s.stop().setScale(DROP.frammento.ingrandimento);
     else s.setScale(DROP.ingrandimento).play(`${SPRITE[tipo]}:idle`);
   }
 
@@ -80,7 +95,7 @@ export class Oggetti {
     for (let i = this.numero - 1; i >= 0; i--) {
       let dx = gx - this.x[i];
       let dy = gy - this.y[i];
-      if (this.tipo[i] === CERA_GOCCIA) {
+      if (this.tipo[i] === CERA_GOCCIA || this.tipo[i] === FRAMMENTO) {
         const d = Math.hypot(dx, dy);
         if (d < raggioCera && d > 0) {
           const passo = Math.min(d, DROP.cera.volo * dt);

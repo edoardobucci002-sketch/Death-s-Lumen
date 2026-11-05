@@ -25,6 +25,9 @@ import {
 import { MOLTIPLICA_CRITICO } from '../data/doni';
 import { NUMERI_UNIONI as U } from '../data/unioni';
 import type { Anime } from './anime';
+import type { Chiazze } from './chiazze';
+import type { Rompibili } from './rompibili';
+import { CHIAZZE, ROMPIBILI } from '../data/rompibili';
 import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SCIA, SPRITE_VELO } from './segnaposto-oggetti';
 
 const NUBE = 1;
@@ -76,7 +79,8 @@ export class Arsenale {
   richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
   anime: Anime | null = null; // per i Fuochi erranti
-  suColpo: ((x: number, y: number) => void) | null = null; // un'arma ha colpito un nemico lì: rompe gli oggetti vicini
+  rompibili: Rompibili | null = null; // le armi li rompono con il loro impatto
+  chiazze: Chiazze | null = null; // le armi di fuoco accendono l'olio
   private unite: Partial<Record<Arma['id'], boolean>> = {};
   private raffiche = 0; // raffiche del Bastone (Verga dei nomi)
   private uccisiPozze = 0; // uccisioni nelle pozze (Acquasantiera)
@@ -143,6 +147,7 @@ export class Arsenale {
   private prReazione = new Uint32Array(MAX_PROIETTILI); // la reazione a cui appartiene la fiammella (0 = nessuna)
   private prEsplode = new Uint8Array(MAX_PROIETTILI);
   private prAff = new Uint8Array(MAX_PROIETTILI);
+  private prFuoco = new Uint8Array(MAX_PROIETTILI); // accende l'olio
   private prResto = new Uint8Array(MAX_PROIETTILI); // nemici che può ancora trapassare
   private prUnione = new Uint8Array(MAX_PROIETTILI); // SCIA o RACCOGLIE
   private prColpiti = new Uint32Array(MAX_PROIETTILI * 4); // id dei nemici già colpiti (fino a 4)
@@ -337,6 +342,7 @@ export class Arsenale {
     this.prepara(0, this.px, this.py, raggio, danno, 0);
     this.cAff = SACRO;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
+    this.rompiForma();
     this.effetti.reazione(this.px, this.py, raggio, REAZIONI.rivelazione.colore, REAZIONI.rivelazione.bordo, REAZIONI.durataEffetto);
   }
 
@@ -525,6 +531,7 @@ export class Arsenale {
           this.cvMY[k] = o.y[j] - o.raggio[j];
           this.cvMira[k] = 0.18;
           this.ferisci(j, l.danno, 0, 0, 0, LUCE);
+          this.rompibili?.colpitoDa(this.cvMX[k], this.cvMY[k], ROMPIBILI.raggio);
         }
         this.richiami += l.anime;
         return l.ricarica;
@@ -537,6 +544,7 @@ export class Arsenale {
         this.cProb = RUOLI.veloConsacra;
         this.cLampo = false;
         this.orda.griglia.nelRaggio(this.cx, this.cy, this.raggioVelo + 40, this.visitaColpo);
+        this.rompiForma();
         return l.ricarica;
       }
       case 'falce':
@@ -593,6 +601,7 @@ export class Arsenale {
           this.cAff = TERRA;
           this.cProb = RUOLI.lapideSeppellisce;
           this.orda.griglia.nelRaggio(this.cx, this.cy, this.lpR[i] + 40, this.visitaColpo);
+          this.rompiForma();
           this.effetto(LAPIDE.effetto, this.cx, this.cy, this.lpR[i], PROFONDITA.aTerra, EFFETTI.impattoPala);
           if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
         }
@@ -633,6 +642,7 @@ export class Arsenale {
     for (let i = this.grani - 1; i >= 0; i--) {
       this.grTempo[i] -= dt;
       if (this.grTempo[i] > 0) continue;
+      this.rompibili?.colpitoDa(this.grX[i], this.grY[i], ROMPIBILI.raggio);
       let j = -1;
       if (this.grResto[i] > 0) {
         this.cProiettile = i;
@@ -701,7 +711,6 @@ export class Arsenale {
   private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true, reazione = 0): void {
     const o = this.orda;
     const danno = this.danno(base);
-    this.suColpo?.(o.x[j], o.y[j]);
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
     const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
     if (r) this.accoda(r, j, 0);
@@ -721,6 +730,7 @@ export class Arsenale {
     this.cAff = LUCE;
     this.cProb = probabilita;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
+    this.rompiForma();
     this.effetti.arco(this.px, this.py, Math.atan2(dy, dx), raggio, ampiezza);
   }
 
@@ -753,6 +763,7 @@ export class Arsenale {
         this.cRAperta = 0;
         if (t === ESPLOSIONE) o.segno[j] = this.colpo; // il dardo l'ha già colpito
         this.orda.griglia.nelRaggio(x, y, r + 40, this.visitaColpo);
+        this.rompiForma();
         if (t === ECLISSI) this.eclissi++;
         if (t === ECLISSI) this.effetti.reazione(x, y, r, REAZIONI.eclissi.colore, REAZIONI.eclissi.bordo, REAZIONI.durataEffetto);
       } else if (t === ESORCISMO) {
@@ -788,6 +799,7 @@ export class Arsenale {
       this.lapideCade(this.cx, this.cy, raggio, 0); // solo da vedere: il colpo è già questo
     }
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
+    this.rompiForma();
     this.effetto(PALA.effetto, this.cx, this.cy, raggio, PROFONDITA.aTerra, EFFETTI.impattoPala);
     if (this.toccati) this.effetti.scuoti(EFFETTI.scossaPala.forza, EFFETTI.scossaPala.durata);
   }
@@ -797,6 +809,7 @@ export class Arsenale {
     this.cAff = SACRO;
     this.cFerma = ferma;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
+    this.rompiForma();
     this.effetto(CAMPANA.effetto, this.px, this.py, raggio, PROFONDITA.aTerra, CAMPANA.durataEffetto);
     suona('campana');
   }
@@ -813,6 +826,7 @@ export class Arsenale {
     this.cDX = dx;
     this.cDY = dy;
     this.orda.griglia.nelRaggio(this.cx, this.cy, this.cr + 40, this.visitaColpo);
+    this.rompiForma();
     // il fendente della v0 parte dal bordo sinistro della tela e va a destra: si allunga e si gira nella direzione;
     // verso sinistra si capovolge anche in verticale, così il disegno non resta sottosopra
     const s = this.effetto(LAMA_DI_LUCE.effetto, ox, oy, 0, PROFONDITA.aTerra, LAMA_DI_LUCE.durataEffetto);
@@ -886,6 +900,36 @@ export class Arsenale {
     const aff = this.cAff, ferma = this.cFerma;
     this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff, this.cProb, this.cLampo, this.cReazione);
     if (ferma) o.ferma(j, ferma);
+  }
+
+  /** Rompe gli oggetti dentro la forma del colpo in corso: stessa geometria di tocca. */
+  private rompiForma(): void {
+    const R = this.rompibili;
+    if (!R) return;
+    const r = ROMPIBILI.raggio;
+    for (let i = 0; i < R.capienza; i++) {
+      if (!R.intero(i)) continue;
+      const ex = R.x[i], ey = R.y[i] - ROMPIBILI.centro;
+      if (this.cForma === 2) {
+        const lx = ex - this.cX0, ly = ey - this.cY0;
+        const lungo = lx * this.cDX + ly * this.cDY;
+        if (lungo < -r || lungo > this.cX1 + r || Math.abs(-lx * this.cDY + ly * this.cDX) > this.cY1 + r) continue;
+      } else {
+        const rx = ex - this.cx, ry = ey - this.cy, d = Math.hypot(rx, ry) || 1;
+        if (d > this.cr + r || (this.cForma === 1 && (rx * this.cDX + ry * this.cDY) / d < this.cCos && d > r)) continue;
+      }
+      R.rompi(i);
+    }
+  }
+
+  /** Il fuoco di una chiazza ferisce il nemico j, come una zona. */
+  brucia(j: number, danno: number): void {
+    this.ferisci(j, danno, 0, 0, 0, 0, 0, false);
+  }
+
+  /** Numero nuovo per segnare i nemici già toccati (lo usano le chiazze). */
+  nuovoColpo(): number {
+    return ++this.colpo;
   }
 
   private ritarda(arma: Arma, tempo: number, a: number, b: number, c: number): void {
@@ -962,6 +1006,7 @@ export class Arsenale {
       this.zTick[i] += this.zIntervallo[i];
       this.colpo++;
       this.orda.griglia.nelRaggio(this.zX[i], this.zY[i], this.zR[i] + 40, this.visitaZona);
+      this.rompibili?.colpitoDa(this.zX[i], this.zY[i], this.zR[i]);
     }
   }
 
@@ -1029,6 +1074,7 @@ export class Arsenale {
         this.cx = this.px + Math.cos(ang) * r;
         this.cy = this.py + Math.sin(ang) * r;
         this.orda.griglia.vicini(this.cx, this.cy, this.visitaFalce);
+        this.rompibili?.colpitoDa(this.cx, this.cy, this.cr);
         this.lame[k].setPosition(Math.round(this.cx), Math.round(this.cy)).setRotation(ang * 3).setScale(this.scalaLama * (1 + this.falceCresce)).setVisible(true);
       }
     }
@@ -1073,6 +1119,7 @@ export class Arsenale {
     this.prX[i] = ox;
     this.prY[i] = oy;
     this.prAff[i] = aff;
+    this.prFuoco[i] = (CHIAZZE.accendono as readonly string[]).includes(chiave) ? 1 : 0;
     this.prVX[i] = Math.cos(ang) * velocita;
     this.prVY[i] = Math.sin(ang) * velocita;
     this.prVel[i] = velocita;
@@ -1155,6 +1202,8 @@ export class Arsenale {
         this.cx = this.prX[i];
         this.cy = this.prY[i];
         this.orda.griglia.vicini(this.cx, this.cy, this.visitaProiettile);
+        this.rompibili?.colpitoDa(this.cx, this.cy, this.prRaggio[i]);
+        if (this.prFuoco[i]) this.chiazze?.accendi(this.cx, this.cy);
       }
       if (this.prVita[i] <= 0 || this.prResto[i] === 0) this.togliProiettile(i);
     }
@@ -1237,6 +1286,7 @@ export class Arsenale {
     for (const a of this.prCampi) a[i] = a[u];
     this.prEsplode[i] = this.prEsplode[u];
     this.prAff[i] = this.prAff[u];
+    this.prFuoco[i] = this.prFuoco[u];
     this.prResto[i] = this.prResto[u];
     this.prUnione[i] = this.prUnione[u];
     this.prReazione[i] = this.prReazione[u];

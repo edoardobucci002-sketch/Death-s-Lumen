@@ -100,6 +100,7 @@ Regole del registro (4 novembre 2026, scelte di Edoardo):
 | 2026-10-30 | Obiettivo: app per iOS e Android, più versione web installabile | Richiesta di Edoardo |
 | 2026-10-30 | Versione web pubblicata su GitHub Pages, repository pubblico `edoardobucci002-sketch/Death-s-Lumen` | GitHub Pages gratuito richiede un repository pubblico |
 | 2026-11-05 | **Oggetti rompibili in prova: urne, giare e lanterne sparse a caso; la lanterna fa luce.** Gli asset di Seliel the Shaper (Mana Seed) restano fuori: la licenza vieta i progetti con codice generato dall'AI. Le prove nascono da ChatGPT e Claude le ripassa in Aseprite. | Edoardo vuole vederli in gioco prima di decidere; i numeri e il drop sono *da rivedere*. |
+| 2026-11-05 | **Rompibili, seconda versione.** La giara lascia Cera; la lanterna esplode in una chiazza d'olio che rallenta e che solo le armi di fuoco accendono; l'urna lascia un frammento di reliquia. Le armi rompono gli oggetti con il loro impatto. Percentuali di comparsa leggibili. La luce deve vedersi sul telefono. | Partita di Edoardo su telefono: luce e retino quasi invisibili, ottima la quantità. Durate, armi di fuoco e numero di frammenti restano *da rivedere*. |
 
 ## Riferimenti della v0 e dei link
 

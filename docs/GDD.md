@@ -508,15 +508,20 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
 
 ## 8g. Oggetti rompibili (`src/data/rompibili.ts`)
 
-**Prova: tutti i valori sono *da rivedere*.** Urne, giare e lanterne stanno sparse a caso nel cimitero, in posti diversi a ogni notte. Il mondo è diviso in settori di 700×700 px: il 60% ne ha uno, ad almeno 110 px dal bordo del settore e ad almeno 320 px dal punto di partenza. Sono attivi i settori entro 2 da quello del personaggio.
+**Prova: tutti i valori sono *da rivedere*.** Urne, giare e lanterne stanno sparse a caso, in posti diversi a ogni notte. Il mondo è diviso in settori di 700×700 px, circa uno schermo di telefono: ogni settore ha una sola estrazione, ad almeno 110 px dal bordo e ad almeno 320 px dal punto di partenza. Sono attivi i settori entro 2 da quello del personaggio.
 
-| Oggetto | Peso | Cera | Luce |
+| Oggetto | Per settore | Cosa lascia | Luce |
 | --- | --- | --- | --- |
-| Urna | 4 | 1 | no |
-| Giara | 4 | 2 | no |
-| Lanterna | 2 | 1 | sì |
+| Urna | 24% | 1 frammento di reliquia | no |
+| Giara | 24% | 2 gocce di Cera | no |
+| Lanterna | 12% | chiazza d'olio | sì |
+| Niente | 40% | | |
 
-Si rompono se il personaggio arriva a 34 px o se un'arma colpisce un nemico entro 70 px (oggi le armi non li colpiscono da sole, senza un nemico vicino). Un oggetto rotto non torna in quella notte. La lanterna intera apre un foro nel buio, pieno fino a 120 px e poi a retino; rotta, si spegne. Le gocce di Cera non cambiano quelle lasciate dai nemici. Il bot delle simulazioni gioca senza rompibili.
+Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, impatti, rintocchi, fendenti, nubi, pozze, proiettili, falci, lapidi, grani e corvo, anche senza nemici vicini. Un oggetto rotto non torna in quella notte. La lanterna intera apre un foro nel buio pieno fino a 120 px e scalda il terreno fino a 170 px; rotta, si spegne.
+
+**Chiazza d'olio**: raggio 96 px, dura 12 s, rallenta del 40% i nemici dentro (Seth la metà). Non tocca il personaggio. Candela e Fuoco fatuo la accendono passandoci sopra: brucia per 5 s al posto dell'olio che resta, 14 danni ogni 0,4 s (più i bonus di danno), e fa luce come una lanterna. Disegni provvisori dal codice.
+
+**Frammenti**: volano verso il personaggio come la Cera. Il cartiglio dice «1 di 3: riuniti, aprono un reliquiario»; il terzo apre un reliquiario e il conto riparte. Il bot delle simulazioni gioca senza rompibili, quindi olio e frammenti non sono misurati.
 
 ## 9. Esperienza e doni
 
@@ -572,8 +577,8 @@ Si rompono se il personaggio arriva a 34 px o se un'arma colpisce un nemico entr
 | --- | --- | --- |
 | Pixel di gioco da vedere | 700 in verticale, 610 in orizzontale | `src/sistema/pixel.ts`; si sceglie la scala intera più vicina, quindi sui telefoni se ne vedono un po' meno (circa 585 sul lato corto) |
 | Raggio della luce | 260 | oltre comincia il buio a retino |
-| Sfumatura del buio | 0,9 | più alto = buio più rapido |
-| Buio massimo | 78% dei pixel | nel buio più fitto il terreno si intravede ancora |
+| Sfumatura del buio | 1,5 | più alto = buio più rapido |
+| Buio massimo | 88% dei pixel | nel buio più fitto il terreno si intravede ancora |
 | Centro della luce | 42 px sopra i piedi | |
 | Tremolio della fiamma | ±7 px ogni 0,12 s | |
 | Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |

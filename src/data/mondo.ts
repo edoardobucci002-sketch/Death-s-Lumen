@@ -13,8 +13,12 @@ export const SEME_PREDEFINITO = 1031;
 /** Alone della lanterna: fuori dal raggio il buio cresce a retino. */
 export const LUCE = {
   raggio: 260, // dove comincia il buio
-  sfumatura: 0.9, // quanto in fretta si fa buio fuori dal raggio
-  buioMassimo: 0.78, // parte di pixel neri nel buio più fitto (1 = nero pieno)
+  quotaSchermo: 0.36, // il raggio non supera questa parte del lato corto del campo: sul telefono il buio si deve vedere
+  sfumatura: 1.5, // quanto in fretta si fa buio fuori dal raggio
+  buioMassimo: 0.88, // parte di pixel neri nel buio più fitto (1 = nero pieno)
+  coloreAlone: '#2e1b0a', // il calore sommato al terreno dentro la luce
+  densitaAlone: 0.75, // parte di pixel accesi al centro dell'alone
+  raggioAlone: 1.15, // l'alone arriva a tante volte il raggio
   altezza: 42, // centro della luce sopra i piedi del personaggio
   tremolio: 7, // di quanti pixel varia il raggio quando la fiamma tremola
   intervalloTremolio: 0.12,

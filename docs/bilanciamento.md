@@ -40,6 +40,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 5/11 — Rompibili, seconda prova e luce
+
+Dopo la partita di Edoardo su telefono. Stesso numero di oggetti, percentuali chiare: 24% urna, 24% giara, 12% lanterna, 40% niente. Urna e lanterna non danno più Cera. Olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s, 3 frammenti per un reliquiario: proposte da rivedere. Buio: sfumatura da 0,9 a 1,5, massimo da 78% a 88%, raggio entro il 36% del lato corto del campo (sul telefono circa 195-210 px invece di 260), alone caldo nuovo. Il raggio di gioco della Lucciola non cambia. Il bot non ha rompibili: reliquiari in più e danni del fuoco non sono misurati.
+
 ### 5/11 — Oggetti rompibili (prova, valori da rivedere)
 
 Nuovi: 60% dei settori da 700 px con un oggetto; urna 1 goccia, giara 2, lanterna 1; pesi 4/4/2. La Cera dei nemici non cambia, quindi una notte ne dà un po' di più. Il bot gioca senza rompibili: la simulazione non cambia e non misura questa Cera in più.

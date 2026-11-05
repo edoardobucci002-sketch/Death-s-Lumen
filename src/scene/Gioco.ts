@@ -39,7 +39,7 @@ import { Legenda } from '../sistema/legenda';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Hud, type VoceBuild } from '../sistema/hud';
 import { vibra } from '../sistema/mobile';
-import { CALAMITA, CERA_GOCCIA, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
+import { CALAMITA, CERA_GOCCIA, FRAMMENTO, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
 import { LUCE as LUCE_AFF, OMBRA as OMBRA_AFF, SACRO as SACRO_AFF, TERRA as TERRA_AFF } from '../sistema/orda';
 import { Orda, type CategoriaNemico } from '../sistema/orda';
 import { Minacce } from '../sistema/minacce';
@@ -54,9 +54,10 @@ import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from 
 import { iconaAmuleto } from '../sistema/amuleti';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { Rompibili } from '../sistema/rompibili';
-import { ROMPIBILI } from '../data/rompibili';
+import { Chiazze } from '../sistema/chiazze';
+import { FRAMMENTI, ROMPIBILI } from '../data/rompibili';
 import { creaTerreno } from '../sistema/terreno';
-import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
+import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
@@ -91,6 +92,9 @@ export class Gioco extends Phaser.Scene {
   private oggetti!: Oggetti;
   private minacce!: Minacce;
   private rompibili: Rompibili | null = null; // nelle simulazioni non ci sono: il bot non li cerca
+  private chiazze: Chiazze | null = null;
+  private frammenti = 0; // frammenti di reliquia raccolti verso il prossimo reliquiario
+  private alone!: Phaser.GameObjects.Image;
   private effetti!: Effetti;
   private doni!: Doni;
   private legenda!: Legenda;
@@ -211,7 +215,10 @@ export class Gioco extends Phaser.Scene {
     this.arsenale = new Arsenale(this, this.orda, this.caso, this.bonus, this.effetti);
     this.arsenale.anime = this.anime;
     this.rompibili = parametri.has('bot') ? null : new Rompibili(this, Number(parametri.get('seme')) || Date.now() % 2147483647, this.oggettoRotto);
-    this.arsenale.suColpo = this.rompibili ? this.colpoVicino : null;
+    this.chiazze = this.rompibili ? new Chiazze(this, this.orda, this.arsenale) : null;
+    this.arsenale.rompibili = this.rompibili;
+    this.arsenale.chiazze = this.chiazze;
+    this.frammenti = 0;
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
     const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
@@ -232,6 +239,7 @@ export class Gioco extends Phaser.Scene {
     this.areaLuce = this.fattoreLuce();
     this.misureBuio = creaBuio(this, this.campoL, this.campoA, LUCE.raggio * this.areaLuce);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
+    this.alone = this.add.image(0, 0, CHIAVI_ALONE[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD);
     // barra della salute sotto i piedi, sopra il buio così si vede sempre
     // (disegnata da Edoardo: cornice col cuore e riempimento che si taglia da sinistra)
     this.saluteCornice = this.add.image(0, 0, 'Barra_Salute_Cornice').setOrigin(0).setDepth(PROFONDITA.barra);
@@ -374,6 +382,7 @@ export class Gioco extends Phaser.Scene {
       this.arsenale.abbaglia(this.x, this.y - COLPI.corpo, LUCE.raggio * this.areaLuce);
     }
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, mezzaL, mezzaA);
+    this.chiazze?.aggiorna(dt);
     const cura = this.arsenale.cura();
     if (cura && this.salute < this.saluteMassima) suona('cura');
     const primaCura = this.salute;
@@ -649,6 +658,18 @@ export class Gioco extends Phaser.Scene {
     this.rompibili?.rompiVicino(this.x, this.y);
   }
 
+  labChiazza(): void {
+    this.chiazze?.aggiungi(this.x + 130, this.y);
+  }
+
+  labAccendiChiazze(): void {
+    this.chiazze?.accendiTutte();
+  }
+
+  labFrammento(): void {
+    this.oggetti.aggiungi(FRAMMENTO, this.x + 60, this.y - 60);
+  }
+
   labPausa(): void {
     this.apriPausa();
   }
@@ -788,6 +809,8 @@ export class Gioco extends Phaser.Scene {
     } else if (tipo === CALAMITA) {
       this.anime.attiraTutte();
       suona('reliquiario');
+    } else if (tipo === FRAMMENTO) {
+      this.frammento();
     } else {
       this.apriReliquiario();
     }
@@ -1078,13 +1101,16 @@ export class Gioco extends Phaser.Scene {
     this.orda.disegna(cam, COMPARSA.margine, px, py);
     this.anime.disegna(cam);
     this.oggetti.disegna(cam, this.fermo() ? 0 : dt);
-    this.rompibili?.disegna(cam);
+    this.rompibili?.disegna(cam, this.fiamma);
+    this.chiazze?.disegna();
     this.arsenale.disegna();
     this.minacce.disegna();
     this.terreno.setTilePosition(cam.scrollX, cam.scrollY);
     const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
     const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);
-    this.buio.setTexture(this.rompibili?.buio(CHIAVI_BUIO[this.fiamma], this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam) ?? CHIAVI_BUIO[this.fiamma]);
+    const chiaveBuio = CHIAVI_BUIO[this.fiamma];
+    this.buio.setTexture(this.rompibili && this.chiazze ? this.rompibili.buio(chiaveBuio, this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam, this.chiazze) : chiaveBuio);
+    this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
     this.buio.setPosition(bx, by);
     const z = this.zSalute, f = FINESTRE.Barra_Salute_Cornice;
     const sx = px - Math.floor(((arte('Barra_Salute_Cornice')?.w ?? 0) * z) / 2);
@@ -1130,15 +1156,28 @@ export class Gioco extends Phaser.Scene {
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
 
-  /** Un oggetto rompibile lascia la sua Cera. */
+  /** Frammento di reliquia: il cartiglio dice quanti ne mancano; riuniti aprono un reliquiario. */
+  private frammento(): void {
+    const servono = FRAMMENTI.perReliquiario;
+    if (++this.frammenti >= servono) {
+      this.frammenti = 0;
+      this.apriReliquiario();
+      return;
+    }
+    suona('cera');
+    vibra('leggera');
+    this.hud.avviso(FRAMMENTI.titolo, `${this.frammenti} di ${servono}: riuniti, aprono un reliquiario`);
+  }
+
+  /** Un oggetto rompibile lascia ciò che contiene. */
   private oggettoRotto = (tipo: number, x: number, y: number): void => {
-    const { gocce } = ROMPIBILI.tipi[tipo];
+    const { gocce, frammenti, olio } = ROMPIBILI.tipi[tipo];
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * ROMPIBILI.dispersione, y);
+    for (let k = 0; k < frammenti; k++) this.oggetti.aggiungi(FRAMMENTO, x, y);
+    if (olio) this.chiazze?.aggiungi(x, y);
     suona('colpo');
     vibra('leggera');
   };
-
-  private colpoVicino = (x: number, y: number): void => this.rompibili?.colpo(x, y);
 
   private tasto = (e: KeyboardEvent): void => {
     if (e.code === 'KeyP' || e.code === 'Escape') {

@@ -1,13 +1,16 @@
 /*
- * Rompibili: urne, giare e lanterne sparse nel cimitero. Si rompono se il personaggio le tocca o se un'arma
- * colpisce un nemico lì vicino, e lasciano Cera. Una lanterna intera apre un foro nel buio.
+ * Rompibili: urne, giare e lanterne sparse nel cimitero. Si rompono se il personaggio le tocca o se le colpisce
+ * un'arma. La giara lascia Cera, l'urna un frammento di reliquia, la lanterna una chiazza d'olio.
+ * Una lanterna intera apre un foro nel buio e scalda il terreno intorno; anche una chiazza accesa fa luce.
  * Il mondo è diviso in settori: da seme e settore si ricava sempre lo stesso oggetto, quindi non serve ricordare
  * la mappa ma solo i settori già rotti. Il generatore è a parte: non cambia nemici, carte e drop.
  */
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import { LUCE_LANTERNA, ROMPIBILI } from '../data/rompibili';
 import { Caso } from './caso';
-import { creaFori } from './luce';
+import type { Chiazze } from './chiazze';
+import { PROFONDITA } from './effetti';
+import { CHIAVI_ALONE_LUME, creaFori } from './luce';
 
 const MAX = 40;
 const LIBERO = 0, INTERO = 1, ROTTO = 2;
@@ -16,9 +19,11 @@ const CHIAVE_BUIO = 'buio-lumi';
 const chiaveSettore = (cx: number, cy: number): number => (cx + 32768) * 65536 + (cy + 32768);
 
 export class Rompibili {
+  readonly capienza = MAX;
+  readonly x = new Float32Array(MAX);
+  readonly y = new Float32Array(MAX);
   private sprite: Phaser.GameObjects.Sprite[] = [];
-  private x = new Float32Array(MAX);
-  private y = new Float32Array(MAX);
+  private alone: Phaser.GameObjects.Image[] = [];
   private tipo = new Uint8Array(MAX);
   private stato = new Uint8Array(MAX);
   private settore = new Float64Array(MAX);
@@ -27,10 +32,14 @@ export class Rompibili {
   private cy = Infinity;
   private fori: { chiavi: string[]; lato: number };
   private telaBuio: Phaser.Textures.DynamicTexture | null = null;
+  private fuochi = 0; // fori aperti in questo disegno
 
   constructor(private scena: Phaser.Scene, private seme: number, private quandoRotto: (tipo: number, x: number, y: number) => void) {
-    for (let i = 0; i < MAX; i++) this.sprite.push(scena.add.sprite(0, 0, ROMPIBILI.tipi[0].sprite).setOrigin(0.5, 1).setVisible(false));
     this.fori = creaFori(scena);
+    for (let i = 0; i < MAX; i++) {
+      this.sprite.push(scena.add.sprite(0, 0, ROMPIBILI.tipi[0].sprite).setOrigin(0.5, 1).setVisible(false));
+      this.alone.push(scena.add.image(0, 0, CHIAVI_ALONE_LUME[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD).setVisible(false));
+    }
     if (scena.textures.exists(CHIAVE_BUIO)) scena.textures.remove(CHIAVE_BUIO);
   }
 
@@ -42,9 +51,18 @@ export class Rompibili {
     this.rompiEntro(x, y, tocco);
   }
 
-  /** Un'arma ha colpito un nemico in (x, y). */
-  colpo(x: number, y: number): void {
-    this.rompiEntro(x, y, ROMPIBILI.colpo);
+  intero(i: number): boolean {
+    return this.stato[i] === INTERO;
+  }
+
+  /** Un'arma ha colpito in (x, y) con questo raggio: rompe ciò che tocca. */
+  colpitoDa(x: number, y: number, raggio: number): void {
+    const r = raggio + ROMPIBILI.raggio;
+    for (let i = 0; i < MAX; i++) {
+      if (this.stato[i] !== INTERO) continue;
+      const dx = this.x[i] - x, dy = this.y[i] - ROMPIBILI.centro - y;
+      if (dx * dx + dy * dy < r * r) this.rompi(i);
+    }
   }
 
   /** Laboratorio: mette un oggetto lì dov'è chiesto. */
@@ -63,30 +81,41 @@ export class Rompibili {
     if (scelto >= 0) this.rompi(scelto);
   }
 
-  disegna(cam: Phaser.Cameras.Scene2D.Camera): void {
+  disegna(cam: Phaser.Cameras.Scene2D.Camera, fiamma: number): void {
     for (let i = 0; i < MAX; i++) {
       if (this.stato[i] === ROTTO && !this.sprite[i].anims.isPlaying) this.libera(i);
       if (this.stato[i] === LIBERO) continue;
       this.sprite[i].setVisible(this.inVista(i, cam, 90));
+      const lume = this.stato[i] === INTERO && ROMPIBILI.tipi[this.tipo[i]].luce > 0 && this.inVista(i, cam, this.fori.lato / 2);
+      this.alone[i].setVisible(lume);
+      if (lume) this.alone[i].setTexture(CHIAVI_ALONE_LUME[fiamma]).setPosition(this.x[i], this.y[i] - LUCE_LANTERNA.altezza);
     }
   }
 
   /** La texture del buio da usare: quella del personaggio, con i fori delle lanterne se ce n'è una in vista. */
-  buio(base: string, fiamma: number, bx: number, by: number, w: number, h: number, cam: Phaser.Cameras.Scene2D.Camera): string {
+  buio(base: string, fiamma: number, bx: number, by: number, w: number, h: number, cam: Phaser.Cameras.Scene2D.Camera, chiazze: Chiazze): string {
     const metà = this.fori.lato / 2;
-    let tela: Phaser.Textures.DynamicTexture | null = null;
+    this.fuochi = 0;
     for (let i = 0; i < MAX; i++) {
-      if (this.stato[i] !== INTERO || !ROMPIBILI.tipi[this.tipo[i]].luce || !this.inVista(i, cam, metà)) continue;
-      if (!tela) {
-        tela = this.tela(w, h);
-        tela.clear();
-        tela.stamp(base, undefined, 0, 0, { originX: 0, originY: 0 });
-      }
-      tela.erase(this.fori.chiavi[fiamma], Math.round(this.x[i] - cam.scrollX - bx), Math.round(this.y[i] - LUCE_LANTERNA.altezza - cam.scrollY - by)); // erase si posa dal centro
+      if (this.stato[i] === INTERO && ROMPIBILI.tipi[this.tipo[i]].luce && this.inVista(i, cam, metà)) this.foro(base, fiamma, this.x[i], this.y[i] - LUCE_LANTERNA.altezza, bx, by, w, h, cam);
     }
-    if (!tela) return base;
-    tela.render();
+    for (let i = 0; i < chiazze.numero; i++) {
+      const x = chiazze.x[i], y = chiazze.y[i];
+      if (chiazze.fuoco[i] > 0 && x > cam.scrollX - metà && x < cam.scrollX + cam.width + metà && y > cam.scrollY - metà && y < cam.scrollY + cam.height + metà) this.foro(base, fiamma, x, y, bx, by, w, h, cam);
+    }
+    if (!this.fuochi) return base;
+    this.telaBuio!.render();
     return CHIAVE_BUIO;
+  }
+
+  /** Apre un foro nel punto (x, y) del mondo; al primo foro della scena copia il buio del personaggio. */
+  private foro(base: string, fiamma: number, x: number, y: number, bx: number, by: number, w: number, h: number, cam: Phaser.Cameras.Scene2D.Camera): void {
+    const tela = this.tela(w, h);
+    if (!this.fuochi++) {
+      tela.clear();
+      tela.stamp(base, undefined, 0, 0, { originX: 0, originY: 0 });
+    }
+    tela.erase(this.fori.chiavi[fiamma], Math.round(x - cam.scrollX - bx), Math.round(y - cam.scrollY - by)); // erase si posa dal centro
   }
 
   private tela(w: number, h: number): Phaser.Textures.DynamicTexture {
@@ -118,14 +147,15 @@ export class Rompibili {
   }
 
   private crea(sx: number, sy: number, k: number): void {
-    const { settore, bordo, probabilita, partenza, tipi } = ROMPIBILI;
+    const { settore, bordo, partenza, tipi } = ROMPIBILI;
     const caso = new Caso((this.seme ^ Math.imul(sx, 73856093) ^ Math.imul(sy, 19349663)) >>> 0);
-    if (caso.numero() >= probabilita) return;
+    // una sola estrazione per settore: oltre la somma delle probabilità il settore resta vuoto
+    let estratto = caso.numero(), tipo = 0;
+    while (tipo < tipi.length && estratto >= tipi[tipo].probabilita) estratto -= tipi[tipo++].probabilita;
+    if (tipo >= tipi.length) return;
     const x = sx * settore + caso.intero(bordo, settore - bordo);
     const y = sy * settore + caso.intero(bordo, settore - bordo);
     if (Math.hypot(x, y) < partenza) return;
-    let peso = caso.numero() * tipi.reduce((t, q) => t + q.peso, 0), tipo = 0;
-    while (tipo < tipi.length - 1 && peso >= tipi[tipo].peso) peso -= tipi[tipo++].peso;
     this.occupa(tipo, x, y, k);
   }
 
@@ -149,10 +179,11 @@ export class Rompibili {
     }
   }
 
-  private rompi(i: number): void {
+  rompi(i: number): void {
     this.stato[i] = ROTTO;
     if (this.settore[i] !== LAB) this.rotti.add(this.settore[i]);
     this.settore[i] = 0;
+    this.alone[i].setVisible(false);
     this.sprite[i].play({ key: `${ROMPIBILI.tipi[this.tipo[i]].sprite}:death`, repeat: 0 });
     this.quandoRotto(this.tipo[i], this.x[i], this.y[i]);
   }
@@ -162,5 +193,6 @@ export class Rompibili {
     this.settore[i] = 0;
     this.sprite[i].stop();
     this.sprite[i].setVisible(false);
+    this.alone[i].setVisible(false);
   }
 }

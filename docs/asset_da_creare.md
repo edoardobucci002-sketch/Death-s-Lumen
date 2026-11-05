@@ -19,6 +19,8 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | **10 icone delle unioni** (24×24, `Icona_Unione_<id>`: faroDeiMorti, vangaDelCustode, incensiereUltimaOra, vergaDeiNomi, candelabroFunebre, falceDelMietitore, campanaAMorto, fuochiErranti, acquasantiera, lamaDellAlba) | caselle, strisce, legenda | icona dell'arma con angoli d'oro, dal codice in `src/sistema/segnaposto-oggetti.ts` |
 | **Effetti delle unioni** (cerchio del Faro, fiamma della scia, lapide della Vanga, colpo della Verga…) | in partita | effetti esistenti riusati |
 | **Urna, Giara, Lanterna** (`OGGETTI/<Nome>/<Nome>_V1.aseprite`, 88×64 con base in basso al centro, tag `idle` e `death`) | oggetti rompibili | prove nate da ChatGPT e ripulite da Claude: da confermare o ridisegnare; un `_V2` le sostituisce da solo |
+| **Chiazza d'olio e fuoco** (circa 192×192 px: `Chiazza_olio` che si asciuga, `Chiazza_fuoco` animata) | lanterna rotta | disegnate dal codice a retino in `src/sistema/chiazze.ts` |
+| **Frammento di reliquia** (10×9 px circa, `OGGETTI/Frammento/Frammento_V1.aseprite`) e **contatore fisso** nell'HUD se Edoardo lo vuole | urne | scheggia d'oro in `src/sistema/oggetti.ts`; per ora lo spiega il cartiglio |
 | **Seth, il Rinnovato** (sprite e barra) | boss dei minuti 5 e 10 | `Il_Mietitore` e `Barra_Mietitore` |
 | Cerchi delle reazioni (Eclissi, Rivelazione, Esorcismo, Interramento) | reazioni tra stati | cerchi a retino dal codice |
 | Preavvisi e falci delle mosse di Seth | boss | cerchi rossi a retino dal codice |
