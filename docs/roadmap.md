@@ -34,6 +34,10 @@ Parti della M8 già fatte:
 - Fasce del telefono in verticale con il campo vero, segnaposto dal codice (5/11). Sul link di prova e sull'APK di prova, non ancora sul link pubblico; poi pausa, scelta dei doni e menu
 - Laboratorio (LAB) sul link di prova (3/11)
 
+### Oggetti rompibili (prova, 5/11)
+
+Urne, giare e lanterne con la loro luce sono su `/prova/`: LAB → Eventi → Rompibili. Da decidere cosa lasciano e se le armi devono romperli senza un nemico vicino (vedi «Da confermare»).
+
 ## Prossime tappe
 
 L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (vedi «Da confermare»).
@@ -51,7 +55,7 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
 - Suoni e musica originali al posto di quelli sintetizzati.
 - Lingua del gioco: solo italiano, oppure anche inglese (il titolo è in inglese).
 - Nemici con uno stile grafico diverso da quello dei personaggi.
-- Torce o lumini sparsi nel cimitero, con un loro alone di luce: oggi l'unica luce è la lanterna e la mappa risulta molto buia (osservazione di Edoardo, 2 novembre).
+- ~~Torce o lumini sparsi nel cimitero~~: superata dalle lanterne rompibili (5/11), in prova.
 
 ## Piccole cose da sistemare nel codice (non fatte nel riordino dei documenti)
 
@@ -67,6 +71,8 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
+| Rompibili: densità, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
+| Rompibili: la Cera dai nemici resta uguale per ora; cosa lasciano davvero | GDD 8g |
 | Fasce del telefono: tutte le misure di `FASCE`, `PAUSA_PICCOLA`, `JOYSTICK_PICCOLO`, `SEGNALE_PECCATO` in `src/data/hud.ts`, provate da Edoardo sul S25 | GDD §11; decisioni 5/11 |
 | Pausa piccola subito a sinistra di abilità e fiaschetta: al centro esatto si sovrapporrebbe al gruppo | GDD §11; decisioni 5/11 |
 | Cartiglio largo 240 pixel di gioco: copre il centro di esperienza, non lo stemma né le estremità della barra | GDD §11 |
