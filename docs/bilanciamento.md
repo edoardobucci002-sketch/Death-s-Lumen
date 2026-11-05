@@ -40,6 +40,21 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 5/11 — Fotogrammi: `prova` contro `main` (nessun numero di gioco cambia)
+
+Misure sul Mac, schermo del S25, stesse schermate. Il Mac non è il telefono: valgono le differenze, non i valori.
+
+| Schermata | Processore rallentato ×4, con scheda grafica | Disegno a carico del processore |
+| --- | --- | --- |
+| Selezione | `main` 60 fps, 0,6 ms di lavoro; `prova` 60 fps, 0,7 ms | 60 fps entrambi |
+| Partita 0:00 | `main` 2,4 ms; `prova` 3,1 ms | 55 e 54 fps |
+| Minuto 14, 380 nemici | `main` 3,7 ms; `prova` 4,9 ms, scatti da 50 ms | `main` 41 fps; `prova` 26 fps, picchi da 200 ms |
+
+- Scheda Schermo, ascolto di Indietro, fasce e controllo del joystick non pesano in modo misurabile.
+- Con lanterne o fuochi in vista il buio si ridisegna per intero a ogni fotogramma per aprirne i fori: 36 ms a fotogramma contro 27 ms senza fori. Senza nulla in vista 25 ms, come prima. Gli aloni pesano circa 3 ms.
+- Il picco da 200 ms capita una volta sola, ai primi fotogrammi della partita.
+- Nella selezione il difetto non si riproduce sul Mac: `main` e `prova` sono uguali e il processore è quasi fermo. Serve la lettura sul S25.
+
 ### 5/11 — Rompibili, seconda prova e luce
 
 Dopo la partita di Edoardo su telefono. Stesso numero di oggetti, percentuali chiare: 24% urna, 24% giara, 12% lanterna, 40% niente. Urna e lanterna non danno più Cera. Olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s, 3 frammenti per un reliquiario: proposte da rivedere. Buio: sfumatura da 0,9 a 1,5, massimo da 78% a 88%, raggio entro il 36% del lato corto del campo (sul telefono circa 195-210 px invece di 260), alone caldo nuovo. Il raggio di gioco della Lucciola non cambia. Il bot non ha rompibili: reliquiari in più e danni del fuoco non sono misurati.
