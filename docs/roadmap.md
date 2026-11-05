@@ -52,7 +52,8 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
 5. **Cero della fiaschetta e questline** con il Ceraiolo (ampolla incrinata → riparata → si riempie battendo Seth). Oggi la fiaschetta c'è dalla prima notte con 3 sorsi. Quando la fiaschetta diventerà uno sblocco, rilanciare la simulazione.
 6. **Veggente e Sguattera**: i due personaggi giocabili previsti. Da decidere con Edoardo: la loro affinità (vedi [lore.md](lore.md), *Aperto*), arma iniziale, abilità, ritratto e sprite, come si sbloccano.
 7. **Redesign dell'intero gioco** (da collocare nell'ordine con Edoardo): HUD, personaggi, animazioni (`attack`, `special`, `hurt`, `death`), effetti, mosse di Seth, hub, nemici V1 alla scala nuova, scheda del personaggio (con statistiche vere), cornici dei ritratti e Pannello scheda.
-8. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
+8. **Prestazioni su un telefono di fascia bassa** (senza data): Edoardo decide il telefono minimo; prova a fine notte con fori nel buio e picchi da circa 200 ms da spiegare (visti in emulazione, mai sul S25).
+9. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
 
 ## Idee non ancora decise
 
@@ -81,11 +82,10 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Luce: sfumatura 1,5, buio 88%, raggio 36% del lato corto, alone caldo | GDD 11, `src/data/mondo.ts` |
 | Fasce del telefono: tutte le misure di `FASCE`, `PAUSA_PICCOLA`, `JOYSTICK_PICCOLO`, `SEGNALE_PECCATO` in `src/data/hud.ts`, provate da Edoardo sul S25 | GDD §11; decisioni 5/11 |
 | Pausa piccola al centro della fascia bassa, senza area di tocco invisibile (`PAUSA_PICCOLA.margineTocco` 0) | GDD §11; decisioni 5/11 |
-| Fotogrammi in partita: con una lanterna o un fuoco in vista il buio si ridisegna per intero a ogni fotogramma (da 27 a 36 ms sul Mac con il disegno a carico del processore). Da decidere dopo la lettura sul S25: scelta in sospeso tra tenerlo, limitarlo o rifarlo | bilanciamento 5/11, voce «Fotogrammi» |
-| Fotogrammi nella selezione: `main` e `prova` uguali sul Mac, difetto da misurare sul S25 con LAB → Schermo | bilanciamento 5/11, voce «Fotogrammi» |
 | Tacche (`TACCHE`: lato 4, raggio 31, arco 150°, lampo 0,25 s) e pulsante tondo della fiaschetta composto dalla cornice dell'abilità | GDD §8b e §11 |
 | Area sicura fissata dopo 1,5 s dall'apertura (`AREA_SICURA.assestamento`) | GDD §11 |
-| Chiave di firma dell'APK di prova nella cache di GitHub (7 giorni senza compilazioni e si perde). Più solida: un segreto del repository, da creare a mano | decisioni 5/11 |
+| Telefono minimo: quale telefono di fascia bassa deve reggere il gioco; lo decide Edoardo | «Prossime tappe», Prestazioni |
+| Link pubblico: stessa protezione dalla ricarica in partita del link di prova, quando Edoardo approverà l'unione con `main` | decisioni 5/11 |
 | Link di prova: controllo della versione nuova ogni 120 s (`AGGIORNAMENTI.ogni`) | decisioni 5/11 |
 | Opacità della base del joystick quando copre un pulsante: 50% (`JOYSTICK_PICCOLO.opacitaSuiPulsanti`) | GDD §11 |
 | Campo del telefono più corto: a Cappella vuota il bot vince il 4%; da riguardare con il bilanciamento finale, partendo dal Becchino prima del minuto 5 e da Seth del minuto 10 | bilanciamento 5/11 |
