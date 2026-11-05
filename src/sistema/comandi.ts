@@ -4,6 +4,7 @@
  * Base e pomello sono quelli disegnati da Edoardo (Joystick_Base, Joystick_Pomello), messi a pixel di gioco interi.
  * La sensibilità resta in punti dello schermo (JOYSTICK.raggio); il pomello disegnato si sposta fino al bordo della base.
  */
+import { JOYSTICK_PICCOLO } from '../data/hud';
 import { JOYSTICK } from '../data/mondo';
 import { arte, fasce, immagine, ingr, misura, misureHud, type MisureHud } from './arte';
 
@@ -106,8 +107,8 @@ export class Comandi {
     this.misure();
     // il centro della base va su un pixel di gioco intero
     const px = this.m.px;
-    const [cx, cy] = this.lontanoDaiPulsanti(this.ox, this.oy);
-    this.base.style.transform = `translate(${Math.round(cx / px) * px}px, ${Math.round(cy / px) * px}px)`;
+    this.base.style.transform = `translate(${Math.round(this.ox / px) * px}px, ${Math.round(this.oy / px) * px}px)`;
+    this.sopraIPulsanti();
     this.pomello.style.transform = '';
     this.base.hidden = false;
   };
@@ -148,29 +149,22 @@ export class Comandi {
   }
 
   /**
-   * Sul telefono in verticale la base non nasce mai sopra un pulsante: si sposta di quanto basta,
-   * mentre il centro della direzione resta dove si è appoggiato il dito, così il personaggio non parte da solo.
+   * Sul telefono in verticale la base resta sotto il dito: se copre un pulsante si disegna sopra, mezza trasparente.
+   * Il tocco non può iniziare su un pulsante (appoggia) e la base non riceve tocchi, quindi i pulsanti coperti non scattano.
    */
-  private lontanoDaiPulsanti(x: number, y: number): [number, number] {
-    const b = arte(this.chiaveBase);
-    if (!b || !fasce(this.m).attive) return [x, y];
-    const r = (b.w * ingr('joystick', this.m) * this.m.px) / 2 + this.m.px; // un pixel in più: poi la base si arrotonda al pixel di gioco
-    x = Math.min(Math.max(x, r), window.innerWidth - r); // anche dentro lo schermo
-    y = Math.min(Math.max(y, r), window.innerHeight - r);
-    const pulsanti = [...document.querySelectorAll('.speciale, .fiaschetta, .hud-pausa-tasto')].map((e) => e.getBoundingClientRect());
-    const tocca = (q: DOMRect): boolean => q.left - r < x && q.right + r > x && q.top - r < y && q.bottom + r > y;
-    for (let giro = 0; giro < pulsanti.length; giro++) {
-      for (const q of pulsanti) {
-        if (!tocca(q)) continue;
-        const sinistra = q.left - r - x, destra = q.right + r - x, su = q.top - r - y, giu = q.bottom + r - y;
-        const dx = -sinistra < destra ? sinistra : destra, dy = -su < giu ? su : giu;
-        if (Math.abs(dx) <= Math.abs(dy)) x += dx;
-        else y += dy;
-      }
+  private sopraIPulsanti(): void {
+    const b = arte(this.chiaveBase), stile = this.base.style;
+    if (!b || !fasce(this.m).attive) {
+      stile.zIndex = stile.opacity = '';
+      return;
     }
-    // tra due pulsanti non c'è posto per la base: sale sopra tutta la riga
-    if (pulsanti.some(tocca)) y = Math.min(...pulsanti.map((q) => q.top)) - r;
-    return [x, y];
+    const r = (b.w * ingr('joystick', this.m) * this.m.px) / 2, x = this.ox, y = this.oy;
+    const copre = [...document.querySelectorAll('.speciale, .fiaschetta, .hud-pausa-tasto')].some((e) => {
+      const q = e.getBoundingClientRect();
+      return q.left - r < x && q.right + r > x && q.top - r < y && q.bottom + r > y;
+    });
+    stile.zIndex = copre ? '3' : '';
+    stile.opacity = copre ? String(JOYSTICK_PICCOLO.opacitaSuiPulsanti) : '';
   }
 
   private solleva = (e?: PointerEvent): void => {

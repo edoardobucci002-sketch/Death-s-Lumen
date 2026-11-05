@@ -320,11 +320,6 @@ for (const [nome, indirizzo, prova] of eventi) {
     await pag.goto(`${url}?pg=lampionaio&automatico&sicura=${sicura}`);
     await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
     await pag.waitForTimeout(400);
-    const tocca = () => pag.evaluate(() => {
-      const r = (q) => document.querySelector(q).getBoundingClientRect();
-      const b = r('.joystick-base');
-      return ['.speciale', '.fiaschetta', '.hud-pausa-tasto'].filter((q) => { const p = r(q); return b.left < p.right && b.right > p.left && b.top < p.bottom && b.bottom > p.top; });
-    });
     const d = await pag.evaluate(() => {
       const r = (q) => document.querySelector(q).getBoundingClientRect(), c = window.__dl.scene.getScene('Gioco').cameras.main;
       return { y: c.y, a: c.height, l: c.width, H: window.__dl.scale.height, pausa: r('.hud-pausa-tasto').toJSON(), abilita: r('.speciale').toJSON(), fiaschetta: r('.fiaschetta').toJSON(), vw: innerWidth };
@@ -334,13 +329,36 @@ for (const [nome, indirizzo, prova] of eventi) {
     for (const [q, p] of Object.entries({ pausa: d.pausa, abilita: d.abilita, fiaschetta: d.fiaschetta })) if (p.width < 44 || p.height < 44) errori.push(`${q} sotto i 44 punti`);
     if (d.abilita.right < d.vw - 16 || d.fiaschetta.left > 16) errori.push('abilità e fiaschetta non sono negli angoli');
     if (Math.abs(d.pausa.left + d.pausa.width / 2 - d.vw / 2) > 1) errori.push('la pausa non è al centro');
+    // la base resta sotto il dito e può coprire un pulsante, mezza trasparente e solo mentre il dito trascina
+    const joystick = () => pag.evaluate(() => {
+      const c = document.querySelector('.joystick'), b = document.querySelector('.joystick-base').getBoundingClientRect();
+      return { nascosto: c.hidden, x: b.left + b.width / 2, y: b.top + b.height / 2, opacita: c.style.opacity, z: c.style.zIndex };
+    });
+    let coperti = 0;
     for (const p of [d.pausa, d.fiaschetta, d.abilita]) {
-      await pag.mouse.move(p.left + p.width / 2, p.top - 6); // appena sopra il pulsante, fuori dalla sua area di tocco
+      const x = p.left + p.width / 2, y = p.top - 6; // appena sopra il pulsante, fuori dalla sua area di tocco
+      await pag.mouse.move(x, y);
       await pag.mouse.down();
       await pag.waitForTimeout(40);
-      const sopra = await tocca();
+      const j = await joystick();
+      if (j.nascosto) errori.push('il joystick non nasce accanto a un pulsante');
+      if (Math.abs(j.x - x) > 1.5 || Math.abs(j.y - y) > 1.5) errori.push('la base non è centrata sotto il dito');
+      if (j.opacita) coperti++;
+      if (j.opacita && j.z !== '3') errori.push('la base che copre un pulsante non sta sopra');
+      await pag.mouse.move(x, y - 30, { steps: 2 }); // trascinando sopra e via: il pulsante non scatta
       await pag.mouse.up();
-      if (sopra.length) errori.push(`joystick sopra ${sopra.join(', ')}`);
+      await pag.waitForTimeout(40);
+      if ((await joystick()).opacita && !(await joystick()).nascosto) errori.push('la base resta visibile dopo il tocco');
+    }
+    if (coperti !== 3) errori.push(`la base copre ${coperti} pulsanti su 3`);
+    if (await pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])'))) errori.push('il joystick ha premuto la pausa');
+    // il tocco non inizia mai su un pulsante; la pausa per ultima, perché si apre davvero
+    for (const p of [d.fiaschetta, d.abilita, d.pausa]) {
+      await pag.mouse.move(p.left + p.width / 2, p.top + p.height / 2);
+      await pag.mouse.down();
+      await pag.waitForTimeout(40);
+      if (!(await joystick()).nascosto) errori.push('il joystick è nato su un pulsante');
+      await pag.mouse.up();
     }
     if (errori.length) falliti++;
     console.log(`${errori.length ? '✗' : '✓'} fasce ${nome}: alta ${d.y}, bassa ${d.H - d.y - d.a}, campo ${d.l}×${d.a}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);

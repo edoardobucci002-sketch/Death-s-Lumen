@@ -112,6 +112,7 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 | `main` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/ | il link pubblico (e l'APK Android): solo ciò che Edoardo ha approvato |
 
 - Ogni push su `prova` o su `main` ripubblica entrambi i link in un paio di minuti, tranne i push su `main` che toccano solo `docs/`: quelli non fanno partire né le pagine né l'APK (`.github/workflows/pagine.yml`; per `prova` lo fa partire `prova.yml`, perché GitHub pubblica solo da `main`).
+- Su `prova` lavora una sola sessione alla volta. All'inizio di ogni sessione leggi i commit di `prova` delle ultime ore e di' a Edoardo se c'è lavoro di un'altra sessione che non conosci.
 - Lavora sempre su `prova`, o su un ramo di passaggio che unisci a `prova` appena funziona, nella stessa sessione. Mai rami lasciati a metà o worktree dimenticati: Edoardo deve trovare tutto in `/prova/`.
 - Unisci `prova` in `main` **solo quando Edoardo dice che approva**. Il primo passo dell'unione è sempre riportare `docs/` di `prova` su `main` (procedura al punto 8 della «Verifica»): altrimenti i documenti vanno in conflitto. Lo fa Claude ogni volta, senza che Edoardo debba ricordarlo.
 - **Eccezione**: `docs/` è l'unica cosa che arriva su `main` senza approvazione: alla fine di ogni tappa, dopo `npm run controlla-gdd`, si porta `docs/` di `prova` su `main` (solo quella cartella). Su `main` i documenti possono descrivere contenuti non ancora pubblicati: lì `controlla-gdd` non va lanciato.

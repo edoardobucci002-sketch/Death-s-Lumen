@@ -103,7 +103,7 @@ export const PAUSA_PICCOLA = { lato: 34, margineTocco: 0 }; // punti di area di 
 /** Misura minima di un pulsante da toccare, in punti: se il disegno è più piccolo si ingrandisce di un numero intero di volte. */
 export const TOCCO_MINIMO = 44;
 /** Joystick sul telefono in verticale: base più piccola, in pixel disegnati (la sensibilità resta JOYSTICK.raggio). */
-export const JOYSTICK_PICCOLO = { base: 56, pomello: 24 };
+export const JOYSTICK_PICCOLO = { base: 56, pomello: 24, opacitaSuiPulsanti: 0.5 }; // opacità della base quando copre un pulsante, solo mentre il dito trascina; da rivedere
 /** Segnale del Peccato: cornice a retino sul bordo del campo. Spessore in pixel disegnati, livello del retino da 0 a 16. */
 export const SEGNALE_PECCATO = { spessore: 3, livello: 8, colore: '#8f4fd0' };
 
