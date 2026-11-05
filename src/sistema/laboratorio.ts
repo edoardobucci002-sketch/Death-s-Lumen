@@ -32,12 +32,13 @@ import * as nemici from '../data/nemici';
 import * as oggetti from '../data/oggetti';
 import * as personaggi from '../data/personaggi';
 import * as progressione from '../data/progressione';
+import * as rompibili from '../data/rompibili';
 import * as rosario from '../data/rosario';
 import * as sopravvivenza from '../data/sopravvivenza';
 import * as stati from '../data/stati';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rosario, sopravvivenza, stati };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stati };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -248,6 +249,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(e('elite', 'Élite'), e('seth1', 'Seth (1ª volta)'), e('seth2', 'Seth (2ª volta)'), e('orda', 'Orda'), e('sciame', 'Sciame')),
       titolo('Drop a terra'),
       riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('reliquiarioLontano', 'Reliquiario fuori vista'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
+      titolo('Rompibili (prova)'),
+      riga(tasto('Urna, giara e lanterna qui accanto', fai((x) => x.labRompibili())), tasto('Rompi il più vicino', fai((x) => x.labRompiVicino()))),
+      el('p', 'lab-nota', 'Lascia il gioco in corso (scheda Partita) per vederli rompersi. I numeri sono in Numeri → rompibili.'),
       titolo('Avvisi nel cartiglio'),
       riga(tasto('Seth', fai((x) => x.labAvviso('Seth', 'il Rinnovato è venuto per te'))), tasto('Sciame', fai((x) => x.labAvviso('Lo sciame', 'ti circonda'))), tasto('Due orde', fai((x) => x.labAvviso('Due orde', 'ti stringono'))), tasto('Reliquiario', fai((x) => x.labAvviso('Reliquiario', 'Lanterna, Candela, Falce')))),
       titolo('Scelte'),

@@ -506,6 +506,18 @@ Un'arma al livello 8 più il suo dono al livello 3 (o al massimo del dono, se è
 
 Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni. **Sblocco**: nella Cappella, con l'impresa «Sopravvivi 10 minuti» oppure con 500 Cera. *Da rivedere* (scelta di Claude per fare delle unioni un premio della meta). Le strisce di arma e dono dicono a che livelli si unisce; la legenda elenca tutte le unioni. Icone provvisorie: l'icona dell'arma con quattro angoli d'oro.
 
+## 8g. Oggetti rompibili (`src/data/rompibili.ts`)
+
+**Prova: tutti i valori sono *da rivedere*.** Urne, giare e lanterne stanno sparse a caso nel cimitero, in posti diversi a ogni notte. Il mondo è diviso in settori di 700×700 px: il 60% ne ha uno, ad almeno 110 px dal bordo del settore e ad almeno 320 px dal punto di partenza. Sono attivi i settori entro 2 da quello del personaggio.
+
+| Oggetto | Peso | Cera | Luce |
+| --- | --- | --- | --- |
+| Urna | 4 | 1 | no |
+| Giara | 4 | 2 | no |
+| Lanterna | 2 | 1 | sì |
+
+Si rompono se il personaggio arriva a 34 px o se un'arma colpisce un nemico entro 70 px (oggi le armi non li colpiscono da sole, senza un nemico vicino). Un oggetto rotto non torna in quella notte. La lanterna intera apre un foro nel buio, pieno fino a 120 px e poi a retino; rotta, si spegne. Le gocce di Cera non cambiano quelle lasciate dai nemici. Il bot delle simulazioni gioca senza rompibili.
+
 ## 9. Esperienza e doni
 
 - Anime per passare dal livello L al successivo: 2 + 3 L + L²

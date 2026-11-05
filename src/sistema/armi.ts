@@ -76,6 +76,7 @@ export class Arsenale {
   richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
   anime: Anime | null = null; // per i Fuochi erranti
+  suColpo: ((x: number, y: number) => void) | null = null; // un'arma ha colpito un nemico lì: rompe gli oggetti vicini
   private unite: Partial<Record<Arma['id'], boolean>> = {};
   private raffiche = 0; // raffiche del Bastone (Verga dei nomi)
   private uccisiPozze = 0; // uccisioni nelle pozze (Acquasantiera)
@@ -700,6 +701,7 @@ export class Arsenale {
   private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true, reazione = 0): void {
     const o = this.orda;
     const danno = this.danno(base);
+    this.suColpo?.(o.x[j], o.y[j]);
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
     const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
     if (r) this.accoda(r, j, 0);

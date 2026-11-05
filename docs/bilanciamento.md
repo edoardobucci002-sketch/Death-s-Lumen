@@ -40,6 +40,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 5/11 — Oggetti rompibili (prova, valori da rivedere)
+
+Nuovi: 60% dei settori da 700 px con un oggetto; urna 1 goccia, giara 2, lanterna 1; pesi 4/4/2. La Cera dei nemici non cambia, quindi una notte ne dà un po' di più. Il bot gioca senza rompibili: la simulazione non cambia e non misura questa Cera in più.
+
 ### 5/11 — Campo vero con le fasce del telefono
 
 Nessun numero di gioco cambia; cambia il campo: sul telefono in verticale `mezzaA` passa da 585 a 410, quindi comparsa, ricollocamento e armi «sullo schermo» finiscono al bordo delle fasce. Il bot ora gioca sempre con lo schermo del Galaxy S25 (`tools/sim.mjs`). Computer e tablet: tre notti con lo stesso seme identiche a prima.

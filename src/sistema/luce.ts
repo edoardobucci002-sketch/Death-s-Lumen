@@ -4,6 +4,7 @@
  */
 import Phaser from 'phaser';
 import { LUCE } from '../data/mondo';
+import { LUCE_LANTERNA } from '../data/rompibili';
 
 const BAYER = [
   [0, 8, 2, 10],
@@ -13,6 +14,7 @@ const BAYER = [
 ].map((riga) => riga.map((v) => (v + 0.5) / 16));
 
 export const CHIAVI_BUIO = ['buio-0', 'buio-1', 'buio-2'];
+const CHIAVI_FORI = ['foro-lume-0', 'foro-lume-1', 'foro-lume-2'];
 
 /** Il buio copre tutto lo schermo anche quando la luce non è al centro: margine in più. */
 export function creaBuio(scena: Phaser.Scene, larghezza: number, altezza: number, raggioBase: number = LUCE.raggio): { w: number; h: number } {
@@ -42,4 +44,27 @@ export function creaBuio(scena: Phaser.Scene, larghezza: number, altezza: number
     tela.refresh();
   });
   return { w, h };
+}
+
+/** Il foro di luce di una lanterna a terra: i pixel pieni cancellano il buio. Tre versioni, come per la fiamma del personaggio. */
+export function creaFori(scena: Phaser.Scene): { chiavi: string[]; lato: number } {
+  const { raggio, sfumatura, tremolio } = LUCE_LANTERNA;
+  const lato = 2 * Math.ceil((raggio + tremolio) * (1 + 1 / sfumatura));
+  CHIAVI_FORI.forEach((chiave, n) => {
+    if (scena.textures.exists(chiave)) return;
+    const tela = scena.textures.createCanvas(chiave, lato, lato)!;
+    const g = tela.getContext();
+    const img = g.createImageData(lato, lato);
+    const r = raggio + (n - 1) * tremolio;
+    for (let y = 0; y < lato; y++) {
+      for (let x = 0; x < lato; x++) {
+        const d = Math.hypot(x + 0.5 - lato / 2, y + 0.5 - lato / 2) / r;
+        if (d > 1 && BAYER[y & 3][x & 3] < (d - 1) * sfumatura) continue;
+        img.data[(y * lato + x) * 4 + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    tela.refresh();
+  });
+  return { chiavi: CHIAVI_FORI, lato };
 }

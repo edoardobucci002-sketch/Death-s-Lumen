@@ -136,6 +136,17 @@
       "tag": []
     },
     {
+      "chiave": "Giara",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Giara.png",
+      "dati": "assets/oggetti/Giara.json",
+      "versioneFile": 1,
+      "tag": [
+        "idle",
+        "death"
+      ]
+    },
+    {
       "chiave": "Icona_Acqua_santa",
       "categoria": "icone",
       "immagine": "assets/icone/Icona_Acqua_santa.png",
@@ -424,6 +435,17 @@
       "tag": []
     },
     {
+      "chiave": "Lanterna",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Lanterna.png",
+      "dati": "assets/oggetti/Lanterna.json",
+      "versioneFile": 1,
+      "tag": [
+        "idle",
+        "death"
+      ]
+    },
+    {
       "chiave": "Lanterna_Arco",
       "categoria": "effetti",
       "immagine": "assets/effetti/Lanterna_Arco.png",
@@ -511,6 +533,17 @@
       "dati": "assets/effetti/Turibolo_Nube.json",
       "versioneFile": 0,
       "tag": []
+    },
+    {
+      "chiave": "Urna",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Urna.png",
+      "dati": "assets/oggetti/Urna.json",
+      "versioneFile": 1,
+      "tag": [
+        "idle",
+        "death"
+      ]
     },
     {
       "chiave": "Zombi",

@@ -53,6 +53,8 @@ import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type U
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
+import { Rompibili } from '../sistema/rompibili';
+import { ROMPIBILI } from '../data/rompibili';
 import { creaTerreno } from '../sistema/terreno';
 import { CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 
@@ -88,6 +90,7 @@ export class Gioco extends Phaser.Scene {
   private anime!: Anime;
   private oggetti!: Oggetti;
   private minacce!: Minacce;
+  private rompibili: Rompibili | null = null; // nelle simulazioni non ci sono: il bot non li cerca
   private effetti!: Effetti;
   private doni!: Doni;
   private legenda!: Legenda;
@@ -207,6 +210,8 @@ export class Gioco extends Phaser.Scene {
     this.effetti = new Effetti(this);
     this.arsenale = new Arsenale(this, this.orda, this.caso, this.bonus, this.effetti);
     this.arsenale.anime = this.anime;
+    this.rompibili = parametri.has('bot') ? null : new Rompibili(this, Number(parametri.get('seme')) || Date.now() % 2147483647, this.oggettoRotto);
+    this.arsenale.suColpo = this.rompibili ? this.colpoVicino : null;
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
     const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
@@ -410,6 +415,7 @@ export class Gioco extends Phaser.Scene {
       suona('anima');
     }
     this.oggetti.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta * 0.6, this.raccogli);
+    this.rompibili?.aggiorna(this.x, this.y);
     this.sim?.passo(this.secondi, this.livello, this.salute, this.orda);
     while (this.esperienza >= animePerLivello(this.livello)) {
       this.esperienza -= animePerLivello(this.livello);
@@ -632,6 +638,15 @@ export class Gioco extends Phaser.Scene {
   /** Sblocca (o ripristina) armi e doni nuovi in questa partita, così escono subito nella scelta. */
   labOggetti(on: boolean): void {
     this.oggettiSbloccati = new Set(on ? SBLOCCHI_OGGETTI.map((o) => o.id) : this.meta.oggetti);
+  }
+
+  /** Laboratorio: urna, giara e lanterna accanto al personaggio (a sinistra, così non si rompono subito). */
+  labRompibili(): void {
+    ROMPIBILI.tipi.forEach((_, n) => this.rompibili?.piazza(n, this.x - 90 - n * 70, this.y + 10));
+  }
+
+  labRompiVicino(): void {
+    this.rompibili?.rompiVicino(this.x, this.y);
   }
 
   labPausa(): void {
@@ -1063,20 +1078,20 @@ export class Gioco extends Phaser.Scene {
     this.orda.disegna(cam, COMPARSA.margine, px, py);
     this.anime.disegna(cam);
     this.oggetti.disegna(cam, this.fermo() ? 0 : dt);
+    this.rompibili?.disegna(cam);
     this.arsenale.disegna();
     this.minacce.disegna();
     this.terreno.setTilePosition(cam.scrollX, cam.scrollY);
-    this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
-    this.buio.setPosition(
-      px - cam.scrollX - Math.floor(this.misureBuio.w / 2),
-      py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2),
-    );
+    const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
+    const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);
+    this.buio.setTexture(this.rompibili?.buio(CHIAVI_BUIO[this.fiamma], this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam) ?? CHIAVI_BUIO[this.fiamma]);
+    this.buio.setPosition(bx, by);
     const z = this.zSalute, f = FINESTRE.Barra_Salute_Cornice;
-    const bx = px - Math.floor(((arte('Barra_Salute_Cornice')?.w ?? 0) * z) / 2);
-    const by = py + BARRA_SALUTE.distanza;
+    const sx = px - Math.floor(((arte('Barra_Salute_Cornice')?.w ?? 0) * z) / 2);
+    const sy = py + BARRA_SALUTE.distanza;
     const piena = Math.round(f.l * Math.max(0, this.salute / this.saluteMassima));
-    this.saluteCornice.setPosition(bx, by).setVisible(!this.morto);
-    this.salutePiena.setPosition(bx + f.x * z, by + f.y * z).setCrop(0, 0, piena, f.a).setVisible(!this.morto && piena > 0);
+    this.saluteCornice.setPosition(sx, sy).setVisible(!this.morto);
+    this.salutePiena.setPosition(sx + f.x * z, sy + f.y * z).setCrop(0, 0, piena, f.a).setVisible(!this.morto && piena > 0);
     this.hud.mostraRosario(this.graniUsati(), this.grani(), this.amuletiPosseduti.length);
     const boss = this.orda.mietitore();
     this.hud.aggiorna(
@@ -1114,6 +1129,16 @@ export class Gioco extends Phaser.Scene {
     this.misureBuio = creaBuio(this, this.campoL, this.campoA, LUCE.raggio * this.areaLuce);
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
+
+  /** Un oggetto rompibile lascia la sua Cera. */
+  private oggettoRotto = (tipo: number, x: number, y: number): void => {
+    const { gocce } = ROMPIBILI.tipi[tipo];
+    for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * ROMPIBILI.dispersione, y);
+    suona('colpo');
+    vibra('leggera');
+  };
+
+  private colpoVicino = (x: number, y: number): void => this.rompibili?.colpo(x, y);
 
   private tasto = (e: KeyboardEvent): void => {
     if (e.code === 'KeyP' || e.code === 'Escape') {
