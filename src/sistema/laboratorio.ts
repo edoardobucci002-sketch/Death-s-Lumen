@@ -19,6 +19,7 @@ import { AMULETI } from '../data/rosario';
 import { PERSONAGGI } from '../data/personaggi';
 import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
 import { UNIONI } from '../data/unioni';
+import { accendiContatore, contatoreAcceso, riprendiContatore } from './contatore';
 import { letturaSchermo } from './lettura-schermo';
 import { carica, salva } from './salvataggio';
 import * as abilita from '../data/abilita';
@@ -154,6 +155,7 @@ const STILE = `
 .lab-gruppo > summary { min-height: 44px; display: flex; align-items: center; padding: 0 10px; cursor: pointer; font-weight: 600; }
 .lab-gruppo > div { padding: 0 8px 8px; }
 .lab-testo { width: 100%; min-height: 120px; border: 1px solid #7a54a4; border-radius: 6px; background: #100a16; color: #fff; font: 12px/1.4 ui-monospace, monospace; padding: 6px; user-select: text; }
+.lab-contatore { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 2px); right: 2px; z-index: 96; padding: 2px 6px; background: #000; color: #9f9; font: 700 12px/1.3 ui-monospace, monospace; pointer-events: none; }
 .lab-cerca { width: 100%; min-height: 44px; padding: 6px 10px; border: 1px solid #7a54a4; border-radius: 6px; background: #100a16; color: #fff; font: inherit; user-select: text; }
 `;
 
@@ -162,6 +164,7 @@ const SCHEDE: [Scheda, string][] = [['partita', 'Partita'], ['eventi', 'Eventi']
 
 export function avviaLaboratorio(gioco: Phaser.Game): void {
   applicaSalvati();
+  riprendiContatore();
   const stile = el('style', '', STILE);
   const apri = el('button', 'lab-apri', Object.keys(salvati()).length ? 'LAB •' : 'LAB'); // il puntino dice che ci sono numeri cambiati
   apri.type = 'button';
@@ -180,6 +183,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   for (const e of [apri, pannello]) for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'keydown']) e.addEventListener(ev, (x) => x.stopPropagation());
 
   let scheda: Scheda = 'partita';
+  let foriSpenti = false; // prove sui fotogrammi: durano finché non si ricarica
+  let telaSpenta = false;
   const partita = (): Gioco | null => (gioco.scene.isActive('Gioco') ? (gioco.scene.getScene('Gioco') as Gioco) : null);
   const menu = (): Menu | null => (gioco.scene.isActive('Menu') ? (gioco.scene.getScene('Menu') as Menu) : null);
   const ridisegna = (): void => {
@@ -388,6 +393,13 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         window.dispatchEvent(new Event('resize')); // abilità, fiaschetta e HUD si rimettono al loro posto
         ridisegna();
       }, scambiati ? 'acceso' : '')),
+      titolo('Fotogrammi al secondo'),
+      riga(tasto(contatoreAcceso() ? 'Contatore: acceso' : 'Contatore: spento', () => { accendiContatore(!contatoreAcceso()); ridisegna(); }, contatoreAcceso() ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Resta acceso in tutte le schermate, anche nella selezione: media e peggiore dell\'ultimo secondo. Le prove qui sotto servono a capire cosa pesa sul telefono.'),
+      riga(
+        tasto(foriSpenti ? 'Fori nel buio: spenti' : 'Fori nel buio: accesi', () => { foriSpenti = !foriSpenti; partita()?.labForiBuio(!foriSpenti); ridisegna(); }, foriSpenti ? 'acceso' : ''),
+        tasto(telaSpenta ? 'Tela del gioco nel menu: spenta' : 'Tela del gioco nel menu: accesa', () => { telaSpenta = !telaSpenta; const t = document.querySelector<HTMLElement>('#gioco canvas'); if (t) t.style.visibility = telaSpenta && menu() ? 'hidden' : ''; ridisegna(); }, telaSpenta ? 'acceso' : ''),
+      ),
       titolo('Misure'),
       el('p', 'lab-nota', 'Quello che il telefono dichiara adesso. Tienilo in verticale e, nell\'app o nel link in Home, senza barre visibili.'),
       riga(

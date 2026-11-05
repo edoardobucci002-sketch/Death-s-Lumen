@@ -36,6 +36,8 @@ function ridimensiona(): void {
   cancelAnimationFrame(attesa);
   attesa = requestAnimationFrame(() => {
     const n = calcolaMisure();
+    // niente da fare se la misura non cambia: rifare le texture del buio farebbe scattare il gioco
+    if (n.larghezza === gioco.scale.width && n.altezza === gioco.scale.height && n.scala === gioco.registry.get('scala')) return;
     gioco.registry.set('scala', n.scala);
     gioco.scale.setZoom(n.zoom);
     gioco.scale.resize(n.larghezza, n.altezza);

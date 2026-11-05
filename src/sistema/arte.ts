@@ -4,7 +4,7 @@
  * Le posizioni si danno sempre in pixel di gioco interi (posa), mai centrando con il CSS, che lascerebbe mezzi pixel.
  */
 import type Phaser from 'phaser';
-import { FASCE, GRUPPI_PARTITA, INGRANDIMENTO, PUNTI_MINIMI_PARTITA, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
+import { AREA_SICURA, FASCE, GRUPPI_PARTITA, INGRANDIMENTO, PUNTI_MINIMI_PARTITA, PUNTI_MINIMI_PER_PIXEL, SENZA_RADDOPPIO, type Riquadro } from '../data/hud';
 import { calcolaMisure } from './pixel';
 
 interface R4 { x: number; y: number; w: number; h: number }
@@ -59,6 +59,20 @@ let sonda: HTMLElement | null = null;
 // ?sicura=35: area sicura in alto finta, in punti, per le prove e il bot (nel browser invisibile non ce n'è una vera)
 const SICURA_DI_PROVA = Number(new URLSearchParams(location.search).get('sicura')) || 0;
 
+type Lati = { top: number; bottom: number; left: number; right: number };
+const areeFisse = new Map<boolean, { inizio: number; lati: Lati }>(); // una per orientamento
+
+/** L'area sicura da usare: la più grande vista nei primi istanti, poi non cambia più (le barre di un gesto sono temporanee). */
+function areaFissa(orizzontale: boolean, lette: Lati): Lati {
+  const ora = performance.now();
+  let a = areeFisse.get(orizzontale);
+  if (!a) areeFisse.set(orizzontale, (a = { inizio: ora, lati: { top: 0, bottom: 0, left: 0, right: 0 } }));
+  if (ora - a.inizio <= AREA_SICURA.assestamento * 1000) {
+    for (const k of ['top', 'bottom', 'left', 'right'] as const) a.lati[k] = Math.max(a.lati[k], lette[k]);
+  }
+  return a.lati;
+}
+
 /** L'area sicura scritta da Capacitor nell'app Android (0 altrove), in punti. */
 const capacitor = (st: CSSStyleDeclaration, lato: string): number => parseFloat(st.getPropertyValue(`--safe-area-inset-${lato}`)) || 0;
 
@@ -73,10 +87,12 @@ export function misureHud(): MisureHud {
   }
   const st = getComputedStyle(sonda), radice = getComputedStyle(document.documentElement);
   // la più grande tra env() e Capacitor: sul Galaxy S25 sono 105 e 102 pixel fisici
-  const p = (v: string, lato: string, prova = 0): number => Math.ceil((Math.max(parseFloat(v), capacitor(radice, lato), prova) * dpr) / m.scala - 1e-6);
+  const lato = (v: string, nome: string, prova = 0): number => Math.max(parseFloat(v), capacitor(radice, nome), prova);
+  const area = areaFissa(m.larghezza > m.altezza, { top: lato(st.paddingTop, 'top', SICURA_DI_PROVA), bottom: lato(st.paddingBottom, 'bottom'), left: lato(st.paddingLeft, 'left'), right: lato(st.paddingRight, 'right') });
+  const p = (punti: number): number => Math.ceil((punti * dpr) / m.scala - 1e-6);
   return {
     W: m.larghezza, H: m.altezza, px: m.zoom, scala: m.scala, dpr,
-    safe: { a: p(st.paddingTop, 'top', SICURA_DI_PROVA), b: p(st.paddingBottom, 'bottom'), s: p(st.paddingLeft, 'left'), d: p(st.paddingRight, 'right') },
+    safe: { a: p(area.top), b: p(area.bottom), s: p(area.left), d: p(area.right) },
     raddoppioPartita: Math.max(1, Math.ceil(PUNTI_MINIMI_PARTITA / (m.scala / dpr) - 1e-9)),
     raddoppio: Math.max(1, Math.ceil(PUNTI_MINIMI_PER_PIXEL / (m.scala / dpr) - 1e-9)),
   };

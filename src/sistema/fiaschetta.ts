@@ -1,15 +1,16 @@
 /*
  * Fiaschetta di lumen: cure contate. Pulsante accanto all'anello dell'abilità (o tasto F).
  * Ogni sorso cura una parte della salute massima nell'arco di un secondo; i sorsi tornano uccidendo
- * élite e Mietitore. Il disegno è di Edoardo (un fotogramma per piena, 2/3, 1/3, vuota); se mancasse,
- * la fiala è fatta dal codice: il lumen ambra cala a ogni sorso e sotto ci sono le tacche dei sorsi rimasti.
+ * élite e Mietitore. Pulsante tondo uguale a quello dell'abilità: finché manca Fiaschetta_Lumen_Tonda, il codice
+ * compone la stessa cornice dell'abilità con dentro una fiala. I sorsi si leggono sulle tacche, una per sorso massimo.
  */
 import { FIASCHETTA } from '../data/sopravvivenza';
-import { FASCE } from '../data/hud';
-import { angoliFascia, arte, bordiHud, fasce, ingr, misura, misureHud, posa, type Arte } from './arte';
+import { ANELLI, FASCE } from '../data/hud';
+import { angoliFascia, arte, bordiHud, fasce, ingr, misura, misureHud, posa } from './arte';
+import { Tacche } from './tacche';
 
-const L = 15; // misure della fiala fatta dal codice (riserva), in pixel dell'immagine
-const A = 27;
+const L = 15; // misure della fiala fatta dal codice, in pixel dell'immagine
+const A = 23;
 const C = FIASCHETTA.colori;
 
 export class Fiaschetta {
@@ -18,9 +19,8 @@ export class Fiaschetta {
   private curaRimasta = 0; // secondi di cura ancora in corso
   private pulsante: HTMLButtonElement;
   private tela: HTMLCanvasElement;
-  private disegnati = -1;
+  private tacche: Tacche;
   private attesaMisure = 0;
-  private disegno: Arte | undefined = arte(FIASCHETTA.arte);
 
   constructor(
     contenitore: HTMLElement,
@@ -33,9 +33,12 @@ export class Fiaschetta {
     this.pulsante.setAttribute('aria-label', 'Fiaschetta di lumen');
     this.tela = document.createElement('canvas');
     this.tela.className = 'arte';
-    this.tela.width = this.disegno ? this.disegno.w : L;
-    this.tela.height = this.disegno ? this.disegno.h : A;
-    this.pulsante.append(this.tela);
+    const anello = arte(chiaveSpeciale), c = ANELLI[chiaveSpeciale];
+    this.tela.width = anello?.w ?? 2 * L;
+    this.tela.height = anello?.h ?? 2 * A;
+    this.tacche = new Tacche(this.tela.width, this.tela.height, c?.x ?? L, c?.y ?? A);
+    this.disegnaPulsante();
+    this.pulsante.append(this.tela, this.tacche.tela);
     this.pulsante.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this.bevi();
@@ -43,7 +46,7 @@ export class Fiaschetta {
     contenitore.append(this.pulsante);
     window.addEventListener('keydown', this.tasto);
     window.addEventListener('resize', this.ridimensiona);
-    this.disegna();
+    this.mostraTacche();
     this.disponi();
   }
 
@@ -52,7 +55,7 @@ export class Fiaschetta {
     if (this.sorsi <= 0 || this.curaRimasta > 0 || !this.puo()) return false;
     this.sorsi--;
     this.curaRimasta = FIASCHETTA.durata;
-    this.disegna();
+    this.mostraTacche();
     return true;
   }
 
@@ -62,6 +65,7 @@ export class Fiaschetta {
 
   /** Un passo: restituisce la parte di salute massima da curare in questo passo. */
   aggiorna(dt: number): number {
+    this.tacche.passa(dt);
     if (this.curaRimasta <= 0) return 0;
     const t = Math.min(dt, this.curaRimasta);
     this.curaRimasta -= t;
@@ -71,7 +75,7 @@ export class Fiaschetta {
   /** Aggiunge sorsi (élite), senza superare il massimo. */
   ricarica(n: number): void {
     this.sorsi = Math.min(this.massimo, this.sorsi + n);
-    this.disegna();
+    this.mostraTacche();
   }
 
   distruggi(): void {
@@ -81,38 +85,35 @@ export class Fiaschetta {
     this.pulsante.remove();
   }
 
-  /** Il fotogramma dei sorsi rimasti (0 = piena); senza disegno, la fiala fatta dal codice. */
-  private disegna(): void {
-    if (this.sorsi === this.disegnati) return;
-    this.disegnati = this.sorsi;
-    const g = this.tela.getContext('2d')!;
-    g.clearRect(0, 0, this.tela.width, this.tela.height);
-    const d = this.disegno;
-    if (d) {
-      g.drawImage(d.fotogrammi[Math.min(d.fotogrammi.length - 1, this.massimo - this.sorsi)], 0, 0);
+  private mostraTacche(): void {
+    this.tacche.mostra(this.sorsi, this.massimo);
+  }
+
+  /** Il disegno di Edoardo se c'è; altrimenti la cornice dell'abilità, con il disco vuotato e la fiala al centro. */
+  private disegnaPulsante(): void {
+    const g = this.tela.getContext('2d')!, vero = arte(FIASCHETTA.arte);
+    if (vero) {
+      g.drawImage(vero.tela, 0, 0);
       return;
     }
-    // riserva: collo, pancia rotonda, lumen fino all'altezza dei sorsi rimasti, tacche sotto
+    const anello = arte(this.chiaveSpeciale), c = ANELLI[this.chiaveSpeciale];
+    if (anello) g.drawImage(anello.tela, 0, 0);
+    const cx = c?.x ?? L, cy = c?.y ?? A, r = c?.r ?? L;
+    g.fillStyle = C.vuoto;
+    for (let y = -r; y < r; y++) for (let x = -r; x < r; x++) if ((x + 0.5) ** 2 + (y + 0.5) ** 2 <= r * r) g.fillRect(cx + x, cy + y, 1, 1);
+    const x0 = cx - Math.floor(L / 2), y0 = cy - Math.floor(A / 2);
     const dentro = (x: number, y: number): boolean => {
       if (y >= 1 && y <= 7 && x >= 5 && x <= 9) return true; // collo
       const dx = (x + 0.5 - 7.5) / 6.5, dy = (y + 0.5 - 15) / 7.5;
       return y >= 7 && y <= 22 && dx * dx + dy * dy <= 1;
     };
-    const livello = 21 - (this.sorsi / this.massimo) * 13; // riga da cui comincia il lumen
-    for (let y = 0; y < 23; y++) {
+    for (let y = 0; y < A; y++) {
       for (let x = 0; x < L; x++) {
         if (!dentro(x, y)) continue;
         const bordo = !dentro(x - 1, y) || !dentro(x + 1, y) || !dentro(x, y - 1) || !dentro(x, y + 1);
-        g.fillStyle = bordo ? C.bordo : y < 3 ? C.vetro : y >= livello ? (x === 4 ? C.luce : C.liquido) : C.vuoto;
-        g.fillRect(x, y, 1, 1);
+        g.fillStyle = bordo ? C.bordo : y < 3 ? C.vetro : x === 4 ? C.luce : C.liquido;
+        g.fillRect(x0 + x, y0 + y, 1, 1);
       }
-    }
-    for (let k = 0; k < Math.min(3, this.massimo); k++) {
-      const x = 1 + k * 5;
-      g.fillStyle = C.bordo;
-      g.fillRect(x - 1, 23, 5, 4);
-      g.fillStyle = k < this.sorsi ? C.liquido : C.vuoto;
-      g.fillRect(x, 24, 3, 2);
     }
   }
 
@@ -121,10 +122,10 @@ export class Fiaschetta {
     this.attesaMisure = requestAnimationFrame(() => this.disponi());
   };
 
-  /** A destra dell'anello dell'abilità, staccata di FIASCHETTA.distanza pixel disegnati, appoggiata in basso. */
+  /** Sul telefono in un angolo della fascia bassa; altrove a destra dell'abilità, staccata di FIASCHETTA.distanza pixel disegnati. */
   private disponi(): void {
     const m = misureHud(), b = bordiHud(m), za = ingr('speciale', m), anello = arte(this.chiaveSpeciale);
-    const z = this.disegno ? za : za * FIASCHETTA.ingrandimentoSegnaposto;
+    const z = za;
     const w = this.tela.width, h = this.tela.height;
     const dopo = anello ? anello.w * za : 0, f = fasce(m);
     if (f.attive) {
@@ -133,6 +134,7 @@ export class Fiaschetta {
     } else posa(this.pulsante, b.s + 4 + dopo + FIASCHETTA.distanza * za, m.H - b.b - h * z, m);
     misura(this.pulsante, w, h, z, m);
     misura(this.tela, w, h, z, m);
+    misura(this.tacche.tela, w, h, z, m);
   }
 
   private tasto = (e: KeyboardEvent): void => {

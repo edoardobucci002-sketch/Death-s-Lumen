@@ -377,12 +377,24 @@ for (const [nome, indirizzo, prova] of eventi) {
   const pausaAperta = () => pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])'));
   const indietro = async () => { await pag.evaluate(() => history.back()); await pag.waitForTimeout(250); };
   const iniziali = await voci();
-  for (const [giro, attesa] of [[1, true], [2, false], [3, true], [4, false], [5, true]]) {
+  // apre la pausa e basta: premuto di nuovo non fa ripartire la partita
+  for (const giro of [1, 2, 3, 4]) {
     await indietro();
-    if ((await pausaAperta()) !== attesa) errori.push(`Indietro n. ${giro}: pausa ${attesa ? 'non aperta' : 'non chiusa'}`);
+    if (!(await pausaAperta())) errori.push(`Indietro n. ${giro}: la pausa non è aperta`);
     if ((await voci()) !== iniziali) errori.push(`Indietro n. ${giro}: la cronologia è cambiata`);
     if (pag.url() === 'about:blank') { errori.push(`Indietro n. ${giro}: ha lasciato la pagina`); break; }
   }
+  // dentro la pausa chiude solo i sottopannelli
+  await pag.click('[data-azione="legenda"]');
+  await pag.waitForSelector('.legenda:not([hidden])', { timeout: 2000 }).catch(() => errori.push('Stati non si apre'));
+  await indietro();
+  if (await pag.evaluate(() => !!document.querySelector('.legenda:not([hidden])'))) errori.push('Indietro non chiude Stati');
+  if (!(await pausaAperta())) errori.push('Indietro ha chiuso anche la pausa');
+  // la partita riparte solo dal pulsante
+  await pag.click('[data-azione="riprendi"]');
+  await pag.waitForTimeout(150);
+  if (await pausaAperta()) errori.push('Riprendi non chiude la pausa');
+  await indietro();
   // dalla pausa si abbandona: nel menu Indietro fa di nuovo quello del browser, e la voce non resta sul percorso
   await pag.click('[data-azione="abbandona"]');
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Menu'), null, { timeout: 5000 }).catch(() => errori.push('il menu non arriva'));
@@ -392,7 +404,61 @@ for (const [nome, indirizzo, prova] of eventi) {
   await pag.waitForTimeout(250);
   if (pag.url() !== 'about:blank') errori.push('dal menu Indietro non lascia la pagina');
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} Indietro nel browser: pausa aperta e chiusa, cronologia ferma a ${iniziali} voci${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} Indietro nel browser: apre la pausa e basta, chiude Stati, cronologia ferma a ${iniziali} voci${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// le barre di sistema temporanee non spostano niente: area sicura e altezza della finestra cambiano, le fasce no
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const pag = await ctx.newPage();
+  const errori = [];
+  await pag.goto(`${url}?pg=lampionaio&automatico&sicura=35`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(2000); // l'area sicura si è fissata
+  const misura = () => pag.evaluate(() => {
+    const c = window.__dl.scene.getScene('Gioco').cameras.main, r = (e) => { const q = e.getBoundingClientRect(); return [q.top, q.height]; };
+    return JSON.stringify([c.y, c.height, ...[...document.querySelectorAll('.hud-fascia')].flatMap(r), r(document.querySelector('#gioco canvas')), r(document.querySelector('.hud-orologio'))]);
+  });
+  const prima = await misura();
+  await pag.evaluate(() => { document.documentElement.style.setProperty('--safe-area-inset-top', '60px'); document.documentElement.style.setProperty('--safe-area-inset-bottom', '40px'); window.dispatchEvent(new Event('resize')); });
+  await pag.setViewportSize({ width: 360, height: 740 }); // le barre rubano altezza alla finestra
+  await pag.waitForTimeout(300);
+  const durante = await misura();
+  await pag.evaluate(() => { document.documentElement.style.removeProperty('--safe-area-inset-top'); document.documentElement.style.removeProperty('--safe-area-inset-bottom'); });
+  await pag.setViewportSize({ width: 360, height: 780 });
+  await pag.waitForTimeout(300);
+  const dopo = await misura();
+  if (durante !== prima) errori.push(`con le barre le fasce si muovono: ${prima} → ${durante}`);
+  if (dopo !== prima) errori.push(`dopo le barre le fasce non tornano: ${prima} → ${dopo}`);
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} barre di sistema temporanee: fasce ferme${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// pausa durante la scelta dei doni e dei reliquiari: si apre sopra e chiudendola si ritrova la stessa scelta
+for (const [nome, metodo] of [['dono', 'labSceltaDono'], ['reliquiario', 'labReliquiario']]) {
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?pg=lampionaio&sicura=35`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(300);
+  await pag.evaluate((m) => { const g = window.__dl.scene.getScene('Gioco'); g.labRosario(true); g[m](); }, metodo); // senza Rosario il reliquiario non offre scelte
+  await pag.waitForSelector('.doni:not([hidden])', { timeout: 2000 }).catch(() => errori.push('la scelta non si apre'));
+  const carte = () => pag.evaluate(() => document.querySelector('.doni').innerText);
+  const prime = await carte();
+  await pag.evaluate(() => window.__dl.scene.getScene('Gioco').indietro());
+  await pag.waitForTimeout(150);
+  const inCima = await pag.evaluate(() => { const r = document.querySelector('[data-azione="riprendi"]').getBoundingClientRect(); return !!document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.hud-pausa'); });
+  if (!inCima) errori.push('la pausa si apre sotto le carte');
+  await pag.click('[data-azione="riprendi"]');
+  await pag.waitForTimeout(150);
+  if (await pag.evaluate(() => document.querySelector('.doni').hidden)) errori.push('chiudendo la pausa la scelta è sparita');
+  if ((await carte()) !== prime) errori.push('le carte sono cambiate');
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} pausa sopra la scelta (${nome}): stesse carte alla chiusura${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

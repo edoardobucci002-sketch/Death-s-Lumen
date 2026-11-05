@@ -28,6 +28,7 @@ export type Dono =
   | { tipo: 'potenziamento' }; // dal reliquiario: il potenziamento a caso di prima
 
 export class Doni {
+  sospesa = false; // la pausa è aperta sopra la scelta: i tasti 1-2-3-4 non scelgono
   private radice: HTMLElement;
   private elenco: HTMLElement;
   private rimescola: HTMLButtonElement;
@@ -279,7 +280,7 @@ export class Doni {
   }
 
   private tasto = (e: KeyboardEvent): void => {
-    if (!this.aperta) return;
+    if (!this.aperta || this.sospesa) return;
     const n = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
     if (n >= 0 && this.carte[n]) {
       e.preventDefault();

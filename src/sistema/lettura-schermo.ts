@@ -65,6 +65,7 @@ export function letturaSchermo(): [string, string][] {
     ['Aree sicure', ''],
     ['env()', testoLati(env)],
     ['Capacitor', cap ? testoLati(cap) : 'non presente'],
+    ['In uso', `alto ${m.safe.a * m.scala}, basso ${m.safe.b * m.scala} fisici, fissata dopo i primi istanti: le barre di un gesto non la cambiano`],
     ['Scala', ''],
     ['Scala', `×${m.scala}: ${m.W}×${m.H} pixel di gioco`],
     ['Pixel disegnato', `×${z}: ${fisiciRiga} fisici`],

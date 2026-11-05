@@ -7,6 +7,7 @@
 import { PRONTA_DOPO, type Abilita } from '../data/abilita';
 import { ANELLI, FASCE } from '../data/hud';
 import { angoliFascia, arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa } from './arte';
+import { Tacche } from './tacche';
 
 export class Speciale {
   attesa: number = PRONTA_DOPO; // secondi alla prossima volta che è pronta (0 se ha tutte le cariche)
@@ -14,6 +15,7 @@ export class Speciale {
   caricheMassime = 1;
   private pulsante: HTMLButtonElement;
   private tela: HTMLCanvasElement;
+  private tacche: Tacche;
   private icona: HTMLImageElement;
   private colore: ImageData | null = null;
   private grigio: ImageData | null = null;
@@ -38,8 +40,9 @@ export class Speciale {
     this.tela = document.createElement('canvas');
     this.tela.className = 'arte';
     this.icona = immagine(abilita.icona, 'speciale-icona');
-    this.pulsante.append(this.tela, this.icona);
-    const col = arte(this.chiave), gr = arte(`${this.chiave}_Ricarica`);
+    const col = arte(this.chiave), gr = arte(`${this.chiave}_Ricarica`), c = ANELLI[this.chiave];
+    this.tacche = new Tacche(col?.w ?? 1, col?.h ?? 1, c?.x ?? 0, c?.y ?? 0); // solo con più cariche (Ceri gemelli)
+    this.pulsante.append(this.tela, this.icona, this.tacche.tela);
     if (col) {
       this.tela.width = col.w;
       this.tela.height = col.h;
@@ -63,6 +66,7 @@ export class Speciale {
 
   /** Avanza la ricarica; fattore è il moltiplicatore delle attese (Clessidra, Strega). */
   aggiorna(dt: number, fattore: number): void {
+    this.tacche.passa(dt);
     this.ricaricaAttuale = this.abilita.ricarica * fattore;
     if (this.attesa > 0) {
       this.attesa = Math.max(0, this.attesa - dt);
@@ -73,6 +77,7 @@ export class Speciale {
     } else if (this.cariche < this.caricheMassime) {
       this.attesa = this.ricaricaAttuale; // più cariche massime di colpo (amuleto acceso)
     }
+    this.tacche.mostra(this.cariche, this.caricheMassime > 1 ? this.caricheMassime : 0);
     const parte = this.cariche > 0 ? 100 : this.attesa > 0 ? Math.min(99, Math.round((1 - this.attesa / Math.max(this.ricaricaAttuale, PRONTA_DOPO)) * 100)) : 100;
     if (parte !== this.ultimaParte) {
       this.ultimaParte = parte;
@@ -129,6 +134,7 @@ export class Speciale {
     } else posa(this.pulsante, b.s + 4, m.H - b.b - a.h * z, m);
     misura(this.pulsante, a.w, a.h, z, m);
     misura(this.tela, a.w, a.h, z, m);
+    misura(this.tacche.tela, a.w, a.h, z, m);
     posa(this.icona, (c.x - 12) * z, (c.y - 12) * z, m);
     misura(this.icona, 24, 24, z, m);
   }

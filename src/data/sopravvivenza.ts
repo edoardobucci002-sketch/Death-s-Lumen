@@ -5,16 +5,14 @@
 
 /** Fiaschetta: cure contate. Si beve con il pulsante accanto all'abilità o con il tasto F. */
 export const FIASCHETTA = {
-  sorsi: 3, // all'inizio della notte, e al massimo
+  sorsi: 3, // all'inizio della notte e, senza Lacrima di lumen, al massimo
   cura: 0.35, // ogni sorso cura il 35% della salute massima…
   durata: 1, // …in 1 secondo
   perElite: 1, // sorsi che tornano uccidendo un'élite (il Mietitore la riempie tutta)
-  // disegno di Edoardo (HUD/Pulsanti/Fiaschetta_Lumen_V#.aseprite): 4 fotogrammi, piena, 2/3, 1/3, vuota;
-  // stesso ingrandimento dell'anello dell'abilità, a «distanza» pixel disegnati da lui (staccata, sul telefono in verticale)
-  arte: 'Fiaschetta_Lumen',
+  // disegno di Edoardo, quando c'è (HUD/Pulsanti/Fiaschetta_Lumen_Tonda_V#.aseprite); finché manca il pulsante si compone dal codice:
+  // la cornice dell'abilità con dentro la fiala. Sta a «distanza» pixel disegnati dall'abilità, su computer e tablet
+  arte: 'Fiaschetta_Lumen_Tonda',
   distanza: 12,
-  // se il disegno mancasse: la fiala fatta dal codice (15×27 pixel), ingrandita il triplo
-  ingrandimentoSegnaposto: 3,
   colori: { bordo: '#000000', vetro: '#d8cfc0', liquido: '#e3913a', luce: '#ffd27a', vuoto: '#2a1f17' },
 } as const;
 

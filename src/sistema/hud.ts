@@ -323,12 +323,14 @@ export class Hud {
     this.sintesi.textContent = [`◆ ${this.ultimeAnime}`, `Cera ${this.ultimaCera}`, this.ultimoRosario].filter(Boolean).join(' · ');
     this.opzioni();
     this.pausa.hidden = false;
+    this.radice.classList.add('sopra');
     this.disponi();
     (this.pausa.querySelector('[data-azione="riprendi"]') as HTMLElement).focus();
   }
 
   nascondiPausa(): void {
     this.pausa.hidden = true;
+    this.radice.classList.remove('sopra');
   }
 
   mostraFine(r: Riepilogo): void {

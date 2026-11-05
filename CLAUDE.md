@@ -64,7 +64,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
   - pausa automatica quando l'app va in background;
   - schermo sempre acceso durante la partita;
   - vibrazione sugli eventi importanti, disattivabile;
-  - su Android, il tasto Indietro mette in pausa, riprende o torna al menu.
+  - il tasto Indietro apre la pausa e basta; dentro la pausa chiude solo i sottopannelli, la partita riparte solo dal pulsante; dalla fine torna al menu.
 - Niente zoom con doppio tocco o pizzico; niente selezione di testo nell'interfaccia di gioco.
 - Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia `npm run prova`: controlla le fasce sul gioco vero, su sei telefoni.
 - Funziona offline: tutti gli asset sono nel pacchetto.
@@ -82,7 +82,8 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
    - Il testo discorsivo del GDD lo script non lo vede: resta controllato a lettura.
 5. **Decisioni che spettano a Edoardo**: alla fine di ogni tappa elencale, una per riga, in un blocco con questo titolo. Non scegliere tu i valori: se devi metterne uno per andare avanti, segnalo **«da rivedere»** nel GDD e nella roadmap («Da confermare»).
 6. Riassumi a Edoardo cosa è cambiato e come provarlo.
-7. **Ultimo punto di ogni tappa: porta `docs/` su `main`** (vedi «I due link»), dopo `npm run controlla-gdd`. Su `main`: `git restore --source=origin/prova --staged --worktree -- docs/` (a differenza di `git checkout prova -- docs/` toglie anche i file eliminati su `prova`), commit «Aggiorna i documenti da prova», push. Va fatto anche subito prima di unire `prova` in `main`: se i documenti delle due parti sono diversi, l'unione va in conflitto.
+7. **Salvataggio della partita in corso** (appena la tappa esiste): il controllo con il bot (salva, ricarica, la notte finisce identica) è parte fissa di `npm run prova`, e **ogni sistema nuovo nasce già salvabile**.
+8. **Ultimo punto di ogni tappa: porta `docs/` su `main`** (vedi «I due link»), dopo `npm run controlla-gdd`. Su `main`: `git restore --source=origin/prova --staged --worktree -- docs/` (a differenza di `git checkout prova -- docs/` toglie anche i file eliminati su `prova`), commit «Aggiorna i documenti da prova», push. Va fatto anche subito prima di unire `prova` in `main`: se i documenti delle due parti sono diversi, l'unione va in conflitto.
 
 ## Documentazione
 
@@ -112,7 +113,7 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 
 - Ogni push su `prova` o su `main` ripubblica entrambi i link in un paio di minuti, tranne i push su `main` che toccano solo `docs/`: quelli non fanno partire né le pagine né l'APK (`.github/workflows/pagine.yml`; per `prova` lo fa partire `prova.yml`, perché GitHub pubblica solo da `main`).
 - Lavora sempre su `prova`, o su un ramo di passaggio che unisci a `prova` appena funziona, nella stessa sessione. Mai rami lasciati a metà o worktree dimenticati: Edoardo deve trovare tutto in `/prova/`.
-- Unisci `prova` in `main` **solo quando Edoardo dice che approva**. Il primo passo dell'unione è sempre riportare `docs/` di `prova` su `main` (procedura al punto 7 della «Verifica»): altrimenti i documenti vanno in conflitto. Lo fa Claude ogni volta, senza che Edoardo debba ricordarlo.
+- Unisci `prova` in `main` **solo quando Edoardo dice che approva**. Il primo passo dell'unione è sempre riportare `docs/` di `prova` su `main` (procedura al punto 8 della «Verifica»): altrimenti i documenti vanno in conflitto. Lo fa Claude ogni volta, senza che Edoardo debba ricordarlo.
 - **Eccezione**: `docs/` è l'unica cosa che arriva su `main` senza approvazione: alla fine di ogni tappa, dopo `npm run controlla-gdd`, si porta `docs/` di `prova` su `main` (solo quella cartella). Su `main` i documenti possono descrivere contenuti non ancora pubblicati: lì `controlla-gdd` non va lanciato.
 - Sul Mac al massimo un server acceso (`npm run anteprima`, porta 4173). Spegnilo quando hai finito; non spegnere un server che Edoardo sta usando senza chiederglielo.
 - Il service worker tiene separate le copie offline dei due link (`tools/genera-sw.mjs`). Salvataggi e record invece sono in comune, perché il sito è lo stesso.

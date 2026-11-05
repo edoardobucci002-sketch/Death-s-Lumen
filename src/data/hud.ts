@@ -85,6 +85,19 @@ export const FASCE = {
   scambiaAngoli: 0, // 0: fiaschetta a sinistra, abilità a destra; 1: scambiate (dal LAB, scheda Schermo)
 };
 
+/**
+ * Area sicura: per tanti secondi dall'apertura si tiene la più grande vista, poi resta fissa finché l'app è aperta.
+ * Le barre di sistema che compaiono con un gesto sono temporanee e non devono spostare niente.
+ */
+export const AREA_SICURA = { assestamento: 1.5 };
+
+/**
+ * Tacche intorno ai pulsanti tondi di fiaschetta e abilità, in pixel disegnati (sul S25 uno vale 4 pixel fisici). Da rivedere.
+ * Stanno su un arco sopra il centro del pulsante: lato del quadretto, distanza dal centro, ampiezza dell'arco in gradi.
+ * lampo: secondi di lampo quando una tacca si riempie.
+ */
+export const TACCHE = { lato: 4, raggio: 31, arco: 150, lampo: 0.25, colori: { accesa: '#e3913a', scura: '#2a1f17', lampo: '#fff2c8', bordo: '#000000' } };
+
 /** Pulsante della pausa al centro della fascia bassa: più piccolo, per lasciare posto al joystick. Da rivedere. */
 export const PAUSA_PICCOLA = { lato: 34, margineTocco: 0 }; // punti di area di tocco invisibile: nessuna, per non premerla per sbaglio
 /** Misura minima di un pulsante da toccare, in punti: se il disegno è più piccolo si ingrandisce di un numero intero di volte. */

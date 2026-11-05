@@ -32,7 +32,8 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'controlla-gdd-'));
 function trascrivi(file) {
   const testo = fs.readFileSync(file, 'utf8');
   const js = ts.transpileModule(testo, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  fs.writeFileSync(path.join(tmp, path.basename(file).replace(/\.ts$/, '.js')), js);
+  // qui i file stanno tutti in una cartella sola: pixel.ts legge i dati da ../data/
+  fs.writeFileSync(path.join(tmp, path.basename(file).replace(/\.ts$/, '.js')), js.replace(/require\("\.\.\/data\//g, 'require("./'));
 }
 for (const f of fs.readdirSync(path.join(radice, 'src/data'))) if (f.endsWith('.ts')) trascrivi(path.join(radice, 'src/data', f));
 trascrivi(path.join(radice, 'src/sistema/pixel.ts'));
@@ -490,7 +491,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('Fiaschetta', '{} sorsi all\'inizio della notte', FI.sorsi);
   frase('Fiaschetta: cura', 'Un sorso cura il {}% della salute massima in {} s', pct(FI.cura), FI.durata);
   frase('Fiaschetta: élite', 'Un\'élite uccisa ridà {} sorso', FI.perElite);
-  frase('Fiaschetta: distanza', 'staccata da lui di {} pixel disegnati', FI.distanza);
+  frase('Fiaschetta: distanza', 'staccata di {} pixel disegnati', FI.distanza);
   frase('Grazia: finestra', 'quando mancavano al massimo {} s al colpo', GR.finestra);
   frase('Grazia: sfioro', '(entro {} px oltre il bordo)', GR.sfioro);
   frase('Grazia: effetto', 'Dura {} s: +{}% danno, +{}% velocità, il personaggio lampeggia di chiaro ({} volte al secondo)', GR.durata, pct(GR.danno), pct(GR.velocita), GR.lampi);

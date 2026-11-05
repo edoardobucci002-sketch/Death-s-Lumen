@@ -80,7 +80,11 @@ export class Legenda {
     chiudi.focus();
   }
 
-  private chiudi(): void {
+  get aperta(): boolean {
+    return !this.radice.hidden;
+  }
+
+  chiudi(): void {
     this.radice.hidden = true;
     window.removeEventListener('keydown', this.tasto, true);
   }

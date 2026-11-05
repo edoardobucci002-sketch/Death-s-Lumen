@@ -145,6 +145,7 @@ export class Gioco extends Phaser.Scene {
   private prossimaCalamita = 0;
   private mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
+  private foriBuio = true; // solo il Laboratorio li spegne
   private campoL = 0; // pixel di gioco del campo: sul telefono in verticale è meno dello schermo
   private campoA = 0;
   private buio!: Phaser.GameObjects.Image;
@@ -322,11 +323,15 @@ export class Gioco extends Phaser.Scene {
     this.disegna(delta / 1000);
   }
 
-  /** Tasto Indietro di Android: pausa, riprende, o dalla fine torna al menu. Restituisce sempre true (gestito). */
+  /**
+   * Tasto Indietro: in partita apre la pausa e basta; nella pausa chiude solo i sottopannelli, la partita riparte
+   * solo toccando il pulsante (scelta voluta: una doppia pressione per sbaglio la faceva ripartire);
+   * dalla fine torna al menu. Restituisce sempre true (gestito).
+   */
   indietro(): boolean {
     if (this.finito && this.hud.fineAperta) this.scene.start('Menu');
-    else if (this.pausa) this.riprendi();
-    else this.apriPausa();
+    else if (this.legenda.aperta) this.legenda.chiudi();
+    else if (!this.pausa) this.apriPausa();
     return true;
   }
 
@@ -594,6 +599,11 @@ export class Gioco extends Phaser.Scene {
 
   labLivelli(): { armi: { arma: Arma; livello: number }[]; doni: Record<IdDono, number> } {
     return { armi: this.arsenale.possedute.map((p) => ({ arma: p.arma, livello: p.livello })), doni: { ...this.passivi } };
+  }
+
+  /** Diagnosi dei fotogrammi: spegne i fori di lanterne e fuochi nel buio, per misurarne il costo sul telefono. */
+  labForiBuio(accesi: boolean): void {
+    this.foriBuio = accesi;
   }
 
   /** Accende o spegne a mano il segnale del Peccato sul bordo del campo, per vederlo senza comporre un Rosario. */
@@ -923,6 +933,7 @@ export class Gioco extends Phaser.Scene {
   private apriPausa(): void {
     if (this.finito || this.pausa) return;
     this.pausa = true;
+    this.doni.sospesa = true;
     this.anims.pauseAll();
     this.comandi.lascia();
     this.hud.mostraPausa(this.build());
@@ -931,6 +942,7 @@ export class Gioco extends Phaser.Scene {
   private riprendi(): void {
     if (!this.pausa) return;
     this.pausa = false;
+    this.doni.sospesa = false;
     this.hud.nascondiPausa();
     if (!this.doni.aperta) this.anims.resumeAll();
   }
@@ -1112,7 +1124,7 @@ export class Gioco extends Phaser.Scene {
     const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
     const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);
     const chiaveBuio = CHIAVI_BUIO[this.fiamma];
-    this.buio.setTexture(this.rompibili && this.chiazze ? this.rompibili.buio(chiaveBuio, this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam, this.chiazze) : chiaveBuio);
+    this.buio.setTexture(this.foriBuio && this.rompibili && this.chiazze ? this.rompibili.buio(chiaveBuio, this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam, this.chiazze) : chiaveBuio);
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
     this.buio.setPosition(bx, by);
     const z = this.zSalute, f = FINESTRE.Barra_Salute_Cornice;
