@@ -1,6 +1,6 @@
 # Roadmap
 
-Un solo piano di lavoro, aggiornato a ogni tappa (4 novembre 2026). Ogni tappa finisce con qualcosa che Edoardo può provare, di norma dal Laboratorio sul link di prova (vedi «Verifica» in `CLAUDE.md`). Il dettaglio dei contenuti è nel [GDD](GDD.md), le scelte in [decisioni.md](decisioni.md), i numeri e le simulazioni in [bilanciamento.md](bilanciamento.md).
+Un solo piano di lavoro, aggiornato a ogni tappa (5 novembre 2026). Ogni tappa finisce con qualcosa che Edoardo può provare, di norma dal Laboratorio sul link di prova (vedi «Verifica» in `CLAUDE.md`). Il dettaglio dei contenuti è nel [GDD](GDD.md), le scelte in [decisioni.md](decisioni.md), i numeri e le simulazioni in [bilanciamento.md](bilanciamento.md).
 
 ## Fatto
 
@@ -30,6 +30,8 @@ Parti della M8 già fatte:
 - Tappa 4 · Rosario, 10 amuleti, Peccato (3/11)
 - Tappa 5 · 4 armi e 4 doni nuovi con i loro sblocchi (4/11)
 - Tappa 6 · 10 unioni (4/11)
+- Leggibilità del campo, solo visiva (4–5/11): lampo dei nemici, numeri del danno (limite di 15, ambra in tre casi, somma su élite, Seth e reazioni), nomi delle reazioni, simboli degli stati, cartiglio degli avvisi, orologio, personaggio sopra i nemici. Sul link di prova, non ancora sul link pubblico
+- Fasce del telefono in verticale con il campo vero, segnaposto dal codice (5/11). Sul link di prova e sull'APK di prova, non ancora sul link pubblico; poi pausa, scelta dei doni e menu
 - Laboratorio (LAB) sul link di prova (3/11)
 
 ## Prossime tappe
@@ -65,6 +67,21 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
+| Fasce del telefono: tutte le misure di `FASCE`, `PAUSA_PICCOLA`, `JOYSTICK_PICCOLO`, `SEGNALE_PECCATO` in `src/data/hud.ts`, provate da Edoardo sul S25 | GDD §11; decisioni 5/11 |
+| Pausa piccola subito a sinistra di abilità e fiaschetta: al centro esatto si sovrapporrebbe al gruppo | GDD §11; decisioni 5/11 |
+| Cartiglio largo 240 pixel di gioco: copre il centro di esperienza, non lo stemma né le estremità della barra | GDD §11 |
+| Zone dei gesti di sistema nella scheda Schermo: servono codice nativo Android; esclusione dei gesti rimandata alla prova a mano di Edoardo | decisioni 5/11 |
+| Bozza dell'HUD (`npm run bozza`): non conosce le fasce, le controlla `npm run prova` sul gioco vero. Aggiornarla o ritirarla? | `CLAUDE.md`, «Mobile» |
+| Leggibilità, secondo passo: nomi delle reazioni (× 2, ogni 2 s, 3 insieme, 90 px), 40 simboli solo sui pesanti, somma dei numeri su élite e Seth (0,5 s, 30 px sopra), cartiglio (scala 0,5, minimo × 2; 1,45 s; dissolvenza 0,3 s), orologio nella colonna di destra. Confermati da Edoardo il 5/11, restano da provare sul suo telefono | GDD §8c, §11 e «Impatto dei colpi»; decisioni 4/11 e 5/11 |
+| Scritte delle reazioni: il nome parte 34 px sopra il punto e sta 16 px sopra il numero quando viene spostato | GDD «Impatto dei colpi»; bilanciamento 5/11 |
+| Numeri ambra: se una build rende critici la maggior parte dei colpi, rivedere l'ambra. Al massimo livello il Chiodo di bara dà circa il 30% di numeri ambra | GDD «Impatto dei colpi»; decisioni 5/11 |
+| Chiodo di bara al massimo: gli ambra sostituiscono i bianchi così spesso che i bianchi durano ~0,03 s. Possibile correzione: un ambra può sostituire solo un bianco visibile da almeno 0,3 s (non applicata) | bilanciamento 5/11 |
+| Leggibilità del campo provata solo su telefoni emulati e sul Mac: manca la prova di Edoardo sul Galaxy S25 | decisioni 4/11 e 5/11 |
+| Link pubblico: il codice di `prova`, con tutta la leggibilità e gli altri lavori dal 3/11, non è su `main`; il merge aspetta l'approvazione di Edoardo | «I due link» in `CLAUDE.md` |
+| Seth molto scuro sullo sfondo notturno e cerchi delle reazioni ancora vistosi: contorno o alone per Seth, cerchi più piccoli o ridisegnati, oppure sprite di Edoardo. Non ancora deciso | `asset_da_creare.md` per i cerchi |
+| Nome e numero di una reazione si toccano ancora nell'8% circa dei fotogrammi | GDD «Impatto dei colpi» |
+| Con 15 numeri ambra già sullo schermo, il primo colpo di una reazione può restare fuori dalla somma mostrata; visto solo in una prova forzata, il danno vero non cambia | GDD «Impatto dei colpi» |
+| Verifica nella bozza dell'HUD: 44 avvisi già presenti prima di questo lavoro. In partita, su iPhone SE e Android piccolo la barra di Seth tocca le caselle 2 e 3; gli altri riguardano altre schermate, soprattutto i doni | bozza («Verifica tutti i telefoni») |
 | Leggibilità nella folla: lampo del nemico (0,033 s, uno ogni 0,3 s, 50% su bruti/élite/Seth) e al massimo 15 numeri del danno; si provano dal LAB | GDD §10 e «Impatto dei colpi»; decisioni 4/11 |
 | Sblocco delle Unioni: «Sopravvivi 10 minuti» o 500 Cera | GDD §8f; bilanciamento 4/11 |
 | Sblocchi di armi e doni nuovi (tappa 5): imprese (10 Eclissi, 30000 anime per il Corvo, 3 minuti nelle nubi per il Velo, 20 schivate perfette) e costi (120 Cera; Campanella con impresa o 120) | GDD §8d |

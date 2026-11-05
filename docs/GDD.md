@@ -360,7 +360,7 @@ Valori al minuto 0, in `src/data/nemici.ts`; la velocità varia a caso del ±10%
   - *accerchia* (scheletri): punta a un punto girato di lato intorno a te di 0,6–1,2 radianti e al 60% della distanza, così arriva dai fianchi; sotto i 120 px viene dritto;
   - *taglia la strada* (segugi): punta dove sarai, guardando dove cammini, fino a 1,1 s in anticipo;
   - *zig-zag* (pipistrelli): ondeggia di lato (ampiezza 0,7, 5 oscillazioni al secondo, ognuno con il suo ritmo).
-- **Orde**: dalle 2:30, ogni 80 s fino alle 14:20, un'orda di 12 + 2 nemici per minuto (al massimo 28) nasce in formazione appena fuori dallo schermo: file di 7, distanziate di 2,4 raggi. Marcia compatta verso di te a 80 px/s; a 260 px carica tutta insieme a velocità ×1,35. Zombi fino alle 5:00, poi scheletri, dalle 10:00 segugi. Dalle 7:00 arrivano due orde da lati opposti (tenaglia). Avvisi: «Un'orda marcia verso di te», «Due orde ti stringono».
+- **Orde**: dalle 2:30, ogni 80 s fino alle 14:20, un'orda di 12 + 2 nemici per minuto (al massimo 28) nasce in formazione appena fuori dallo schermo: file di 7, distanziate di 2,4 raggi. Marcia compatta verso di te a 80 px/s; a 260 px carica tutta insieme a velocità ×1,35. Zombi fino alle 5:00, poi scheletri, dalle 10:00 segugi. Dalle 7:00 arrivano due orde da lati opposti (tenaglia). Avvisi: «Un'orda» (marcia verso di te), «Due orde» (ti stringono).
 - **Sciami**: 14 + 3 nemici per minuto, fino a 56, a +12% di velocità. Nascono in cerchio (un'ellisse grande quanto lo schermo, 48 px fuori dal bordo).
 - **Élite**: l'alone ambra è un colore aggiunto allo sprite; ingrandite × 1,5 anche nel raggio dei contatti.
 
@@ -406,7 +406,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
-Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa del nemico compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole ambra, croce oro, teschio viola, lapide seppia (la lapide resta anche durante l'Interramento). Niente cambi di colore né intermittenza; al massimo 200 simboli sullo schermo.
+Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa di bruti, élite e Seth compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole ambra, croce oro, teschio viola, lapide seppia (la lapide resta anche durante l'Interramento). Sui nemici comuni lo stato funziona lo stesso, ma senza simbolo. Niente cambi di colore né intermittenza; al massimo 40 simboli sullo schermo (*da rivedere*), con questa precedenza: prima Seth, poi le élite, poi i bruti più vicini al personaggio.
 
 | Affinità | Armi e abilità | Stato | Effetto |
 | --- | --- | --- | --- |
@@ -426,7 +426,7 @@ Due stati diversi sullo stesso nemico si consumano e fanno una reazione:
 
 Ruoli delle armi: l'esplosione del dardo del Bastone ferisce in 40 px al 35% del danno; il Fuoco fatuo insegue per primi élite e Seth (li vede 4 volte più vicini); ogni uccisione della Falce allunga la lama del 2% per 5 s (al massimo +30%); il fendente della Lama di luce segue la direzione in cui cammini; il secondo rintocco della Campana (livello 8) ferma i nemici per 0,6 s. I cerchi delle reazioni sono disegnati dal codice a retino finché Edoardo non disegna i suoi.
 
-La **scelta dei doni** è fatta di strisce orizzontali una sotto l'altra (`src/sistema/scheda.ts`, parole in `src/data/spiegazioni.ts`): nome, numeri grandi che cambiano («Danno 24 › 32»), il simbolo dello stato che lascia l'arma con il suo effetto, la reazione che si otterrebbe con un'arma già posseduta. Gli amuleti mostrano i grani dopo averli presi, vantaggio in verde, rovescio in rosso e l'avviso di Peccato se si sfora. Quando scatta una reazione il suo nome sale sopra il nemico. La **legenda** di stati e reazioni si apre dalla pausa («Stati») e dal «?» della scelta dei doni.
+La **scelta dei doni** è fatta di strisce orizzontali una sotto l'altra (`src/sistema/scheda.ts`, parole in `src/data/spiegazioni.ts`): nome, numeri grandi che cambiano («Danno 24 › 32»), il simbolo dello stato che lascia l'arma con il suo effetto, la reazione che si otterrebbe con un'arma già posseduta. Gli amuleti mostrano i grani dopo averli presi, vantaggio in verde, rovescio in rosso e l'avviso di Peccato se si sfora. Quando scatta una reazione il suo nome sale sopra il nemico, ingrandito × 2, nel colore dello stato con il contorno scuro: Eclissi viola, Rivelazione oro, Esorcismo ambra, Interramento seppia. Lo stesso nome torna al massimo ogni 2 s, al massimo 3 nomi sullo schermo insieme (oltre non si creano: la reazione avviene lo stesso). Il nome resta fuori da 90 px intorno al personaggio, spostandosi sopra quel cerchio, e dentro lo schermo (*da rivedere*). La **legenda** di stati e reazioni si apre dalla pausa («Stati») e dal «?» della scelta dei doni.
 
 ## 8d. Meta progressione (`src/data/meta.ts`)
 
@@ -529,23 +529,30 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
 | Lampo del nemico colpito | 0,033 s (2 passi di gioco), al massimo un lampo ogni 0,3 s per nemico: un colpo che arriva prima non lo fa ripartire. Bruti, élite e Seth non diventano bianchi: si schiariscono del 50%, così resta la sagoma. Solo i colpi diretti lo fanno (archi, impatti, proiettili, esplosioni, falci, rintocchi, lapidi, grani, becchi); niente lampo per nubi, pozze, Velo funebre, abilità speciali e scie (*da rivedere*) |
 | Punto da cui partono le armi | 36 px sopra i piedi |
 | Rallentamento | resta attivo il più forte tra quelli in corso |
-| Salute bassa | sotto il 35% il bordo dello schermo pulsa di rosso |
+| Salute bassa | sotto il 35% il bordo pulsa di rosso: quello del campo sul telefono in verticale, quello dello schermo altrove |
 
 ## 11. Interfaccia e sensazioni
 
-- **HUD**:
-  - in alto: barra dell'esperienza, armi e doni con il loro livello, orologio, livello e anime;
+- **HUD sul telefono in verticale: due fasce fisse fuori dal campo** (misure in `FASCE`, `src/data/hud.ts`, tutte *da rivedere*). Il campo è vero: finisce al bordo delle fasce per la telecamera, la comparsa e il ricollocamento dei nemici e tutte le armi che scelgono bersagli «sullo schermo».
+  - altezza calcolata per ogni telefono: area sicura (la più grande tra `env()` e Capacitor) + contenuto. Sul Galaxy S25 (area sicura in alto 105 pixel fisici, in basso 0): fascia alta 81 pixel disegnati (324 fisici), fascia bassa 94 (376 fisici), campo 540×820 pixel di gioco. Un pixel disegnato vale 4 pixel fisici;
+  - fascia alta: stemma del livello ed esperienza; sotto, la riga dell'orologio e della barra sottile di Seth. Il cartiglio sale fino al bordo e copre il centro della prima riga per la sua durata; la sua scritta resta sempre fuori dall'area sicura (sul S25 parte a 108 fisici) e la riga dell'orologio resta libera;
+  - fascia bassa: abilità a destra e fiaschetta affiancata, oppure scambiate dal LAB (abilità al centro); pausa piccola subito a sinistra di loro. L'abilità non va mai nell'angolo in basso a sinistra;
+  - fuori dall'HUD di partita: anime, Cera, Rosario e griglia degli oggetti, che stanno nella pausa e nella schermata di fine;
+  - segnali sul bordo del campo: salute bassa (rosso che pulsa), Peccato (cornice viola a retino), reliquiario fuori vista (freccia al confine con le fasce);
+  - joystick con base più piccola: non nasce mai sopra un pulsante, la base si sposta di quanto basta e il centro della direzione resta sotto il dito.
+- **HUD su computer, tablet e telefono in orizzontale** (invariato):
+  - in alto: barra dell'esperienza, armi e doni con il loro livello, livello e anime; l'orologio sta nella colonna di destra, sotto anime e Cera, dove le caselle non arrivano mai (*da rivedere*);
   - barra del boss quando c'è Seth;
   - in basso a sinistra: l'abilità speciale con la ricarica circolare; in basso a destra: la pausa.
 - **Feedback**:
-  - numeri del danno (in ambra se 40 o più);
+  - numeri del danno, bianchi; in ambra solo i critici, la somma del danno delle reazioni e il numero sommato su élite e Seth;
   - il personaggio lampeggia quando viene colpito;
   - leggero tremolio dello schermo;
   - bordo rosso quando la salute è bassa;
-  - avvisi testuali a centro schermo (sciami, Seth, reliquiari).
+  - avvisi nel cartiglio (sciami, orde, Seth, reliquiari), subito sotto barre e caselle, con la riga secondaria subito sotto. Il cartiglio è ridotto a 0,5 volte, arrotondato a un ingrandimento intero e mai sotto × 2: sui telefoni normali è la metà; su computer, tablet e iPhone SE resta com'era, perché a × 1 le lettere non si leggono (*da rivedere*). Non scende mai sul personaggio: se le caselle sono tante, sale sopra di loro. Durano 1,45 s, compresi 0,3 s di dissolvenza a retino (*da rivedere*).
 - **Audio** (sintetizzato dal codice): colpo, sparo, anima con tono che sale nelle serie, danno subito, campana, livello, reliquiario, Seth, cura, speciale. Da sostituire con suoni veri (vedi [roadmap.md](roadmap.md)).
-- **In partita**: HUD in alto con livello, orologio, anime, Cera, Rosario, icone di armi e doni con il livello, barra di Seth; avvisi «Uno sciame ti circonda», «Seth – il Rinnovato è venuto per te», «Reliquiario: …»; pausa con il pulsante in basso a destra, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni; 1-2-3-4 scelgono la striscia del dono; F beve dalla fiaschetta; Spazio usa l'abilità.
-- **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.
+- **In partita** (computer e tablet; sul telefono vedi sopra): HUD in alto con livello, orologio, anime, Cera, Rosario, icone di armi e doni con il livello, barra di Seth; avvisi «Lo sciame» (ti circonda), «Seth» (il Rinnovato è venuto per te), «Reliquiario» (…); pausa con il pulsante in basso a destra, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni; 1-2-3-4 scelgono la striscia del dono; F beve dalla fiaschetta; Spazio usa l'abilità.
+- **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, sul telefono anche anime, Cera e Rosario, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.
 
 ### Mondo, luce e comandi (`src/data/mondo.ts`)
 
@@ -558,7 +565,7 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
 | Centro della luce | 42 px sopra i piedi | |
 | Tremolio della fiamma | ±7 px ogni 0,12 s | |
 | Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |
-| Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito |
+| Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito; sul telefono in verticale base da 56 pixel disegnati, mai sopra un pulsante (*da rivedere*) |
 
 ### Nemici in campo (`src/data/nemici.ts`)
 
@@ -576,12 +583,14 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
 
 | Valore | Numero | Note |
 | --- | --- | --- |
-| Numeri del danno | durano 0,55 s, salgono di 22 px, cifre 3×5 ingrandite × 2 | ambra da 40 in su; al massimo 15 numeri del danno sullo schermo (*da rivedere*): oltre non si creano, ma quelli da 40 in su e quelli su élite e Seth prendono il posto del numero comune più vecchio |
+| Numeri del danno | durano 0,55 s, salgono di 22 px, cifre 3×5 ingrandite × 2 | bianchi; ambra in tre casi soltanto: colpi critici (Chiodo di bara), danno delle reazioni (vedi riga sotto) e numero sommato su élite e Seth; al massimo 15 numeri del danno sullo schermo (*da rivedere*): al limite un bianco nuovo non si crea, un ambra nuovo prende il posto del bianco più vecchio; se sono tutti ambra, neanche l'ambra nuovo si crea |
+| Numero delle reazioni | un solo numero ambra con la somma del danno di quella reazione, al centro della zona colpita | Eclissi ed Esorcismo (Rivelazione e Interramento non fanno danno). Comprende anche il danno su élite e Seth. Per l'Esorcismo resta aperto finché esiste una fiammella. Regole delle scritte: mai entro 90 px dal personaggio, mai fuori dallo schermo. Se il nome della reazione viene spostato sopra quel cerchio, sta 16 px più in alto del numero (*da rivedere*) |
+| Numeri su élite e Seth | i colpi entro 0,5 s si sommano in un solo numero, 30 px sopra la cima dello sprite | segue la testa del nemico e sale quando la somma si chiude: non sta mai sul corpo, nemmeno mentre Seth pulsa di rosso; è sempre ambra (*da rivedere*) |
 | Scoppio del nemico che muore | 0,2 s | anello chiaro che si sfalda a retino |
 | Arco della Lanterna | 0,12 s, spessore 6 px | disegnato dal codice, metà pieno e metà a retino |
 | Impatto della pala | 0,22 s; scossa dello schermo di 2 px per 0,1 s se colpisce qualcuno | |
 | Esplosione dei dardi | 0,18 s | |
-| Ordine di disegno | arco, impatto e nubi sotto i nemici; anime sopra il buio | decisione di Edoardo: i colpi non devono coprire i nemici, le anime devono vedersi |
+| Ordine di disegno | arco, impatto e nubi sotto i nemici; il personaggio sopra tutti i nemici, Seth compreso; cerchi e falci di Seth sopra il personaggio; anime sopra il buio | decisione di Edoardo: i colpi non devono coprire i nemici, il personaggio non deve sparire, le anime devono vedersi |
 | Anime a terra | cristalli della v0 ingranditi × 3 | |
 
 ## 12. Da fare e da decidere
