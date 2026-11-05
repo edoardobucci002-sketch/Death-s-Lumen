@@ -85,6 +85,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Fotogrammi nella selezione: `main` e `prova` uguali sul Mac, difetto da misurare sul S25 con LAB → Schermo | bilanciamento 5/11, voce «Fotogrammi» |
 | Tacche (`TACCHE`: lato 4, raggio 31, arco 150°, lampo 0,25 s) e pulsante tondo della fiaschetta composto dalla cornice dell'abilità | GDD §8b e §11 |
 | Area sicura fissata dopo 1,5 s dall'apertura (`AREA_SICURA.assestamento`) | GDD §11 |
+| Chiave di firma dell'APK di prova nella cache di GitHub (7 giorni senza compilazioni e si perde). Più solida: un segreto del repository, da creare a mano | decisioni 5/11 |
 | Link di prova: controllo della versione nuova ogni 120 s (`AGGIORNAMENTI.ogni`) | decisioni 5/11 |
 | Opacità della base del joystick quando copre un pulsante: 50% (`JOYSTICK_PICCOLO.opacitaSuiPulsanti`) | GDD §11 |
 | Campo del telefono più corto: a Cappella vuota il bot vince il 4%; da riguardare con il bilanciamento finale, partendo dal Becchino prima del minuto 5 e da Seth del minuto 10 | bilanciamento 5/11 |
