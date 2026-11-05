@@ -38,6 +38,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 5/11 — Ambra in tre casi soltanto (solo visivo)
+
+Tolto `EFFETTI.numeri.ambra`, proposto poche ore prima (vedi sotto): l'ambra ora dipende solo dal tipo di colpo. Nessun numero di gioco cambia. Prova: `npm run sim -- 3 tutti` prima e dopo, stessi semi: 12 notti, 1251 valori confrontati, 0 differenze.
+
 ### 5/11 — Ordine di disegno, precedenza dei simboli, numeri ambra (solo visivo)
 
 `AVVISO.scala` da 0,6 a 0,5 (sui telefoni resta ×2: si vede uguale). Nuovo `EFFETTI.numeri.ambra` 1,5 (*da rivedere*); `numeri.forte` 40 ora decide solo la precedenza. Nessun numero di gioco cambia. Prova: `npm run sim -- 3 tutti` prima e dopo, stessi semi: 12 notti, 1251 valori confrontati, 0 differenze.

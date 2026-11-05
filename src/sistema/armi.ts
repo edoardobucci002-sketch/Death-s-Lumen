@@ -45,6 +45,7 @@ const MAX_CORVI = 5;
 const PASSI_STORIA = 64; // posizioni ricordate per la Lama dell'alba (più di un secondo)
 const SCIA = 1; // proiettile che lascia una scia (Candelabro funebre)
 const RACCOGLIE = 2; // proiettile che raccoglie le anime (Fuochi erranti)
+const FIAMMELLA = 3; // fiammella dell'Esorcismo: il suo danno è di una reazione
 // i proiettili della v0 attraversano la tela nei loro fotogrammi: si usa l'ultimo, con l'origine sulla punta
 const PROIETTILI_V0: Record<string, { fotogramma: string; x: number; y: number }> = {
   [BASTONE.effetto]: { fotogramma: '3', x: 88, y: 64 },
@@ -140,7 +141,7 @@ export class Arsenale {
   private prEsplode = new Uint8Array(MAX_PROIETTILI);
   private prAff = new Uint8Array(MAX_PROIETTILI);
   private prResto = new Uint8Array(MAX_PROIETTILI); // nemici che può ancora trapassare
-  private prUnione = new Uint8Array(MAX_PROIETTILI); // SCIA o RACCOGLIE
+  private prUnione = new Uint8Array(MAX_PROIETTILI); // SCIA, RACCOGLIE o FIAMMELLA
   private prColpiti = new Uint32Array(MAX_PROIETTILI * 4); // id dei nemici già colpiti (fino a 4)
   private prSprite: Phaser.GameObjects.Sprite[] = [];
   private raffica = 0; // dardi del bastone ancora da sparare nella raffica in corso
@@ -215,6 +216,7 @@ export class Arsenale {
   private cProb: number = STATI.probabilita; // probabilità di lasciare lo stato
   private cFerma = 0; // secondi per cui il colpo in corso ferma i nemici (secondo rintocco)
   private critico = false; // l'ultimo colpo calcolato è un critico?
+  private cReazione = false; // il colpo in corso è il danno di una reazione (l'esplosione dell'Eclissi)?
   private cLampo = true; // il colpo in corso fa lampeggiare i nemici? (no per chi ferisce a intervalli, come il Velo)
   // coda delle reazioni e delle esplosioni, eseguite alla fine del passo
   private code = 0;
@@ -688,19 +690,17 @@ export class Arsenale {
     return this.critico ? d * MOLTIPLICA_CRITICO : d;
   }
 
-  /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno; lampeggia = false per le zone e le aure. */
-  private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true): void {
+  /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno; lampeggia = false per le zone e le aure, reazione = true per il danno delle reazioni. */
+  private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true, reazione = false): void {
     const o = this.orda;
     const danno = this.danno(base);
-    // ambra: i critici e i colpi molto sopra il danno attuale dell'arma, contando anche quanto il nemico è vulnerabile
-    const ambra = this.critico || danno * o.vulnerabile(j) >= EFFETTI.numeri.ambra * base * (1 + this.bonus.danno);
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
     const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
     if (r) this.accoda(r, j, 0);
     this.dannoTotale += danno;
     suona('colpo');
-    if (o.elite[j] || o.tipo[j] === ID_MIETITORE) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno, ambra);
-    else this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno, ambra);
+    if (o.elite[j] || o.tipo[j] === ID_MIETITORE) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno);
+    else this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno, this.critico || reazione);
   }
 
   // ——— Colpi istantanei ———
@@ -738,6 +738,7 @@ export class Arsenale {
       if (t === ESPLOSIONE || t === ECLISSI) {
         const r = t === ECLISSI ? REAZIONI.eclissi.raggio : RUOLI.esplosioneBastone.raggio;
         this.prepara(0, x, y, r, this.qDanno[k], 0);
+        this.cReazione = t === ECLISSI;
         if (t === ESPLOSIONE) o.segno[j] = this.colpo; // il dardo l'ha già colpito
         this.orda.griglia.nelRaggio(x, y, r + 40, this.visitaColpo);
         if (t === ECLISSI) this.eclissi++;
@@ -745,7 +746,9 @@ export class Arsenale {
       } else if (t === ESORCISMO) {
         const e = REAZIONI.esorcismo;
         for (let f = 0; f < e.fiammelle; f++) {
+          const prima = this.proiettili;
           this.lancia(FUOCO_FATUO.effetto, -1, e.velocita, e.vita, e.danno, 1, FUOCO_FATUO.raggio, FUOCO_FATUO.sterzo, FUOCO_FATUO.portata, false, (f / e.fiammelle) * Math.PI * 2, 0, x, y);
+          if (this.proiettili > prima) this.prUnione[prima] = FIAMMELLA;
         }
         this.effetti.reazione(x, y, e.raggio, e.colore, e.bordo, REAZIONI.durataEffetto);
       } else if (t === RIVELAZIONE) {
@@ -829,6 +832,7 @@ export class Arsenale {
     this.cProb = STATI.probabilita;
     this.cFerma = 0;
     this.cLampo = true;
+    this.cReazione = false;
     this.colpo++;
     this.toccati = 0;
   }
@@ -864,7 +868,7 @@ export class Arsenale {
     o.segno[j] = this.colpo;
     this.toccati++;
     const aff = this.cAff, ferma = this.cFerma;
-    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff, this.cProb, this.cLampo);
+    this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff, this.cProb, this.cLampo, this.cReazione);
     if (ferma) o.ferma(j, ferma);
   }
 
@@ -1191,7 +1195,7 @@ export class Arsenale {
     }
     this.prResto[i]--;
     const v = this.prVel[i] || 1;
-    this.ferisci(j, this.prDanno[i], 0, this.prVX[i] / v, this.prVY[i] / v, this.prAff[i]);
+    this.ferisci(j, this.prDanno[i], 0, this.prVX[i] / v, this.prVY[i] / v, this.prAff[i], STATI.probabilita, true, this.prUnione[i] === FIAMMELLA);
     if (this.prEsplode[i]) {
       this.effetto(BASTONE.esplosione, this.cx, this.cy, 0, PROFONDITA.sopra, EFFETTI.esplosione);
       this.accoda(ESPLOSIONE, j, this.prDanno[i] * RUOLI.esplosioneBastone.danno); // ferisce anche intorno

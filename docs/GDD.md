@@ -538,7 +538,7 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
   - barra del boss quando c'è Seth;
   - in basso a sinistra: l'abilità speciale con la ricarica circolare; in basso a destra: la pausa.
 - **Feedback**:
-  - numeri del danno (in ambra i critici e i colpi da 1,5 volte il danno attuale dell'arma);
+  - numeri del danno, bianchi; in ambra solo i critici, il danno delle reazioni e il numero sommato su élite e Seth;
   - il personaggio lampeggia quando viene colpito;
   - leggero tremolio dello schermo;
   - bordo rosso quando la salute è bassa;
@@ -576,8 +576,8 @@ Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni
 
 | Valore | Numero | Note |
 | --- | --- | --- |
-| Numeri del danno | durano 0,55 s, salgono di 22 px, cifre 3×5 ingrandite × 2 | ambra solo i colpi critici (Chiodo di bara) e i colpi che valgono almeno 1,5 volte il danno attuale dell'arma, cioè con i bonus al danno, contando anche se il nemico è vulnerabile (*da rivedere*); al massimo 15 numeri del danno sullo schermo (*da rivedere*): oltre non si creano, ma i numeri da 40 in su e quelli su élite e Seth prendono il posto del numero comune più vecchio, e quelli ambra del più vecchio tra i non ambra |
-| Numeri su élite e Seth | i colpi entro 0,5 s si sommano in un solo numero, 30 px sopra la cima dello sprite | segue la testa del nemico e sale quando la somma si chiude: non sta mai sul corpo, nemmeno mentre Seth pulsa di rosso; è ambra se lo è almeno uno dei colpi sommati (*da rivedere*) |
+| Numeri del danno | durano 0,55 s, salgono di 22 px, cifre 3×5 ingrandite × 2 | bianchi; ambra in tre casi soltanto: colpi critici (Chiodo di bara), danno delle reazioni (di fatto Eclissi ed Esorcismo: Rivelazione e Interramento non fanno danno) e numero sommato su élite e Seth; al massimo 15 numeri del danno sullo schermo (*da rivedere*): oltre non si creano, ma un numero ambra prende il posto del bianco più vecchio, e un bianco da 40 in su quello del bianco più vecchio sotto i 40 |
+| Numeri su élite e Seth | i colpi entro 0,5 s si sommano in un solo numero, 30 px sopra la cima dello sprite | segue la testa del nemico e sale quando la somma si chiude: non sta mai sul corpo, nemmeno mentre Seth pulsa di rosso; è sempre ambra (*da rivedere*) |
 | Scoppio del nemico che muore | 0,2 s | anello chiaro che si sfalda a retino |
 | Arco della Lanterna | 0,12 s, spessore 6 px | disegnato dal codice, metà pieno e metà a retino |
 | Impatto della pala | 0,22 s; scossa dello schermo di 2 px per 0,1 s se colpisce qualcuno | |

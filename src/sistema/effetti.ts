@@ -42,7 +42,7 @@ export class Effetti {
   private numeroVita = new Float32Array(MAX_NUMERI);
   private numeroX = new Float32Array(MAX_NUMERI);
   private numeroY = new Float32Array(MAX_NUMERI);
-  private numeroImportante = new Uint8Array(MAX_NUMERI); // 0 = comune, 1 = danno forte o su élite e Seth, 2 = ambra
+  private numeroImportante = new Uint8Array(MAX_NUMERI); // 0 = bianco, 1 = bianco da danno forte, 2 = ambra
   private numeriAttivi = 0;
   private numeroId = new Uint32Array(MAX_NUMERI); // il nemico di un numero sommato (0 = numero normale)
   private numeroSomma = new Float32Array(MAX_NUMERI);
@@ -98,7 +98,7 @@ export class Effetti {
     return x >= cam.scrollX && x <= cam.scrollX + cam.width && y >= cam.scrollY && y <= cam.scrollY + cam.height;
   }
 
-  /** Numero del danno che salta fuori da (x, y), se è sullo schermo e c'è posto; ambra: colpo critico o molto sopra il normale. */
+  /** Numero del danno che salta fuori da (x, y), se è sullo schermo e c'è posto; ambra: colpo critico o danno di una reazione. */
   numero(x: number, y: number, danno: number, ambra: boolean): void {
     if (!this.sulloSchermo(x, y)) return;
     const n = Math.max(1, Math.min(999, Math.round(danno)));
@@ -116,17 +116,17 @@ export class Effetti {
     else t.clearTint();
   }
 
-  /** Colpo su un'élite o su Seth (id = il suo numero unico; y = la cima dello sprite): si somma nel suo numero aperto, o ne apre uno. */
-  sommaDanno(id: number, x: number, y: number, danno: number, ambra: boolean): void {
+  /** Colpo su un'élite o su Seth (id = il suo numero unico; y = la cima dello sprite): si somma nel suo numero ambra aperto, o ne apre uno. */
+  sommaDanno(id: number, x: number, y: number, danno: number): void {
     if (!this.sulloSchermo(x, y)) return;
     let i = -1;
     for (let k = 0; k < MAX_NUMERI; k++) {
       if (this.numeroId[k] === id && this.numeroFinestra[k] > 0 && this.numeroVita[k] > 0) i = k;
     }
     if (i < 0) {
-      i = this.postoNumero(ambra ? 2 : 1);
+      i = this.postoNumero(2);
       if (i < 0) return;
-      this.numeroImportante[i] = 1;
+      this.numeroImportante[i] = 2;
       this.numeroId[i] = id;
       this.numeroSomma[i] = 0;
       this.numeroFinestra[i] = EFFETTI.numeri.somma.finestra;
@@ -134,12 +134,9 @@ export class Effetti {
       this.numeroY[i] = y - EFFETTI.numeri.somma.sopra;
     }
     this.numeroSomma[i] += danno;
-    if (ambra) this.numeroImportante[i] = 2; // basta un colpo ambra perché lo sia tutta la somma
     this.numeroVita[i] = EFFETTI.numeri.durata; // finché si somma resta fermo sopra la testa; sale quando la finestra si chiude
     const n = Math.max(1, Math.min(TESTI.length - 1, Math.round(this.numeroSomma[i])));
-    const t = this.numeri[i].setText(TESTI[n]).setVisible(true);
-    if (this.numeroImportante[i] === 2) t.setTint(EFFETTI.numeri.coloreForte);
-    else t.clearTint();
+    this.numeri[i].setText(TESTI[n]).setVisible(true).setTint(EFFETTI.numeri.coloreForte);
   }
 
   /** Porta il numero sommato del nemico id sopra la cima del suo sprite, che è in (x, y). */

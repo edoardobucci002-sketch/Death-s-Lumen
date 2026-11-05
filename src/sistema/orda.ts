@@ -265,14 +265,10 @@ export class Orda {
     }
   }
 
-  /** Abbagliato e interrato subiscono di più: per quanto si moltiplica il danno che il nemico i riceve. */
-  vulnerabile(i: number): number {
-    return 1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? REAZIONI.interramento.danno : 0);
-  }
-
   /** Colpisce il nemico i: toglie salute, lo illumina (se lampeggia e non l'ha fatto da poco) e lo spinge nella direzione (dx, dy), lunga 1. */
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number, lampeggia = true): void {
-    this.salute[i] -= danno * this.vulnerabile(i);
+    // abbagliato e interrato subiscono di più
+    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? REAZIONI.interramento.danno : 0));
     if (lampeggia && this.pausaLampo[i] <= 0) {
       this.lampo[i] = COLPI.lampoNemico;
       this.pausaLampo[i] = COLPI.lampoNemicoPausa;
