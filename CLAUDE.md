@@ -58,7 +58,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 ## Mobile (obbligatorio)
 
-- Controlli touch: joystick virtuale dove si appoggia il dito; sul telefono in verticale, nella fascia bassa, abilità e fiaschetta affiancate a destra (mai l'abilità nell'angolo a sinistra) e pausa accanto a loro; altrove abilità in basso a sinistra con la fiaschetta accanto e pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio (abilità), F (fiaschetta), P (pausa), M (suoni), 1-2-3-4 (scelta del dono).
+- Controlli touch: joystick virtuale dove si appoggia il dito; sul telefono in verticale, nella fascia bassa, fiaschetta e abilità negli angoli (scambiabili dal Laboratorio) e pausa al centro; altrove abilità in basso a sinistra con la fiaschetta accanto e pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio (abilità), F (fiaschetta), P (pausa), M (suoni), 1-2-3-4 (scelta del dono).
 - Rispetta le safe area (notch, Dynamic Island, barre di sistema). **Su telefono il gioco è solo in verticale**; su computer e tablet è in orizzontale, come Vampire Survivors. Non si adatta l'HUD al telefono in orizzontale.
 - Comportamento dell'app:
   - pausa automatica quando l'app va in background;
@@ -66,7 +66,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
   - vibrazione sugli eventi importanti, disattivabile;
   - su Android, il tasto Indietro mette in pausa, riprende o torna al menu.
 - Niente zoom con doppio tocco o pizzico; niente selezione di testo nell'interfaccia di gioco.
-- Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia «Verifica tutti i telefoni» nella bozza (`npm run bozza`, porta 5190) e poi spegnila.
+- Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia `npm run prova`: controlla le fasce sul gioco vero, su sei telefoni.
 - Funziona offline: tutti gli asset sono nel pacchetto.
 
 ## Verifica, prima di dire che una tappa è finita
@@ -130,7 +130,6 @@ Per vedere e provare le cose c'è il Laboratorio. Gli artifact su claude.ai rest
 - **Questionario, sempre**: ogni artifact ha un questionario. Ogni domanda ha «Va bene» / «Cambia» e un campo per la nota o la proposta. In fondo c'è un **riassunto che si aggiorna in tempo reale**, con il pulsante «Copia il riassunto», da incollare in chat.
 - **Vita breve**: un artifact si apre quando serve e si **elimina quando non serve più**, cioè quando le risposte sono arrivate e applicate. Proponilo a Edoardo ed elimina solo dopo il suo sì; poi segna in `docs/proposte/README.md` cos'era.
 - Le proposte approvate si copiano in `docs/proposte/` come testo.
-- La bozza dell'HUD non si tiene accesa per Edoardo: è uno strumento di verifica tuo.
 
 ## Lezioni dalla v0 (da non ripetere)
 

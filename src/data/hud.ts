@@ -2,7 +2,6 @@
  * HUD disegnato da Edoardo (cartella HUD/ accanto al repository): quanto ingrandire ogni elemento
  * e dove stanno le sue parti interne (la finestra che si riempie, il cerchio dell'abilità, la casella dell'icona).
  * Misure in pixel dell'immagine Aseprite, a partire dall'angolo in alto a sinistra della tela.
- * Lo usano il gioco e la pagina di bozza (bozza-hud.html); le fasce del telefono le ha solo il gioco.
  */
 
 export interface Riquadro {
@@ -18,7 +17,7 @@ export interface Cerchio {
   r: number; // raggio
 }
 
-/** Ingrandimento proposto (numero intero: 1 pixel disegnato = tot pixel di gioco). Nella bozza si cambia a mano. */
+/** Ingrandimento proposto (numero intero: 1 pixel disegnato = tot pixel di gioco). */
 export const INGRANDIMENTO: Record<string, number> = {
   barre: 1,
   salute: 1,
@@ -83,14 +82,11 @@ export const FASCE = {
   sottoCartiglio: 3, // la riga sotto il cartiglio sale di tante righe, per non toccare la riga dell'orologio e di Seth
   righeBassa: 94, // filo, abilità (86 al massimo) e respiro; l'area sicura in basso si aggiunge
   margine: 3, // dal bordo dello schermo
-  spazio: 6, // tra abilità, fiaschetta e pausa
-  larghezzaAbilita: 77, // l'anello più largo: tiene fermo il posto della pausa con ogni personaggio
-  larghezzaFiaschetta: 45,
-  abilitaAlCentro: 0, // 0: abilità a destra, fiaschetta accanto; 1: scambiate (dal LAB, scheda Schermo)
+  scambiaAngoli: 0, // 0: fiaschetta a sinistra, abilità a destra; 1: scambiate (dal LAB, scheda Schermo)
 };
 
-/** Pulsante della pausa nella fascia bassa: più piccolo, per lasciare posto al joystick. */
-export const PAUSA_PICCOLA = { lato: 34 };
+/** Pulsante della pausa al centro della fascia bassa: più piccolo, per lasciare posto al joystick. Da rivedere. */
+export const PAUSA_PICCOLA = { lato: 34, margineTocco: 0 }; // punti di area di tocco invisibile: nessuna, per non premerla per sbaglio
 /** Misura minima di un pulsante da toccare, in punti: se il disegno è più piccolo si ingrandisce di un numero intero di volte. */
 export const TOCCO_MINIMO = 44;
 /** Joystick sul telefono in verticale: base più piccola, in pixel disegnati (la sensibilità resta JOYSTICK.raggio). */

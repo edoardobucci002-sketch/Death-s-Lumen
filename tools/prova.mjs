@@ -308,7 +308,7 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
-// fasce del telefono in verticale: campo oltre il minimo, pulsanti grandi per un dito, abilità mai nell'angolo a sinistra,
+// fasce del telefono in verticale: campo oltre il minimo, pulsanti grandi per un dito, abilità e fiaschetta negli angoli, pausa al centro,
 // joystick mai sopra un pulsante; sul Galaxy S25, con l'area sicura misurata, le misure esatte decise con Edoardo
 {
   const telefoni = [['iPhone SE', 375, 667, 2, 20], ['iPhone 13', 390, 844, 3, 47], ['iPhone 15 Pro Max', 430, 932, 3, 59], ['Galaxy S25', 360, 780, 3, 35], ['Pixel 7', 412, 915, 2.625, 40], ['Android piccolo', 360, 780, 2, 28]];
@@ -332,7 +332,8 @@ for (const [nome, indirizzo, prova] of eventi) {
     if (d.a < 700) errori.push(`campo di ${d.a} pixel, sotto il minimo`);
     if (nome === 'Galaxy S25' && (d.y !== 162 || d.H - d.y - d.a !== 188 || d.a !== 820 || d.l !== 540)) errori.push(`misure del S25 sbagliate: alta ${d.y}, bassa ${d.H - d.y - d.a}, campo ${d.l}×${d.a}`);
     for (const [q, p] of Object.entries({ pausa: d.pausa, abilita: d.abilita, fiaschetta: d.fiaschetta })) if (p.width < 44 || p.height < 44) errori.push(`${q} sotto i 44 punti`);
-    if (d.abilita.left < d.vw / 2 - 1) errori.push("l'abilità è nella metà sinistra");
+    if (d.abilita.right < d.vw - 16 || d.fiaschetta.left > 16) errori.push('abilità e fiaschetta non sono negli angoli');
+    if (Math.abs(d.pausa.left + d.pausa.width / 2 - d.vw / 2) > 1) errori.push('la pausa non è al centro');
     for (const p of [d.pausa, d.fiaschetta, d.abilita]) {
       await pag.mouse.move(p.left + p.width / 2, p.top - 6); // appena sopra il pulsante, fuori dalla sua area di tocco
       await pag.mouse.down();
@@ -358,6 +359,41 @@ for (const [nome, indirizzo, prova] of eventi) {
     console.log(`${ok ? '✓' : '✗'} nessuna fascia su ${nome}`);
     await ctx.close();
   }
+}
+
+// Indietro nel browser (link in Home e Chrome): in partita apre e chiude la pausa, senza lasciare voci in più nella cronologia
+{
+  const ctx = await browser.newContext(devices['Pixel 7']);
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto('about:blank');
+  await pag.goto(`${url}?pg=lampionaio&automatico`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(300);
+  await pag.mouse.click(120, 450); // Chrome conta la voce solo dopo un tocco
+  await pag.waitForTimeout(150);
+  const voci = () => pag.evaluate(() => history.length);
+  const pausaAperta = () => pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])'));
+  const indietro = async () => { await pag.evaluate(() => history.back()); await pag.waitForTimeout(250); };
+  const iniziali = await voci();
+  for (const [giro, attesa] of [[1, true], [2, false], [3, true], [4, false], [5, true]]) {
+    await indietro();
+    if ((await pausaAperta()) !== attesa) errori.push(`Indietro n. ${giro}: pausa ${attesa ? 'non aperta' : 'non chiusa'}`);
+    if ((await voci()) !== iniziali) errori.push(`Indietro n. ${giro}: la cronologia è cambiata`);
+    if (pag.url() === 'about:blank') { errori.push(`Indietro n. ${giro}: ha lasciato la pagina`); break; }
+  }
+  // dalla pausa si abbandona: nel menu Indietro fa di nuovo quello del browser, e la voce non resta sul percorso
+  await pag.click('[data-azione="abbandona"]');
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Menu'), null, { timeout: 5000 }).catch(() => errori.push('il menu non arriva'));
+  await pag.waitForTimeout(300);
+  if (await pag.evaluate(() => history.state?.dlPartita === true)) errori.push('nel menu si è rimasti sulla voce della partita');
+  await pag.goBack().catch(() => {});
+  await pag.waitForTimeout(250);
+  if (pag.url() !== 'about:blank') errori.push('dal menu Indietro non lascia la pagina');
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} Indietro nel browser: pausa aperta e chiusa, cronologia ferma a ${iniziali} voci${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
 }
 
 await browser.close();

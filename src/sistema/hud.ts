@@ -5,11 +5,10 @@
  * Anime, Cera, Rosario e caselle stanno nella pausa e nella fine; salute bassa e Peccato sono segnali sul bordo del campo.
  * Altrove, in alto: stemma del livello, barra dell'esperienza, anime e orologio a destra, caselle di armi e doni, barra del Mietitore,
  * e sotto gli avvisi nel nastro. In basso a destra: pausa. Poi le schermate di pausa e di fine partita.
- * Quella senza fasce è la disposizione della bozza (bozza-hud.html): se cambia qui, cambia anche là.
  * La barra della salute è nel gioco, sotto il personaggio; l'abilità speciale in basso a sinistra (speciale.ts).
  */
-import { AVVISO, CASELLA, FASCE, FINESTRE, INTERNI, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
-import { adattaZoom, arte, bordiHud, fasce, immagine, ingr, mascheraRetino, misura, misureHud, posa, postoPulsanti, retino, scriviIn, type Fasce, type MisureHud } from './arte';
+import { AVVISO, CASELLA, FASCE, FINESTRE, INTERNI, MARGINE_TOCCO, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
+import { adattaZoom, angoliFascia, arte, bordiHud, fasce, immagine, ingr, mascheraRetino, misura, misureHud, posa, retino, scriviIn, type Fasce, type MisureHud } from './arte';
 import { audioAttivo, impostaAudio } from './audio';
 import { impostaVibrazione, vibrazione } from './mobile';
 import { scalaScritta, scritta, scriviNel } from './scritte';
@@ -388,7 +387,7 @@ export class Hud {
     schermo.querySelector('.hud-altre')!.replaceChildren(...altre.map((v) => icona(v)));
   }
 
-  /** Mette ogni elemento al suo posto, in pixel di gioco interi (come nella bozza). */
+  /** Mette ogni elemento al suo posto, in pixel di gioco interi. */
   private disponi(): void {
     const m = (this.m = misureHud()), b = bordiHud(m), px = m.px;
     const f = fasce(m);
@@ -451,9 +450,9 @@ export class Hud {
     });
     // pausa piccola: si ingrandisce solo se così non arriverebbe alla misura di un dito
     const zp = z * Math.ceil(TOCCO_MINIMO / (PAUSA_PICCOLA.lato * z * px) - 1e-9);
-    const p = postoPulsanti(m, f, FASCE.larghezzaAbilita, ap.w * zp);
     (this.pausaTasto.firstElementChild as HTMLImageElement).src = ap.url;
-    posa(this.pausaTasto, p.pausa, p.centroY - Math.round((ap.h * zp) / 2), m);
+    this.pausaTasto.style.setProperty('--margine-tocco', `${PAUSA_PICCOLA.margineTocco}px`);
+    posa(this.pausaTasto, Math.round((W - ap.w * zp) / 2), angoliFascia(m, f).centroY - Math.round((ap.h * zp) / 2), m);
     misura(this.pausaTasto, ap.w, ap.h, zp, m);
     misura(this.pausaTasto.firstElementChild as HTMLElement, ap.w, ap.h, zp, m);
   }
@@ -518,6 +517,7 @@ export class Hud {
     const ap = arte('Pulsante_Pausa');
     if (ap) {
       (this.pausaTasto.firstElementChild as HTMLImageElement).src = ap.url;
+      this.pausaTasto.style.setProperty('--margine-tocco', `${MARGINE_TOCCO}px`);
       posa(this.pausaTasto, W - b.d - ap.w * zp, H - b.b - ap.h * zp, m);
       misura(this.pausaTasto, ap.w, ap.h, zp, m);
       misura(this.pausaTasto.firstElementChild as HTMLElement, ap.w, ap.h, zp, m);

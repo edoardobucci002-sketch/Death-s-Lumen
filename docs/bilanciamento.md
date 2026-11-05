@@ -60,6 +60,8 @@ Stessi semi, 12 notti per personaggio (48 per condizione), bot sul S25, 540×117
 | a metà | 29/48 (60%) | 26/48 (54%) | 1 → 1 | 42/47 → 44/47 | 8:32 → 8:18 | 66 → 69 |
 | completa | 26/48 (54%) | 20/48 (42%) | 0 → 0 | 44/48 → 44/48 | 9:09 → 8:55 | 68 → 67 |
 
+**Da ora le simulazioni usano il campo del telefono (540×820): non sono confrontabili con le precedenti.** A Cappella vuota le vittorie passano da 15/48 a 2/48, fuori dal rumore. Il Becchino muore prima di Seth del minuto 5 in 3 notti su 12 (prima 0). Badessa e Strega a Cappella vuota muoiono intorno al minuto 10.
+
 Regole vincolanti: **nessuno muore sempre prima del minuto 5**: rispettata. **Seth del minuto 5 primo vero ostacolo**: rispettata per il controllo della simulazione (il danno subito al minuto cresce quando arriva, per tutti in tutte le condizioni), ma da tenere d'occhio: a Cappella vuota muoiono prima di lui 2 notti su 12 del Lampionaio (erano 3) e 3 su 12 del Becchino (erano 0). A Cappella vuota Badessa e Strega non vincono più (da 5 e 3 a 0): muoiono intorno al minuto 10, con il secondo Seth. Un personaggio ha 12 notti, quindi queste sono indicazioni e non misure.
 
 ### 5/11 — Oltre i 15 i numeri bianchi non si creano (solo visivo)

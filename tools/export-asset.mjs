@@ -8,8 +8,7 @@
 // Convenzione: Nome_V#.aseprite è il ritratto della selezione, Nome_ingame_V# lo sprite in gioco.
 // Produce in public/assets/<categoria>/ un PNG con tutti i fotogrammi e un JSON con i tag,
 // più public/assets/elenco.json che il gioco legge all'avvio.
-// Gli elementi dell'HUD vanno in un elenco a parte (public/assets/hud/elenco.json), letto per ora
-// solo dalla pagina di bozza (bozza-hud.html): il gioco non li carica finché non li usa.
+// Gli elementi dell'HUD vanno in un elenco a parte (public/assets/hud/elenco.json), che il gioco legge all'avvio.
 //
 // Uso:  npm run asset
 // Opzioni (variabili d'ambiente):
@@ -83,7 +82,7 @@ if (!scelti.size) {
 const dest = join(repo, 'public', 'assets');
 for (const c of Object.values(CATEGORIE)) rmSync(join(dest, c), { recursive: true, force: true });
 const elenco = { versione: 1, asset: [] };
-const elencoHud = { versione: 1, esportato: new Date().toISOString(), asset: [] }; // la bozza si aggiorna quando cambia l'ora
+const elencoHud = { versione: 1, esportato: new Date().toISOString(), asset: [] };
 const avvisi = [];
 for (const s of [...scelti.values()].sort((a, b) => a.chiave.localeCompare(b.chiave))) {
   const cartella = join(dest, s.categoria);

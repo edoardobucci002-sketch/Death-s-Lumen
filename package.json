@@ -9,7 +9,6 @@
     "build": "tsc --noEmit && vite build && node tools/genera-sw.mjs",
     "anteprima": "vite preview --host",
     "asset": "node tools/export-asset.mjs",
-    "bozza": "vite --host --open /bozza-hud.html",
     "icone": "node tools/icone.mjs",
     "prova": "node tools/prova.mjs",
     "sim": "npm run build && node tools/sim.mjs",
@@ -31,7 +30,6 @@
     "@fontsource/im-fell-english": "5.3.0",
     "@fontsource/im-fell-english-sc": "5.3.0",
     "@fontsource/jersey-10": "5.3.0",
-    "@fontsource/pixelify-sans": "5.3.0",
     "phaser": "4.2.1"
   },
   "devDependencies": {

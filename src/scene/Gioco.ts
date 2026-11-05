@@ -16,6 +16,7 @@
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
 import { arte, fasce, ingr, misureHud } from '../sistema/arte';
+import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
 import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
@@ -287,10 +288,12 @@ export class Gioco extends Phaser.Scene {
     if (riempi > 0) this.orda.riempi(riempi, this.secondi, this.x, this.y, this.campoL / 2, this.campoA / 2);
 
     this.scale.on('resize', this.ridimensiona, this);
+    if (!this.bot) entraInPartita();
     this.game.events.on('sfondo', this.apriPausa, this);
     window.addEventListener('keydown', this.tasto);
     this.events.once('shutdown', () => {
       this.scale.off('resize', this.ridimensiona, this);
+      esciDallaPartita();
       this.game.events.off('sfondo', this.apriPausa, this);
       window.removeEventListener('keydown', this.tasto);
       this.comandi.distruggi();

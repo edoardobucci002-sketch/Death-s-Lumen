@@ -9,6 +9,7 @@ import { Gioco } from './scene/Gioco';
 import { Menu } from './scene/Menu';
 import { preparaAudio } from './sistema/audio';
 import { calcolaMisure } from './sistema/pixel';
+import { avviaIndietro } from './sistema/indietro';
 import { avviaMobile, nativo, schermoAcceso } from './sistema/mobile';
 
 const m = calcolaMisure();
@@ -57,6 +58,7 @@ preparaAudio();
   // in partita: pausa, riprendi o torna al menu; dal menu chiude l'app
   indietro: () => (gioco.scene.isActive('Gioco') ? (gioco.scene.getScene('Gioco') as Gioco).indietro() : false),
 });
+if (!nativo) avviaIndietro(() => (gioco.scene.isActive('Gioco') ? (gioco.scene.getScene('Gioco') as Gioco).indietro() : false));
 schermoAcceso(true);
 preparaAudio();
 

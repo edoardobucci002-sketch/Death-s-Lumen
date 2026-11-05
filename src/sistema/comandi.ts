@@ -158,18 +158,18 @@ export class Comandi {
     x = Math.min(Math.max(x, r), window.innerWidth - r); // anche dentro lo schermo
     y = Math.min(Math.max(y, r), window.innerHeight - r);
     const pulsanti = [...document.querySelectorAll('.speciale, .fiaschetta, .hud-pausa-tasto')].map((e) => e.getBoundingClientRect());
-    for (let giro = 0; giro < pulsanti.length + 1; giro++) {
-      let fermo = true;
+    const tocca = (q: DOMRect): boolean => q.left - r < x && q.right + r > x && q.top - r < y && q.bottom + r > y;
+    for (let giro = 0; giro < pulsanti.length; giro++) {
       for (const q of pulsanti) {
+        if (!tocca(q)) continue;
         const sinistra = q.left - r - x, destra = q.right + r - x, su = q.top - r - y, giu = q.bottom + r - y;
-        if (sinistra >= 0 || destra <= 0 || su >= 0 || giu <= 0) continue; // non si toccano
         const dx = -sinistra < destra ? sinistra : destra, dy = -su < giu ? su : giu;
         if (Math.abs(dx) <= Math.abs(dy)) x += dx;
         else y += dy;
-        fermo = false;
       }
-      if (fermo) break;
     }
+    // tra due pulsanti non c'è posto per la base: sale sopra tutta la riga
+    if (pulsanti.some(tocca)) y = Math.min(...pulsanti.map((q) => q.top)) - r;
     return [x, y];
   }
 

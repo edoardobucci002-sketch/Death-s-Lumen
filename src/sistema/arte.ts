@@ -85,7 +85,7 @@ export function misureHud(): MisureHud {
 /** Ingrandimento di un gruppo di elementi su questo telefono (vedi INGRANDIMENTO in data/hud.ts). */
 export const ingr = (gruppo: string, m: MisureHud): number => (INGRANDIMENTO[gruppo] ?? 1) * (SENZA_RADDOPPIO.includes(gruppo) ? 1 : GRUPPI_PARTITA.includes(gruppo) ? m.raddoppioPartita : m.raddoppio);
 
-/** Dove l'HUD può stare: la safe area più 6 pixel di respiro (come nella bozza). */
+/** Dove l'HUD può stare: la safe area più 6 pixel di respiro. */
 export const bordiHud = (m: MisureHud): { a: number; b: number; s: number; d: number } => ({ a: m.safe.a + 6, b: m.safe.b + 6, s: m.safe.s + 6, d: m.safe.d + 6 });
 
 export interface Fasce {
@@ -106,14 +106,10 @@ export function fasce(m: MisureHud): Fasce {
   return { attive: true, z, alta, bassa, campoA: m.H - alta - bassa, sopraCartiglio: sopra * z };
 }
 
-/** Dove stanno i pulsanti nella fascia bassa: abilità e fiaschetta affiancate a destra, pausa subito prima. L'abilità non va mai nell'angolo a sinistra. */
-export function postoPulsanti(m: MisureHud, f: Fasce, larghezzaAbilita: number, larghezzaPausa = 0): { abilita: number; fiaschetta: number; pausa: number; centroY: number } {
-  const fine = m.W - Math.max(FASCE.margine * f.z, m.safe.d), spazio = FASCE.spazio * f.z;
-  const lA = larghezzaAbilita * f.z, lF = FASCE.larghezzaFiaschetta * f.z;
-  const fiaschetta = FASCE.abilitaAlCentro ? fine - lF : fine - lA - spazio - lF;
-  const abilita = FASCE.abilitaAlCentro ? fine - lF - spazio - lA : fine - lA;
-  const gruppo = fine - (FASCE.larghezzaAbilita + FASCE.larghezzaFiaschetta) * f.z - spazio;
-  return { abilita, fiaschetta, pausa: gruppo - spazio - larghezzaPausa, centroY: m.H - f.bassa + Math.round((FASCE.righeBassa * f.z) / 2) };
+/** I due angoli della fascia bassa e la sua linea di mezzo. L'angolo di ciascuno lo decide FASCE.scambiaAngoli. */
+export function angoliFascia(m: MisureHud, f: Fasce): { sinistra: number; destra: number; centroY: number } {
+  const margine = FASCE.margine * f.z;
+  return { sinistra: Math.max(margine, m.safe.s), destra: m.W - Math.max(margine, m.safe.d), centroY: m.H - f.bassa + Math.round((FASCE.righeBassa * f.z) / 2) };
 }
 
 /** Mette un elemento in (x, y) pixel di gioco, interi. */

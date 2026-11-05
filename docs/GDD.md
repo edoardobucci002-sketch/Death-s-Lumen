@@ -553,10 +553,10 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 - **HUD sul telefono in verticale: due fasce fisse fuori dal campo** (misure in `FASCE`, `src/data/hud.ts`, tutte *da rivedere*). Il campo è vero: finisce al bordo delle fasce per la telecamera, la comparsa e il ricollocamento dei nemici e tutte le armi che scelgono bersagli «sullo schermo».
   - altezza calcolata per ogni telefono: area sicura (la più grande tra `env()` e Capacitor) + contenuto. Sul Galaxy S25 (area sicura in alto 105 pixel fisici, in basso 0): fascia alta 81 pixel disegnati (324 fisici), fascia bassa 94 (376 fisici), campo 540×820 pixel di gioco. Un pixel disegnato vale 4 pixel fisici;
   - fascia alta: stemma del livello ed esperienza; sotto, la riga dell'orologio e della barra sottile di Seth. Il cartiglio sale fino al bordo e copre il centro della prima riga per la sua durata; la sua scritta resta sempre fuori dall'area sicura (sul S25 parte a 108 fisici) e la riga dell'orologio resta libera;
-  - fascia bassa: abilità a destra e fiaschetta affiancata, oppure scambiate dal LAB (abilità al centro); pausa piccola subito a sinistra di loro. L'abilità non va mai nell'angolo in basso a sinistra;
+  - fascia bassa: fiaschetta nell'angolo a sinistra e abilità nell'angolo a destra, scambiabili dal LAB; pausa piccola al centro, senza area di tocco invisibile (*da rivedere*). Il joystick può nascere anche nella fascia bassa;
   - fuori dall'HUD di partita: anime, Cera, Rosario e griglia degli oggetti, che stanno nella pausa e nella schermata di fine;
   - segnali sul bordo del campo: salute bassa (rosso che pulsa), Peccato (cornice viola a retino), reliquiario fuori vista (freccia al confine con le fasce);
-  - joystick con base più piccola: non nasce mai sopra un pulsante, la base si sposta di quanto basta e il centro della direzione resta sotto il dito.
+  - joystick con base più piccola: non nasce mai sopra un pulsante, la base si sposta di quanto basta (sopra la riga dei pulsanti, se di lato non c'è posto) e il centro della direzione resta sotto il dito.
 - **HUD su computer, tablet e telefono in orizzontale** (invariato):
   - in alto: barra dell'esperienza, armi e doni con il loro livello, livello e anime; l'orologio sta nella colonna di destra, sotto anime e Cera, dove le caselle non arrivano mai (*da rivedere*);
   - barra del boss quando c'è Seth;
@@ -567,6 +567,11 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - leggero tremolio dello schermo;
   - bordo rosso quando la salute è bassa;
   - avvisi nel cartiglio (sciami, orde, Seth, reliquiari), subito sotto barre e caselle, con la riga secondaria subito sotto. Il cartiglio è ridotto a 0,5 volte, arrotondato a un ingrandimento intero e mai sotto × 2: sui telefoni normali è la metà; su computer, tablet e iPhone SE resta com'era, perché a × 1 le lettere non si leggono (*da rivedere*). Non scende mai sul personaggio: se le caselle sono tante, sale sopra di loro. Durano 1,45 s, compresi 0,3 s di dissolvenza a retino (*da rivedere*).
+- **Gesti e tasto Indietro** (provati da Edoardo sul Galaxy S25, nessuna esclusione dei gesti):
+  - nell'APK, dai bordi laterali: il primo gesto mostra le barre di sistema, il secondo mette in pausa;
+  - nell'APK, dal basso verso l'alto: l'app va in secondo piano; riaprendola la partita è in pausa, finché Android non chiude l'app;
+  - nel link in Home e in Chrome: in partita Indietro apre la pausa e, se è già aperta, la chiude, come nell'APK; nella schermata di fine torna al menu; nei menu si comporta come sempre. La partita aggiunge una sola voce alla cronologia (`src/sistema/indietro.ts`), dopo il primo tocco: prima di quel tocco Indietro lascia la pagina;
+  - nel link, chiudere la scheda fa perdere la partita (vedi la tappa «Salvataggio della partita in corso» in [roadmap.md](roadmap.md)).
 - **Audio** (sintetizzato dal codice): colpo, sparo, anima con tono che sale nelle serie, danno subito, campana, livello, reliquiario, Seth, cura, speciale. Da sostituire con suoni veri (vedi [roadmap.md](roadmap.md)).
 - **In partita** (computer e tablet; sul telefono vedi sopra): HUD in alto con livello, orologio, anime, Cera, Rosario, icone di armi e doni con il livello, barra di Seth; avvisi «Lo sciame» (ti circonda), «Seth» (il Rinnovato è venuto per te), «Reliquiario» (…); pausa con il pulsante in basso a destra, P o Esc, Indietro su Android e quando l'app va in secondo piano; M accende e spegne i suoni; 1-2-3-4 scelgono la striscia del dono; F beve dalla fiaschetta; Spazio usa l'abilità.
 - **Schermate**: selezione del personaggio con le schede, scelta del dono, pausa (riepilogo della build, sul telefono anche anime, Cera e Rosario, audio, vibrazione, abbandona), fine partita (tempo, livello, anime, danno, build). Il record di tempo si salva sul dispositivo.

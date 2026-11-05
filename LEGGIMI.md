@@ -32,7 +32,6 @@ npm run dev        # apre il gioco in locale
 | `npm run dev` | avvia il gioco in locale; l'indirizzo «Network» si apre anche dal telefono sulla stessa Wi-Fi |
 | `npm run anteprima` | serve la build già costruita (porta 4173): è il modo più veloce di provare sul telefono |
 | `npm run asset` | esporta da Aseprite tutti gli sprite (vedi «Aggiungere i tuoi sprite») |
-| `npm run bozza` | apre la pagina di bozza dell'HUD (`bozza-hud.html`): gli elementi di `HUD/` al loro posto, senza giocare |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
 | `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi; `npm run sim -- 12 tutti meta=max` con la Cappella completa, `meta=meta` a metà, `meta=0` vuota); riepilogo a schermo, dettagli in `prove/sim.json`. Obiettivi in [docs/bilanciamento.md](docs/bilanciamento.md) |
@@ -64,8 +63,7 @@ DEATH'S LUMEN/
     public/                        manifest, icone
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/                    sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
-    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sfondi-bozza, sim, controlla-gdd
-    bozza-hud.html, src/bozza/     pagina di bozza dell'HUD (solo in sviluppo, non entra nella build)
+    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sim, controlla-gdd
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
 ```

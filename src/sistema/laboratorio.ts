@@ -380,14 +380,14 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     copia.readOnly = true;
     copia.hidden = true;
     raccogli();
-    const scambio = voci.find((v) => v.percorso === 'hud.FASCE.abilitaAlCentro')!, alCentro = hud.FASCE.abilitaAlCentro === 1;
+    const scambio = voci.find((v) => v.percorso === 'hud.FASCE.scambiaAngoli')!, scambiati = hud.FASCE.scambiaAngoli === 1;
     return [
       titolo('Fascia bassa'),
-      riga(tasto(alCentro ? 'Abilità al centro: tocca per metterla a destra' : 'Abilità a destra: tocca per metterla al centro', () => {
-        imposta(scambio, alCentro ? 0 : 1);
+      riga(tasto(scambiati ? 'Abilità a sinistra: tocca per scambiare' : 'Abilità a destra: tocca per scambiare', () => {
+        imposta(scambio, scambiati ? 0 : 1);
         window.dispatchEvent(new Event('resize')); // abilità, fiaschetta e HUD si rimettono al loro posto
         ridisegna();
-      }, alCentro ? 'acceso' : '')),
+      }, scambiati ? 'acceso' : '')),
       titolo('Misure'),
       el('p', 'lab-nota', 'Quello che il telefono dichiara adesso. Tienilo in verticale e, nell\'app o nel link in Home, senza barre visibili.'),
       riga(

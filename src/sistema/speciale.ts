@@ -4,9 +4,9 @@
  * Quando è pronta e si preme, chiama usa(); la ricarica segue la Clessidra e il personaggio.
  * Con i Ceri gemelli (Rosario) ha più cariche: si ricarica una alla volta.
  */
-import { ANELLI } from '../data/hud';
 import { PRONTA_DOPO, type Abilita } from '../data/abilita';
-import { arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa, postoPulsanti } from './arte';
+import { ANELLI, FASCE } from '../data/hud';
+import { angoliFascia, arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa } from './arte';
 
 export class Speciale {
   attesa: number = PRONTA_DOPO; // secondi alla prossima volta che è pronta (0 se ha tutte le cariche)
@@ -118,14 +118,14 @@ export class Speciale {
     this.attesaMisure = requestAnimationFrame(() => this.disponi());
   };
 
-  /** In basso a sinistra, come nella bozza (sul telefono in verticale nella fascia bassa); l'icona dell'abilità al centro del disco. */
+  /** In basso a sinistra (sul telefono in verticale in un angolo della fascia bassa); l'icona dell'abilità al centro del disco. */
   private disponi(): void {
     const m = misureHud(), b = bordiHud(m), z = ingr('speciale', m), a = arte(this.chiave), c = ANELLI[this.chiave];
     if (!a || !c) return;
     const f = fasce(m);
     if (f.attive) {
-      const p = postoPulsanti(m, f, a.w);
-      posa(this.pulsante, p.abilita, p.centroY - Math.round((a.h * z) / 2), m);
+      const p = angoliFascia(m, f);
+      posa(this.pulsante, FASCE.scambiaAngoli ? p.sinistra : p.destra - a.w * z, p.centroY - Math.round((a.h * z) / 2), m);
     } else posa(this.pulsante, b.s + 4, m.H - b.b - a.h * z, m);
     misura(this.pulsante, a.w, a.h, z, m);
     misura(this.tela, a.w, a.h, z, m);
