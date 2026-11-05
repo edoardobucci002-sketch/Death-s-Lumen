@@ -2,6 +2,7 @@
 # Su prova compila l'APK di prova «DL prova»: ha il Laboratorio e un nome di pacchetto suo, così si installa accanto all'app normale.
 # Lo pubblica a un indirizzo fisso, scaricabile dal telefono senza accedere a GitHub (etichetta apk-prova, file dl-prova.apk).
 # La chiave di firma resta la stessa da una compilazione all'altra: altrimenti Android rifiuta l'aggiornamento.
+# GitHub cancella la copia della chiave se per 7 giorni non si compila: la chiave nuova richiede di disinstallare «DL prova» una volta.
 name: APK Android
 on:
   push:
