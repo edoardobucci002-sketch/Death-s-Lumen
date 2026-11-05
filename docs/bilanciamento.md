@@ -38,6 +38,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 5/11 — Oltre i 15 i numeri bianchi non si creano (solo visivo)
+
+Nessun valore cambia. Durata di un numero bianco al minuto 13: media 0,53 s, mediana 0,55 (346 numeri, altri 9271 non creati). Con il Chiodo di bara al massimo: media 0,03 s, perché gli ambra li sostituiscono quasi subito. Prova: `npm run sim -- 3 tutti` prima e dopo, stessi semi: 12 notti, 1251 valori confrontati, 0 differenze.
+
 ### 5/11 — Precedenza dei numeri e numero unico delle reazioni (solo visivo)
 
 Tolto `EFFETTI.numeri.forte`; `coloreForte` diventa `coloreAmbra`. Nuovi `REAZIONI.etichetta.staccoNumero` 16 px e `sopra` 34 px, che era 24 scritto nel codice (*da rivedere*). Nessun numero di gioco cambia. Prova: `npm run sim -- 3 tutti` prima e dopo, stessi semi: 12 notti, 1251 valori confrontati, 0 differenze.

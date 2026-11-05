@@ -105,7 +105,7 @@ export class Effetti {
   numero(x: number, y: number, danno: number, ambra: boolean): void {
     if (!this.sulloSchermo(x, y)) return;
     const n = Math.max(1, Math.min(999, Math.round(danno)));
-    const i = this.postoNumero();
+    const i = this.postoNumero(ambra);
     if (i < 0) return;
     this.numeroAmbra[i] = ambra ? 1 : 0;
     this.numeroReazione[i] = 0;
@@ -127,7 +127,7 @@ export class Effetti {
       if (this.numeroId[k] === id && this.numeroFinestra[k] > 0 && this.numeroVita[k] > 0) i = k;
     }
     if (i < 0) {
-      i = this.postoNumero();
+      i = this.postoNumero(true);
       if (i < 0) return;
       this.numeroAmbra[i] = 1;
       this.numeroReazione[i] = 0;
@@ -153,7 +153,7 @@ export class Effetti {
       if (this.numeroId[k] === id && this.numeroVita[k] > 0) i = k;
     }
     if (i < 0) {
-      i = this.postoNumero();
+      i = this.postoNumero(true);
       if (i < 0) return;
       this.numeroAmbra[i] = this.numeroReazione[i] = 1;
       this.numeroId[i] = id;
@@ -183,8 +183,8 @@ export class Effetti {
     }
   }
 
-  /** Un posto libero entro il limite; al limite il posto del bianco più vecchio; −1 se sono tutti ambra. */
-  private postoNumero(): number {
+  /** Un posto libero entro il limite; al limite un ambra prende il posto del bianco più vecchio, un bianco non si crea (−1); −1 anche se sono tutti ambra. */
+  private postoNumero(ambra: boolean): number {
     if (this.numeriAttivi < Math.min(EFFETTI.numeri.massimo, MAX_NUMERI)) {
       for (let i = 0; i < MAX_NUMERI; i++) {
         if (this.numeroVita[i] > 0) continue;
@@ -192,6 +192,7 @@ export class Effetti {
         return i;
       }
     }
+    if (!ambra) return -1;
     let scelto = -1;
     for (let i = 0; i < MAX_NUMERI; i++) {
       if (this.numeroVita[i] > 0 && !this.numeroAmbra[i] && (scelto < 0 || this.numeroVita[i] < this.numeroVita[scelto])) scelto = i;

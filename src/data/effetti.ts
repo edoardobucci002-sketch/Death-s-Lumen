@@ -8,7 +8,7 @@ export const EFFETTI = {
     salita: 22, // di quanto sale
     sparpaglio: 8, // spostamento a caso a destra o a sinistra, per non sovrapporli
     ingrandimento: 2, // le cifre sono 3×5 pixel: si disegnano grandi il doppio
-    massimo: 15, // numeri sullo schermo nello stesso momento: al limite uno nuovo prende il posto del bianco più vecchio (da rivedere; al massimo 64)
+    massimo: 15, // numeri sullo schermo nello stesso momento: oltre, un bianco non si crea e un ambra prende il posto del bianco più vecchio (da rivedere; al massimo 64)
     // élite e Seth: i colpi che arrivano entro «finestra» secondi si sommano in un solo numero, che segue la testa del nemico (da rivedere)
     somma: {
       finestra: 0.5,

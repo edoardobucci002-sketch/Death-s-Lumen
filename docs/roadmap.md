@@ -67,7 +67,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | --- | --- |
 | Leggibilità, secondo passo: nomi delle reazioni (× 2, ogni 2 s, 3 insieme, 90 px), 40 simboli solo sui pesanti, somma dei numeri su élite e Seth (0,5 s, 30 px sopra), cartiglio (scala 0,5, minimo × 2; 1,45 s; dissolvenza 0,3 s), orologio nella colonna di destra. Confermati da Edoardo il 5/11, restano da provare sul suo telefono | GDD §8c, §11 e «Impatto dei colpi»; decisioni 4/11 e 5/11 |
 | Scritte delle reazioni: il nome parte 34 px sopra il punto e sta 16 px sopra il numero quando viene spostato | GDD «Impatto dei colpi»; bilanciamento 5/11 |
-| Numeri ambra: se una build rende critici la maggior parte dei colpi, rivedere l'ambra. Al massimo livello il Chiodo di bara dà circa il 30% di numeri ambra | GDD «Impatto dei colpi»; decisioni 5/11 |
+| Numeri ambra: se una build rende critici la maggior parte dei colpi, rivedere l'ambra. Al massimo livello il Chiodo di bara dà circa il 30% di numeri ambra: nelle folle i 15 posti si riempiono di ambra e i bianchi durano in media 0,03 s | GDD «Impatto dei colpi»; decisioni 5/11 |
 | Leggibilità nella folla: lampo del nemico (0,033 s, uno ogni 0,3 s, 50% su bruti/élite/Seth) e al massimo 15 numeri del danno; si provano dal LAB | GDD §10 e «Impatto dei colpi»; decisioni 4/11 |
 | Sblocco delle Unioni: «Sopravvivi 10 minuti» o 500 Cera | GDD §8f; bilanciamento 4/11 |
 | Sblocchi di armi e doni nuovi (tappa 5): imprese (10 Eclissi, 30000 anime per il Corvo, 3 minuti nelle nubi per il Velo, 20 schivate perfette) e costi (120 Cera; Campanella con impresa o 120) | GDD §8d |
