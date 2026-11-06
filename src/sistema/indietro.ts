@@ -1,5 +1,5 @@
 /*
- * Tasto Indietro fuori dall'app (link in Home e Chrome): in partita apre la pausa e la richiude, come nell'APK;
+ * Tasto Indietro fuori dall'app (link in Home e Chrome): in partita apre la pausa e basta, come nell'APK;
  * nei menu il browser fa quello che ha sempre fatto.
  * All'inizio della partita si aggiunge una sola voce alla cronologia. Indietro torna alla voce di prima: il gioco se ne
  * accorge e rimette il piede su quella già esistente con history.forward(), senza crearne di nuove a ogni pressione.

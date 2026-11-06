@@ -2,16 +2,16 @@
  * Interfaccia in partita (HTML sopra il gioco), con gli elementi disegnati da Edoardo (cartella HUD/), a pixel interi.
  * Sul telefono in verticale tutto sta in due fasce fisse fuori dal campo (disponiFasce): in alto stemma, esperienza,
  * orologio e barra sottile di Seth, con il cartiglio che copre stemma ed esperienza finché dura; in basso la pausa.
- * Anime, Cera, Rosario e caselle stanno nella pausa e nella fine; salute bassa e Peccato sono segnali sul bordo del campo.
+ * Anime, Cera, Rosario e caselle stanno nella pausa (pausa.ts) e nella fine; salute bassa e Peccato sono segnali sul bordo del campo.
  * Altrove, in alto: stemma del livello, barra dell'esperienza, anime e orologio a destra, caselle di armi e doni, barra del Mietitore,
- * e sotto gli avvisi nel nastro. In basso a destra: pausa. Poi le schermate di pausa e di fine partita.
+ * e sotto gli avvisi nel nastro. In basso a destra: pausa. Poi la schermata di fine partita.
  * La barra della salute è nel gioco, sotto il personaggio; l'abilità speciale in basso a sinistra (speciale.ts).
  */
 import { AVVISO, CASELLA, FASCE, FINESTRE, INTERNI, MARGINE_TOCCO, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
 import { adattaZoom, angoliFascia, arte, bordiHud, fasce, immagine, ingr, mascheraRetino, misura, misureHud, posa, retino, scriviIn, type Fasce, type MisureHud } from './arte';
-import { audioAttivo, impostaAudio } from './audio';
-import { impostaVibrazione, vibrazione } from './mobile';
-import { scalaScritta, scritta, scriviNel } from './scritte';
+import { Pausa, type DatiPausa, type SchedaPausa } from './pausa';
+import { scritta, scriviNel } from './scritte';
+import { disponiTasto, scalaTasti, tasto } from './tasti';
 
 /** Un'arma o un dono posseduto, per le caselle e i riepiloghi. */
 export interface VoceBuild {
@@ -19,7 +19,7 @@ export interface VoceBuild {
   icona: string; // chiave dell'icona (Icona_<Nome>)
   livello: number;
   arma: boolean; // armi nella prima fila, doni nella seconda
-  amuleto?: string; // id dell'amuleto del Rosario (il numero è il suo costo in grani); nella pausa si tocca per accenderlo e spegnerlo
+  amuleto?: string; // id dell'amuleto del Rosario (il numero è il suo costo in grani)
   acceso?: boolean;
 }
 
@@ -42,16 +42,12 @@ export interface AzioniHud {
   riprova(): void;
   menu(): void;
   amuleto(id: string): void; // dalla pausa: accende o spegne un amuleto
-  legenda(): void; // dalla pausa: spiega stati e reazioni
 }
 
 const ALTEZZA_OROLOGIO = 24; // pixel di gioco per ogni volta dell'ingrandimento delle barre (testo da 16 più il respiro)
 const CLIC_FANTASMA_MS = 60; // quanto dopo l'alzata del dito arriva il clic generato dal telefono
 const PER_FILA = 6; // caselle per fila: 6 armi, poi 6 doni
-const MAX_SCRITTA_PULSANTI = 3; // pixel di gioco per pixel della lettera nei pulsanti: come i pixel del pulsante (×3)
 const OMBRA = '#000'; // ombra di un pixel sotto le scritte chiare su fondo scuro
-/** Pulsante chiaro (pergamena): scritta scura, senza ombra. Sugli altri, anche l'arancio, scritta chiara con l'ombra. */
-const chiaro = (arte: string): boolean => arte === 'Pulsante_Chiaro';
 
 /** Un elemento posizionato a mano dentro l'HUD. */
 function blocco(classe: string, ...figli: HTMLElement[]): HTMLElement {
@@ -94,19 +90,6 @@ class Barra {
   }
 }
 
-/** Pulsante disegnato (Pulsante_Acceso, _Scuro, …) con la scritta al centro della sua targhetta. */
-function tasto(chiave: string, testo: string, dati: Record<string, string>): HTMLButtonElement {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = 'hud-tasto';
-  b.dataset.arte = chiave;
-  Object.assign(b.dataset, dati);
-  const s = document.createElement('span');
-  scritta(s, testo);
-  b.append(immagine(chiave), s);
-  return b;
-}
-
 export class Hud {
   private radice: HTMLElement;
   private xp = new Barra('hud-xp', 'Barra_Esperienza_Cornice', 'Barra_Esperienza_Piena');
@@ -115,7 +98,6 @@ export class Hud {
   private fasciaAlta = blocco('hud-fascia', immagine('Fascia_Alta'));
   private fasciaBassa = blocco('hud-fascia', immagine('Fascia_Bassa'));
   private peccato = blocco('hud-peccato');
-  private sintesi = blocco('hud-sintesi'); // anime, Cera e Rosario nella pausa, solo con le fasce
   private conFasce = false;
   private clicFantasma = false; // il dito che ha aperto la pausa non si è ancora alzato del tutto
   private inPeccato = false;
@@ -130,7 +112,7 @@ export class Hud {
   private avvisoEl = blocco('hud-avviso', immagine('Nastro_Titolo'), blocco('hud-avviso-testo'), blocco('hud-avviso-sotto'));
   private pausaTasto = document.createElement('button');
   private bordo = blocco('hud-bordo');
-  private pausa: HTMLElement;
+  private quadro: Pausa;
   private fine: HTMLElement;
   private voci: VoceBuild[] = [];
   private m: MisureHud = misureHud();
@@ -175,44 +157,20 @@ export class Hud {
       window.addEventListener('pointercancel', fine);
     });
     this.pausaTasto.addEventListener('click', (e) => { if (e.detail === 0) this.azioni.pausa(); }); // con la tastiera
-    this.pausa = blocco('hud-schermo hud-pausa', blocco('hud-pannello'), blocco('hud-altre'), this.sintesi, blocco('hud-pulsanti'));
+    this.quadro = new Pausa({ riprendi: () => this.azioni.riprendi(), abbandona: () => this.azioni.menu(), amuleto: (id) => this.azioni.amuleto(id) });
     this.fine = blocco('hud-schermo hud-fine', blocco('hud-nastro', immagine('Nastro_Titolo'), document.createElement('h1')), blocco('hud-pannello'), blocco('hud-altre'), blocco('hud-pulsanti'));
-    for (const s of [this.pausa, this.fine]) {
-      s.hidden = true;
-      s.style.backgroundImage = `url(${retino(12)})`;
-    }
-    this.pausa.querySelector('.hud-pulsanti')!.append(
-      tasto('Pulsante_Acceso', 'Riprendi', { azione: 'riprendi' }),
-      tasto('Pulsante_Scuro', 'Stati', { azione: 'legenda' }),
-      tasto('Pulsante_Scuro', '', { opzione: 'audio' }),
-      tasto('Pulsante_Scuro', '', { opzione: 'vibrazione' }),
-      tasto('Pulsante_Pericolo', 'Abbandona', { azione: 'abbandona' }),
-    );
+    this.fine.hidden = true;
+    this.fine.style.backgroundImage = `url(${retino(12)})`;
     this.fine.querySelector('.hud-pulsanti')!.append(
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
       tasto('Pulsante_Chiaro', 'Personaggi', { azione: 'menu' }),
     );
-    this.radice.append(this.bordo, this.peccato, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.seth.el, this.avvisoEl, this.pausa, this.fine);
+    this.radice.append(this.bordo, this.peccato, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.seth.el, this.avvisoEl, this.quadro.el, this.fine);
     this.radice.addEventListener('click', (e) => {
-      if (this.clicFantasma) return;
-      const am = (e.target as Element).closest<HTMLElement>('[data-amuleto]');
-      if (am?.dataset.amuleto) {
-        this.azioni.amuleto(am.dataset.amuleto);
-        return;
-      }
-      const b = (e.target as Element).closest('button');
-      if (!b) return;
-      const azione = b.dataset.azione;
-      if (azione === 'riprendi') this.azioni.riprendi();
-      else if (azione === 'abbandona' || azione === 'menu') this.azioni.menu();
+      if (this.clicFantasma || this.quadro.clic(e.target as Element)) return;
+      const azione = (e.target as Element).closest<HTMLElement>('button')?.dataset.azione;
+      if (azione === 'menu') this.azioni.menu();
       else if (azione === 'riprova') this.azioni.riprova();
-      else if (azione === 'legenda') this.azioni.legenda();
-      if (b.dataset.opzione === 'audio') impostaAudio(!audioAttivo());
-      if (b.dataset.opzione === 'vibrazione') impostaVibrazione(!vibrazione());
-      if (b.dataset.opzione) {
-        this.opzioni();
-        this.disponi();
-      }
     });
     contenitore.append(this.fasciaAlta, this.fasciaBassa, this.radice, this.pausaTasto); // la pausa ha il suo strato: sta sopra le carte dei doni
     window.addEventListener('resize', this.ridimensiona);
@@ -221,7 +179,21 @@ export class Hud {
   }
 
   get pausaAperta(): boolean {
-    return !this.pausa.hidden;
+    return this.quadro.aperta;
+  }
+
+  /** La finestra di conferma di Abbandona è aperta sopra la pausa. */
+  get confermaAperta(): boolean {
+    return this.quadro.confermaAperta;
+  }
+
+  chiudiConferma(): void {
+    this.quadro.chiudiConferma();
+  }
+
+  /** Dalla tastiera: la scheda numero n della pausa, da 0. */
+  schedaPausa(n: number): void {
+    this.quadro.vaiAScheda(n);
   }
 
   get fineAperta(): boolean {
@@ -336,19 +308,22 @@ export class Hud {
     Object.assign(this.avvisoEl.style, { maskImage: url ? `url(${url})` : '', webkitMaskImage: url ? `url(${url})` : '', maskSize: `${lato}px`, webkitMaskSize: `${lato}px` });
   }
 
-  mostraPausa(build: VoceBuild[]): void {
-    this.riempiPannello(this.pausa, build, 'Pausa', '');
-    this.sintesi.textContent = [`◆ ${this.ultimeAnime}`, `Cera ${this.ultimaCera}`, this.ultimoRosario].filter(Boolean).join(' · ');
-    this.opzioni();
-    this.pausa.hidden = false;
+  /** Apre la pausa; scheda: quella da mostrare, se non è la regola normale (ultima usata, Rosario se c'è urgenza). */
+  mostraPausa(dati: DatiPausa, scheda?: SchedaPausa): void {
+    this.quadro.apri(dati, scheda);
     this.pausaTasto.hidden = true;
     this.radice.classList.add('sopra');
     this.disponi();
-    (this.pausa.querySelector('[data-azione="riprendi"]') as HTMLElement).focus();
+    this.quadro.focoIniziale();
+  }
+
+  /** Numeri nuovi con la pausa già aperta (un amuleto acceso o spento). */
+  aggiornaPausa(dati: DatiPausa): void {
+    this.quadro.aggiorna(dati);
   }
 
   nascondiPausa(): void {
-    this.pausa.hidden = true;
+    this.quadro.chiudi();
     this.pausaTasto.hidden = false;
     this.radice.classList.remove('sopra');
   }
@@ -365,7 +340,7 @@ export class Hud {
     if (r.sbloccato) numeri.push(`Sbloccato: ${r.sbloccato}`);
     this.riempiPannello(this.fine, r.build, '', numeri.join('\n'));
     this.bordo.hidden = true;
-    this.pausa.hidden = true;
+    this.quadro.chiudi();
     this.pausaTasto.hidden = true;
     this.fine.hidden = false;
     this.disponi();
@@ -387,17 +362,6 @@ export class Hud {
     cancelAnimationFrame(this.attesa);
     this.attesa = requestAnimationFrame(() => this.disponi());
   };
-
-  private opzioni(): void {
-    // acceso: pulsante scuro con il bordo dorato; spento: pulsante grigio (le scritte lunghe «: sì» non stavano nella targhetta)
-    for (const [opzione, nome, acceso] of [['audio', 'Suoni', audioAttivo()], ['vibrazione', 'Vibrazione', vibrazione()]] as const) {
-      const b = this.pausa.querySelector<HTMLElement>(`[data-opzione="${opzione}"]`)!;
-      b.dataset.arte = acceso ? 'Pulsante_Scuro' : 'Pulsante_Spento';
-      (b.firstElementChild as HTMLImageElement).src = arte(b.dataset.arte)?.url ?? '';
-      b.setAttribute('aria-pressed', String(acceso));
-      scritta(b.lastElementChild!, nome);
-    }
-  }
 
   /** Pannello grande: titolo o testo in alto, le prime 4 armi nelle sue caselle, il resto in fila sotto. */
   private riempiPannello(schermo: HTMLElement, build: VoceBuild[], titolo: string, testo: string): void {
@@ -425,8 +389,8 @@ export class Hud {
     this.bordo.style.inset = f.attive ? `${f.alta * px}px 0 ${f.bassa * px}px` : '';
     if (f.attive) this.disponiFasce(m, f);
     else this.disponiSenzaFasce(m, b);
-    if (!this.pausa.hidden) this.disponiPannello(this.pausa, false, m);
-    if (!this.fine.hidden) this.disponiPannello(this.fine, true, m);
+    if (this.quadro.aperta) this.quadro.disponi(m, f, f.attive ? parseFloat(this.pausaTasto.style.top) / px : 0);
+    if (!this.fine.hidden) this.disponiPannello(this.fine, m);
   }
 
   /** Telefono in verticale: tutto nelle fasce, a pixel disegnati interi. Le altezze le calcola fasce() per ogni telefono. */
@@ -548,8 +512,8 @@ export class Hud {
     }
   }
 
-  /** Pausa e fine: pannello (con il nastro del titolo nella fine), icone in più, pulsanti sotto o a destra. */
-  private disponiPannello(schermo: HTMLElement, conNastro: boolean, m: MisureHud): void {
+  /** Fine: pannello con il nastro del titolo, icone in più, pulsanti sotto o a destra. */
+  private disponiPannello(schermo: HTMLElement, m: MisureHud): void {
     const b = bordiHud(m), W = m.W, H = m.H, px = m.px, ori = W > H, conFasce = fasce(m).attive;
     const ap = arte('Pannello_Grande'), an = arte('Nastro_Titolo'), zt = ingr('pulsanti', m), zc = ingr('caselle', m);
     if (!ap || !an) return;
@@ -559,33 +523,27 @@ export class Hud {
     const altezzaTasti = tasti.length * (riga + 3 * zt) - 3 * zt;
     const altre = [...schermo.querySelector('.hud-altre')!.children] as HTMLElement[];
     const alta = H - b.a - b.b, larga = W - b.s - b.d;
-    // con le fasce la pausa è l'unico posto dove vedere la build: le icone vanno a capo invece di uscire dallo schermo
+    // con le fasce le icone vanno a capo invece di uscire dallo schermo
     const perRiga = conFasce ? Math.max(1, Math.floor(larga / (26 * zc))) : altre.length || 1;
     const hAltre = altre.length ? Math.ceil(altre.length / perRiga) * 26 * zc + 4 - 2 * zc : 0;
-    const sintesi = schermo.querySelector<HTMLElement>('.hud-sintesi'), hSintesi = sintesi && conFasce ? 20 * zc : 0;
-    if (sintesi) sintesi.hidden = !conFasce;
-    const nastro = (k: number): number => (conNastro ? an.h * k - 6 * k : 0);
+    const nastro = (k: number): number => an.h * k - 6 * k;
     const zz = adattaZoom(ingr('pannelli', m), (k) => (ori
       ? nastro(k) + ap.h * k + hAltre <= alta && ap.w * k + 12 + largo <= larga
-      : nastro(k) + ap.h * k + hAltre + hSintesi + 6 + altezzaTasti <= alta && ap.w * k <= larga));
+      : nastro(k) + ap.h * k + hAltre + 6 + altezzaTasti <= alta && ap.w * k <= larga));
     const tot = ori ? ap.w * zz + 12 + largo : ap.w * zz;
     const x = Math.round(W / 2 - tot / 2);
     let y = ori ? Math.round(b.a + (alta - nastro(zz) - ap.h * zz - hAltre) / 2) : b.a + 6;
-    if (conNastro) {
-      const n = schermo.querySelector('.hud-nastro') as HTMLElement;
-      posa(n, Math.round(x + (ap.w * zz) / 2 - (an.w * zz) / 2), y, m);
-      misura(n, an.w, an.h, zz, m);
-      misura(n.firstElementChild as HTMLElement, an.w, an.h, zz, m);
-      scriviNel(n.lastElementChild as HTMLElement, INTERNI.Nastro_Titolo.testo, zz, zz, m, TESTI.avviso);
-      y += nastro(zz);
-    }
+    const n = schermo.querySelector('.hud-nastro') as HTMLElement;
+    posa(n, Math.round(x + (ap.w * zz) / 2 - (an.w * zz) / 2), y, m);
+    misura(n, an.w, an.h, zz, m);
+    misura(n.firstElementChild as HTMLElement, an.w, an.h, zz, m);
+    scriviNel(n.lastElementChild as HTMLElement, INTERNI.Nastro_Titolo.testo, zz, zz, m, TESTI.avviso);
+    y += nastro(zz);
     const p = schermo.querySelector('.hud-pannello') as HTMLElement, r = INTERNI.Pannello_Grande;
     posa(p, x, y, m);
     misura(p, ap.w, ap.h, zz, m);
     misura(p.firstElementChild as HTMLElement, ap.w, ap.h, zz, m);
-    // il titolo (Pausa) a pixel grandi quanto quelli del pannello; il riepilogo della fine resta in Garamond, a più righe
-    if (conNastro) scriviIn(p.children[1] as HTMLElement, r.testo, zz, 7, m);
-    else scriviNel(p.children[1] as HTMLElement, r.testo, zz, 2 * zz, m, 20, OMBRA); // titolo: lettere il doppio dei pixel del pannello
+    scriviIn(p.children[1] as HTMLElement, r.testo, zz, 7, m); // il riepilogo della fine resta in Garamond, a più righe
     [...p.querySelectorAll<HTMLElement>('.hud-icona')].forEach((el, i) => {
       const c = r[`casella${i + 1}`];
       disponiIcona(el, x + (c.x + c.l / 2) * zz - 12 * zz - x, (c.y + c.a / 2) * zz - 12 * zz, zz, m);
@@ -593,28 +551,13 @@ export class Hud {
     const yAltre = y + ap.h * zz + 4;
     if (conFasce) altre.forEach((el, i) => disponiIcona(el, b.s + (i % perRiga) * 26 * zc, yAltre + Math.floor(i / perRiga) * 26 * zc, zc, m));
     else altre.forEach((el, i) => disponiIcona(el, x + i * 26 * zc, yAltre, zc, m));
-    if (sintesi && conFasce) {
-      posa(sintesi, 0, yAltre + hAltre, m);
-      Object.assign(sintesi.style, { width: `${W * px}px`, height: `${hSintesi * px}px`, lineHeight: `${hSintesi * px}px`, fontSize: `${14 * zc * px}px` });
-    }
     // pulsanti: ogni riga alta come il pulsante più alto, si tocca tutta la riga
     const cx = ori ? x + ap.w * zz + 12 + largo / 2 : W / 2;
-    let yt = ori ? Math.round(b.a + (alta - altezzaTasti) / 2) : yAltre + hAltre + hSintesi + 6;
-    // tutte le scritte dei pulsanti con lo stesso ingrandimento: quello della più lunga
-    const kTasti = Math.min(...tasti.map((t) => {
-      const rt = INTERNI[t.dataset.arte!]?.testo;
-      const s = t.lastElementChild as HTMLElement;
-      return (rt && scalaScritta(s.dataset.testo ?? '', rt, zt, MAX_SCRITTA_PULSANTI)) || MAX_SCRITTA_PULSANTI;
-    }));
+    let yt = ori ? Math.round(b.a + (alta - altezzaTasti) / 2) : yAltre + hAltre + 6;
+    const kTasti = scalaTasti(tasti, zt);
     for (const t of tasti) {
-      const a = arte(t.dataset.arte!)!, xt = Math.round(cx - (a.w * zt) / 2);
-      posa(t, xt, yt, m);
-      misura(t, a.w, riga / zt, zt, m);
-      const im = t.firstElementChild as HTMLElement;
-      misura(im, a.w, a.h, zt, m);
-      im.style.top = `${Math.round((riga - a.h * zt) / 2) * px}px`;
-      const s = t.lastElementChild as HTMLElement, rt = INTERNI[t.dataset.arte!]?.testo ?? { x: 0, y: 0, l: a.w, a: a.h };
-      scriviNel(s, { ...rt, y: rt.y + Math.round((riga / zt - a.h) / 2) }, zt, kTasti, m, TESTI.pulsante, chiaro(t.dataset.arte!) ? null : OMBRA);
+      const a = arte(t.dataset.arte!)!;
+      disponiTasto(t, Math.round(cx - (a.w * zt) / 2), yt, zt, riga, kTasti, m);
       yt += riga + 3 * zt;
     }
   }
@@ -642,17 +585,13 @@ function disponiCasella(el: HTMLElement, x: number, y: number, z: number, m: Mis
   Object.assign(lv.style, { right: `${-2 * z * m.px}px`, bottom: `${-3 * z * m.px}px`, fontSize: `${TESTI.casella * z * m.px}px` });
 }
 
-/** Icona con il livello, senza cornice (pannelli di pausa e fine). */
+/** Icona con il livello, senza cornice (schermata di fine). */
 function icona(v: VoceBuild): HTMLElement {
   const lv = blocco('hud-lv');
   lv.textContent = String(v.livello);
   const d = blocco('hud-icona', immagine(v.icona), lv);
-  d.title = v.amuleto ? `${v.nome} · ${v.livello} grani · tocca per ${v.acceso ? 'spegnere' : 'accendere'}` : `${v.nome} · livello ${v.livello}`;
-  if (v.amuleto) {
-    d.dataset.amuleto = v.amuleto;
-    d.classList.add('hud-amuleto');
-    d.classList.toggle('spento', v.acceso === false);
-  }
+  d.title = v.amuleto ? `${v.nome} · ${v.livello} grani` : `${v.nome} · livello ${v.livello}`;
+  d.classList.toggle('spento', v.acceso === false);
   return d;
 }
 

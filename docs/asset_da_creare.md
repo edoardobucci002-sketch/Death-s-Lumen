@@ -18,7 +18,7 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | **Striscia del dono** (170×62 px: `HUD/Cornici/Striscia_Dono_V1.aseprite` e `Striscia_Dono_Scelta_V1.aseprite`, pozzetto icona in x 5, y 5, 34×52) | scelta dei doni e reliquiari | provvisoria dal codice in `src/sistema/scheda.ts`; le misure interne sono in `STRISCIA`, `src/data/hud.ts` |
 | **8 icone** (24×24: `Icona_Lapide`, `Icona_Rosario_spezzato`, `Icona_Corvo`, `Icona_Velo_funebre`, `Icona_Cera_votiva`, `Icona_Chiodo_di_bara`, `Icona_Lacrima_di_lumen`, `Icona_Campanella_d_argento`, in `ICONE/<Nome>/`) | armi e doni nuovi; le stesse icone fanno da sprite provvisori di lapide, grano e corvo | disegnate dal codice in `src/sistema/segnaposto-oggetti.ts`; ogni file le sostituisce da solo |
 | **Effetti delle armi nuove** (lapide che cade, grano, corvo in volo con le ali, aura del Velo) | in partita | icone ingrandite e cerchio a retino dal codice |
-| **10 icone delle unioni** (24×24, `Icona_Unione_<id>`: faroDeiMorti, vangaDelCustode, incensiereUltimaOra, vergaDeiNomi, candelabroFunebre, falceDelMietitore, campanaAMorto, fuochiErranti, acquasantiera, lamaDellAlba) | caselle, strisce, legenda | icona dell'arma con angoli d'oro, dal codice in `src/sistema/segnaposto-oggetti.ts` |
+| **10 icone delle unioni** (24×24, `Icona_Unione_<id>`: faroDeiMorti, vangaDelCustode, incensiereUltimaOra, vergaDeiNomi, candelabroFunebre, falceDelMietitore, campanaAMorto, fuochiErranti, acquasantiera, lamaDellAlba) | caselle, strisce, pausa | icona dell'arma con angoli d'oro, dal codice in `src/sistema/segnaposto-oggetti.ts` |
 | **Effetti delle unioni** (cerchio del Faro, fiamma della scia, lapide della Vanga, colpo della Verga…) | in partita | effetti esistenti riusati |
 | **Urna, Giara, Lanterna** (`OGGETTI/<Nome>/<Nome>_V1.aseprite`, 88×64 con base in basso al centro, tag `idle` e `death`) | oggetti rompibili | prove nate da ChatGPT e ripulite da Claude: da confermare o ridisegnare; un `_V2` le sostituisce da solo |
 | **Chiazza d'olio e fuoco** (circa 192×192 px: `Chiazza_olio` che si asciuga, `Chiazza_fuoco` animata) | lanterna rotta | disegnate dal codice a retino in `src/sistema/chiazze.ts` |
@@ -37,3 +37,29 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | **Suoni e musica veri** | tutto il gioco | suoni sintetizzati dal codice (`src/sistema/audio.ts`) |
 | Nemici V1 alla scala nuova | tutti i nemici | segnaposto V0 ×2 |
 | Effetti e icone delle armi alla scala nuova | armi | segnaposto V0 |
+
+## La pausa: misure per ridisegnarla
+
+Oggi cornici e schede le disegna il CSS (`.pausa-*` in `src/stile.css`); pulsanti, icone e simboli sono già i tuoi. Le misure sono in **pixel disegnati**: la stessa unità di `Fascia_Alta`, e sul S25 uno vale 2 pixel di gioco, cioè 4 pixel fisici e 1,33 punti. Le misure vengono da `PAUSA` in `src/data/hud.ts`, lette dal gioco vero con il caso pieno; se cambiano, questa tabella va rimisurata.
+
+Larghezze e altezze cambiano da telefono a telefono: chi ha una misura a intervallo va disegnato con un **centro ripetibile**, in tre pezzi (inizio, centro, fine) o nove pezzi se si allunga nei due sensi. Ogni pezzo è un file a sé.
+
+| Elemento | Sul Galaxy S25 | Sugli altri telefoni | Come si adatta |
+| --- | --- | --- | --- |
+| **Quadro intero** (schermata) | 270×585 | da 270×600 a 375×780 | tutto lo schermo; le prime 27 righe del S25 sono area sicura |
+| **Striscia in alto** (`Pausa_Testata`) | 270×60 | larga come lo schermo, alta da 38 a 74 | si ripete in larghezza. Le voci vanno a capo: una, due o tre righe di dati |
+| **Riga «in attesa»** | 270×16 | larga come lo schermo | si ripete in larghezza |
+| **Pagina** (fondo) | 270×383 | da 270×420 a 375×533 | nove pezzi o fondo pieno: il contenuto ci scorre sopra |
+| **Riquadro di dettaglio** (`Pausa_Dettaglio`) | 258×106 | larga da 258 a 363, alta almeno 84 | nove pezzi: cresce con il testo. Margine interno 5 ai lati e 4 sopra e sotto |
+| **Casella** (`Pausa_Casella`, piena, scelta, vuota, unita) | cornice 28×28, icona 24×24, spazio di tocco 43×34 | cornice 28 × il suo ingrandimento (28×28 o 42×42 disegnati dove un pixel disegnato vale 1 punto) | misura fissa: tre o quattro disegni. Numero del livello in basso a destra |
+| **Riga delle caselle** | 6 caselle in 258 | 6 caselle in 258–363 | la cornice resta al centro del suo spazio |
+| **Scheda** (`Pausa_Scheda`, spenta e accesa) | 67,5×68 con 4 schede, 90×68 con 3 | con 4 schede da 67,5 a 94, alta da 68 a 85 | tre pezzi. La scritta è al centro. Lascia un angolo libero di 4×4 per il segno rosso del Peccato |
+| **Fascia di Riprendi** | 270×48 | larga come lo schermo, alta 48–60 | si ripete in larghezza. Dentro c'è `Pulsante_Acceso`, 101×24 disegnati |
+| **Riga di un amuleto** (`Pausa_Amuleto`) | 258 × 70–85 | larga 258–363 | nove pezzi: l'altezza dipende dal testo. Icona 24×24 a sinistra, interruttore a destra |
+| **Riga di un'Unione** (`Pausa_Unione`) | 258×67 | come sopra | nove pezzi; bordo sinistro di 2 per lo stato |
+| **Grano del Rosario** | 6×6 | uguale | pieno, vuoto, di troppo |
+| **Finestra di conferma** (`Pausa_Conferma`) | 159×157 | larghezza = `Pulsante_Pericolo` + 12 di margine | nove pezzi. Dentro: `Pulsante_Scuro` e `Pulsante_Pericolo` |
+
+Su computer e tablet (un pixel disegnato = 1 punto): quadro 680×660, colonna delle schede larga 214, ogni scheda 214×44, pagina 464×604, fascia di Riprendi 214×60.
+
+Per controllare un disegno: LAB → Schermate → Pausa → **Caso pieno** mostra ogni elemento al massimo. Dimmi quando i file sono pronti: li collego io, indicandomi quali pezzi hai disegnato.

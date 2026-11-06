@@ -36,9 +36,10 @@ import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Doni, type Dono } from '../sistema/doni';
-import { Legenda } from '../sistema/legenda';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
-import { Hud, type VoceBuild } from '../sistema/hud';
+import { Hud, tempo, type VoceBuild } from '../sistema/hud';
+import type { DatiPausa, SchedaPausa, VoceUnione } from '../sistema/pausa';
+import { voceArma, voceDono } from '../sistema/scheda';
 import { vibra } from '../sistema/mobile';
 import { CALAMITA, CERA_GOCCIA, FRAMMENTO, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
 import { LUCE as LUCE_AFF, OMBRA as OMBRA_AFF, SACRO as SACRO_AFF, TERRA as TERRA_AFF } from '../sistema/orda';
@@ -53,6 +54,8 @@ import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECO
 import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
+import { segnoPercento, virgola } from '../data/spiegazioni';
+import { AFFINITA_ABILITA, AFFINITA_ARMI } from '../data/stati';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { Rompibili } from '../sistema/rompibili';
 import { Chiazze } from '../sistema/chiazze';
@@ -98,7 +101,6 @@ export class Gioco extends Phaser.Scene {
   private alone!: Phaser.GameObjects.Image;
   private effetti!: Effetti;
   private doni!: Doni;
-  private legenda!: Legenda;
   private raccolta = 0;
   private rigenerazione = 0;
   private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
@@ -119,6 +121,7 @@ export class Gioco extends Phaser.Scene {
   private meta!: BonusMeta; // ceri accesi della Cappella
   private candelaUsata = false; // Seconda candela
   private eliteUccise = 0;
+  private uccisi = 0; // nemici uccisi in questa veglia
   private ceraRaccolta = 0; // gocce di Cera raccolte in questa veglia
   private schivateNotte = 0; // schivate perfette in questa veglia (imprese)
   private secondiNubi = 0; // secondi passati dentro le nubi in questa veglia (imprese)
@@ -129,6 +132,8 @@ export class Gioco extends Phaser.Scene {
   private amuletiAccesi = new Set<IdAmuleto>();
   private rosarioSbloccato = false;
   private unioniSbloccate = false;
+  private unioniScoperte = new Set<IdUnione>(); // quelle già viste in partita, anche nelle notti passate
+  private scoperteDiProva = false; // il Laboratorio ha forzato le unioni: non si salvano
   private sangueFreddoAttivo = false;
   private ultimaDanza = -99; // secondi dell'ultima Grazia data dalla Danza macabra
   private prossimoAbbaglio = 0;
@@ -175,11 +180,13 @@ export class Gioco extends Phaser.Scene {
     for (const q of PASSIVI) this.passivi[q.id] = 0;
     this.grazia = 0;
     this.candelaUsata = false;
-    this.eliteUccise = this.sethSconfitti = this.ceraRaccolta = 0;
+    this.eliteUccise = this.sethSconfitti = this.ceraRaccolta = this.uccisi = 0;
     this.meta = bonusMeta(carica(), parametri.get('meta') ?? (parametri.has('bot') ? '0' : null));
     this.oggettiSbloccati = new Set(parametri.has('senzaoggetti') ? [] : parametri.has('oggetti') ? SBLOCCHI_OGGETTI.map((o) => o.id) : this.meta.oggetti); // ?senzaoggetti, ?oggetti: per confrontare le simulazioni
     for (const id of (parametri.get('blocca') ?? '').split(',')) this.oggettiSbloccati.delete(id as IdOggetto); // ?blocca=corvo,lapide: per le simulazioni
     this.unioniSbloccate = (this.meta.unioni && !parametri.has('senzaunioni')) || parametri.has('unioni');
+    this.unioniScoperte = new Set(carica().unioniScoperte);
+    this.scoperteDiProva = false;
     this.rosarioSbloccato = (this.meta.rosario && !parametri.has('senzarosario')) || parametri.has('rosario'); // ?senzarosario: per confrontare le simulazioni
     this.amuletiPosseduti = [];
     this.amuletiAccesi.clear();
@@ -261,13 +268,11 @@ export class Gioco extends Phaser.Scene {
       riprova: () => this.scene.restart({ pg: this.pg.id }),
       menu: () => this.scene.start('Menu'),
       amuleto: (id) => this.commutaAmuleto(id),
-      legenda: () => this.legenda.apri(),
     });
     // altezza vera del personaggio: dalla riga più alta a quella più bassa usate nei fotogrammi
     const fotogrammi = (this.cache.json.get(this.chiaveSprite) as { frames: { spriteSourceSize: { y: number; h: number } }[] }).frames;
     this.hud.impostaPersonaggio((Math.max(...fotogrammi.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h)) - Math.min(...fotogrammi.map((f) => f.spriteSourceSize.y))) * this.giocatore.scaleY);
-    this.legenda = new Legenda(interfaccia, () => this.unioniSbloccate);
-    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate }), () => this.legenda.apri(), (id) => this.disponibile(id));
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.pausa || this.doni.aperta) return false;
@@ -327,13 +332,13 @@ export class Gioco extends Phaser.Scene {
   }
 
   /**
-   * Tasto Indietro: in partita apre la pausa e basta; nella pausa chiude solo i sottopannelli, la partita riparte
+   * Tasto Indietro: in partita apre la pausa e basta; nella pausa chiude solo la conferma di Abbandona, la partita riparte
    * solo toccando il pulsante (scelta voluta: una doppia pressione per sbaglio la faceva ripartire);
    * dalla fine torna al menu. Restituisce sempre true (gestito).
    */
   indietro(): boolean {
     if (this.finito && this.hud.fineAperta) this.scene.start('Menu');
-    else if (this.legenda.aperta) this.legenda.chiudi();
+    else if (this.hud.confermaAperta) this.hud.chiudiConferma();
     else if (!this.pausa) this.apriPausa();
     return true;
   }
@@ -712,13 +717,53 @@ export class Gioco extends Phaser.Scene {
     this.oggetti.aggiungi(FRAMMENTO, this.x + 60, this.y - 60);
   }
 
-  labPausa(): void {
+  /** Apre la pausa sulla scheda indicata; se è già aperta la richiude prima. */
+  labPausa(scheda?: SchedaPausa): void {
+    this.riprendi();
+    this.apriPausa(scheda);
+  }
+
+  /** Il caso pieno: 6 armi, 6 doni, tutti gli amuleti e le unioni in tutti gli stati. Non tocca il salvataggio. */
+  labPausaPiena(scheda: SchedaPausa = 'build'): void {
+    this.scoperteDiProva = true;
+    const mia = UNIONI.find((u) => u.arma === this.pg.armaIniziale)!;
+    [mia, ...UNIONI.filter((u) => u !== mia).slice(0, MAX_ARMI - 1)].forEach((u, i) => this.labUnione(u.id, i % 3 === 0));
+    this.rosarioSbloccato = true;
+    for (const a of AMULETI) this.labAmuleto(a.id, true);
+    for (const u of UNIONI) this.unioniScoperte.add(u.id);
+    this.labPausa(scheda);
+  }
+
+  /** Peccato: amuleti accesi oltre i grani; la pausa si apre da sola sul Rosario. */
+  labPausaPeccato(): void {
+    this.rosarioSbloccato = true;
+    for (const a of AMULETI.slice(0, 3)) this.labAmuleto(a.id, true);
+    this.labPausa();
+  }
+
+  /** La prima partita: niente Rosario né Unioni. */
+  labPausaPrima(): void {
+    for (const id of [...this.amuletiPosseduti]) this.labAmuleto(id, false);
+    this.rosarioSbloccato = this.unioniSbloccate = false;
+    this.labPausa();
+  }
+
+  /** La pausa sopra una scelta di doni o di reliquiario. */
+  labPausaSopra(reliquiario: boolean): void {
+    this.riprendi();
+    if (reliquiario) {
+      this.rosarioSbloccato = true;
+      this.labReliquiario();
+    } else this.labSceltaDono();
     this.apriPausa();
   }
 
-  labLegenda(): void {
-    this.apriPausa();
-    this.legenda.apri();
+  /** Dimentica le unioni scoperte, per riprovare la scoperta da capo. */
+  labDimenticaUnioni(): void {
+    this.unioniScoperte.clear();
+    const s = carica();
+    s.unioniScoperte = [];
+    salva(s);
   }
 
   private armaDi(id: Arma['id']): Arma | undefined {
@@ -737,7 +782,7 @@ export class Gioco extends Phaser.Scene {
   /** Porta arma e dono ai livelli giusti: con unisci li unisce subito, altrimenti aspetta il reliquiario. */
   labUnione(id: IdUnione, unisci: boolean): void {
     const u = UNIONI.find((x) => x.id === id)!;
-    this.unioniSbloccate = true;
+    this.unioniSbloccate = this.scoperteDiProva = true;
     const arma = this.armaDi(u.arma) ?? ARMI_COMUNI.find((a) => a.id === u.arma) ?? Object.values(ARMI_INIZIALI).find((a) => a.id === u.arma)!;
     this.labArma(arma, CARTE.livelloMassimo);
     this.labDono(u.dono, Math.max(this.passivi[u.dono], livelloDonoUnione(u.dono)));
@@ -784,8 +829,8 @@ export class Gioco extends Phaser.Scene {
     if (!this.amuletiAccesi.delete(a)) this.amuletiAccesi.add(a);
     this.dopoPassivo();
     this.aggiornaBuild();
-    if (this.pausa) this.hud.mostraPausa(this.build());
-    this.hud.avviso(this.graniUsati() > this.grani() ? 'Peccato' : amuleto(a).nome, this.graniUsati() > this.grani() ? 'spegni un amuleto' : `${this.ha(a) ? 'acceso' : 'spento'} · grani ${this.graniUsati()}/${this.grani()}`);
+    this.doni.aggiornaCarte(); // sopra una scelta: stesse carte, grani di adesso
+    if (this.pausa) this.hud.aggiornaPausa(this.datiPausa());
   };
 
   /** Dopo un dono passivo: statistiche, salute in più del Cuore di cera, alone più ampio con lo Stoppino lungo. */
@@ -810,6 +855,7 @@ export class Gioco extends Phaser.Scene {
   private muore = (x: number, y: number, valore: number, categoria: CategoriaNemico): void => {
     this.anime.aggiungi(x, y, valore, this.x, this.y);
     this.effetti.scoppio(x, y);
+    this.uccisi++;
     this.sim?.ucciso();
     const seth = categoria === 'seth', elite = categoria === 'elite';
     const daLasciare = seth ? MIETITORE.reliquiari : elite ? ELITE.reliquiari * (this.ha('ossaDelite') ? AM.ossaDelite.reliquiari : 1) : 0;
@@ -959,13 +1005,13 @@ export class Gioco extends Phaser.Scene {
     else if (this.automatico) this.doni.scegliPrima();
   }
 
-  private apriPausa(): void {
+  private apriPausa(scheda?: SchedaPausa): void {
     if (this.finito || this.pausa) return;
     this.pausa = true;
     this.doni.sospesa = true;
     this.anims.pauseAll();
     this.comandi.lascia();
-    this.hud.mostraPausa(this.build());
+    this.hud.mostraPausa(this.datiPausa(), typeof scheda === 'string' ? scheda : undefined);
   }
 
   private riprendi(): void {
@@ -1065,6 +1111,74 @@ export class Gioco extends Phaser.Scene {
 
   private aggiornaBuild(): void {
     this.hud.build(this.build());
+    this.scopriUnioni();
+  }
+
+  /** Un'unione si scopre la prima volta che arma e dono stanno insieme nella build: da allora compare nella pausa, anche nelle notti dopo. */
+  private scopriUnioni(): void {
+    if (!this.unioniSbloccate) return;
+    const nuove = UNIONI.filter((u) => !this.unioniScoperte.has(u.id) && this.armaDi(u.arma) && this.passivi[u.dono] > 0);
+    if (!nuove.length) return;
+    for (const u of nuove) this.unioniScoperte.add(u.id);
+    if (this.sim) return;
+    this.hud.avviso('Unione scoperta', nuove[0].nome);
+    if (this.immortale || this.scoperteDiProva) return;
+    const s = carica();
+    s.unioniScoperte = [...this.unioniScoperte];
+    salva(s);
+  }
+
+  /** Le unioni da mostrare: sbloccate, già scoperte e con l'arma in mano. Prima quelle pronte. */
+  private vociUnioni(): VoceUnione[] {
+    const ordine = { Pronta: 0, Manca: 1, Unita: 2 };
+    return UNIONI.filter((u) => this.unioniScoperte.has(u.id) && this.armaDi(u.arma)).map((u): VoceUnione => {
+      const a = this.armaDi(u.arma)!, q = PASSIVI.find((x) => x.id === u.dono)!, serve = livelloDonoUnione(u.dono), l = this.arsenale.livello(a);
+      const stato = this.arsenale.unita(a) ? 'Unita' : l >= CARTE.livelloMassimo && this.passivi[u.dono] >= serve ? 'Pronta' : 'Manca';
+      return { nome: u.nome, icona: iconaUnione(u.id), testo: u.testo, stato, ricetta: `${a.nome} ${l}/${CARTE.livelloMassimo} · ${q.nome} ${Math.min(serve, this.passivi[u.dono])}/${serve}` };
+    }).sort((x, y) => ordine[x.stato] - ordine[y.stato]);
+  }
+
+  /** Le statistiche vere del personaggio in questo momento, con doni, ceri e amuleti già contati. */
+  private statistiche(): { nome: string; valore: string }[] {
+    const subito = (1 - this.armatura) * (1 + (this.ha('specchioRotto') ? AM.specchioRotto.dannoSubito : 0)) * (1 + (this.graniUsati() > this.grani() ? ROSARIO.peccato : 0)) - 1;
+    return [
+      { nome: 'Salute', valore: `${Math.ceil(this.salute)}/${Math.ceil(this.saluteMassima)}` },
+      { nome: 'Salute/s', valore: `+${virgola(this.rigenerazione)}` },
+      { nome: 'Danno', valore: segnoPercento(this.bonus.danno) },
+      { nome: 'Danno subito', valore: segnoPercento(subito) },
+      { nome: 'Ricarica', valore: segnoPercento(this.bonus.ricarica - 1) },
+      { nome: 'Area', valore: segnoPercento(this.bonus.area) },
+      { nome: 'Quantità', valore: `+${this.bonus.quantita}` },
+      { nome: 'Durata', valore: segnoPercento(this.bonus.durata) },
+      { nome: 'Critico', valore: segnoPercento(this.bonus.critico) },
+      { nome: 'Velocità', valore: segnoPercento(this.velocita / BASE.velocita - 1) },
+      { nome: 'Raccolta', valore: segnoPercento(this.raccolta / BASE.raccolta - 1) },
+      { nome: 'Anime', valore: segnoPercento(this.moltAnime - 1) },
+      { nome: 'Sorsi', valore: `${this.fiaschetta.sorsi}/${this.fiaschetta.massimo}` },
+    ];
+  }
+
+  /** Tutto quello che la pausa mostra, letto ora. */
+  private datiPausa(): DatiPausa {
+    const voci = this.unioniSbloccate ? this.vociUnioni() : [];
+    const unioneDiArma = (id: Arma['id']): { u: Unione; stato: string } | undefined => {
+      const u = unioneDi(id), v = u && voci.find((x) => x.nome === u.nome);
+      return u && v ? { u, stato: v.stato } : undefined;
+    };
+    return {
+      tempo: tempo(Math.floor(this.secondi)), livello: this.livello, anime: Math.floor(this.animeTotali), cera: this.ceraRaccolta, uccisi: this.uccisi,
+      frammenti: { ora: this.frammenti, servono: FRAMMENTI.perReliquiario },
+      rosario: this.rosarioSbloccato ? {
+        usati: this.graniUsati(), grani: this.grani(),
+        amuleti: this.amuletiPosseduti.map((id) => { const a = amuleto(id); return { id, nome: a.nome, icona: iconaAmuleto(id), grani: a.grani, vantaggio: a.vantaggio, rovescio: a.rovescio, acceso: this.ha(id) }; }),
+      } : null,
+      armi: this.arsenale.possedute.map((p) => voceArma(p.arma, p.livello, !!p.unita, unioneDiArma(p.arma.id))),
+      doni: PASSIVI.filter((q) => this.passivi[q.id]).map((q) => voceDono(q, this.passivi[q.id])),
+      unioni: this.unioniSbloccate ? { voci, scoperte: this.unioniScoperte.size, totali: UNIONI.length } : null,
+      statistiche: this.statistiche(),
+      affinita: [...new Set([...this.arsenale.possedute.map((p) => AFFINITA_ARMI[p.arma.id]), AFFINITA_ABILITA[this.pg.abilita]])],
+      attesa: !this.doni.aperta ? null : this.doni.reliquiario ? 'reliquiario' : 'dono',
+    };
   }
 
   /**
@@ -1224,9 +1338,13 @@ export class Gioco extends Phaser.Scene {
   };
 
   private tasto = (e: KeyboardEvent): void => {
+    const cifra = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
     if (e.code === 'KeyP' || e.code === 'Escape') {
-      if (this.pausa) this.riprendi();
+      if (this.hud.confermaAperta) this.hud.chiudiConferma();
+      else if (this.pausa) this.riprendi();
       else this.apriPausa();
+    } else if (this.pausa && cifra >= 0) {
+      this.hud.schedaPausa(cifra);
     } else if (e.code === 'KeyM') {
       impostaAudio(!audioAttivo());
       this.hud.avviso(audioAttivo() ? 'Suoni accesi' : 'Suoni spenti');

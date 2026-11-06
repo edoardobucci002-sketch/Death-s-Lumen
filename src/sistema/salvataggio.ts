@@ -6,6 +6,7 @@
  */
 import { CERI, META_SIMULAZIONE, OGGETTI_A_META, SBLOCCHI, SBLOCCHI_OGGETTI, rimescolateCero, type IdCero, type IdOggetto } from '../data/meta';
 import type { Personaggio } from '../data/personaggi';
+import { UNIONI, type IdUnione } from '../data/unioni';
 
 const CHIAVE = 'dl-salvataggio';
 const VERSIONE = 1;
@@ -27,6 +28,7 @@ export interface Salvataggio {
   rosario: boolean; // il Rosario è sbloccato
   oggetti: IdOggetto[]; // armi e doni nuovi sbloccati
   unioni: boolean; // le unioni delle armi sono sbloccate
+  unioniScoperte: IdUnione[]; // quelle già viste in partita: solo queste compaiono nella pausa
   ultimaVeglia: { voci: VoceVeglia[]; totale: number; sbloccato: string | null } | null;
 }
 
@@ -48,7 +50,7 @@ export interface BonusMeta {
 function nuovo(): Salvataggio {
   const ceri = {} as Record<IdCero, number>;
   for (const c of CERI) ceri[c.id] = 0;
-  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], unioni: false, ultimaVeglia: null };
+  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], unioni: false, unioniScoperte: [], ultimaVeglia: null };
 }
 
 /** Porta un salvataggio letto (anche vecchio o incompleto) alla forma di oggi. */
@@ -65,6 +67,7 @@ function aggiorna(dati: Partial<Salvataggio>): Salvataggio {
   s.sbloccati = Array.from(new Set(['lampionaio', ...(dati.sbloccati ?? []).filter((id) => id in SBLOCCHI)])) as Personaggio['id'][];
   s.rosario = !!dati.rosario;
   s.unioni = !!dati.unioni;
+  s.unioniScoperte = (dati.unioniScoperte ?? []).filter((id) => UNIONI.some((u) => u.id === id));
   s.oggetti = (dati.oggetti ?? []).filter((id) => SBLOCCHI_OGGETTI.some((o) => o.id === id));
   s.ultimaVeglia = dati.ultimaVeglia ?? null;
   return s;

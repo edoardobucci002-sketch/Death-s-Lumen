@@ -33,6 +33,7 @@ export class Doni {
   private elenco: HTMLElement;
   private rimescola: HTMLButtonElement;
   private rimescolate: number = CARTE.rimescolate;
+  private conRimescola = true;
   private carte: Dono[] = [];
   private scegli: ((d: Dono) => void) | null = null;
 
@@ -78,6 +79,16 @@ export class Doni {
 
   get aperta(): boolean {
     return !this.radice.hidden;
+  }
+
+  /** La scelta aperta è quella di un reliquiario. */
+  get reliquiario(): boolean {
+    return this.aperta && !this.conRimescola;
+  }
+
+  /** Stesse carte, numeri di oggi: dopo aver acceso o spento un amuleto dalla pausa. Non tira il caso e non consuma rimescolate. */
+  aggiornaCarte(): void {
+    if (this.aperta) this.disegnaCarte(this.conRimescola);
   }
 
   /** Mostra le carte; quando il giocatore sceglie, chiama scegli(dono). */
@@ -150,6 +161,7 @@ export class Doni {
 
   /** Mette le carte sullo schermo; Rimescola e le sue righe solo per i livelli, non per i reliquiari. */
   private disegnaCarte(conRimescola: boolean): void {
+    this.conRimescola = conRimescola;
     this.rimescola.hidden = !conRimescola;
     (this.radice.querySelector('.doni-rimaste') as HTMLElement).hidden = !conRimescola;
     scritta(this.radice.querySelector('h2')!, conRimescola ? 'Un nuovo dono' : 'Un reliquiario');

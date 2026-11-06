@@ -375,11 +375,24 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         vai('Pausa', () => p?.labPausa()),
         vai('Scelta del dono', () => p?.labSceltaDono()),
         vai('Reliquiario', () => p?.labReliquiario()),
-        vai('Stati e reazioni', () => p?.labLegenda()),
         vai("Fine: l'alba", () => p?.labEvento('vittoria')),
         vai('Fine: sconfitta', () => p?.labEvento('morte')),
       ),
-      el('p', 'lab-nota', 'Il pannello si chiude da solo per mostrarti la schermata. Riaprilo con LAB.'),
+      titolo(p ? 'Pausa' : 'Pausa (serve una partita)'),
+      riga(
+        vai('Build', () => p?.labPausa('build')),
+        vai('Rosario', () => p?.labPausa('rosario')),
+        vai('Stati', () => p?.labPausa('stati')),
+        vai('Opzioni', () => p?.labPausa('opzioni')),
+      ),
+      riga(
+        vai('Caso pieno', () => p?.labPausaPiena()),
+        vai('Peccato', () => p?.labPausaPeccato()),
+        vai('Prima partita', () => p?.labPausaPrima()),
+        vai('Sopra i doni', () => p?.labPausaSopra(false)),
+        vai('Sopra il reliquiario', () => p?.labPausaSopra(true)),
+      ),
+      el('p', 'lab-nota', 'Il pannello si chiude da solo per mostrarti la schermata. Riaprilo con LAB. Le ultime prove cambiano la partita in corso.'),
     ];
   }
 
@@ -445,6 +458,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Sblocca il Rosario', () => { const x = carica(); x.rosario = true; salva(x); ridisegna(); }),
         tasto('Sblocca armi e doni nuovi', () => { const x = carica(); x.oggetti = SBLOCCHI_OGGETTI.map((o) => o.id); salva(x); ridisegna(); }),
         tasto('Sblocca le Unioni', () => { const x = carica(); x.unioni = true; salva(x); ridisegna(); }),
+        tasto('Dimentica le Unioni scoperte', () => { const x = carica(); x.unioniScoperte = []; salva(x); partita()?.labDimenticaUnioni(); ridisegna(); }),
         tasto('Seconda candela', () => { const x = carica(); x.secondaCandela = true; x.secondaCandelaSpenta = false; salva(x); ridisegna(); }),
       ),
       titolo('Ceri votivi'),

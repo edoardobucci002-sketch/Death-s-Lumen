@@ -42,7 +42,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 - **Mondo inventato**: niente riferimenti alla realtà (feste, luoghi, nomi storici). La lore è in `docs/lore.md`. Le croci nei disegni restano: fanno parte di questo mondo. Nell'interfaccia di gioco «veglia» e «Seth»; «Rinnovato» compare dal primo Seth come primo indizio; «Rinnovo» e «Ricaduta» arrivano più avanti nella trama. Nei testi che il giocatore legge, parlando dei boss in generale si usano termini generici («capi»), non «Seth»: gli altri boss non vanno anticipati.
 - Palette notturna calda. Ogni personaggio ha il suo colore guida (nel GDD) e l'interfaccia prende il colore del personaggio scelto.
-- **Caratteri**: titoli, nastri e scritte dentro i pulsanti in **Tiny5 tutto maiuscolo**, a pixel interi (`src/sistema/scritte.ts`); numeri e HUD in Jersey 10; testi lunghi (schede, pannelli, legenda) in EB Garamond. Vanno inclusi nel pacchetto, non scaricati da internet.
+- **Caratteri**: titoli, nastri e scritte dentro i pulsanti in **Tiny5 tutto maiuscolo**, a pixel interi (`src/sistema/scritte.ts`); numeri e HUD in Jersey 10; testi lunghi (schede, pannelli, pausa) in EB Garamond. Vanno inclusi nel pacchetto, non scaricati da internet.
 - Le schede dei personaggi riprendono lo stile della scheda di Edoardo: nome, motto, ritratto, biografia, fila di sprite, arma iniziale, abilità speciale, barre delle statistiche, citazione sopra un paesaggio.
 
 ## Regole per il codice
@@ -65,7 +65,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
   - pausa automatica quando l'app va in background;
   - schermo sempre acceso durante la partita;
   - vibrazione sugli eventi importanti, disattivabile;
-  - il tasto Indietro apre la pausa e basta; dentro la pausa chiude solo i sottopannelli, la partita riparte solo dal pulsante; dalla fine torna al menu.
+  - il tasto Indietro apre la pausa e basta; dentro la pausa chiude solo la finestra di conferma di Abbandona, la partita riparte solo dal pulsante; dalla fine torna al menu.
 - Niente zoom con doppio tocco o pizzico; niente selezione di testo nell'interfaccia di gioco.
 - Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia `npm run prova`: controlla le fasce sul gioco vero, su sei telefoni.
 - Funziona offline: tutti gli asset sono nel pacchetto.

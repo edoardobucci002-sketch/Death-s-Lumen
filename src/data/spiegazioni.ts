@@ -97,4 +97,7 @@ export const SPIEGA_DONI: Record<IdDono, string> = {
   campanellaDArgento: 'Più tempo per la Grazia: uscire dai cerchi rossi all\'ultimo istante è più facile.',
 };
 
+/** Un bonus in percentuale con il suo segno, per le statistiche nella pausa: «+10%», «−14%», «0%». */
+export const segnoPercento = (v: number): string => (Math.abs(v) < 0.0005 ? '0%' : v > 0 ? `+${percento(v)}` : `−${percento(-v)}`);
+
 export const AFFINITA_TUTTE = Object.keys(INFO_AFFINITA) as IdAffinita[];

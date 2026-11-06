@@ -7,8 +7,8 @@ import type { Arma } from '../data/armi';
 import { AFFINITA_ARMI } from '../data/stati';
 import { CARTE } from '../data/progressione';
 import { ROSARIO } from '../data/rosario';
-import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI } from '../data/unioni';
-import { PASSIVI, type IdDono } from '../data/doni';
+import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type Unione } from '../data/unioni';
+import { PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import { CAMPI_ARMA, DATI_DONI, INFO_AFFINITA, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { STRISCIA } from '../data/hud';
 import { arte, registraArte } from './arte';
@@ -31,6 +31,40 @@ export interface Contesto {
   graniTotali: number;
   doni: Record<IdDono, number>; // livello di ogni dono
   unioni: boolean; // le unioni sono sbloccate
+}
+
+/** Un'arma o un dono visti nella pausa: la casella e il riquadro di dettaglio. */
+export interface VoceDettaglio {
+  chiave: string;
+  nome: string;
+  icona: string;
+  livello: number;
+  massimo: number;
+  unita: boolean;
+  numeri: { nome: string; valore: string }[];
+  righe: Riga[];
+}
+
+/** Dettaglio di un'arma al suo livello; unione: quella già fatta, oppure da mostrare come traguardo con il suo stato. */
+export function voceArma(arma: Arma, livello: number, unita: boolean, unione?: { u: Unione; stato: string }): VoceDettaglio {
+  const ora = arma.livelli[livello - 1] as unknown as Record<string, number | boolean | string>;
+  const numeri: VoceDettaglio['numeri'] = [];
+  for (const k of Object.keys(ora)) {
+    const campo = CAMPI_ARMA[k], v = ora[k];
+    if (campo && typeof v === 'number') numeri.push({ nome: campo.nome, valore: virgola(v) + (campo.unita ?? '') });
+  }
+  const info = INFO_AFFINITA[AFFINITA_ARMI[arma.id]], fatta = unita ? unioneDi(arma.id) : undefined;
+  const righe: Riga[] = [
+    { testo: fatta?.testo ?? String(arma.livelli[0].testo) },
+    { testo: `${info.verbo} il nemico: ${info.effetto()}`, simbolo: info.simbolo, colore: info.colore },
+  ];
+  if (unione && !fatta) righe.push({ testo: `Unione: ${unione.u.nome}, ${unione.stato.toLowerCase()}`, tono: 'reazione' });
+  return { chiave: arma.id, nome: fatta?.nome ?? arma.nome, icona: fatta ? iconaUnione(fatta.id) : arma.icona, livello, massimo: CARTE.livelloMassimo, unita: !!fatta, numeri, righe };
+}
+
+/** Dettaglio di un dono al suo livello. */
+export function voceDono(q: Passivo, livello: number): VoceDettaglio {
+  return { chiave: q.id, nome: q.nome, icona: q.icona, livello, massimo: q.massimo, unita: false, numeri: DATI_DONI[q.id](q, livello), righe: [{ testo: SPIEGA_DONI[q.id] }] };
 }
 
 const tagLivello = (l: number, massimo: number, nuovo: string): string => (l === 1 ? nuovo : `Liv ${l - 1} › ${l === massimo ? 'MAX' : l}`);

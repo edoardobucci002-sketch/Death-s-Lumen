@@ -33,6 +33,7 @@ Parti della M8 già fatte:
 - Leggibilità del campo, solo visiva (4–5/11): lampo dei nemici, numeri del danno (limite di 15, ambra in tre casi, somma su élite, Seth e reazioni), nomi delle reazioni, simboli degli stati, cartiglio degli avvisi, orologio, personaggio sopra i nemici. Sul link di prova, non ancora sul link pubblico
 - **Fasce del telefono in verticale con il campo vero: fatte, verificate sul S25 il 6/11**, con i segnaposto dal codice. Sul link di prova e sull'APK di prova, non ancora sul link pubblico. Prossimi: pausa, scelta dei doni e menu
 - Laboratorio (LAB) sul link di prova (3/11)
+- **Pausa a schede (6/11)**: Build, Rosario, Stati, Opzioni, statistiche del personaggio, Unioni che si scoprono, conferma di Abbandona; sul link di prova e sull'APK di prova, da provare sul S25. LAB → Schermate → Pausa
 
 ### Oggetti rompibili (prova, 5/11)
 
@@ -80,6 +81,11 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
+| Pausa, misure: tutti i valori di `PAUSA` in `src/data/hud.ts`, schede alte 90 punti sul S25, finestra di conferma | GDD «La pausa»; decisioni 6/11 |
+| Statistiche nella Build, prima delle Unioni: posizione e quali mostrare (oggi 13) | GDD «La pausa» |
+| Unioni: «scoperta» = la prima volta che arma e dono stanno insieme; le strisce dei doni possono già nominare un'unione non ancora scoperta | GDD §8f; decisioni 6/11 |
+| Unioni: se la scoperta deve sostituire lo sblocco generale nella Cappella (10 minuti o 500 Cera), che oggi resta | GDD §8f; decisioni 6/11 |
+| Tremolio della luce: usa il generatore del caso a ogni tremolio anche a partita ferma, quindi la durata di una pausa cambia i numeri estratti dopo; da guardare prima del salvataggio della partita in corso | `Gioco.ts` (`attesaTremolio`) |
 | Rompibili: percentuali, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
 | Chiazze: olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s; armi di fuoco: Candela e Fuoco fatuo | GDD 8g |
 | Frammenti: 3 per un reliquiario, contatore fisso nell'HUD sì o no | GDD 8g |

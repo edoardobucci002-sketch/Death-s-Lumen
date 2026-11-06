@@ -402,19 +402,22 @@ for (const [nome, indirizzo, prova] of eventi) {
     if ((await voci()) !== iniziali) errori.push(`Indietro n. ${giro}: la cronologia è cambiata`);
     if (pag.url() === 'about:blank') { errori.push(`Indietro n. ${giro}: ha lasciato la pagina`); break; }
   }
-  // dentro la pausa chiude solo i sottopannelli
-  await pag.click('[data-azione="legenda"]');
-  await pag.waitForSelector('.legenda:not([hidden])', { timeout: 2000 }).catch(() => errori.push('Stati non si apre'));
+  // Abbandona chiede conferma: Indietro chiude solo la finestra, non cambia scheda e non riprende
+  await pag.click('[data-scheda="opzioni"]');
+  await pag.click('.pausa-pagina [data-azione="abbandona"]');
+  await pag.waitForSelector('.pausa-conferma:not([hidden])', { timeout: 2000 }).catch(() => errori.push('la conferma di Abbandona non si apre'));
   await indietro();
-  if (await pag.evaluate(() => !!document.querySelector('.legenda:not([hidden])'))) errori.push('Indietro non chiude Stati');
+  if (await pag.evaluate(() => !!document.querySelector('.pausa-conferma:not([hidden])'))) errori.push('Indietro non chiude la conferma');
   if (!(await pausaAperta())) errori.push('Indietro ha chiuso anche la pausa');
+  if (!(await pag.$('[data-scheda="opzioni"][aria-selected="true"]'))) errori.push('Indietro ha cambiato scheda');
   // la partita riparte solo dal pulsante
   await pag.click('[data-azione="riprendi"]');
   await pag.waitForTimeout(150);
   if (await pausaAperta()) errori.push('Riprendi non chiude la pausa');
   await indietro();
   // dalla pausa si abbandona: nel menu Indietro fa di nuovo quello del browser, e la voce non resta sul percorso
-  await pag.click('[data-azione="abbandona"]');
+  await pag.click('.pausa-pagina [data-azione="abbandona"]');
+  await pag.click('[data-azione="conferma-abbandona"]');
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Menu'), null, { timeout: 5000 }).catch(() => errori.push('il menu non arriva'));
   await pag.waitForTimeout(300);
   if (await pag.evaluate(() => history.state?.dlPartita === true)) errori.push('nel menu si è rimasti sulla voce della partita');
@@ -422,7 +425,7 @@ for (const [nome, indirizzo, prova] of eventi) {
   await pag.waitForTimeout(250);
   if (pag.url() !== 'about:blank') errori.push('dal menu Indietro non lascia la pagina');
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} Indietro nel browser: apre la pausa e basta, chiude Stati, cronologia ferma a ${iniziali} voci${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} Indietro nel browser: apre la pausa e basta, chiude la conferma, cronologia ferma a ${iniziali} voci${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 
@@ -606,6 +609,210 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   if ((await carte()) !== prime) errori.push('le carte sono cambiate');
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} pausa sopra la scelta (${nome}): stesse carte alla chiusura${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// La pausa, caso pieno (6 armi, 6 doni, 10 amuleti, unioni) su ogni scheda dei sei telefoni: niente fuori dallo schermo, ogni pulsante almeno 44 punti,
+// Riprendi lontano dal pulsante della pausa. Il LAB la prepara con labPausaPiena()
+{
+  const telefoni = [['iPhone SE', 375, 667, 2, 20], ['iPhone 13', 390, 844, 3, 47], ['iPhone 15 Pro Max', 430, 932, 3, 59], ['Galaxy S25', 360, 780, 3, 35], ['Pixel 7', 412, 915, 2.625, 40], ['Android piccolo', 360, 780, 2, 28]];
+  for (const [nome, width, height, deviceScaleFactor, sicura] of telefoni) {
+    const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor, isMobile: true, hasTouch: true });
+    const pag = await ctx.newPage();
+    const errori = [];
+    pag.on('pageerror', (e) => errori.push(e.message));
+    pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+    await pag.goto(`${url}?pg=becchino&sicura=${sicura}&automatico`);
+    await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+    await pag.waitForTimeout(300);
+    const pulsante = await pag.evaluate(() => document.querySelector('.hud-pausa-tasto').getBoundingClientRect().toJSON());
+    await pag.evaluate(() => window.__dl.scene.getScene('Gioco').labPausaPiena());
+    await pag.waitForTimeout(150);
+    for (const scheda of ['build', 'rosario', 'stati', 'opzioni']) {
+      await pag.evaluate((s) => document.querySelector(`[data-scheda="${s}"]`).click(), scheda);
+      await pag.waitForTimeout(60);
+      const d = await pag.evaluate((sicura) => {
+        const fuori = [], piccoli = [], W = innerWidth, H = innerHeight, p = document.querySelector('.pausa-pagina'), q = p.getBoundingClientRect();
+        const r = (e) => e.getBoundingClientRect();
+        for (const e of document.querySelectorAll('.hud-pausa button, .pausa-pagina *')) {
+          e.scrollIntoView({ block: 'nearest' });
+          const b = r(e);
+          if (!b.width) continue;
+          if (b.left < -0.5 || b.right > W + 0.5 || b.bottom > H + 0.5) fuori.push(e.className || e.tagName);
+          if (e.tagName === 'BUTTON' && (b.width < 43.9 || b.height < 43.9)) piccoli.push(`${e.className} ${Math.round(b.width)}×${Math.round(b.height)}`);
+        }
+        const testa = r(document.querySelector('.pausa-testa-riga')), rip = r(document.querySelector('[data-azione="riprendi"]')), sch = r(document.querySelector('.pausa-schede'));
+        const dati = r(document.querySelector('.pausa-dati'));
+        return { fuori, piccoli, larga: p.scrollWidth > p.clientWidth + 1, testa: testa.top, datiFuori: dati.right > W + 0.5, rip: rip.toJSON(), sch: sch.toJSON(), pagina: q.height, sicura };
+      }, sicura);
+      if (d.fuori.length) errori.push(`${scheda}: fuori dallo schermo ${[...new Set(d.fuori)].slice(0, 3).join(', ')}`);
+      if (d.piccoli.length) errori.push(`${scheda}: sotto i 44 punti ${[...new Set(d.piccoli)].slice(0, 3).join(', ')}`);
+      if (d.larga) errori.push(`${scheda}: la pagina sborda in larghezza`);
+      if (d.testa < sicura - 1) errori.push(`${scheda}: la striscia entra nell'area sicura`);
+      if (d.datiFuori) errori.push(`${scheda}: la striscia esce dallo schermo`);
+      if (d.rip.bottom > pulsante.top && d.rip.top < pulsante.bottom) errori.push(`${scheda}: Riprendi sta sul pulsante della pausa`);
+      if (d.sch.top > pulsante.top) errori.push(`${scheda}: le schede non coprono il pulsante della pausa`);
+      if (d.pagina < 150) errori.push(`${scheda}: pagina alta solo ${Math.round(d.pagina)} punti`);
+      if (nome === 'Galaxy S25') await pag.screenshot({ path: `prove/pausa-${scheda}.png` });
+    }
+    // la finestra di conferma: sta dentro lo schermo e i suoi pulsanti si toccano
+    await pag.evaluate(() => document.querySelector('.pausa-pagina [data-azione="abbandona"]').click());
+    await pag.waitForTimeout(60);
+    const c = await pag.evaluate(() => [...document.querySelectorAll('.pausa-conferma button')].map((e) => e.getBoundingClientRect().toJSON()));
+    for (const b of c) {
+      if (b.width < 43.9 || b.height < 43.9) errori.push(`conferma: pulsante ${Math.round(b.width)}×${Math.round(b.height)}`);
+      if (b.left < 0 || b.right > width || b.bottom > height) errori.push('conferma: pulsante fuori dallo schermo');
+    }
+    if (errori.length) falliti++;
+    console.log(`${errori.length ? '✗' : '✓'} pausa piena ${nome}: 4 schede${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+    await ctx.close();
+  }
+}
+
+// La pausa, comportamento: su quale scheda si apre, doppia pressione, tasti, carte aggiornate, conferma, scoperta delle unioni
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
+  await pag.addInitScript(() => localStorage.setItem('dl-salvataggio', JSON.stringify({ versione: 1, unioni: true, rosario: true })));
+  await pag.goto(`${url}?pg=lampionaio&sicura=35`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(300);
+  const aperta = () => pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])'));
+  const scheda = () => pag.evaluate(() => document.querySelector('[aria-selected="true"]')?.dataset.scheda);
+  const gioco = (f, a) => pag.evaluate(`(${f})(window.__dl.scene.getScene('Gioco'), ${JSON.stringify(a ?? null)})`);
+  // doppia pressione sul pulsante della pausa: il secondo tocco cade su una scheda
+  const b = await pag.evaluate(() => { const r = document.querySelector('.hud-pausa-tasto').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  await pag.touchscreen.tap(b.x, b.y);
+  await pag.waitForTimeout(120);
+  await pag.touchscreen.tap(b.x, b.y);
+  await pag.waitForTimeout(120);
+  if (!(await aperta())) errori.push('la doppia pressione fa ripartire la partita');
+  // tasti 1-2-3-4 e ultima scheda usata
+  await pag.keyboard.press('Digit3');
+  if ((await scheda()) !== 'stati') errori.push('il tasto 3 non apre Stati');
+  await pag.click('[data-azione="riprendi"]');
+  await pag.waitForTimeout(100);
+  await pag.keyboard.press('KeyP');
+  await pag.waitForTimeout(100);
+  if ((await scheda()) !== 'stati') errori.push('non riapre sull\'ultima scheda usata');
+  await pag.click('[data-azione="riprendi"]');
+  // Peccato: si apre sul Rosario
+  await gioco('(s) => s.labPausaPeccato()');
+  await pag.waitForTimeout(100);
+  if ((await scheda()) !== 'rosario') errori.push('in Peccato non si apre sul Rosario');
+  if (!(await pag.$('.pausa-segno'))) errori.push('manca il segno del Peccato sulla scheda');
+  await pag.click('[data-azione="riprendi"]');
+  await gioco('(s) => { for (const a of [...s.amuletiPosseduti]) s.labAmuleto(a, false); }');
+  // sopra il reliquiario: si apre sul Rosario, spegnere un amuleto aggiorna le carte, stesse carte e stesso caso
+  await gioco('(s) => { s.labAmuleto("specchioRotto", true); s.labAmuleto("sangueFreddo", false); s.labPausaSopra(true); }');
+  await pag.waitForTimeout(150);
+  if ((await scheda()) !== 'rosario') errori.push('sopra il reliquiario non si apre sul Rosario');
+  if (!(await pag.$eval('[data-azione="riprendi"]', (e) => e.getAttribute('aria-label')?.includes('Torna')))) errori.push('sopra una scelta il pulsante non dice «Torna alla scelta»');
+  const carte = () => pag.evaluate(() => [...document.querySelectorAll('.doni-carta')].map((c) => c.innerText));
+  const prima = await carte();
+  await pag.click('[data-amuleto="specchioRotto"]');
+  await pag.waitForTimeout(100);
+  if ((await gioco('(s) => s.graniUsati()')) !== 0) errori.push('l\'amuleto non si spegne dalla pausa');
+  await pag.click('[data-azione="riprendi"]');
+  await pag.waitForTimeout(100);
+  const dopo = await carte();
+  if (dopo.length !== prima.length || !dopo.some((c, i) => c !== prima[i])) errori.push('le carte non mostrano i grani nuovi');
+  if (dopo.some((c, i) => c.split('\n')[0] !== prima[i].split('\n')[0])) errori.push('le carte sono cambiate');
+  if (!(await gioco('(s) => { const c = s.caso.stato, r = s.doni.rimescolate; s.doni.aggiornaCarte(); return c === s.caso.stato && r === s.doni.rimescolate; }'))) errori.push('aggiornare le carte tira il caso o consuma rimescolate');
+  // il «?» della scelta apre Stati
+  await pag.click('.doni-aiuto');
+  await pag.waitForTimeout(100);
+  if (!(await aperta()) || (await scheda()) !== 'stati') errori.push('il «?» non apre Stati');
+  await pag.click('[data-azione="riprendi"]');
+  await gioco('(s) => s.doni.scegliPrima()');
+  await pag.waitForTimeout(100);
+  // la scoperta di un'unione resta nel salvataggio; prima di averla vista non si legge
+  await gioco('(s) => s.labPausa("build")');
+  await pag.waitForTimeout(100);
+  if (await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText.includes('Lanterna 1'))) errori.push('un\'unione non scoperta si vede');
+  await gioco('(s) => { s.riprendi(); s.passivi.stoppinoLungo = 1; s.dopoPassivo(); s.aggiornaBuild(); s.labPausa("build"); }');
+  await pag.waitForTimeout(100);
+  const salvate = await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).unioniScoperte);
+  if (!salvate?.includes('faroDeiMorti')) errori.push(`unione scoperta non salvata: ${salvate}`);
+  if (!(await pag.$('.pausa-unione.manca'))) errori.push('l\'unione scoperta non compare con «Manca»');
+  // i numeri della striscia e le statistiche sono quelli veri
+  const testa = await gioco('(s) => { s.uccisi = 7; s.frammenti = 2; s.labPausa("build"); return document.querySelector(".pausa-testa").innerText; }');
+  if (!testa.includes('Uccisi 7') || !testa.includes('Frammenti 2 di 3')) errori.push(`striscia: ${testa}`);
+  const statistiche = await pag.evaluate(() => [...document.querySelectorAll('.pausa-statistica')].map((e) => e.innerText.replace('\n', ' ')));
+  if (statistiche.length < 13 || statistiche.some((t) => /undefined|NaN/.test(t))) errori.push(`statistiche: ${statistiche}`);
+  // il dito sulla pagina non fa nascere il joystick; alla ripresa non resta movimento
+  await pag.mouse.move(180, 400);
+  await pag.mouse.down();
+  await pag.waitForTimeout(40);
+  if (!(await pag.evaluate(() => document.querySelector('.joystick').hidden))) errori.push('il joystick nasce sulla pausa');
+  await pag.mouse.up();
+  await pag.click('[data-azione="riprendi"]');
+  await pag.waitForTimeout(100);
+  await pag.mouse.move(100, 400);
+  await pag.mouse.down();
+  await pag.mouse.move(160, 400, { steps: 3 });
+  await pag.waitForTimeout(60);
+  await gioco('(s) => s.labPausa("build")'); // come il secondo dito o l'app in secondo piano: il primo dito resta giù
+  await pag.waitForTimeout(60);
+  await pag.mouse.move(100, 400, { steps: 2 });
+  await gioco('(s) => s.riprendi()');
+  await pag.waitForTimeout(150);
+  const fermo = await gioco('(s) => { const a = s.x; return new Promise((ok) => setTimeout(() => ok(Math.abs(s.x - a) < 0.01 && !s.comandi.dx && !s.comandi.dy), 200)); }');
+  if (!fermo) errori.push('alla ripresa resta del movimento');
+  await pag.mouse.up();
+  // prima partita: niente Rosario e niente Unioni
+  await gioco('(s) => s.labPausaPrima()');
+  await pag.waitForTimeout(100);
+  if (await pag.$('[data-scheda="rosario"]')) errori.push('la scheda Rosario si vede prima dello sblocco');
+  if (await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText.toLowerCase().includes('scoperte'))) errori.push('le Unioni si vedono prima dello sblocco');
+  // conferma: Esc non serve sul telefono, Annulla la chiude; la finestra sta sopra e Abbandona non è dove stava
+  await pag.click('[data-scheda="opzioni"]');
+  const abbandona = await pag.evaluate(() => document.querySelector('.pausa-pagina [data-azione="abbandona"]').getBoundingClientRect().toJSON());
+  await pag.click('.pausa-pagina [data-azione="abbandona"]');
+  await pag.waitForTimeout(80);
+  const conferma = await pag.evaluate(() => document.querySelector('[data-azione="conferma-abbandona"]').getBoundingClientRect().toJSON());
+  if (conferma.top < abbandona.bottom && conferma.bottom > abbandona.top) errori.push('il secondo tocco cade sul pulsante di conferma');
+  await pag.screenshot({ path: 'prove/pausa-conferma.png' });
+  await pag.click('[data-azione="annulla"]');
+  if (await pag.evaluate(() => !!document.querySelector('.pausa-conferma:not([hidden])'))) errori.push('Annulla non chiude la conferma');
+  if (!(await aperta())) errori.push('Annulla ha chiuso la pausa');
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} pausa, comportamento: schede, doppia pressione, carte, unioni, joystick, conferma${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// La pausa su computer e tablet: schede in colonna a sinistra, pagina a destra; Esc chiude solo la conferma
+for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['tablet orizzontale', { width: 1180, height: 820 }], ['tablet verticale', { width: 744, height: 1133 }]]) {
+  const ctx = await browser.newContext({ viewport });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?pg=lampionaio&automatico`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(300);
+  await pag.evaluate(() => window.__dl.scene.getScene('Gioco').labPausaPiena());
+  await pag.waitForTimeout(150);
+  const d = await pag.evaluate(() => {
+    const r = (q) => document.querySelector(q).getBoundingClientRect().toJSON();
+    return { schede: r('.pausa-schede'), pagina: r('.pausa-pagina'), rip: r('[data-azione="riprendi"]'), quadro: r('.pausa-quadro'), W: innerWidth, H: innerHeight };
+  });
+  if (d.schede.right > d.pagina.left + 1 || d.schede.height < 100) errori.push('le schede non sono una colonna a sinistra');
+  if (d.quadro.left < 0 || d.quadro.right > d.W || d.quadro.top < 0 || d.quadro.bottom > d.H) errori.push('il quadro esce dallo schermo');
+  if (d.rip.right > d.pagina.left + 1 || d.rip.left < d.quadro.left - 1) errori.push('Riprendi esce dalla sua colonna');
+  const piccoli = await pag.evaluate(() => [...document.querySelectorAll('.hud-pausa button')].map((e) => e.getBoundingClientRect()).filter((b) => b.width && (b.width < 43.9 || b.height < 43.9)).length);
+  if (piccoli) errori.push(`${piccoli} pulsanti sotto i 44 punti`);
+  await pag.screenshot({ path: `prove/pausa-${nome.replace(' ', '-')}.png` });
+  await pag.keyboard.press('Digit4');
+  await pag.click('.pausa-pagina [data-azione="abbandona"]');
+  await pag.keyboard.press('Escape');
+  await pag.waitForTimeout(80);
+  if (await pag.evaluate(() => !!document.querySelector('.pausa-conferma:not([hidden])'))) errori.push('Esc non chiude la conferma');
+  if (!(await pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])')))) errori.push('Esc ha chiuso anche la pausa');
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} pausa su ${nome}: colonna a sinistra${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

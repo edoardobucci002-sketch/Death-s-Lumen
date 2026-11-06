@@ -65,11 +65,9 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 .hud-rosario { white-space: nowrap; font-family: var(--f-pixel); font-weight: 700; color: #c9d6e8; text-shadow: 0 2px 0 #000; }
 .hud-rosario.peccato { color: #ff7a5c; }
 .hud-casella.spento, .hud-icona.spento { filter: grayscale(1) brightness(0.55); }
-.hud-amuleto { cursor: pointer; }
 /* fasce del telefono: sotto pulsanti e HUD, i tocchi le attraversano e il joystick può nascerci sopra */
 #interfaccia > .hud-fascia { position: fixed; z-index: 0; overflow: hidden; pointer-events: none; }
 .hud-peccato { pointer-events: none; }
-.hud-sintesi { text-align: center; white-space: nowrap; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 0 2px 0 #000; }
 .hud-casella, .hud-icona, .hud-tasto { position: absolute; }
 /* casella in partita: riquadro scuro con il bordo bronzo delle cornici di Edoardo (spessore messo dal codice) */
 .hud-casella { box-sizing: border-box; border: 0 solid #8a5a32; background: #1b1514; }
@@ -136,15 +134,88 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 @media (hover: none) { .doni-tasto { display: none; } }
 .doni-aiuto { position: absolute; padding: 0; background: #1a1410; border: 2px solid var(--accento); color: var(--accento); font-family: var(--f-pixel); line-height: 1; cursor: pointer; }
 
-/* Legenda di stati e reazioni (src/sistema/legenda.ts) */
-#interfaccia > .legenda { position: fixed; inset: 0; z-index: 7; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: safe center; gap: 8px; padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 12px); background-color: #050403; color: var(--pergamena); font-family: var(--f-testo); font-size: 17px; line-height: 1.2; }
-.legenda h2 { margin: 8px 0 0; font: 400 24px var(--f-titolo); color: var(--accento); }
-.legenda p { margin: 0; max-width: 460px; text-align: center; color: var(--tenue); }
-.legenda-voce { width: 100%; max-width: 460px; min-width: 0; display: flex; align-items: center; gap: 10px; }
-.legenda-voce .arte { position: static; flex: none; }
-.legenda-voce span { min-width: 0; }
-.legenda-voce b { font-weight: 400; font-family: var(--f-pixel); font-size: 1.2em; }
-.legenda-chiudi { min-width: 160px; min-height: 44px; margin-top: 8px; background: #1a1410; border: 2px solid var(--accento); color: var(--accento); font: 400 20px var(--f-pixel); cursor: pointer; }
+/* Pausa (src/sistema/pausa.ts): misure in pixel di gioco interi; --u è un pixel disegnato. Cornici e schede dal CSS finché Edoardo non le ridisegna */
+#interfaccia .hud-pausa { user-select: none; }
+.pausa-quadro { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; min-width: 0; }
+.pausa-testa { grid-row: 1; }
+.pausa-attesa { grid-row: 2; }
+.pausa-pagina { grid-row: 3; }
+.pausa-riprendi { grid-row: 4; }
+.pausa-schede { grid-row: 5; }
+.pausa-quadro.larga { grid-template-columns: var(--colonna) minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; border: var(--u) solid #8a5a32; background: var(--pannello); }
+.pausa-quadro.larga .pausa-testa, .pausa-quadro.larga .pausa-attesa { grid-column: 1 / -1; }
+.pausa-quadro.larga .pausa-pagina { grid-column: 2; grid-row: 3 / 5; border-left: var(--u) solid #3a2f24; }
+.pausa-quadro.larga .pausa-schede { grid-column: 1; grid-row: 3; grid-auto-flow: row; grid-auto-rows: var(--scheda); align-content: start; border-top: 0; }
+.pausa-quadro.larga .pausa-riprendi { grid-column: 1; grid-row: 4; overflow: hidden; }
+.pausa-quadro.larga .pausa-scheda { border-top: 0; border-left: calc(var(--u) * 2) solid transparent; }
+.pausa-quadro.larga .pausa-scheda[aria-selected='true'] { border-left-color: var(--accento); }
+.pausa-testa { display: grid; gap: var(--u); padding: calc(var(--u) * 3) calc(var(--u) * 6); background: var(--pannello); border-bottom: var(--u) solid #3a2f24; min-width: 0; }
+.pausa-testa-riga { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-width: 0; }
+.pausa-tempo, .pausa-dato, .pausa-conto, .pausa-stato, .pausa-sotto, .pausa-numero, .pausa-valore, .pausa-attesa, .pausa-livello, .pausa-statistica, .pausa-interruttore, .pausa-possibile { font-family: var(--f-pixel); font-size: var(--pixel-font); line-height: 1; }
+.pausa-tempo { color: var(--pergamena); white-space: nowrap; }
+.pausa-dati { display: flex; flex-wrap: wrap; gap: 2px 14px; min-width: 0; }
+.pausa-dato { white-space: nowrap; color: var(--pergamena); }
+.pausa-dato.anime { color: #9fe3dc; }
+.pausa-dato.cera { color: #f2cf6a; }
+.pausa-dato.rosario { color: #c9d6e8; }
+.pausa-dato.male { color: #ff7a5c; }
+.pausa-attesa { padding: var(--u) calc(var(--u) * 6); color: #15110d; background: #dcc07a; }
+.pausa-pagina { box-sizing: border-box; min-height: 0; min-width: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; display: flex; flex-direction: column; gap: calc(var(--u) * 4); padding: calc(var(--u) * 6); background: var(--sfondo); color: var(--pergamena); font-size: 17px; line-height: 1.2; }
+.pausa-pagina > * { flex: none; min-width: 0; }
+.pausa-scritta { display: block; flex: none; image-rendering: pixelated; pointer-events: none; }
+.pausa-sezione { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pausa-conto { color: var(--tenue); white-space: nowrap; }
+.pausa-griglia { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.pausa-cella { position: relative; padding: 0; border: 0; background: none; display: grid; place-items: center; min-width: 0; }
+.pausa-cornice { position: relative; box-sizing: border-box; border: var(--px) solid #8a5a32; background: #1b1514; }
+.pausa-cella.vuota .pausa-cornice { border-style: dashed; border-color: #3a2f24; background: none; }
+.pausa-cella.unita .pausa-cornice { border-color: #ffe08a; }
+.pausa-cella[aria-pressed='true'] .pausa-cornice { border-color: var(--accento); background: #2c1f12; }
+.pausa-livello { position: absolute; right: 0; bottom: 0; color: var(--pergamena); text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px 0 #000; }
+.pausa-dettaglio { box-sizing: border-box; display: flex; flex-direction: column; gap: 3px; padding: calc(var(--u) * 4) calc(var(--u) * 5); background: var(--pannello); border: var(--px) solid #3a2f24; }
+.pausa-sotto { color: var(--tenue); }
+.pausa-numeri { display: flex; flex-wrap: wrap; gap: 0 12px; }
+.pausa-numero { display: flex; gap: 4px; color: var(--tenue); }
+.pausa-valore { color: var(--pergamena); }
+.pausa-riga { display: block; color: var(--pergamena); }
+.pausa-riga.bene { color: #8fe388; }
+.pausa-riga.male { color: #ff7a66; }
+.pausa-riga.reazione { color: #ffe08a; }
+.pausa-simbolo { position: static; display: inline-block; flex: none; vertical-align: text-bottom; margin-right: 0.25em; }
+.pausa-vuoto { color: var(--tenue); }
+.pausa-unione { display: flex; align-items: flex-start; gap: calc(var(--u) * 3); padding: calc(var(--u) * 3) calc(var(--u) * 4); background: var(--pannello); border-left: calc(var(--u) * 2) solid #3a2f24; }
+.pausa-unione.pronta { border-left-color: #ffe08a; }
+.pausa-unione.unita { border-left-color: var(--accento); }
+.pausa-unione-testo, .pausa-amuleto-testo { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.pausa-stato { flex: none; color: var(--tenue); }
+.pausa-unione.pronta .pausa-stato { color: #ffe08a; }
+.pausa-statistiche { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px calc(var(--u) * 8); }
+.pausa-statistica { display: flex; justify-content: space-between; gap: 8px; color: var(--tenue); white-space: nowrap; }
+.pausa-grani { display: flex; align-items: center; gap: calc(var(--u) * 2); }
+.pausa-grano { background: #1f1913; box-shadow: inset 0 0 0 var(--px) #3a2f24; }
+.pausa-grano.pieno { background: #dcc07a; box-shadow: none; }
+.pausa-grano.troppo { background: #ff7a5c; box-shadow: none; }
+.pausa-grani .pausa-conto { margin-left: calc(var(--u) * 2); color: var(--pergamena); }
+.pausa-peccato { padding: calc(var(--u) * 3) calc(var(--u) * 5); color: var(--pergamena); background: #3a120e; border: var(--u) solid #ff7a5c; }
+.pausa-amuleto { display: flex; align-items: center; gap: calc(var(--u) * 3); width: 100%; min-height: 44px; padding: calc(var(--u) * 3) calc(var(--u) * 4); text-align: left; color: var(--pergamena); background: var(--pannello); border: var(--px) solid #3a2f24; font: inherit; }
+.pausa-amuleto[aria-pressed='true'] { border-color: #8a5a32; }
+.pausa-amuleto[aria-pressed='false'] .arte { filter: grayscale(1) brightness(0.55); }
+.pausa-interruttore { flex: none; width: 58px; padding: 4px 0; text-align: center; color: var(--tenue); border: var(--u) solid #3a2f24; }
+.pausa-amuleto[aria-pressed='true'] .pausa-interruttore { color: #dcc07a; border-color: #dcc07a; }
+.pausa-voce { display: flex; align-items: flex-start; gap: calc(var(--u) * 3); }
+.pausa-voce > div { min-width: 0; display: grid; gap: 2px; }
+.pausa-voce.spenta .pausa-riga { color: var(--tenue); }
+.pausa-titolo-voce { display: flex; align-items: center; gap: 8px; }
+.pausa-possibile { padding: 0 4px; color: #8fe388; border: var(--px) solid #8fe388; }
+.pausa-opzioni { position: relative; }
+.pausa-riprendi { position: relative; min-width: 0; background: var(--pannello); }
+.pausa-schede { box-sizing: border-box; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); background: var(--pannello); border-top: var(--u) solid #3a2f24; }
+.pausa-scheda { position: relative; min-height: 44px; padding: 0; border: 0; border-top: calc(var(--u) * 2) solid transparent; background: none; display: grid; place-items: center; }
+.pausa-scheda[aria-selected='true'] { border-top-color: var(--accento); background: #1f1913; }
+.pausa-segno { position: absolute; top: 8px; right: 8px; width: calc(var(--u) * 4); height: calc(var(--u) * 4); background: #ff7a5c; }
+.pausa-conferma { position: absolute; inset: 0; z-index: 1; background-repeat: repeat; image-rendering: pixelated; }
+.pausa-conferma-riquadro { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; background: var(--pannello); border: var(--u) solid var(--accento); }
+.pausa-conferma-testo { font-size: 17px; line-height: 1.2; color: var(--pergamena); }
 .doni-rimescola:disabled { filter: grayscale(1) brightness(0.6); cursor: default; }
 
 /* Abilità speciale (src/sistema/speciale.ts): anello disegnato, si colora durante la ricarica */

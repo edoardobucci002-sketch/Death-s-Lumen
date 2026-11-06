@@ -98,6 +98,27 @@ export const AREA_SICURA = { assestamento: 1.5 };
  */
 export const TACCHE = { lato: 4, raggio: 31, arco: 150, lampo: 0.25, colori: { accesa: '#e3913a', scura: '#2a1f17', lampo: '#fff2c8', bordo: '#000000' } };
 
+/**
+ * La pausa: striscia in alto, pagina che scorre, Riprendi, schede. Misure in pixel disegnati (sul Galaxy S25 uno vale
+ * 2 pixel di gioco, cioè 1,33 punti), salvo dove è scritto «punti». Tutto da rivedere; la tabella per ridisegnarla è in docs/asset_da_creare.md.
+ */
+export const PAUSA = {
+  margine: 6, // tra le parti e dai bordi dello schermo
+  casellaAlta: 34, // altezza della riga di caselle: sale da sola se sarebbe sotto TOCCO_MINIMO
+  casella: 28, // lato della cornice di un'arma o di un dono
+  casellaPunti: 42, // punti: la cornice si ingrandisce finché resta sotto questa misura
+  dettaglio: 84, // altezza minima del riquadro di dettaglio
+  schedaAlta: 42, // altezza minima delle schede
+  stacco: 4, // tra il pulsante della pausa e il bordo alto delle schede: Riprendi sta sopra, così il secondo tocco di una doppia pressione cade su una scheda
+  lettera: 2, // punti per pixel di lettera: voci, schede, nomi
+  letteraTitolo: 3, // punti per pixel di lettera: il titolo «Pausa»
+  grano: 6, // lato di un grano del Rosario
+  larghezzaMassima: 680, // punti: computer e tablet
+  altezzaMassima: 660, // punti: computer e tablet
+  retino: 12, // quanto è scuro il fondo (0-16), come nella schermata di fine
+  retinoConferma: 14, // il fondo della finestra di conferma di Abbandona
+};
+
 /** Pulsante della pausa al centro della fascia bassa: più piccolo, per lasciare posto al joystick. Da rivedere. */
 export const PAUSA_PICCOLA = { lato: 34, margineTocco: 0 }; // punti di area di tocco invisibile: nessuna, per non premerla per sbaglio
 /** Misura minima di un pulsante da toccare, in punti: se il disegno è più piccolo si ingrandisce di un numero intero di volte. */
