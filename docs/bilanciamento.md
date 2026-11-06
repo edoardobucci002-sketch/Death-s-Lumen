@@ -44,7 +44,7 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 Scelta di Edoardo. I numeri dentro la notte non cambiano: cambia quando un giocatore arriva alle Unioni, che ora sono un premio di fine percorso. Simulazione a Cappella vuota, dove le Unioni sono spente: 12 notti, 3 per personaggio, campione minimo e buono solo come controllo. Vince 1 notte su 12 (Lampionaio); le altre finiscono tra 6:42 e 10:48. Livello medio 57, da 28 a 75. Seth del minuto 5 ucciso in 11 notti su 12; nessun personaggio muore sempre prima del minuto 5. Lo scarto dall'obiettivo sul Lampionaio (1/3) è rumore di un campione così piccolo.
 
-La simulazione a metà Cappella considera le Unioni sbloccate: ora può non essere vero per chi non ha ancora 3 veglie vinte. Non cambiato, da riguardare con il bilanciamento finale.
+La simulazione a metà Cappella considera le Unioni sbloccate: ora può non essere vero per chi non ha ancora 3 veglie vinte. Resta così fino al bilanciamento finale (confermato da Edoardo il 6/11).
 
 ### 5/11 — Fotogrammi: `prova` contro `main` (nessun numero di gioco cambia)
 

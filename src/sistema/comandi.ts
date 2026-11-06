@@ -99,7 +99,7 @@ export class Comandi {
   };
 
   private appoggia = (e: PointerEvent): void => {
-    if (this.dito !== null || (e.target as Element).closest('button, .hud-pausa')) return; // nella pausa il dito scorre le pagine, non cammina
+    if (this.dito !== null || (e.target as Element).closest('button, .hud-pausa, .rivelazione')) return; // nella pausa il dito scorre le pagine, non cammina
     this.dito = e.pointerId;
     this.ox = e.clientX;
     this.oy = e.clientY;

@@ -101,8 +101,8 @@ export const SPIEGA_DONI: Record<IdDono, string> = {
 export const segnoPercento = (v: number): string => (Math.abs(v) < 0.0005 ? '0%' : v > 0 ? `+${percento(v)}` : `−${percento(-v)}`);
 
 /** Nella pausa c'è spazio per parole più chiare di quelle corte delle strisce. Da rivedere. */
-export const NOMI_CHIARI: Record<string, string> = { Ricarica: 'Attesa tra i colpi', Quantità: 'Colpi per volta', Durata: 'Durata zone e stati' };
-export const NOME_COLPI_IN_PIU = 'Colpi in più'; // la Quantità come bonus: Specchio e Specchio rotto
+export const NOMI_CHIARI: Record<string, string> = { Ricarica: 'Attesa colpi', Quantità: 'Colpi', Durata: 'Durata zone' };
+export const NOME_COLPI_IN_PIU = 'Colpi extra'; // la Quantità come bonus: Specchio e Specchio rotto
 export const chiaro = (nome: string): string => NOMI_CHIARI[nome] ?? nome;
 
 export const AFFINITA_TUTTE = Object.keys(INFO_AFFINITA) as IdAffinita[];

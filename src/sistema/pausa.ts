@@ -335,7 +335,7 @@ export class Pausa {
     const u = d.unioni;
     if (!u) return [];
     const conto = this.sezione('Unioni', `${u.scoperte} di ${u.totali} scoperte`);
-    if (!u.voci.length) return [conto, div('pausa-vuoto', 'Tieni insieme un\'arma e il suo dono per scoprire la loro Unione.')];
+    if (!u.voci.length) return [conto, div('pausa-vuoto', 'Porta un\'arma e il suo dono al massimo per scoprire la loro Unione.')];
     return [conto, ...u.voci.map((v) => {
       const im = immagine(v.icona, 'pausa-simbolo');
       misura(im, 24, 24, this.z, this.m!);

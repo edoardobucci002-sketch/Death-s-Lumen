@@ -39,6 +39,7 @@ import { Doni, type Dono } from '../sistema/doni';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Hud, tempo, type VoceBuild } from '../sistema/hud';
 import type { DatiPausa, SchedaPausa, VoceUnione } from '../sistema/pausa';
+import { Rivelazione } from '../sistema/rivelazione';
 import { voceArma, voceDono } from '../sistema/scheda';
 import { vibra } from '../sistema/mobile';
 import { CALAMITA, CERA_GOCCIA, FRAMMENTO, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
@@ -101,6 +102,7 @@ export class Gioco extends Phaser.Scene {
   private alone!: Phaser.GameObjects.Image;
   private effetti!: Effetti;
   private doni!: Doni;
+  private rivelazione!: Rivelazione; // l'animazione della scoperta di un'Unione
   private raccolta = 0;
   private rigenerazione = 0;
   private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
@@ -274,17 +276,21 @@ export class Gioco extends Phaser.Scene {
     // altezza vera del personaggio: dalla riga più alta a quella più bassa usate nei fotogrammi
     const fotogrammi = (this.cache.json.get(this.chiaveSprite) as { frames: { spriteSourceSize: { y: number; h: number } }[] }).frames;
     this.hud.impostaPersonaggio((Math.max(...fotogrammi.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h)) - Math.min(...fotogrammi.map((f) => f.spriteSourceSize.y))) * this.giocatore.scaleY);
+    this.rivelazione = new Rivelazione(interfaccia, () => {
+      this.doni.sospesa = this.pausa;
+      if (!this.fermo()) this.anims.resumeAll();
+    });
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate, scoperte: this.unioniScoperte }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
-      if (this.finito || this.pausa || this.doni.aperta) return false;
+      if (this.finito || this.fermo()) return false;
       this.arsenale.abilita(ABILITA[this.pg.abilita]);
       suona('speciale');
       vibra('media');
       return true;
     });
     this.fiaschetta = new Fiaschetta(interfaccia, `Speciale_${this.pg.nome.replace(/ /g, '_')}`, () => {
-      if (this.finito || this.pausa || this.doni.aperta || this.salute >= this.saluteMassima || this.ha('pattoDiSangue')) return false;
+      if (this.finito || this.fermo() || this.salute >= this.saluteMassima || this.ha('pattoDiSangue')) return false;
       suona('cura');
       vibra('leggera');
       this.sim?.bevuto();
@@ -310,6 +316,7 @@ export class Gioco extends Phaser.Scene {
       this.comandi.distruggi();
       this.hud.distruggi();
       this.doni.distruggi();
+      this.rivelazione.distruggi();
       this.speciale.distruggi();
       this.fiaschetta.distruggi();
       this.anims.resumeAll();
@@ -347,7 +354,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Il gioco è fermo: pausa o scelta del dono. */
   private fermo(): boolean {
-    return this.pausa || this.doni.aperta || this.pausaLab;
+    return this.pausa || this.doni.aperta || this.pausaLab || this.rivelazione.attiva;
   }
 
   /** Un passo di logica: niente disegno qui. */
@@ -789,6 +796,7 @@ export class Gioco extends Phaser.Scene {
   labUnione(id: IdUnione, unisci: boolean): void {
     const u = UNIONI.find((x) => x.id === id)!;
     this.unioniSbloccate = this.scoperteDiProva = true;
+    this.unioniScoperte.add(u.id); // qui non si vuole l'animazione: la mostra LAB → Schermate
     const arma = this.armaDi(u.arma) ?? ARMI_COMUNI.find((a) => a.id === u.arma) ?? Object.values(ARMI_INIZIALI).find((a) => a.id === u.arma)!;
     this.labArma(arma, CARTE.livelloMassimo);
     this.labDono(u.dono, Math.max(this.passivi[u.dono], livelloDonoUnione(u.dono)));
@@ -1015,6 +1023,7 @@ export class Gioco extends Phaser.Scene {
 
   private apriPausa(scheda?: SchedaPausa): void {
     if (this.finito || this.pausa) return;
+    this.rivelazione.salta();
     this.pausa = true;
     this.doni.sospesa = true;
     this.anims.pauseAll();
@@ -1123,15 +1132,31 @@ export class Gioco extends Phaser.Scene {
     this.scopriUnioni();
   }
 
-  /** Un'unione si scopre la prima volta che arma e dono stanno insieme nella build: da allora compare nella pausa, anche nelle notti dopo. */
+  /** Un'unione si scopre quando arma e dono arrivano ai livelli che servono: la partita si ferma per l'animazione e da allora la si nomina, anche nelle notti dopo. */
   private scopriUnioni(): void {
-    if (!this.unioniSbloccate) return;
-    const nuove = UNIONI.filter((u) => !this.unioniScoperte.has(u.id) && this.armaDi(u.arma) && this.passivi[u.dono] > 0);
+    const nuove = this.unioniPronte().filter((u) => !this.unioniScoperte.has(u.id));
     if (!nuove.length) return;
     for (const u of nuove) this.unioniScoperte.add(u.id);
     if (this.sim) return;
-    this.hud.avviso('Unione scoperta', nuove[0].nome);
+    if (this.automatico) this.hud.avviso('Unione scoperta', nuove[0].nome);
+    else for (const u of nuove) this.mostraScoperta(u);
     this.salvaUnioni();
+  }
+
+  /** L'animazione della scoperta: ferma la partita finché dura. */
+  private mostraScoperta(u: Unione): void {
+    this.anims.pauseAll();
+    this.comandi.lascia();
+    this.doni.sospesa = true; // sotto può esserci una scelta: i tasti non devono sceglierla
+    suona('reliquiario');
+    vibra('media');
+    const armi = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
+    this.rivelazione.mostra({ nome: u.nome, ricetta: this.ricettaUnione(u), arma: armi.find((a) => a.id === u.arma)!.icona, dono: PASSIVI.find((q) => q.id === u.dono)!.icona, unione: iconaUnione(u.id) });
+  }
+
+  /** Dal Laboratorio: rivede l'animazione, senza toccare scoperte né salvataggio. */
+  labScoperta(): void {
+    this.mostraScoperta(UNIONI.find((u) => u.arma === this.pg.armaIniziale) ?? UNIONI[0]);
   }
 
   /** Scoperte e unite restano sul dispositivo; le prove con il Laboratorio e il bot non contano. */

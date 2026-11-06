@@ -119,6 +119,26 @@ export const PAUSA = {
   retinoConferma: 14, // il fondo della finestra di conferma di Abbandona
 };
 
+/**
+ * La scoperta di un'Unione (rivelazione.ts): tempi in secondi, misure in punti salvo dove è scritto. Da rivedere: è il segnaposto
+ * dal codice dell'animazione che Edoardo vuole fatta apposta.
+ */
+export const RIVELAZIONE = {
+  entrata: 0.45, // il fondo si scurisce, arma e dono ai lati
+  avvicina: 0.65, // arma e dono si avvicinano
+  lampo: 0.35, // il lampo si allarga e si spegne
+  resta: 3, // l'Unione resta sullo schermo; un tocco la chiude prima
+  passi: 8, // gli scatti del movimento e del lampo
+  gradini: 3, // gli scatti del fondo
+  fondoDa: 8, fondoA: 15, // quanto è scuro il fondo (0-16), dall'inizio alla fine
+  iconaPunti: 64, // grandezza massima delle icone di arma e dono
+  unioneInPiu: 2, // l'Unione è più grande di tanti ingrandimenti
+  allargaLampo: 2, // il lampo diventa grande tante volte l'icona, oltre alla sua misura
+  sopraCentro: 90, // il centro dell'animazione sta così sopra il centro dello schermo
+  sottoIcona: 20, // dove iniziano le scritte, sotto il centro dello schermo
+  lettera: 2, // punti per pixel di lettera
+};
+
 /** Pulsante della pausa al centro della fascia bassa: più piccolo, per lasciare posto al joystick. Da rivedere. */
 export const PAUSA_PICCOLA = { lato: 34, margineTocco: 0 }; // punti di area di tocco invisibile: nessuna, per non premerla per sbaglio
 /** Misura minima di un pulsante da toccare, in punti: se il disegno è più piccolo si ingrandisce di un numero intero di volte. */

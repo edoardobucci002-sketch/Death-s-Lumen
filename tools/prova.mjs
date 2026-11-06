@@ -643,10 +643,21 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
         }
         const testa = r(document.querySelector('.pausa-testa-riga')), rip = r(document.querySelector('[data-azione="riprendi"]')), sch = r(document.querySelector('.pausa-schede'));
         const dati = r(document.querySelector('.pausa-dati'));
-        return { fuori, piccoli, larga: p.scrollWidth > p.clientWidth + 1, testa: testa.top, datiFuori: dati.right > W + 0.5, rip: rip.toJSON(), sch: sch.toJSON(), pagina: q.height, sicura };
+        // anche con numeri molto più grandi, nome e valore delle statistiche non si toccano
+        const strette = [];
+        for (const s of document.querySelectorAll('.pausa-statistica')) {
+          const v = s.lastElementChild, prima = v.textContent;
+          v.textContent = '1234/1234';
+          const n = document.createRange();
+          n.selectNodeContents(s.firstElementChild);
+          if (n.getBoundingClientRect().right > r(v).left - 2 || s.firstElementChild.scrollWidth > s.firstElementChild.clientWidth) strette.push(s.firstElementChild.textContent);
+          v.textContent = prima;
+        }
+        return { strette, fuori, piccoli, larga: p.scrollWidth > p.clientWidth + 1, testa: testa.top, datiFuori: dati.right > W + 0.5, rip: rip.toJSON(), sch: sch.toJSON(), pagina: q.height, sicura };
       }, sicura);
       if (d.fuori.length) errori.push(`${scheda}: fuori dallo schermo ${[...new Set(d.fuori)].slice(0, 3).join(', ')}`);
       if (d.piccoli.length) errori.push(`${scheda}: sotto i 44 punti ${[...new Set(d.piccoli)].slice(0, 3).join(', ')}`);
+      if (d.strette.length) errori.push(`${scheda}: statistiche troppo vicine ai numeri: ${d.strette.join(', ')}`);
       if (d.larga) errori.push(`${scheda}: la pagina sborda in larghezza`);
       if (d.testa < sicura - 1) errori.push(`${scheda}: la striscia entra nell'area sicura`);
       if (d.datiFuori) errori.push(`${scheda}: la striscia esce dallo schermo`);
@@ -733,11 +744,34 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   await gioco('(s) => s.labPausa("build")');
   await pag.waitForTimeout(100);
   if (await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText.includes('Lanterna 1'))) errori.push('un\'unione non scoperta si vede');
-  await gioco('(s) => { s.riprendi(); s.passivi.stoppinoLungo = 1; s.dopoPassivo(); s.aggiornaBuild(); s.labPausa("build"); }');
+  // arma e dono insieme non bastano; ai livelli giusti parte l'animazione, la partita si ferma e poi riparte
+  await gioco('(s) => { s.riprendi(); s.passivi.stoppinoLungo = 1; s.dopoPassivo(); s.aggiornaBuild(); }');
+  if (await gioco('(s) => s.unioniScoperte.size')) errori.push('l\'unione si scopre prima dei livelli giusti');
+  await gioco('(s) => { s.labArma(s.arsenale.possedute[0].arma, 8); s.passivi.stoppinoLungo = 3; s.dopoPassivo(); s.aggiornaBuild(); }');
+  await pag.waitForTimeout(80);
+  if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('l\'animazione della scoperta non parte');
+  const t0 = await gioco('(s) => s.secondi');
+  await pag.waitForTimeout(300);
+  if ((await gioco('(s) => s.secondi')) !== t0) errori.push('la partita non si ferma durante l\'animazione');
+  await pag.mouse.click(180, 400); // troppo presto: un tocco non la chiude
+  if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('un tocco chiude l\'animazione prima che l\'Unione compaia');
+  await pag.waitForTimeout(1400);
+  await pag.screenshot({ path: 'prove/scoperta-unione.png' });
+  if (!(await pag.evaluate(() => document.querySelector('.rivelazione').innerText.includes('Lanterna 8 + Stoppino lungo 3')))) errori.push('l\'animazione non dice la ricetta');
+  await pag.mouse.click(180, 400);
+  await pag.waitForTimeout(150);
+  if (await pag.$('.rivelazione:not([hidden])')) errori.push('il tocco non chiude l\'animazione');
+  if ((await gioco('(s) => s.secondi')) === t0) errori.push('la partita non riparte dopo l\'animazione');
+  // la pausa salta l'animazione
+  await gioco('(s) => s.labScoperta()');
+  await gioco('(s) => s.indietro()');
+  await pag.waitForTimeout(80);
+  if (!(await aperta()) || (await pag.$('.rivelazione:not([hidden])'))) errori.push('la pausa non salta l\'animazione');
+  await gioco('(s) => s.labPausa("build")');
   await pag.waitForTimeout(100);
   const salvate = await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).unioniScoperte);
   if (!salvate?.includes('faroDeiMorti')) errori.push(`unione scoperta non salvata: ${salvate}`);
-  if (!(await pag.$('.pausa-unione.manca'))) errori.push('l\'unione scoperta non compare con «Manca»');
+  if (!(await pag.$('.pausa-unione.pronta'))) errori.push('l\'unione scoperta non compare con «Pronta»');
   // l'effetto si svela solo dopo aver unito: prima nome e ricetta; unita, resta in Stati per sempre
   const riga = { testoBuild: await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText) };
   if (riga.testoBuild.includes('L\'arco diventa')) errori.push('l\'effetto dell\'unione si legge prima di averla unita');
@@ -846,6 +880,8 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   });
   if ((await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta nomina un\'unione non scoperta');
   await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.passivi.stoppinoLungo = 1; s.aggiornaBuild(); });
+  if ((await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta nomina l\'unione con il dono al primo livello');
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.labArma(s.arsenale.possedute[0].arma, 8); s.passivi.stoppinoLungo = 3; s.aggiornaBuild(); });
   if (!(await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta non nomina l\'unione scoperta');
   // tre veglie vinte
   await pag.evaluate(() => { const v = JSON.parse(localStorage.getItem('dl-salvataggio')); v.unioni = false; v.vittorie = 2; localStorage.setItem('dl-salvataggio', JSON.stringify(v)); });

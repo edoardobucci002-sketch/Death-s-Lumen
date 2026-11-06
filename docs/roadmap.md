@@ -82,9 +82,9 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Unioni: «scoperta» = la prima volta che arma e dono stanno insieme nella build | GDD §8f; decisioni 6/11 |
-| Parole della pausa: Attesa tra i colpi, Colpi per volta, Colpi in più, Durata zone e stati; le strisce dei doni tengono quelle corte, che Edoardo non capiva | GDD «La pausa»; `NOMI_CHIARI` in `src/data/spiegazioni.ts` |
-| Simulazione a metà Cappella: dà le Unioni per sbloccate, ma ora servono 3 veglie vinte; da rivedere con il bilanciamento finale | bilanciamento 6/11 |
+| Scoperta di un'Unione: Edoardo ha detto «arma e dono al livello massimo», ma l'unione oggi chiede il dono al 3 (5 è il massimo di molti doni). Per ora vale il livello dell'unione: se deve servire il massimo vero, cambia anche quando l'unione è pronta | GDD §8f; `LIVELLO_DONO_UNIONE` |
+| Animazione della scoperta: segnaposto dal codice, tempi di `RIVELAZIONE`, disegni di Edoardo | GDD §8f; `asset_da_creare.md` |
+| Abbreviazioni della pausa: Attesa colpi, Colpi, Colpi extra, Durata zone | GDD «La pausa»; `NOMI_CHIARI` in `src/data/spiegazioni.ts` |
 | Rompibili: percentuali, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
 | Chiazze: olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s; armi di fuoco: Candela e Fuoco fatuo | GDD 8g |
 | Frammenti: 3 per un reliquiario, contatore fisso nell'HUD sì o no | GDD 8g |

@@ -375,6 +375,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         vai('Pausa', () => p?.labPausa()),
         vai('Scelta del dono', () => p?.labSceltaDono()),
         vai('Reliquiario', () => p?.labReliquiario()),
+        vai("Scoperta di un'Unione", () => p?.labScoperta()),
         vai("Fine: l'alba", () => p?.labEvento('vittoria')),
         vai('Fine: sconfitta', () => p?.labEvento('morte')),
       ),
