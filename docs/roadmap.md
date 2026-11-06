@@ -76,13 +76,27 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
 - Il CSS usa ancora IM Fell English SC per alcuni titoli (`--f-titolo`: avviso, titolo della scelta dei doni, pannelli, nastri); i titoli decisi sono in Tiny5.
 - Disegnare gli asset elencati in [asset_da_creare.md](asset_da_creare.md).
 
+## Mosaici e Vetrate (si riprende più avanti)
+
+Soggetti approvati da Edoardo il 7/11, per il mondo del cimitero, dal meno importante alle rivelazioni. Si sbloccano solo dopo la prima alba vinta.
+
+| # | Soggetto | Cosa racconta | Stato |
+| --- | --- | --- | --- |
+| 1 | La Veglia | cimitero, mani, fiamma: il Lumen è la luce da custodire | disegnato, nel gioco |
+| 2 | L'Ultima Cappella | candele accese nel buio e un Ceraiolo di spalle: resta un solo luogo acceso | da creare |
+| 3 | Il Risveglio | una tomba aperta e un morto con una fiamma nel petto: il Lumen non si spegne più | da creare |
+| 4 | Le Due Mani | chi abbraccia un morto e chi gli porta una lanterna: il Rinnovo contro la Ricaduta | da creare |
+| 5 | La Morte Rinnovata | la falce e una corona di Lumen corrotto: chi è davvero Seth | da creare |
+
+Da costruire: le **Vetrate** nella Cappella (collezione sempre visibile, con un testo breve da epitaffio per ogni mosaico), il passaggio al mosaico successivo, ciò che ogni mosaico sblocca la prima volta e la ricompensa quando se ne ricompleta uno già trovato.
+
 ## Da confermare
 
 Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da Claude e non ancora confermati da Edoardo. Quando Edoardo ne conferma una, si toglie da qui e dall'etichetta nel testo.
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Mosaici: disegno V1, probabilità dell'urna (8%), raggio di raccolta 40 px. Da decidere il Bagliore (quale buff, a tempo o fino a fine notte), i 5 soggetti e il sostituto del reliquiario; Vetrate da costruire | `docs/asset_da_creare.md`, `docs/GDD.md` |
+| Mosaici: disegno V1, probabilità dell'urna (8%, stima da misurare), numeri del Bagliore (20 s, +30% velocità, luce × 1,5), raggio di raccolta 40 px | `docs/asset_da_creare.md`, `docs/GDD.md` |
 | Scoperta di un'Unione: Edoardo ha detto «arma e dono al livello massimo», ma l'unione oggi chiede il dono al 3 (5 è il massimo di molti doni). Rimandato al bilanciamento finale (6/11): per ora vale il livello dell'unione | GDD §8f; `LIVELLO_DONO_UNIONE` |
 | Animazione della scoperta: segnaposto dal codice; Edoardo la vuole semplice ma con la «scarica di dopamina» dell'evoluzione di un Pokémon; durata da decidere quando ci sarà quella vera; tela e fotogrammi da definire | GDD §8f; `asset_da_creare.md` |
 | Abbreviazioni della pausa: Attesa colpi, Colpi, Colpi extra, Durata zone | GDD «La pausa»; `NOMI_CHIARI` in `src/data/spiegazioni.ts` |
