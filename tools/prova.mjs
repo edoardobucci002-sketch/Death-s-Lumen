@@ -758,10 +758,19 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   await pag.waitForTimeout(1400);
   await pag.screenshot({ path: 'prove/scoperta-unione.png' });
   if (!(await pag.evaluate(() => document.querySelector('.rivelazione').innerText.includes('Lanterna 8 + Stoppino lungo 3')))) errori.push('l\'animazione non dice la ricetta');
+  if (!(await pag.evaluate(() => document.querySelector('.rivelazione-chiudi')?.innerText.includes('per chiudere')))) errori.push('manca l\'avviso per chiudere l\'Unione');
+  await pag.waitForTimeout(3500); // nessuna chiusura a tempo
+  if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('l\'Unione si chiude da sola');
   await pag.mouse.click(180, 400);
   await pag.waitForTimeout(150);
   if (await pag.$('.rivelazione:not([hidden])')) errori.push('il tocco non chiude l\'animazione');
   if ((await gioco('(s) => s.secondi')) === t0) errori.push('la partita non riparte dopo l\'animazione');
+  // Spazio chiude l'Unione e non usa l'abilità
+  await gioco('(s) => s.labScoperta()');
+  await pag.waitForTimeout(1600);
+  await pag.keyboard.press('Space');
+  await pag.waitForTimeout(150);
+  if (await pag.$('.rivelazione:not([hidden])')) errori.push('Spazio non chiude l\'Unione');
   // la pausa salta l'animazione
   await gioco('(s) => s.labScoperta()');
   await gioco('(s) => s.indietro()');
