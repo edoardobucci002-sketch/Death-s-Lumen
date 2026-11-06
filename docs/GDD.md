@@ -38,7 +38,7 @@ Il mondo, i personaggi e la trama sono in [lore.md](lore.md). In gioco il boss d
 
 Personaggi giocabili oggi: quattro. Previsti: la Veggente e la Sguattera (vedi [roadmap.md](roadmap.md)).
 
-Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 150 px, armatura 0.
+Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 40 px, armatura 0. Il raggio è *da rivedere*: senza potenziamenti il Lumen si raccoglie passandoci sopra.
 
 | Personaggio | Motto | Colore | Arma iniziale | Abilità speciale | Modificatori |
 | --- | --- | --- | --- | --- | --- |
@@ -320,7 +320,7 @@ Al massimo 6 doni passivi diversi.
 | Clessidra | −7% ricarica, si moltiplica (minimo 40% della ricarica base) | 5 |
 | Stoppino lungo | +10% area (raggi, archi, nubi, pozze, abilità, alone di luce; nel gioco nuovo anche il bonus area del personaggio allarga l'alone) | 5 |
 | Ali di falena | +8% velocità | 5 |
-| Calamita | +30% raggio di raccolta e +5% anime | 5 |
+| Calamita | +100% raggio di raccolta e +5% anime | 5 |
 | Erbe amare | +0,25 salute al secondo | 5 |
 | Scudo di ferro | −6% danno subito | 4 |
 | Specchio | +1 proiettile, nube, fiala, fuoco o falce | 1 |
@@ -506,7 +506,7 @@ Un'arma al livello 8 più il suo dono al livello 3 (o al massimo del dono, se è
 
 Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni. **Sblocco**: si sbloccano vincendo 3 veglie, in tutto (`SBLOCCO_UNIONI`); la Cappella mostra il conto e non le vende più. Chi le aveva già sbloccate le tiene. Le Unioni **si svelano giocando**, in tre passi:
 - **Non scoperta**: nessun testo la nomina, nemmeno le strisce dei doni.
-- **Scoperta**, quando arma e dono arrivano ai livelli dell'unione: arma all'8, dono al 3 o al suo massimo (*da rivedere*: Edoardo ha detto «al livello massimo», vedi «Da confermare»). La partita si ferma per un'**animazione** a tutto schermo (`src/sistema/rivelazione.ts`, tempi in `RIVELAZIONE`, `src/data/hud.ts`, segnaposto dal codice, *da rivedere*): arma e dono si avvicinano, un lampo a retino, compaiono l'Unione, il nome e la ricetta. Dopo la comparsa l'Unione resta sullo schermo finché il giocatore non tocca, clicca o preme Spazio (nessuna chiusura a tempo; Spazio in quel momento non usa l'abilità); in basso al centro un avviso dice come chiuderla («Tocca per chiudere» sul telefono, «Clicca o premi Spazio per chiudere» su computer); aprire la pausa la salta. Da allora le strisce la nominano e, nelle notti dopo, la Build della pausa la mostra con nome, ricetta e stato («Pronta», «Manca» o «Unita») se hai l'arma in mano. L'effetto non si legge ancora, se non sulla carta del reliquiario.
+- **Scoperta**, quando arma e dono arrivano ai livelli dell'unione: arma all'8, dono al 3 o al suo massimo (*da rivedere*: Edoardo ha detto «al livello massimo», vedi «Da confermare»). La partita si ferma per un'**animazione** a tutto schermo (`src/sistema/rivelazione.ts`, tempi in `RIVELAZIONE`, `src/data/hud.ts`, segnaposto dal codice, *da rivedere*): arma e dono si avvicinano, un lampo a retino, compaiono l'Unione, il nome e la ricetta. Dopo la comparsa l'Unione resta sullo schermo finché il giocatore non tocca, clicca o preme Spazio (nessuna chiusura a tempo; Spazio in quel momento non usa l'abilità); in basso al centro un avviso lampeggiante, 1 s a ciclo, dice come chiuderla («Tocca per chiudere» sul telefono, «Clicca o premi Spazio per chiudere» su computer); aprire la pausa la salta. Da allora le strisce la nominano e, nelle notti dopo, la Build della pausa la mostra con nome, ricetta e stato («Pronta», «Manca» o «Unita») se hai l'arma in mano. L'effetto non si legge ancora, se non sulla carta del reliquiario.
 - **Unita** almeno una volta: resta per sempre nella scheda Stati, in ogni notte, con come si combina e che cosa fa.
 
 Scoperte e unite si ricordano sul dispositivo. Icone provvisorie: l'icona dell'arma con quattro angoli d'oro.
@@ -517,16 +517,16 @@ Scoperte e unite si ricordano sul dispositivo. Icone provvisorie: l'icona dell'a
 
 | Oggetto | Per settore | Cosa lascia | Luce |
 | --- | --- | --- | --- |
-| Urna | 24% | 1 frammento di vetro | no |
+| Urna | 24% | nulla, oppure all'8% un frammento di vetro (*da rivedere*), al massimo 3 a notte | no |
 | Giara | 24% | 2 gocce di Cera | no |
 | Lanterna | 12% | chiazza d'olio | sì |
 | Niente | 40% | | |
 
-Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, impatti, rintocchi, fendenti, nubi, pozze, proiettili, falci, lapidi, grani e corvo, anche senza nemici vicini. Un oggetto rotto non torna in quella notte. La lanterna intera apre un foro nel buio pieno fino a 120 px e scalda il terreno fino a 170 px; rotta, si spegne.
+Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, impatti, rintocchi, fendenti, nubi, pozze, proiettili, falci, lapidi, grani e corvo, anche senza nemici vicini, ma **solo quando si vedono**: fuori dal campo visibile i colpi non li toccano. Un oggetto rotto non torna in quella notte. La lanterna intera apre un foro nel buio pieno fino a 120 px e scalda il terreno fino a 170 px; rotta, si spegne.
 
 **Chiazza d'olio**: raggio 96 px, dura 12 s, rallenta del 40% i nemici dentro (Seth la metà). Non tocca il personaggio. Candela e Fuoco fatuo la accendono passandoci sopra: brucia per 5 s al posto dell'olio che resta, 14 danni ogni 0,4 s (più i bonus di danno), e fa luce come una lanterna. Disegni provvisori dal codice.
 
-**Frammenti di vetro**: volano verso il personaggio come la Cera. Ognuno ha un colore a caso (rosso, verde o blu scuro) ed è un pezzo del **mosaico** della Veglia (`src/sistema/mosaico.ts`, tempi in `MOSAICO`, `src/data/hud.ts`, *da rivedere*): a ogni frammento il mosaico compare al centro in alto, sotto la fascia, con sotto solo «1/3», «2/3» o «3/3»; il pezzo nuovo si accende a retino in 0,5 s (prima il cimitero, poi le mani, per ultima la fiamma con le stelle), resta fino a 2 s ed esce a retino in 0,3 s. Non ferma il gioco e non prende i tocchi. Le parti non trovate restano un'ombra scura. Al terzo frammento il mosaico intero si illumina per 1,8 s, poi apre un reliquiario e il conto riparte. Il bot delle simulazioni gioca senza rompibili, quindi olio e frammenti non sono misurati.
+**Frammenti di vetro**: escono dall'8% delle urne (*da rivedere*), al massimo 3 a notte, quindi il mosaico si completa una volta sola; quando un'urna ne contiene uno compaiono un anello di luce, una piccola scossa e il suono del vetro. Volano verso il personaggio come la Cera. Ognuno ha un colore a caso (rosso, verde o blu scuro) ed è un pezzo del **mosaico** della Veglia (`src/sistema/mosaico.ts`, tempi in `MOSAICO`, `src/data/hud.ts`, *da rivedere*): a ogni frammento il mosaico compare al centro in alto, sotto la fascia, con sotto solo «1/3», «2/3» o «3/3»; il pezzo nuovo si accende a retino in 0,5 s (prima il cimitero, poi le mani, per ultima la fiamma con le stelle), resta fino a 2 s ed esce a retino in 0,3 s. Non ferma il gioco e non prende i tocchi. Le parti non trovate restano un'ombra scura. Al terzo frammento il mosaico intero si illumina per 1,8 s, poi apre un reliquiario e il conto riparte. Il bot delle simulazioni gioca senza rompibili, quindi olio e frammenti non sono misurati.
 
 ## 9. Esperienza e doni
 
