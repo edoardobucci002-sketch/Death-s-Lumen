@@ -19,7 +19,8 @@ import { disponiTasto, scalaTasti, tasto } from './tasti';
 
 export type SchedaPausa = 'build' | 'rosario' | 'stati' | 'opzioni';
 
-export interface VoceUnione { nome: string; icona: string; testo: string; ricetta: string; stato: 'Pronta' | 'Manca' | 'Unita' }
+export interface VoceUnione { nome: string; icona: string; testo: string; ricetta: string; stato: 'Pronta' | 'Manca' | 'Unita' } // testo vuoto finché non è stata unita una volta
+export interface VoceUnioneFatta { nome: string; icona: string; ricetta: string; testo: string }
 export interface VoceAmuleto { id: string; nome: string; icona: string; grani: number; vantaggio: string; rovescio: string; acceso: boolean }
 
 /** Tutto quello che la pausa mostra, preparato dalla scena di gioco ogni volta che si apre o cambia qualcosa. */
@@ -34,6 +35,7 @@ export interface DatiPausa {
   armi: VoceDettaglio[];
   doni: VoceDettaglio[];
   unioni: { voci: VoceUnione[]; scoperte: number; totali: number } | null; // null: non ancora sbloccate
+  unite: VoceUnioneFatta[]; // fatte almeno una volta, in qualsiasi notte: restano per sempre in Stati
   statistiche: { nome: string; valore: string }[];
   affinita: IdAffinita[]; // gli stati che la build può lasciare
   attesa: 'dono' | 'reliquiario' | null; // la scelta aperta sotto la pausa
@@ -338,7 +340,7 @@ export class Pausa {
       const im = immagine(v.icona, 'pausa-simbolo');
       misura(im, 24, 24, this.z, this.m!);
       return div(`pausa-unione ${v.stato.toLowerCase()}`, im,
-        div('pausa-unione-testo', this.parola(v.nome, v.stato === 'Manca' ? '#e8dcc4' : '#ffe08a', this.lettera, this.larghezzaPagina() - 44 * this.z), div('pausa-sotto', v.ricetta), div('pausa-riga', v.testo)),
+        div('pausa-unione-testo', this.parola(v.nome, v.stato === 'Manca' ? '#e8dcc4' : '#ffe08a', this.lettera, this.larghezzaPagina() - 44 * this.z), div('pausa-sotto', v.ricetta), ...(v.testo ? [div('pausa-riga', v.testo)] : [])),
         div('pausa-stato', v.stato));
     })];
   }
@@ -388,6 +390,11 @@ export class Pausa {
       ...(altri.length ? [this.sezione('Gli altri stati'), ...altri.map((a) => stato(a, true))] : []),
       this.sezione('Reazioni'), div('pausa-vuoto', 'Due stati diversi sullo stesso nemico si consumano e fanno:'),
       ...reazioni.filter((x) => x.possibile).map((x) => x.el), ...reazioni.filter((x) => !x.possibile).map((x) => x.el),
+      ...(d.unite.length ? [this.sezione('Unioni'), ...d.unite.map((u) => {
+        const im = immagine(u.icona, 'pausa-simbolo');
+        misura(im, 24, 24, this.z, this.m!);
+        return div('pausa-voce pausa-unita', im, div('', this.parola(u.nome, '#ffe08a', this.lettera, this.larghezzaPagina() - 32 * this.z), div('pausa-sotto', u.ricetta), div('pausa-riga', u.testo)));
+      })] : []),
     ];
   }
 

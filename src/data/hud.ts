@@ -100,7 +100,7 @@ export const TACCHE = { lato: 4, raggio: 31, arco: 150, lampo: 0.25, colori: { a
 
 /**
  * La pausa: striscia in alto, pagina che scorre, Riprendi, schede. Misure in pixel disegnati (sul Galaxy S25 uno vale
- * 2 pixel di gioco, cioè 1,33 punti), salvo dove è scritto «punti». Tutto da rivedere; la tabella per ridisegnarla è in docs/asset_da_creare.md.
+ * 2 pixel di gioco, cioè 1,33 punti), salvo dove è scritto «punti». Confermate da Edoardo; la tabella per ridisegnarla è in docs/asset_da_creare.md.
  */
 export const PAUSA = {
   margine: 6, // tra le parti e dai bordi dello schermo

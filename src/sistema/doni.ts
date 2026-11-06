@@ -16,7 +16,7 @@ import { CARTE } from '../data/progressione';
 import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import type { Amuleto } from '../data/rosario';
-import type { Unione } from '../data/unioni';
+import type { IdUnione, Unione } from '../data/unioni';
 import { creaStrisce, schedaDono, type Riga } from './scheda';
 
 export type Dono =
@@ -43,7 +43,7 @@ export class Doni {
     private armaIniziale: Arma,
     private passivi: Record<IdDono, number>, // livello di ogni dono passivo (0 = non posseduto)
     private caso: Caso,
-    private rosario: () => { usati: number; totale: number; unioni: boolean },
+    private rosario: () => { usati: number; totale: number; unioni: boolean; scoperte: ReadonlySet<IdUnione> },
     private legenda: () => void,
     private disponibile: (id: string) => boolean, // armi e doni nuovi: solo se sbloccati nella Cappella
   ) {
@@ -177,7 +177,7 @@ export class Doni {
 
   private carta(d: Dono, n: number): HTMLElement {
     const r = this.rosario();
-    const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni });
+    const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni, scoperte: r.scoperte });
     const b = document.createElement('button');
     b.type = 'button';
     b.className = `doni-carta ${sc.categoria}`;

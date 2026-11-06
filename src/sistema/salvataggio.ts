@@ -28,7 +28,9 @@ export interface Salvataggio {
   rosario: boolean; // il Rosario è sbloccato
   oggetti: IdOggetto[]; // armi e doni nuovi sbloccati
   unioni: boolean; // le unioni delle armi sono sbloccate
-  unioniScoperte: IdUnione[]; // quelle già viste in partita: solo queste compaiono nella pausa
+  unioniScoperte: IdUnione[]; // arma e dono sono stati insieme nella build: solo queste si nominano
+  unioniUnite: IdUnione[]; // fatte almeno una volta: restano per sempre nella scheda Stati
+  vittorie: number; // veglie arrivate all'alba, in tutto
   ultimaVeglia: { voci: VoceVeglia[]; totale: number; sbloccato: string | null } | null;
 }
 
@@ -50,7 +52,7 @@ export interface BonusMeta {
 function nuovo(): Salvataggio {
   const ceri = {} as Record<IdCero, number>;
   for (const c of CERI) ceri[c.id] = 0;
-  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], unioni: false, unioniScoperte: [], ultimaVeglia: null };
+  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], unioni: false, unioniScoperte: [], unioniUnite: [], vittorie: 0, ultimaVeglia: null };
 }
 
 /** Porta un salvataggio letto (anche vecchio o incompleto) alla forma di oggi. */
@@ -68,6 +70,8 @@ function aggiorna(dati: Partial<Salvataggio>): Salvataggio {
   s.rosario = !!dati.rosario;
   s.unioni = !!dati.unioni;
   s.unioniScoperte = (dati.unioniScoperte ?? []).filter((id) => UNIONI.some((u) => u.id === id));
+  s.unioniUnite = (dati.unioniUnite ?? []).filter((id) => UNIONI.some((u) => u.id === id));
+  if (typeof dati.vittorie === 'number' && dati.vittorie >= 0) s.vittorie = Math.floor(dati.vittorie);
   s.oggetti = (dati.oggetti ?? []).filter((id) => SBLOCCHI_OGGETTI.some((o) => o.id === id));
   s.ultimaVeglia = dati.ultimaVeglia ?? null;
   return s;

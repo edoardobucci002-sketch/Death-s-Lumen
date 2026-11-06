@@ -676,7 +676,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
   pag.on('console', (m) => m.type() === 'error' && errori.push(m.text()));
-  await pag.addInitScript(() => localStorage.setItem('dl-salvataggio', JSON.stringify({ versione: 1, unioni: true, rosario: true })));
+  await pag.addInitScript(() => { if (!localStorage.getItem('dl-salvataggio')) localStorage.setItem('dl-salvataggio', JSON.stringify({ versione: 1, unioni: true, rosario: true })); });
   await pag.goto(`${url}?pg=lampionaio&sicura=35`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(300);
@@ -738,6 +738,16 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   const salvate = await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).unioniScoperte);
   if (!salvate?.includes('faroDeiMorti')) errori.push(`unione scoperta non salvata: ${salvate}`);
   if (!(await pag.$('.pausa-unione.manca'))) errori.push('l\'unione scoperta non compare con «Manca»');
+  // l'effetto si svela solo dopo aver unito: prima nome e ricetta; unita, resta in Stati per sempre
+  const riga = { testoBuild: await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText) };
+  if (riga.testoBuild.includes('L\'arco diventa')) errori.push('l\'effetto dell\'unione si legge prima di averla unita');
+  const stati = await gioco(`(s) => { s.labPausa('stati'); return document.querySelector('.pausa-pagina').innerText; }`);
+  if (stati.toLowerCase().includes('faro dei morti')) errori.push('l\'unione è in Stati prima di essere stata unita');
+  await gioco(`(s) => { s.riprendi(); s.scoperteDiProva = false; s.segnaUnita('faroDeiMorti'); s.labPausa('stati'); }`);
+  await pag.waitForTimeout(80);
+  const unita = await pag.evaluate(() => [...document.querySelectorAll('.pausa-unita')].map((e) => e.innerText).join());
+  if (!unita.includes('Lanterna 8 + Stoppino lungo 3') || !unita.includes('L\'arco')) errori.push(`in Stati manca l'unione fatta: ${unita}`);
+  if (!(await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).unioniUnite?.includes('faroDeiMorti')))) errori.push('l\'unione fatta non resta nel salvataggio');
   // i numeri della striscia e le statistiche sono quelli veri
   const testa = await gioco('(s) => { s.uccisi = 7; s.frammenti = 2; s.labPausa("build"); return document.querySelector(".pausa-testa").innerText; }');
   if (!testa.includes('Uccisi 7') || !testa.includes('Frammenti 2 di 3')) errori.push(`striscia: ${testa}`);
@@ -813,6 +823,40 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   if (!(await pag.evaluate(() => !!document.querySelector('.hud-pausa:not([hidden])')))) errori.push('Esc ha chiuso anche la pausa');
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} pausa su ${nome}: colonna a sinistra${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// Unioni che si svelano: la carta non nomina una non scoperta; 3 veglie vinte le sbloccano e la Cappella non le vende più
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.addInitScript(() => { if (!localStorage.getItem('dl-salvataggio')) localStorage.setItem('dl-salvataggio', JSON.stringify({ versione: 1, unioni: true, vittorie: 0 })); });
+  await pag.goto(`${url}?pg=lampionaio&automatico`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(200);
+  const cartaLanterna = () => pag.evaluate(() => {
+    const s = window.__dl.scene.getScene('Gioco'), a = s.arsenale.possedute[0].arma;
+    s.automatico = false;
+    s.doni.mostraReliquiario([{ tipo: 'arma', arma: a, livello: 8 }], () => {});
+    const t = document.querySelector('.doni-carta').innerText;
+    s.doni.scegliPrima();
+    return t;
+  });
+  if ((await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta nomina un\'unione non scoperta');
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.passivi.stoppinoLungo = 1; s.aggiornaBuild(); });
+  if (!(await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta non nomina l\'unione scoperta');
+  // tre veglie vinte
+  await pag.evaluate(() => { const v = JSON.parse(localStorage.getItem('dl-salvataggio')); v.unioni = false; v.vittorie = 2; localStorage.setItem('dl-salvataggio', JSON.stringify(v)); });
+  await pag.reload();
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non riparte'));
+  await pag.waitForTimeout(200);
+  const dopo = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.contaCera(false); const a = JSON.parse(localStorage.getItem('dl-salvataggio')); s.contaCera(true); const b = JSON.parse(localStorage.getItem('dl-salvataggio')); return { a: [a.unioni, a.vittorie], b: [b.unioni, b.vittorie] }; });
+  if (dopo.a[0] || dopo.a[1] !== 2) errori.push(`una sconfitta conta come vittoria: ${dopo.a}`);
+  if (!dopo.b[0] || dopo.b[1] !== 3) errori.push(`la terza vittoria non sblocca: ${dopo.b}`);
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} Unioni: si svelano giocando e si sbloccano con 3 veglie vinte${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

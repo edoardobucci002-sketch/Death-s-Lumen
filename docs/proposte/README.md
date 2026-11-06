@@ -11,4 +11,6 @@ Copie in testo delle proposte approvate da Edoardo, nate come documenti su claud
 
 - **Revisione della tappa 3** (`GfCyi3SGkrzkZLvqYCfYZE`, 3/11, eliminato il 4/11): pagina con le foto di stati, reazioni e ruoli nuovi delle armi (iPhone verticale) e un questionario «Va bene / Cambia» con riassunto da incollare in chat. Le risposte sono state applicate.
 
+- **La pausa della veglia** (`GEKw3Bn7VTPzqFvPXt8uhM`, 6/11, eliminato il 6/11): schizzo della pausa a schede, ricerca sugli altri survivor-like e questionario di 12 voci. Risposte applicate: vedi [decisioni.md](../decisioni.md) del 6/11.
+
 Altri riferimenti esterni (v0 giocabile e suo compendio) sono in fondo a [decisioni.md](../decisioni.md).

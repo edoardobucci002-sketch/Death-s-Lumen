@@ -66,10 +66,10 @@ export class Cappella {
         </li>`;
     const su = SBLOCCO_UNIONI;
     const unioni = `<li class="cero">
-          <div class="cero-testo"><h3>Le Unioni</h3><p>Un'arma al livello 8 e il suo dono al livello 3 si uniscono nel reliquiario in un'arma nuova. Si sblocca così: ${su.impresa.toLowerCase()}, oppure con la Cera.</p></div>
+          <div class="cero-testo"><h3>Le Unioni</h3><p>Un'arma al livello 8 e il suo dono al livello 3 si uniscono nel reliquiario in un'arma nuova. Si sbloccano vincendo ${su.vittorie} veglie.</p></div>
           <span class="cero-livelli" aria-label="${s.unioni ? 'Sbloccate' : 'Bloccate'}">${s.unioni ? '<b></b>' : '<b class="vuota"></b>'}</span>
           <div class="cero-azioni">
-            ${s.unioni ? '<span class="cero-pieno">Sbloccate</span>' : `<button type="button" data-compra-unioni ${s.cera < su.cera ? 'disabled' : ''}>Sblocca · ${su.cera} Cera</button>`}
+            <span class="cero-pieno">${s.unioni ? 'Sbloccate' : `Veglie vinte ${Math.min(s.vittorie, su.vittorie)}/${su.vittorie}`}</span>
           </div>
         </li>`;
     const oggetti = SBLOCCHI_OGGETTI.map((o) => {
@@ -145,11 +145,6 @@ export class Cappella {
       if (s.cera < SBLOCCO_ROSARIO.cera) return;
       s.cera -= SBLOCCO_ROSARIO.cera;
       s.rosario = true;
-      this.salvaECambia();
-    } else if ('compraUnioni' in b.dataset) {
-      if (s.cera < SBLOCCO_UNIONI.cera) return;
-      s.cera -= SBLOCCO_UNIONI.cera;
-      s.unioni = true;
       this.salvaECambia();
     } else if (b.dataset.compraOggetto) {
       const o = SBLOCCHI_OGGETTI.find((x) => x.id === b.dataset.compraOggetto);

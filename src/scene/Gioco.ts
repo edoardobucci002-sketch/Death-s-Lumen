@@ -54,7 +54,7 @@ import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECO
 import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
-import { segnoPercento, virgola } from '../data/spiegazioni';
+import { chiaro, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
 import { AFFINITA_ABILITA, AFFINITA_ARMI } from '../data/stati';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { Rompibili } from '../sistema/rompibili';
@@ -132,7 +132,8 @@ export class Gioco extends Phaser.Scene {
   private amuletiAccesi = new Set<IdAmuleto>();
   private rosarioSbloccato = false;
   private unioniSbloccate = false;
-  private unioniScoperte = new Set<IdUnione>(); // quelle già viste in partita, anche nelle notti passate
+  private unioniScoperte = new Set<IdUnione>(); // arma e dono sono stati insieme, anche nelle notti passate
+  private unioniUnite = new Set<IdUnione>(); // fatte almeno una volta: restano per sempre nella scheda Stati
   private scoperteDiProva = false; // il Laboratorio ha forzato le unioni: non si salvano
   private sangueFreddoAttivo = false;
   private ultimaDanza = -99; // secondi dell'ultima Grazia data dalla Danza macabra
@@ -186,6 +187,7 @@ export class Gioco extends Phaser.Scene {
     for (const id of (parametri.get('blocca') ?? '').split(',')) this.oggettiSbloccati.delete(id as IdOggetto); // ?blocca=corvo,lapide: per le simulazioni
     this.unioniSbloccate = (this.meta.unioni && !parametri.has('senzaunioni')) || parametri.has('unioni');
     this.unioniScoperte = new Set(carica().unioniScoperte);
+    this.unioniUnite = new Set(carica().unioniUnite);
     this.scoperteDiProva = false;
     this.rosarioSbloccato = (this.meta.rosario && !parametri.has('senzarosario')) || parametri.has('rosario'); // ?senzarosario: per confrontare le simulazioni
     this.amuletiPosseduti = [];
@@ -272,7 +274,7 @@ export class Gioco extends Phaser.Scene {
     // altezza vera del personaggio: dalla riga più alta a quella più bassa usate nei fotogrammi
     const fotogrammi = (this.cache.json.get(this.chiaveSprite) as { frames: { spriteSourceSize: { y: number; h: number } }[] }).frames;
     this.hud.impostaPersonaggio((Math.max(...fotogrammi.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h)) - Math.min(...fotogrammi.map((f) => f.spriteSourceSize.y))) * this.giocatore.scaleY);
-    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate, scoperte: this.unioniScoperte }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.pausa || this.doni.aperta) return false;
@@ -745,6 +747,8 @@ export class Gioco extends Phaser.Scene {
   labPausaPrima(): void {
     for (const id of [...this.amuletiPosseduti]) this.labAmuleto(id, false);
     this.rosarioSbloccato = this.unioniSbloccate = false;
+    this.unioniScoperte.clear();
+    this.unioniUnite.clear();
     this.labPausa();
   }
 
@@ -761,8 +765,10 @@ export class Gioco extends Phaser.Scene {
   /** Dimentica le unioni scoperte, per riprovare la scoperta da capo. */
   labDimenticaUnioni(): void {
     this.unioniScoperte.clear();
+    this.unioniUnite.clear();
     const s = carica();
     s.unioniScoperte = [];
+    s.unioniUnite = [];
     salva(s);
   }
 
@@ -788,6 +794,7 @@ export class Gioco extends Phaser.Scene {
     this.labDono(u.dono, Math.max(this.passivi[u.dono], livelloDonoUnione(u.dono)));
     if (unisci) {
       this.arsenale.unisci(arma);
+      this.segnaUnita(id);
       this.aggiornaBuild();
     }
   }
@@ -930,6 +937,7 @@ export class Gioco extends Phaser.Scene {
     this.doni.mostraReliquiario(carte, (d: Dono) => {
       if (d.tipo === 'unione') {
         this.arsenale.unisci(d.arma);
+        this.segnaUnita(d.unione.id);
         this.aggiornaBuild();
         this.hud.avviso(d.unione.nome, 'arma unita');
       } else if (d.tipo === 'amuleto') {
@@ -1058,7 +1066,8 @@ export class Gioco extends Phaser.Scene {
     const s = carica();
     s.cera += totale;
     let sbloccatoOggetto: string | null = null;
-    if (!s.unioni && this.secondi >= SBLOCCO_UNIONI.minuti * 60) {
+    if (vittoria) s.vittorie++;
+    if (!s.unioni && s.vittorie >= SBLOCCO_UNIONI.vittorie) {
       s.unioni = true;
       sbloccatoOggetto = 'Le Unioni';
     }
@@ -1122,10 +1131,23 @@ export class Gioco extends Phaser.Scene {
     for (const u of nuove) this.unioniScoperte.add(u.id);
     if (this.sim) return;
     this.hud.avviso('Unione scoperta', nuove[0].nome);
-    if (this.immortale || this.scoperteDiProva) return;
+    this.salvaUnioni();
+  }
+
+  /** Scoperte e unite restano sul dispositivo; le prove con il Laboratorio e il bot non contano. */
+  private salvaUnioni(): void {
+    if (this.sim || this.immortale || this.scoperteDiProva) return;
     const s = carica();
     s.unioniScoperte = [...this.unioniScoperte];
+    s.unioniUnite = [...this.unioniUnite];
     salva(s);
+  }
+
+  /** L'arma si è unita: da ora l'unione è nella scheda Stati, per sempre. */
+  private segnaUnita(id: IdUnione): void {
+    this.unioniScoperte.add(id);
+    this.unioniUnite.add(id);
+    this.salvaUnioni();
   }
 
   /** Le unioni da mostrare: sbloccate, già scoperte e con l'arma in mano. Prima quelle pronte. */
@@ -1134,7 +1156,7 @@ export class Gioco extends Phaser.Scene {
     return UNIONI.filter((u) => this.unioniScoperte.has(u.id) && this.armaDi(u.arma)).map((u): VoceUnione => {
       const a = this.armaDi(u.arma)!, q = PASSIVI.find((x) => x.id === u.dono)!, serve = livelloDonoUnione(u.dono), l = this.arsenale.livello(a);
       const stato = this.arsenale.unita(a) ? 'Unita' : l >= CARTE.livelloMassimo && this.passivi[u.dono] >= serve ? 'Pronta' : 'Manca';
-      return { nome: u.nome, icona: iconaUnione(u.id), testo: u.testo, stato, ricetta: `${a.nome} ${l}/${CARTE.livelloMassimo} · ${q.nome} ${Math.min(serve, this.passivi[u.dono])}/${serve}` };
+      return { nome: u.nome, icona: iconaUnione(u.id), testo: this.unioniUnite.has(u.id) ? u.testo : '', stato, ricetta: `${a.nome} ${l}/${CARTE.livelloMassimo} · ${q.nome} ${Math.min(serve, this.passivi[u.dono])}/${serve}` };
     }).sort((x, y) => ordine[x.stato] - ordine[y.stato]);
   }
 
@@ -1146,16 +1168,22 @@ export class Gioco extends Phaser.Scene {
       { nome: 'Salute/s', valore: `+${virgola(this.rigenerazione)}` },
       { nome: 'Danno', valore: segnoPercento(this.bonus.danno) },
       { nome: 'Danno subito', valore: segnoPercento(subito) },
-      { nome: 'Ricarica', valore: segnoPercento(this.bonus.ricarica - 1) },
+      { nome: chiaro('Ricarica'), valore: segnoPercento(this.bonus.ricarica - 1) },
       { nome: 'Area', valore: segnoPercento(this.bonus.area) },
-      { nome: 'Quantità', valore: `+${this.bonus.quantita}` },
-      { nome: 'Durata', valore: segnoPercento(this.bonus.durata) },
+      { nome: NOME_COLPI_IN_PIU, valore: `+${this.bonus.quantita}` },
+      { nome: chiaro('Durata'), valore: segnoPercento(this.bonus.durata) },
       { nome: 'Critico', valore: segnoPercento(this.bonus.critico) },
       { nome: 'Velocità', valore: segnoPercento(this.velocita / BASE.velocita - 1) },
       { nome: 'Raccolta', valore: segnoPercento(this.raccolta / BASE.raccolta - 1) },
       { nome: 'Anime', valore: segnoPercento(this.moltAnime - 1) },
       { nome: 'Sorsi', valore: `${this.fiaschetta.sorsi}/${this.fiaschetta.massimo}` },
     ];
+  }
+
+  /** Come si combina: «Lanterna 8 + Stoppino lungo 3». */
+  private ricettaUnione(u: Unione): string {
+    const armi = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
+    return `${armi.find((a) => a.id === u.arma)!.nome} ${CARTE.livelloMassimo} + ${PASSIVI.find((q) => q.id === u.dono)!.nome} ${livelloDonoUnione(u.dono)}`;
   }
 
   /** Tutto quello che la pausa mostra, letto ora. */
@@ -1175,6 +1203,7 @@ export class Gioco extends Phaser.Scene {
       armi: this.arsenale.possedute.map((p) => voceArma(p.arma, p.livello, !!p.unita, unioneDiArma(p.arma.id))),
       doni: PASSIVI.filter((q) => this.passivi[q.id]).map((q) => voceDono(q, this.passivi[q.id])),
       unioni: this.unioniSbloccate ? { voci, scoperte: this.unioniScoperte.size, totali: UNIONI.length } : null,
+      unite: UNIONI.filter((u) => this.unioniUnite.has(u.id)).map((u) => ({ nome: u.nome, icona: iconaUnione(u.id), testo: u.testo, ricetta: this.ricettaUnione(u) })),
       statistiche: this.statistiche(),
       affinita: [...new Set([...this.arsenale.possedute.map((p) => AFFINITA_ARMI[p.arma.id]), AFFINITA_ABILITA[this.pg.abilita]])],
       attesa: !this.doni.aperta ? null : this.doni.reliquiario ? 'reliquiario' : 'dono',
