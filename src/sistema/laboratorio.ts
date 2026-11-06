@@ -170,7 +170,7 @@ const SCHEDE: [Scheda, string][] = [['partita', 'Partita'], ['eventi', 'Eventi']
 
 export function avviaLaboratorio(gioco: Phaser.Game): void {
   applicaSalvati();
-  riprendiContatore();
+  riprendiContatore(gioco);
   const stile = el('style', '', STILE);
   const apri = el('button', 'lab-apri', Object.keys(salvati()).length ? 'LAB •' : 'LAB'); // il puntino dice che ci sono numeri cambiati
   apri.type = 'button';
@@ -402,7 +402,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       el('p', 'lab-nota', 'Un tocco e aspetta un minuto senza toccare niente: alla fine c\'è un testo da copiare. La partita in corso si perde; Cera, record e sblocchi non cambiano.'),
       riga(tasto('Prova prestazioni', () => { mostra(false); void avviaProvaPrestazioni(gioco); }, 'acceso')),
       titolo('Fotogrammi al secondo'),
-      riga(tasto(contatoreAcceso() ? 'Contatore: acceso' : 'Contatore: spento', () => { accendiContatore(!contatoreAcceso()); ridisegna(); }, contatoreAcceso() ? 'acceso' : '')),
+      riga(tasto(contatoreAcceso() ? 'Contatore: acceso' : 'Contatore: spento', () => { accendiContatore(gioco, !contatoreAcceso()); ridisegna(); }, contatoreAcceso() ? 'acceso' : '')),
       el('p', 'lab-nota', 'Resta acceso in tutte le schermate, anche nella selezione: media e peggiore dell\'ultimo secondo. Le prove qui sotto servono a capire cosa pesa sul telefono.'),
       riga(
         tasto(foriSpenti ? 'Fori nel buio: spenti' : 'Fori nel buio: accesi', () => { foriSpenti = !foriSpenti; partita()?.labForiBuio(!foriSpenti); ridisegna(); }, foriSpenti ? 'acceso' : ''),

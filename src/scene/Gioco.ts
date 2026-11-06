@@ -187,6 +187,8 @@ export class Gioco extends Phaser.Scene {
     this.ultimaDanza = -99;
     this.prossimoAbbaglio = this.reliquiariInAttesa = 0;
     this.pausaLab = false;
+    this.fineFinta = 0; // la scena si riusa: ciò che fa la Prova prestazioni non deve restare nella notte dopo
+    this.foriBuio = true;
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
@@ -617,6 +619,11 @@ export class Gioco extends Phaser.Scene {
     for (const a of ARMI_COMUNI.slice(0, MAX_ARMI - 1)) this.labArma(a, P.livelloArmi);
     this.rompibili?.piazzaFissa(ROMPIBILI.tipi.findIndex((t) => t.luce > 0), this.x + P.lanterna.dx, this.y + P.lanterna.dy);
     this.labProvaRiempi();
+  }
+
+  /** Prova prestazioni: la stessa ricostruzione che avviene quando un dono allarga la luce. */
+  labRicostruisciBuio(): void {
+    this.ridimensiona();
   }
 
   labProvaRiempi(): void {

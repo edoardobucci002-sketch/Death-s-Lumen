@@ -10,6 +10,9 @@ export const INGRANDIMENTO_SEGNAPOSTO = 2;
 /** Seme del caso: a parità di seme il cimitero è sempre uguale. */
 export const SEME_PREDEFINITO = 1031;
 
+/** Disegni al secondo, su tutti i dispositivi (0 = nessun limite); la logica resta a 60 passi. margine: vedi src/sistema/fotogrammi.ts. */
+export const FOTOGRAMMI = { limite: 60, margine: 1 };
+
 /**
  * Prova prestazioni del LAB (da rivedere). Obiettivo sul telefono minimo: media 60 fps, peggiore mai sotto 45.
  * La notte si ferma a secondiFine, prima dell'alba: così la prova non arriva mai alla fine e non salva niente.

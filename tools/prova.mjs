@@ -453,7 +453,7 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
-// la notte dura uguale a ogni frequenza dello schermo: a 60, 90 e 120 Hz stessa logica allo stesso secondo, in tempo reale
+// a 60, 90 e 120 Hz il gioco disegna circa 60 volte al secondo e la notte è identica, in tempo reale
 {
   const risultati = [];
   for (const hz of [60, 90, 120]) {
@@ -461,10 +461,9 @@ for (const [nome, indirizzo, prova] of eventi) {
     const pag = await ctx.newPage();
     await pag.addInitScript((hz) => {
       let prossimo = performance.now();
-      window.__disegni = 0;
       window.requestAnimationFrame = (f) => {
         prossimo = Math.max(prossimo + 1000 / hz, performance.now());
-        return setTimeout(() => { window.__disegni++; f(performance.now()); }, Math.max(0, prossimo - performance.now()));
+        return setTimeout(() => f(performance.now()), Math.max(0, prossimo - performance.now()));
       };
     }, hz);
     await pag.goto(`${url}?pg=lampionaio&automatico&seme=7&sicura=35`);
@@ -472,15 +471,18 @@ for (const [nome, indirizzo, prova] of eventi) {
     // 6 secondi di notte: fermo, il personaggio muore poco dopo. Se la notte non avanza il test fallisce invece di restare appeso
     const r = await pag.evaluate(() => new Promise((ok, no) => {
       setTimeout(() => no(new Error('la notte non avanza')), 20000);
-      const s = window.__dl.scene.getScene('Gioco'), avanti = s.passo.bind(s), inizio = performance.now(), secondi0 = s.secondi, disegni0 = window.__disegni;
+      const s = window.__dl.scene.getScene('Gioco'), avanti = s.passo.bind(s), inizio = performance.now(), secondi0 = s.secondi;
+      let disegni = 0;
+      window.__dl.events.on('postrender', () => disegni++);
       s.passo = (dt) => {
         avanti(dt);
-        if (s.secondi - secondi0 < 6) return;
+        if (s.secondi < 6) return; // lo stesso secondo della notte per tutti: l'aggancio avviene in momenti diversi
         s.passo = avanti;
         const stato = [s.x, s.y, s.livello, s.orda.numero, ...Array.from(s.orda.x.slice(0, s.orda.numero))].join();
         let h = 0;
         for (let i = 0; i < stato.length; i++) h = (Math.imul(h, 31) + stato.charCodeAt(i)) | 0;
-        ok({ reali: (performance.now() - inizio) / 1000, disegni: (window.__disegni - disegni0) / 6, nemici: s.orda.numero, impronta: h });
+        const reali = (performance.now() - inizio) / 1000;
+        ok({ reali, notte: s.secondi - secondi0, disegni: disegni / reali, nemici: s.orda.numero, impronta: h, passi: Math.round(s.secondi * 60) });
       };
     }));
     risultati.push({ hz, ...r });
@@ -488,12 +490,40 @@ for (const [nome, indirizzo, prova] of eventi) {
   }
   const errori = [];
   for (const r of risultati) {
-    if (Math.abs(r.reali - 6) > 0.6) errori.push(`a ${r.hz} Hz 6 s di notte durano ${r.reali.toFixed(1)} s veri`);
-    if (Math.abs(r.disegni - r.hz) > r.hz * 0.2) errori.push(`a ${r.hz} Hz disegna ${r.disegni.toFixed(0)} volte al secondo`);
+    if (Math.abs(r.reali - r.notte) > 0.6) errori.push(`a ${r.hz} Hz ${r.notte.toFixed(1)} s di notte durano ${r.reali.toFixed(1)} s veri`);
+    if (Math.abs(r.disegni - 60) > 6) errori.push(`a ${r.hz} Hz disegna ${r.disegni.toFixed(0)} volte al secondo invece di circa 60`);
     if (r.impronta !== risultati[0].impronta) errori.push(`a ${r.hz} Hz la notte va diversamente`);
   }
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} frequenza dello schermo: ${risultati.map((r) => `${r.hz} Hz ${r.reali.toFixed(1)} s, ${r.disegni.toFixed(0)} disegni/s`).join(' · ')}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} frequenza dello schermo: ${risultati.map((r) => `${r.hz} Hz ${r.notte.toFixed(1)} s di notte in ${r.reali.toFixed(1)} s, ${r.disegni.toFixed(0)} disegni/s, impronta ${r.impronta}`).join(' · ')}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
+// la Prova prestazioni non lascia niente nella partita dopo: l'esperienza conta, la notte va avanti, si può morire
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const pag = await ctx.newPage();
+  const errori = [];
+  await pag.goto(`${url}?pg=lampionaio&sicura=35`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(300);
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.labProvaPrestazioni(); s.scene.start('Menu'); });
+  await pag.waitForFunction(() => window.__dl.scene.isActive('Menu'), null, { timeout: 5000 }).catch(() => errori.push('il menu non arriva'));
+  await pag.evaluate(() => window.__dl.scene.getScene('Menu').scene.start('Gioco', { pg: 'lampionaio' }));
+  await pag.waitForFunction(() => window.__dl.scene.isActive('Gioco') && window.__dl.scene.getScene('Gioco').secondi < 30, null, { timeout: 5000 }).catch(() => errori.push('la partita nuova non parte'));
+  const dopo = await pag.evaluate(() => new Promise((ok) => {
+    const s = window.__dl.scene.getScene('Gioco');
+    s.labMinuto(14.9);
+    s.esperienza = 1;
+    setTimeout(() => ok({ esperienza: s.esperienza, secondi: s.secondi, immortale: s.immortale, automatico: s.automatico, livello: s.livello, fori: s.foriBuio }), 300);
+  }));
+  if (dopo.esperienza < 1) errori.push('le anime non contano più come esperienza');
+  if (dopo.secondi <= 870) errori.push('la notte resta ferma');
+  if (dopo.immortale || dopo.automatico) errori.push('la partita dopo la prova non è normale');
+  if (dopo.livello > 3) errori.push(`la partita dopo la prova parte al livello ${dopo.livello}`);
+  if (!dopo.fori) errori.push('i fori nel buio restano spenti');
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} dopo la Prova prestazioni la partita è normale${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
 }
 
 // la firma della versione esiste solo nelle versioni di prova: questa build è quella normale

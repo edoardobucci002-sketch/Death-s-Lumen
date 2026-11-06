@@ -1,11 +1,14 @@
 /*
  * Contatore dei fotogrammi del Laboratorio: nell'angolo in alto a destra, in tutte le schermate, selezione compresa.
- * Ogni secondo mostra la media e il peggiore di quel secondo, in fotogrammi al secondo. Si accende dalla scheda Schermo.
+ * Ogni secondo mostra la media e il peggiore di quel secondo, in fotogrammi al secondo. Conta i disegni veri del gioco,
+ * non i battiti dello schermo. Si accende dalla scheda Schermo.
  */
+import type Phaser from 'phaser';
+
 const CHIAVE = 'dl-lab-contatore';
 
 let scritta: HTMLElement | null = null;
-let attivo = 0;
+let fermaGiro: (() => void) | null = null;
 
 const ricordato = (): boolean => {
   try { return localStorage.getItem(CHIAVE) === '1'; } catch { return false; }
@@ -13,9 +16,10 @@ const ricordato = (): boolean => {
 
 export const contatoreAcceso = (): boolean => scritta !== null;
 
-export function accendiContatore(acceso: boolean): void {
+export function accendiContatore(gioco: Phaser.Game, acceso: boolean): void {
   try { localStorage.setItem(CHIAVE, acceso ? '1' : '0'); } catch { /* niente memoria */ }
-  cancelAnimationFrame(attivo);
+  fermaGiro?.();
+  fermaGiro = null;
   scritta?.remove();
   scritta = null;
   if (!acceso) return;
@@ -25,7 +29,8 @@ export function accendiContatore(acceso: boolean): void {
   document.body.append(el);
   scritta = el;
   let ultimo = performance.now(), inizio = ultimo, fotogrammi = 0, peggiore = 0;
-  const giro = (ora: number): void => {
+  const giro = (): void => {
+    const ora = performance.now();
     peggiore = Math.max(peggiore, ora - ultimo);
     ultimo = ora;
     fotogrammi++;
@@ -35,11 +40,11 @@ export function accendiContatore(acceso: boolean): void {
       fotogrammi = 0;
       peggiore = 0;
     }
-    attivo = requestAnimationFrame(giro);
   };
-  attivo = requestAnimationFrame(giro);
+  gioco.events.on('postrender', giro);
+  fermaGiro = () => gioco.events.off('postrender', giro);
 }
 
-export function riprendiContatore(): void {
-  if (ricordato()) accendiContatore(true);
+export function riprendiContatore(gioco: Phaser.Game): void {
+  if (ricordato()) accendiContatore(gioco, true);
 }

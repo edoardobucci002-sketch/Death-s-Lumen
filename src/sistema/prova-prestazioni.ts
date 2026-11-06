@@ -5,8 +5,9 @@
  */
 import type Phaser from 'phaser';
 import type { Gioco } from '../scene/Gioco';
-import { PRESTAZIONI } from '../data/mondo';
+import { FOTOGRAMMI, PRESTAZIONI } from '../data/mondo';
 import { FIRMA } from './firma';
+import { misuraDisegni } from './fotogrammi';
 import { nativo } from './mobile';
 
 interface DatiTelefono { model?: string; platformVersion?: string; fullVersionList?: { brand: string; version: string }[] }
@@ -34,27 +35,19 @@ function grafica(): string {
   return nome;
 }
 
-/** Tempi tra un fotogramma e l'altro per tot secondi, senza allocare durante la misura. */
-function misura(secondi: number, ogniFotogramma?: (trascorsi: number) => void): Promise<Float64Array> {
-  const tempi = new Float64Array(Math.ceil(secondi * 400));
+/** Frequenza dello schermo stimata dai battiti dello schermo, non dai disegni: la pagina non può chiederla al telefono. */
+function frequenza(): Promise<number> {
   return new Promise((fine) => {
-    const inizio = performance.now();
-    let ultimo = inizio, n = 0;
+    const t: number[] = [];
+    let ultimo = performance.now();
     const giro = (ora: number): void => {
-      if (n < tempi.length) tempi[n++] = ora - ultimo;
+      t.push(ora - ultimo);
       ultimo = ora;
-      ogniFotogramma?.((ora - inizio) / 1000);
-      if (ora - inizio >= secondi * 1000) fine(tempi.slice(0, n));
-      else requestAnimationFrame(giro);
+      if (t.length < 90) requestAnimationFrame(giro);
+      else fine(Math.round(1000 / (t.sort((a, b) => a - b)[45] || 16.7)));
     };
     requestAnimationFrame(giro);
   });
-}
-
-/** Frequenza dello schermo stimata dai fotogrammi: la pagina non può chiederla al telefono. */
-async function frequenza(): Promise<number> {
-  const t = [...(await misura(1))].sort((a, b) => a - b);
-  return Math.round(1000 / (t[Math.floor(t.length / 2)] || 16.7));
 }
 
 function pannello(testo: string, gioco: Phaser.Game): void {
@@ -97,11 +90,11 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
   });
   const partita = gioco.scene.getScene('Gioco') as Gioco;
   partita.labProvaPrestazioni();
-  await misura(PRESTAZIONI.avvio);
+  await misuraDisegni(gioco, PRESTAZIONI.avvio);
   let interrotta = false, secondo = 0;
   const visibilita = (): void => { if (document.hidden) interrotta = true; };
   document.addEventListener('visibilitychange', visibilita);
-  const tempi = await misura(PRESTAZIONI.secondi, (t) => {
+  const tempi = await misuraDisegni(gioco, PRESTAZIONI.secondi, (t) => {
     const s = Math.floor(t);
     if (s === secondo) return;
     secondo = s;
@@ -109,6 +102,11 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     avviso.textContent = `Prova prestazioni: non toccare niente · ${PRESTAZIONI.secondi - s} s`;
   });
   document.removeEventListener('visibilitychange', visibilita);
+  // misura a parte: la ricostruzione del buio che avviene quando un dono allarga la luce, compreso il disegno che la mostra
+  const inizioBuio = performance.now();
+  partita.labRicostruisciBuio();
+  await misuraDisegni(gioco, 0);
+  const buio = performance.now() - inizioBuio;
   avviso.remove();
   const totale = tempi.reduce((a, b) => a + b, 0), peggiore = tempi.reduce((a, b) => Math.max(a, b), 0);
   const blocchi = tempi.reduce((n, t) => n + (t > PRESTAZIONI.blocco ? 1 : 0), 0);
@@ -120,11 +118,12 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     `Grafica: ${grafica()}`,
     `Android: ${c.android}`,
     `WebView o Chrome: ${c.webview}`,
-    `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}`,
+    `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}; disegni limitati a ${FOTOGRAMMI.limite} al secondo`,
     `Minuto ${PRESTAZIONI.minuto}, ${PRESTAZIONI.nemici} nemici, lanterna in vista, ${PRESTAZIONI.secondi} s`,
     `Media: ${((tempi.length * 1000) / totale).toFixed(1)} fps`,
     `Peggiore: ${(1000 / peggiore).toFixed(1)} fps (${Math.round(peggiore)} ms)`,
     `Blocchi sopra ${PRESTAZIONI.blocco} ms: ${blocchi}`,
+    `Ricostruzione del buio: ${Math.round(buio)} ms`,
     interrotta ? "ATTENZIONE: l'app è andata in secondo piano, prova da rifare" : 'Prova completa',
   ].join('\n'), gioco);
 }
