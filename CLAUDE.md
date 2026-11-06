@@ -11,6 +11,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
   - Prima di una decisione difficile da cambiare (motore, struttura dei dati, formato degli asset) proponi le opzioni con pro e contro e aspetta la sua risposta.
   - Quando chiedi a Edoardo di fare qualcosa (aprire un'app, esportare da Aseprite, provare sul telefono), dai passi numerati con i nomi esatti di menu e pulsanti.
   - Dopo ogni tappa digli come provare il risultato: il comando da lanciare e cosa deve vedere.
+- **Ogni sessione ha un solo obiettivo**: quello che non lo blocca va in «Da confermare» di `docs/roadmap.md` con una riga, senza lavorarci.
 - Computer: MacBook Air M1 con 8 GB di RAM. Tieni leggeri build, dipendenze e server di sviluppo.
 
 ## Stack e dipendenze

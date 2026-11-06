@@ -5,7 +5,7 @@
  */
 import type Phaser from 'phaser';
 import type { Gioco } from '../scene/Gioco';
-import { FOTOGRAMMI, PRESTAZIONI } from '../data/mondo';
+import { PRESTAZIONI } from '../data/mondo';
 import { FIRMA } from './firma';
 import { misuraDisegni } from './fotogrammi';
 import { nativo } from './mobile';
@@ -108,8 +108,21 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
   await misuraDisegni(gioco, 0);
   const buio = performance.now() - inizioBuio;
   avviso.remove();
-  const totale = tempi.reduce((a, b) => a + b, 0), peggiore = tempi.reduce((a, b) => Math.max(a, b), 0);
+  const totale = tempi.reduce((a, b) => a + b, 0);
   const blocchi = tempi.reduce((n, t) => n + (t > PRESTAZIONI.blocco ? 1 : 0), 0);
+  // fotogrammi saltati: ogni disegno arrivato dopo più di un battito dello schermo ne ha persi tanti quanti i battiti in più
+  const battito = 1000 / hz;
+  const saltati = tempi.reduce((n, t) => n + Math.max(0, Math.round(t / battito) - 1), 0);
+  // secondi lenti: si divide la misura in secondi e si contano quelli sotto la soglia
+  let trascorsi = 0, inQuesto = 0, secondi = 0, lenti = 0;
+  for (const t of tempi) {
+    trascorsi += t;
+    inQuesto++;
+    if (trascorsi < 1000) continue;
+    secondi++;
+    if ((inQuesto * 1000) / trascorsi < PRESTAZIONI.secondoLento) lenti++;
+    trascorsi = inQuesto = 0;
+  }
   const c = await telefono();
   pannello([
     "Death's Lumen · Prova prestazioni",
@@ -118,10 +131,11 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     `Grafica: ${grafica()}`,
     `Android: ${c.android}`,
     `WebView o Chrome: ${c.webview}`,
-    `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}; disegni limitati a ${FOTOGRAMMI.limite} al secondo`,
+    `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}`,
     `Minuto ${PRESTAZIONI.minuto}, ${PRESTAZIONI.nemici} nemici, lanterna in vista, ${PRESTAZIONI.secondi} s`,
     `Media: ${((tempi.length * 1000) / totale).toFixed(1)} fps`,
-    `Peggiore: ${(1000 / peggiore).toFixed(1)} fps (${Math.round(peggiore)} ms)`,
+    `Fotogrammi saltati: ${saltati}`,
+    `Secondi sotto ${PRESTAZIONI.secondoLento} fps: ${((lenti * 100) / Math.max(1, secondi)).toFixed(1)}%`,
     `Blocchi sopra ${PRESTAZIONI.blocco} ms: ${blocchi}`,
     `Ricostruzione del buio: ${Math.round(buio)} ms`,
     interrotta ? "ATTENZIONE: l'app è andata in secondo piano, prova da rifare" : 'Prova completa',

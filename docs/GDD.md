@@ -588,8 +588,8 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Buio massimo | 88% dei pixel | nel buio più fitto il terreno si intravede ancora |
 | Centro della luce | 42 px sopra i piedi | |
 | Tremolio della fiamma | ±7 px ogni 0,12 s | |
-| Frequenza dello schermo | logica sempre a 60 passi al secondo; disegno limitato a 60 fotogrammi al secondo su tutti i dispositivi | `FOTOGRAMMI`; a 60, 90 e 120 Hz la notte è identica (`npm run prova`) |
-| Prova prestazioni | minuto 14, 400 nemici, lanterna in vista, 6 armi al livello 8, 60 s; la notte si ferma a 14:30; a fine prova misura a parte la ricostruzione del buio | `PRESTAZIONI`; obiettivo sul telefono minimo: media 60 fps, peggiore mai sotto 45 (*da rivedere*) |
+| Frequenza dello schermo | logica sempre a 60 passi al secondo, il disegno segue lo schermo | nessun limite del gioco: a 60, 90 e 120 Hz la notte è identica (`npm run prova`) |
+| Prova prestazioni | minuto 14, 400 nemici, lanterna in vista, 6 armi al livello 8, 60 s; la notte si ferma a 14:30; a fine prova misura a parte la ricostruzione del buio | `PRESTAZIONI`; riporta media, fotogrammi saltati, secondi sotto 55 fps e blocchi sopra 100 ms; obiettivo sul telefono minimo: media 60, meno dell'1% dei secondi sotto 55, nessun blocco sopra 100 ms (*da rivedere*) |
 | Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |
 | Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito; sul telefono in verticale base da 56 pixel disegnati, opacità 50% quando copre un pulsante (*da rivedere*) |
 

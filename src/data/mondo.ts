@@ -10,14 +10,11 @@ export const INGRANDIMENTO_SEGNAPOSTO = 2;
 /** Seme del caso: a parità di seme il cimitero è sempre uguale. */
 export const SEME_PREDEFINITO = 1031;
 
-/** Disegni al secondo, su tutti i dispositivi (0 = nessun limite); la logica resta a 60 passi. margine: vedi src/sistema/fotogrammi.ts. */
-export const FOTOGRAMMI = { limite: 60, margine: 1 };
-
 /**
- * Prova prestazioni del LAB (da rivedere). Obiettivo sul telefono minimo: media 60 fps, peggiore mai sotto 45.
+ * Prova prestazioni del LAB (da rivedere). Obiettivo sul telefono minimo: media 60 fps, meno dell'1% dei secondi sotto 55, nessun blocco sopra 100 ms.
  * La notte si ferma a secondiFine, prima dell'alba: così la prova non arriva mai alla fine e non salva niente.
  */
-export const PRESTAZIONI = { personaggio: 'lampionaio', minuto: 14, secondiFine: 870, nemici: 400, secondi: 60, avvio: 3, blocco: 100, livello: 100, livelloArmi: 8, lanterna: { dx: 110, dy: -120 } };
+export const PRESTAZIONI = { personaggio: 'lampionaio', minuto: 14, secondiFine: 870, nemici: 400, secondi: 60, avvio: 3, blocco: 100, secondoLento: 55, livello: 100, livelloArmi: 8, lanterna: { dx: 110, dy: -120 } };
 
 /** Link di prova: ogni quanti secondi controlla se c'è una versione nuova (da rivedere). */
 export const AGGIORNAMENTI = { ogni: 120 };

@@ -52,16 +52,13 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
 5. **Cero della fiaschetta e questline** con il Ceraiolo (ampolla incrinata → riparata → si riempie battendo Seth). Oggi la fiaschetta c'è dalla prima notte con 3 sorsi. Quando la fiaschetta diventerà uno sblocco, rilanciare la simulazione.
 6. **Veggente e Sguattera**: i due personaggi giocabili previsti. Da decidere con Edoardo: la loro affinità (vedi [lore.md](lore.md), *Aperto*), arma iniziale, abilità, ritratto e sprite, come si sbloccano.
 7. **Redesign dell'intero gioco** (da collocare nell'ordine con Edoardo): HUD, personaggi, animazioni (`attack`, `special`, `hurt`, `death`), effetti, mosse di Seth, hub, nemici V1 alla scala nuova, scheda del personaggio (con statistiche vere), cornici dei ritratti e Pannello scheda.
-8. **Prove sui telefoni degli amici con Prova prestazioni** (senza data): telefono minimo MediaTek Helio G99 con Mali-G57 MC2 e 4 GB (Galaxy A16 4G, Redmi Note 14 4G); almeno tre famiglie di processore grafico: Mali, Adreno, un telefono di 3–4 anni fa; più avanti un iPhone. Se un telefono non regge si riducono solo gli effetti visivi. I picchi da circa 200 ms hanno una causa: la luce si ricostruisce quando un dono la allarga (Stoppino lungo, Lucciola), con le carte aperte; da riguardare su un telefono lento.
-9. **Account sviluppatore Google Play: deciso, lo apre Edoardo.** 25 dollari una tantum e verifica dell'identità. Per i nuovi account personali servono almeno 12 tester per 14 giorni di fila in prova chiusa prima della pubblicazione; le prove degli amici con «Prova prestazioni» si fanno dentro la prova chiusa, così contano anche per quel requisito. Test interno: aggiornamenti senza Blocco automatico e rapporto automatico pre-lancio. Firebase Test Lab è escluso: chiude il 30/09/2027. Dal lato del gioco servono:
-   - identificativo definitivo `com.deathslumen.game` (non si cambia più dopo la prima pubblicazione);
-   - compilazione firmata in formato AAB, con una chiave di caricamento propria, distinta da quella dell'APK di prova, e numero di versione che cresce a ogni caricamento;
-   - scelta su cosa vede chi prova: oggi Prova prestazioni è nel LAB, che esiste solo nelle versioni di prova;
-   - icona 512×512, grafica in evidenza 1024×500, almeno due schermate del telefono;
-   - titolo, descrizione breve e completa, categoria, contatto;
-   - pagina con l'informativa sulla privacy, modulo sui dati raccolti, questionario sui contenuti;
-   - controllo delle licenze di caratteri e di ogni asset di terzi.
-10. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
+8. **Pubblicazione** (senza data):
+   - **Google Play: lo apre Edoardo.** 25 dollari una tantum e verifica dell'identità. Per i nuovi account personali servono almeno 12 tester per 14 giorni di fila in prova chiusa prima della pubblicazione. Test interno: aggiornamenti senza Blocco automatico e rapporto automatico pre-lancio. Firebase Test Lab è escluso: chiude il 30/09/2027.
+   - **Versione per i tester senza LAB**, con il solo pulsante «Prova prestazioni».
+   - **Prove degli amici con Prova prestazioni**, dentro la prova chiusa, così contano anche per quel requisito. Telefono minimo: MediaTek Helio G99 con Mali-G57 MC2 e 4 GB (Galaxy A16 4G, Redmi Note 14 4G); almeno tre famiglie di processore grafico: Mali, Adreno, un telefono di 3–4 anni fa; più avanti un iPhone. Se un telefono non regge si riducono solo gli effetti visivi.
+   - **Prestazioni.** Ricostruzione del buio quando un dono allarga la luce: 223–240 ms sul S25; da sistemare prima della pubblicazione.
+   - **Dal lato del gioco servono:** identificativo definitivo `com.deathslumen.game` (non si cambia più dopo la prima pubblicazione); compilazione firmata in formato AAB, con una chiave di caricamento propria e numero di versione che cresce a ogni caricamento; icona 512×512, grafica in evidenza 1024×500, almeno due schermate del telefono; titolo, descrizione breve e completa, categoria, contatto; pagina con l'informativa sulla privacy, modulo sui dati raccolti, questionario sui contenuti; controllo delle licenze di caratteri e di ogni asset di terzi.
+9. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
 
 ## Idee non ancora decise
 
@@ -92,10 +89,9 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Pausa piccola al centro della fascia bassa, senza area di tocco invisibile (`PAUSA_PICCOLA.margineTocco` 0) | GDD §11; decisioni 5/11 |
 | Tacche (`TACCHE`: lato 4, raggio 31, arco 150°, lampo 0,25 s) e pulsante tondo della fiaschetta composto dalla cornice dell'abilità | GDD §8b e §11 |
 | Area sicura fissata dopo 1,5 s dall'apertura (`AREA_SICURA.assestamento`) | GDD §11 |
-| Obiettivo sul telefono minimo: media 60 fps, peggiore mai sotto 45, al minuto 14 con 400 nemici e lanterna in vista | decisioni 5/11 |
-| Prova prestazioni: 60 s di misura, 3 s di avvio, blocchi sopra 100 ms, build con 6 armi al livello 8 (`PRESTAZIONI`) | GDD «Mondo, luce e comandi» |
+| Obiettivo sul telefono minimo: media 60, meno dell'1% dei secondi sotto 55, nessun blocco sopra 100 ms, al minuto 14 con 400 nemici e lanterna in vista | decisioni 5/11 |
+| Prova prestazioni: 60 s di misura, 3 s di avvio, blocchi sopra 100 ms, secondi sotto 55 fps, build con 6 armi al livello 8 (`PRESTAZIONI`) | GDD «Mondo, luce e comandi» |
 | Link pubblico: stessa protezione dalla ricarica in partita del link di prova, quando Edoardo approverà l'unione con `main` | decisioni 5/11 |
-| Margine del limite ai disegni: 1 (`FOTOGRAMMI.margine`), per non saltare fotogrammi sugli schermi a 60 Hz | GDD «Mondo, luce e comandi» |
 | Link di prova: controllo della versione nuova ogni 120 s (`AGGIORNAMENTI.ogni`) | decisioni 5/11 |
 | Opacità della base del joystick quando copre un pulsante: 50% (`JOYSTICK_PICCOLO.opacitaSuiPulsanti`) | GDD §11 |
 | Campo del telefono più corto: a Cappella vuota il bot vince il 4%; da riguardare con il bilanciamento finale, partendo dal Becchino prima del minuto 5 e da Seth del minuto 10 | bilanciamento 5/11 |

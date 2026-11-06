@@ -453,7 +453,7 @@ for (const [nome, indirizzo, prova] of eventi) {
   await ctx.close();
 }
 
-// a 60, 90 e 120 Hz il gioco disegna circa 60 volte al secondo e la notte è identica, in tempo reale
+// la notte dura uguale a ogni frequenza dello schermo: a 60, 90 e 120 Hz stessa logica allo stesso secondo, in tempo reale
 {
   const risultati = [];
   for (const hz of [60, 90, 120]) {
@@ -491,7 +491,7 @@ for (const [nome, indirizzo, prova] of eventi) {
   const errori = [];
   for (const r of risultati) {
     if (Math.abs(r.reali - r.notte) > 0.6) errori.push(`a ${r.hz} Hz ${r.notte.toFixed(1)} s di notte durano ${r.reali.toFixed(1)} s veri`);
-    if (Math.abs(r.disegni - 60) > 6) errori.push(`a ${r.hz} Hz disegna ${r.disegni.toFixed(0)} volte al secondo invece di circa 60`);
+    if (Math.abs(r.disegni - r.hz) > r.hz * 0.2) errori.push(`a ${r.hz} Hz disegna ${r.disegni.toFixed(0)} volte al secondo`);
     if (r.impronta !== risultati[0].impronta) errori.push(`a ${r.hz} Hz la notte va diversamente`);
   }
   if (errori.length) falliti++;

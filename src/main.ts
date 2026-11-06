@@ -10,7 +10,6 @@ import { Menu } from './scene/Menu';
 import { preparaAudio } from './sistema/audio';
 import { calcolaMisure } from './sistema/pixel';
 import { avviaAggiornamenti } from './sistema/aggiornamenti';
-import { limitaDisegni } from './sistema/fotogrammi';
 import { avviaIndietro } from './sistema/indietro';
 import { avviaMobile, nativo, schermoAcceso } from './sistema/mobile';
 
@@ -32,7 +31,6 @@ const gioco = new Phaser.Game({
   scene: [Avvio, Menu, Gioco],
 });
 gioco.registry.set('scala', m.scala);
-limitaDisegni(gioco);
 
 let attesa = 0;
 function ridimensiona(): void {
