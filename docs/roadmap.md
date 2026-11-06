@@ -82,6 +82,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
+| Lumen, frammento e simboli V2: disegni, grandezza dei Lumen (× 2), colore del frammento (oggi solo ambra; a caso per ogni drop?) | `docs/asset_da_creare.md`, `docs/GDD.md` |
 | Scoperta di un'Unione: Edoardo ha detto «arma e dono al livello massimo», ma l'unione oggi chiede il dono al 3 (5 è il massimo di molti doni). Rimandato al bilanciamento finale (6/11): per ora vale il livello dell'unione | GDD §8f; `LIVELLO_DONO_UNIONE` |
 | Animazione della scoperta: segnaposto dal codice; Edoardo la vuole semplice ma con la «scarica di dopamina» dell'evoluzione di un Pokémon; durata da decidere quando ci sarà quella vera; tela e fotogrammi da definire | GDD §8f; `asset_da_creare.md` |
 | Abbreviazioni della pausa: Attesa colpi, Colpi, Colpi extra, Durata zone | GDD «La pausa»; `NOMI_CHIARI` in `src/data/spiegazioni.ts` |

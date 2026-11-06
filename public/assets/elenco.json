@@ -22,24 +22,30 @@
       "categoria": "oggetti",
       "immagine": "assets/oggetti/Anima_grande.png",
       "dati": "assets/oggetti/Anima_grande.json",
-      "versioneFile": 0,
-      "tag": []
+      "versioneFile": 2,
+      "tag": [
+        "idle"
+      ]
     },
     {
       "chiave": "Anima_media",
       "categoria": "oggetti",
       "immagine": "assets/oggetti/Anima_media.png",
       "dati": "assets/oggetti/Anima_media.json",
-      "versioneFile": 0,
-      "tag": []
+      "versioneFile": 2,
+      "tag": [
+        "idle"
+      ]
     },
     {
       "chiave": "Anima_piccola",
       "categoria": "oggetti",
       "immagine": "assets/oggetti/Anima_piccola.png",
       "dati": "assets/oggetti/Anima_piccola.json",
-      "versioneFile": 0,
-      "tag": []
+      "versioneFile": 2,
+      "tag": [
+        "idle"
+      ]
     },
     {
       "chiave": "Bastone_Esplosione",
@@ -126,6 +132,14 @@
         "walk",
         "hurt"
       ]
+    },
+    {
+      "chiave": "Frammento",
+      "categoria": "oggetti",
+      "immagine": "assets/oggetti/Frammento.png",
+      "dati": "assets/oggetti/Frammento.json",
+      "versioneFile": 2,
+      "tag": []
     },
     {
       "chiave": "Fuoco_fatuo_Volo",
@@ -524,6 +538,38 @@
       "immagine": "assets/effetti/Sepoltura.png",
       "dati": "assets/effetti/Sepoltura.json",
       "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Simbolo_Abbagliato",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Simbolo_Abbagliato.png",
+      "dati": "assets/effetti/Simbolo_Abbagliato.json",
+      "versioneFile": 2,
+      "tag": []
+    },
+    {
+      "chiave": "Simbolo_Consacrato",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Simbolo_Consacrato.png",
+      "dati": "assets/effetti/Simbolo_Consacrato.json",
+      "versioneFile": 2,
+      "tag": []
+    },
+    {
+      "chiave": "Simbolo_Maledetto",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Simbolo_Maledetto.png",
+      "dati": "assets/effetti/Simbolo_Maledetto.json",
+      "versioneFile": 2,
+      "tag": []
+    },
+    {
+      "chiave": "Simbolo_Sepolto",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Simbolo_Sepolto.png",
+      "dati": "assets/effetti/Simbolo_Sepolto.json",
+      "versioneFile": 2,
       "tag": []
     },
     {

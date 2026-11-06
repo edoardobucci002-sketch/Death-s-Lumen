@@ -14,7 +14,7 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | **Scheda del Play Store**: grafica in evidenza 1024×500 px e icona 512×512 px | prova chiusa e pubblicazione su Google Play | c'è `public/icons/icon-512.png`; la grafica in evidenza non esiste |
 | **Goccia di cera** (oggetto a terra, 8×11 px circa; se vuole anche una versione grande per i mucchi di Seth) | gocce di Cera lasciate dai nemici | disegnata dal codice in `src/sistema/oggetti.ts`; il file `OGGETTI/Goccia_cera_V1.aseprite` la sostituisce |
 | **10 icone degli amuleti** (24×24, `Icona_Amuleto_<id>`: specchioRotto, lanternaCieca, cuoreAvido, sangueFreddo, martire, danzaMacabra, ceriGemelli, lucciola, ossaDelite, pattoDiSangue) e il **grano del Rosario** | Rosario: carte del reliquiario, pausa, HUD | grani colorati disegnati dal codice (`src/sistema/amuleti.ts`) |
-| **Simboli degli stati** (circa 11×11 px: `EFFETTI/Simbolo_Abbagliato_V1.aseprite`, `Simbolo_Consacrato`, `Simbolo_Maledetto`, `Simbolo_Sepolto`) | sopra la testa dei nemici | disegnati dal codice in `src/sistema/simboli.ts` (sole, croce, teschio, lapide); ogni file li sostituisce da solo |
+| **Simboli degli stati** (11×11 px: `EFFETTI/Simbolo_<Nome>/Simbolo_<Nome>_V2.aseprite`) | sopra la testa dei nemici | **V2 del 6/11**: ridisegnati pixel per pixel da Claude a partire dalle prove di ChatGPT (sole giallo, croce bianca e oro, teschio viola, lapide grigio terra); da confermare o ritoccare, un `_V3` li sostituisce da solo |
 | **Striscia del dono** (170×62 px: `HUD/Cornici/Striscia_Dono_V1.aseprite` e `Striscia_Dono_Scelta_V1.aseprite`, pozzetto icona in x 5, y 5, 34×52) | scelta dei doni e reliquiari | provvisoria dal codice in `src/sistema/scheda.ts`; le misure interne sono in `STRISCIA`, `src/data/hud.ts` |
 | **8 icone** (24×24: `Icona_Lapide`, `Icona_Rosario_spezzato`, `Icona_Corvo`, `Icona_Velo_funebre`, `Icona_Cera_votiva`, `Icona_Chiodo_di_bara`, `Icona_Lacrima_di_lumen`, `Icona_Campanella_d_argento`, in `ICONE/<Nome>/`) | armi e doni nuovi; le stesse icone fanno da sprite provvisori di lapide, grano e corvo | disegnate dal codice in `src/sistema/segnaposto-oggetti.ts`; ogni file le sostituisce da solo |
 | **Effetti delle armi nuove** (lapide che cade, grano, corvo in volo con le ali, aura del Velo) | in partita | icone ingrandite e cerchio a retino dal codice |
@@ -23,7 +23,7 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | **Effetti delle unioni** (cerchio del Faro, fiamma della scia, lapide della Vanga, colpo della Verga…) | in partita | effetti esistenti riusati |
 | **Urna, Giara, Lanterna** (`OGGETTI/<Nome>/<Nome>_V1.aseprite`, 88×64 con base in basso al centro, tag `idle` e `death`) | oggetti rompibili | prove nate da ChatGPT e ripulite da Claude: da confermare o ridisegnare; un `_V2` le sostituisce da solo |
 | **Chiazza d'olio e fuoco** (circa 192×192 px: `Chiazza_olio` che si asciuga, `Chiazza_fuoco` animata) | lanterna rotta | disegnate dal codice a retino in `src/sistema/chiazze.ts` |
-| **Frammento di reliquia** (10×9 px circa, `OGGETTI/Frammento/Frammento_V1.aseprite`) e **contatore fisso** nell'HUD se Edoardo lo vuole | urne | scheggia d'oro in `src/sistema/oggetti.ts`; per ora lo spiega il cartiglio |
+| **Frammento di reliquia** (15×15 px, `OGGETTI/Frammento/Frammento_V2.aseprite`) e **contatore fisso** nell'HUD se Edoardo lo vuole | urne | **V2 del 6/11**: pezzo di vetrata con l'angolo di piombo e il lato spezzato; 3 fotogrammi = 3 colori (ambra, rosso, blu), il gioco oggi mostra solo il primo. Da decidere: un colore a caso per ogni drop? |
 | **Seth, il Rinnovato** (sprite e barra) | boss dei minuti 5 e 10 | `Il_Mietitore` e `Barra_Mietitore` |
 | Cerchi delle reazioni (Eclissi, Rivelazione, Esorcismo, Interramento) | reazioni tra stati | cerchi a retino dal codice |
 | Preavvisi e falci delle mosse di Seth | boss | cerchi rossi a retino dal codice |
@@ -36,6 +36,7 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | **Veggente e Sguattera** (ritratti, sprite in gioco, icone, abilità) | personaggi giocabili previsti | non esistono ancora; affinità da decidere |
 | **Il Ceraiolo** (custode della Cappella) | guida, questline della fiaschetta | non esiste ancora |
 | **Suoni e musica veri** | tutto il gioco | suoni sintetizzati dal codice (`src/sistema/audio.ts`) |
+| **Lumen (anime)** `OGGETTI/Anima_piccola`, `Anima_media`, `Anima_grande` (`_V2.aseprite`, 9×11, 11×14, 15×19 px su tela 24×24, tag `idle`) | gemme che cadono dai nemici | **V2 del 6/11**: ridisegnati pixel per pixel da Claude; stessa sagoma nei 4 fotogrammi, il battito è dato dalla luce e da una scintilla (rosso, ambra, azzurro: colori delle stelle); da confermare |
 | Nemici V1 alla scala nuova | tutti i nemici | segnaposto V0 ×2 |
 | Effetti e icone delle armi alla scala nuova | armi | segnaposto V0 |
 

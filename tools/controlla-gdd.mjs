@@ -483,7 +483,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   });
   frase('Raccolta degli oggetti', 'si raccolgono a {} px dal personaggio, sono disegnati sopra il buio e ingranditi × {}', G.presa, G.ingrandimento);
   const AN = PR.ANIME;
-  frase('Colore delle anime', 'azzurro sotto {}, verde da {} a {}, ambra da {} in su', AN.media, AN.media, AN.grande - 1, AN.grande);
+  frase('Colore delle anime', 'rosso sotto {}, ambra da {} a {}, azzurro da {} in su', AN.media, AN.media, AN.grande - 1, AN.grande);
   frase('Volo delle anime', 'volano verso il personaggio a {} px/s, accelerando di {} px/s al secondo; sono raccolte a {} px', AN.volo, AN.accelerazione, AN.presa);
   frase('Anime a terra', 'Al massimo {} anime a terra', AN.massimeATerra);
 

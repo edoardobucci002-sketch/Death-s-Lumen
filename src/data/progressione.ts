@@ -15,10 +15,10 @@ export function animePerLivello(l: number): number {
 
 export const ANIME = {
   massimeATerra: 320, // oltre, la nuova prende il posto (e il valore) della più lontana dal personaggio
-  media: 6, // da 6 anime in su il cristallo è verde…
-  grande: 20, // …da 20 in su ambra
+  media: 6, // da 6 anime in su il Lumen è ambra…
+  grande: 20, // …da 20 in su azzurro
   sprite: { piccola: 'Anima_piccola', media: 'Anima_media', grande: 'Anima_grande' },
-  ingrandimento: 3, // i cristalli della v0 sono piccoli: si disegnano grandi il triplo, sopra il buio
+  ingrandimento: 2, // gli sprite V2 hanno da 9×11 a 15×19 pixel: si disegnano grandi il doppio, sopra il buio (da rivedere)
   volo: 420, // velocità iniziale verso il personaggio quando entra nel raggio di raccolta
   accelerazione: 900, // quanto accelera mentre vola
   presa: 24, // a questa distanza dal personaggio l'anima è raccolta

@@ -397,7 +397,7 @@ Le comparse arrivano appena fuori dallo schermo. Se in campo c'è meno del 40% d
 
 Pane, calamita e reliquiari si raccolgono a 40 px dal personaggio, sono disegnati sopra il buio e ingranditi × 3; i reliquiari fuori schermo hanno un segnale lampeggiante sul bordo (`src/data/oggetti.ts`).
 
-Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (`src/data/progressione.ts`). Al massimo 320 anime a terra: oltre, la nuova nasce comunque dove muore il nemico e prende il posto e il valore dell'anima più lontana dal personaggio. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
+Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle stelle scelti da Edoardo: rosso sotto 6, ambra da 6 a 19, azzurro da 20 in su. Si disegnano grandi il doppio (*da rivedere*). Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (`src/data/progressione.ts`). Al massimo 320 anime a terra: oltre, la nuova nasce comunque dove muore il nemico e prende il posto e il valore dell'anima più lontana dal personaggio. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
 
 ## 8b. Fiaschetta e Grazia (`src/data/sopravvivenza.ts`)
 
@@ -406,7 +406,7 @@ Colore delle anime: azzurro sotto 6, verde da 6 a 19, ambra da 20 in su. Nel rag
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
-Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa di bruti, élite e Seth compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole ambra, croce oro, teschio viola, lapide seppia (la lapide resta anche durante l'Interramento). Sui nemici comuni lo stato funziona lo stesso, ma senza simbolo. Niente cambi di colore né intermittenza; al massimo 40 simboli sullo schermo (*da rivedere*), con questa precedenza: prima Seth, poi le élite, poi i bruti più vicini al personaggio.
+Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa di bruti, élite e Seth compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole giallo, croce bianca e oro, teschio viola, lapide grigio terra (la lapide resta anche durante l'Interramento). Sui nemici comuni lo stato funziona lo stesso, ma senza simbolo. Niente cambi di colore né intermittenza; al massimo 40 simboli sullo schermo (*da rivedere*), con questa precedenza: prima Seth, poi le élite, poi i bruti più vicini al personaggio.
 
 | Affinità | Armi e abilità | Stato | Effetto |
 | --- | --- | --- | --- |
@@ -630,7 +630,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Impatto della pala | 0,22 s; scossa dello schermo di 2 px per 0,1 s se colpisce qualcuno | |
 | Esplosione dei dardi | 0,18 s | |
 | Ordine di disegno | arco, impatto e nubi sotto i nemici; il personaggio sopra tutti i nemici, Seth compreso; cerchi e falci di Seth sopra il personaggio; anime sopra il buio | decisione di Edoardo: i colpi non devono coprire i nemici, il personaggio non deve sparire, le anime devono vedersi |
-| Anime a terra | cristalli della v0 ingranditi × 3 | |
+| Anime a terra | Lumen V2 ingranditi × 2 | |
 
 ## 12. Da fare e da decidere
 

@@ -114,7 +114,7 @@ export class Anime {
     }
   }
 
-  /** Colore secondo il valore: azzurro, verde da 6, ambra da 20. */
+  /** Colore secondo il valore: rosso, ambra da 6, azzurro da 20 (colori delle stelle). */
   private aspetto(i: number): void {
     const v = this.valore[i];
     const chiave = v >= ANIME.grande ? ANIME.sprite.grande : v >= ANIME.media ? ANIME.sprite.media : ANIME.sprite.piccola;
