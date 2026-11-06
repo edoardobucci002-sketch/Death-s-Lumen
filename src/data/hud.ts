@@ -123,6 +123,18 @@ export const PAUSA = {
  * La scoperta di un'Unione (rivelazione.ts): tempi in secondi, misure in punti salvo dove è scritto. Da rivedere: è il segnaposto
  * dal codice dell'animazione che Edoardo vuole fatta apposta.
  */
+/** Il mosaico dei frammenti di vetro (src/sistema/mosaico.ts): compare al centro in alto a ogni frammento. Tempi in secondi. */
+export const MOSAICO = {
+  punti: 170, // grandezza del mosaico sullo schermo, arrotondata a un ingrandimento intero
+  margine: 8, // pixel di gioco sotto la fascia alta del telefono
+  sopraComputer: 84, // pixel di gioco dal bordo alto dove non c'è la fascia: sotto l'HUD
+  rivela: 0.5, // il pezzo nuovo si accende a retino
+  resta: 2, // dalla comparsa all'inizio dell'uscita
+  uscita: 0.3, // sparisce a retino
+  passi: 8, // gli scatti di entrata e uscita
+  finale: 1.8, // al terzo frammento il mosaico intero resta acceso tanto, poi si apre il reliquiario
+};
+
 export const RIVELAZIONE = {
   entrata: 0.45, // il fondo si scurisce, arma e dono ai lati
   avvicina: 0.65, // arma e dono si avvicinano

@@ -1,6 +1,6 @@
 /*
  * Oggetti a terra: pane (salute), calamita (attira tutte le anime), reliquiari (potenziamenti), gocce di Cera
- * (la valuta della Cappella: rare, volano verso il personaggio come le anime ma più piano) e frammenti di reliquia.
+ * (la valuta della Cappella: rare, volano verso il personaggio come le anime ma più piano) e frammenti di vetro.
  * Si raccolgono passandoci sopra. Si disegnano sopra il buio, come le anime;
  * un reliquiario fuori dallo schermo è indicato da un segnale lampeggiante sul bordo (HUD/Segnali/Segnale_Reliquiario).
  */
@@ -32,7 +32,7 @@ const GOCCIA = [
   '.OAAAAO.',
   '..OOOO..',
 ];
-/** Il frammento di reliquia, provvisorio: una scheggia d'oro con un bordo rotto. */
+/** Il frammento di vetro, di riserva se manca il disegno: una scheggia d'oro con un bordo rotto. */
 const SCHEGGIA = [
   '....OO....',
   '...OWYO...',
@@ -86,7 +86,8 @@ export class Oggetti {
     this.tipo[i] = tipo;
     const s = this.sprite[i].setTexture(SPRITE[tipo]).setVisible(true);
     if (tipo === CERA_GOCCIA) s.stop().setScale(DROP.cera.ingrandimento);
-    else if (tipo === FRAMMENTO) s.stop().setScale(DROP.frammento.ingrandimento);
+    // il colore nasce dal punto in cui cade: non tocca il generatore del caso, che deve restare uguale per carte e comparse
+    else if (tipo === FRAMMENTO) s.stop().setScale(DROP.frammento.ingrandimento).setFrame(String(Math.abs(Math.floor(x * 1.7 + y * 3.1)) % DROP.frammento.colori));
     else s.setScale(DROP.ingrandimento).play(`${SPRITE[tipo]}:idle`);
   }
 

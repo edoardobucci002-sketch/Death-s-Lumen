@@ -134,6 +134,11 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 @media (hover: none) { .doni-tasto { display: none; } }
 .doni-aiuto { position: absolute; padding: 0; background: #1a1410; border: 2px solid var(--accento); color: var(--accento); font-family: var(--f-pixel); line-height: 1; cursor: pointer; }
 
+/* Mosaico dei frammenti di vetro (src/sistema/mosaico.ts): non ferma il gioco e non prende i tocchi; sotto carte e pausa */
+#interfaccia > .mosaico { position: fixed; z-index: 2; pointer-events: none; }
+.mosaico-tela { display: block; image-rendering: pixelated; }
+.mosaico-numero { background: #140c14; color: #ffe08a; text-align: center; font-family: var(--f-pixel); font-size: calc(var(--pixel-font) * 1.5); line-height: 1.25; }
+
 /* Scoperta di un'Unione (src/sistema/rivelazione.ts): sopra carte e pausa, sotto il Laboratorio */
 #interfaccia > .rivelazione { position: fixed; inset: 0; z-index: 7; overflow: hidden; background-color: transparent; background-repeat: repeat; image-rendering: pixelated; cursor: pointer; }
 .rivelazione-lampo { position: absolute; background: #ffe08a; }

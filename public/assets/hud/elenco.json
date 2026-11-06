@@ -1,6 +1,6 @@
 {
   "versione": 1,
-  "esportato": "2026-11-06T15:25:49.516Z",
+  "esportato": "2026-11-06T16:00:25.490Z",
   "asset": [
     {
       "chiave": "Barra_Esperienza_Cornice",
@@ -160,6 +160,14 @@
       "immagine": "assets/hud/Joystick_Pomello.png",
       "dati": "assets/hud/Joystick_Pomello.json",
       "versioneFile": 2,
+      "tag": []
+    },
+    {
+      "chiave": "Mosaico",
+      "categoria": "hud",
+      "immagine": "assets/hud/Mosaico.png",
+      "dati": "assets/hud/Mosaico.json",
+      "versioneFile": 1,
       "tag": []
     },
     {

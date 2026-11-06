@@ -869,6 +869,42 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await ctx.close();
 }
 
+// Mosaico dei frammenti: un pezzo per volta, non ferma il gioco, sparisce da solo; il terzo apre il reliquiario e riparte da capo
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?pg=lampionaio&automatico`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
+  await pag.waitForTimeout(200);
+  const gioco = (f) => pag.evaluate(`(${f})(window.__dl.scene.getScene('Gioco'))`);
+  const numero = () => pag.evaluate(() => { const e = document.querySelector('.mosaico'); return e && !e.hidden ? e.querySelector('.mosaico-numero').textContent : ''; });
+  await gioco('(s) => { s.labImmortale(true); s.labMosaico(); }');
+  if (await numero() !== '1/3') errori.push('il primo frammento non mostra 1/3');
+  if (await pag.evaluate(() => getComputedStyle(document.querySelector('.mosaico')).pointerEvents) !== 'none') errori.push('il mosaico prende i tocchi');
+  await pag.waitForTimeout(600);
+  await pag.screenshot({ path: 'prove/mosaico-1.png' });
+  await pag.waitForTimeout(2000);
+  if (await numero()) errori.push('il mosaico non sparisce da solo');
+  await gioco('(s) => { s.labMosaico(); s.labMosaico(); }');
+  if (await numero() !== '3/3') errori.push('il terzo frammento non mostra 3/3');
+  if (await gioco('(s) => s.frammenti')) errori.push('il conto dei frammenti non riparte');
+  await pag.waitForTimeout(800);
+  await pag.screenshot({ path: 'prove/mosaico-3.png' });
+  await pag.waitForFunction(() => document.querySelector('.mosaico').hidden, null, { timeout: 4000 }).catch(() => errori.push('il mosaico completo non si chiude'));
+  if (await gioco('(s) => s.attesaMosaico')) errori.push('il reliquiario del mosaico non si apre');
+  await gioco('(s) => s.labMosaico()');
+  await gioco('(s) => s.labPausa("build")');
+  if (await numero()) errori.push('il mosaico resta sopra la pausa');
+  await gioco('(s) => s.riprendi()');
+  const colori = await gioco('(s) => { const visti = new Set(); for (let i = 0; i < 12; i++) { s.oggetti.aggiungi(4, 40 + i * 31, 90 + i * 17); visti.add(s.oggetti.sprite[s.oggetti.numero - 1].frame.name); s.oggetti.togli(s.oggetti.numero - 1); } return visti.size; }');
+  if (colori !== 3) errori.push(`i frammenti hanno ${colori} colori invece di 3`);
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} mosaico dei frammenti: 1/3, 3/3, reliquiario, tre colori${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
 // Unioni che si svelano: la carta non nomina una non scoperta; 3 veglie vinte le sbloccano e la Cappella non le vende più
 {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });

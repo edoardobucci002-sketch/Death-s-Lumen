@@ -18,7 +18,7 @@ import { voce } from '../sistema/asset';
 import { arte, fasce, ingr, misureHud } from '../sistema/arte';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
-import { FINESTRE } from '../data/hud';
+import { FINESTRE, MOSAICO } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PRESTAZIONI, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, ORDE, SCIAMI } from '../data/nemici';
@@ -40,6 +40,7 @@ import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { Hud, tempo, type VoceBuild } from '../sistema/hud';
 import type { DatiPausa, SchedaPausa, VoceUnione } from '../sistema/pausa';
 import { Rivelazione } from '../sistema/rivelazione';
+import { Mosaico } from '../sistema/mosaico';
 import { voceArma, voceDono } from '../sistema/scheda';
 import { vibra } from '../sistema/mobile';
 import { CALAMITA, CERA_GOCCIA, FRAMMENTO, Oggetti, PANE, RELIQUIARIO } from '../sistema/oggetti';
@@ -98,11 +99,13 @@ export class Gioco extends Phaser.Scene {
   private minacce!: Minacce;
   private rompibili: Rompibili | null = null; // nelle simulazioni non ci sono: il bot non li cerca
   private chiazze: Chiazze | null = null;
-  private frammenti = 0; // frammenti di reliquia raccolti verso il prossimo reliquiario
+  private frammenti = 0; // frammenti di vetro raccolti verso il prossimo reliquiario
+  private attesaMosaico = 0; // secondi di gioco prima che il mosaico completo apra il reliquiario
   private alone!: Phaser.GameObjects.Image;
   private effetti!: Effetti;
   private doni!: Doni;
   private rivelazione!: Rivelazione; // l'animazione della scoperta di un'Unione
+  private mosaico!: Mosaico; // il mosaico dei frammenti di vetro
   private raccolta = 0;
   private rigenerazione = 0;
   private bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
@@ -235,6 +238,7 @@ export class Gioco extends Phaser.Scene {
     this.arsenale.rompibili = this.rompibili;
     this.arsenale.chiazze = this.chiazze;
     this.frammenti = 0;
+    this.attesaMosaico = 0;
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
     const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
@@ -280,6 +284,7 @@ export class Gioco extends Phaser.Scene {
       this.doni.sospesa = this.pausa;
       if (!this.fermo()) this.anims.resumeAll();
     });
+    this.mosaico = new Mosaico(interfaccia);
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate, scoperte: this.unioniScoperte }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
@@ -317,6 +322,7 @@ export class Gioco extends Phaser.Scene {
       this.hud.distruggi();
       this.doni.distruggi();
       this.rivelazione.distruggi();
+      this.mosaico.distruggi();
       this.speciale.distruggi();
       this.fiaschetta.distruggi();
       this.anims.resumeAll();
@@ -359,6 +365,11 @@ export class Gioco extends Phaser.Scene {
 
   /** Un passo di logica: niente disegno qui. */
   private passo(dt: number): void {
+    if (this.attesaMosaico > 0 && (this.attesaMosaico -= dt) <= 0) {
+      this.attesaMosaico = 0;
+      this.mosaico.nascondi();
+      this.apriReliquiario();
+    }
     this.attesaTremolio -= dt;
     if (this.attesaTremolio <= 0) {
       this.attesaTremolio = LUCE.intervalloTremolio;
@@ -722,6 +733,11 @@ export class Gioco extends Phaser.Scene {
     this.chiazze?.accendiTutte();
   }
 
+  /** Come raccogliere un frammento: accende il pezzo dopo del mosaico. */
+  labMosaico(): void {
+    this.frammento();
+  }
+
   labFrammento(): void {
     this.oggetti.aggiungi(FRAMMENTO, this.x + 60, this.y - 60);
   }
@@ -1024,6 +1040,7 @@ export class Gioco extends Phaser.Scene {
   private apriPausa(scheda?: SchedaPausa): void {
     if (this.finito || this.pausa) return;
     this.rivelazione.salta();
+    this.mosaico.nascondi();
     this.pausa = true;
     this.doni.sospesa = true;
     this.anims.pauseAll();
@@ -1368,17 +1385,19 @@ export class Gioco extends Phaser.Scene {
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
 
-  /** Frammento di reliquia: il cartiglio dice quanti ne mancano; riuniti aprono un reliquiario. */
+  /** Frammento di vetro: accende un pezzo del mosaico; al terzo il mosaico intero si illumina e poi apre un reliquiario. */
   private frammento(): void {
-    const servono = FRAMMENTI.perReliquiario;
-    if (++this.frammenti >= servono) {
-      this.frammenti = 0;
-      this.apriReliquiario();
+    const servono = FRAMMENTI.perReliquiario, n = ++this.frammenti;
+    this.mosaico.mostra(n, servono);
+    if (n < servono) {
+      suona('cera');
+      vibra('leggera');
       return;
     }
-    suona('cera');
-    vibra('leggera');
-    this.hud.avviso(FRAMMENTI.titolo, `${this.frammenti} di ${servono}: riuniti, aprono un reliquiario`);
+    this.frammenti = 0;
+    this.attesaMosaico = MOSAICO.finale;
+    suona('reliquiario');
+    vibra('media');
   }
 
   /** Un oggetto rompibile lascia ciò che contiene. */

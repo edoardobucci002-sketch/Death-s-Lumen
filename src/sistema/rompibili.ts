@@ -1,6 +1,6 @@
 /*
  * Rompibili: urne, giare e lanterne sparse nel cimitero. Si rompono se il personaggio le tocca o se le colpisce
- * un'arma. La giara lascia Cera, l'urna un frammento di reliquia, la lanterna una chiazza d'olio.
+ * un'arma. La giara lascia Cera, l'urna un frammento di vetro, la lanterna una chiazza d'olio.
  * Una lanterna intera apre un foro nel buio e scalda il terreno intorno; anche una chiazza accesa fa luce.
  * Il mondo è diviso in settori: da seme e settore si ricava sempre lo stesso oggetto, quindi non serve ricordare
  * la mappa ma solo i settori già rotti. Il generatore è a parte: non cambia nemici, carte e drop.

@@ -44,8 +44,7 @@ export const CHIAZZE = {
   accendono: ['Candela_Fiammella', 'Fuoco_fatuo_Volo'],
 } as const;
 
-/** I frammenti di reliquia delle urne: riuniti danno un reliquiario. */
+/** I frammenti di vetro delle urne: tre pezzi del mosaico, riuniti danno un reliquiario. */
 export const FRAMMENTI = {
   perReliquiario: 3,
-  titolo: 'Frammento di reliquia',
 } as const;
