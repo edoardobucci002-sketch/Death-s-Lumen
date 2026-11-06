@@ -34,6 +34,10 @@ export class Rompibili {
   private telaBuio: Phaser.Textures.DynamicTexture | null = null;
   private fissa = -1; // l'oggetto che non si rompe (Prova prestazioni)
   private fuochi = 0; // fori aperti in questo disegno
+  private px = 0; // il personaggio e il mezzo campo visibile: le armi rompono solo ciò che si vede
+  private py = 0;
+  private mezzaL = 0;
+  private mezzaA = 0;
 
   constructor(private scena: Phaser.Scene, private seme: number, private quandoRotto: (tipo: number, x: number, y: number) => void) {
     this.fori = creaFori(scena);
@@ -45,8 +49,12 @@ export class Rompibili {
   }
 
   /** Passo di logica: accende i settori intorno al personaggio e rompe ciò che tocca. */
-  aggiorna(x: number, y: number): void {
+  aggiorna(x: number, y: number, mezzaL: number, mezzaA: number): void {
     const { settore, tocco } = ROMPIBILI;
+    this.px = x;
+    this.py = y;
+    this.mezzaL = mezzaL;
+    this.mezzaA = mezzaA;
     const cx = Math.floor(x / settore), cy = Math.floor(y / settore);
     if (cx !== this.cx || cy !== this.cy) this.cambiaSettore(cx, cy);
     this.rompiEntro(x, y, tocco);
@@ -56,12 +64,14 @@ export class Rompibili {
     return this.stato[i] === INTERO;
   }
 
-  /** Un'arma ha colpito in (x, y) con questo raggio: rompe ciò che tocca. */
+  /** Un'arma ha colpito in (x, y) con questo raggio: rompe ciò che tocca, ma solo dentro il campo visibile. */
   colpitoDa(x: number, y: number, raggio: number): void {
     const r = raggio + ROMPIBILI.raggio;
     for (let i = 0; i < MAX; i++) {
       if (this.stato[i] !== INTERO) continue;
-      const dx = this.x[i] - x, dy = this.y[i] - ROMPIBILI.centro - y;
+      const ox = this.x[i], oy = this.y[i] - ROMPIBILI.centro;
+      if (Math.abs(ox - this.px) > this.mezzaL || Math.abs(oy - this.py) > this.mezzaA) continue;
+      const dx = ox - x, dy = oy - y;
       if (dx * dx + dy * dy < r * r) this.rompi(i);
     }
   }

@@ -70,6 +70,13 @@ Dopo la partita di Edoardo su telefono. Stesso numero di oggetti, percentuali ch
 
 Nuovi: 60% dei settori da 700 px con un oggetto; urna 1 goccia, giara 2, lanterna 1; pesi 4/4/2. La Cera dei nemici non cambia, quindi una notte ne dà un po' di più. Il bot gioca senza rompibili: la simulazione non cambia e non misura questa Cera in più.
 
+### 6/11 — Raggio di raccolta da 150 a 40 px
+
+Richiesta di Edoardo: senza potenziamenti il Lumen a terra si raccoglie passandoci sopra. `BASE.raccolta` passa da 150 a 40 (*da rivedere*). La Calamita resta in percentuale: al massimo arriva a 100 px invece di 375, quindi va ricalibrata con Edoardo.
+
+Bot sul S25, Cappella vuota, 12 notti per personaggio (48): **0 vittorie su 48** (prima 2/48), 7 morti prima del minuto 5 (prima 5), mediana della morte 9:54 (prima 10:16), livello finale medio 43 (prima 55). Seth del 5 ucciso in 32 notti su 41 che ci sono arrivate. I due vincoli restano rispettati. 
+Stessa condizione con la Calamita da +30% a +100% per livello (240 px al massimo, scelta di Edoardo): 0 vittorie su 48, 8 morti prima del minuto 5, mediana della morte 9:54, livello finale medio 44, Seth del 5 ucciso in 31 notti su 40.
+
 ### 5/11 — Campo vero con le fasce del telefono
 
 Nessun numero di gioco cambia; cambia il campo: sul telefono in verticale `mezzaA` passa da 585 a 410, quindi comparsa, ricollocamento e armi «sullo schermo» finiscono al bordo delle fasce. Il bot ora gioca sempre con lo schermo del Galaxy S25 (`tools/sim.mjs`). Computer e tablet: tre notti con lo stesso seme identiche a prima.

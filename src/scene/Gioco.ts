@@ -100,6 +100,7 @@ export class Gioco extends Phaser.Scene {
   private rompibili: Rompibili | null = null; // nelle simulazioni non ci sono: il bot non li cerca
   private chiazze: Chiazze | null = null;
   private frammenti = 0; // frammenti di vetro raccolti verso il prossimo reliquiario
+  private frammentiCaduti = 0; // quanti ne sono usciti dalle urne in questa notte
   private attesaMosaico = 0; // secondi di gioco prima che il mosaico completo apra il reliquiario
   private alone!: Phaser.GameObjects.Image;
   private effetti!: Effetti;
@@ -239,6 +240,7 @@ export class Gioco extends Phaser.Scene {
     this.arsenale.chiazze = this.chiazze;
     this.frammenti = 0;
     this.attesaMosaico = 0;
+    this.frammentiCaduti = 0;
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
     const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
@@ -464,7 +466,7 @@ export class Gioco extends Phaser.Scene {
       suona('anima');
     }
     this.oggetti.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta * 0.6, this.raccogli);
-    this.rompibili?.aggiorna(this.x, this.y);
+    this.rompibili?.aggiorna(this.x, this.y, mezzaL, mezzaA);
     this.sim?.passo(this.secondi, this.livello, this.salute, this.orda);
     while (this.esperienza >= animePerLivello(this.livello)) {
       this.esperienza -= animePerLivello(this.livello);
@@ -739,7 +741,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   labFrammento(): void {
-    this.oggetti.aggiungi(FRAMMENTO, this.x + 60, this.y - 60);
+    this.lasciaFrammento(this.x + 60, this.y - 60);
   }
 
   /** Apre la pausa sulla scheda indicata; se è già aperta la richiude prima. */
@@ -1400,11 +1402,21 @@ export class Gioco extends Phaser.Scene {
     vibra('media');
   }
 
+  /** L'urna fortunata: esce un frammento, con un anello di luce, una scossa e il suono del vetro. */
+  private lasciaFrammento(x: number, y: number): void {
+    this.frammentiCaduti++;
+    this.oggetti.aggiungi(FRAMMENTO, x, y);
+    this.effetti.reazione(x, y - ROMPIBILI.centro, FRAMMENTI.anello, FRAMMENTI.coloreAnello, FRAMMENTI.bordoAnello, FRAMMENTI.durataAnello);
+    this.effetti.scuoti(FRAMMENTI.scossa, FRAMMENTI.durataScossa);
+    suona('vetro');
+    vibra('media');
+  }
+
   /** Un oggetto rompibile lascia ciò che contiene. */
   private oggettoRotto = (tipo: number, x: number, y: number): void => {
     const { gocce, frammenti, olio } = ROMPIBILI.tipi[tipo];
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * ROMPIBILI.dispersione, y);
-    for (let k = 0; k < frammenti; k++) this.oggetti.aggiungi(FRAMMENTO, x, y);
+    if (frammenti && this.frammentiCaduti < FRAMMENTI.perNotte && this.caso.numero() < FRAMMENTI.probabilita) this.lasciaFrammento(x, y);
     if (olio) this.chiazze?.aggiungi(x, y);
     suona('colpo');
     vibra('leggera');

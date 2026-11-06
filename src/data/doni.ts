@@ -20,7 +20,7 @@ export const PASSIVI: Passivo[] = [
   { id: 'clessidra', nome: 'Clessidra', icona: 'Icona_Clessidra', massimo: 5, per: 0.07, testo: '−7% ricarica.' },
   { id: 'stoppinoLungo', nome: 'Stoppino lungo', icona: 'Icona_Stoppino_lungo', massimo: 5, per: 0.1, testo: '+10% area: raggi, archi, nubi, pozze, abilità e alone di luce.' },
   { id: 'aliDiFalena', nome: 'Ali di falena', icona: 'Icona_Ali_di_falena', massimo: 5, per: 0.08, testo: '+8% velocità.' },
-  { id: 'calamita', nome: 'Calamita', icona: 'Icona_Calamita', massimo: 5, per: 0.3, anime: 0.05, testo: '+30% raggio di raccolta e +5% anime.' },
+  { id: 'calamita', nome: 'Calamita', icona: 'Icona_Calamita', massimo: 5, per: 1, anime: 0.05, testo: '+100% raggio di raccolta e +5% anime.' },
   { id: 'erbeAmare', nome: 'Erbe amare', icona: 'Icona_Erbe_amare', massimo: 5, per: 0.25, testo: '+0,25 salute al secondo.' },
   { id: 'scudoDiFerro', nome: 'Scudo di ferro', icona: 'Icona_Scudo_di_ferro', massimo: 4, per: 0.06, testo: '−6% danno subito.' },
   { id: 'specchio', nome: 'Specchio', icona: 'Icona_Specchio', massimo: 1, per: 1, testo: '+1 proiettile, nube, fiala, fuoco o falce.' },

@@ -4,10 +4,10 @@
  * Ogni suono ha un intervallo minimo, così cento colpi nello stesso istante non diventano un frastuono.
  * Acceso o spento si ricorda sul dispositivo (tasto M o menu di pausa).
  */
-export type Suono = 'colpo' | 'sparo' | 'anima' | 'cera' | 'danno' | 'campana' | 'livello' | 'reliquiario' | 'mietitore' | 'cura' | 'speciale' | 'morte' | 'alba';
+export type Suono = 'colpo' | 'sparo' | 'anima' | 'cera' | 'danno' | 'campana' | 'livello' | 'reliquiario' | 'vetro' | 'mietitore' | 'cura' | 'speciale' | 'morte' | 'alba';
 
 const PAUSA_MINIMA: Record<Suono, number> = {
-  colpo: 0.05, sparo: 0.07, anima: 0.035, cera: 0.1, danno: 0.1, campana: 0.3, livello: 0.2, reliquiario: 0.3, mietitore: 1, cura: 0.4, speciale: 0.3, morte: 1, alba: 1,
+  colpo: 0.05, sparo: 0.07, anima: 0.035, cera: 0.1, danno: 0.1, campana: 0.3, livello: 0.2, reliquiario: 0.3, vetro: 0.3, mietitore: 1, cura: 0.4, speciale: 0.3, morte: 1, alba: 1,
 };
 const VOLUME = 0.35;
 
@@ -92,6 +92,9 @@ function produci(s: Suono): void {
       break;
     case 'reliquiario':
       [784, 988, 1175, 1568].forEach((f, k) => tono(t + k * 0.07, 'triangle', f, f, 0.15, 0.25));
+      break;
+    case 'vetro':
+      [1319, 1976, 2637, 1976].forEach((f, k) => tono(t + k * 0.05, 'sine', f, f, 0.18, 0.22));
       break;
     case 'mietitore':
       tono(t, 'sawtooth', 55, 50, 1.6, 0.35);

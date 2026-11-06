@@ -898,6 +898,13 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await gioco('(s) => s.labPausa("build")');
   if (await numero()) errori.push('il mosaico resta sopra la pausa');
   await gioco('(s) => s.riprendi()');
+  const rottiFuori = await gioco(`(s) => { const r = s.rompibili, conta = () => Array.from(r.stato, (_, i) => r.intero(i)).filter(Boolean).length;
+    r.piazza(0, s.x + s.campoL, s.y); const prima = conta(); r.colpitoDa(s.x + s.campoL, s.y - 20, 8); const fuori = prima - conta();
+    r.piazza(0, s.x + 60, s.y - 60); const dopo = conta(); r.colpitoDa(s.x + 60, s.y - 80, 8); return [fuori, dopo - conta()]; }`);
+  if (rottiFuori[0]) errori.push('un\'arma rompe un oggetto fuori campo');
+  if (rottiFuori[1] !== 1) errori.push('un\'arma non rompe un oggetto in vista');
+  const usciti = await gioco(`(s) => { const prima = s.oggetti.numero; s.frammentiCaduti = 0; const p = s.caso.numero; s.caso.numero = () => 0; for (let i = 0; i < 6; i++) s.oggettoRotto(0, s.x, s.y + 200); s.caso.numero = p; return s.oggetti.numero - prima; }`);
+  if (usciti !== 3) errori.push(`le urne fortunate lasciano ${usciti} frammenti invece di 3 a notte`);
   const colori = await gioco('(s) => { const visti = new Set(); for (let i = 0; i < 12; i++) { s.oggetti.aggiungi(4, 40 + i * 31, 90 + i * 17); visti.add(s.oggetti.sprite[s.oggetti.numero - 1].frame.name); s.oggetti.togli(s.oggetti.numero - 1); } return visti.size; }');
   if (colori !== 3) errori.push(`i frammenti hanno ${colori} colori invece di 3`);
   if (errori.length) falliti++;

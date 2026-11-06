@@ -27,7 +27,7 @@ export interface Personaggio {
 }
 
 // velocità e raccolta: valori della v0 × 2,35, perché i personaggi ora sono alti circa 80 px invece di 34
-export const BASE = { salute: 100, velocita: 245, raccolta: 150, armatura: 0, armaturaMassima: 0.6 } as const;
+export const BASE = { salute: 100, velocita: 245, raccolta: 40, armatura: 0, armaturaMassima: 0.6 } as const;
 
 export const PERSONAGGI: Personaggio[] = [
   { id: 'lampionaio', nome: 'Il Lampionaio', motto: 'Guida nel buio', colore: '#e3913a', ritratto: 'Il_Lampionaio', sprite: 'Il_Lampionaio_ingame',

@@ -44,7 +44,15 @@ export const CHIAZZE = {
   accendono: ['Candela_Fiammella', 'Fuoco_fatuo_Volo'],
 } as const;
 
-/** I frammenti di vetro delle urne: tre pezzi del mosaico, riuniti danno un reliquiario. */
+/** I frammenti di vetro: tre pezzi del mosaico, riuniti danno un reliquiario. Un'urna ne contiene uno solo per fortuna. */
 export const FRAMMENTI = {
+  probabilita: 0.08, // quante urne ne contengono uno (da rivedere)
+  perNotte: 3, // oltre questi le urne restano vuote: il mosaico si completa una volta sola a notte
   perReliquiario: 3,
+  anello: 56, // raggio dell'anello che segnala il frammento, in pixel di gioco
+  durataAnello: 0.5,
+  scossa: 2, // scossa dello schermo, in pixel e secondi
+  durataScossa: 0.15,
+  coloreAnello: '#ffe08a',
+  bordoAnello: '#a8761e',
 } as const;
