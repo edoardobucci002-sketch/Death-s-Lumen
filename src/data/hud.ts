@@ -127,7 +127,6 @@ export const RIVELAZIONE = {
   entrata: 0.45, // il fondo si scurisce, arma e dono ai lati
   avvicina: 0.65, // arma e dono si avvicinano
   lampo: 0.35, // il lampo si allarga e si spegne
-  resta: 3, // l'Unione resta sullo schermo; un tocco la chiude prima
   passi: 8, // gli scatti del movimento e del lampo
   gradini: 3, // gli scatti del fondo
   fondoDa: 8, fondoA: 15, // quanto è scuro il fondo (0-16), dall'inizio alla fine

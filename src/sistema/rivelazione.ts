@@ -2,7 +2,7 @@
  * Il momento della scoperta di un'Unione: la partita si ferma, l'arma e il dono si avvicinano a scatti, un lampo a retino
  * e compare l'Unione con il suo nome e la sua ricetta. Disegnata dal codice finché Edoardo non disegna la sua
  * (docs/asset_da_creare.md). Tutto a pixel interi, a gradini, senza trasparenze; tempi e misure in RIVELAZIONE (data/hud.ts).
- * Dopo la comparsa un tocco chiude; se si apre la pausa o l'app va in secondo piano l'animazione si salta.
+ * Dopo la comparsa resta lì finché un tocco o un click non la chiude; se si apre la pausa o l'app va in secondo piano l'animazione si salta.
  */
 import { RIVELAZIONE } from '../data/hud';
 import { immagine, ingr, mascheraRetino, misura, misureHud, posa, retino, type MisureHud } from './arte';
@@ -148,10 +148,7 @@ export class Rivelazione {
         this.unione.hidden = this.testi.hidden = false;
         this.pronta = true;
       }
-      if (t >= luce + R.resta) {
-        this.prossima();
-        return;
-      }
+      return; // resta sullo schermo finché il giocatore non tocca
     }
     this.attesa = requestAnimationFrame(this.fotogramma);
   };
