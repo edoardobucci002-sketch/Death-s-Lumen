@@ -40,6 +40,12 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 6/11 — Unioni: da 10 minuti o 500 Cera a 3 veglie vinte
+
+Scelta di Edoardo. I numeri dentro la notte non cambiano: cambia quando un giocatore arriva alle Unioni, che ora sono un premio di fine percorso. Simulazione a Cappella vuota, dove le Unioni sono spente: 12 notti, 3 per personaggio, campione minimo e buono solo come controllo. Vince 1 notte su 12 (Lampionaio); le altre finiscono tra 6:42 e 10:48. Livello medio 57, da 28 a 75. Seth del minuto 5 ucciso in 11 notti su 12; nessun personaggio muore sempre prima del minuto 5. Lo scarto dall'obiettivo sul Lampionaio (1/3) è rumore di un campione così piccolo.
+
+La simulazione a metà Cappella considera le Unioni sbloccate: ora può non essere vero per chi non ha ancora 3 veglie vinte. Non cambiato, da riguardare con il bilanciamento finale.
+
 ### 5/11 — Fotogrammi: `prova` contro `main` (nessun numero di gioco cambia)
 
 Misure sul Mac, schermo del S25, stesse schermate. Il Mac non è il telefono: valgono le differenze, non i valori.
@@ -109,7 +115,7 @@ Nuovi o cambiati, tutti *da rivedere*: `REAZIONI.etichetta` (`ingrandimento` da 
 - Simulazione prima e dopo, stessi semi (`npm run sim -- 3 tutti`, più `meta=max` per provare anche Rosario e unioni): 24 partite su 24 identiche in ogni campo di `prove/sim.json`. Cappella vuota 3 vittorie su 12, completa 6 su 12; 12 partite per condizione sono solo un confronto, non una misura. Le rimescolate il bot non le usa: i valori ai livelli 1–5 restano 1, 1, 2, 2, 3.
 
 ### 4/11 — Unioni (tappa 6)
-- Le unioni non aumentano i numeri dell'arma: danno solo l'effetto. Sblocco: 10 minuti o 500 Cera (*da rivedere*).
+- Le unioni non aumentano i numeri dell'arma: danno solo l'effetto. ~~Sblocco: 10 minuti o 500 Cera~~ (**superato** il 6/11: 3 veglie vinte).
 - Simulazione: vuota 10/48 (21%), a metà 25/48 (52%), completa 25/48 (52%). ~~Il bot arriva a un'unione possibile in 7 notti su 48 a Cappella completa (contando l'unione a fine notte).~~ Corretto il 4/11: a Cappella completa, su 48 notti, 31 finiscono con almeno un'arma unita (58 unioni fatte in tutto) e 7 con un'unione pronta ma non fatta (5 di queste senza nessuna arma unita); con una o con l'altra 36 notti su 48. Il vecchio «7» contava solo le unioni rimaste pronte. Le notti con un'arma unita sono 25 su 25 tra le vittorie e 6 su 23 tra le sconfitte: chi sopravvive più a lungo fa in tempo a unire, quindi questo non dice da solo quanto aiutano le unioni.
 
 ### 4/11 — Armi e doni nuovi (tappa 5)

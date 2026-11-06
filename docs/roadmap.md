@@ -44,6 +44,7 @@ Su `/prova/`: urne con frammenti, giare con Cera, lanterne con luce e chiazze d'
 L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (vedi «Da confermare»).
 
 1. **Salvataggio della partita in corso** (senza data): dopo pausa, scelta dei doni e menu, prima dei Patti. Riaprendo l'APK o il link si ritrova la partita in pausa, esattamente dov'era. Una sola partita salvata, cancellata alla morte, all'alba o con «Abbandona». Due tappe:
+   - **Prima di iniziare**: il tremolio della luce usa il generatore del caso anche a partita ferma, quindi la durata di una pausa cambia i numeri estratti dopo (`attesaTremolio` in `Gioco.ts`). Va separato, altrimenti la notte ricaricata non finisce identica (confermato da Edoardo il 6/11).
    - **Fotografia e ripristino**: tutto ciò che decide la partita (personaggio, armi, doni, Rosario, nemici, Seth e le sue mosse, proiettili, zone, eventi della notte, generatore del caso); numeri del danno, scoppi, tremolio, suoni e animazioni si ricostruiscono. Comandi in LAB → Salvataggio: salva adesso con peso e tempo, ricarica, cancella. Misurato il 5/11: circa 130–140 KB al minuto 14, 5 ms su un Mac rallentato di sei volte; da rimisurare sul S25. Il controllo con il bot (salva, ricarica, la notte finisce identica) entra in `npm run prova`.
    - **Salvataggi automatici e riapertura**: si salva quando l'app va in secondo piano, entrando in pausa, dopo ogni dono e ogni 15 s come riserva (*da rivedere*). All'apertura si entra direttamente nella partita, in pausa; se si era in una scelta di dono o reliquiario, si riapre su quella scelta con le stesse carte.
    - **Aggiornamenti**: il salvataggio porta un numero di versione del formato, che cambia solo quando cambia la struttura di ciò che si salva. Un aggiornamento normale non cancella la partita. Se la versione non combacia o la ricarica fallisce per qualsiasi motivo (dati mancanti, errore durante il ripristino), la partita salvata si cancella, compare un avviso e si torna al menu: il gioco non riparte mai in un errore all'apertura.
@@ -81,11 +82,9 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Pausa, misure: tutti i valori di `PAUSA` in `src/data/hud.ts`, schede alte 90 punti sul S25, finestra di conferma | GDD «La pausa»; decisioni 6/11 |
-| Statistiche nella Build, prima delle Unioni: posizione e quali mostrare (oggi 13) | GDD «La pausa» |
-| Unioni: «scoperta» = la prima volta che arma e dono stanno insieme; le strisce dei doni possono già nominare un'unione non ancora scoperta | GDD §8f; decisioni 6/11 |
-| Unioni: se la scoperta deve sostituire lo sblocco generale nella Cappella (10 minuti o 500 Cera), che oggi resta | GDD §8f; decisioni 6/11 |
-| Tremolio della luce: usa il generatore del caso a ogni tremolio anche a partita ferma, quindi la durata di una pausa cambia i numeri estratti dopo; da guardare prima del salvataggio della partita in corso | `Gioco.ts` (`attesaTremolio`) |
+| Unioni: «scoperta» = la prima volta che arma e dono stanno insieme nella build | GDD §8f; decisioni 6/11 |
+| Parole della pausa: Attesa tra i colpi, Colpi per volta, Colpi in più, Durata zone e stati; le strisce dei doni tengono quelle corte, che Edoardo non capiva | GDD «La pausa»; `NOMI_CHIARI` in `src/data/spiegazioni.ts` |
+| Simulazione a metà Cappella: dà le Unioni per sbloccate, ma ora servono 3 veglie vinte; da rivedere con il bilanciamento finale | bilanciamento 6/11 |
 | Rompibili: percentuali, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
 | Chiazze: olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s; armi di fuoco: Candela e Fuoco fatuo | GDD 8g |
 | Frammenti: 3 per un reliquiario, contatore fisso nell'HUD sì o no | GDD 8g |
@@ -111,7 +110,6 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Nome e numero di una reazione si toccano ancora nell'8% circa dei fotogrammi | GDD «Impatto dei colpi» |
 | Con 15 numeri ambra già sullo schermo, il primo colpo di una reazione può restare fuori dalla somma mostrata; visto solo in una prova forzata, il danno vero non cambia | GDD «Impatto dei colpi» |
 | Leggibilità nella folla: lampo del nemico (0,033 s, uno ogni 0,3 s, 50% su bruti/élite/Seth) e al massimo 15 numeri del danno; si provano dal LAB | GDD §10 e «Impatto dei colpi»; decisioni 4/11 |
-| Sblocco delle Unioni: «Sopravvivi 10 minuti» o 500 Cera | GDD §8f; bilanciamento 4/11 |
 | Sblocchi di armi e doni nuovi (tappa 5): imprese (10 Eclissi, 30000 anime per il Corvo, 3 minuti nelle nubi per il Velo, 20 schivate perfette) e costi (120 Cera; Campanella con impresa o 120) | GDD §8d |
 | «Reliquie dimenticate» semplificate in acquisti dalla Cappella (nella proposta si trovavano in partita) | GDD §8d; decisioni 4/11 |
 | Rosario: 3 grani di partenza, Peccato ×2, sblocco «Sopravvivi 8 minuti» o 300 Cera, 3 amuleti per reliquiario | GDD §8e; decisioni 3/11 |
