@@ -30,7 +30,7 @@ export interface DatiPausa {
   anime: number;
   cera: number;
   uccisi: number;
-  frammenti: { ora: number; servono: number };
+  frammenti: { ora: number; servono: number; aperti: boolean }; // prima della prima alba la voce non si vede
   rosario: { usati: number; grani: number; amuleti: VoceAmuleto[] } | null; // null: non ancora sbloccato
   armi: VoceDettaglio[];
   doni: VoceDettaglio[];
@@ -244,7 +244,7 @@ export class Pausa {
       div('pausa-dati',
         dato('anime', `◆ ${d.anime}`), dato('cera', `Cera ${d.cera}`), dato('', `Uccisi ${d.uccisi}`),
         ...(r ? [dato(peccato ? 'male' : 'rosario', `${peccato ? 'Peccato' : 'Rosario'} ${r.usati}/${r.grani}`)] : []),
-        dato('', `Frammenti ${d.frammenti.ora} di ${d.frammenti.servono}`)),
+        ...(d.frammenti.aperti ? [dato('', `Frammenti ${d.frammenti.ora} di ${d.frammenti.servono}`)] : [])),
     );
   }
 

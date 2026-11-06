@@ -20,6 +20,20 @@ export const FIASCHETTA = {
  * Grazia: il premio per chi schiva all'ultimo istante. Scatta uscendo da un cerchio rosso del Mietitore
  * negli ultimi istanti prima del colpo, o lasciandosi sfiorare da una falce spettrale senza esserne toccati.
  */
+/**
+ * Il Bagliore: il buff del mosaico completo, a tempo come la stella di Super Mario. Finché dura non si subisce danno,
+ * il tocco brucia i nemici (non élite e Seth), si corre di più e la luce si allarga. Tutti i valori sono da rivedere.
+ */
+export const BAGLIORE = {
+  durata: 20, // secondi
+  velocita: 0.3, // +30% velocità
+  luce: 1.5, // la luce del personaggio diventa grande tante volte
+  alone: 0x705020, // colore aggiunto allo sprite, a lampi, mentre dura
+  lampi: 6, // lampi al secondo
+  lampiFine: 14, // …negli ultimi secondi: sta per finire
+  ultimi: 3,
+} as const;
+
 export const GRAZIA = {
   finestra: 0.25, // eri dentro il cerchio quando mancavano al massimo 0,25 s al colpo
   sfioro: 30, // una falce ti passa entro 30 px oltre il bordo senza toccarti

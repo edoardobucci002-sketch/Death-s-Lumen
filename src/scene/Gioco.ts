@@ -18,7 +18,7 @@ import { voce } from '../sistema/asset';
 import { arte, fasce, ingr, misureHud } from '../sistema/arte';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
-import { FINESTRE, MOSAICO } from '../data/hud';
+import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PRESTAZIONI, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, ORDE, SCIAMI } from '../data/nemici';
@@ -51,7 +51,7 @@ import { leggiRecord, salvaRecord } from '../sistema/record';
 import { Simulazione } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
-import { FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
+import { BAGLIORE, FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
 import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECONDA_CANDELA, type IdOggetto } from '../data/meta';
 import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
@@ -101,7 +101,8 @@ export class Gioco extends Phaser.Scene {
   private chiazze: Chiazze | null = null;
   private frammenti = 0; // frammenti di vetro raccolti verso il prossimo reliquiario
   private frammentiCaduti = 0; // quanti ne sono usciti dalle urne in questa notte
-  private attesaMosaico = 0; // secondi di gioco prima che il mosaico completo apra il reliquiario
+  private mosaiciAperti = false; // i frammenti escono solo dopo la prima alba
+  private bagliore = 0; // secondi di Bagliore rimasti
   private alone!: Phaser.GameObjects.Image;
   private effetti!: Effetti;
   private doni!: Doni;
@@ -239,8 +240,9 @@ export class Gioco extends Phaser.Scene {
     this.arsenale.rompibili = this.rompibili;
     this.arsenale.chiazze = this.chiazze;
     this.frammenti = 0;
-    this.attesaMosaico = 0;
+    this.bagliore = 0;
     this.frammentiCaduti = 0;
+    this.mosaiciAperti = carica().vittorie >= FRAMMENTI.vittorie;
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
     const livelloProva = Math.min(CARTE.livelloMassimo, Number(parametri.get('livello')) || 1);
@@ -367,11 +369,6 @@ export class Gioco extends Phaser.Scene {
 
   /** Un passo di logica: niente disegno qui. */
   private passo(dt: number): void {
-    if (this.attesaMosaico > 0 && (this.attesaMosaico -= dt) <= 0) {
-      this.attesaMosaico = 0;
-      this.mosaico.nascondi();
-      this.apriReliquiario();
-    }
     this.attesaTremolio -= dt;
     if (this.attesaTremolio <= 0) {
       this.attesaTremolio = LUCE.intervalloTremolio;
@@ -413,6 +410,10 @@ export class Gioco extends Phaser.Scene {
     }
     if (this.bot && this.salute < this.saluteMassima * BOT.beviSotto) this.fiaschetta.bevi();
     if (this.grazia > 0 && (this.grazia -= dt) <= 0) this.ricalcola();
+    if (this.bagliore > 0 && (this.bagliore -= dt) <= 0) {
+      this.bagliore = 0;
+      this.dopoPassivo();
+    }
 
     const mezzaL = this.campoL / 2;
     const mezzaA = this.campoA / 2;
@@ -536,13 +537,32 @@ export class Gioco extends Phaser.Scene {
     this.sim?.grazia();
   }
 
+  /** Il Bagliore: nessun danno, e chi tocca il personaggio brucia, tranne élite e Seth. */
+  private bruciaAlTocco(): void {
+    const o = this.orda;
+    for (let i = 0; i < o.numero; i++) {
+      if (o.elite[i] || NEMICI[o.tipo[i]].id === 'mietitore') continue;
+      const r = o.raggio[i] + COMBATTIMENTO.raggioGiocatore, dx = o.x[i] - this.x, dy = o.y[i] - this.y;
+      if (dx * dx + dy * dy < r * r) o.salute[i] = 0;
+    }
+  }
+
+  /** Il mosaico è completo: parte il Bagliore. */
+  private iniziaBagliore(): void {
+    this.bagliore = BAGLIORE.durata;
+    this.dopoPassivo();
+    this.hud.avviso('Bagliore');
+    suona('alba');
+    vibra('forte');
+  }
+
   /** Ricalcola statistiche e bonus delle armi da personaggio e doni passivi (GDD, sezioni 2 e 5). */
   private ricalcola(): void {
     const per = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
     const m = this.meta;
     this.saluteMassima = (BASE.salute + this.pg.salute + per('cuoreDiCera')) * (1 + m.salute) * (1 + (this.ha('martire') ? AM.martire.salute : 0));
     const grazia = this.grazia > 0;
-    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + m.velocita + (grazia ? GRAZIA.velocita : 0));
+    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + m.velocita + (grazia ? GRAZIA.velocita : 0) + (this.bagliore > 0 ? BAGLIORE.velocita : 0));
     this.raccolta = BASE.raccolta * (1 + per('calamita') + m.raccolta);
     this.rigenerazione = this.pg.rigenerazione + per('erbeAmare');
     this.armatura = Math.min(BASE.armaturaMassima, BASE.armatura + this.pg.armatura + per('scudoDiFerro'));
@@ -740,6 +760,10 @@ export class Gioco extends Phaser.Scene {
     this.frammento();
   }
 
+  labBagliore(): void {
+    this.iniziaBagliore();
+  }
+
   labFrammento(): void {
     this.lasciaFrammento(this.x + 60, this.y - 60);
   }
@@ -852,7 +876,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Raggio dell'alone di luce, in multipli di LUCE.raggio: Stoppino lungo e Lucciola lo allargano, la Lanterna cieca lo spegne. */
   private fattoreLuce(): number {
-    return (1 + this.bonus.area + (this.ha('lucciola') ? AM.lucciola.alone : 0)) * (this.ha('lanternaCieca') ? AM.lanternaCieca.alone : 1);
+    return (1 + this.bonus.area + (this.ha('lucciola') ? AM.lucciola.alone : 0)) * (this.ha('lanternaCieca') ? AM.lanternaCieca.alone : 1) * (this.bagliore > 0 ? BAGLIORE.luce : 1);
   }
 
   /** Dalla pausa: accende o spegne un amuleto (in Peccato il danno subito raddoppia). */
@@ -1239,7 +1263,7 @@ export class Gioco extends Phaser.Scene {
     };
     return {
       tempo: tempo(Math.floor(this.secondi)), livello: this.livello, anime: Math.floor(this.animeTotali), cera: this.ceraRaccolta, uccisi: this.uccisi,
-      frammenti: { ora: this.frammenti, servono: FRAMMENTI.perReliquiario },
+      frammenti: { ora: this.frammenti, servono: FRAMMENTI.perReliquiario, aperti: this.mosaiciAperti || this.frammenti > 0 },
       rosario: this.rosarioSbloccato ? {
         usati: this.graniUsati(), grani: this.grani(),
         amuleti: this.amuletiPosseduti.map((id) => { const a = amuleto(id); return { id, nome: a.nome, icona: iconaAmuleto(id), grani: a.grani, vantaggio: a.vantaggio, rovescio: a.rovescio, acceso: this.ha(id) }; }),
@@ -1259,6 +1283,10 @@ export class Gioco extends Phaser.Scene {
    * (minaccia), poi un attimo di invulnerabilità.
    */
   private contatti(dt: number, minaccia: number): void {
+    if (this.bagliore > 0) {
+      this.bruciaAlTocco();
+      return;
+    }
     if (this.invulnerabile > 0) {
       this.invulnerabile -= dt;
       return;
@@ -1325,6 +1353,7 @@ export class Gioco extends Phaser.Scene {
     // lampo bianco appena colpito; da morto il personaggio lampeggia e poi sparisce
     const lampo = this.invulnerabile > COMBATTIMENTO.invulnerabilita - COMBATTIMENTO.lampo || (this.morto && this.attesaFine > 0 && Math.floor(this.attesaFine * 12) % 2 === 0);
     if (lampo) this.giocatore.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+    else if (this.bagliore > 0 && Math.floor(this.secondi * (this.bagliore < BAGLIORE.ultimi ? BAGLIORE.lampiFine : BAGLIORE.lampi)) % 2 === 0) this.giocatore.setTint(BAGLIORE.alone).setTintMode(Phaser.TintModes.ADD);
     else if (this.grazia > 0 && Math.floor(this.secondi * GRAZIA.lampi) % 2 === 0) this.giocatore.setTint(GRAZIA.alone).setTintMode(Phaser.TintModes.ADD);
     else this.giocatore.clearTint();
     this.giocatore.setVisible(!this.morto || this.attesaFine > 0);
@@ -1387,7 +1416,7 @@ export class Gioco extends Phaser.Scene {
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]);
   }
 
-  /** Frammento di vetro: accende un pezzo del mosaico; al terzo il mosaico intero si illumina e poi apre un reliquiario. */
+  /** Frammento di vetro: accende un pezzo del mosaico; al terzo il mosaico intero si illumina e parte il Bagliore. */
   private frammento(): void {
     const servono = FRAMMENTI.perReliquiario, n = ++this.frammenti;
     this.mosaico.mostra(n, servono);
@@ -1397,9 +1426,7 @@ export class Gioco extends Phaser.Scene {
       return;
     }
     this.frammenti = 0;
-    this.attesaMosaico = MOSAICO.finale;
-    suona('reliquiario');
-    vibra('media');
+    this.iniziaBagliore();
   }
 
   /** L'urna fortunata: esce un frammento, con un anello di luce, una scossa e il suono del vetro. */
@@ -1416,7 +1443,7 @@ export class Gioco extends Phaser.Scene {
   private oggettoRotto = (tipo: number, x: number, y: number): void => {
     const { gocce, frammenti, olio } = ROMPIBILI.tipi[tipo];
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * ROMPIBILI.dispersione, y);
-    if (frammenti && this.frammentiCaduti < FRAMMENTI.perNotte && this.caso.numero() < FRAMMENTI.probabilita) this.lasciaFrammento(x, y);
+    if (frammenti && this.mosaiciAperti && this.frammentiCaduti < FRAMMENTI.perNotte && this.caso.numero() < FRAMMENTI.probabilita) this.lasciaFrammento(x, y);
     if (olio) this.chiazze?.aggiungi(x, y);
     suona('colpo');
     vibra('leggera');

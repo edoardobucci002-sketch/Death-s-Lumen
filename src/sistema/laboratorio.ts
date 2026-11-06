@@ -261,7 +261,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('reliquiarioLontano', 'Reliquiario fuori vista'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
       titolo('Rompibili (prova)'),
       riga(tasto('Urna, giara e lanterna qui accanto', fai((x) => x.labRompibili())), tasto('Rompi il più vicino', fai((x) => x.labRompiVicino()))),
-      riga(tasto("Chiazza d'olio", fai((x) => x.labChiazza())), tasto('Accendi le chiazze', fai((x) => x.labAccendiChiazze())), tasto('Frammento a terra', fai((x) => x.labFrammento())), tasto('Mosaico: pezzo dopo', fai((x) => x.labMosaico()))),
+      riga(tasto("Chiazza d'olio", fai((x) => x.labChiazza())), tasto('Accendi le chiazze', fai((x) => x.labAccendiChiazze())), tasto('Frammento a terra', fai((x) => x.labFrammento())), tasto('Mosaico: pezzo dopo', fai((x) => x.labMosaico())), tasto('Bagliore', fai((x) => x.labBagliore()))),
       el('p', 'lab-nota', 'Lascia il gioco in corso (scheda Partita) per vederli rompersi. I numeri sono in Numeri → rompibili.'),
       titolo('Avvisi nel cartiglio'),
       riga(tasto('Seth', fai((x) => x.labAvviso('Seth', 'il Rinnovato è venuto per te'))), tasto('Sciame', fai((x) => x.labAvviso('Lo sciame', 'ti circonda'))), tasto('Due orde', fai((x) => x.labAvviso('Due orde', 'ti stringono'))), tasto('Reliquiario', fai((x) => x.labAvviso('Reliquiario', 'Lanterna, Candela, Falce')))),

@@ -132,7 +132,7 @@ export const MOSAICO = {
   resta: 2, // dalla comparsa all'inizio dell'uscita
   uscita: 0.3, // sparisce a retino
   passi: 8, // gli scatti di entrata e uscita
-  finale: 1.8, // al terzo frammento il mosaico intero resta acceso tanto, poi si apre il reliquiario
+  finale: 1.8, // al terzo frammento il mosaico intero resta acceso tanto, mentre parte il Bagliore
 };
 
 export const RIVELAZIONE = {

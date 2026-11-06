@@ -48,6 +48,7 @@ export const CHIAZZE = {
 export const FRAMMENTI = {
   probabilita: 0.08, // quante urne ne contengono uno (da rivedere)
   perNotte: 3, // oltre questi le urne restano vuote: il mosaico si completa una volta sola a notte
+  vittorie: 1, // prima di tante albe vinte le urne non ne contengono: i mosaici si aprono dopo la prima alba
   perReliquiario: 3,
   anello: 56, // raggio dell'anello che segnala il frammento, in pixel di gioco
   durataAnello: 0.5,

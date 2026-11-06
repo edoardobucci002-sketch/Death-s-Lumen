@@ -869,7 +869,7 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await ctx.close();
 }
 
-// Mosaico dei frammenti: un pezzo per volta, non ferma il gioco, sparisce da solo; il terzo apre il reliquiario e riparte da capo
+// Mosaico dei frammenti: un pezzo per volta, non ferma il gioco, sparisce da solo; il terzo fa partire il Bagliore
 {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   const pag = await ctx.newPage();
@@ -893,7 +893,13 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await pag.waitForTimeout(800);
   await pag.screenshot({ path: 'prove/mosaico-3.png' });
   await pag.waitForFunction(() => document.querySelector('.mosaico').hidden, null, { timeout: 4000 }).catch(() => errori.push('il mosaico completo non si chiude'));
-  if (await gioco('(s) => s.attesaMosaico')) errori.push('il reliquiario del mosaico non si apre');
+  if (!(await gioco('(s) => s.bagliore > 0'))) errori.push('il mosaico completo non fa partire il Bagliore');
+  const toccato = await gioco('(s) => { const o = s.orda; o.x[0] = s.x; o.y[0] = s.y; o.elite[0] = 0; o.tipo[0] = 0; return o.id[0]; }');
+  await pag.waitForTimeout(150);
+  if (await gioco(`(s) => Array.from(s.orda.id.subarray(0, s.orda.numero)).includes(${toccato})`)) errori.push('il Bagliore non brucia chi lo tocca');
+  await gioco('(s) => { s.bagliore = 0.01; }');
+  await pag.waitForTimeout(150);
+  if (await gioco('(s) => s.bagliore > 0')) errori.push('il Bagliore non finisce');
   await gioco('(s) => s.labMosaico()');
   await gioco('(s) => s.labPausa("build")');
   if (await numero()) errori.push('il mosaico resta sopra la pausa');
@@ -903,12 +909,12 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
     r.piazza(0, s.x + 60, s.y - 60); const dopo = conta(); r.colpitoDa(s.x + 60, s.y - 80, 8); return [fuori, dopo - conta()]; }`);
   if (rottiFuori[0]) errori.push('un\'arma rompe un oggetto fuori campo');
   if (rottiFuori[1] !== 1) errori.push('un\'arma non rompe un oggetto in vista');
-  const usciti = await gioco(`(s) => { const prima = s.oggetti.numero; s.frammentiCaduti = 0; const p = s.caso.numero; s.caso.numero = () => 0; for (let i = 0; i < 6; i++) s.oggettoRotto(0, s.x, s.y + 200); s.caso.numero = p; return s.oggetti.numero - prima; }`);
-  if (usciti !== 3) errori.push(`le urne fortunate lasciano ${usciti} frammenti invece di 3 a notte`);
+  const usciti = await gioco(`(s) => { const prima = s.oggetti.numero; s.frammentiCaduti = 0; const p = s.caso.numero; s.caso.numero = () => 0; s.mosaiciAperti = false; s.oggettoRotto(0, s.x, s.y + 200); const chiusi = s.oggetti.numero - prima; s.mosaiciAperti = true; for (let i = 0; i < 6; i++) s.oggettoRotto(0, s.x, s.y + 200); s.caso.numero = p; return chiusi ? -1 : s.oggetti.numero - prima; }`);
+  if (usciti !== 3) errori.push(usciti < 0 ? 'prima della prima alba le urne lasciano frammenti' : `le urne fortunate lasciano ${usciti} frammenti invece di 3 a notte`);
   const colori = await gioco('(s) => { const visti = new Set(); for (let i = 0; i < 12; i++) { s.oggetti.aggiungi(4, 40 + i * 31, 90 + i * 17); visti.add(s.oggetti.sprite[s.oggetti.numero - 1].frame.name); s.oggetti.togli(s.oggetti.numero - 1); } return visti.size; }');
   if (colori !== 3) errori.push(`i frammenti hanno ${colori} colori invece di 3`);
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} mosaico dei frammenti: 1/3, 3/3, reliquiario, tre colori${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} mosaico dei frammenti: 1/3, 3/3, Bagliore, tre colori${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

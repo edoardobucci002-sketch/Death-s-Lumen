@@ -17,7 +17,7 @@ export class Mosaico {
   private uscita: ImageData | null = null;
   private da = 0;
   private a = 0;
-  private completo = false;
+  private durata = 0; // secondi prima dell'uscita
   private inizio = 0;
   private attesa = 0;
   private gradino = -1;
@@ -46,7 +46,7 @@ export class Mosaico {
     if (!this.lato) return;
     this.da = Math.min(n - 1, this.stati.length - 1);
     this.a = Math.min(n, this.stati.length - 1);
-    this.completo = n >= servono;
+    this.durata = n >= servono ? MOSAICO.finale : MOSAICO.resta;
     this.numero.textContent = `${n}/${servono}`;
     this.disponi();
     this.maschera('');
@@ -109,12 +109,12 @@ export class Mosaico {
       this.gradino = M.passi;
       this.disegna(16);
     }
-    if (!this.completo && t >= M.resta) {
-      if (t >= M.resta + M.uscita) {
+    if (t >= this.durata) {
+      if (t >= this.durata + M.uscita) {
         this.nascondi();
         return;
       }
-      const passo = Math.floor(((t - M.resta) / M.uscita) * M.passi);
+      const passo = Math.floor(((t - this.durata) / M.uscita) * M.passi);
       this.maschera(mascheraRetino(Math.round(16 * (1 - passo / (M.passi + 1))), this.cella));
     }
     this.attesa = requestAnimationFrame(this.fotogramma);

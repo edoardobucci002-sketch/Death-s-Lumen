@@ -517,7 +517,7 @@ Scoperte e unite si ricordano sul dispositivo. Icone provvisorie: l'icona dell'a
 
 | Oggetto | Per settore | Cosa lascia | Luce |
 | --- | --- | --- | --- |
-| Urna | 24% | nulla, oppure all'8% un frammento di vetro (*da rivedere*), al massimo 3 a notte | no |
+| Urna | 24% | nulla; dopo la prima alba, all'8%, un frammento di vetro (*da rivedere*), al massimo 3 a notte | no |
 | Giara | 24% | 2 gocce di Cera | no |
 | Lanterna | 12% | chiazza d'olio | sì |
 | Niente | 40% | | |
@@ -526,7 +526,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 
 **Chiazza d'olio**: raggio 96 px, dura 12 s, rallenta del 40% i nemici dentro (Seth la metà). Non tocca il personaggio. Candela e Fuoco fatuo la accendono passandoci sopra: brucia per 5 s al posto dell'olio che resta, 14 danni ogni 0,4 s (più i bonus di danno), e fa luce come una lanterna. Disegni provvisori dal codice.
 
-**Frammenti di vetro**: escono dall'8% delle urne (*da rivedere*), al massimo 3 a notte, quindi il mosaico si completa una volta sola; quando un'urna ne contiene uno compaiono un anello di luce, una piccola scossa e il suono del vetro. Volano verso il personaggio come la Cera. Ognuno ha un colore a caso (rosso, verde o blu scuro) ed è un pezzo del **mosaico** della Veglia (`src/sistema/mosaico.ts`, tempi in `MOSAICO`, `src/data/hud.ts`, *da rivedere*): a ogni frammento il mosaico compare al centro in alto, sotto la fascia, con sotto solo «1/3», «2/3» o «3/3»; il pezzo nuovo si accende a retino in 0,5 s (prima il cimitero, poi le mani, per ultima la fiamma con le stelle), resta fino a 2 s ed esce a retino in 0,3 s. Non ferma il gioco e non prende i tocchi. Le parti non trovate restano un'ombra scura. Al terzo frammento il mosaico intero si illumina per 1,8 s, poi apre un reliquiario e il conto riparte. Il bot delle simulazioni gioca senza rompibili, quindi olio e frammenti non sono misurati.
+**Frammenti di vetro**: escono solo **dopo la prima alba vinta**, dall'8% delle urne (*da rivedere*), al massimo 3 a notte, quindi il mosaico si completa una volta sola; quando un'urna ne contiene uno compaiono un anello di luce, una piccola scossa e il suono del vetro. Volano verso il personaggio come la Cera. Ognuno ha un colore a caso (rosso, verde o blu scuro) ed è un pezzo del **mosaico** della Veglia (`src/sistema/mosaico.ts`, tempi in `MOSAICO`, `src/data/hud.ts`, *da rivedere*): a ogni frammento il mosaico compare al centro in alto, sotto la fascia, con sotto solo «1/3», «2/3» o «3/3»; il pezzo nuovo si accende a retino in 0,5 s (prima il cimitero, poi le mani, per ultima la fiamma con le stelle), resta fino a 2 s ed esce a retino in 0,3 s. Non ferma il gioco e non prende i tocchi. Le parti non trovate restano un'ombra scura. Al terzo frammento il mosaico intero si illumina per 1,8 s e parte il **Bagliore** (*da rivedere*, `BAGLIORE`, `src/data/sopravvivenza.ts`): per 20 s non si subisce danno, chi tocca il personaggio brucia (élite e Seth no), si corre il 30% più veloce e la luce è grande una volta e mezza; lo sprite lampeggia d'oro, più in fretta negli ultimi 3 s. Il bot delle simulazioni gioca senza rompibili, quindi olio e frammenti non sono misurati.
 
 ## 9. Esperienza e doni
 
