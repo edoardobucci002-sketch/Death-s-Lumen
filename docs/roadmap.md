@@ -20,7 +20,7 @@ Un solo piano di lavoro, aggiornato a ogni tappa (5 novembre 2026). Ogni tappa f
 | Tappa | Cosa | Stato |
 | --- | --- | --- |
 | M7 · App | Capacitor iOS e Android, icone, avvio, vibrazione, schermo acceso, tasto Indietro | **in prova**: APK costruita da GitHub Actions, provata sul Galaxy S25 di Edoardo; iOS rimandato (manca Xcode) |
-| M8 · Bilanciamento e oggetti | Bot di simulazione, ritocco dei numeri, meta progressione e oggetti della [proposta](proposte/oggetti-build-sinergie.md) | **in corso**, vedi sotto. Obiettivi del bot **provvisori e non vincolanti** (9/11: Cappella vuota 32/48, a metà 29/48, completa 32/48): si tara alla fine, a contenuti completi ([bilanciamento.md](bilanciamento.md)). Da riprovare a mano |
+| M8 · Bilanciamento e oggetti | Bot di simulazione, ritocco dei numeri, meta progressione e oggetti della [proposta](proposte/oggetti-build-sinergie.md) | **in corso**, vedi sotto. Obiettivi del bot **provvisori e non vincolanti** (9/11 sera, con orde e correzioni agli oggetti: Cappella vuota 7/48, a metà 22/48, completa 20/48): si tara alla fine, a contenuti completi ([bilanciamento.md](bilanciamento.md)). Da riprovare a mano |
 
 Parti della M8 già fatte:
 - Tappa 1 · ritocchi agli oggetti esistenti (3/11)

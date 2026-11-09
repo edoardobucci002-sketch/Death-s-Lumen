@@ -57,7 +57,7 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 **Vanga e Seth (prova con il Becchino immortale, fermo, Pala rivolta verso Seth, Seth che non muore, 60 s).** Prima: Seth fermo il 96% del tempo, fino a 57,6 s di fila, **nessuna mossa**: il fermo (1,5 s su Seth) si rinnovava a ogni colpo della Pala (0,95 s al livello 8, più il secondo colpo), e Seth fermo non attacca. Ora: fermo il 17% del tempo, al massimo 0,8 s di fila, 9 mosse in un minuto. Il bot invece scappa da Seth (gli sta vicino il 2% del tempo), per questo nelle simulazioni il difetto non si vedeva.
 
-**Simulazione** (bot sul S25, 12 notti per personaggio = 48 per condizione, stessi semi; «prima» = la build di stamattina):
+**Simulazione delle sole correzioni** (bot sul S25, 12 notti per personaggio = 48 per condizione, stessi semi; «prima» = la build di stamattina; senza le orde della sera, vedi più sotto):
 
 | Cappella | Vittorie prima | Vittorie ora | Per personaggio ora (L, B, Ba, S) | Morti prima del 5 | Mediana della morte | Livello medio | Seth del 5 ucciso |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -119,6 +119,16 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 Altro, Cappella completa, media a notte: abilità speciale 374 mila di danno; reazioni Eclissi 610, Rivelazione 893, Esorcismo 162, Interramento 292; danno delle reazioni Eclissi 209 mila, Esorcismo 17 mila, parte in più dell'Interramento 23 mila. Prima Unione offerta in 33 notti su 48, in media a 7:38, e il bot la prende sempre subito. Acquasantiera: 10 sorsi a notte guadagnati nelle 8 notti in cui c'era, ma solo 0,9 entrati davvero nella fiaschetta (il bot beve solo sotto il 40% di salute, quindi è quasi sempre piena). Con la Cappella a metà: Sangue freddo 41 notti, Lucciola 23, Ceri gemelli 22, Ossa d'élite 21; Falce di Seth l'Unione più fatta (16), Acquasantiera 9,8 sorsi a notte (0,2 entrati).
 
 Prima delle correzioni (prova con 12 notti, Cappella completa) Lucciola, Ossa d'élite e Sangue freddo erano in tutte le 12 notti, e l'Acquasantiera ridava in media 246 sorsi a notte.
+
+**Con le orde della sera (il codice di oggi su `prova`, versione 69c82c3).** Le correzioni sono state fatte in parallelo alla voce «9/11 (sera)» di un'altra sessione; le simulazioni qui sopra misurano le correzioni da sole. Sul codice che contiene tutte e due, 48 notti per condizione:
+
+| Cappella | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana della morte | Livello medio | Seth del 5 ucciso |
+| --- | --- | --- | --- | --- | --- |
+| vuota | 7/48 (2, 2, 2, 1) | 6 | 8:06 | 44 | 37/42 |
+| a metà | 22/48 (1, 5, 8, 8) | 4 | 7:36 | 55 | 38/44 |
+| completa | 20/48 (3, 6, 6, 5) | 2 | 11:12 | 60 | 42/46 |
+
+Amuleti a fine notte, a metà / completa: Sangue freddo 43 / 38 notti, Lucciola 23 / 28, Ceri gemelli 28 / 20, Ossa d'élite 11 / 16, Danza macabra 6 / 7, gli altri 0. Unioni più fatte: Acquasantiera 16 / 14, Falce di Seth 14 / 18, Candelabro funebre 10 / 13. Prima Unione offerta (e presa) in 32 e 33 notti, in media a 7:19 e 6:58. Acquasantiera: circa 9 sorsi a notte, meno di 1 entrato davvero. A Cappella completa i morti prima del minuto 5 sono 2 su 48; a metà e completa le vittorie sono vicine tra loro, come già prima.
 
 **Cosa la tabella non può dire:** Martire, Patto di sangue, Specchio rotto, Cuore avido e Lanterna cieca hanno 0 perché il bot non li prende mai (`amuletiPreferiti` a 0 in `src/data/bot.ts`, non toccato). Le correzioni a Martire non sono misurate. Le armi iniziali sono sempre presenti, quindi «notti» e «vinte» dicono il personaggio, non l'arma.
 
