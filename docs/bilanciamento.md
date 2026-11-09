@@ -70,6 +70,23 @@ Dopo la partita di Edoardo su telefono. Stesso numero di oggetti, percentuali ch
 
 Nuovi: 60% dei settori da 700 px con un oggetto; urna 1 goccia, giara 2, lanterna 1; pesi 4/4/2. La Cera dei nemici non cambia, quindi una notte ne dà un po' di più. Il bot gioca senza rompibili: la simulazione non cambia e non misura questa Cera in più.
 
+### 7/11 — Copione della notte, respiro e tetto a 250
+
+Decisione di Edoardo: le comparse sembravano continue e senza criterio. Ora ogni minuto ha il suo copione (due tipi principali e al massimo uno di contorno, `COPIONE`), in ogni minuto dopo il primo arrivano 40 s di marea e 20 s di calma con le comparse al 25% (`RESPIRO`), e i nemici in campo sono al massimo 250 invece di 380. Tutti i valori sono *da rivedere*.
+
+Bot sul S25, Cappella vuota, 12 notti per personaggio (48), confronto con la riga del 6/11 (Calamita +100%): **3 vittorie su 48** (prima 0), 4 morti prima del minuto 5 (prima 8), mediana della morte 11:09 (prima 9:54), livello finale medio 44 (uguale), Seth del 5 ucciso in 39 notti su 44 (prima 31 su 40). I due vincoli sono rispettati.
+
+Al minuto 13, con l'arma iniziale al livello 8 e il personaggio fermo, il campo resta pieno a 250 anche nella calma, e i bruti arrivano a 185 su 250: sono i più resistenti, quindi si accumulano più di quanto dica il loro peso.
+
+**Probabilità dei frammenti.** Obiettivo di Edoardo: all'alba, 89% di notti con il mosaico completo. Misurato con il bot immortale e le urne attive (`DL_EXTRA='&rompibili&immortale' node tools/sim.mjs 12`), 48 notti intere:
+
+| Bot | Urne rotte a notte | Probabilità per l'89% |
+| --- | --- | --- |
+| che non le cerca | media 7,5, da 2 a 20 | irraggiungibile: anche al 100% resta al 92% solo se ne trova almeno 3, e al 94% servirebbe quasi ogni urna |
+| che le cerca (`&cercaurne`) | media 20,6, da 10 a 31 | **26%** |
+
+Scelto il 26%: chi va a cercare le urne completa il mosaico nell'89% delle notti; chi non le cerca, nel 29% circa.
+
 ### 6/11 — Raggio di raccolta da 150 a 40 px
 
 Richiesta di Edoardo: senza potenziamenti il Lumen a terra si raccoglie passandoci sopra. `BASE.raccolta` passa da 150 a 40 (*da rivedere*). La Calamita resta in percentuale: al massimo arriva a 100 px invece di 375, quindi va ricalibrata con Edoardo.

@@ -19,14 +19,14 @@ Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i 
 | Momento | Evento |
 | --- | --- |
 | 0:00 | Pipistrelli e zombi; abilità speciale pronta dopo 4 s |
-| 0:50 | Iniziano i fantasmi |
+| 1:00 | Iniziano i fantasmi |
 | 0:55, poi ogni 55 s | Un nemico élite, che lascia un reliquiario |
 | inizio di ogni minuto (tranne il 5° e il 10°, fino al 14°) | Sciame che ti circonda: pipistrelli fino al 6° minuto, fantasmi dal 7° |
-| 2:20 | Iniziano gli scheletri (ti accerchiano) |
+| 2:00 | Iniziano gli scheletri (ti accerchiano) |
 | 2:30, poi ogni 80 s fino a 14:20 | Un'orda in formazione marcia verso di te e poi carica; dalle 7:00 due orde da lati opposti |
-| 3:50 | Iniziano i segugi (ti tagliano la strada) |
+| 4:00 | Iniziano i segugi (ti tagliano la strada) |
 | 5:00 | Prima apparizione di Seth |
-| 6:00 | Iniziano i bruti |
+| 7:00 | Iniziano i bruti |
 | 10:00 | Seconda apparizione di Seth, molto più resistente |
 | 15:00 | L'alba: vittoria |
 
@@ -339,10 +339,10 @@ Valori al minuto 0, in `src/data/nemici.ts`; la velocità varia a caso del ±10%
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Pipistrello | 6 | 179 | 5 | 16 | 1 | 0:00 | comune all'inizio, sciami; vola a zig-zag |
 | Zombi | 16 | 87 | 8 | 21 | 2 | 0:00 | lento |
-| Fantasma | 13 | 129 | 7 | 21 | 2 | 0:50 | attraversa gli altri nemici |
-| Scheletro | 34 | 106 | 10 | 21 | 3 | 2:20 | resistente; ti accerchia |
-| Segugio | 28 | 200 | 9 | 21 | 3 | 3:50 | il più veloce; ti taglia la strada |
-| Bruto | 150 | 78 | 18 | 38 | 8 | 6:00 | pesante: respinta e attrazione ridotte |
+| Fantasma | 13 | 129 | 7 | 21 | 2 | 1:00 | attraversa gli altri nemici |
+| Scheletro | 34 | 106 | 10 | 21 | 3 | 2:00 | resistente; ti accerchia |
+| Segugio | 28 | 200 | 9 | 21 | 3 | 4:00 | il più veloce; ti taglia la strada |
+| Bruto | 150 | 78 | 18 | 38 | 8 | 7:00 | pesante: respinta e attrazione ridotte |
 | Seth, il Rinnovato (`mietitore`) | 3600 | 118 | 22 | 61 | 60 | 5:00 e 10:00 | boss; attraversa gli altri nemici |
 
 - **Élite**: ogni 55 s compare un nemico normale potenziato: salute ×7, danno ×1,4, anime ×6, dimensione ×1,5, velocità ×0,9, alone ambra. Lascia un reliquiario.
@@ -364,16 +364,25 @@ Valori al minuto 0, in `src/data/nemici.ts`; la velocità varia a caso del ±10%
 - **Sciami**: 14 + 3 nemici per minuto, fino a 56, a +12% di velocità. Nascono in cerchio (un'ellisse grande quanto lo schermo, 48 px fuori dal bordo).
 - **Élite**: l'alone ambra è un colore aggiunto allo sprite; ingrandite × 1,5 anche nel raggio dei contatti.
 
-**Pesi di comparsa** (s = secondi di gioco)
+**Il copione della notte** (`COPIONE`, `src/data/nemici.ts`, *da rivedere*): chi compare da quel minuto e con che peso (più alto, più spesso).
 
-| Nemico | Peso |
+| Da | Nemici |
 | --- | --- |
-| Pipistrello | 3 − s/200, minimo 0,7 |
-| Zombi | 3, poi 1,5 dall'8° minuto |
-| Fantasma | 2 dopo 50 s |
-| Scheletro | 2,6 dopo 140 s |
-| Segugio | 2 dopo 230 s |
-| Bruto | dopo 360 s: il minore tra 1 + s/600 e (s − 360)/75, cioè entrano in 2 minuti |
+| 0:00 | pipistrello 3, zombi 2 |
+| 1:00 | zombi 3, fantasma 2 |
+| 2:00 | fantasma 3, pipistrello 2, scheletro 1 |
+| 3:00 | scheletro 3, zombi 2 |
+| 4:00 | pipistrello 3, segugio 2 |
+| 5:00 | zombi 3, scheletro 1 |
+| 6:00 | segugio 3, fantasma 2 |
+| 7:00 | zombi 3, bruto 1 |
+| 8:00 | scheletro 3, zombi 2, bruto 1 |
+| 9:00 | segugio 3, pipistrello 1 |
+| 10:00 | fantasma 3, pipistrello 1 |
+| 11:00 | bruto 3, fantasma 2 |
+| 12:00 | scheletro 3, segugio 2 |
+| 13:00 | scheletro 3, bruto 2, segugio 1 |
+| 14:00 | segugio 3, bruto 2, fantasma 2 |
 
 ## 7. Difficoltà
 
@@ -381,10 +390,10 @@ Un nemico prende i valori del momento in cui nasce (m = minuti di gioco, anche f
 
 - salute = base × (1 + 0,28 m + 0,06 × (m − 3)²), l'ultimo termine solo dopo il minuto 3. Al minuto 10 ≈ ×6,7, al 15 ≈ ×13,8
 - danno = base × (1 + 0,16 m)
-- nemici massimi in campo = min(380, 20 + 30 m)
+- nemici massimi in campo = min(250, 20 + 30 m)
 - comparse al secondo = 1,2 + 2,5 m (al massimo 8 per fotogramma)
 
-Le comparse arrivano appena fuori dallo schermo. Se in campo c'è meno del 40% del massimo, arrivano 2 nemici in più a ogni fotogramma. Un nemico rimasto troppo lontano viene ricollocato davanti al giocatore.
+Le comparse arrivano appena fuori dallo schermo. **Il respiro** (`RESPIRO`, *da rivedere*): dal minuto 1, in ogni ciclo di 60 s le comparse sono piene per 40 s, poi nella calma scendono al 25%. Se in campo c'è meno del 40% del massimo, arrivano 2 nemici in più a ogni fotogramma, tranne nella calma. Un nemico rimasto troppo lontano viene ricollocato davanti al giocatore.
 
 ## 8. Drop
 
@@ -517,7 +526,7 @@ Scoperte e unite si ricordano sul dispositivo. Icone provvisorie: l'icona dell'a
 
 | Oggetto | Per settore | Cosa lascia | Luce |
 | --- | --- | --- | --- |
-| Urna | 24% | nulla; dopo la prima alba, all'8%, un frammento di vetro (*da rivedere*), al massimo 3 a notte | no |
+| Urna | 24% | nulla; dopo la prima alba, al 26%, un frammento di vetro (*da rivedere*), al massimo 3 a notte | no |
 | Giara | 24% | 2 gocce di Cera | no |
 | Lanterna | 12% | chiazza d'olio | sì |
 | Niente | 40% | | |
@@ -526,7 +535,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 
 **Chiazza d'olio**: raggio 96 px, dura 12 s, rallenta del 40% i nemici dentro (Seth la metà). Non tocca il personaggio. Candela e Fuoco fatuo la accendono passandoci sopra: brucia per 5 s al posto dell'olio che resta, 14 danni ogni 0,4 s (più i bonus di danno), e fa luce come una lanterna. Disegni provvisori dal codice.
 
-**Frammenti di vetro**: escono solo **dopo la prima alba vinta**, dall'8% delle urne (*da rivedere*), al massimo 3 a notte, quindi il mosaico si completa una volta sola; quando un'urna ne contiene uno compaiono un anello di luce, una piccola scossa e il suono del vetro. Volano verso il personaggio come la Cera. Ognuno ha un colore a caso (rosso, verde o blu scuro) ed è un pezzo del **mosaico** della Veglia (`src/sistema/mosaico.ts`, tempi in `MOSAICO`, `src/data/hud.ts`, *da rivedere*): a ogni frammento il mosaico compare al centro in alto, sotto la fascia, con sotto solo «1/3», «2/3» o «3/3»; il pezzo nuovo si accende a retino in 0,5 s (prima il cimitero, poi le mani, per ultima la fiamma con le stelle), resta fino a 2 s ed esce a retino in 0,3 s. Non ferma il gioco e non prende i tocchi. Le parti non trovate restano un'ombra scura. Al terzo frammento il mosaico intero si illumina per 1,8 s e parte il **Bagliore** (*da rivedere*, `BAGLIORE`, `src/data/sopravvivenza.ts`): per 20 s non si subisce danno, chi tocca il personaggio brucia (élite e Seth no), si corre il 30% più veloce e la luce è grande una volta e mezza; lo sprite lampeggia d'oro, più in fretta negli ultimi 3 s. Il bot delle simulazioni gioca senza rompibili, quindi olio e frammenti non sono misurati.
+**Frammenti di vetro**: escono solo **dopo la prima alba vinta**, dal 26% delle urne (*da rivedere*), al massimo 3 a notte, quindi il mosaico si completa una volta sola; quando un'urna ne contiene uno compaiono un anello di luce, una piccola scossa e il suono del vetro. Volano verso il personaggio come la Cera. Ognuno ha un colore a caso (rosso, verde o blu scuro) ed è un pezzo del **mosaico** della Veglia (`src/sistema/mosaico.ts`, tempi in `MOSAICO`, `src/data/hud.ts`, *da rivedere*): a ogni frammento il mosaico compare al centro in alto, sotto la fascia, con sotto solo «1/3», «2/3» o «3/3»; il pezzo nuovo si accende a retino in 0,5 s (prima il cimitero, poi le mani, per ultima la fiamma con le stelle), resta fino a 2 s ed esce a retino in 0,3 s. Non ferma il gioco e non prende i tocchi. Le parti non trovate restano un'ombra scura. Al terzo frammento il mosaico intero si illumina per 1,8 s e parte il **Bagliore** (*da rivedere*, `BAGLIORE`, `src/data/sopravvivenza.ts`): per 20 s non si subisce danno, chi tocca il personaggio brucia (élite e Seth no), si corre il 30% più veloce e la luce è grande una volta e mezza; lo sprite lampeggia d'oro, più in fretta negli ultimi 3 s. Il bot delle simulazioni gioca senza rompibili, quindi olio e frammenti non sono misurati.
 
 ## 9. Esperienza e doni
 
@@ -557,7 +566,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 
 - **HUD sul telefono in verticale: due fasce fisse fuori dal campo** (misure in `FASCE`, `src/data/hud.ts`, tutte *da rivedere*). Il campo è vero: finisce al bordo delle fasce per la telecamera, la comparsa e il ricollocamento dei nemici e tutte le armi che scelgono bersagli «sullo schermo».
   - altezza calcolata per ogni telefono: area sicura (la più grande tra `env()` e Capacitor, fissata 1,5 s dopo l'apertura, *da rivedere*: le barre di sistema temporanee non spostano niente) + contenuto. Sul Galaxy S25 (area sicura in alto 105 pixel fisici, in basso 0): fascia alta 81 pixel disegnati (324 fisici), fascia bassa 94 (376 fisici), campo 540×820 pixel di gioco. Un pixel disegnato vale 4 pixel fisici;
-  - fascia alta: stemma del livello ed esperienza; sotto, la riga dell'orologio e della barra sottile di Seth. Il cartiglio sale fino al bordo e copre il centro della prima riga per la sua durata; la sua scritta resta sempre fuori dall'area sicura (sul S25 parte a 108 fisici) e la riga dell'orologio resta libera;
+  - fascia alta: stemma del livello ed esperienza; sotto, la riga dell'orologio e della barra sottile di Seth. Il cartiglio non sta nella fascia ma nel campo, subito sotto;
   - fascia bassa: fiaschetta nell'angolo a sinistra e abilità nell'angolo a destra, scambiabili dal LAB, con cornice rotonda uguale; l'abilità tiene l'anello continuo della ricarica e, con più cariche (Ceri gemelli), anche una tacca per carica; pausa piccola al centro, senza area di tocco invisibile (*da rivedere*). Il joystick può nascere anche nella fascia bassa;
   - fuori dall'HUD di partita: anime, Cera, Rosario e griglia degli oggetti, che stanno nella pausa e nella schermata di fine;
   - segnali sul bordo del campo: salute bassa (rosso che pulsa), Peccato (cornice viola a retino), reliquiario fuori vista (freccia al confine con le fasce);
@@ -571,7 +580,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - il personaggio lampeggia quando viene colpito;
   - leggero tremolio dello schermo;
   - bordo rosso quando la salute è bassa;
-  - avvisi nel cartiglio (sciami, orde, Seth, reliquiari), subito sotto barre e caselle, con la riga secondaria subito sotto. Il cartiglio è ridotto a 0,5 volte, arrotondato a un ingrandimento intero e mai sotto × 2: sui telefoni normali è la metà; su computer, tablet e iPhone SE resta com'era, perché a × 1 le lettere non si leggono (*da rivedere*). Non scende mai sul personaggio: se le caselle sono tante, sale sopra di loro. Durano 1,45 s, compresi 0,3 s di dissolvenza a retino (*da rivedere*).
+  - avvisi nel cartiglio (sciami, orde, Seth, reliquiari), con la riga secondaria subito sotto. Sul telefono in verticale stanno nel campo, 6 pixel sotto la fascia alta, grandi un ingrandimento in più di HUD e fascia (*da rivedere*). Su computer e tablet stanno sotto barre e caselle, ridotti a 0,5 volte, arrotondati a un ingrandimento intero e mai sotto × 2: sui telefoni i piccoli restano leggibili; non scendono mai sul personaggio: se le caselle sono tante, salgono sopra di loro. Durano 3 s, compresi 0,3 s di dissolvenza a retino (*da rivedere*).
 - **Gesti e tasto Indietro** (provati da Edoardo sul Galaxy S25, nessuna esclusione dei gesti):
   - Indietro apre la pausa e basta; dentro la pausa chiude solo la finestra di conferma di Abbandona, non cambia scheda e la partita riparte solo toccando il pulsante; dalla fine torna al menu; nei menu resta com'era. Vale per APK e link;
   - nell'APK, dai bordi laterali: il primo gesto mostra le barre di sistema, il secondo mette in pausa;
