@@ -15,14 +15,15 @@ import { ingrandimento } from './asset';
 import type { Caso } from './caso';
 import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
-import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SCIAMI, SEPARAZIONE } from '../data/nemici';
+import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { REAZIONI, STATI } from '../data/stati';
 import { Simboli } from './simboli';
 import { COLPI } from '../data/armi';
 
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici, alle orde e alla chiamata dei morti. */
-export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + SCIAMI.massimo + 2 * ORDE.massimo + MIETITORE.chiamata.quanti + 20;
+const ID_BRUTO = NEMICI.findIndex((t) => t.id === 'bruto');
+export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + 2 * ORDE.massimo + MIETITORE.chiamata.quanti + 20;
 /** Che tipo di nemico è morto: decide reliquiari, Cera e fiaschetta. */
 export type CategoriaNemico = 'comune' | 'elite' | 'seth';
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
@@ -111,6 +112,7 @@ export class Orda {
   private distanzaStato = new Float32Array(STATI.simboli.massimi); // in ordine crescente, come brutiStato
   durataStati = 1; // la Cera votiva allunga gli stati
   private daFare = 0; // comparse accumulate (frazioni di nemico)
+  private bruti = 0; // bruti in campo, per non superarne il massimo
   private prossimoId = 1;
   // usati dentro la separazione, per non creare funzioni nel ciclo di gioco
   private corrente = 0;
@@ -412,7 +414,7 @@ export class Orda {
    * Un'orda: quanti nemici del tipo dato in formazione (file di ORDE.perFila), appena fuori dallo schermo
    * nella direzione angolo; marciano compatti verso il giocatore e caricano quando sono vicini.
    */
-  orda(secondi: number, tipo: number, quanti: number, angolo: number, gx: number, gy: number, mezzaL: number, mezzaA: number): void {
+  orda(secondi: number, tipo: number, quanti: number, angolo: number, gx: number, gy: number, mezzaL: number, mezzaA: number, cuneo = false): void {
     const b = this.bAttiva.indexOf(0);
     if (b < 0) return;
     const c = Math.cos(angolo);
@@ -427,8 +429,11 @@ export class Orda {
     for (let k = 0; k < quanti && this.numero < CAPIENZA; k++) {
       const fila = Math.floor(k / ORDE.perFila);
       const inFila = Math.min(ORDE.perFila, quanti - fila * ORDE.perFila);
-      const lato = (k % ORDE.perFila - (inFila - 1) / 2) * spazio; // lungo il fronte
-      const dietro = fila * spazio; // le file dopo la prima stanno più lontane
+      // cuneo: la punta davanti, i due bracci che si aprono all'indietro; muro: file una dietro l'altra
+      // cuneo: un triangolo pieno con la punta verso di te (la riga r ha r + 1 nemici); muro: file una dietro l'altra
+      const r = Math.floor((Math.sqrt(8 * k + 1) - 1) / 2), inRiga = k - (r * (r + 1)) / 2;
+      const lato = cuneo ? (inRiga - r / 2) * spazio : (k % ORDE.perFila - (inFila - 1) / 2) * spazio; // lungo il fronte
+      const dietro = cuneo ? r * spazio * 0.8 : fila * spazio; // più lontano da te
       const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA, tipo);
       this.branco[i] = b + 1;
       this.postoX[i] = -sn * lato + c * dietro;
@@ -445,7 +450,7 @@ export class Orda {
       const ang = (k / quanti) * Math.PI * 2;
       this.x[i] = gx + Math.cos(ang) * (mezzaL + COMPARSA.margine);
       this.y[i] = gy + Math.sin(ang) * (mezzaA + COMPARSA.margine);
-      this.velocita[i] *= SCIAMI.velocita;
+      this.velocita[i] *= ORDE.velocitaAnello;
     }
   }
 
@@ -534,6 +539,7 @@ export class Orda {
     const tipo = NEMICI[t];
     const m = secondi / 60;
     this.tipo[i] = t;
+    if (t === ID_BRUTO) this.bruti++;
     this.id[i] = this.prossimoId++;
     this.segno[i] = 0;
     this.raggio[i] = tipo.raggio;
@@ -647,6 +653,7 @@ export class Orda {
 
   /** Toglie il nemico i spostando l'ultimo al suo posto (con il suo sprite). */
   private togli(i: number): void {
+    if (this.tipo[i] === ID_BRUTO) this.bruti--;
     const u = --this.numero;
     const s = this.sprite[i];
     s.stop();
@@ -686,12 +693,25 @@ export class Orda {
     const riga = COPIONE[Math.min(COPIONE.length - 1, Math.floor(secondi / 60))];
     let totale = 0;
     for (const t of NEMICI) totale += riga[t.id] ?? 0;
-    let r = this.caso.numero() * totale;
+    let r = this.caso.numero() * totale, scelto = 0;
     for (let t = 0; t < NEMICI.length; t++) {
       r -= riga[NEMICI[t].id] ?? 0;
-      if (r < 0) return t;
+      if (r < 0) {
+        scelto = t;
+        break;
+      }
     }
-    return 0;
+    if (scelto !== ID_BRUTO || this.bruti < DIFFICOLTA.brutiMassimi) return scelto;
+    // troppi bruti: al loro posto il nemico principale del minuto
+    let principale = 0, peso = -1;
+    for (let t = 0; t < NEMICI.length; t++) {
+      const p = t === ID_BRUTO ? -1 : riga[NEMICI[t].id] ?? 0;
+      if (p > peso) {
+        peso = p;
+        principale = t;
+      }
+    }
+    return principale;
   }
 
   private separa(j: number): void {

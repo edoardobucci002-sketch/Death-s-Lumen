@@ -70,6 +70,17 @@ Dopo la partita di Edoardo su telefono. Stesso numero di oggetti, percentuali ch
 
 Nuovi: 60% dei settori da 700 px con un oggetto; urna 1 goccia, giara 2, lanterna 1; pesi 4/4/2. La Cera dei nemici non cambia, quindi una notte ne dà un po' di più. Il bot gioca senza rompibili: la simulazione non cambia e non misura questa Cera in più.
 
+### 9/11 — Orde a forma, meno bruti, Lumen accorpato
+
+Decisioni di Edoardo: meno bruti a fine notte, Lumen accorpato come in Vampire Survivors, orde riconoscibili. Cambiano insieme:
+- **bruti**: nel copione pesano al massimo 1 (prima 2 e 3 negli ultimi minuti) e in campo ce ne sono al massimo 30;
+- **orde**: gli sciami di ogni minuto e le orde ogni 80 s diventano **un solo evento all'inizio di ogni minuto** (non nei minuti di Seth), con 3 s di preavviso sul bordo; un solo tipo, grande un terzo del campo (17 al minuto 1, 80 dal minuto 8), in quattro forme; la carica parte a 150 px invece di 260;
+- **Lumen**: un'anima che cade entro 36 px da una ferma si unisce a lei.
+
+Bot sul S25, Cappella vuota, 12 notti per personaggio (48), confronto con il 7/11: **32 vittorie su 48** (prima 3), 4 morti prima del minuto 5 (uguale: tre Lampionaio e un Becchino), mediana della morte 7:08 sulle 16 notti perse, livello finale medio 51 (prima 44), Seth del 5 ucciso in 40 notti su 44. I due vincoli sono rispettati; le vittorie sono molto sopra l'obiettivo provvisorio (5–15%). Non è stato separato quale delle tre modifiche pesa di più: la candidata principale è il tetto dei bruti, che a fine notte erano la maggior parte del campo.
+
+Una prima versione con orde di 24 + 4 nemici per minuto (28 già al minuto 1, su un campo di 50) dava 24 vittorie ma 10 morti prima del minuto 5: scartata.
+
 ### 7/11 — Copione della notte, respiro e tetto a 250
 
 Decisione di Edoardo: le comparse sembravano continue e senza criterio. Ora ogni minuto ha il suo copione (due tipi principali e al massimo uno di contorno, `COPIONE`), in ogni minuto dopo il primo arrivano 40 s di marea e 20 s di calma con le comparse al 25% (`RESPIRO`), e i nemici in campo sono al massimo 250 invece di 380. Tutti i valori sono *da rivedere*.

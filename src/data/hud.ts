@@ -55,11 +55,17 @@ export const MARGINE_TOCCO = 4;
  * Avvisi nel cartiglio (Nastro_Titolo), in alto sotto barre e caselle. Valori da rivedere.
  * scala: parte dell'ingrandimento normale; il risultato si arrotonda a un numero intero per non deformare i pixel del disegno.
  */
+/** Preavviso di un'orda: il bordo del campo da cui arriva lampeggia a retino (src/sistema/hud.ts). Da rivedere. */
+export const PREAVVISO_ORDA = { colore: '#c0392b', spessore: 8, livello: 10 }; // spessore in pixel disegnati, livello del retino su 16
+
 export const AVVISO = {
   scala: 0.5,
   minimo: 2, // ingrandimento più piccolo: a ×1 le lettere sono alte 5 pixel; così computer e tablet restano a grandezza normale
   durata: 3, // secondi in tutto, dissolvenza compresa
-  inPiuTelefono: 1, // sul telefono è più grande di un ingrandimento e sta nel campo, sotto la fascia alta
+  inPiuTelefono: 1, // sul telefono le scritte sono più grandi di un ingrandimento e stanno nel campo, sotto la fascia alta
+  colore: '#ffe08a', // il titolo
+  fondo: '#140c14', // il fondo scuro sotto le scritte
+  altezza: 24, // pixel disegnati occupati da titolo e riga sotto, per non scendere sul personaggio
   sottoFascia: 6, // pixel di gioco tra la fascia alta e il cartiglio
   dissolvenza: 0.3, // secondi finali in cui sparisce a retino
   passi: 3, // gradini del retino

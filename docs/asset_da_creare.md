@@ -40,6 +40,7 @@ Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto p
 | **Lumen (anime)** `OGGETTI/Anima_piccola`, `Anima_media`, `Anima_grande` (`_V2.aseprite`, 9×11, 11×14, 15×19 px su tela 24×24, tag `idle`) | gemme che cadono dai nemici | **V2 del 6/11**: ridisegnati pixel per pixel da Claude; stessa sagoma nei 4 fotogrammi, il battito è dato dalla luce e da una scintilla (rosso, ambra, azzurro: colori delle stelle); da confermare |
 | **4 mosaici** (L'Ultima Cappella, Il Risveglio, Le Due Mani, La Morte Rinnovata) | Vetrate e frammenti | si riprendono più avanti: soggetti in `docs/roadmap.md` |
 | **Effetto del Bagliore** (alone sul personaggio) | mosaico completo | lampi d'oro sullo sprite, dal codice |
+| **Preavviso delle orde** (bordo del campo) | orde | striscia rossa a retino dal codice |
 | Nemici V1 alla scala nuova | tutti i nemici | segnaposto V0 ×2 |
 | Effetti e icone delle armi alla scala nuova | armi | segnaposto V0 |
 

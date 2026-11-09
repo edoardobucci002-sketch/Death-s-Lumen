@@ -146,6 +146,17 @@ function compareDa(etichetta, tipo, testo) {
   const primo = N.COPIONE.findIndex((riga) => riga[tipo.id]) * 60;
   vero(etichetta, secondi(testo) === primo, `GDD ${testo}, ma nel copione compare da ${primo} s`);
 }
+/** «1-4, 6-9, 11-14» da [1, 2, 3, 4, 6, …]. */
+const ORDINE_MINUTI = (m) => {
+  const tratti = [];
+  for (let i = 0; i < m.length; i++) {
+    let j = i;
+    while (j + 1 < m.length && m[j + 1] === m[j] + 1) j++;
+    tratti.push(i === j ? `${m[i]}` : `${m[i]}-${m[j]}`);
+    i = j;
+  }
+  return tratti.join(', ');
+};
 const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 
 // --- 1. Cronologia ----------------------------------------------------------------------------
@@ -166,13 +177,9 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     inTesto(r.Momento, 'Cronologia élite', '{t}, poi ogni {} s', N.ELITE.primo, N.ELITE.ogni);
     inTesto(r.Evento, 'Cronologia élite', 'che lascia {p} reliquiario', N.ELITE.reliquiari);
   });
-  evento('Sciame', (r) => {
-    inTesto(r.Momento, 'Cronologia sciami', 'tranne il {}° e il {}°, fino al {}°', ...N.SCIAMI.saltaMinuti, N.SCIAMI.ultimoMinuto);
-    inTesto(r.Evento, 'Cronologia sciami', 'pipistrelli fino al {}° minuto, fantasmi dal {}°', N.SCIAMI.pipistrelliFinoAl, N.SCIAMI.pipistrelliFinoAl + 1);
-  });
-  evento('Un\'orda', (r) => {
-    inTesto(r.Momento, 'Cronologia orde', '{t}, poi ogni {} s fino a {t}', N.ORDE.primo, N.ORDE.ogni, N.ORDE.ultimo);
-    inTesto(r.Evento, 'Cronologia orde', 'dalle {t} due orde', N.ORDE.tenagliaDal);
+  evento('Un\'orda di un solo tipo', (r) => {
+    const minuti = ORDINE_MINUTI(N.ORDE.copione.map((o) => o.minuto));
+    vero('Cronologia orde', r.Momento.includes(minuti) && r.Momento.includes(`${N.ORDE.preavviso} s di preavviso`), `GDD «${r.Momento}» ≠ dati «${minuti}, ${N.ORDE.preavviso} s di preavviso»`);
   });
   evento('Prima apparizione', (r) => inTesto(r.Momento, 'Cronologia Seth', '{t}', N.MIETITORE.minuti[0] * 60));
   evento('Seconda apparizione', (r) => inTesto(r.Momento, 'Cronologia Seth', '{t}', N.MIETITORE.minuti[1] * 60));
@@ -409,14 +416,17 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('IA zig-zag', '(ampiezza {}, {} oscillazioni al secondo', IA.zigzag.ampiezza, IA.zigzag.frequenza);
 
   const O = N.ORDE;
-  frase('Orde', '**Orde**: dalle {t}, ogni {} s fino alle {t}, un\'orda di {} + {} nemici per minuto (al massimo {})', O.primo, O.ogni, O.ultimo, O.base, O.perMinuto, O.massimo);
-  frase('Orde: formazione', 'file di {}, distanziate di {} raggi. Marcia compatta verso di te a {} px/s; a {} px carica tutta insieme a velocità ×{}.', O.perFila, O.spazio, O.marcia, O.distanzaCarica, O.carica);
-  frase('Orde: tipi', 'Zombi fino alle {t}, poi scheletri, dalle {t} segugi. Dalle {t} arrivano due orde', O.tipi[1].dal, O.tipi[2].dal, O.tenagliaDal);
-  vero('Orde: tipi', O.tipi.map((x) => x.tipo).join() === ['zombi', 'scheletro', 'segugio'].join(), 'nei dati i tipi sono diversi dalla frase del GDD');
-
-  const S = N.SCIAMI;
-  frase('Sciami', '**Sciami**: {} + {} nemici per minuto, fino a {}, a +{}% di velocità', S.base, S.perMinuto, S.massimo, pct(S.velocita - 1));
-  frase('Sciami: dove', 'grande quanto lo schermo, {} px fuori dal bordo', N.COMPARSA.margine);
+  frase('Orde', '{} s prima il bordo del campo', O.preavviso);
+  frase('Orde: quanti', 'almeno {} e al massimo {}', O.minimo, O.massimo);
+  vero('Orde: un terzo', Math.abs(O.parteDelCampo - 1 / 3) < 1e-9, 'nei dati l\'orda non è un terzo del campo');
+  frase('Orde: muro', '*muro*, file di {} distanziate di {} raggi', O.perFila, O.spazio);
+  frase('Orde: anello', '{} px fuori dal bordo), a +{}% di velocità', N.COMPARSA.margine, pct(O.velocitaAnello - 1));
+  frase('Orde: marcia', 'marciano compatti verso di te a {} px/s; a {} px caricano tutti insieme a velocità ×{}', O.marcia, O.distanzaCarica, O.carica);
+  const co = tabella('**Il copione delle orde**');
+  O.copione.forEach((o) => conRiga(co, String(o.minuto), (r) => vero(`Orda del minuto ${o.minuto}`, r.Forma === o.forma && r.Nemico === o.tipo, `GDD ${r.Forma} ${r.Nemico} ≠ dati ${o.forma} ${o.tipo}`)));
+  vero('Copione delle orde', co.righe.length === O.copione.length, `GDD ${co.righe.length} righe ≠ dati ${O.copione.length}`);
+  frase('Bruti massimi', 'bruti in campo al massimo {}', N.DIFFICOLTA.brutiMassimi);
+  frase('Lumen accorpato', 'entro {} px da una ferma si unisce a lei', PR.ANIME.accorpa);
 
   // il copione: una riga per minuto, gli stessi nemici e gli stessi pesi
   const copione = tabella('**Il copione della notte**');

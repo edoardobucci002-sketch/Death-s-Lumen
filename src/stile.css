@@ -75,11 +75,17 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 /* contorno nero pieno (quattro ombre) per leggere il numero sopra icone e bordi */
 .hud-lv { position: absolute; line-height: 1; font-family: var(--f-pixel); font-weight: 700; color: var(--pergamena); text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px 0 #000; }
 .hud-icona .hud-lv { right: 0; bottom: 0; }
-.hud-avviso-testo, .hud-avviso-sotto, .hud-nastro h1, .hud-tasto span, .doni-titolo, .doni-rimescola span {
+.hud-nastro h1, .hud-tasto span, .doni-titolo, .doni-rimescola span {
   position: absolute; margin: 0; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden;
 }
-.hud-avviso-testo { font-family: var(--f-titolo); color: #1e1008; }
-.hud-avviso-sotto { font-family: var(--f-pixel); font-weight: 500; color: var(--pergamena); text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 2px 0 #000; }
+/* avvisi: scritte semplici su fondo scuro, una sotto l'altra al centro (src/sistema/hud.ts) */
+.hud-avviso { position: absolute; pointer-events: none; }
+.hud-avviso:not([hidden]) { display: flex; flex-direction: column; align-items: center; }
+.hud-avviso-testo { line-height: 0; }
+.hud-avviso-tela { display: block; image-rendering: pixelated; }
+.hud-avviso-sotto { font-family: var(--f-pixel); font-weight: 500; line-height: 1; white-space: nowrap; color: var(--pergamena); }
+/* preavviso di un'orda: il bordo del campo da cui arriva lampeggia */
+.hud-preavviso { position: absolute; pointer-events: none; animation: lampeggia 0.4s steps(1, end) infinite; }
 #interfaccia .hud-pausa-tasto, .hud-tasto, .doni-carta, .doni-rimescola, .speciale, .fiaschetta { padding: 0; border: 0; background: none; cursor: pointer; }
 #interfaccia .hud-pausa-tasto { position: fixed; z-index: 4; pointer-events: auto; touch-action: none; } /* sopra le carte dei doni (3), sotto la base del joystick (5) */
 /* area di tocco un po' più grande del disegno; la pausa ha il suo margine, messo dal codice (src/data/hud.ts) */

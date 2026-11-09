@@ -7,10 +7,10 @@
  * e sotto gli avvisi nel nastro. In basso a destra: pausa. Poi la schermata di fine partita.
  * La barra della salute è nel gioco, sotto il personaggio; l'abilità speciale in basso a sinistra (speciale.ts).
  */
-import { AVVISO, CASELLA, FASCE, FINESTRE, INTERNI, MARGINE_TOCCO, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
+import { AVVISO, PREAVVISO_ORDA, CASELLA, FASCE, FINESTRE, INTERNI, MARGINE_TOCCO, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
 import { adattaZoom, angoliFascia, arte, bordiHud, fasce, immagine, ingr, mascheraRetino, misura, misureHud, posa, retino, scriviIn, type Fasce, type MisureHud } from './arte';
 import { Pausa, type DatiPausa, type SchedaPausa } from './pausa';
-import { scritta, scriviNel } from './scritte';
+import { scritta, scriviNel, tela } from './scritte';
 import { disponiTasto, scalaTasti, tasto } from './tasti';
 
 /** Un'arma o un dono posseduto, per le caselle e i riepiloghi. */
@@ -47,7 +47,6 @@ export interface AzioniHud {
 const ALTEZZA_OROLOGIO = 24; // pixel di gioco per ogni volta dell'ingrandimento delle barre (testo da 16 più il respiro)
 const CLIC_FANTASMA_MS = 60; // quanto dopo l'alzata del dito arriva il clic generato dal telefono
 const PER_FILA = 6; // caselle per fila: 6 armi, poi 6 doni
-const OMBRA = '#000'; // ombra di un pixel sotto le scritte chiare su fondo scuro
 
 /** Un elemento posizionato a mano dentro l'HUD. */
 function blocco(classe: string, ...figli: HTMLElement[]): HTMLElement {
@@ -109,7 +108,10 @@ export class Hud {
   private rosario = blocco('hud-rosario');
   private ultimoRosario = '';
   private icone = blocco('hud-icone');
-  private avvisoEl = blocco('hud-avviso', immagine('Nastro_Titolo'), blocco('hud-avviso-testo'), blocco('hud-avviso-sotto'));
+  private avvisoEl = blocco('hud-avviso', blocco('hud-avviso-testo'), blocco('hud-avviso-sotto'));
+  private preavvisoEl = blocco('hud-preavviso');
+  private timerPreavviso = 0;
+  private kAvviso = 2; // pixel di gioco per pixel della scritta
   private pausaTasto = document.createElement('button');
   private bordo = blocco('hud-bordo');
   private quadro: Pausa;
@@ -134,6 +136,7 @@ export class Hud {
     this.mietitore.el.hidden = true;
     this.seth.el.hidden = true;
     this.peccato.hidden = true;
+    this.preavvisoEl.hidden = true;
     this.mietitore.el.setAttribute('aria-label', 'Seth, il Rinnovato');
     this.avvisoEl.hidden = true;
     this.avvisoEl.setAttribute('aria-live', 'polite');
@@ -165,7 +168,7 @@ export class Hud {
       tasto('Pulsante_Acceso', 'Riprova', { azione: 'riprova' }),
       tasto('Pulsante_Chiaro', 'Personaggi', { azione: 'menu' }),
     );
-    this.radice.append(this.bordo, this.peccato, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.seth.el, this.avvisoEl, this.quadro.el, this.fine);
+    this.radice.append(this.bordo, this.peccato, this.preavvisoEl, this.xp.el, this.orologio, this.livello, this.anime, this.cera, this.rosario, this.icone, this.mietitore.el, this.seth.el, this.avvisoEl, this.quadro.el, this.fine);
     this.radice.addEventListener('click', (e) => {
       if (this.clicFantasma || this.quadro.clic(e.target as Element)) return;
       const azione = (e.target as Element).closest<HTMLElement>('button')?.dataset.azione;
@@ -274,8 +277,7 @@ export class Hud {
 
   /** Scritta nel nastro in alto, che sparisce da sola a retino; «sotto» è una riga in più sotto il nastro. */
   avviso(testo: string, sotto = ''): void {
-    scritta(this.avvisoEl.children[1], testo);
-    scritta(this.avvisoEl.children[2], sotto);
+    this.scriviAvviso(testo, sotto);
     this.avvisoEl.hidden = false;
     this.mascheraAvviso('');
     this.passoAvviso = 0;
@@ -283,6 +285,41 @@ export class Hud {
     clearTimeout(this.timerAvviso);
     this.inizioAvviso = performance.now();
     this.prossimoGradino();
+  }
+
+  /** Dopo un cambio di misure: riscrive l'avviso in corso alla grandezza nuova. */
+  private ridisegnaAvviso(): void {
+    const c = this.avvisoEl.querySelector('canvas');
+    if (c) this.scriviAvviso(c.getAttribute('aria-label') ?? '', this.avvisoEl.children[1].textContent ?? '');
+  }
+
+  /** Titolo in Tiny5 a pixel interi e riga sotto, ognuno sul suo fondo scuro. */
+  private scriviAvviso(testo: string, sotto: string): void {
+    const k = this.kAvviso, px = this.m.px, titolo = this.avvisoEl.children[0] as HTMLElement, riga = this.avvisoEl.children[1] as HTMLElement;
+    const c = tela(testo, AVVISO.colore, null);
+    c.className = 'hud-avviso-tela';
+    c.setAttribute('role', 'img');
+    c.setAttribute('aria-label', testo);
+    misura(c, c.width, c.height, k, this.m);
+    titolo.replaceChildren(c);
+    titolo.style.padding = `${2 * k * px}px ${4 * k * px}px`;
+    riga.textContent = sotto;
+    riga.hidden = !sotto;
+    Object.assign(riga.style, { fontSize: `${TESTI.avvisoSotto * k * px}px`, padding: `${k * px}px ${4 * k * px}px`, marginTop: `${k * px}px` });
+    for (const e of [titolo, riga]) e.style.background = AVVISO.fondo;
+  }
+
+  /** Preavviso di un'orda: per «secondi» lampeggiano i bordi del campo da cui arriva. */
+  preavviso(sopra: boolean, sotto: boolean, sinistra: boolean, destra: boolean, secondi: number): void {
+    const t = PREAVVISO_ORDA.spessore * this.kAvviso * this.m.px, c = PREAVVISO_ORDA.colore, ombre: string[] = [];
+    if (sopra) ombre.push(`inset 0 ${t}px 0 0 ${c}`);
+    if (sotto) ombre.push(`inset 0 ${-t}px 0 0 ${c}`);
+    if (sinistra) ombre.push(`inset ${t}px 0 0 0 ${c}`);
+    if (destra) ombre.push(`inset ${-t}px 0 0 0 ${c}`);
+    this.preavvisoEl.style.boxShadow = ombre.join(', ');
+    this.preavvisoEl.hidden = !ombre.length;
+    clearTimeout(this.timerPreavviso);
+    this.timerPreavviso = window.setTimeout(() => { this.preavvisoEl.hidden = true; }, secondi * 1000);
   }
 
   /** Un gradino della dissolvenza a retino; dopo l'ultimo l'avviso sparisce. */
@@ -419,18 +456,15 @@ export class Hud {
     this.xp.disponi(margine + (ms.w + 2) * z, yStemma + Math.round(((ms.h - me.h) * z) / 2), z, m);
     Object.assign(this.orologio.style, { right: `${margine * px}px`, top: `${yRiga * px}px`, fontSize: `${16 * z * px}px`, lineHeight: `${16 * z * px}px` });
     this.seth.disponi(margine, yRiga + z, z, m);
-    // cartiglio: nel campo, subito sotto la fascia alta, così non copre l'esperienza e si legge
-    const zc = Math.min(z + AVVISO.inPiuTelefono, Math.floor(W / an.w));
-    const xa = Math.round(W / 2 - (an.w * zc) / 2);
-    this.lamaAvviso = Math.max(1, Math.round(zc * px * m.dpr));
-    posa(this.avvisoEl, xa, f.alta + AVVISO.sottoFascia, m);
-    misura(this.avvisoEl, an.w, an.h, zc, m);
-    misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, zc, m);
-    scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, zc, zc, m, TESTI.avviso);
-    const sotto = this.avvisoEl.children[2] as HTMLElement;
-    sotto.style.width = `${W * px}px`;
-    sotto.style.fontSize = `${TESTI.avvisoSotto * zc * px}px`;
-    scriviNel(sotto, { x: -xa, y: (an.h - 8) * zc, l: W, a: 6 * zc }, 1, zc, m, TESTI.avvisoSotto * zc, OMBRA);
+    // avvisi: nel campo, subito sotto la fascia alta, più grandi di un ingrandimento
+    this.kAvviso = z + AVVISO.inPiuTelefono;
+    this.lamaAvviso = Math.max(1, Math.round(this.kAvviso * px * m.dpr));
+    posa(this.avvisoEl, 0, f.alta + AVVISO.sottoFascia, m);
+    this.avvisoEl.style.width = `${W * px}px`;
+    this.ridisegnaAvviso();
+    // preavviso delle orde: sul bordo del campo, a retino
+    const lamaP = Math.max(1, Math.round(z * px * m.dpr)), latoP = (4 * lamaP) / m.dpr, urlP = mascheraRetino(PREAVVISO_ORDA.livello, lamaP);
+    Object.assign(this.preavvisoEl.style, { inset: `${f.alta * px}px 0 ${f.bassa * px}px`, maskImage: `url(${urlP})`, webkitMaskImage: `url(${urlP})`, maskSize: `${latoP}px`, webkitMaskSize: `${latoP}px` });
     // Peccato: cornice a retino sul bordo del campo
     const lama = Math.max(1, Math.round(z * px * m.dpr)), lato = (4 * lama) / m.dpr, url = mascheraRetino(SEGNALE_PECCATO.livello, lama);
     Object.assign(this.peccato.style, {
@@ -484,23 +518,17 @@ export class Hud {
     if (ori) y = ye + me.h * zb + 2 + ALTEZZA_OROLOGIO * zb + 4;
     this.mietitore.disponi(Math.round(W / 2 - (mm.w * zb) / 2), y, zb, m);
     if (!this.mietitore.el.hidden) y += mm.h * zb + 6;
-    // avviso nel nastro: in alto, sotto barre e caselle, per non coprire il personaggio
-    const an = arte('Nastro_Titolo');
-    if (an) {
-      const z = Math.max(AVVISO.minimo, Math.round(za * AVVISO.scala)); // numero intero: il disegno non si deforma
-      const xa = Math.round(W / 2 - (an.w * z) / 2);
-      // sotto barre e caselle; se sono troppe sale sopra di loro per non toccare il personaggio (la testa viene prima)
-      const ya = Math.max(b.a, Math.min(y, Math.floor(H / 2) - this.altezzaPersonaggio - AVVISO.margine - (an.h + 3) * z));
+    // avvisi: in alto, sotto barre e caselle; se sono troppe salgono sopra di loro per non toccare il personaggio
+    {
+      const z = Math.max(AVVISO.minimo, Math.round(za * AVVISO.scala)); // numero intero: le lettere non si deformano
+      this.kAvviso = z;
+      const ya = Math.max(b.a, Math.min(y, Math.floor(H / 2) - this.altezzaPersonaggio - AVVISO.margine - AVVISO.altezza * z));
       this.lamaAvviso = Math.max(1, Math.round(z * px * m.dpr));
-      posa(this.avvisoEl, xa, ya, m);
-      misura(this.avvisoEl, an.w, an.h, z, m);
-      misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, z, m);
-      scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, z, z, m, TESTI.avviso);
-      // la riga subito sotto il nastro, larga quanto lo schermo, con l'ombra perché sta sopra il gioco
-      const sotto = this.avvisoEl.children[2] as HTMLElement;
-      sotto.style.width = `${W * px}px`;
-      sotto.style.fontSize = `${TESTI.avvisoSotto * z * px}px`;
-      scriviNel(sotto, { x: -xa, y: (an.h - 8) * z, l: W, a: 6 * z }, 1, z, m, TESTI.avvisoSotto * z, OMBRA);
+      posa(this.avvisoEl, 0, ya, m);
+      this.avvisoEl.style.width = `${W * px}px`;
+      this.ridisegnaAvviso();
+      const lamaP = Math.max(1, Math.round(z * px * m.dpr)), latoP = (4 * lamaP) / m.dpr, urlP = mascheraRetino(PREAVVISO_ORDA.livello, lamaP);
+      Object.assign(this.preavvisoEl.style, { inset: '0', maskImage: `url(${urlP})`, webkitMaskImage: `url(${urlP})`, maskSize: `${latoP}px`, webkitMaskSize: `${latoP}px` });
     }
     // pausa in basso a destra, con un'area di tocco un po' più grande del disegno (MARGINE_TOCCO, in CSS)
     const ap = arte('Pulsante_Pausa');

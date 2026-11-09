@@ -67,17 +67,6 @@ export const ELITE = {
   alone: 0x6a3a00, // colore aggiunto allo sprite (ambra)
 } as const;
 
-/** Sciami: all'inizio di ogni minuto (tranne il 5° e il 10°, fino al 14°) ti circondano. */
-export const SCIAMI = {
-  base: 14, // 14 + 3 nemici per minuto, fino a 56
-  perMinuto: 3,
-  massimo: 56,
-  velocita: 1.12, // +12%
-  saltaMinuti: [5, 10],
-  ultimoMinuto: 14,
-  pipistrelliFinoAl: 6, // pipistrelli fino al 6° minuto, poi fantasmi
-} as const;
-
 /** Un nemico prende i valori del momento in cui nasce (m = minuti di gioco). */
 export const DIFFICOLTA = {
   // salute = base × (1 + 0,28 m + 0,04 × (m − 3)² dopo il minuto 3): uguale all'inizio, molto più resistenti a metà notte
@@ -88,6 +77,7 @@ export const DIFFICOLTA = {
   massimiBase: 20, // nemici massimi in campo = min(tetto, 20 + 30 m)
   massimiPerMinuto: 30,
   tetto: 250,
+  brutiMassimi: 30, // bruti in campo al massimo: oltre, al loro posto nasce il nemico principale del minuto (da rivedere)
   comparseBase: 1.2, // comparse al secondo = 1,2 + 2,5 m
   comparsePerMinuto: 2.5,
   comparsePerFotogramma: 8, // al massimo
@@ -113,10 +103,10 @@ export const COPIONE: Partial<Record<TipoNemico['id'], number>>[] = [
   { scheletro: 3, zombi: 2, bruto: 1 },
   { segugio: 3, pipistrello: 1 },
   { fantasma: 3, pipistrello: 1 },
-  { bruto: 3, fantasma: 2 },
+  { fantasma: 3, scheletro: 2, bruto: 1 },
   { scheletro: 3, segugio: 2 },
-  { scheletro: 3, bruto: 2, segugio: 1 },
-  { segugio: 3, bruto: 2, fantasma: 2 },
+  { scheletro: 3, segugio: 2, bruto: 1 },
+  { segugio: 3, fantasma: 2, bruto: 1 },
 ];
 
 /** Il respiro della notte: in ogni ciclo la marea sale, poi cala e nessun rinforzo la riempie. Da rivedere. */
@@ -138,24 +128,37 @@ export const IA = {
 } as const;
 
 /**
- * Orde: un muro di nemici in formazione che marcia compatto verso di te e, arrivato vicino, carica tutto insieme.
- * Dal minuto 7 arrivano in due, da lati opposti (tenaglia).
+ * Le orde: una all'inizio di ogni minuto del copione, quando finisce la calma del respiro (nei minuti di Seth no).
+ * Prima del loro arrivo il bordo del campo da cui vengono lampeggia. Un solo tipo per orda. Tutto da rivedere.
+ * Forme: muro (file che marciano e poi caricano), cuneo (una punta verso di te), tenaglia (due muri da lati
+ * opposti, metà nemici ciascuno), anello (in cerchio appena fuori dallo schermo, un po' più veloci).
  */
+export type FormaOrda = 'muro' | 'cuneo' | 'tenaglia' | 'anello';
 export const ORDE = {
-  primo: 150, // secondi
-  ogni: 80,
-  ultimo: 860, // nessuna orda dopo questo secondo
-  base: 12, // nemici per orda: 12 + 2 per minuto, al massimo 28
-  perMinuto: 2,
-  massimo: 28,
-  perFila: 7, // nemici per fila della formazione
+  preavviso: 3, // secondi prima dell'arrivo: lampeggia il bordo e compare la scritta
+  parteDelCampo: 1 / 3, // nemici per orda: un terzo dei nemici massimi in campo in quel minuto…
+  minimo: 12, // …ma almeno 12…
+  massimo: 80, // …e al massimo 80
+  perFila: 12, // nemici per fila del muro
   spazio: 2.4, // distanza tra due nemici della formazione, in raggi
   marcia: 80, // velocità della formazione (pixel al secondo)
-  distanzaCarica: 260, // a questa distanza da te carica…
+  distanzaCarica: 150, // a questa distanza da te carica: abbastanza vicino da vedere la forma…
   carica: 1.35, // …a velocità ×1,35
-  tenagliaDal: 420, // da questo secondo le orde arrivano in due, da lati opposti
-  // di che tipo sono i nemici dell'orda, secondo il tempo (secondi)
-  tipi: [{ dal: 0, tipo: 'zombi' }, { dal: 300, tipo: 'scheletro' }, { dal: 600, tipo: 'segugio' }] as { dal: number; tipo: TipoNemico['id'] }[],
+  velocitaAnello: 1.12, // l'anello è più veloce del 12%
+  copione: [
+    { minuto: 1, forma: 'anello', tipo: 'pipistrello' },
+    { minuto: 2, forma: 'muro', tipo: 'zombi' },
+    { minuto: 3, forma: 'cuneo', tipo: 'scheletro' },
+    { minuto: 4, forma: 'anello', tipo: 'pipistrello' },
+    { minuto: 6, forma: 'muro', tipo: 'scheletro' },
+    { minuto: 7, forma: 'tenaglia', tipo: 'zombi' },
+    { minuto: 8, forma: 'anello', tipo: 'fantasma' },
+    { minuto: 9, forma: 'cuneo', tipo: 'segugio' },
+    { minuto: 11, forma: 'muro', tipo: 'scheletro' },
+    { minuto: 12, forma: 'anello', tipo: 'fantasma' },
+    { minuto: 13, forma: 'tenaglia', tipo: 'segugio' },
+    { minuto: 14, forma: 'cuneo', tipo: 'scheletro' },
+  ] as { minuto: number; forma: FormaOrda; tipo: TipoNemico['id'] }[],
 } as const;
 
 /** Dove nascono i nemici e quando vengono ricollocati. */

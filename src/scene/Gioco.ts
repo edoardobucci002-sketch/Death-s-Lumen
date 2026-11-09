@@ -21,7 +21,7 @@ import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
 import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PRESTAZIONI, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
-import { COMBATTIMENTO, COMPARSA, ELITE, MIETITORE, NEMICI, ORDE, SCIAMI } from '../data/nemici';
+import { COMBATTIMENTO, COMPARSA, DIFFICOLTA, ELITE, MIETITORE, NEMICI, ORDE, type FormaOrda } from '../data/nemici';
 import { EFFETTI } from '../data/effetti';
 import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, MAX_ARMI, type Arma } from '../data/armi';
 import { ABILITA } from '../data/abilita';
@@ -68,8 +68,6 @@ import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
 const RITARDO_MASSIMO_MS = 250; // dopo un blocco lungo non recupera all'infinito
-const ID_PIPISTRELLO = NEMICI.findIndex((t) => t.id === 'pipistrello');
-const ID_FANTASMA = NEMICI.findIndex((t) => t.id === 'fantasma');
 
 /** Quanto chiede l'impresa dell'oggetto id. */
 const SOGLIA = (id: IdOggetto): number => SBLOCCHI_OGGETTI.find((o) => o.id === id)!.soglia ?? Infinity;
@@ -153,8 +151,9 @@ export class Gioco extends Phaser.Scene {
   private chiaveSprite = '';
   // eventi della notte
   private prossimaElite = 0;
-  private ultimoSciame = 0;
-  private prossimaOrda = 0;
+  private prossimaOrda = 0; // indice in ORDE.copione
+  private ordaAnnunciata = false;
+  private angoloOrda = 0;
   private prossimoPane = 0; // secondi: prima di allora non cade altro pane
   private prossimaCalamita = 0;
   private mietitoriArrivati = 0;
@@ -221,9 +220,10 @@ export class Gioco extends Phaser.Scene {
     this.dirY = 0;
     // se la partita parte più avanti (prove), gli eventi già passati non si ripetono
     this.prossimaElite = Math.max(ELITE.primo, Math.ceil(this.secondi / ELITE.ogni) * ELITE.ogni);
-    this.ultimoSciame = Math.ceil(this.secondi / 60) - 1;
     this.prossimoPane = this.prossimaCalamita = 0;
-    this.prossimaOrda = ORDE.primo + Math.max(0, Math.ceil((this.secondi - ORDE.primo) / ORDE.ogni)) * ORDE.ogni;
+    this.prossimaOrda = Math.max(0, ORDE.copione.findIndex((o) => o.minuto * 60 >= this.secondi));
+    if (ORDE.copione.every((o) => o.minuto * 60 < this.secondi)) this.prossimaOrda = ORDE.copione.length;
+    this.ordaAnnunciata = false;
     this.mietitoriArrivati = MIETITORE.minuti.filter((m) => m * 60 < this.secondi).length;
 
     this.misuraCampo();
@@ -483,34 +483,54 @@ export class Gioco extends Phaser.Scene {
     }
   }
 
+  /** Il preavviso di un'orda: la scritta e il bordo del campo da cui arriva (tutti per l'anello). */
+  private annunciaOrda(forma: FormaOrda, angolo: number): void {
+    const testi: Record<FormaOrda, [string, string]> = { muro: ["Un'orda", 'marcia verso di te'], cuneo: ["Un'orda a cuneo", 'punta verso di te'], tenaglia: ['Due orde', 'ti stringono'], anello: ['Lo sciame', 'ti circonda'] };
+    this.hud.avviso(...testi[forma]);
+    const c = Math.cos(angolo), sn = Math.sin(angolo), orizzontale = Math.abs(c) * this.campoA > Math.abs(sn) * this.campoL;
+    const tutti = forma === 'anello', doppio = forma === 'tenaglia';
+    const destra = orizzontale && c > 0, sinistra = orizzontale && c < 0, sotto = !orizzontale && sn > 0, sopra = !orizzontale && sn < 0;
+    this.hud.preavviso(tutti || sopra || (doppio && sotto), tutti || sotto || (doppio && sopra), tutti || sinistra || (doppio && destra), tutti || destra || (doppio && sinistra), ORDE.preavviso);
+  }
+
+  /** Fa nascere l'orda del minuto, di un solo tipo, nella sua forma. */
+  private lanciaOrda(forma: FormaOrda, tipo: number, minuto: number, angolo: number, mezzaL: number, mezzaA: number): void {
+    const campo = Math.min(DIFFICOLTA.tetto, DIFFICOLTA.massimiBase + DIFFICOLTA.massimiPerMinuto * minuto);
+    const quanti = Math.max(ORDE.minimo, Math.min(ORDE.massimo, Math.round(campo * ORDE.parteDelCampo))), s = this.secondi;
+    if (forma === 'anello') this.orda.sciame(s, tipo, quanti, this.x, this.y, mezzaL, mezzaA);
+    else if (forma === 'tenaglia') {
+      this.orda.orda(s, tipo, Math.ceil(quanti / 2), angolo, this.x, this.y, mezzaL, mezzaA);
+      this.orda.orda(s, tipo, Math.floor(quanti / 2), angolo + Math.PI, this.x, this.y, mezzaL, mezzaA);
+    } else this.orda.orda(s, tipo, quanti, angolo, this.x, this.y, mezzaL, mezzaA, forma === 'cuneo');
+  }
+
+  /** Laboratorio: un'orda della forma scelta, subito, con la scritta e il bordo. */
+  labOrda(forma: FormaOrda): void {
+    const minuto = Math.max(1, Math.floor(this.secondi / 60)), angolo = this.caso.numero() * Math.PI * 2;
+    const tipo = forma === 'anello' ? 'fantasma' : 'scheletro';
+    this.annunciaOrda(forma, angolo);
+    this.lanciaOrda(forma, NEMICI.findIndex((t) => t.id === tipo), minuto, angolo, this.campoL / 2, this.campoA / 2);
+  }
+
   /** Eventi della notte (GDD, sezione 1): élite, sciami, Mietitore, alba. */
   private notte(mezzaL: number, mezzaA: number): void {
     while (this.secondi >= this.prossimaElite) {
       this.orda.nasciElite(this.secondi, this.x, this.y, mezzaL, mezzaA);
       this.prossimaElite += ELITE.ogni;
     }
-    const minuto = Math.floor(this.secondi / 60);
-    if (minuto > this.ultimoSciame) {
-      this.ultimoSciame = minuto;
-      if (minuto >= 1 && minuto <= SCIAMI.ultimoMinuto && !(SCIAMI.saltaMinuti as readonly number[]).includes(minuto)) {
-        const quanti = Math.min(SCIAMI.massimo, SCIAMI.base + SCIAMI.perMinuto * minuto);
-        this.orda.sciame(this.secondi, minuto <= SCIAMI.pipistrelliFinoAl ? ID_PIPISTRELLO : ID_FANTASMA, quanti, this.x, this.y, mezzaL, mezzaA);
-        this.hud.avviso('Lo sciame', 'ti circonda');
+    // orde: all'inizio del minuto del copione; qualche secondo prima lampeggia il bordo da cui arrivano
+    const o = ORDE.copione[this.prossimaOrda];
+    if (o) {
+      if (!this.ordaAnnunciata && this.secondi >= o.minuto * 60 - ORDE.preavviso) {
+        this.ordaAnnunciata = true;
+        this.angoloOrda = this.caso.numero() * Math.PI * 2;
+        this.annunciaOrda(o.forma, this.angoloOrda);
       }
-    }
-    if (this.secondi >= this.prossimaOrda && this.prossimaOrda <= ORDE.ultimo) {
-      this.prossimaOrda += ORDE.ogni;
-      const m = this.secondi / 60;
-      const quanti = Math.min(ORDE.massimo, Math.round(ORDE.base + ORDE.perMinuto * m));
-      let tipo = ORDE.tipi[0].tipo;
-      for (const t of ORDE.tipi) if (this.secondi >= t.dal) tipo = t.tipo;
-      const id = NEMICI.findIndex((t) => t.id === tipo);
-      const angolo = this.caso.numero() * Math.PI * 2;
-      this.orda.orda(this.secondi, id, quanti, angolo, this.x, this.y, mezzaL, mezzaA);
-      const tenaglia = this.secondi >= ORDE.tenagliaDal;
-      if (tenaglia) this.orda.orda(this.secondi, id, quanti, angolo + Math.PI, this.x, this.y, mezzaL, mezzaA);
-      if (tenaglia) this.hud.avviso('Due orde', 'ti stringono');
-      else this.hud.avviso("Un'orda", 'marcia verso di te');
+      if (this.secondi >= o.minuto * 60) {
+        this.prossimaOrda++;
+        this.ordaAnnunciata = false;
+        this.lanciaOrda(o.forma, NEMICI.findIndex((t) => t.id === o.tipo), o.minuto, this.angoloOrda, mezzaL, mezzaA);
+      }
     }
     if (this.mietitoriArrivati < MIETITORE.minuti.length && this.secondi >= MIETITORE.minuti[this.mietitoriArrivati] * 60) {
       this.orda.nasciMietitore(this.secondi, this.mietitoriArrivati, this.x, this.y, mezzaL, mezzaA);
@@ -604,8 +624,9 @@ export class Gioco extends Phaser.Scene {
   labMinuto(m: number): void {
     this.secondi = Math.max(0, m) * 60;
     this.prossimaElite = Math.max(ELITE.primo, Math.ceil(this.secondi / ELITE.ogni) * ELITE.ogni);
-    this.ultimoSciame = Math.ceil(this.secondi / 60) - 1;
-    this.prossimaOrda = ORDE.primo + Math.max(0, Math.ceil((this.secondi - ORDE.primo) / ORDE.ogni)) * ORDE.ogni;
+    this.prossimaOrda = Math.max(0, ORDE.copione.findIndex((o) => o.minuto * 60 >= this.secondi));
+    if (ORDE.copione.every((o) => o.minuto * 60 < this.secondi)) this.prossimaOrda = ORDE.copione.length;
+    this.ordaAnnunciata = false;
     this.mietitoriArrivati = MIETITORE.minuti.filter((q) => q * 60 < this.secondi).length;
   }
 
@@ -703,8 +724,8 @@ export class Gioco extends Phaser.Scene {
       case 'elite': this.orda.nasciElite(s, this.x, this.y, mezzaL, mezzaA); break;
       case 'seth1': this.orda.nasciMietitore(s, 0, this.x, this.y, mezzaL, mezzaA); break;
       case 'seth2': this.orda.nasciMietitore(s, 1, this.x, this.y, mezzaL, mezzaA); break;
-      case 'orda': this.orda.orda(s, NEMICI.findIndex((t) => t.id === ORDE.tipi[ORDE.tipi.length - 1].tipo), ORDE.base, 0, this.x, this.y, mezzaL, mezzaA); break;
-      case 'sciame': this.orda.sciame(s, ID_FANTASMA, SCIAMI.base, this.x, this.y, mezzaL, mezzaA); break;
+      case 'orda': this.labOrda('muro'); break;
+      case 'sciame': this.labOrda('anello'); break;
       case 'pane': this.oggetti.aggiungi(PANE, this.x + 40, this.y - 40); break;
       case 'calamita': this.oggetti.aggiungi(CALAMITA, this.x - 40, this.y - 40); break;
       case 'reliquiarioATerra': this.oggetti.aggiungi(RELIQUIARIO, this.x, this.y - 70); break;

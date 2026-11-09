@@ -256,7 +256,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const e = (nome: Parameters<Gioco['labEvento']>[0], testo: string, classe = ''): HTMLElement => tasto(testo, fai((x) => x.labEvento(nome)), classe);
     return [
       titolo('Nemici'),
-      riga(e('elite', 'Élite'), e('seth1', 'Seth (1ª volta)'), e('seth2', 'Seth (2ª volta)'), e('orda', 'Orda'), e('sciame', 'Sciame')),
+      riga(e('elite', 'Élite'), e('seth1', 'Seth (1ª volta)'), e('seth2', 'Seth (2ª volta)'), e('orda', 'Orda a muro'), e('sciame', 'Sciame ad anello')),
+      riga(tasto('Orda a cuneo', fai((x) => x.labOrda('cuneo'))), tasto('Tenaglia', fai((x) => x.labOrda('tenaglia')))),
       titolo('Drop a terra'),
       riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('reliquiarioLontano', 'Reliquiario fuori vista'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
       titolo('Rompibili (prova)'),
