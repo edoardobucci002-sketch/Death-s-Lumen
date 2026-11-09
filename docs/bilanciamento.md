@@ -40,6 +40,98 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 9/11 — Il bot misura gli oggetti; sei correzioni (Vanga, Acquasantiera, Lucciola, Ossa d'élite, Martire, Ceri gemelli)
+
+**Misure nuove (nessun numero di gioco cambia).** `prove/sim.json` ha per ogni notte gli oggetti posseduti a fine notte con il livello, le carte offerte e scelte, il danno di ogni arma e di ogni reazione, le reazioni per tipo, il minuto della prima Unione offerta e presa, la cura del Patto di sangue e i sorsi dell'Acquasantiera; `npm run sim` stampa la tabella per oggetto. Controllo: `npm run sim -- 3 tutti` prima e dopo, stessi semi, Cappella vuota e completa: 24 notti, 504 campi confrontati, 0 differenze. Il danno di un'arma è misurato come il «danno totale» della fine partita (prima di Abbagliato e Interramento); la parte in più dell'Interramento è contata a parte; la maledizione che consuma la salute non è contata.
+
+**Correzioni** (richiesta di Edoardo, valori *da rivedere*):
+
+| Oggetto | Prima | Ora |
+| --- | --- | --- |
+| Vanga del custode | fermo 3 s a ogni colpo | fermo 1,5 s; poi 4 s in cui la Vanga non lo ferma più (la stessa pausa del Sepolto) |
+| Acquasantiera | un sorso ogni 40 uccisioni nelle pozze | in più, al massimo un sorso ogni 45 s |
+| Lucciola | 1 grano; abbaglia tutti nell'alone ogni 0,5 s | 2 grani; abbaglia chi entra nell'alone, non più di una volta ogni 4 s per nemico |
+| Ossa d'élite | 1 grano | 2 grani |
+| Martire | 3 grani; onda di 150 px con 30 di danno base | 2 grani; l'onda non ferisce, lascia Consacrato e ferma 0,6 s chi è entro 150 px |
+| Ceri gemelli | ricarica +30% | ricarica +10% |
+
+**Vanga e Seth (prova con il Becchino immortale, fermo, Pala rivolta verso Seth, Seth che non muore, 60 s).** Prima: Seth fermo il 96% del tempo, fino a 57,6 s di fila, **nessuna mossa**: il fermo (1,5 s su Seth) si rinnovava a ogni colpo della Pala (0,95 s al livello 8, più il secondo colpo), e Seth fermo non attacca. Ora: fermo il 17% del tempo, al massimo 0,8 s di fila, 9 mosse in un minuto. Il bot invece scappa da Seth (gli sta vicino il 2% del tempo), per questo nelle simulazioni il difetto non si vedeva.
+
+**Simulazione delle sole correzioni** (bot sul S25, 12 notti per personaggio = 48 per condizione, stessi semi; «prima» = la build di stamattina; senza le orde della sera, vedi più sotto):
+
+| Cappella | Vittorie prima | Vittorie ora | Per personaggio ora (L, B, Ba, S) | Morti prima del 5 | Mediana della morte | Livello medio | Seth del 5 ucciso |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| vuota | 32/48 | 32/48 | 6, 8, 10, 8 | 4 | 7:11 | 51 | 40/44 |
+| a metà | 32/48 | 29/48 | 3, 8, 10, 8 | 4 | 7:14 | 52 | 36/44 |
+| completa | 38/48 | 32/48 | 2, 11, 10, 9 | 0 | 7:40 | 55 (prima 61) | 41/48 |
+
+- A Cappella vuota le notti sono identiche: Rosario e Unioni lì sono spenti.
+- A metà e completa le vittorie scendono di 3 e 6: dentro l'incertezza di ±12 punti, quindi è una tendenza, non una misura.
+- Vincoli: Seth del 5 resta il primo ostacolo; nessun personaggio muore sempre prima del minuto 5 (a Cappella vuota muoiono prima del 5 tre notti del Lampionaio e una del Becchino).
+- Il Lampionaio a Cappella completa vince 2 notti su 12 (prima 5) e ne perde 10 tra 7:08 e 8:22; uccide Seth del 5 in 5 notti su 12. Era già il più debole; non si corregge ora.
+
+**Tabella per oggetto, Cappella completa** (48 notti, 32 vinte). «Notti» = a fine notte lo possedeva; «scelto/offerto» = carte. Danno medio a notte in migliaia.
+
+| Oggetto | Notti | Vinte | Scelto/offerto | Livello | Danno |
+| --- | --- | --- | --- | --- | --- |
+| Campana | 28 | 21 | 146/293 | 7,0 | 2324 |
+| Falce | 27 | 19 | 149/330 | 7,1 | 395 |
+| Lapide | 26 | 20 | 151/347 | 7,5 | 2224 |
+| Lama di luce | 25 | 18 | 147/361 | 7,2 | 348 |
+| Fuoco fatuo | 21 | 17 | 131/334 | 7,5 | 413 |
+| Corvo | 20 | 14 | 124/329 | 7,3 | 161 |
+| Acqua santa | 19 | 17 | 125/305 | 7,7 | 3133 |
+| Rosario spezzato | 18 | 13 | 111/320 | 7,5 | 514 |
+| Velo funebre | 18 | 12 | 104/347 | 7,2 | 161 |
+| Candela | 14 | 8 | 82/311 | 7,2 | 608 |
+| Lanterna (arma iniziale) | 12 | 2 | 74/74 | 7,9 | 164 |
+| Pala (arma iniziale) | 12 | 11 | 76/76 | 8,0 | 134 |
+| Turibolo (arma iniziale) | 12 | 10 | 76/76 | 8,0 | 629 |
+| Bastone (arma iniziale) | 12 | 9 | 78/78 | 8,0 | 800 |
+| Unione: Falce di Seth | 14 | 12 | 14/14 | | |
+| Unione: Campana a morto | 9 | 9 | 9/9 | | |
+| Unione: Acquasantiera | 8 | 7 | 8/8 | | |
+| Unione: Vanga del custode | 7 | 7 | 7/7 | | |
+| Unione: Verga dei nomi | 6 | 5 | 6/6 | | |
+| Unione: Candelabro funebre | 5 | 5 | 5/5 | | |
+| Unione: Lama dell'alba | 4 | 3 | 4/4 | | |
+| Unioni: Faro, Incensiere, Fuochi erranti | 2 ciascuna | 2 ciascuna | 2/2 ciascuna | | |
+| Sale nero | 36 | 23 | 126/266 | 4,4 | |
+| Chiodo di bara | 35 | 26 | 98/331 | 4,3 | |
+| Cuore di cera | 31 | 24 | 88/295 | 4,2 | |
+| Clessidra | 30 | 20 | 85/249 | 4,0 | |
+| Specchio | 30 | 22 | 30/100 | 1,0 | |
+| Stoppino lungo | 28 | 21 | 77/276 | 4,3 | |
+| Lacrima di lumen | 21 | 11 | 36/151 | 2,0 | |
+| Scudo di ferro | 21 | 16 | 46/304 | 3,5 | |
+| Cera votiva | 14 | 10 | 36/265 | 3,6 | |
+| Ali di falena | 13 | 7 | 20/219 | 3,4 | |
+| Erbe amare | 8 | 7 | 17/206 | 4,6 | |
+| Calamita | 6 | 2 | 10/166 | 3,2 | |
+| Campanella d'argento | 5 | 3 | 7/145 | 1,8 | |
+| Amuleto: Sangue freddo | 44 | 32 | 44/59 | | |
+| Amuleto: Lucciola | 28 | 22 | 28/192 | | |
+| Amuleto: Ceri gemelli | 22 | 18 | 22/213 | | |
+| Amuleto: Ossa d'élite | 18 | 15 | 18/149 | | |
+| Amuleto: Danza macabra | 9 | 7 | 9/256 | | |
+| Amuleti: Lanterna cieca, Cuore avido, Martire, Specchio rotto, Patto di sangue | 0 | 0 | 0 su 277–309 | | |
+
+Altro, Cappella completa, media a notte: abilità speciale 374 mila di danno; reazioni Eclissi 610, Rivelazione 893, Esorcismo 162, Interramento 292; danno delle reazioni Eclissi 209 mila, Esorcismo 17 mila, parte in più dell'Interramento 23 mila. Prima Unione offerta in 33 notti su 48, in media a 7:38, e il bot la prende sempre subito. Acquasantiera: 10 sorsi a notte guadagnati nelle 8 notti in cui c'era, ma solo 0,9 entrati davvero nella fiaschetta (il bot beve solo sotto il 40% di salute, quindi è quasi sempre piena). Con la Cappella a metà: Sangue freddo 41 notti, Lucciola 23, Ceri gemelli 22, Ossa d'élite 21; Falce di Seth l'Unione più fatta (16), Acquasantiera 9,8 sorsi a notte (0,2 entrati).
+
+Prima delle correzioni (prova con 12 notti, Cappella completa) Lucciola, Ossa d'élite e Sangue freddo erano in tutte le 12 notti, e l'Acquasantiera ridava in media 246 sorsi a notte.
+
+**Con le orde della sera (il codice di oggi su `prova`, versione 69c82c3).** Le correzioni sono state fatte in parallelo alla voce «9/11 (sera)» di un'altra sessione; le simulazioni qui sopra misurano le correzioni da sole. Sul codice che contiene tutte e due, 48 notti per condizione:
+
+| Cappella | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana della morte | Livello medio | Seth del 5 ucciso |
+| --- | --- | --- | --- | --- | --- |
+| vuota | 7/48 (2, 2, 2, 1) | 6 | 8:06 | 44 | 37/42 |
+| a metà | 22/48 (1, 5, 8, 8) | 4 | 7:36 | 55 | 38/44 |
+| completa | 20/48 (3, 6, 6, 5) | 2 | 11:12 | 60 | 42/46 |
+
+Amuleti a fine notte, a metà / completa: Sangue freddo 43 / 38 notti, Lucciola 23 / 28, Ceri gemelli 28 / 20, Ossa d'élite 11 / 16, Danza macabra 6 / 7, gli altri 0. Unioni più fatte: Acquasantiera 16 / 14, Falce di Seth 14 / 18, Candelabro funebre 10 / 13. Prima Unione offerta (e presa) in 32 e 33 notti, in media a 7:19 e 6:58. Acquasantiera: circa 9 sorsi a notte, meno di 1 entrato davvero. A Cappella completa i morti prima del minuto 5 sono 2 su 48; a metà e completa le vittorie sono vicine tra loro, come già prima.
+
+**Cosa la tabella non può dire:** Martire, Patto di sangue, Specchio rotto, Cuore avido e Lanterna cieca hanno 0 perché il bot non li prende mai (`amuletiPreferiti` a 0 in `src/data/bot.ts`, non toccato). Le correzioni a Martire non sono misurate. Le armi iniziali sono sempre presenti, quindi «notti» e «vinte» dicono il personaggio, non l'arma.
+
 ### 6/11 — Unioni: da 10 minuti o 500 Cera a 3 veglie vinte
 
 Scelta di Edoardo. I numeri dentro la notte non cambiano: cambia quando un giocatore arriva alle Unioni, che ora sono un premio di fine percorso. Simulazione a Cappella vuota, dove le Unioni sono spente: 12 notti, 3 per personaggio, campione minimo e buono solo come controllo. Vince 1 notte su 12 (Lampionaio); le altre finiscono tra 6:42 e 10:48. Livello medio 57, da 28 a 75. Seth del minuto 5 ucciso in 11 notti su 12; nessun personaggio muore sempre prima del minuto 5. Lo scarto dall'obiettivo sul Lampionaio (1/3) è rumore di un campione così piccolo.
