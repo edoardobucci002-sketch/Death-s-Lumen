@@ -14,27 +14,17 @@ export interface TipoNemico {
   pesante: boolean; // subisce solo un quarto della respinta
   /** Come si muove: dritto verso di te, ti accerchia, ti taglia la strada o vola a zig-zag (vedi IA). */
   comportamento: 'diretto' | 'accerchia' | 'intercetta' | 'zigzag';
-  /** Quanto spesso compare rispetto agli altri, dato il tempo di gioco in secondi (0 = non ancora). */
-  peso: (s: number) => number;
 }
 
 export const NEMICI: TipoNemico[] = [
-  { id: 'pipistrello', sprite: 'Pipistrello', salute: 6, velocita: 179, danno: 5, raggio: 16, anime: 1, attraversa: false, pesante: false, comportamento: 'zigzag',
-    peso: (s) => Math.max(0.7, 3 - s / 200) },
-  { id: 'zombi', sprite: 'Zombi', salute: 16, velocita: 87, danno: 8, raggio: 21, anime: 2, attraversa: false, pesante: false, comportamento: 'diretto',
-    peso: (s) => (s < 480 ? 3 : 1.5) },
-  { id: 'fantasma', sprite: 'Fantasma', salute: 13, velocita: 129, danno: 7, raggio: 21, anime: 2, attraversa: true, pesante: false, comportamento: 'diretto',
-    peso: (s) => (s >= 50 ? 2 : 0) },
-  { id: 'scheletro', sprite: 'Scheletro', salute: 34, velocita: 106, danno: 10, raggio: 21, anime: 3, attraversa: false, pesante: false, comportamento: 'accerchia',
-    peso: (s) => (s >= 140 ? 2.6 : 0) },
-  { id: 'segugio', sprite: 'Segugio', salute: 28, velocita: 200, danno: 9, raggio: 21, anime: 3, attraversa: false, pesante: false, comportamento: 'intercetta',
-    peso: (s) => (s >= 230 ? 2 : 0) },
-  { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false, pesante: true, comportamento: 'diretto',
-    // M8: entrano gradualmente in 2 minuti invece che tutti insieme alle 6:00 (lì si moriva quasi sempre)
-    peso: (s) => (s >= 360 ? Math.min(1 + s / 600, (s - 360) / 75) : 0) },
+  { id: 'pipistrello', sprite: 'Pipistrello', salute: 6, velocita: 179, danno: 5, raggio: 16, anime: 1, attraversa: false, pesante: false, comportamento: 'zigzag' },
+  { id: 'zombi', sprite: 'Zombi', salute: 16, velocita: 87, danno: 8, raggio: 21, anime: 2, attraversa: false, pesante: false, comportamento: 'diretto' },
+  { id: 'fantasma', sprite: 'Fantasma', salute: 13, velocita: 129, danno: 7, raggio: 21, anime: 2, attraversa: true, pesante: false, comportamento: 'diretto' },
+  { id: 'scheletro', sprite: 'Scheletro', salute: 34, velocita: 106, danno: 10, raggio: 21, anime: 3, attraversa: false, pesante: false, comportamento: 'accerchia' },
+  { id: 'segugio', sprite: 'Segugio', salute: 28, velocita: 200, danno: 9, raggio: 21, anime: 3, attraversa: false, pesante: false, comportamento: 'intercetta' },
+  { id: 'bruto', sprite: 'Bruto', salute: 150, velocita: 78, danno: 18, raggio: 38, anime: 8, attraversa: false, pesante: true, comportamento: 'diretto' },
   // il Mietitore non compare a caso: arriva ai minuti indicati in MIETITORE
-  { id: 'mietitore', sprite: 'Il_Mietitore', salute: 3600, velocita: 118, danno: 22, raggio: 61, anime: 60, attraversa: true, pesante: true, comportamento: 'diretto',
-    peso: () => 0 },
+  { id: 'mietitore', sprite: 'Il_Mietitore', salute: 3600, velocita: 118, danno: 22, raggio: 61, anime: 60, attraversa: true, pesante: true, comportamento: 'diretto' },
 ];
 
 /**
@@ -97,13 +87,44 @@ export const DIFFICOLTA = {
   dannoPerMinuto: 0.16, // danno = base × (1 + 0,16 m)
   massimiBase: 20, // nemici massimi in campo = min(tetto, 20 + 30 m)
   massimiPerMinuto: 30,
-  tetto: 380,
+  tetto: 250,
   comparseBase: 1.2, // comparse al secondo = 1,2 + 2,5 m
   comparsePerMinuto: 2.5,
   comparsePerFotogramma: 8, // al massimo
   sogliaRinforzo: 0.4, // sotto il 40% del massimo in campo…
   rinforzoPerFotogramma: 2, // …arrivano 2 nemici in più a ogni fotogramma
   variazioneVelocita: 0.1, // ±10% a caso
+} as const;
+
+/**
+ * Il copione della notte: chi compare a ogni minuto (riga 0 = da 0:00, riga 14 = da 14:00) e con che peso.
+ * Più alto il peso, più spesso esce quel nemico. Due tipi principali e al massimo uno di contorno, così ogni fase ha
+ * la sua faccia; nei minuti di Seth (5 e 10) il copione è più leggero. Tutti i valori sono da rivedere.
+ */
+export const COPIONE: Partial<Record<TipoNemico['id'], number>>[] = [
+  { pipistrello: 3, zombi: 2 },
+  { zombi: 3, fantasma: 2 },
+  { fantasma: 3, pipistrello: 2, scheletro: 1 },
+  { scheletro: 3, zombi: 2 },
+  { pipistrello: 3, segugio: 2 },
+  { zombi: 3, scheletro: 1 },
+  { segugio: 3, fantasma: 2 },
+  { zombi: 3, bruto: 1 },
+  { scheletro: 3, zombi: 2, bruto: 1 },
+  { segugio: 3, pipistrello: 1 },
+  { fantasma: 3, pipistrello: 1 },
+  { bruto: 3, fantasma: 2 },
+  { scheletro: 3, segugio: 2 },
+  { scheletro: 3, bruto: 2, segugio: 1 },
+  { segugio: 3, bruto: 2, fantasma: 2 },
+];
+
+/** Il respiro della notte: in ogni ciclo la marea sale, poi cala e nessun rinforzo la riempie. Da rivedere. */
+export const RESPIRO = {
+  dal: 60, // secondi: il primo minuto è già tranquillo
+  ciclo: 60, // secondi di un ciclo intero
+  marea: 40, // primi secondi del ciclo: comparse piene
+  comparse: 0.25, // nella calma le comparse si riducono a questa parte
 } as const;
 
 /** Come si muovono i nemici più furbi (comportamento in NEMICI). */

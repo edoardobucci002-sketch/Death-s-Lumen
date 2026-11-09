@@ -14,6 +14,7 @@ import { MAX_ARMI, type Arma } from '../data/armi';
 import type { Dono } from './doni';
 import type { Orda } from './orda';
 import type { Anime } from './anime';
+import type { Rompibili } from './rompibili';
 import type { Minacce } from './minacce';
 import { PANE, type Oggetti } from './oggetti';
 
@@ -31,6 +32,7 @@ export class Bot {
   private pesi: Float32Array;
   private quanti = 0;
   private aggressione: number;
+  urne: Rompibili | null = null; // solo per misurare: con ?cercaurne va apposta verso le urne
 
   constructor(
     private orda: Orda,
@@ -87,6 +89,13 @@ export class Bot {
         ty = g.y[i];
         obiettivo = true;
       }
+    }
+    const urna = !obiettivo && this.urne ? this.urne.urnaVicina(gx, gy) : -1;
+    if (urna >= 0) {
+      const u = this.urne!.posizione(urna);
+      tx = u.x;
+      ty = u.y;
+      obiettivo = true;
     }
     if (!obiettivo) {
       migliore = BOT.cercaAnime * BOT.cercaAnime;

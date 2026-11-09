@@ -46,7 +46,7 @@ export const CHIAZZE = {
 
 /** I frammenti di vetro: tre pezzi del mosaico, riuniti danno un reliquiario. Un'urna ne contiene uno solo per fortuna. */
 export const FRAMMENTI = {
-  probabilita: 0.08, // quante urne ne contengono uno (da rivedere)
+  probabilita: 0.26, // quante urne ne contengono uno: 89% di mosaici completi all'alba per chi cerca le urne (vedi docs/bilanciamento.md)
   perNotte: 3, // oltre questi le urne restano vuote: il mosaico si completa una volta sola a notte
   vittorie: 1, // prima di tante albe vinte le urne non ne contengono: i mosaici si aprono dopo la prima alba
   perReliquiario: 3,

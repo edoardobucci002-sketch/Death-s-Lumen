@@ -82,6 +82,9 @@ for (const pg of scelti) {
   console.log(pg.padEnd(13) + riga.join(''));
 }
 
+const urne = risultati.map((r) => r.urne ?? 0).filter(Boolean).sort((a, b) => a - b);
+if (urne.length) console.log(`\nUrne rotte a notte: media ${media(urne).toFixed(1)}, da ${urne[0]} a ${urne[urne.length - 1]} (${urne.join(' ')})`);
+
 console.log('\nPer personaggio');
 const problemi = [];
 for (const pg of scelti) {

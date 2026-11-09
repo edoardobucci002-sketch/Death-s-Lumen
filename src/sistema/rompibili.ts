@@ -87,6 +87,21 @@ export class Rompibili {
     this.occupa(tipo, x, y, LAB);
   }
 
+  /** Il bot che cerca le urne: dove sta l'urna intera più vicina a (x, y); -1 se non ce n'è. */
+  urnaVicina(x: number, y: number): number {
+    let scelta = -1, migliore = Infinity;
+    for (let i = 0; i < MAX; i++) {
+      if (this.stato[i] !== INTERO || !ROMPIBILI.tipi[this.tipo[i]].frammenti) continue;
+      const d = (this.x[i] - x) ** 2 + (this.y[i] - y) ** 2;
+      if (d < migliore) { migliore = d; scelta = i; }
+    }
+    return scelta;
+  }
+
+  posizione(i: number): { x: number; y: number } {
+    return { x: this.x[i], y: this.y[i] };
+  }
+
   /** Laboratorio: rompe l'oggetto intero più vicino. */
   rompiVicino(x: number, y: number): void {
     let scelto = -1, migliore = Infinity;

@@ -15,7 +15,7 @@ import { ingrandimento } from './asset';
 import type { Caso } from './caso';
 import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
-import { COMPARSA, DIFFICOLTA, ELITE, IA, MIETITORE, NEMICI, ORDE, SCIAMI, SEPARAZIONE } from '../data/nemici';
+import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SCIAMI, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { REAZIONI, STATI } from '../data/stati';
 import { Simboli } from './simboli';
@@ -146,11 +146,12 @@ export class Orda {
   aggiorna(dt: number, secondi: number, gx: number, gy: number, dirX: number, dirY: number, vel: number, mezzaL: number, mezzaA: number): void {
     const m = secondi / 60;
     const massimi = Math.min(DIFFICOLTA.tetto, DIFFICOLTA.massimiBase + DIFFICOLTA.massimiPerMinuto * m);
-    this.daFare += (DIFFICOLTA.comparseBase + DIFFICOLTA.comparsePerMinuto * m) * dt;
+    const calma = secondi >= RESPIRO.dal && secondi % RESPIRO.ciclo >= RESPIRO.marea;
+    this.daFare += (DIFFICOLTA.comparseBase + DIFFICOLTA.comparsePerMinuto * m) * (calma ? RESPIRO.comparse : 1) * dt;
     let nascite = Math.min(Math.floor(this.daFare), DIFFICOLTA.comparsePerFotogramma);
     this.daFare -= nascite;
     if (this.daFare > DIFFICOLTA.comparsePerFotogramma) this.daFare = DIFFICOLTA.comparsePerFotogramma;
-    if (this.numero < massimi * DIFFICOLTA.sogliaRinforzo) nascite += DIFFICOLTA.rinforzoPerFotogramma;
+    if (!calma && this.numero < massimi * DIFFICOLTA.sogliaRinforzo) nascite += DIFFICOLTA.rinforzoPerFotogramma;
     for (; nascite > 0 && this.numero < massimi; nascite--) this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
 
     // orde: la formazione marcia verso il giocatore; abbastanza vicina, carica
@@ -682,11 +683,12 @@ export class Orda {
   }
 
   private scegliTipo(secondi: number): number {
+    const riga = COPIONE[Math.min(COPIONE.length - 1, Math.floor(secondi / 60))];
     let totale = 0;
-    for (const t of NEMICI) totale += t.peso(secondi);
+    for (const t of NEMICI) totale += riga[t.id] ?? 0;
     let r = this.caso.numero() * totale;
     for (let t = 0; t < NEMICI.length; t++) {
-      r -= NEMICI[t].peso(secondi);
+      r -= riga[NEMICI[t].id] ?? 0;
       if (r < 0) return t;
     }
     return 0;

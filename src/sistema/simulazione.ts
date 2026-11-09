@@ -43,9 +43,14 @@ export interface RisultatoSim {
   grazie: number; // schivate perfette
   reazioni: number; // reazioni tra stati (Eclissi, Rivelazione, Esorcismo, Interramento)
   cera: number; // Cera guadagnata
+  urne: number; // urne rotte (solo con ?rompibili)
 }
 
 export class Simulazione {
+  urna(): void {
+    this.urne++;
+  }
+
   readonly minuti: MinutoSim[] = [];
   readonly mietitori: MietitoreSim[] = [];
   private dannoSubito = 0; // nel minuto in corso
@@ -58,6 +63,7 @@ export class Simulazione {
   private curaAltro = 0;
   private curaFiaschetta = 0;
   private sorsi = 0;
+  private urne = 0;
   private grazie = 0;
 
   /** Una volta per passo: chiude il minuto quando passa. */
@@ -117,12 +123,13 @@ export class Simulazione {
     this.grazie++;
   }
 
-  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro' | 'curaFiaschetta' | 'sorsi' | 'grazie'> & { reazioni: number; cera: number }): void {
+  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro' | 'curaFiaschetta' | 'sorsi' | 'grazie' | 'urne'> & { reazioni: number; cera: number }): void {
     for (const m of this.mietitori) m.dannoSubito = Math.round(m.dannoSubito);
     (window as unknown as { __sim: RisultatoSim }).__sim = {
       ...r, minuti: this.minuti, mietitori: this.mietitori,
       pani: this.pani, calamite: this.calamite, curaPane: Math.round(this.curaPane), curaAltro: Math.round(this.curaAltro),
       curaFiaschetta: Math.round(this.curaFiaschetta), sorsi: this.sorsi, grazie: this.grazie,
+      urne: this.urne,
     };
   }
 }

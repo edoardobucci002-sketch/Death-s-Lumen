@@ -58,7 +58,9 @@ export const MARGINE_TOCCO = 4;
 export const AVVISO = {
   scala: 0.5,
   minimo: 2, // ingrandimento più piccolo: a ×1 le lettere sono alte 5 pixel; così computer e tablet restano a grandezza normale
-  durata: 1.45, // secondi in tutto, dissolvenza compresa: un filo sotto 1,5 perché il browser può fare tardi di un fotogramma o due
+  durata: 3, // secondi in tutto, dissolvenza compresa
+  inPiuTelefono: 1, // sul telefono è più grande di un ingrandimento e sta nel campo, sotto la fascia alta
+  sottoFascia: 6, // pixel di gioco tra la fascia alta e il cartiglio
   dissolvenza: 0.3, // secondi finali in cui sparisce a retino
   passi: 3, // gradini del retino
   margine: 6, // pixel di gioco che restano tra l'avviso e la testa del personaggio
@@ -79,7 +81,6 @@ export const FASCE = {
   righeAlta: 54, // sotto l'area sicura: 3 di respiro + 32 stemma + 2 + 16 riga dell'orologio e di Seth + 1 filo
   righeCartiglio: 78, // cartiglio 59 + 2 + 16 riga dell'orologio e di Seth + 1 filo
   testoCartiglio: 24, // riga del cartiglio dove inizia la scritta: il cartiglio scende quanto basta a tenerla fuori dall'area sicura
-  sottoCartiglio: 3, // la riga sotto il cartiglio sale di tante righe, per non toccare la riga dell'orologio e di Seth
   righeBassa: 94, // filo, abilità (86 al massimo) e respiro; l'area sicura in basso si aggiunge
   margine: 3, // dal bordo dello schermo
   scambiaAngoli: 0, // 0: fiaschetta a sinistra, abilità a destra; 1: scambiate (dal LAB, scheda Schermo)

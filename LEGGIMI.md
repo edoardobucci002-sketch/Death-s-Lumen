@@ -34,7 +34,7 @@ npm run dev        # apre il gioco in locale
 | `npm run asset` | esporta da Aseprite tutti gli sprite (vedi «Aggiungere i tuoi sprite») |
 | `npm run icone` | rifà icone e schermate di avvio (web, Android, iOS) dallo sprite in gioco del Lampionaio |
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
-| `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi; `npm run sim -- 12 tutti meta=max` con la Cappella completa, `meta=meta` a metà, `meta=0` vuota); riepilogo a schermo, dettagli in `prove/sim.json`. Obiettivi in [docs/bilanciamento.md](docs/bilanciamento.md) |
+| `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi; `npm run sim -- 12 tutti meta=max` con la Cappella completa, `meta=meta` a metà, `meta=0` vuota); riepilogo a schermo, dettagli in `prove/sim.json`. Obiettivi in [docs/bilanciamento.md](docs/bilanciamento.md) Per contare le urne rotte: `DL_EXTRA='&rompibili&immortale' node tools/sim.mjs 12`, con `&cercaurne` il bot va apposta verso le urne. |
 | `npm run controlla-gdd` | confronta le tabelle di `docs/GDD.md` con i numeri di `src/data/` e segnala ogni differenza (da lanciare a fine tappa; se segnala qualcosa, il GDD o i dati vanno aggiornati) |
 | `npm run prova` | prova automatica su desktop, iPhone e Android emulati, su una porta libera; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run app` | build + copia nei progetti nativi (Capacitor) |

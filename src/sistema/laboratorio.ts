@@ -203,7 +203,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     }));
     const p = partita();
     const s = p?.labStato();
-    stato.textContent = s ? `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS` : 'Laboratorio · non sei in partita';
+    stato.textContent = s ? `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · urne ${s.urne} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS` : 'Laboratorio · non sei in partita';
     corpo.replaceChildren(...({ partita: schedaPartita, eventi: schedaEventi, oggetti: schedaOggetti, numeri: schedaNumeri, schermate: schedaSchermate, schermo: schedaSchermo, salvataggio: schedaSalvataggio })[scheda]());
   };
   const mostra = (aperto: boolean): void => {
@@ -479,6 +479,6 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     if (pannello.hidden) return;
     const p = partita();
     const s = p?.labStato();
-    if (s) stato.textContent = `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS`;
+    if (s) stato.textContent = `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · urne ${s.urne} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS`;
   }, 500);
 }

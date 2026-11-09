@@ -141,10 +141,10 @@ function vero(etichetta, condizione, spiegazione) {
   if (!condizione) diff.push(`${etichetta}: ${spiegazione}`);
 }
 
-/** Il momento scritto nel GDD deve essere quello in cui il peso del nemico smette di essere zero. */
+/** Il momento scritto nel GDD deve essere il primo minuto del copione in cui compare il nemico. */
 function compareDa(etichetta, tipo, testo) {
-  const s = secondi(testo);
-  vero(etichetta, s === 0 ? tipo.peso(1) > 0 : tipo.peso(s - 1) === 0 && tipo.peso(s + 1) > 0, `GDD ${testo}, ma nei dati il peso non comincia lì`);
+  const primo = N.COPIONE.findIndex((riga) => riga[tipo.id]) * 60;
+  vero(etichetta, secondi(testo) === primo, `GDD ${testo}, ma nel copione compare da ${primo} s`);
 }
 const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 
@@ -418,32 +418,13 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('Sciami', '**Sciami**: {} + {} nemici per minuto, fino a {}, a +{}% di velocità', S.base, S.perMinuto, S.massimo, pct(S.velocita - 1));
   frase('Sciami: dove', 'grande quanto lo schermo, {} px fuori dal bordo', N.COMPARSA.margine);
 
-  // pesi di comparsa: la forma della formula è qui, i suoi numeri vengono dal GDD; si confronta secondo per secondo con il gioco
-  const pesi = tabella('**Pesi di comparsa**');
-  const inNumeri = (a) => a?.map(leggi);
-  const uguaglianza = (id, formula) => {
-    let ok = true;
-    for (let s = 0; s <= OG.ALBA; s++) if (!uguali(formula(s), tipo(id).peso(s))) ok = false;
-    vero(`Peso di comparsa ${id}`, ok, 'la formula del GDD non dà gli stessi valori dei dati');
-  };
-  conRiga(pesi, 'Pipistrello', (r) => {
-    const v = inNumeri(estrai(r.Peso, 'Peso pipistrello', '{} − s/{}, minimo {}'));
-    if (v) uguaglianza('pipistrello', (s) => Math.max(v[2], v[0] - s / v[1]));
-  });
-  conRiga(pesi, 'Zombi', (r) => {
-    const v = inNumeri(estrai(r.Peso, 'Peso zombi', '{}, poi {} dall\'{}° minuto'));
-    if (v) uguaglianza('zombi', (s) => (s < v[2] * 60 ? v[0] : v[1]));
-  });
-  for (const [nome, id] of [['Fantasma', 'fantasma'], ['Scheletro', 'scheletro'], ['Segugio', 'segugio']]) {
-    conRiga(pesi, nome, (r) => {
-      const v = inNumeri(estrai(r.Peso, `Peso ${id}`, '{} dopo {} s'));
-      if (v) uguaglianza(id, (s) => (s >= v[1] ? v[0] : 0));
-    });
-  }
-  conRiga(pesi, 'Bruto', (r) => {
-    const v = inNumeri(estrai(r.Peso, 'Peso bruto', 'dopo {} s: il minore tra {} + s/{} e (s − {})/{}'));
-    if (v) uguaglianza('bruto', (s) => (s >= v[0] ? Math.min(v[1] + s / v[2], (s - v[3]) / v[4]) : 0));
-  });
+  // il copione: una riga per minuto, gli stessi nemici e gli stessi pesi
+  const copione = tabella('**Il copione della notte**');
+  N.COPIONE.forEach((riga, m) => conRiga(copione, `${m}:00`, (r) => {
+    const attesi = Object.entries(riga).map(([id, peso]) => `${id} ${peso}`).join(', ');
+    vero(`Copione del minuto ${m}`, r.Nemici === attesi, `GDD ${r.Nemici} ≠ dati ${attesi}`);
+  }));
+  frase('Respiro', 'in ogni ciclo di {} s le comparse sono piene per {} s, poi nella calma scendono al {}%', N.RESPIRO.ciclo, N.RESPIRO.marea, pct(N.RESPIRO.comparse));
 }
 
 // --- 7. Difficoltà -----------------------------------------------------------------------------

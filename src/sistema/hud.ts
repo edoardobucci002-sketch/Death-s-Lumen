@@ -419,17 +419,18 @@ export class Hud {
     this.xp.disponi(margine + (ms.w + 2) * z, yStemma + Math.round(((ms.h - me.h) * z) / 2), z, m);
     Object.assign(this.orologio.style, { right: `${margine * px}px`, top: `${yRiga * px}px`, fontSize: `${16 * z * px}px`, lineHeight: `${16 * z * px}px` });
     this.seth.disponi(margine, yRiga + z, z, m);
-    // cartiglio: sale fino al bordo e copre stemma ed esperienza; la riga dell'orologio e di Seth resta libera
-    const xa = Math.round(W / 2 - (an.w * z) / 2);
-    this.lamaAvviso = Math.max(1, Math.round(z * px * m.dpr));
-    posa(this.avvisoEl, xa, f.sopraCartiglio, m);
-    misura(this.avvisoEl, an.w, an.h, z, m);
-    misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, z, m);
-    scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, z, z, m, TESTI.avviso);
+    // cartiglio: nel campo, subito sotto la fascia alta, così non copre l'esperienza e si legge
+    const zc = Math.min(z + AVVISO.inPiuTelefono, Math.floor(W / an.w));
+    const xa = Math.round(W / 2 - (an.w * zc) / 2);
+    this.lamaAvviso = Math.max(1, Math.round(zc * px * m.dpr));
+    posa(this.avvisoEl, xa, f.alta + AVVISO.sottoFascia, m);
+    misura(this.avvisoEl, an.w, an.h, zc, m);
+    misura(this.avvisoEl.firstElementChild as HTMLElement, an.w, an.h, zc, m);
+    scriviNel(this.avvisoEl.children[1] as HTMLElement, INTERNI.Nastro_Titolo.testo, zc, zc, m, TESTI.avviso);
     const sotto = this.avvisoEl.children[2] as HTMLElement;
     sotto.style.width = `${W * px}px`;
-    sotto.style.fontSize = `${TESTI.avvisoSotto * z * px}px`;
-    scriviNel(sotto, { x: -xa, y: (an.h - 8 - FASCE.sottoCartiglio) * z, l: W, a: 6 * z }, 1, z, m, TESTI.avvisoSotto * z, OMBRA);
+    sotto.style.fontSize = `${TESTI.avvisoSotto * zc * px}px`;
+    scriviNel(sotto, { x: -xa, y: (an.h - 8) * zc, l: W, a: 6 * zc }, 1, zc, m, TESTI.avvisoSotto * zc, OMBRA);
     // Peccato: cornice a retino sul bordo del campo
     const lama = Math.max(1, Math.round(z * px * m.dpr)), lato = (4 * lama) / m.dpr, url = mascheraRetino(SEGNALE_PECCATO.livello, lama);
     Object.assign(this.peccato.style, {

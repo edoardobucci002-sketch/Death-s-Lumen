@@ -100,6 +100,7 @@ export class Gioco extends Phaser.Scene {
   private rompibili: Rompibili | null = null; // nelle simulazioni non ci sono: il bot non li cerca
   private chiazze: Chiazze | null = null;
   private frammenti = 0; // frammenti di vetro raccolti verso il prossimo reliquiario
+  private urneRotte = 0; // in questa notte: serve a tarare la probabilità dei frammenti
   private frammentiCaduti = 0; // quanti ne sono usciti dalle urne in questa notte
   private mosaiciAperti = false; // i frammenti escono solo dopo la prima alba
   private bagliore = 0; // secondi di Bagliore rimasti
@@ -235,13 +236,13 @@ export class Gioco extends Phaser.Scene {
     this.effetti = new Effetti(this);
     this.arsenale = new Arsenale(this, this.orda, this.caso, this.bonus, this.effetti);
     this.arsenale.anime = this.anime;
-    this.rompibili = parametri.has('bot') ? null : new Rompibili(this, Number(parametri.get('seme')) || Date.now() % 2147483647, this.oggettoRotto);
+    this.rompibili = parametri.has('bot') && !parametri.has('rompibili') ? null : new Rompibili(this, Number(parametri.get('seme')) || Date.now() % 2147483647, this.oggettoRotto);
     this.chiazze = this.rompibili ? new Chiazze(this, this.orda, this.arsenale) : null;
     this.arsenale.rompibili = this.rompibili;
     this.arsenale.chiazze = this.chiazze;
     this.frammenti = 0;
     this.bagliore = 0;
-    this.frammentiCaduti = 0;
+    this.frammentiCaduti = this.urneRotte = 0;
     this.mosaiciAperti = carica().vittorie >= FRAMMENTI.vittorie;
     const arma = ARMI_INIZIALI[this.pg.armaIniziale];
     this.arsenale.aggiungi(arma);
@@ -307,6 +308,7 @@ export class Gioco extends Phaser.Scene {
     });
     this.aggiornaBuild();
     this.bot = parametri.has('bot') ? new Bot(this.orda, this.anime, this.oggetti, this.minacce, arma) : null;
+    if (this.bot && parametri.has('cercaurne')) this.bot.urne = this.rompibili;
     this.sim = this.bot ? new Simulazione() : null;
     this.cameras.main.setVisible(!this.bot);
 
@@ -551,7 +553,6 @@ export class Gioco extends Phaser.Scene {
   private iniziaBagliore(): void {
     this.bagliore = BAGLIORE.durata;
     this.dopoPassivo();
-    this.hud.avviso('Bagliore');
     suona('alba');
     vibra('forte');
   }
@@ -582,9 +583,9 @@ export class Gioco extends Phaser.Scene {
   // Comandi per andare subito a qualsiasi punto della partita e vedere una cosa sola, senza rigiocare tutto.
 
   /** Per il pannello: a che punto è la partita. */
-  labStato(): { secondi: number; livello: number; salute: number; saluteMassima: number; immortale: boolean; fermo: boolean; nemici: number; rosario: boolean; pg: string } {
+  labStato(): { secondi: number; livello: number; salute: number; saluteMassima: number; immortale: boolean; fermo: boolean; nemici: number; rosario: boolean; pg: string; urne: number } {
     return {
-      secondi: this.secondi, livello: this.livello, salute: this.salute, saluteMassima: this.saluteMassima, immortale: this.immortale,
+      urne: this.urneRotte, secondi: this.secondi, livello: this.livello, salute: this.salute, saluteMassima: this.saluteMassima, immortale: this.immortale,
       fermo: this.pausaLab, nemici: this.orda.numero, rosario: this.rosarioSbloccato, pg: this.pg.id,
     };
   }
@@ -1443,6 +1444,10 @@ export class Gioco extends Phaser.Scene {
   private oggettoRotto = (tipo: number, x: number, y: number): void => {
     const { gocce, frammenti, olio } = ROMPIBILI.tipi[tipo];
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * ROMPIBILI.dispersione, y);
+    if (frammenti) {
+      this.urneRotte++;
+      this.sim?.urna();
+    }
     if (frammenti && this.mosaiciAperti && this.frammentiCaduti < FRAMMENTI.perNotte && this.caso.numero() < FRAMMENTI.probabilita) this.lasciaFrammento(x, y);
     if (olio) this.chiazze?.aggiungi(x, y);
     suona('colpo');
