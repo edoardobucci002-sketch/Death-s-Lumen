@@ -359,7 +359,7 @@ Valori al minuto 0, in `src/data/nemici.ts`; la velocità varia a caso del ±10%
   - *accerchia* (scheletri): punta a un punto girato di lato intorno a te di 0,6–1,2 radianti e al 60% della distanza, così arriva dai fianchi; sotto i 120 px viene dritto;
   - *taglia la strada* (segugi): punta dove sarai, guardando dove cammini, fino a 1,1 s in anticipo;
   - *zig-zag* (pipistrelli): ondeggia di lato (ampiezza 0,7, 5 oscillazioni al secondo, ognuno con il suo ritmo).
-- **Orde** (`ORDE`, *da rivedere*): una all'inizio di ogni minuto del copione, quando finisce la calma del respiro; nei minuti di Seth no. 3 s prima il bordo del campo da cui arriva lampeggia di rosso a retino (tutti i bordi per l'anello, due opposti per la tenaglia) e compare la scritta. Ogni orda è di un solo tipo e ha un terzo dei nemici massimi in campo in quel minuto, almeno 12 e al massimo 80: 17 al minuto 1, 80 dal minuto 8. Forme: *muro*, file di 12 distanziate di 2,4 raggi; *cuneo*, un triangolo pieno con la punta verso di te; *tenaglia*, due muri da lati opposti con metà nemici ciascuno; *anello*, in cerchio appena fuori dallo schermo (un'ellisse grande quanto lo schermo, 48 px fuori dal bordo), a +12% di velocità. Muro, cuneo e tenaglia marciano compatti verso di te a 80 px/s; a 150 px caricano tutti insieme a velocità ×1,35.
+- **Orde** (`ORDE`, *da rivedere*): una all'inizio di ogni minuto del copione, quando finisce la calma del respiro; nei minuti di Seth no. 3 s prima il bordo del campo da cui arriva lampeggia di rosso a retino (tutti i bordi per l'anello, due opposti per la tenaglia) e compare la scritta. Ogni orda è di un solo tipo e ha un terzo dei nemici massimi in campo in quel minuto, almeno 12 e al massimo 80: 17 al minuto 1, 80 dal minuto 8. Forme: *muro*, file di 12 distanziate di 2,4 raggi; *cuneo*, un triangolo pieno con la punta verso di te; *tenaglia*, due muri da lati opposti con metà nemici ciascuno; *anello*, in cerchio appena fuori dallo schermo (un'ellisse grande quanto lo schermo, 48 px fuori dal bordo), a +12% di velocità. Muro, cuneo e tenaglia attraversano il campo compatti, in linea retta verso il punto dove eri quando sono nati, a 80 px/s, e non ti inseguono: si sciolgono solo dopo averlo attraversato tutto. I nemici delle orde, anello compreso, non si fanno spingere indietro e dal minuto 6 hanno salute ×3: sono un muro da aggirare.
 
 **Il copione delle orde**
 
@@ -395,10 +395,10 @@ Valori al minuto 0, in `src/data/nemici.ts`; la velocità varia a caso del ±10%
 | 8:00 | scheletro 3, zombi 2, bruto 1 |
 | 9:00 | segugio 3, pipistrello 1 |
 | 10:00 | fantasma 3, pipistrello 1 |
-| 11:00 | fantasma 3, scheletro 2, bruto 1 |
+| 11:00 | fantasma 3, bruto 2 |
 | 12:00 | scheletro 3, segugio 2 |
-| 13:00 | scheletro 3, segugio 2, bruto 1 |
-| 14:00 | segugio 3, fantasma 2, bruto 1 |
+| 13:00 | scheletro 3, bruto 2, segugio 1 |
+| 14:00 | segugio 3, bruto 2, fantasma 2 |
 
 ## 7. Difficoltà
 
@@ -407,10 +407,10 @@ Un nemico prende i valori del momento in cui nasce (m = minuti di gioco, anche f
 - salute = base × (1 + 0,28 m + 0,06 × (m − 3)²), l'ultimo termine solo dopo il minuto 3. Al minuto 10 ≈ ×6,7, al 15 ≈ ×13,8
 - danno = base × (1 + 0,16 m)
 - nemici massimi in campo = min(250, 20 + 30 m)
-- bruti in campo al massimo 30 (*da rivedere*): oltre, al loro posto nasce il nemico principale del minuto
-- comparse al secondo = 1,2 + 2,5 m (al massimo 8 per fotogramma)
+- bruti in campo al massimo 100 (*da rivedere*): oltre, al loro posto nasce il nemico principale del minuto
+- comparse al secondo = 1,4 + 2,9 m (al massimo 8 per fotogramma)
 
-Le comparse arrivano appena fuori dallo schermo. **Il respiro** (`RESPIRO`, *da rivedere*): dal minuto 1, in ogni ciclo di 60 s le comparse sono piene per 40 s, poi nella calma scendono al 25%. Se in campo c'è meno del 40% del massimo, arrivano 2 nemici in più a ogni fotogramma, tranne nella calma. Un nemico rimasto troppo lontano viene ricollocato davanti al giocatore.
+Le comparse arrivano appena fuori dallo schermo. **Il respiro** (`RESPIRO`, *da rivedere*): dal minuto 1, in ogni ciclo di 60 s le comparse sono piene per 50 s, poi nella calma scendono al 25%. Se in campo c'è meno del 40% del massimo, arrivano 2 nemici in più a ogni fotogramma, tranne nella calma. Un nemico rimasto troppo lontano viene ricollocato davanti al giocatore.
 
 ## 8. Drop
 
@@ -423,7 +423,7 @@ Le comparse arrivano appena fuori dallo schermo. **Il respiro** (`RESPIRO`, *da 
 
 Pane, calamita e reliquiari si raccolgono a 40 px dal personaggio, sono disegnati sopra il buio e ingranditi × 3; i reliquiari fuori schermo hanno un segnale lampeggiante sul bordo (`src/data/oggetti.ts`).
 
-Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle stelle scelti da Edoardo: rosso sotto 6, ambra da 6 a 19, azzurro da 20 in su. Si disegnano grandi il doppio (*da rivedere*). Un'anima che cade entro 36 px da una ferma si unisce a lei, come in Vampire Survivors: il valore si somma e la gemma cambia dimensione e colore (*da rivedere*). Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (`src/data/progressione.ts`). Al massimo 320 anime a terra: oltre, la nuova nasce comunque dove muore il nemico e prende il posto e il valore dell'anima più lontana dal personaggio. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
+Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle stelle scelti da Edoardo: rosso sotto 6, ambra da 6 a 19, azzurro da 20 in su. Si disegnano grandi il doppio (*da rivedere*). Un'anima che cade entro 28 px da una ferma si unisce a lei, come in Vampire Survivors: il valore si somma e la gemma cambia dimensione e colore (*da rivedere*). Nel raggio di raccolta volano verso il personaggio a 420 px/s, accelerando di 900 px/s al secondo; sono raccolte a 24 px (`src/data/progressione.ts`). Al massimo 320 anime a terra: oltre, la nuova nasce comunque dove muore il nemico e prende il posto e il valore dell'anima più lontana dal personaggio. Una freccia ai bordi dello schermo indica i reliquiari fuori vista.
 
 ## 8b. Fiaschetta e Grazia (`src/data/sopravvivenza.ts`)
 
@@ -504,11 +504,11 @@ Le «reliquie dimenticate» della proposta (oggetti trovati in partita e pagati 
 | Lanterna cieca | 2 | +35% danno | alone di luce al 15%: quasi spento |
 | Cuore avido | 2 | +30% anime | pane e fiaschetta curano la metà |
 | Sangue freddo | 1 | sotto il 30% di salute, +40% danno | nessuno |
-| Martire | 3 | ogni colpo subito libera un'onda sacra di 150 px (30 di danno base) | −20% salute massima |
+| Martire | 2 | ogni colpo subito libera un'onda sacra di 150 px: non ferisce, lascia Consacrato e ferma i nemici per 0,6 s (Seth a metà) (*da rivedere*) | −20% salute massima |
 | Danza macabra | 2 | la Grazia scatta anche sfiorando (entro 16 px) i nemici normali, non più di una ogni 3 s | la Grazia dura 2 s invece di 3 |
-| Ceri gemelli | 2 | l'abilità speciale ha 2 cariche | ricarica +30% |
-| Lucciola | 1 | alone di luce +20%; i nemici nell'alone sono abbagliati (controllo ogni 0,5 s) | nessuno |
-| Ossa d'élite | 1 | le élite lasciano 2 reliquiari | le élite hanno +40% salute |
+| Ceri gemelli | 2 | l'abilità speciale ha 2 cariche | ricarica +10% (*da rivedere*) |
+| Lucciola | 2 | alone di luce +20%; un nemico è abbagliato quando entra nell'alone, non più di una volta ogni 4 s (*da rivedere*) | nessuno |
+| Ossa d'élite | 2 (*da rivedere*) | le élite lasciano 2 reliquiari | le élite hanno +40% salute |
 | Patto di sangue | 2 | ogni uccisione cura 0,2 di salute | non puoi più usare la fiaschetta |
 
 - **Icone**: grani colorati disegnati dal codice (`src/sistema/amuleti.ts`), finché Edoardo non disegna `Icona_Amuleto_<id>`.
@@ -520,14 +520,14 @@ Un'arma al livello 8 più il suo dono al livello 3 (o al massimo del dono, se è
 | Arma | + Dono | Arma unita | Effetto |
 | --- | --- | --- | --- |
 | Lanterna | Stoppino lungo | Faro dei morti | l'arco diventa un cerchio; abbaglia un nemico su due |
-| Pala | Scudo di ferro | Vanga del custode | ogni colpo pianta una lapide: chi è sotto resta fermo 3 s (Seth a metà) |
+| Pala | Scudo di ferro | Vanga del custode | ogni colpo pianta una lapide: chi è sotto resta fermo 1,5 s (Seth a metà); poi la Vanga non può fermarlo di nuovo per 4 s, la stessa pausa del Sepolto, che vale per tutti e due (*da rivedere*) |
 | Turibolo | Erbe amare | Incensiere dell'ultima ora | dentro le nubi +1 salute al secondo (non si somma tra nubi) |
 | Bastone | Clessidra | Verga dei nomi | ogni 5ª raffica colpisce tutti i maledetti sullo schermo, con il danno di un dardo |
 | Candela | Cuore di cera | Candelabro funebre | le fiammelle lasciano una scia: una fiamma ogni 0,12 s, 36 px, 1 s, 40% del danno ogni 0,3 s |
 | Falce | Sale nero | Falce di Seth | uccide i nemici normali sotto il 15% di salute (non élite e Seth) |
 | Campana | Cera votiva | Campana a morto | ogni rintocco ferma per 0,8 s |
 | Fuoco fatuo | Calamita | Fuochi erranti | i fuochi raccolgono le anime entro 120 px |
-| Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso |
+| Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso, al massimo uno ogni 45 s (*da rivedere*) |
 | Lama di luce | Ali di falena | Lama dell'alba | un secondo fendente parte da dove eri 0,5 s prima |
 
 Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni. **Sblocco**: si sbloccano vincendo 3 veglie, in tutto (`SBLOCCO_UNIONI`); la Cappella mostra il conto e non le vende più. Chi le aveva già sbloccate le tiene. Le Unioni **si svelano giocando**, in tre passi:
