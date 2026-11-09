@@ -1,11 +1,33 @@
 /*
  * Simulazione: con ?bot registra la partita minuto per minuto (livello, salute, nemici, danno subito, uccisi),
  * quanto dura e quanto fa male ogni Mietitore, quanti pani e calamite raccoglie e quanta salute recupera.
- * Alla fine mette il risultato in window.__sim, dove lo legge tools/sim.mjs.
+ * Misura anche gli oggetti: che cosa possiede a fine notte, quali carte gli sono state offerte e quali ha scelto,
+ * il danno di ogni arma e di ogni reazione, quando arriva la prima Unione, Patto di sangue e Acquasantiera.
+ * Alla fine mette il risultato in window.__sim, dove lo legge tools/sim.mjs. Non tira il caso: non cambia la notte.
  */
 import { NEMICI } from '../data/nemici';
 import type { Orda } from './orda';
 import { CALAMITA, PANE } from './oggetti';
+import type { Dono } from './doni';
+
+/** Il nome di una carta nelle tabelle della simulazione: «arma:Lanterna», «dono:Sale nero», «amuleto:Lucciola»… */
+export function nomeCarta(d: Dono): string {
+  switch (d.tipo) {
+    case 'arma': return `arma:${d.arma.nome}`;
+    case 'passivo': return `dono:${d.passivo.nome}`;
+    case 'amuleto': return `amuleto:${d.amuleto.nome}`;
+    case 'unione': return `unione:${d.unione.nome}`;
+    case 'pane': return 'altro:Pane e vino';
+    case 'potenziamento': return 'altro:Potenziamento';
+  }
+}
+
+/** Gli oggetti posseduti a fine notte, con il livello (gli amuleti con i grani e se sono accesi). */
+export interface OggettiSim {
+  armi: { nome: string; livello: number; unione: string | null }[];
+  doni: { nome: string; livello: number }[];
+  amuleti: { nome: string; acceso: boolean }[];
+}
 
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 
@@ -44,7 +66,19 @@ export interface RisultatoSim {
   reazioni: number; // reazioni tra stati (Eclissi, Rivelazione, Esorcismo, Interramento)
   cera: number; // Cera guadagnata
   urne: number; // urne rotte (solo con ?rompibili)
+  oggetti: OggettiSim; // posseduti a fine notte
+  carte: Record<string, { offerta: number; scelta: number }>; // ogni carta: quante volte offerta e quante scelta
+  dannoArmi: Record<string, number>; // danno di ogni arma (e dell'abilità, del Martire e del fuoco dell'olio)
+  dannoReazioni: Record<string, number>; // danno di Eclissi, Esorcismo e la parte in più dell'Interramento
+  reazioniPerTipo: Record<string, number>;
+  unioneOfferta: number | null; // minuto (con i decimali) in cui il reliquiario ha offerto la prima Unione
+  unionePresa: number | null; // minuto in cui il bot ne ha presa una
+  curaPatto: number; // salute curata da Patto di sangue
+  sorsiAcquasantiera: number; // sorsi guadagnati con l'Acquasantiera…
+  sorsiAcquasantieraVeri: number; // …e quanti sono entrati davvero nella fiaschetta (non oltre il massimo)
 }
+
+type Misure = Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo'>;
 
 export class Simulazione {
   urna(): void {
@@ -65,6 +99,35 @@ export class Simulazione {
   private sorsi = 0;
   private urne = 0;
   private grazie = 0;
+  private carte: RisultatoSim['carte'] = {};
+  private unioneOfferta: number | null = null;
+  private unionePresa: number | null = null;
+  private curaPatto = 0;
+  private sorsiAcquasantiera = 0;
+  private sorsiAcquasantieraVeri = 0;
+
+  /** Il bot ha visto queste carte e ha scelto quella in posizione scelta. */
+  scelta(carte: readonly Dono[], scelta: number, secondi: number): void {
+    carte.forEach((d, n) => {
+      const k = nomeCarta(d);
+      const c = (this.carte[k] ??= { offerta: 0, scelta: 0 });
+      c.offerta++;
+      if (n === scelta) c.scelta++;
+      if (d.tipo === 'unione') {
+        this.unioneOfferta ??= secondi / 60;
+        if (n === scelta) this.unionePresa ??= secondi / 60;
+      }
+    });
+  }
+
+  patto(quanto: number): void {
+    this.curaPatto += quanto;
+  }
+
+  acquasantiera(sorsi: number, veri: number): void {
+    this.sorsiAcquasantiera += sorsi;
+    this.sorsiAcquasantieraVeri += veri;
+  }
 
   /** Una volta per passo: chiude il minuto quando passa. */
   passo(secondi: number, livello: number, salute: number, orda: Orda): void {
@@ -123,13 +186,15 @@ export class Simulazione {
     this.grazie++;
   }
 
-  fine(r: Omit<RisultatoSim, 'minuti' | 'mietitori' | 'pani' | 'calamite' | 'curaPane' | 'curaAltro' | 'curaFiaschetta' | 'sorsi' | 'grazie' | 'urne'> & { reazioni: number; cera: number }): void {
+  fine(r: Pick<RisultatoSim, 'vittoria' | 'secondi' | 'livello' | 'anime' | 'danno' | 'build' | 'reazioni' | 'cera'> & Misure): void {
     for (const m of this.mietitori) m.dannoSubito = Math.round(m.dannoSubito);
     (window as unknown as { __sim: RisultatoSim }).__sim = {
       ...r, minuti: this.minuti, mietitori: this.mietitori,
       pani: this.pani, calamite: this.calamite, curaPane: Math.round(this.curaPane), curaAltro: Math.round(this.curaAltro),
       curaFiaschetta: Math.round(this.curaFiaschetta), sorsi: this.sorsi, grazie: this.grazie,
       urne: this.urne,
+      carte: this.carte, unioneOfferta: this.unioneOfferta, unionePresa: this.unionePresa,
+      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri,
     };
   }
 }

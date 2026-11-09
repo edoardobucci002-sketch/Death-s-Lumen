@@ -30,7 +30,7 @@ import { animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
 import { BOT } from '../data/bot';
 import { Anime } from '../sistema/anime';
-import { Arsenale, type Bonus } from '../sistema/armi';
+import { Arsenale, FONTI, type Bonus } from '../sistema/armi';
 import { Bot } from '../sistema/bot';
 import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { Caso } from '../sistema/caso';
@@ -48,7 +48,7 @@ import { LUCE as LUCE_AFF, OMBRA as OMBRA_AFF, SACRO as SACRO_AFF, TERRA as TERR
 import { Orda, type CategoriaNemico } from '../sistema/orda';
 import { Minacce } from '../sistema/minacce';
 import { leggiRecord, salvaRecord } from '../sistema/record';
-import { Simulazione } from '../sistema/simulazione';
+import { Simulazione, type RisultatoSim } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
 import { BAGLIORE, FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
@@ -56,7 +56,7 @@ import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECO
 import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
-import { chiaro, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
+import { chiaro, INFO_REAZIONI, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
 import { AFFINITA_ABILITA, AFFINITA_ARMI } from '../data/stati';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { Rompibili } from '../sistema/rompibili';
@@ -454,7 +454,9 @@ export class Gioco extends Phaser.Scene {
       this.ricalcola();
     }
     if (this.arsenale.sorsiGuadagnati) {
+      const prima = this.fiaschetta.sorsi;
       this.fiaschetta.ricarica(this.arsenale.sorsiGuadagnati);
+      this.sim?.acquasantiera(this.arsenale.sorsiGuadagnati, this.fiaschetta.sorsi - prima);
       this.arsenale.sorsiGuadagnati = 0;
     }
     if (this.arsenale.richiami) {
@@ -939,7 +941,11 @@ export class Gioco extends Phaser.Scene {
     const seth = categoria === 'seth', elite = categoria === 'elite';
     const daLasciare = seth ? MIETITORE.reliquiari : elite ? ELITE.reliquiari * (this.ha('ossaDelite') ? AM.ossaDelite.reliquiari : 1) : 0;
     for (let k = 0; k < daLasciare; k++) this.oggetti.aggiungi(RELIQUIARIO, x + k * 30, y);
-    if (this.ha('pattoDiSangue')) this.salute = Math.min(this.saluteMassima, this.salute + AM.pattoDiSangue.cura);
+    if (this.ha('pattoDiSangue')) {
+      const prima = this.salute;
+      this.salute = Math.min(this.saluteMassima, this.salute + AM.pattoDiSangue.cura);
+      this.sim?.patto(this.salute - prima);
+    }
     // gocce di Cera: rare dai nemici comuni, qualcuna in più da élite e Seth
     const gocce = seth ? DROP.cera.perSeth : elite ? DROP.cera.perElite : this.caso.numero() < DROP.cera.probabilita ? 1 : 0;
     for (let k = 0; k < gocce; k++) this.oggetti.aggiungi(CERA_GOCCIA, x + (k - (gocce - 1) / 2) * 14, y + 10);
@@ -1024,8 +1030,14 @@ export class Gioco extends Phaser.Scene {
       }
       this.dopoScelta();
     });
-    if (this.bot) this.doni.scegliCon((c) => this.bot!.amuleto(c, this.grani() - this.graniUsati()));
+    if (this.bot) this.doni.scegliCon((c) => this.sceltaBot(c, this.bot!.amuleto(c, this.grani() - this.graniUsati())));
     else if (this.automatico) this.doni.scegliPrima();
+  }
+
+  /** La scelta del bot, registrata dalla simulazione (carte offerte e scelte). */
+  private sceltaBot(carte: readonly Dono[], k: number): number {
+    this.sim?.scelta(carte, k, this.secondi);
+    return k;
   }
 
   /** Dopo una scelta (dono o reliquiario): la prossima in coda, oppure si riprende a giocare. */
@@ -1081,7 +1093,7 @@ export class Gioco extends Phaser.Scene {
       this.livelliDaScegliere--;
       this.dopoScelta();
     });
-    if (this.bot) this.doni.scegliCon((carte) => this.bot!.carta(carte, this.arsenale.possedute.length));
+    if (this.bot) this.doni.scegliCon((carte) => this.sceltaBot(carte, this.bot!.carta(carte, this.arsenale.possedute.length)));
     else if (this.automatico) this.doni.scegliPrima();
   }
 
@@ -1110,6 +1122,7 @@ export class Gioco extends Phaser.Scene {
       this.sim.fine({
         vittoria, secondi: Math.round(this.secondi), livello: this.livello, anime: this.animeTotali, danno: Math.round(this.arsenale.dannoTotale),
         build: this.build().map((v) => `${v.nome} ${v.livello}`), reazioni: this.arsenale.reazioni, cera: veglia.totale,
+        ...this.misureSim(),
       });
     }
     const nuovo = this.sim ? false : salvaRecord(this.pg.id, this.secondi);
@@ -1126,6 +1139,30 @@ export class Gioco extends Phaser.Scene {
       cera: veglia.totale,
       sbloccato: veglia.sbloccato,
     });
+  }
+
+  /** Per la simulazione: oggetti posseduti, danno di ogni fonte e reazioni per tipo. */
+  private misureSim(): Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo'> {
+    const a = this.arsenale, nomiArmi = new Map<string, string>([...ARMI_COMUNI, ...Object.values(ARMI_INIZIALI)].map((x) => [x.id, x.nome]));
+    const dannoArmi: Record<string, number> = {}, dannoReazioni: Record<string, number> = {};
+    const altre: Record<string, string> = { abilita: 'Abilità speciale', martire: 'Martire', fuoco: "Fuoco dell'olio" };
+    const reazioni: Record<string, string> = { eclissi: 'Eclissi', esorcismo: 'Esorcismo', interramento: 'Interramento' };
+    FONTI.forEach((f, i) => {
+      const v = Math.round(a.dannoFonti[i]);
+      if (!v) return;
+      if (reazioni[f]) dannoReazioni[reazioni[f]] = v;
+      else dannoArmi[nomiArmi.get(f) ?? altre[f]] = v;
+    });
+    const reazioniPerTipo: Record<string, number> = {};
+    INFO_REAZIONI.forEach((r, k) => (reazioniPerTipo[r.nome] = a.reazioniPerTipo[k + 1]));
+    return {
+      oggetti: {
+        armi: a.possedute.map((p) => ({ nome: p.arma.nome, livello: p.livello, unione: p.unita ? unioneDi(p.arma.id)?.nome ?? null : null })),
+        doni: PASSIVI.filter((q) => this.passivi[q.id] > 0).map((q) => ({ nome: q.nome, livello: this.passivi[q.id] })),
+        amuleti: this.amuletiPosseduti.map((id) => ({ nome: amuleto(id).nome, acceso: this.ha(id) })),
+      },
+      dannoArmi, dannoReazioni, reazioniPerTipo,
+    };
   }
 
   /**

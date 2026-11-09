@@ -55,6 +55,13 @@ const PROIETTILI_V0: Record<string, { fotogramma: string; x: number; y: number }
   [FUOCO_FATUO.effetto]: { fotogramma: '3', x: 84, y: 60 },
 };
 
+/** Da dove viene il danno (per la simulazione): le armi, l'abilità, il Martire, il fuoco dell'olio e le reazioni che feriscono. */
+export const FONTI = [
+  'lanterna', 'pala', 'turibolo', 'bastone', 'candela', 'falce', 'campana', 'fuocoFatuo', 'acquaSanta', 'lamaDiLuce',
+  'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'abilita', 'martire', 'fuoco', 'eclissi', 'esorcismo', 'interramento',
+] as const;
+const F = Object.fromEntries(FONTI.map((f, i) => [f, i])) as Record<(typeof FONTI)[number], number>;
+
 export interface Posseduta {
   arma: Arma;
   livello: number; // da 1 a 8
@@ -75,6 +82,9 @@ export class Arsenale {
   readonly possedute: Posseduta[] = [];
   dannoTotale = 0; // per il riepilogo di fine partita
   reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)
+  readonly reazioniPerTipo = new Uint32Array(5); // per la simulazione: indice = ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO
+  readonly dannoFonti = new Float64Array(FONTI.length); // per la simulazione: danno di ogni fonte (stessa misura di dannoTotale)
+  private fonte = 0; // la fonte del colpo in corso
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
   richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
@@ -126,6 +136,7 @@ export class Arsenale {
   private zSegue = new Uint8Array(MAX_ZONE);
   private zTipo = new Uint8Array(MAX_ZONE); // 0 abilità, 1 nube, 2 pozza (nubi e pozze non si sommano: COLPI.zoneNonCumulative)
   private zAff = new Uint8Array(MAX_ZONE); // affinità della zona
+  private zFonte = new Uint8Array(MAX_ZONE); // da dove viene (FONTI)
   private zCampi = [this.zX, this.zY, this.zR, this.zDanno, this.zVita, this.zIntervallo, this.zTick, this.zRallenta, this.zAttira, this.zCura];
   private zSprite: Phaser.GameObjects.Sprite[] = [];
 
@@ -147,6 +158,7 @@ export class Arsenale {
   private prReazione = new Uint32Array(MAX_PROIETTILI); // la reazione a cui appartiene la fiammella (0 = nessuna)
   private prEsplode = new Uint8Array(MAX_PROIETTILI);
   private prAff = new Uint8Array(MAX_PROIETTILI);
+  private prFonte = new Uint8Array(MAX_PROIETTILI); // da dove viene (FONTI)
   private prFuoco = new Uint8Array(MAX_PROIETTILI); // accende l'olio
   private prResto = new Uint8Array(MAX_PROIETTILI); // nemici che può ancora trapassare
   private prUnione = new Uint8Array(MAX_PROIETTILI); // SCIA o RACCOGLIE
@@ -333,12 +345,14 @@ export class Arsenale {
   /** Lancia un'abilità speciale nel punto del personaggio. */
   abilita(a: Abilita): void {
     const area = 1 + this.bonus.area;
+    this.fonte = F.abilita;
     this.zona(a.effetto, this.px, this.py, a.raggio * area, a.danno, a.durata, a.intervallo, a.rallenta, a.attira, a.cura, a.segue, a.animazione === 'ciclo',
       0, CODICE_AFFINITA[AFFINITA_ABILITA[a.id]]);
   }
 
   /** Martire: un'onda sacra intorno al personaggio quando subisce un colpo. */
   onda(raggio: number, danno: number): void {
+    this.fonte = F.martire;
     this.prepara(0, this.px, this.py, raggio, danno, 0);
     this.cAff = SACRO;
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
@@ -406,6 +420,7 @@ export class Arsenale {
     const a = p.arma;
     const area = 1 + this.bonus.area;
     const piu = this.bonus.quantita;
+    this.fonte = F[a.id];
     switch (a.id) {
       case 'lanterna': {
         const l = a.livelli[p.livello - 1];
@@ -598,6 +613,7 @@ export class Arsenale {
         this.lpCaduta[i] = 0;
         if (this.lpDanno[i]) this.prepara(0, this.lpX[i], this.lpY[i], this.lpR[i], this.lpDanno[i], 0);
         if (this.lpDanno[i]) {
+          this.fonte = F.lapide;
           this.cAff = TERRA;
           this.cProb = RUOLI.lapideSeppellisce;
           this.orda.griglia.nelRaggio(this.cx, this.cy, this.lpR[i] + 40, this.visitaColpo);
@@ -642,6 +658,7 @@ export class Arsenale {
     for (let i = this.grani - 1; i >= 0; i--) {
       this.grTempo[i] -= dt;
       if (this.grTempo[i] > 0) continue;
+      this.fonte = F.rosarioSpezzato;
       this.rompibili?.colpitoDa(this.grX[i], this.grY[i], ROMPIBILI.raggio);
       let j = -1;
       if (this.grResto[i] > 0) {
@@ -711,6 +728,8 @@ export class Arsenale {
   private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true, reazione = 0): void {
     const o = this.orda;
     const danno = this.danno(base);
+    this.dannoFonti[this.fonte] += danno;
+    if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * REAZIONI.interramento.danno; // la parte in più dell'Interramento
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
     const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
     if (r) this.accoda(r, j, 0);
@@ -757,6 +776,7 @@ export class Arsenale {
       if (t === ESPLOSIONE || t === ECLISSI) {
         const r = t === ECLISSI ? REAZIONI.eclissi.raggio : RUOLI.esplosioneBastone.raggio;
         this.prepara(0, x, y, r, this.qDanno[k], 0);
+        this.fonte = t === ECLISSI ? F.eclissi : F.bastone;
         this.cReazione = t === ECLISSI ? this.prossimaIdReazione++ : 0;
         this.cRX = x;
         this.cRY = y;
@@ -768,6 +788,7 @@ export class Arsenale {
         if (t === ECLISSI) this.effetti.reazione(x, y, r, REAZIONI.eclissi.colore, REAZIONI.eclissi.bordo, REAZIONI.durataEffetto);
       } else if (t === ESORCISMO) {
         const e = REAZIONI.esorcismo, id = this.prossimaIdReazione++;
+        this.fonte = F.esorcismo;
         for (let f = 0; f < e.fiammelle; f++) {
           const prima = this.proiettili;
           this.lancia(FUOCO_FATUO.effetto, -1, e.velocita, e.vita, e.danno, 1, FUOCO_FATUO.raggio, FUOCO_FATUO.sterzo, FUOCO_FATUO.portata, false, (f / e.fiammelle) * Math.PI * 2, 0, x, y);
@@ -785,6 +806,7 @@ export class Arsenale {
       }
       if (t !== ESPLOSIONE) {
         this.reazioni++;
+        this.reazioniPerTipo[t]++;
         this.effetti.etichetta(t, x, y - REAZIONI.etichetta.sopra);
       }
     }
@@ -924,6 +946,7 @@ export class Arsenale {
 
   /** Il fuoco di una chiazza ferisce il nemico j, come una zona. */
   brucia(j: number, danno: number): void {
+    this.fonte = F.fuoco;
     this.ferisci(j, danno, 0, 0, 0, 0, 0, false);
   }
 
@@ -947,6 +970,7 @@ export class Arsenale {
       this.rtTempo[i] -= dt;
       if (this.rtTempo[i] > 0) continue;
       const arma = this.rtArma[i];
+      this.fonte = F[arma.id];
       if (arma === PALA) this.impatto(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
       else if (arma === CAMPANA) this.rintocco(this.rtA[i], this.rtB[i], Math.max(this.rtC[i] ? RUOLI.campanaFermo : 0, this.unite.campana ? U.campana.fermo : 0));
       else this.fendente(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
@@ -977,6 +1001,7 @@ export class Arsenale {
     this.zSegue[i] = segue ? 1 : 0;
     this.zTipo[i] = tipo;
     this.zAff[i] = aff;
+    this.zFonte[i] = this.fonte;
     const s = this.zSprite[i];
     if (chiave === SPRITE_SCIA) {
       s.stop();
@@ -1004,6 +1029,7 @@ export class Arsenale {
       this.zTick[i] -= dt;
       if (this.zTick[i] > 0) continue;
       this.zTick[i] += this.zIntervallo[i];
+      this.fonte = this.zFonte[i];
       this.colpo++;
       this.orda.griglia.nelRaggio(this.zX[i], this.zY[i], this.zR[i] + 40, this.visitaZona);
       this.rompibili?.colpitoDa(this.zX[i], this.zY[i], this.zR[i]);
@@ -1054,6 +1080,7 @@ export class Arsenale {
     this.zSegue[i] = this.zSegue[u];
     this.zTipo[i] = this.zTipo[u];
     this.zAff[i] = this.zAff[u];
+    this.zFonte[i] = this.zFonte[u];
     this.zSprite[i] = this.zSprite[u];
     this.zSprite[u] = s;
   }
@@ -1068,6 +1095,7 @@ export class Arsenale {
       const r = l.raggio * (1 + this.bonus.area);
       this.angoloFalci = (this.angoloFalci + l.giri * Math.PI * 2 * dt) % (Math.PI * 2);
       this.cDanno = l.danno;
+      this.fonte = F.falce;
       this.cr = FALCE.raggioLama * (1 + this.falceCresce);
       for (let k = 0; k < n; k++) {
         const ang = this.angoloFalci + (k / n) * Math.PI * 2;
@@ -1093,7 +1121,10 @@ export class Arsenale {
     const ey = o.y[j] - o.raggio[j] - this.py;
     const d = Math.hypot(ex, ey) || 1;
     this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
-    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < U.falce.sotto * o.saluteMassima[j]) o.colpisci(j, o.salute[j], 0, 0, 0);
+    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < U.falce.sotto * o.saluteMassima[j]) {
+      this.dannoFonti[F.falce] += o.salute[j];
+      o.colpisci(j, o.salute[j], 0, 0, 0);
+    }
     if (o.salute[j] <= 0) {
       // ogni uccisione allunga la lama per qualche secondo
       const c = RUOLI.falceCrescita;
@@ -1119,6 +1150,7 @@ export class Arsenale {
     this.prX[i] = ox;
     this.prY[i] = oy;
     this.prAff[i] = aff;
+    this.prFonte[i] = this.fonte;
     this.prFuoco[i] = (CHIAZZE.accendono as readonly string[]).includes(chiave) ? 1 : 0;
     this.prVX[i] = Math.cos(ang) * velocita;
     this.prVY[i] = Math.sin(ang) * velocita;
@@ -1146,6 +1178,7 @@ export class Arsenale {
     if (this.attesaRaffica > 0) return;
     this.attesaRaffica += BASTONE.intervallo;
     this.raffica--;
+    this.fonte = F.bastone;
     const j = this.piuVicino(BASTONE.portata, 0);
     if (j >= 0) this.lancia(BASTONE.effetto, j, BASTONE.velocita, BASTONE.vita, this.dannoRaffica, this.trapassaRaffica, BASTONE.raggio, 0, 0, true, 0, OMBRA);
   }
@@ -1189,6 +1222,7 @@ export class Arsenale {
     if (scia) this.attesaScia += U.candelabro.ogni;
     for (let i = this.proiettili - 1; i >= 0; i--) {
       this.prVita[i] -= dt;
+      this.fonte = this.prFonte[i];
       if (this.prSterzo[i]) this.sterza(i, dt);
       this.prX[i] += this.prVX[i] * dt;
       this.prY[i] += this.prVY[i] * dt;
@@ -1286,6 +1320,7 @@ export class Arsenale {
     for (const a of this.prCampi) a[i] = a[u];
     this.prEsplode[i] = this.prEsplode[u];
     this.prAff[i] = this.prAff[u];
+    this.prFonte[i] = this.prFonte[u];
     this.prFuoco[i] = this.prFuoco[u];
     this.prResto[i] = this.prResto[u];
     this.prUnione[i] = this.prUnione[u];

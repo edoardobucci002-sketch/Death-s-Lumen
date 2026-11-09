@@ -326,6 +326,11 @@ export class Orda {
     return this.sMaledetto[i] > 0;
   }
 
+  /** Il nemico i è interrato (subisce di più)? */
+  interrato(i: number): boolean {
+    return this.sInterrato[i] > 0;
+  }
+
   ferma(i: number, secondi: number): void {
     const s = secondi * (this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1);
     if (s > this.fermo[i]) this.fermo[i] = s;

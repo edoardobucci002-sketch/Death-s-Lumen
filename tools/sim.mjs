@@ -117,6 +117,62 @@ for (const pg of scelti) {
   if (m5.length && !(durante > primaAlMinuto)) problemi.push(`per ${pg} il Mietitore del 5 non fa più male dei minuti prima`);
 }
 
+// ——— oggetti: in quante notti c'erano, in quante vinte, quante volte scelti su quante offerti ———
+const notti = risultati.filter((r) => r.oggetti);
+if (notti.length) {
+  const righe = new Map();
+  const altreFonti = new Map(); // abilità speciale, Martire, fuoco dell'olio
+  const riga = (k) => righe.get(k) ?? righe.set(k, { notti: 0, vinte: 0, offerta: 0, scelta: 0, danno: 0, livelli: [] }).get(k);
+  for (const r of notti) {
+    const presenti = new Map();
+    for (const a of r.oggetti.armi) {
+      presenti.set(`arma:${a.nome}`, a.livello);
+      if (a.unione) presenti.set(`unione:${a.unione}`, a.livello);
+    }
+    for (const d of r.oggetti.doni) presenti.set(`dono:${d.nome}`, d.livello);
+    for (const m of r.oggetti.amuleti) presenti.set(`amuleto:${m.nome}`, null);
+    for (const [k, l] of presenti) {
+      const x = riga(k);
+      x.notti++;
+      if (r.vittoria) x.vinte++;
+      if (l !== null) x.livelli.push(l);
+    }
+    for (const [k, c] of Object.entries(r.carte ?? {})) {
+      const x = riga(k);
+      x.offerta += c.offerta;
+      x.scelta += c.scelta;
+    }
+    for (const [nome, d] of Object.entries(r.dannoArmi ?? {})) {
+      if (presenti.has(`arma:${nome}`)) riga(`arma:${nome}`).danno += d;
+      else altreFonti.set(nome, (altreFonti.get(nome) ?? 0) + d);
+    }
+  }
+  const vinteTutte = notti.filter((r) => r.vittoria).length;
+  const ordine = ['arma', 'unione', 'dono', 'amuleto', 'altro'];
+  const chiavi = [...righe.keys()].sort((x, y) => ordine.indexOf(x.split(':')[0]) - ordine.indexOf(y.split(':')[0]) || righe.get(y).notti - righe.get(x).notti);
+  console.log(`\nOggetti (${notti.length} notti, ${vinteTutte} vinte): notti in cui c'era a fine notte, notti vinte in cui c'era, scelto/offerto, livello medio, danno medio a notte`);
+  console.log('  ' + 'oggetto'.padEnd(34) + 'notti'.padStart(7) + 'vinte'.padStart(7) + 'scelto/offerto'.padStart(16) + 'livello'.padStart(9) + 'danno'.padStart(10));
+  for (const k of chiavi) {
+    const x = righe.get(k);
+    const danno = x.notti && x.danno ? String(Math.round(x.danno / x.notti)) : '';
+    console.log('  ' + k.padEnd(34) + String(x.notti).padStart(7) + String(x.vinte).padStart(7) + `${x.scelta}/${x.offerta}`.padStart(16) +
+      (x.livelli.length ? media(x.livelli).toFixed(1) : '').padStart(9) + danno.padStart(10));
+  }
+  if (altreFonti.size) console.log('\nAltro danno a notte (media su tutte le notti): ' + [...altreFonti].map(([n, d]) => `${n} ${Math.round(d / notti.length)}`).join(', '));
+  // reazioni, Unioni, Patto e Acquasantiera
+  const tipi = [...new Set(notti.flatMap((r) => Object.keys(r.reazioniPerTipo ?? {})))];
+  console.log('\nReazioni a notte (media): ' + tipi.map((t) => `${t} ${Math.round(media(notti.map((r) => r.reazioniPerTipo[t] ?? 0)))}`).join(', '));
+  const dr = [...new Set(notti.flatMap((r) => Object.keys(r.dannoReazioni ?? {})))];
+  if (dr.length) console.log('Danno delle reazioni a notte (media): ' + dr.map((t) => `${t} ${Math.round(media(notti.map((r) => r.dannoReazioni[t] ?? 0)))}`).join(', '));
+  const offerte = notti.filter((r) => r.unioneOfferta !== null), prese = notti.filter((r) => r.unionePresa !== null);
+  const minuto = (m) => tempo(m * 60);
+  console.log(`Prima Unione offerta in ${offerte.length}/${notti.length} notti` + (offerte.length ? `, in media a ${minuto(media(offerte.map((r) => r.unioneOfferta)))}` : '') +
+    `; presa in ${prese.length}` + (prese.length ? `, in media a ${minuto(media(prese.map((r) => r.unionePresa)))}` : ''));
+  const patto = notti.filter((r) => r.curaPatto), acqua = notti.filter((r) => r.sorsiAcquasantiera);
+  console.log(`Patto di sangue: ha curato in ${patto.length} notti` + (patto.length ? `, in media ${Math.round(media(patto.map((r) => r.curaPatto)))} salute a notte` : ''));
+  console.log(`Acquasantiera: sorsi in ${acqua.length} notti` + (acqua.length ? `, in media ${media(acqua.map((r) => r.sorsiAcquasantiera)).toFixed(1)} a notte (${media(acqua.map((r) => r.sorsiAcquasantieraVeri)).toFixed(1)} entrati davvero)` : ''));
+}
+
 console.log('\nObiettivi (CLAUDE.md, «Verifica»)');
 if (!problemi.length) console.log('  ✓ tutti rispettati');
 for (const p of problemi) console.log('  ✗ ' + p);
