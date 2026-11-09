@@ -421,7 +421,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   vero('Orde: un terzo', Math.abs(O.parteDelCampo - 1 / 3) < 1e-9, 'nei dati l\'orda non è un terzo del campo');
   frase('Orde: muro', '*muro*, file di {} distanziate di {} raggi', O.perFila, O.spazio);
   frase('Orde: anello', '{} px fuori dal bordo), a +{}% di velocità', N.COMPARSA.margine, pct(O.velocitaAnello - 1));
-  frase('Orde: marcia', 'marciano compatti verso di te a {} px/s; a {} px caricano tutti insieme a velocità ×{}', O.marcia, O.distanzaCarica, O.carica);
+  frase('Orde: marcia', 'eri quando sono nati, a {} px/s', O.marcia);
+  frase('Orde: salute', 'dal minuto {} hanno salute ×{}', O.saluteDal, O.salute);
   const co = tabella('**Il copione delle orde**');
   O.copione.forEach((o) => conRiga(co, String(o.minuto), (r) => vero(`Orda del minuto ${o.minuto}`, r.Forma === o.forma && r.Nemico === o.tipo, `GDD ${r.Forma} ${r.Nemico} ≠ dati ${o.forma} ${o.tipo}`)));
   vero('Copione delle orde', co.righe.length === O.copione.length, `GDD ${co.righe.length} righe ≠ dati ${O.copione.length}`);
@@ -594,10 +595,10 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     lanternaCieca: [['Vantaggio', '+{}% danno', pct(AN.lanternaCieca.danno)], ['Rovescio', 'alone di luce al {}%', pct(AN.lanternaCieca.alone)]],
     cuoreAvido: [['Vantaggio', '+{}% anime', pct(AN.cuoreAvido.anime)], ['Rovescio', 'curano la {p}', AN.cuoreAvido.cura]],
     sangueFreddo: [['Vantaggio', 'sotto il {}% di salute, +{}% danno', pct(AN.sangueFreddo.sotto), pct(AN.sangueFreddo.danno)]],
-    martire: [['Vantaggio', 'onda sacra di {} px ({} di danno base)', AN.martire.raggio, AN.martire.danno], ['Rovescio', '−{}% salute massima', -pct(AN.martire.salute)]],
+    martire: [['Vantaggio', 'onda sacra di {} px: non ferisce, lascia Consacrato e ferma i nemici per {} s', AN.martire.raggio, AN.martire.fermo], ['Rovescio', '−{}% salute massima', -pct(AN.martire.salute)]],
     danzaMacabra: [['Vantaggio', '(entro {} px) i nemici normali, non più di una ogni {} s', AN.danzaMacabra.sfiora, AN.danzaMacabra.recupero], ['Rovescio', 'la Grazia dura {} s invece di {}', AN.danzaMacabra.durataGrazia, SO.GRAZIA.durata]],
     ceriGemelli: [['Vantaggio', '{} cariche', AN.ceriGemelli.cariche], ['Rovescio', 'ricarica +{}%', pct(AN.ceriGemelli.ricarica)]],
-    lucciola: [['Vantaggio', 'alone di luce +{}%', pct(AN.lucciola.alone)], ['Vantaggio', '(controllo ogni {} s)', AN.lucciola.intervallo]],
+    lucciola: [['Vantaggio', 'alone di luce +{}%', pct(AN.lucciola.alone)], ['Vantaggio', 'non più di una volta ogni {} s', AN.lucciola.pausa]],
     ossaDelite: [['Vantaggio', 'lasciano {} reliquiari', AN.ossaDelite.reliquiari], ['Rovescio', '+{}% salute', pct(AN.ossaDelite.salute)]],
     pattoDiSangue: [['Vantaggio', 'cura {} di salute', AN.pattoDiSangue.cura]],
   };
@@ -624,14 +625,14 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const NU = U.NUMERI_UNIONI;
   const MODELLI = {
     faroDeiMorti: ['abbaglia un nemico su {p}', 1 / NU.faro.abbaglia],
-    vangaDelCustode: ['resta fermo {} s (Seth a {p})', NU.vanga.fermo, ST.STATI.mietitore.fermo],
+    vangaDelCustode: ['resta fermo {} s (Seth a {p}); poi la Vanga non può fermarlo di nuovo per {} s', NU.vanga.fermo, ST.STATI.mietitore.fermo, ST.STATI.sepolto.pausa],
     incensiereUltimaOra: ['+{} salute al secondo', NU.incensiere.cura],
     vergaDeiNomi: ['ogni {}ª raffica colpisce tutti i maledetti sullo schermo, con il danno di {p} dardo', NU.verga.ogni, NU.verga.danno],
     candelabroFunebre: ['una fiamma ogni {} s, {} px, {} s, {}% del danno ogni {} s', NU.candelabro.ogni, NU.candelabro.raggio, NU.candelabro.durata, pct(NU.candelabro.danno), NU.candelabro.intervallo],
     falceDelMietitore: ['sotto il {}% di salute', pct(NU.falce.sotto)],
     campanaAMorto: ['ferma per {} s', NU.campana.fermo],
     fuochiErranti: ['entro {} px', NU.fuochi.raggio],
-    acquasantiera: ['ogni {} uccisioni', NU.acquasantiera.uccisioni],
+    acquasantiera: ['ogni {} uccisioni nelle pozze torna un sorso, al massimo uno ogni {} s', NU.acquasantiera.uccisioni, NU.acquasantiera.pausa],
     lamaDellAlba: ['da dove eri {} s prima', NU.lama.ritardo],
   };
   stessiNomi('Unioni', t, U.UNIONI.map((u) => armi.find((a) => a.id === u.arma).nome));

@@ -77,9 +77,9 @@ export const DIFFICOLTA = {
   massimiBase: 20, // nemici massimi in campo = min(tetto, 20 + 30 m)
   massimiPerMinuto: 30,
   tetto: 250,
-  brutiMassimi: 30, // bruti in campo al massimo: oltre, al loro posto nasce il nemico principale del minuto (da rivedere)
-  comparseBase: 1.2, // comparse al secondo = 1,2 + 2,5 m
-  comparsePerMinuto: 2.5,
+  brutiMassimi: 100, // bruti in campo al massimo: oltre, al loro posto nasce il nemico principale del minuto (da rivedere)
+  comparseBase: 1.4, // comparse al secondo = 1,4 + 2,9 m
+  comparsePerMinuto: 2.9,
   comparsePerFotogramma: 8, // al massimo
   sogliaRinforzo: 0.4, // sotto il 40% del massimo in campo…
   rinforzoPerFotogramma: 2, // …arrivano 2 nemici in più a ogni fotogramma
@@ -103,17 +103,17 @@ export const COPIONE: Partial<Record<TipoNemico['id'], number>>[] = [
   { scheletro: 3, zombi: 2, bruto: 1 },
   { segugio: 3, pipistrello: 1 },
   { fantasma: 3, pipistrello: 1 },
-  { fantasma: 3, scheletro: 2, bruto: 1 },
+  { fantasma: 3, bruto: 2 },
   { scheletro: 3, segugio: 2 },
-  { scheletro: 3, segugio: 2, bruto: 1 },
-  { segugio: 3, fantasma: 2, bruto: 1 },
+  { scheletro: 3, bruto: 2, segugio: 1 },
+  { segugio: 3, bruto: 2, fantasma: 2 },
 ];
 
 /** Il respiro della notte: in ogni ciclo la marea sale, poi cala e nessun rinforzo la riempie. Da rivedere. */
 export const RESPIRO = {
   dal: 60, // secondi: il primo minuto è già tranquillo
   ciclo: 60, // secondi di un ciclo intero
-  marea: 40, // primi secondi del ciclo: comparse piene
+  marea: 50, // primi secondi del ciclo: comparse piene (poi 10 s di calma)
   comparse: 0.25, // nella calma le comparse si riducono a questa parte
 } as const;
 
@@ -130,7 +130,7 @@ export const IA = {
 /**
  * Le orde: una all'inizio di ogni minuto del copione, quando finisce la calma del respiro (nei minuti di Seth no).
  * Prima del loro arrivo il bordo del campo da cui vengono lampeggia. Un solo tipo per orda. Tutto da rivedere.
- * Forme: muro (file che marciano e poi caricano), cuneo (una punta verso di te), tenaglia (due muri da lati
+ * Forme: muro (file che attraversano il campo in linea retta), cuneo (una punta verso di te), tenaglia (due muri da lati
  * opposti, metà nemici ciascuno), anello (in cerchio appena fuori dallo schermo, un po' più veloci).
  */
 export type FormaOrda = 'muro' | 'cuneo' | 'tenaglia' | 'anello';
@@ -141,9 +141,9 @@ export const ORDE = {
   massimo: 80, // …e al massimo 80
   perFila: 12, // nemici per fila del muro
   spazio: 2.4, // distanza tra due nemici della formazione, in raggi
-  marcia: 80, // velocità della formazione (pixel al secondo)
-  distanzaCarica: 150, // a questa distanza da te carica: abbastanza vicino da vedere la forma…
-  carica: 1.35, // …a velocità ×1,35
+  marcia: 80, // velocità della formazione (pixel al secondo): attraversa il campo in linea retta, non ti insegue
+  salute: 3, // dal minuto saluteDal i nemici delle orde hanno salute ×3: a build avanzata non muoiono prima di farsi vedere
+  saluteDal: 6,
   velocitaAnello: 1.12, // l'anello è più veloce del 12%
   copione: [
     { minuto: 1, forma: 'anello', tipo: 'pipistrello' },

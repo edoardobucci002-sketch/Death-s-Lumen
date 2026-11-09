@@ -143,7 +143,6 @@ export class Gioco extends Phaser.Scene {
   private scoperteDiProva = false; // il Laboratorio ha forzato le unioni: non si salvano
   private sangueFreddoAttivo = false;
   private ultimaDanza = -99; // secondi dell'ultima Grazia data dalla Danza macabra
-  private prossimoAbbaglio = 0;
   private reliquiariInAttesa = 0; // reliquiari raccolti mentre era già aperta una scelta
   private pausaLab = false; // il Laboratorio tiene fermo il gioco
   private inMoto = false;
@@ -201,7 +200,7 @@ export class Gioco extends Phaser.Scene {
     this.amuletiAccesi.clear();
     this.sangueFreddoAttivo = false;
     this.ultimaDanza = -99;
-    this.prossimoAbbaglio = this.reliquiariInAttesa = 0;
+    this.reliquiariInAttesa = 0;
     this.pausaLab = false;
     this.fineFinta = 0; // la scena si riusa: ciò che fa la Prova prestazioni non deve restare nella notte dopo
     this.foriBuio = true;
@@ -422,10 +421,7 @@ export class Gioco extends Phaser.Scene {
     this.notte(mezzaL, mezzaA);
     if (this.finito) return;
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, this.velocita, mezzaL, mezzaA);
-    if (this.ha('lucciola') && (this.prossimoAbbaglio -= dt) <= 0) {
-      this.prossimoAbbaglio = AM.lucciola.intervallo;
-      this.arsenale.abbaglia(this.x, this.y - COLPI.corpo, LUCE.raggio * this.areaLuce);
-    }
+    if (this.ha('lucciola')) this.arsenale.lucciola(this.x, this.y - COLPI.corpo, LUCE.raggio * this.areaLuce, AM.lucciola.pausa);
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, mezzaL, mezzaA);
     this.chiazze?.aggiorna(dt);
     const cura = this.arsenale.cura();
@@ -1376,7 +1372,7 @@ export class Gioco extends Phaser.Scene {
     // Specchio rotto: +25% danno subito; in Peccato (troppi grani) il doppio
     const danno = Math.max(1, colpo * (1 - this.armatura)) * (1 + (this.ha('specchioRotto') ? AM.specchioRotto.dannoSubito : 0)) * (1 + (this.graniUsati() > this.grani() ? ROSARIO.peccato : 0));
     this.salute -= danno;
-    if (this.ha('martire') && this.salute > 0) this.arsenale.onda(AM.martire.raggio, AM.martire.danno);
+    if (this.ha('martire') && this.salute > 0) this.arsenale.onda(AM.martire.raggio, AM.martire.fermo);
     this.sim?.colpito(danno);
     suona('danno');
     vibra('leggera');

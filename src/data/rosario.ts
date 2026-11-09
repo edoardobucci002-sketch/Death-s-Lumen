@@ -26,13 +26,16 @@ export const AMULETI_NUMERI = {
   lanternaCieca: { danno: 0.35, alone: 0.15 }, // l'alone resta al 15%: buio quasi pieno
   cuoreAvido: { anime: 0.3, cura: 0.5 }, // pane e fiaschetta curano la metà
   sangueFreddo: { sotto: 0.3, danno: 0.4 },
-  martire: { raggio: 150, danno: 30, salute: -0.2 }, // l'onda ferisce per 30 (come ogni colpo: più danno, più forte)
+  martire: { raggio: 150, fermo: 0.6, salute: -0.2 }, // l'onda non ferisce: consacra e ferma per 0,6 s chi è entro 150 px (da rivedere)
   danzaMacabra: { sfiora: 16, durataGrazia: 2, recupero: 3 }, // sfiorare = entro 16 px dal contatto; non più di una Grazia ogni 3 s
-  ceriGemelli: { cariche: 2, ricarica: 0.3 },
-  lucciola: { alone: 0.2, intervallo: 0.5 }, // i nemici nell'alone sono abbagliati, controllato ogni mezzo secondo
+  ceriGemelli: { cariche: 2, ricarica: 0.1 }, // ricarica +10% (era +30%; da rivedere)
+  lucciola: { alone: 0.2, pausa: 4 }, // un nemico è abbagliato quando entra nell'alone, non più di una volta ogni 4 s (da rivedere)
   ossaDelite: { reliquiari: 2, salute: 0.4 },
   pattoDiSangue: { cura: 0.2 }, // salute per ogni uccisione
 } as const;
+
+const num = (v: number): string => String(v).replace('.', ',');
+const N = AMULETI_NUMERI;
 
 export interface Amuleto {
   id: IdAmuleto;
@@ -48,11 +51,11 @@ export const AMULETI: Amuleto[] = [
   { id: 'lanternaCieca', nome: 'Lanterna cieca', grani: 2, vantaggio: '+35% danno.', rovescio: 'Alone di luce quasi spento.', colore: '#6a5a8a' },
   { id: 'cuoreAvido', nome: 'Cuore avido', grani: 2, vantaggio: '+30% anime.', rovescio: 'Pane e fiaschetta curano la metà.', colore: '#c2412d' },
   { id: 'sangueFreddo', nome: 'Sangue freddo', grani: 1, vantaggio: 'Sotto il 30% di salute, +40% danno.', rovescio: 'Nessuno.', colore: '#4f8fb8' },
-  { id: 'martire', nome: 'Martire', grani: 3, vantaggio: 'Ogni colpo subito libera un\'onda sacra intorno a te.', rovescio: '−20% salute massima.', colore: '#dcc07a' },
+  { id: 'martire', nome: 'Martire', grani: 2, vantaggio: `Ogni colpo subito libera un'onda sacra: i nemici vicini sono consacrati e fermi per ${num(N.martire.fermo)} s.`, rovescio: '−20% salute massima.', colore: '#dcc07a' },
   { id: 'danzaMacabra', nome: 'Danza macabra', grani: 2, vantaggio: 'La Grazia scatta anche sfiorando i nemici normali.', rovescio: 'La Grazia dura 2 s invece di 3.', colore: '#a57ae0' },
-  { id: 'ceriGemelli', nome: 'Ceri gemelli', grani: 2, vantaggio: 'L\'abilità speciale ha 2 cariche.', rovescio: 'Ricarica +30%.', colore: '#e3913a' },
-  { id: 'lucciola', nome: 'Lucciola', grani: 1, vantaggio: 'Alone di luce più grande del 20%; i nemici nell\'alone sono abbagliati.', rovescio: 'Nessuno.', colore: '#f2e46a' },
-  { id: 'ossaDelite', nome: 'Ossa d\'élite', grani: 1, vantaggio: 'Le élite lasciano 2 reliquiari.', rovescio: 'Le élite hanno +40% salute.', colore: '#e8dcc4' },
+  { id: 'ceriGemelli', nome: 'Ceri gemelli', grani: 2, vantaggio: 'L\'abilità speciale ha 2 cariche.', rovescio: `Ricarica +${Math.round(N.ceriGemelli.ricarica * 100)}%.`, colore: '#e3913a' },
+  { id: 'lucciola', nome: 'Lucciola', grani: 2, vantaggio: `Alone di luce più grande del 20%; chi entra nell'alone è abbagliato (non più di una volta ogni ${num(N.lucciola.pausa)} s).`, rovescio: 'Nessuno.', colore: '#f2e46a' },
+  { id: 'ossaDelite', nome: 'Ossa d\'élite', grani: 2, vantaggio: 'Le élite lasciano 2 reliquiari.', rovescio: 'Le élite hanno +40% salute.', colore: '#e8dcc4' },
   { id: 'pattoDiSangue', nome: 'Patto di sangue', grani: 2, vantaggio: 'Ogni uccisione cura 0,2 di salute.', rovescio: 'Non puoi più usare la fiaschetta.', colore: '#8a1f2a' },
 ];
 

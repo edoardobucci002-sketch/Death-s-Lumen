@@ -94,6 +94,7 @@ export class Arsenale {
   private unite: Partial<Record<Arma['id'], boolean>> = {};
   private raffiche = 0; // raffiche del Bastone (Verga dei nomi)
   private uccisiPozze = 0; // uccisioni nelle pozze (Acquasantiera)
+  private attesaSorso = 0; // secondi prima che l'Acquasantiera possa ridare un sorso
   private attesaScia = 0;
   private storiaX = new Float32Array(PASSI_STORIA); // dove era il personaggio (Lama dell'alba)
   private storiaY = new Float32Array(PASSI_STORIA);
@@ -235,6 +236,7 @@ export class Arsenale {
   private cAff = 0; // affinità del colpo in corso
   private cProb: number = STATI.probabilita; // probabilità di lasciare lo stato
   private cFerma = 0; // secondi per cui il colpo in corso ferma i nemici (secondo rintocco)
+  private cFermaTerra = false; // il fermo del colpo in corso è della Vanga: rispetta la pausa del Sepolto
   private critico = false; // l'ultimo colpo calcolato è un critico?
   private cReazione = 0; // la reazione a cui appartiene il colpo in corso (0 = nessuna): il suo danno va in un solo numero
   private cRX = 0; // il centro della sua zona
@@ -336,6 +338,7 @@ export class Arsenale {
     this.aggiornaGrani(dt);
     this.aggiornaCorvi(dt);
     this.eseguiCoda();
+    if (this.attesaSorso > 0) this.attesaSorso -= dt;
     if (this.falceDura > 0 && (this.falceDura -= dt) <= 0) this.falceCresce = 0;
     for (let i = 0; i < MAX_EFFETTI; i++) {
       if (this.vitaEffetto[i] > 0 && (this.vitaEffetto[i] -= dt) <= 0) this.sprEffetti[i].stop().setVisible(false);
@@ -350,13 +353,16 @@ export class Arsenale {
       0, CODICE_AFFINITA[AFFINITA_ABILITA[a.id]]);
   }
 
-  /** Martire: un'onda sacra intorno al personaggio quando subisce un colpo. */
-  onda(raggio: number, danno: number): void {
-    this.fonte = F.martire;
-    this.prepara(0, this.px, this.py, raggio, danno, 0);
-    this.cAff = SACRO;
-    this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
-    this.rompiForma();
+  /** Martire: un'onda sacra intorno al personaggio quando subisce un colpo. Non ferisce: consacra e ferma chi è entro raggio. */
+  onda(raggio: number, fermo: number): void {
+    const o = this.orda, r2 = raggio * raggio;
+    for (let j = 0; j < o.numero; j++) {
+      const dx = o.x[j] - this.px, dy = o.y[j] - o.raggio[j] - this.py;
+      if (o.salute[j] <= 0 || dx * dx + dy * dy > r2) continue;
+      const r = o.marca(j, SACRO);
+      if (r) this.accoda(r, j, 0);
+      o.ferma(j, fermo);
+    }
     this.effetti.reazione(this.px, this.py, raggio, REAZIONI.rivelazione.colore, REAZIONI.rivelazione.bordo, REAZIONI.durataEffetto);
   }
 
@@ -367,6 +373,17 @@ export class Arsenale {
       const dx = o.x[j] - x, dy = o.y[j] - y;
       if (dx * dx + dy * dy > r2) continue;
       const r = o.marca(j, aff);
+      if (r) this.accoda(r, j, 0);
+    }
+  }
+
+  /** Lucciola: abbaglia chi entra nell'alone (raggio intorno a x, y), non più di una volta ogni «pausa» secondi per nemico. */
+  lucciola(x: number, y: number, raggio: number, pausa: number): void {
+    const o = this.orda, r2 = raggio * raggio;
+    for (let j = 0; j < o.numero; j++) {
+      const dx = o.x[j] - x, dy = o.y[j] - y;
+      if (!o.entraNellAlone(j, dx * dx + dy * dy <= r2, pausa)) continue;
+      const r = o.marca(j, LUCE);
       if (r) this.accoda(r, j, 0);
     }
   }
@@ -818,6 +835,7 @@ export class Arsenale {
     this.cAff = TERRA;
     if (this.unite.pala) {
       this.cFerma = U.vanga.fermo;
+      this.cFermaTerra = true;
       this.lapideCade(this.cx, this.cy, raggio, 0); // solo da vedere: il colpo è già questo
     }
     this.orda.griglia.nelRaggio(this.cx, this.cy, raggio + 40, this.visitaColpo);
@@ -883,6 +901,7 @@ export class Arsenale {
     this.cAff = 0;
     this.cProb = STATI.probabilita;
     this.cFerma = 0;
+    this.cFermaTerra = false;
     this.cLampo = true;
     this.cReazione = 0;
     this.colpo++;
@@ -919,9 +938,10 @@ export class Arsenale {
     }
     o.segno[j] = this.colpo;
     this.toccati++;
-    const aff = this.cAff, ferma = this.cFerma;
+    const aff = this.cAff, terra = this.cFermaTerra, ferma = terra && !o.puoFermareTerra(j) ? 0 : this.cFerma;
     this.ferisci(j, this.cDanno, this.cRespinta, spintaX, spintaY, aff, this.cProb, this.cLampo, this.cReazione);
-    if (ferma) o.ferma(j, ferma);
+    if (ferma && terra) o.fermaTerra(j, ferma);
+    else if (ferma) o.ferma(j, ferma);
   }
 
   /** Rompe gli oggetti dentro la forma del colpo in corso: stessa geometria di tocca. */
@@ -1057,8 +1077,9 @@ export class Arsenale {
     }
     o.segno[j] = this.colpo;
     this.ferisci(j, this.zDanno[i], 0, 0, 0, this.zAff[i], STATI.probabilitaZone, false);
-    if (this.zTipo[i] === POZZA && this.unite.acquaSanta && o.salute[j] <= 0 && ++this.uccisiPozze >= U.acquasantiera.uccisioni) {
+    if (this.zTipo[i] === POZZA && this.unite.acquaSanta && o.salute[j] <= 0 && ++this.uccisiPozze >= U.acquasantiera.uccisioni && this.attesaSorso <= 0) {
       this.uccisiPozze = 0;
+      this.attesaSorso = U.acquasantiera.pausa;
       this.sorsiGuadagnati++;
     }
     if (this.zRallenta[i]) o.rallenta(j, this.zRallenta[i], this.zIntervallo[i] + 0.05);

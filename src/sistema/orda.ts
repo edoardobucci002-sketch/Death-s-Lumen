@@ -55,6 +55,7 @@ export class Orda {
   readonly salute = new Float32Array(CAPIENZA);
   readonly saluteMassima = new Float32Array(CAPIENZA);
   readonly elite = new Uint8Array(CAPIENZA);
+  readonly anello = new Uint8Array(CAPIENZA); // nato in un'orda ad anello: pesante come quelli delle formazioni
   readonly tipo = new Uint8Array(CAPIENZA);
   readonly id = new Uint32Array(CAPIENZA); // numero unico di ogni nemico nato, anche se cambia posto
   readonly segno = new Uint32Array(CAPIENZA); // l'ultimo colpo che l'ha già toccato (vedi Griglia.nelRaggio)
@@ -75,7 +76,9 @@ export class Orda {
   private sMaledetto = new Float32Array(CAPIENZA);
   private sSepolto = new Float32Array(CAPIENZA);
   private sInterrato = new Float32Array(CAPIENZA);
-  private pausaSepolto = new Float32Array(CAPIENZA); // prima di allora non può essere sepolto di nuovo
+  private pausaSepolto = new Float32Array(CAPIENZA); // prima di allora non può essere sepolto di nuovo (né fermato dalla Vanga)
+  private pausaLucciola = new Float32Array(CAPIENZA); // prima di allora la Lucciola non lo abbaglia di nuovo
+  private nellAlone = new Uint8Array(CAPIENZA); // 1 = era dentro l'alone della Lucciola al controllo prima
   private fermo = new Float32Array(CAPIENZA); // fermato da altro (secondo rintocco della Campana)
   private ultimoStato = new Uint8Array(CAPIENZA); // affinità dell'ultimo stato, per il colore
   private rivelato = new Uint8Array(CAPIENZA); // 1 = le sue anime sono già raddoppiate (Rivelazione una volta sola)
@@ -94,7 +97,10 @@ export class Orda {
   private postoX = new Float32Array(CAPIENZA);
   private postoY = new Float32Array(CAPIENZA);
   private bAttiva = new Uint8Array(MAX_BRANCHI);
-  private bCarica = new Uint8Array(MAX_BRANCHI);
+  private bSciolta = new Uint8Array(MAX_BRANCHI); // la formazione ha attraversato il campo: ognuno va per conto suo
+  private bDX = new Float32Array(MAX_BRANCHI); // direzione della marcia, fissata quando nasce
+  private bDY = new Float32Array(MAX_BRANCHI);
+  private bResta = new Float32Array(MAX_BRANCHI); // pixel di marcia prima di sciogliersi
   private bMembri = new Uint16Array(MAX_BRANCHI);
   private bX = new Float32Array(MAX_BRANCHI);
   private bY = new Float32Array(MAX_BRANCHI);
@@ -119,7 +125,7 @@ export class Orda {
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
-    this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo,
+    this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
     this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY];
 
   constructor(
@@ -156,7 +162,7 @@ export class Orda {
     if (!calma && this.numero < massimi * DIFFICOLTA.sogliaRinforzo) nascite += DIFFICOLTA.rinforzoPerFotogramma;
     for (; nascite > 0 && this.numero < massimi; nascite--) this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
 
-    // orde: la formazione marcia verso il giocatore; abbastanza vicina, carica
+    // orde: la formazione attraversa il campo in linea retta; dall'altra parte si scioglie
     for (let b = 0; b < MAX_BRANCHI; b++) {
       if (!this.bAttiva[b]) continue;
       if (!this.bMembri[b]) {
@@ -164,15 +170,10 @@ export class Orda {
         continue;
       }
       this.bMembri[b] = 0; // ricontati qui sotto
-      if (this.bCarica[b]) continue;
-      const ox = gx - this.bX[b];
-      const oy = gy - this.bY[b];
-      const od = Math.hypot(ox, oy);
-      if (od < ORDE.distanzaCarica) this.bCarica[b] = 1;
-      else {
-        this.bX[b] += (ox / od) * ORDE.marcia * dt;
-        this.bY[b] += (oy / od) * ORDE.marcia * dt;
-      }
+      if (this.bSciolta[b]) continue;
+      this.bX[b] += this.bDX[b] * ORDE.marcia * dt;
+      this.bY[b] += this.bDY[b] * ORDE.marcia * dt;
+      if ((this.bResta[b] -= ORDE.marcia * dt) <= 0) this.bSciolta[b] = 1;
     }
 
     // ognuno verso dove punta (IA), più la respinta che si spegne a poco a poco
@@ -200,8 +201,7 @@ export class Orda {
       const comportamento = b >= 0 ? DIRETTO : COMPORTAMENTO[this.tipo[i]];
       if (b >= 0) {
         this.bMembri[b]++;
-        if (this.bCarica[b]) v *= ORDE.carica;
-        else {
+        if (!this.bSciolta[b]) {
           tx = this.bX[b] + this.postoX[i];
           ty = this.bY[b] + this.postoY[i];
         }
@@ -260,7 +260,7 @@ export class Orda {
       if (Math.abs(this.x[i] - gx) > limiteX || Math.abs(this.y[i] - gy) > limiteY) {
         // un'orda che marcia nasce lontana: resta in formazione finché non è troppo indietro
         const b = this.branco[i] - 1;
-        if (b >= 0 && !this.bCarica[b] && Math.abs(this.bX[b] - gx) < limiteX * 2 && Math.abs(this.bY[b] - gy) < limiteY * 2) continue;
+        if (b >= 0 && !this.bSciolta[b] && Math.abs(this.bX[b] - gx) < limiteX * 2 && Math.abs(this.bY[b] - gy) < limiteY * 2) continue;
         this.branco[i] = 0;
         this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
         this.respintaX[i] = this.respintaY[i] = 0;
@@ -277,7 +277,7 @@ export class Orda {
       this.pausaLampo[i] = COLPI.lampoNemicoPausa;
     }
     if (respinta && this.tipo[i] !== ID_MIETITORE) {
-      const r = respinta * (NEMICI[this.tipo[i]].pesante || this.elite[i] ? COLPI.respintaPesanti : 1);
+      const r = respinta * (NEMICI[this.tipo[i]].pesante || this.elite[i] || this.branco[i] || this.anello[i] ? COLPI.respintaPesanti : 1);
       this.respintaX[i] = dx * r;
       this.respintaY[i] = dy * r;
     }
@@ -326,6 +326,28 @@ export class Orda {
     return this.sMaledetto[i] > 0;
   }
 
+  /** Vanga del custode: può fermarlo adesso? Usa la stessa pausa del Sepolto. */
+  puoFermareTerra(i: number): boolean {
+    return this.pausaSepolto[i] <= 0;
+  }
+
+  /** Vanga del custode: lo ferma (Seth a metà) e per STATI.sepolto.pausa secondi non può essere fermato né sepolto di nuovo. */
+  fermaTerra(i: number, secondi: number): void {
+    this.ferma(i, secondi);
+    this.pausaSepolto[i] = STATI.sepolto.pausa;
+  }
+
+  /**
+   * Lucciola: il nemico i è dentro l'alone adesso? Restituisce true se è appena entrato e non è in pausa
+   * (allora va abbagliato, e la pausa riparte).
+   */
+  entraNellAlone(i: number, dentro: boolean, pausa: number): boolean {
+    const entra = dentro && !this.nellAlone[i] && this.pausaLucciola[i] <= 0;
+    this.nellAlone[i] = dentro ? 1 : 0;
+    if (entra) this.pausaLucciola[i] = pausa;
+    return entra;
+  }
+
   /** Il nemico i è interrato (subisce di più)? */
   interrato(i: number): boolean {
     return this.sInterrato[i] > 0;
@@ -341,6 +363,7 @@ export class Orda {
     if (this.sAbbagliato[i] > 0) this.sAbbagliato[i] -= dt;
     if (this.sConsacrato[i] > 0) this.sConsacrato[i] -= dt;
     if (this.pausaSepolto[i] > 0) this.pausaSepolto[i] -= dt;
+    if (this.pausaLucciola[i] > 0) this.pausaLucciola[i] -= dt;
     if (this.sMaledetto[i] > 0) {
       this.sMaledetto[i] -= dt;
       const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
@@ -427,20 +450,24 @@ export class Orda {
     const bordo = Math.min(Math.abs(c) > 1e-6 ? mezzaL / Math.abs(c) : Infinity, Math.abs(sn) > 1e-6 ? mezzaA / Math.abs(sn) : Infinity);
     const spazio = NEMICI[tipo].raggio * ORDE.spazio;
     this.bAttiva[b] = 1;
-    this.bCarica[b] = 0;
+    this.bSciolta[b] = 0;
     this.bMembri[b] = quanti;
     this.bX[b] = gx + c * (bordo + COMPARSA.margine);
     this.bY[b] = gy + sn * (bordo + COMPARSA.margine);
+    this.bDX[b] = -c;
+    this.bDY[b] = -sn;
+    // attraversa tutto il campo e lo supera di tutta la sua profondità
+    this.bResta[b] = 2 * (bordo + COMPARSA.margine) + (cuneo ? Math.sqrt(2 * quanti) * 0.8 : Math.ceil(quanti / ORDE.perFila)) * spazio;
     for (let k = 0; k < quanti && this.numero < CAPIENZA; k++) {
       const fila = Math.floor(k / ORDE.perFila);
       const inFila = Math.min(ORDE.perFila, quanti - fila * ORDE.perFila);
-      // cuneo: la punta davanti, i due bracci che si aprono all'indietro; muro: file una dietro l'altra
       // cuneo: un triangolo pieno con la punta verso di te (la riga r ha r + 1 nemici); muro: file una dietro l'altra
       const r = Math.floor((Math.sqrt(8 * k + 1) - 1) / 2), inRiga = k - (r * (r + 1)) / 2;
       const lato = cuneo ? (inRiga - r / 2) * spazio : (k % ORDE.perFila - (inFila - 1) / 2) * spazio; // lungo il fronte
       const dietro = cuneo ? r * spazio * 0.8 : fila * spazio; // più lontano da te
       const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA, tipo);
       this.branco[i] = b + 1;
+      if (secondi >= ORDE.saluteDal * 60) this.salute[i] = this.saluteMassima[i] *= ORDE.salute;
       this.postoX[i] = -sn * lato + c * dietro;
       this.postoY[i] = c * lato + sn * dietro;
       this.x[i] = this.bX[b] + this.postoX[i];
@@ -453,6 +480,8 @@ export class Orda {
     for (let k = 0; k < quanti && this.numero < CAPIENZA; k++) {
       const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA, tipo);
       const ang = (k / quanti) * Math.PI * 2;
+      if (secondi >= ORDE.saluteDal * 60) this.salute[i] = this.saluteMassima[i] *= ORDE.salute;
+      this.anello[i] = 1;
       this.x[i] = gx + Math.cos(ang) * (mezzaL + COMPARSA.margine);
       this.y[i] = gy + Math.sin(ang) * (mezzaA + COMPARSA.margine);
       this.velocita[i] *= ORDE.velocitaAnello;
@@ -551,14 +580,14 @@ export class Orda {
     const oltre = Math.max(0, m - DIFFICOLTA.saluteDopo);
     this.salute[i] = this.saluteMassima[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m + DIFFICOLTA.saluteAccelera * oltre * oltre);
     this.anime[i] = tipo.anime;
-    this.elite[i] = 0;
+    this.elite[i] = this.anello[i] = 0;
     this.fase[i] = this.mossa[i] = this.volta[i] = this.branco[i] = 0;
     this.fianco[i] = (this.caso.numero() < 0.5 ? -1 : 1) * (IA.accerchia.angolo[0] + this.caso.numero() * (IA.accerchia.angolo[1] - IA.accerchia.angolo[0]));
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
     this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
-    this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = 0;
-    this.ultimoStato[i] = this.rivelato[i] = 0;
+    this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
+    this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];
@@ -667,12 +696,14 @@ export class Orda {
     for (const a of this.campi) a[i] = a[u];
     this.tipo[i] = this.tipo[u];
     this.elite[i] = this.elite[u];
+    this.anello[i] = this.anello[u];
     this.fase[i] = this.fase[u];
     this.mossa[i] = this.mossa[u];
     this.volta[i] = this.volta[u];
     this.branco[i] = this.branco[u];
     this.ultimoStato[i] = this.ultimoStato[u];
     this.rivelato[i] = this.rivelato[u];
+    this.nellAlone[i] = this.nellAlone[u];
     this.id[i] = this.id[u];
     this.segno[i] = this.segno[u];
     this.versoSinistra[i] = this.versoSinistra[u];

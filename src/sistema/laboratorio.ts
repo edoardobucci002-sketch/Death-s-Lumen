@@ -39,9 +39,10 @@ import * as rompibili from '../data/rompibili';
 import * as rosario from '../data/rosario';
 import * as sopravvivenza from '../data/sopravvivenza';
 import * as stati from '../data/stati';
+import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stati };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stati, unioni };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;

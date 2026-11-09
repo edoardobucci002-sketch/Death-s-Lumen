@@ -70,6 +70,14 @@ Dopo la partita di Edoardo su telefono. Stesso numero di oggetti, percentuali ch
 
 Nuovi: 60% dei settori da 700 px con un oggetto; urna 1 goccia, giara 2, lanterna 1; pesi 4/4/2. La Cera dei nemici non cambia, quindi una notte ne dà un po' di più. Il bot gioca senza rompibili: la simulazione non cambia e non misura questa Cera in più.
 
+### 9/11 (sera) — Calma più corta, più nemici, più bruti, orde che sbarrano la strada
+
+Decisioni di Edoardo dopo una partita: calma da 20 a 10 s (marea 50 s); comparse un po' più fitte (1,4 + 2,9 m al secondo invece di 1,2 + 2,5 m, +15% circa, *da rivedere*); più bruti (peso 2 nei minuti 11, 13 e 14, al massimo 100 in campo); Lumen accorpato entro 28 px invece di 36. Le orde devono vincolare il movimento: a build avanzata morivano prima di farsi vedere. Ora attraversano il campo in linea retta senza inseguire, si sciolgono solo dall'altra parte e non si fanno spingere indietro.
+
+Bot sul S25, Cappella vuota, 48 notti:
+- con salute ×3 per tutte le orde: 4 vittorie, **15 morti prima del minuto 5** e per il Becchino Seth del 5 non era più il primo ostacolo (vincolo rotto): scartata;
+- con salute ×3 solo dal minuto 6 (scelta): **7 vittorie su 48** (15%), 6 morti prima del minuto 5, mediana della morte 8:06, livello finale medio 44, Seth del 5 ucciso in 37 notti su 42. Vincoli rispettati; tre personaggi vincono 2 notti su 12, appena sopra l'obiettivo provvisorio.
+
 ### 9/11 — Orde a forma, meno bruti, Lumen accorpato
 
 Decisioni di Edoardo: meno bruti a fine notte, Lumen accorpato come in Vampire Survivors, orde riconoscibili. Cambiano insieme:

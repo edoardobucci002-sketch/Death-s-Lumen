@@ -96,7 +96,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Copione della notte, respiro (40 s + 20 s al 25%), tetto 250, bruti al massimo 30, copione e forme delle orde, preavviso 3 s, carica a 150 px, Lumen accorpato a 36 px: tutti i valori. Il bot ora vince 32 notti su 48 |
+| Copione della notte, respiro (50 s + 10 s al 25%), comparse 1,4 + 2,9 m, tetto 250, bruti al massimo 100, copione e forme delle orde, preavviso 3 s, salute ×3 dal minuto 6, Lumen accorpato a 28 px: tutti i valori. Il bot vince 7 notti su 48 |
 | Mosaici: disegno V1, probabilità dell'urna (26%, misurata con il bot che cerca le urne), numeri del Bagliore (20 s, +30% velocità, luce × 1,5), raggio di raccolta 40 px | `docs/asset_da_creare.md`, `docs/GDD.md` |
 | Scoperta di un'Unione: Edoardo ha detto «arma e dono al livello massimo», ma l'unione oggi chiede il dono al 3 (5 è il massimo di molti doni). Rimandato al bilanciamento finale (6/11): per ora vale il livello dell'unione | GDD §8f; `LIVELLO_DONO_UNIONE` |
 | Animazione della scoperta: segnaposto dal codice; Edoardo la vuole semplice ma con la «scarica di dopamina» dell'evoluzione di un Pokémon; durata da decidere quando ci sarà quella vera; tela e fotogrammi da definire | GDD §8f; `asset_da_creare.md` |
@@ -135,4 +135,6 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Posto del redesign nell'ordine delle tappe | qui sopra |
 | Ordine delle tappe dopo i Patti (Cappella hub, Devozione e notti, questline, Veggente e Sguattera, redesign): proposto da Claude | «Prossime tappe» qui sopra |
 | Danza macabra: recupero di 3 s, da provare a mano da Edoardo | GDD §8e (amuleti) |
+| Correzioni agli oggetti del 9/11 (valori di Claude su richiesta di Edoardo): Vanga 1,5 s con la pausa del Sepolto (4 s); Acquasantiera un sorso ogni 45 s al massimo; Lucciola 2 grani e pausa 4 s; Ossa d'élite 2 grani; Martire 2 grani, onda senza danno che consacra e ferma 0,6 s; Ceri gemelli ricarica +10% | GDD §8e e §8f; bilanciamento 9/11 |
+| Il bot non prende mai Martire, Patto di sangue, Specchio rotto, Cuore avido e Lanterna cieca: le loro misure restano a zero finché non si decide se deve provarli | `amuletiPreferiti` in `src/data/bot.ts`; bilanciamento 9/11 |
 | Affinità della Veggente e della Sguattera | lore (*Aperto*) |
