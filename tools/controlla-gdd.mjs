@@ -723,7 +723,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Ricollocamento', 'Note', 'entro ±{} radianti', CP.ventaglio],
     ['Separazione', 'Numero', 'forza {}; si toccano sotto il {}%', SP.forza, pct(SP.tolleranza)],
     ['Sprite segnaposto', 'Numero', 'ingranditi × {}', W.INGRANDIMENTO_SEGNAPOSTO],
-    ['Barra della salute', 'Numero', 'riempimento {} × {} pixel disegnati, {} px sotto i piedi', H.FINESTRE.Barra_Salute_Cornice.l, H.FINESTRE.Barra_Salute_Cornice.a, W.BARRA_SALUTE.distanza],
+    ['Barra della salute', 'Numero', 'rettangolo rosso {} × {} pixel, {} px sotto i piedi', W.BARRA_SALUTE.larghezza, W.BARRA_SALUTE.altezza, W.BARRA_SALUTE.distanza],
     ['Lampo quando sei colpito', 'Numero', '{} s', CB.lampo],
     ['Dalla morte', 'Numero', '{} s', CB.attesaFine],
   ];

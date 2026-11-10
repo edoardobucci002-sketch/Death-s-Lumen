@@ -3,9 +3,10 @@
  * (Speciale_<Nome>_Ricarica) e si colora in senso orario, pixel per pixel; quando è pronto è tutto colorato.
  * Quando è pronta e si preme, chiama usa(); la ricarica segue la Clessidra e il personaggio.
  * Con i Ceri gemelli (Rosario) ha più cariche: si ricarica una alla volta.
+ * Finché non c'è nessuna carica, sopra l'icona si leggono i secondi che mancano (conto alla rovescia).
  */
 import { PRONTA_DOPO, type Abilita } from '../data/abilita';
-import { ANELLI, FASCE } from '../data/hud';
+import { ANELLI, FASCE, TESTI } from '../data/hud';
 import { angoliFascia, arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa } from './arte';
 import { Tacche } from './tacche';
 
@@ -17,6 +18,8 @@ export class Speciale {
   private tela: HTMLCanvasElement;
   private tacche: Tacche;
   private icona: HTMLImageElement;
+  private conto = document.createElement('div'); // i secondi che mancano
+  private ultimoConto = -1;
   private colore: ImageData | null = null;
   private grigio: ImageData | null = null;
   private uscita: ImageData | null = null;
@@ -42,7 +45,8 @@ export class Speciale {
     this.icona = immagine(abilita.icona, 'speciale-icona');
     const col = arte(this.chiave), gr = arte(`${this.chiave}_Ricarica`), c = ANELLI[this.chiave];
     this.tacche = new Tacche(col?.w ?? 1, col?.h ?? 1, c?.x ?? 0, c?.y ?? 0); // solo con più cariche (Ceri gemelli)
-    this.pulsante.append(this.tela, this.icona, this.tacche.tela);
+    this.conto.className = 'speciale-conto';
+    this.pulsante.append(this.tela, this.icona, this.tacche.tela, this.conto);
     if (col) {
       this.tela.width = col.w;
       this.tela.height = col.h;
@@ -83,6 +87,11 @@ export class Speciale {
       this.ultimaParte = parte;
       this.disegna(parte / 100);
       this.pulsante.classList.toggle('pronta', parte >= 100);
+    }
+    const conto = this.cariche > 0 || this.attesa <= 0 ? 0 : Math.ceil(this.attesa);
+    if (conto !== this.ultimoConto) {
+      this.ultimoConto = conto;
+      this.conto.textContent = conto > 0 ? String(conto) : '';
     }
   }
 
@@ -135,8 +144,12 @@ export class Speciale {
     misura(this.pulsante, a.w, a.h, z, m);
     misura(this.tela, a.w, a.h, z, m);
     misura(this.tacche.tela, a.w, a.h, z, m);
-    posa(this.icona, (c.x - 12) * z, (c.y - 12) * z, m);
-    misura(this.icona, 24, 24, z, m);
+    const ic = arte(this.abilita.icona), iw = ic?.w ?? 24, ih = ic?.h ?? 24; // segnaposto 24×24, icone vere 38×38 (tutto il disco)
+    posa(this.icona, (c.x - iw / 2) * z, (c.y - ih / 2) * z, m);
+    misura(this.icona, iw, ih, z, m);
+    posa(this.conto, (c.x - c.r) * z, (c.y - c.r) * z, m); // un quadrato attorno al disco: il numero sta al centro
+    misura(this.conto, c.r * 2, c.r * 2, z, m);
+    Object.assign(this.conto.style, { fontSize: `${TESTI.ricarica * z * m.px}px`, lineHeight: '1' });
   }
 
   private tasto = (e: KeyboardEvent): void => {

@@ -15,10 +15,9 @@
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
-import { arte, fasce, ingr, misureHud } from '../sistema/arte';
+import { fasce, ingr, misureHud } from '../sistema/arte';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
-import { FINESTRE } from '../data/hud';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PRESTAZIONI, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, DIFFICOLTA, ELITE, MIETITORE, NEMICI, ORDE, type FormaOrda } from '../data/nemici';
@@ -71,6 +70,9 @@ const RITARDO_MASSIMO_MS = 250; // dopo un blocco lungo non recupera all'infinit
 
 /** Quanto chiede l'impresa dell'oggetto id. */
 const SOGLIA = (id: IdOggetto): number => SBLOCCHI_OGGETTI.find((o) => o.id === id)!.soglia ?? Infinity;
+
+/** «#c0262d» → numero, per i colori di Phaser. */
+const esadecimale = (h: string): number => parseInt(h.slice(1), 16);
 
 export class Gioco extends Phaser.Scene {
   pg!: Personaggio;
@@ -162,8 +164,11 @@ export class Gioco extends Phaser.Scene {
   private campoL = 0; // pixel di gioco del campo: sul telefono in verticale è meno dello schermo
   private campoA = 0;
   private buio!: Phaser.GameObjects.Image;
-  private saluteCornice!: Phaser.GameObjects.Image;
-  private salutePiena!: Phaser.GameObjects.Image;
+  private saluteRett!: Phaser.GameObjects.Graphics; // il rettangolo rosso, ridisegnato solo quando la salute cambia
+  private saluteNumeri!: Phaser.GameObjects.BitmapText;
+  private saluteMostrata = -1; // «salute*10000+massima» dell'ultimo disegno
+  private saluteLarga: number = BARRA_SALUTE.larghezza;
+  private saluteTestoX = 0;
   private zSalute = 1;
   private misureBuio = { w: 0, h: 0 };
   private comandi!: Comandi;
@@ -264,10 +269,10 @@ export class Gioco extends Phaser.Scene {
     this.misureBuio = creaBuio(this, this.campoL, this.campoA, LUCE.raggio * this.areaLuce);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     this.alone = this.add.image(0, 0, CHIAVI_ALONE[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD);
-    // barra della salute sotto i piedi, sopra il buio così si vede sempre
-    // (disegnata da Edoardo: cornice col cuore e riempimento che si taglia da sinistra)
-    this.saluteCornice = this.add.image(0, 0, 'Barra_Salute_Cornice').setOrigin(0).setDepth(PROFONDITA.barra);
-    this.salutePiena = this.add.image(0, 0, 'Barra_Salute_Piena').setOrigin(0).setDepth(PROFONDITA.barra + 0.1);
+    // barra della salute sotto i piedi, sopra il buio così si vede sempre: rettangolo rosso con i numeri dentro
+    this.saluteRett = this.add.graphics().setDepth(PROFONDITA.barra);
+    this.saluteNumeri = this.add.bitmapText(0, 0, 'cifre-nette', '').setOrigin(0).setDepth(PROFONDITA.barra + 0.1);
+    this.saluteMostrata = -1;
     this.scalaSalute();
 
     const interfaccia = document.getElementById('interfaccia')!;
@@ -1427,18 +1432,13 @@ export class Gioco extends Phaser.Scene {
     this.buio.setTexture(this.foriBuio && this.rompibili && this.chiazze ? this.rompibili.buio(chiaveBuio, this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam, this.chiazze) : chiaveBuio);
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
     this.buio.setPosition(bx, by);
-    const z = this.zSalute, f = FINESTRE.Barra_Salute_Cornice;
-    const sx = px - Math.floor(((arte('Barra_Salute_Cornice')?.w ?? 0) * z) / 2);
-    const sy = py + BARRA_SALUTE.distanza;
-    const piena = Math.round(f.l * Math.max(0, this.salute / this.saluteMassima));
-    this.saluteCornice.setPosition(sx, sy).setVisible(!this.morto);
-    this.salutePiena.setPosition(sx + f.x * z, sy + f.y * z).setCrop(0, 0, piena, f.a).setVisible(!this.morto && piena > 0);
+    this.disegnaSalute(px, py);
     this.hud.mostraRosario(this.graniUsati(), this.grani(), this.amuletiPosseduti.length);
     const boss = this.orda.mietitore();
     this.hud.aggiorna(
       this.secondi, !this.finito && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello,
       this.esperienza / animePerLivello(this.livello), this.animeTotali,
-      boss >= 0 ? Math.max(0, this.orda.salute[boss] / this.orda.saluteMassima[boss]) : -1, this.ceraRaccolta,
+      boss >= 0 ? Math.max(0, this.orda.salute[boss]) : -1, this.ceraRaccolta, boss >= 0 ? this.orda.saluteMassima[boss] : 1,
     );
   }
 
@@ -1451,8 +1451,33 @@ export class Gioco extends Phaser.Scene {
   /** La barra della salute segue l'ingrandimento dell'HUD (×2 sui telefoni con la scala ×1). */
   private scalaSalute(): void {
     this.zSalute = ingr('salute', misureHud());
-    this.saluteCornice.setScale(this.zSalute);
-    this.salutePiena.setScale(this.zSalute);
+    this.saluteRett.setScale(this.zSalute);
+    this.saluteNumeri.setScale(this.zSalute);
+  }
+
+  /**
+   * Barra della salute sotto i piedi: rettangolo con il rosso che si accorcia da destra e «rimasta/massima» al centro.
+   * Il disegno e la scritta si rifanno solo quando i numeri cambiano; altrimenti si sposta e basta.
+   */
+  private disegnaSalute(px: number, py: number): void {
+    const b = BARRA_SALUTE, z = this.zSalute;
+    const ora = Math.max(0, Math.ceil(this.salute)), max = Math.max(1, Math.round(this.saluteMassima));
+    const chiave = ora * 10000 + max;
+    if (chiave !== this.saluteMostrata) {
+      this.saluteMostrata = chiave;
+      this.saluteNumeri.setText(`${ora}/${max}`);
+      const testo = this.saluteNumeri.text.length * 4 - 1; // cifre larghe 3 più una colonna vuota, l'ultima non conta
+      const L = (this.saluteLarga = Math.max(b.larghezza, testo + 4));
+      const dentro = L - 2, rosso = Math.round(dentro * Math.min(1, ora / max));
+      const g = this.saluteRett.clear();
+      g.fillStyle(esadecimale(b.bordo)).fillRect(0, 0, L, b.altezza);
+      g.fillStyle(esadecimale(b.vuoto)).fillRect(1, 1, dentro, b.altezza - 2);
+      if (rosso > 0) g.fillStyle(esadecimale(b.rosso)).fillRect(1, 1, rosso, b.altezza - 2);
+      this.saluteTestoX = Math.floor((L - testo) / 2);
+    }
+    const sx = px - Math.floor((this.saluteLarga * z) / 2), sy = py + b.distanza;
+    this.saluteRett.setPosition(sx, sy).setVisible(!this.morto);
+    this.saluteNumeri.setPosition(sx + this.saluteTestoX * z, sy + Math.floor((b.altezza - 5) / 2) * z).setVisible(!this.morto);
   }
 
   /** Il campo vero: sul telefono in verticale finisce al bordo delle fasce, per la telecamera e per tutta la logica «sullo schermo». */

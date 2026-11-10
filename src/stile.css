@@ -56,6 +56,11 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 .hud > *, .hud-schermo > *, .doni > * { position: absolute; }
 .hud-icone, .hud-altre, .hud-pulsanti, .doni-carte { display: contents; }
 .hud-finestra { position: absolute; overflow: hidden; }
+/* barra rossa della salute di Seth (src/sistema/hud.ts, BarraSalute): colori da src/data/mondo.ts */
+.hud-salute { pointer-events: none; }
+.hud-salute-vuota { position: absolute; overflow: hidden; }
+.hud-salute-piena { position: absolute; left: 0; top: 0; }
+.hud-salute-numeri { position: absolute; text-align: center; font-family: var(--f-pixel); color: #fff; text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000; white-space: nowrap; }
 /* scritte a pixel (src/sistema/scritte.ts): tela piccola ingrandita senza sfumature */
 .scritta { position: absolute; image-rendering: pixelated; pointer-events: none; }
 .hud-orologio { text-align: right; font-family: var(--f-pixel); font-weight: 700; letter-spacing: 1px; color: var(--pergamena); text-shadow: 0 2px 0 #000; }
@@ -244,6 +249,8 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 /* Abilità speciale (src/sistema/speciale.ts): anello disegnato, si colora durante la ricarica */
 .speciale { position: fixed; touch-action: none; z-index: 1; }
 .speciale:not(.pronta) .speciale-icona { filter: grayscale(1) brightness(0.6); }
+/* secondi che mancano alla ricarica, sopra l'icona */
+.speciale-conto { position: absolute; display: flex; align-items: center; justify-content: center; pointer-events: none; font-family: var(--f-pixel); color: #fff; text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000; }
 /* Fiaschetta di lumen (src/sistema/fiaschetta.ts): fiala disegnata dal codice accanto all'anello */
 .fiaschetta { position: fixed; touch-action: none; z-index: 1; }
 .fiaschetta:focus-visible { outline: none; filter: brightness(1.25); }

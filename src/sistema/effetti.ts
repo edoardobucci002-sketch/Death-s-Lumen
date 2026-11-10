@@ -32,6 +32,7 @@ const MAX_ETICHETTE = 8;
 const CIFRE = [
   '111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001',
   '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111',
+  '001001010100100', // «/», per «salute/massima» nella barra della salute
 ];
 const TESTI = Array.from({ length: 10000 }, (_, n) => String(n)); // preparati: niente stringhe nuove durante la partita
 
@@ -76,6 +77,7 @@ export class Effetti {
   constructor(scena: Phaser.Scene) {
     this.scena = scena;
     creaCifre(scena);
+    creaCifreNette(scena);
     creaScoppio(scena);
     for (let i = 0; i < MAX_NUMERI; i++) {
       this.numeri.push(scena.add.bitmapText(0, 0, 'cifre', '', 5).setLetterSpacing(-1).setScale(EFFETTI.numeri.ingrandimento).setOrigin(0.5, 1).setDepth(PROFONDITA.sopra + 1).setVisible(false));
@@ -334,7 +336,7 @@ function creaCifre(scena: Phaser.Scene): void {
   // ogni cifra 3×5 con un contorno nero di 1 pixel: celle di 5×7
   const W = 5;
   const H = 7;
-  const tela = scena.textures.createCanvas('cifre', W * 10, H)!;
+  const tela = scena.textures.createCanvas('cifre', W * CIFRE.length, H)!;
   const g = tela.getContext();
   CIFRE.forEach((c, n) => {
     for (const [colore, larg] of [['#000', 1], ['#fff', 0]] as const) {
@@ -349,11 +351,29 @@ function creaCifre(scena: Phaser.Scene): void {
   });
   tela.refresh();
   const dati = Phaser.GameObjects.RetroFont.Parse(scena, {
-    image: 'cifre', width: W, height: H, chars: '0123456789', charsPerRow: 10,
+    image: 'cifre', width: W, height: H, chars: '0123456789/', charsPerRow: CIFRE.length,
     'offset.x': 0, 'offset.y': 0, 'spacing.x': 0, 'spacing.y': 0, lineSpacing: 0,
   });
   // in Phaser 4 Parse restituisce già la voce pronta per la cache ({ data, texture, frame }), anche se i tipi dicono altro
   scena.cache.bitmapFont.add('cifre', dati);
+}
+
+/** Cifre 3×5 bianche senza contorno, celle di 4×5 (una colonna vuota fra le cifre): per la barra della salute, dove il rosso deve restare visibile. */
+function creaCifreNette(scena: Phaser.Scene): void {
+  if (scena.cache.bitmapFont.exists('cifre-nette')) return;
+  const W = 4, H = 5;
+  const tela = scena.textures.createCanvas('cifre-nette', W * CIFRE.length, H)!;
+  const g = tela.getContext();
+  g.fillStyle = '#fff';
+  CIFRE.forEach((c, n) => {
+    for (let k = 0; k < 15; k++) if (c[k] === '1') g.fillRect(n * W + (k % 3), Math.floor(k / 3), 1, 1);
+  });
+  tela.refresh();
+  const dati = Phaser.GameObjects.RetroFont.Parse(scena, {
+    image: 'cifre-nette', width: W, height: H, chars: '0123456789/', charsPerRow: CIFRE.length,
+    'offset.x': 0, 'offset.y': 0, 'spacing.x': 0, 'spacing.y': 0, lineSpacing: 0,
+  });
+  scena.cache.bitmapFont.add('cifre-nette', dati);
 }
 
 /** Scoppio di 4 fotogrammi: un lampo pieno che si apre in un anello e si sfalda a retino. */

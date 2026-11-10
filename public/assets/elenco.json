@@ -189,7 +189,7 @@
       "categoria": "icone",
       "immagine": "assets/icone/Icona_Benedizione.png",
       "dati": "assets/icone/Icona_Benedizione.json",
-      "versioneFile": 0,
+      "versioneFile": 1,
       "tag": []
     },
     {
@@ -221,7 +221,7 @@
       "categoria": "icone",
       "immagine": "assets/icone/Icona_Cerchio_di_luce.png",
       "dati": "assets/icone/Icona_Cerchio_di_luce.json",
-      "versioneFile": 0,
+      "versioneFile": 1,
       "tag": []
     },
     {
@@ -293,7 +293,7 @@
       "categoria": "icone",
       "immagine": "assets/icone/Icona_Rito_proibito.png",
       "dati": "assets/icone/Icona_Rito_proibito.json",
-      "versioneFile": 0,
+      "versioneFile": 1,
       "tag": []
     },
     {
@@ -317,7 +317,7 @@
       "categoria": "icone",
       "immagine": "assets/icone/Icona_Sepoltura.png",
       "dati": "assets/icone/Icona_Sepoltura.json",
-      "versioneFile": 0,
+      "versioneFile": 1,
       "tag": []
     },
     {

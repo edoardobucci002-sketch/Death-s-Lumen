@@ -1,13 +1,14 @@
 /*
  * Interfaccia in partita (HTML sopra il gioco), con gli elementi disegnati da Edoardo (cartella HUD/), a pixel interi.
  * Sul telefono in verticale tutto sta in due fasce fisse fuori dal campo (disponiFasce): in alto stemma, esperienza,
- * orologio e barra sottile di Seth, con il cartiglio che copre stemma ed esperienza finché dura; in basso la pausa.
+ * orologio e barra rossa di Seth, con il cartiglio che copre stemma ed esperienza finché dura; in basso la pausa.
  * Anime, Cera, Rosario e caselle stanno nella pausa (pausa.ts) e nella fine; salute bassa e Peccato sono segnali sul bordo del campo.
- * Altrove, in alto: stemma del livello, barra dell'esperienza, anime e orologio a destra, caselle di armi e doni, barra del Mietitore,
+ * Altrove, in alto: stemma del livello, barra dell'esperienza, anime e orologio a destra, caselle di armi e doni, barra rossa di Seth (con i numeri della salute),
  * e sotto gli avvisi nel nastro. In basso a destra: pausa. Poi la schermata di fine partita.
  * La barra della salute è nel gioco, sotto il personaggio; l'abilità speciale in basso a sinistra (speciale.ts).
  */
-import { AVVISO, PREAVVISO_ORDA, CASELLA, FASCE, FINESTRE, INTERNI, MARGINE_TOCCO, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
+import { BARRA_SALUTE } from '../data/mondo';
+import { AVVISO, BARRA_SETH, PREAVVISO_ORDA, CASELLA, FASCE, FINESTRE, INTERNI, MARGINE_TOCCO, OROLOGIO, PAUSA_PICCOLA, SEGNALE_PECCATO, TESTI, TOCCO_MINIMO } from '../data/hud';
 import { adattaZoom, angoliFascia, arte, bordiHud, fasce, immagine, ingr, mascheraRetino, misura, misureHud, posa, retino, scriviIn, type Fasce, type MisureHud } from './arte';
 import { Pausa, type DatiPausa, type SchedaPausa } from './pausa';
 import { scritta, scriviNel, tela } from './scritte';
@@ -56,7 +57,7 @@ function blocco(classe: string, ...figli: HTMLElement[]): HTMLElement {
   return d;
 }
 
-/** Barra con cornice e riempimento che si taglia da sinistra (esperienza, Mietitore). */
+/** Barra con cornice e riempimento che si taglia da sinistra (esperienza). */
 class Barra {
   el: HTMLElement;
   private finestra: HTMLElement;
@@ -89,11 +90,59 @@ class Barra {
   }
 }
 
+/**
+ * Barra della salute di Seth: rettangolo rosso semplice (come quella del personaggio, BARRA_SALUTE) con dentro
+ * «rimasta/massima». La lunghezza è quella della finestra della barra disegnata che sostituisce.
+ */
+class BarraSalute {
+  el: HTMLElement;
+  private piena = blocco('hud-salute-piena');
+  private numeri = blocco('hud-salute-numeri');
+  private dentro = 1; // larghezza interna, pixel di gioco
+  private z = 1;
+  private ora = -1;
+  private max = 1;
+  constructor(classe: string, private finestra: string) {
+    this.el = blocco(`${classe} hud-salute`, blocco('hud-salute-vuota', this.piena), this.numeri);
+    Object.assign(this.el.style, { background: BARRA_SALUTE.bordo });
+    Object.assign((this.el.firstElementChild as HTMLElement).style, { background: BARRA_SALUTE.vuoto });
+    this.piena.style.background = BARRA_SALUTE.rosso;
+  }
+  get altezza(): number {
+    return BARRA_SETH.altezza;
+  }
+  get larghezza(): number {
+    return (FINESTRE[this.finestra]?.l ?? 200) + 2;
+  }
+  disponi(x: number, y: number, z: number, m: MisureHud): void {
+    const L = this.larghezza, H = BARRA_SETH.altezza, px = m.px;
+    this.z = z;
+    this.dentro = L - 2;
+    posa(this.el, x, y, m);
+    misura(this.el, L, H, z, m);
+    const v = this.el.firstElementChild as HTMLElement;
+    posa(v, z, z, m);
+    misura(v, L - 2, H - 2, z, m);
+    this.piena.style.height = '100%';
+    Object.assign(this.numeri.style, { left: '0', top: '0', width: '100%', height: `${H * z * px}px`, lineHeight: `${H * z * px}px`, fontSize: `${TESTI.seth * z * px}px` });
+    this.mostra(this.ora, this.max, m, true);
+  }
+  /** Salute rimasta e massima; la larghezza del rosso va a pixel di gioco interi. */
+  mostra(ora: number, max: number, m: MisureHud, sempre = false): void {
+    if (ora === this.ora && max === this.max && !sempre) return;
+    this.ora = ora;
+    this.max = max;
+    const l = Math.round(this.dentro * Math.max(0, Math.min(1, ora / Math.max(1, max))));
+    this.piena.style.width = `${l * this.z * m.px}px`;
+    this.numeri.textContent = ora < 0 ? '' : `${ora}/${max}`;
+  }
+}
+
 export class Hud {
   private radice: HTMLElement;
   private xp = new Barra('hud-xp', 'Barra_Esperienza_Cornice', 'Barra_Esperienza_Piena');
-  private mietitore = new Barra('hud-boss', 'Barra_Mietitore_Cornice', 'Barra_Mietitore_Piena');
-  private seth = new Barra('hud-boss', 'Barra_Seth_Cornice', 'Barra_Seth_Piena'); // la barra sottile della fascia alta
+  private mietitore = new BarraSalute('hud-boss', 'Barra_Mietitore_Cornice');
+  private seth = new BarraSalute('hud-boss', 'Barra_Seth_Cornice'); // la barra della fascia alta
   private fasciaAlta = blocco('hud-fascia', immagine('Fascia_Alta'));
   private fasciaBassa = blocco('hud-fascia', immagine('Fascia_Bassa'));
   private peccato = blocco('hud-peccato');
@@ -204,7 +253,7 @@ export class Hud {
   }
 
   /** Aggiorna solo quando qualcosa cambia davvero, per non toccare la pagina a ogni fotogramma. */
-  aggiorna(secondi: number, saluteBassa: boolean, livello: number, parteEsperienza: number, anime: number, boss: number, cera = 0): void {
+  aggiorna(secondi: number, saluteBassa: boolean, livello: number, parteEsperienza: number, anime: number, boss: number, cera = 0, bossMassima = 1): void {
     const s = Math.floor(secondi);
     if (s !== this.ultimoSecondo) {
       this.ultimoSecondo = s;
@@ -224,16 +273,17 @@ export class Hud {
       this.cera.textContent = `Cera ${cera}`;
     }
     this.xp.mostra(parteEsperienza, this.m);
-    // boss: parte di salute rimasta, oppure −1 se non c'è
-    const b = boss < 0 ? -1 : Math.ceil(boss * 100);
+    // boss: salute rimasta (bossMassima è quella piena), oppure −1 se non c'è
+    const b = boss < 0 ? -1 : Math.ceil(boss);
     if (b !== this.ultimoBoss) {
       const cambia = (b < 0) !== (this.ultimoBoss < 0);
       this.ultimoBoss = b;
       this.mietitore.el.hidden = b < 0 || this.conFasce;
       this.seth.el.hidden = b < 0 || !this.conFasce;
       if (b >= 0) {
-        this.mietitore.mostra(b / 100, this.m);
-        this.seth.mostra(b / 100, this.m);
+        const mx = Math.round(bossMassima);
+        this.mietitore.mostra(b, mx, this.m);
+        this.seth.mostra(b, mx, this.m);
       }
       if (cambia) this.disponi(); // l'avviso scende sotto la barra
     }
@@ -484,8 +534,8 @@ export class Hud {
   private disponiSenzaFasce(m: MisureHud, b: ReturnType<typeof bordiHud>): void {
     const { W, H, px } = m;
     const zb = ingr('barre', m), zc = ingr('caselle', m), za = ingr('avvisi', m), zp = ingr('pausa', m);
-    const me = arte('Barra_Esperienza_Cornice'), ms = arte('Stemma_Livello'), mm = arte('Barra_Mietitore_Cornice');
-    if (!me || !ms || !mm) return;
+    const me = arte('Barra_Esperienza_Cornice'), ms = arte('Stemma_Livello'), mm = { w: this.mietitore.larghezza, h: this.mietitore.altezza };
+    if (!me || !ms) return;
     const ori = W > H;
     // esperienza al centro in alto
     const ye = b.a;

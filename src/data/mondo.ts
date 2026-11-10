@@ -64,7 +64,16 @@ export const JOYSTICK = {
  */
 export const PIEDI_SEGNAPOSTO = { x: 28, y: 61 } as const;
 
-/** Barra della salute sotto i piedi del personaggio (pixel di gioco). Il disegno è HUD/Barre/Barra_Salute_*. */
+/**
+ * Barra della salute sotto i piedi del personaggio (pixel di gioco): un rettangolo rosso con dentro
+ * «salute rimasta/salute massima», che si accorcia da destra quando si prende danno. Misure e colori da rivedere.
+ * Gli stessi colori valgono per la barra di Seth nell'HUD (src/sistema/hud.ts).
+ */
 export const BARRA_SALUTE = {
   distanza: 5, // quanto sotto i piedi
+  larghezza: 40, // il rettangolo intero, bordo compreso
+  altezza: 9, // cifre alte 5, una riga di rosso sopra e sotto, più il bordo
+  rosso: '#c0262d', // la salute che resta
+  vuoto: '#3a0c10', // la salute che manca
+  bordo: '#120606',
 } as const;

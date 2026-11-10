@@ -171,7 +171,7 @@ export const FINESTRE: Record<string, Riquadro> = {
   Barra_Esperienza_Cornice: { x: 21, y: 16, l: 184, a: 5 },
   Barra_Mietitore_Cornice: { x: 20, y: 31, l: 204, a: 8 },
   Barra_Seth_Cornice: { x: 10, y: 4, l: 205, a: 6 }, // la barra sottile della fascia alta (225×14)
-  Barra_Salute_Cornice: { x: 26, y: 7, l: 47, a: 6 },
+  Barra_Salute_Cornice: { x: 26, y: 7, l: 47, a: 6 }, // non più usata: la barra del personaggio è un rettangolo (BARRA_SALUTE)
 };
 
 /** Il disco scuro al centro dell'anello dell'abilità (lì va l'icona) e il raggio esterno dell'anello colorato. */
@@ -216,8 +216,13 @@ export const INTERNI: Record<string, Record<string, Riquadro>> = {
  * Su un iPhone un pixel di gioco è circa 2/3 di punto: sotto i 12 un numero non si legge più.
  * Se un testo non ci sta nel suo riquadro, il gioco lo rimpicciolisce da solo.
  */
+/** Barra di Seth nell'HUD: rettangolo rosso con i numeri (colori in BARRA_SALUTE, src/data/mondo.ts). Lunga quanto la finestra della barra disegnata. Da rivedere. */
+export const BARRA_SETH = { altezza: 12 };
+
 export const TESTI = {
   livello: 13, // numero nello stemma
+  ricarica: 16, // secondi che mancano all'abilità speciale, sopra la sua icona (da rivedere)
+  seth: 8, // salute di Seth dentro la sua barra (da rivedere)
   casella: 12, // livello di un'arma o di un dono nella sua casella
   avviso: 10, // scritta nel nastro (×2)
   avvisoSotto: 8, // riga sotto il nastro (×2)
