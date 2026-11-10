@@ -33,6 +33,7 @@ Parti della M8 già fatte:
 - Leggibilità del campo, solo visiva (4–5/11): lampo dei nemici, numeri del danno (limite di 15, ambra in tre casi, somma su élite, Seth e reazioni), nomi delle reazioni, simboli degli stati, cartiglio degli avvisi, orologio, personaggio sopra i nemici. Sul link di prova, non ancora sul link pubblico
 - **Fasce del telefono in verticale con il campo vero: fatte, verificate sul S25 il 6/11**, con i segnaposto dal codice. Sul link di prova e sull'APK di prova, non ancora sul link pubblico. Prossimi: pausa, scelta dei doni e menu
 - Laboratorio (LAB) sul link di prova (3/11)
+- **Prove sugli stati (10/11)**: notti esplorative del bot (`esplora`) e interruttore «Stati certi» nel LAB (Eventi), spento di partenza; risultati in [bilanciamento.md](bilanciamento.md). Da decidere se tenerlo
 - **Pausa a schede (6/11)**: Build, Rosario, Stati, Opzioni, statistiche del personaggio, Unioni che si scoprono, conferma di Abbandona; sul link di prova e sull'APK di prova, da provare sul S25. LAB → Schermate → Pausa
 
 ### Oggetti rompibili (prova, 5/11)
@@ -97,6 +98,10 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Voce | Dove è scritta |
 | --- | --- |
 | Barre della salute (personaggio 40 × 9 px, Seth alta 12 px; rosso `#c0262d`, vuoto `#3a0c10`; scorrimento 0,5 s, ambra `#d98a2b` per il danno, verde `#6fbf4a` per la cura) e grandezza del conto alla rovescia dell'abilità (16) | GDD §HUD; `src/data/mondo.ts` (`BARRA_SALUTE`), `src/data/hud.ts` (`BARRA_SETH`, `TESTI`) |
+| Stati certi (prova, interruttore del LAB): tutti i numeri di `STATI_CERTI` (quiete 3 s, Eclissi 10% senza tetto e ×2 del colpo su élite e Seth, Esorcismo 3 × 60%, Rivelazione +50% almeno +1, Interramento Luce +50%, Sacro 2,5 s, Ombra ×2), i casi senza colpo, l'ordine dell'Interramento con più stati, il tetto dei cerchi (12) | GDD §8c; `src/data/stati.ts`; decisioni 10/11 |
+| Amuleti rari (Martire, Patto di sangue, Specchio rotto, Cuore avido, Lanterna cieca): le notti esplorative non bastano a misurarli; servirebbero notti con l'amuleto obbligatorio | bilanciamento 10/11 |
+| Prova prestazioni lanciata dal LAB durante una partita: ferma la scena e misura uno schermo vuoto (dal menu funziona). Difetto che c'era già, non corretto | bilanciamento 10/11; `src/sistema/prova-prestazioni.ts` |
+| Notti esplorative del bot: una su tre; il bot non prende amuleti che lo manderebbero in Peccato | decisioni 10/11; `tools/sim.mjs` |
 | Copione della notte, respiro (50 s + 10 s al 25%), comparse 1,4 + 2,9 m, tetto 250, bruti al massimo 100, copione e forme delle orde, preavviso 3 s, salute ×3 dal minuto 6, Lumen accorpato a 28 px: tutti i valori. Il bot vince 7 notti su 48 |
 | Mosaici: disegno V1, probabilità dell'urna (26%, misurata con il bot che cerca le urne), numeri del Bagliore (20 s, +30% velocità, luce × 1,5), raggio di raccolta 40 px | `docs/asset_da_creare.md`, `docs/GDD.md` |
 | Scoperta di un'Unione: Edoardo ha detto «arma e dono al livello massimo», ma l'unione oggi chiede il dono al 3 (5 è il massimo di molti doni). Rimandato al bilanciamento finale (6/11): per ora vale il livello dell'unione | GDD §8f; `LIVELLO_DONO_UNIONE` |
@@ -137,5 +142,5 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Ordine delle tappe dopo i Patti (Cappella hub, Devozione e notti, questline, Veggente e Sguattera, redesign): proposto da Claude | «Prossime tappe» qui sopra |
 | Danza macabra: recupero di 3 s, da provare a mano da Edoardo | GDD §8e (amuleti) |
 | Correzioni agli oggetti del 9/11 (valori di Claude su richiesta di Edoardo): Vanga 1,5 s con la pausa del Sepolto (4 s); Acquasantiera un sorso ogni 45 s al massimo; Lucciola 2 grani e pausa 4 s; Ossa d'élite 2 grani; Martire 2 grani, onda senza danno che consacra e ferma 0,6 s; Ceri gemelli ricarica +10% | GDD §8e e §8f; bilanciamento 9/11 |
-| Il bot non prende mai Martire, Patto di sangue, Specchio rotto, Cuore avido e Lanterna cieca: le loro misure restano a zero finché non si decide se deve provarli | `amuletiPreferiti` in `src/data/bot.ts`; bilanciamento 9/11 |
+| Il bot non prende mai Martire, Patto di sangue, Specchio rotto, Cuore avido e Lanterna cieca con le sue preferenze; con `esplora` li prende di rado (vedi la riga sugli amuleti rari) | `amuletiPreferiti` in `src/data/bot.ts`; bilanciamento 9/11 |
 | Affinità della Veggente e della Sguattera | lore (*Aperto*) |

@@ -454,6 +454,16 @@ Ruoli delle armi: l'esplosione del dardo del Bastone ferisce in 40 px al 35% del
 
 La **scelta dei doni** è fatta di strisce orizzontali una sotto l'altra (`src/sistema/scheda.ts`, parole in `src/data/spiegazioni.ts`): nome, numeri grandi che cambiano («Danno 24 › 32»), il simbolo dello stato che lascia l'arma con il suo effetto, la reazione che si otterrebbe con un'arma già posseduta. Gli amuleti mostrano i grani dopo averli presi, vantaggio in verde, rovescio in rosso e l'avviso di Peccato se si sfora. Quando scatta una reazione il suo nome sale sopra il nemico, ingrandito × 2, nel colore dello stato con il contorno scuro: Eclissi viola, Rivelazione oro, Esorcismo ambra, Interramento seppia. Lo stesso nome torna al massimo ogni 2 s, al massimo 3 nomi sullo schermo insieme (oltre non si creano: la reazione avviene lo stesso). Il nome resta fuori da 90 px intorno al personaggio, spostandosi sopra quel cerchio, e dentro lo schermo (*da rivedere*). Stati e reazioni si leggono nella scheda **Stati** della pausa, che si apre anche dal «?» della scelta dei doni.
 
+**Stati certi (prova, `STATI_CERTI`; tutti i valori *da rivedere*).** Un interruttore del Laboratorio (scheda Eventi, «Stati certi», spento di partenza; per il bot `?stati=certi`) prova un'altra regola. Spento, tutto resta come sopra. Acceso, vale finché la pagina non si ricarica:
+- ogni colpo lascia lo stato della sua affinità: non contano il 10% e il 5% qui sopra, né le probabilità del Rosario spezzato e del Velo funebre;
+- **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
+- le **abilità speciali** ignorano la quiete: il loro primo scatto fa reagire tutti i nemici nel cerchio che hanno uno stato diverso;
+- **Eclissi**: danno = 10% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il doppio del danno del colpo che la innesca (se non c'è un colpo, come con Lucciola e Martire, il tetto di sempre);
+- **Esorcismo**: 3 fiammelle, ognuna al 60% del danno del colpo che la innesca (senza colpo, il danno di sempre);
+- **Rivelazione**: +50% anime, almeno +1, una volta per nemico;
+- **Interramento**: come sopra, più un effetto dallo stato consumato: Luce, +50% danno subito invece di +30%; Sacro, fermo 2,5 s; Ombra, la maledizione continua al doppio durante l'Interramento;
+- **disegno**: sui nemici comuni il nome della reazione non compare; al massimo 12 cerchi delle reazioni sullo schermo (oltre, la reazione avviene senza disegno).
+
 ## 8d. Meta progressione (`src/data/meta.ts`)
 
 Proposta originale: [proposte/meta-progressione.md](proposte/meta-progressione.md). Per ora c'è la parte di base: Cera, Cappella a elenco, ceri votivi, Seconda candela, personaggi da sbloccare, salvataggio.

@@ -40,6 +40,60 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 10/11 — Notti esplorative del bot e interruttore «Stati certi» (nessun numero della notte normale cambia)
+
+**Controllo.** `npm run sim -- 3 tutti`, Cappella vuota e completa, stessi semi, prima e dopo, con `esplora` e Stati certi spenti: 24 notti, 744 campi confrontati, **0 differenze**. Rifatto sul codice con le barre della salute nuove (5da9386, e3cf404): ancora 0 differenze, e quelle barre non cambiano le notti del bot (stesse notti di prima).
+
+**Notti esplorative** (`npm run sim -- 24 tutti meta=max esplora`: 96 notti, 32 esplorative). Vittorie 21/96: **1/32 nelle notti esplorative, 20/64 nelle altre**. Scegliere a caso indebolisce molto il bot, quindi la colonna «con» penalizza gli oggetti che il bot prende solo esplorando, e la colonna «senza» quelli che prende sempre. Per personaggio: Lampionaio 4/24, Becchino 5/24, Badessa 8/24, Strega 4/24.
+
+| Oggetto | Notti | Vinte | % vinte con | % vinte senza | Scelto/offerto |
+| --- | --- | --- | --- | --- | --- |
+| Sangue freddo | 66 | 21 | 32% | 0% | 66/117 |
+| Lucciola | 39 | 14 | 36% | 12% | 39/239 |
+| Ceri gemelli | 33 | 11 | 33% | 16% | 33/257 |
+| Ossa d'élite | 24 | 6 | 25% | 21% | 24/238 |
+| Danza macabra | 19 | 7 | 37% | 18% | 19/275 |
+| Cuore avido | 5 | 1 | poche | 22% | 5/294 |
+| Martire | 3 | 0 | poche | 23% | 3/352 |
+| Specchio rotto | 2 | 0 | poche | 22% | 2/319 |
+| Lanterna cieca | 2 | 1 | poche | 21% | 2/361 |
+| Patto di sangue | 0 | 0 | poche | 22% | 0/359 |
+| Unione: Candelabro funebre | 14 | 10 | 71% | 13% | 14/16 |
+| Unione: Falce di Seth | 19 | 10 | 53% | 14% | 19/21 |
+| Unione: Acquasantiera | 14 | 7 | 50% | 17% | 14/14 |
+| Acqua santa | 51 | 18 | 35% | 7% | 305/639 |
+| Campana | 51 | 15 | 29% | 13% | 282/716 |
+| Corvo | 38 | 4 | 11% | 29% | 194/646 |
+| Ali di falena | 25 | 0 | 0% | 30% | 62/391 |
+
+- **Sangue freddo**: il 0% «senza» non dice che sia indispensabile: le 30 notti senza sono quasi tutte esplorative (il bot normale lo prende sempre). Nelle sole notti esplorative: 1/17 con, 0/15 senza.
+- **Martire, Patto di sangue, Specchio rotto, Cuore avido, Lanterna cieca: non si può dire niente** (0–5 notti ciascuno). Con 3–5 grani, dopo uno o due amuleti non entra più nulla e anche esplorando il bot prende «Potenziamento» (141 volte su 198 reliquiari esplorativi). Patto di sangue 0 su 67 offerte esplorative è sfortuna del campione. Le notti in cui comparivano: Martire 3 sconfitte (5:35, 7:40, 7:27); Specchio rotto 2 sconfitte (7:27, 7:48); Cuore avido 1 alba e 4 sconfitte; Lanterna cieca 1 alba e 1 sconfitta. Per misurarli servono notti in cui l'amuleto c'è di sicuro (vedi «Da confermare»).
+- Il resto della tabella (armi e doni) è in `prove/sim.json` della simulazione; reazioni a notte: Eclissi 394, Rivelazione 811, Esorcismo 155, Interramento 197; danno delle reazioni 4,2% del totale.
+
+**Stati certi** (`npm run sim -- 12 tutti`, con e senza `stati=certi`, stessi semi, 48 notti per condizione). Valori di `STATI_CERTI` *da rivedere*; la notte non è stata corretta.
+
+| Cappella | Stati | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana della morte | Livello medio | Seth del 5 ucciso | Reazioni a notte: Eclissi, Rivelazione, Esorcismo, Interramento | Danno delle reazioni sul totale |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| vuota | normali | 7/48 (2, 2, 2, 1) | 6 | 8:06 | 44 | 37/42 | 43, 166, 170, 32 | 0,9% |
+| vuota | **certi** | **15/48** (5, 2, 4, 4) | 4 | 11:07 | 50 | 40/44 | 403, 3007, 3441, 782 | 9,0% |
+| completa | normali | 20/48 (3, 6, 6, 5) | 2 | 11:12 | 60 | 42/46 | 715, 1279, 212, 399 | 5,4% |
+| completa | **certi** | **32/48** (6, 6, 9, 11) | 2 | 8:09 | 64 | 42/46 | 1996, 7691, 2457, 1341 | 14,9% |
+
+- **Di quanto vince troppo**: +8 notti a Cappella vuota (da 15% a 31%), +12 a Cappella completa (da 42% a 67%); la Strega a Cappella completa vince 11 su 12. Danno delle reazioni a notte, completa: Eclissi 754 mila (prima 342), Esorcismo 465 mila (prima 23), parte in più dell'Interramento 106 mila (prima 40). La maledizione, anche quella doppia dell'Interramento, non è contata.
+- Vincoli rispettati: Seth del 5 resta il primo ostacolo; nessun personaggio muore sempre prima del minuto 5.
+- **Armi iniziali** (danno medio a notte e parte del danno totale del personaggio), normali → certi. Vuota: Lanterna 208 → 199 mila (18% → 11%), Pala 60 → 58 (10% → 7%), Turibolo 331 → 310 (10% → 6%), Bastone 467 → 520 (20% → 14%). Completa: Lanterna 308 → 272 (18% → 14%), Pala 158 → 123 (7% → 5%), Turibolo 800 → 584 (12% → 8%), Bastone 872 → 1191 (12% → 11%). Il danno delle armi resta simile: la parte scende perché crescono le reazioni.
+
+**Prova prestazioni** (minuto 14, 400 nemici, 60 s; Chromium sul Mac M1 con lo schermo del S25, non un telefono):
+
+| Prova | Reazioni nei 60 s | Media | Fotogrammi saltati | Secondi sotto 55 | Blocchi sopra 100 ms |
+| --- | --- | --- | --- | --- | --- |
+| Stati certi spenti | 599 | 60,0 fps | 2 | 0% | 0 |
+| accesi, al massimo 24 cerchi | 3701 | 60,0 fps | 1 | 0% | 0 |
+| accesi, 12 cerchi | 3681 | 60,0 fps | 3 | 0% | 0 |
+| accesi, 6 cerchi | 3648 | 60,0 fps | 2 | 0% | 0 |
+
+Sul Mac il tetto dei cerchi non fa differenza: le reazioni sono 6 volte di più ma il disegno regge. **Proposta: 12 cerchi** (*da rivedere*), da misurare sul S25 con la Prova prestazioni dell'APK. Durante la misura è venuto fuori un difetto che c'era già: lanciata da una partita in corso, la Prova prestazioni ferma la scena e misura uno schermo vuoto; dal menu funziona (vedi «Da confermare»).
+
 ### 9/11 — Il bot misura gli oggetti; sei correzioni (Vanga, Acquasantiera, Lucciola, Ossa d'élite, Martire, Ceri gemelli)
 
 **Misure nuove (nessun numero di gioco cambia).** `prove/sim.json` ha per ogni notte gli oggetti posseduti a fine notte con il livello, le carte offerte e scelte, il danno di ogni arma e di ogni reazione, le reazioni per tipo, il minuto della prima Unione offerta e presa, la cura del Patto di sangue e i sorsi dell'Acquasantiera; `npm run sim` stampa la tabella per oggetto. Controllo: `npm run sim -- 3 tutti` prima e dopo, stessi semi, Cappella vuota e completa: 24 notti, 504 campi confrontati, 0 differenze. Il danno di un'arma è misurato come il «danno totale» della fine partita (prima di Abbagliato e Interramento); la parte in più dell'Interramento è contata a parte; la maledizione che consuma la salute non è contata.
