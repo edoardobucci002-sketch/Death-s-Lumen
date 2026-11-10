@@ -230,10 +230,18 @@ const eventi = [
     return c >= 0 && barra ? '' : 'il Mietitore non arriva o manca la sua barra';
   }],
   ['élite e sciame', '?pg=strega&immortale&automatico&minuto=0.9', async (pag) => {
-    await pag.waitForTimeout(7000);
-    await pag.screenshot({ path: 'prove/elite-sciame.png' });
-    const s = await pag.evaluate(() => { const o = window.__dl.scene.getScene('Gioco').orda; let e = 0; for (let i = 0; i < o.numero; i++) e += o.elite[i]; return { e, n: o.numero }; });
-    return s.e > 0 && s.n > 30 ? '' : `élite ${s.e}, nemici ${s.n}`;
+    // l'élite arriva a 0:55, lo sciame verso l'1:00, e la Strega può uccidere l'élite prima che arrivi lo sciame:
+    // si guarda ogni quarto di secondo per 9 s e si chiede di aver visto l'una e l'altro (prima un solo istante a 7 s)
+    let eliteVista = 0, nemiciMassimi = 0, foto = false;
+    for (let t = 0; t < 36; t++) {
+      await pag.waitForTimeout(250);
+      const s = await pag.evaluate(() => { const o = window.__dl.scene.getScene('Gioco').orda; let e = 0; for (let i = 0; i < o.numero; i++) e += o.elite[i]; return { e, n: o.numero }; });
+      eliteVista = Math.max(eliteVista, s.e);
+      nemiciMassimi = Math.max(nemiciMassimi, s.n);
+      if (!foto && s.e > 0 && s.n > 30) (foto = true), await pag.screenshot({ path: 'prove/elite-sciame.png' });
+    }
+    if (!foto) await pag.screenshot({ path: 'prove/elite-sciame.png' });
+    return eliteVista > 0 && nemiciMassimi > 30 ? '' : `élite vista ${eliteVista}, nemici al massimo ${nemiciMassimi}`;
   }],
   ['alba', '?pg=lampionaio&immortale&automatico&minuto=14.95', async (pag) => {
     const ok = await pag.waitForSelector('.hud-fine.vittoria:not([hidden])', { timeout: 10000 }).then(() => true, () => false);

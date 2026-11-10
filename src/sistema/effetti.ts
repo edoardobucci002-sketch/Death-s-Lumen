@@ -31,7 +31,7 @@ const MAX_ARCHI = 4;
 const MAX_REAZIONI = 24;
 const MAX_POLVERI = 12;
 const MAX_ETICHETTE = 8;
-const MAX_MANI = 32; // prova pixelfx: gruppi di mani della Sepoltura
+const MAX_MANI = 16; // prova pixelfx: gruppi di mani della Sepoltura (due Sepolture insieme)
 const MAX_ECLISSI = 8; // prova pixelfx: Eclissi sullo schermo nello stesso momento
 // cifre 3×5: ogni riga è una cifra, 1 = pixel acceso
 const CIFRE = [
@@ -88,6 +88,7 @@ export class Effetti {
   private maniVita = new Float32Array(MAX_MANI); // secondi di animazione rimasti (0 = libero)
   private eclissi: Phaser.GameObjects.Sprite[] = [];
   private eclissiVita = new Float32Array(MAX_ECLISSI);
+  private durate = new Map<string, number>(); // secondi di ogni foglio pixelfx, calcolati una volta
   scossaX = 0; // spostamento della telecamera in questo fotogramma, in pixel interi
   scossaY = 0;
 
@@ -273,6 +274,20 @@ export class Effetti {
     this.reazioni[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setVisible(true);
   }
 
+  /**
+   * Durata in secondi di un foglio esportato da Aseprite: la somma delle durate dei fotogrammi.
+   * (La durata dell'animazione di Phaser non le conta: si calcola con 24 fotogrammi al secondo.)
+   */
+  private durataFoglio(chiave: string): number {
+    let d = this.durate.get(chiave);
+    if (d === undefined) {
+      const dati = this.scena.cache.json.get(chiave) as { frames: { duration: number }[] } | undefined;
+      d = (dati?.frames ?? []).reduce((t, f) => t + f.duration, 0) / 1000;
+      this.durate.set(chiave, d);
+    }
+    return d;
+  }
+
   /** Prova pixelfx: l'Eclissi a sprite in (x, y), centro della sfera sul punto; se sono tutte in uso non si crea. */
   eclissiPixelfx(x: number, y: number): void {
     let i = 0;
@@ -280,24 +295,25 @@ export class Effetti {
     if (i >= this.eclissi.length) return;
     const s = this.eclissi[i].setPosition(Math.round(x), Math.round(y)).setVisible(true);
     s.play({ key: 'Pixelfx_Eclissi:idle', repeat: 0 });
-    this.eclissiVita[i] = (this.scena.anims.get('Pixelfx_Eclissi:idle')?.duration ?? 1100) / 1000;
+    this.eclissiVita[i] = this.durataFoglio('Pixelfx_Eclissi');
   }
 
   /**
-   * Prova pixelfx: la Sepoltura come gruppi di mani sparsi nell'ellisse (2:1) di raggio r intorno a (x, y),
-   * uno ogni PIXELFX.sepoltura.areaPerGruppo pixel quadrati, con partenze sfalsate in modo che finiscano entro «durata».
+   * Prova pixelfx: la Sepoltura come gruppi di mani lungo il bordo dell'ellisse (2:1) di raggio r intorno a (x, y):
+   * PIXELFX.sepoltura.gruppi gruppi a passi regolari, i piedi dentro la fascia larga PIXELFX.sepoltura.fascia px
+   * dal bordo, il centro vuoto; partenze sfalsate in modo che finiscano entro «durata».
    */
   maniSepoltura(x: number, y: number, r: number, durata: number): void {
-    const S = PIXELFX.sepoltura, anim = this.scena.anims.get('Pixelfx_Sepoltura_mani:idle');
-    if (!anim || !this.mani.length) return;
-    const lunga = anim.duration / 1000, rx = Math.max(0, r - S.bordo), ry = Math.max(0, r / 2 - S.bordo / 2);
-    let n = Math.min(S.massimo, Math.max(1, Math.round((Math.PI * r * (r / 2)) / S.areaPerGruppo)));
-    for (let i = 0; i < this.mani.length && n > 0; i++) {
+    const S = PIXELFX.sepoltura;
+    if (!this.mani.length) return;
+    const lunga = this.durataFoglio('Pixelfx_Sepoltura_mani'), passo = (Math.PI * 2) / S.gruppi, giro = this.caso.numero() * passo;
+    let n = 0;
+    for (let i = 0; i < this.mani.length && n < S.gruppi; i++) {
       if (this.maniVita[i] > 0) continue;
-      n--;
-      // punto a caso dentro l'ellisse (radice: densità uniforme)
-      const a = this.caso.numero() * Math.PI * 2, d = Math.sqrt(this.caso.numero());
-      const mx = Math.round(x + Math.cos(a) * d * rx), my = Math.round(y + Math.sin(a) * d * ry);
+      // angolo a passi regolari (± un quarto di passo), distanza dal centro dentro la fascia del bordo
+      const a = giro + n * passo + (this.caso.numero() - 0.5) * passo * 0.5, d = Math.max(0, r - this.caso.numero() * S.fascia);
+      n++;
+      const mx = Math.round(x + Math.cos(a) * d), my = Math.round(y + Math.sin(a) * d * 0.5);
       this.maniAttesa[i] = Math.max(0.001, this.caso.numero() * Math.max(0, durata - lunga)); // > 0: spunta al prossimo passo
       this.maniVita[i] = lunga;
       this.mani[i].setPosition(mx, my).setDepth(PROFONDITA.aTerra + my).setVisible(false);

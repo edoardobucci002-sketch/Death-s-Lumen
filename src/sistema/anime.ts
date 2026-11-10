@@ -26,11 +26,13 @@ export class Anime {
   /** Nuova anima in (x, y); (gx, gy) è il personaggio, per sapere quale anima riciclare se sono troppe. */
   aggiungi(x: number, y: number, valore: number, gx: number, gy: number): void {
     // accorpate come in Vampire Survivors: se ce n'è una ferma vicina, il valore va a lei e cresce di dimensione e colore
-    const r2 = ANIME.accorpa * ANIME.accorpa;
+    // …ma solo se quella ferma non è più lontana dal personaggio della nuova: il valore non deve allontanarsi da lui
+    // (con il raggio di unione largo, chi stava fermo non raccoglieva più nulla; 11/11, da rivedere)
+    const r2 = ANIME.accorpa * ANIME.accorpa, dn = (x - gx) ** 2 + (y - gy) ** 2;
     for (let k = 0; k < this.numero; k++) {
       if (this.volo[k]) continue;
       const dx = this.x[k] - x, dy = this.y[k] - y;
-      if (dx * dx + dy * dy < r2) {
+      if (dx * dx + dy * dy < r2 && (this.x[k] - gx) ** 2 + (this.y[k] - gy) ** 2 <= dn) {
         this.valore[k] += valore;
         this.aspetto(k);
         return;

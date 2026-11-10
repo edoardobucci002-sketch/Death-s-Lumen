@@ -28,7 +28,7 @@ import { EFFETTI } from '../data/effetti';
 import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, MAX_ARMI, type Arma } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { animeDono, effettoDono, PASSIVI, RICARICA_MINIMA, ricaricaDono, type IdDono } from '../data/doni';
-import { animePerLivello, CARTE } from '../data/progressione';
+import { ANIME, animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
 import { BOT, PROVE_BOT } from '../data/bot';
 import { Anime } from '../sistema/anime';
@@ -834,6 +834,11 @@ export class Gioco extends Phaser.Scene {
     const y = this.y - COLPI.corpo;
     if (cosa === 'sepoltura') this.arsenale.labVediEffetto(cosa, this.x, this.y);
     else this.arsenale.labVediEffetto(cosa, this.x + (cosa === 'eclissi' ? 140 : 0), cosa === 'eclissi' ? y : y + 120, raggio);
+  }
+
+  /** Raggio di unione delle lacrime di Lumen (ANIME.accorpa), da provare in partita. Vale finché non ricarichi la pagina. */
+  labUnioneLacrime(px: number): void {
+    (ANIME as { accorpa: number }).accorpa = px;
   }
 
   labPozzaCurativa(): void {

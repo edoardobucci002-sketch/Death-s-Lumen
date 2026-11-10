@@ -26,6 +26,7 @@ const CATEGORIE = { PERSONAGGI: 'personaggi', NEMICI: 'nemici', EFFETTI: 'effett
 const SENZA_TAG_OK = ['effetti', 'oggetti', 'icone', 'hud'];
 const TAG_AMMESSI = ['idle', 'walk', 'attack', 'special', 'hurt', 'death'];
 const NOME = /^(.+)_V(\d+)\.aseprite$/i;
+const LATO_MASSIMO = 2048; // lato massimo di un foglio di sprite, in pixel
 
 function trovaAseprite() {
   const candidati = [
@@ -89,9 +90,17 @@ for (const s of [...scelti.values()].sort((a, b) => a.chiave.localeCompare(b.chi
   mkdirSync(cartella, { recursive: true });
   const png = join(cartella, `${s.chiave}.png`);
   const json = join(cartella, `${s.chiave}.json`);
-  execFileSync(aseprite, ['-b', s.p, '--sheet', png, '--sheet-type', 'packed', '--data', json,
+  const esporta = (larghezza) => execFileSync(aseprite, ['-b', s.p, ...(larghezza ? ['--sheet-width', String(larghezza)] : []), '--sheet', png, '--sheet-type', 'packed', '--data', json,
     '--format', 'json-array', '--list-tags', '--trim', '--shape-padding', '1', '--filename-format', '{frame}'], { stdio: 'inherit' });
-  const dati = JSON.parse(readFileSync(json, 'utf8'));
+  esporta(0);
+  let dati = JSON.parse(readFileSync(json, 'utf8'));
+  // nessun foglio oltre LATO_MASSIMO px per lato (i telefoni più deboli non caricano texture più grandi):
+  // se il foglio è troppo largo, i fotogrammi vanno a capo su più righe
+  if (Math.max(dati.meta.size.w, dati.meta.size.h) > LATO_MASSIMO) {
+    esporta(LATO_MASSIMO);
+    dati = JSON.parse(readFileSync(json, 'utf8'));
+    if (Math.max(dati.meta.size.w, dati.meta.size.h) > LATO_MASSIMO) avvisi.push(`${s.chiave}: foglio di ${dati.meta.size.w}×${dati.meta.size.h} px, oltre ${LATO_MASSIMO} anche su più righe`);
+  }
   dati.meta.image = `${s.chiave}.png`;
   writeFileSync(json, JSON.stringify(dati));
   const tag = (dati.meta.frameTags ?? []).map((t) => t.name);

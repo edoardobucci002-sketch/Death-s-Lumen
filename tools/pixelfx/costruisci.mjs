@@ -112,14 +112,15 @@ function rendi(fx, { scala = 1, fps = 15, opzioni = {}, margine = 0 }) {
   return { frames, w: r.w, h: r.h, perno: [fx.meta.origin[0] + margine, fx.meta.origin[1] + margine], fps };
 }
 
-const FPS = 15; // da rivedere: gli sprite del gioco vanno a 8–10 fotogrammi al secondo
+const FPS = 12; // Edoardo, 10/11: 12 fotogrammi al secondo (erano 15), stessa durata
 mkdirSync(join(BASE, 'anteprime'), { recursive: true });
 let totale = 0;
 
-// 1) Sepoltura: un gruppo di mani (grandezza naturale); il gioco ne mette diversi nell'area
+// 1) Sepoltura: un gruppo di mani (grandezza naturale); il gioco ne mette diversi lungo il bordo dell'area.
+//    light: 0 toglie la luce aggiunta, che a retino diventava un alone a puntini (Edoardo, 10/11)
 {
   const fx = await loadEffect('shadow/grasping-hands', join(PFX, 'src/fx'));
-  const r = rifila(...(() => { const x = rendi(fx, { fps: FPS, opzioni: { palette: ['#140e0a', '#2e2216', '#54402a', '#7c6246', '#b89a74', '#dcc8a2', '#f2e6cc'] } }); return [x.frames, x.w, x.h, x.perno]; })());
+  const r = rifila(...(() => { const x = rendi(fx, { fps: FPS, opzioni: { light: 0, palette: ['#140e0a', '#2e2216', '#54402a', '#7c6246', '#b89a74', '#dcc8a2', '#f2e6cc'] } }); return [x.frames, x.w, x.h, x.perno]; })());
   totale += salva('Sepoltura_mani', r, r.frames.map(() => Math.round(1000 / FPS)));
 }
 

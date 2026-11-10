@@ -15,6 +15,7 @@ import { Caso } from './caso';
 import { ECLISSI, ESORCISMO, INTERRAMENTO, LUCE, OMBRA, RIVELAZIONE, SACRO, TERRA, type Orda } from './orda';
 import { AFFINITA_ABILITA, REAZIONI, RUOLI, STATI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
+import { chiediPozza, pozzaCaricata } from './al-volo';
 import { NEMICI } from '../data/nemici';
 import { suona } from './audio';
 import { PROFONDITA, type Effetti } from './effetti';
@@ -34,7 +35,7 @@ import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPI
 const NUBE = 1;
 const POZZA = 2;
 // prova pixelfx: le Pozze a sprite, una per raggio (Pixelfx_Pozza_089 …), con i nomi preparati prima della partita
-const CHIAVI_POZZA = PIXELFX.pozza.raggi.map((r) => `Pixelfx_Pozza_${String(r).padStart(3, '0')}`);
+const CHIAVI_POZZA = PIXELFX.pozza.raggi.map((r) => `${PIXELFX.pozza.prefisso}${String(r).padStart(3, '0')}`);
 function chiavePozzaPixelfx(raggio: number): string {
   let m = 0;
   for (let k = 1; k < PIXELFX.pozza.raggi.length; k++) if (Math.abs(PIXELFX.pozza.raggi[k] - raggio) < Math.abs(PIXELFX.pozza.raggi[m] - raggio)) m = k;
@@ -464,6 +465,16 @@ export class Arsenale {
     this.zSprite[i].setTint(A.colore);
     this.pozzeCuranti++;
   }
+
+  /** Prova pixelfx: è arrivata un'altra misura della Pozza; le pozze in campo passano a lei prima che la vecchia si scarichi. */
+  private cambiaPozza = (vecchia: string, nuova: string): void => {
+    for (let i = 0; i < MAX_ZONE; i++) {
+      const s = this.zSprite[i];
+      if (s.texture.key !== vecchia) continue;
+      if (i < this.zone) s.setTexture(nuova).play({ key: `${nuova}:idle`, repeat: -1 });
+      else s.stop().setTexture(TURIBOLO.effetto);
+    }
+  };
 
   /** Laboratorio: una pozza dell'Acqua santa che cura, nel punto (x, y). */
   labPozzaCurativa(x: number, y: number): void {
@@ -1244,10 +1255,12 @@ export class Arsenale {
     }
     // prova pixelfx: la Pozza nella misura più vicina, a grandezza naturale; la Sepoltura a gruppi di mani (effetti.ts)
     if (INTERRUTTORI.pixelfx && chiave === ACQUA_SANTA.effetto) {
-      const k = chiavePozzaPixelfx(raggio);
-      if (this.scena.textures.exists(k)) {
+      // si carica solo la misura in uso; finché arriva si usa quella in memoria, o la pozza di sempre
+      chiediPozza(this.scena, chiavePozzaPixelfx(raggio), this.cambiaPozza);
+      const k = pozzaCaricata();
+      if (k) {
         s.setTexture(k).setScale(1).setVisible(true);
-        s.play({ key: `${k}:idle`, repeat: -1 }); // la chiave dell'animazione la crea Avvio.ts
+        s.play({ key: `${k}:idle`, repeat: -1 }); // l'animazione la crea al-volo.ts
         return;
       }
     }

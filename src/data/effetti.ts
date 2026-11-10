@@ -57,11 +57,12 @@ export const EFFETTI = {
 // Tutti i valori sono da rivedere.
 export const PIXELFX = {
   // Pozza dell'Acqua santa: una versione per raggio; il gioco prende quella più vicina all'area vera
-  // (i nomi dei file sono Pixelfx_Pozza_089 … Pixelfx_Pozza_186)
-  pozza: { raggi: [89, 107, 129, 155, 186] },
-  // Sepoltura: gruppi di 4 mani sparsi nell'area, un gruppo ogni «areaPerGruppo» pixel quadrati dell'ellisse,
-  // con partenze sfalsate lungo tutta la durata dell'abilità
-  sepoltura: { areaPerGruppo: 9000, massimo: 24, perno: [53, 71] as const, bordo: 40 },
-  // Eclissi: 1,1 s, il centro della sfera nera cade sul nemico che reagisce
-  eclissi: { centro: [83, 97] as const },
+  // (i nomi dei file sono Pixelfx_Pozza_089 … Pixelfx_Pozza_186). Si carica solo quella in uso (src/sistema/al-volo.ts)
+  pozza: { raggi: [89, 107, 129, 155, 186], prefisso: 'Pixelfx_Pozza_' },
+  // Sepoltura (Edoardo, 10/11): gruppi di 4 mani solo lungo il bordo dell'area, i piedi delle mani dentro una fascia
+  // larga «fascia» px dal bordo, centro vuoto; «gruppi» gruppi a passi regolari intorno all'ellisse (con un po' di caso),
+  // partenze sfalsate lungo tutta la durata dell'abilità. perno: i piedi del gruppo nel foglio
+  sepoltura: { gruppi: 8, fascia: 40, perno: [52, 71] as const },
+  // Eclissi: 1,1 s, il centro della sfera nera cade sul nemico che reagisce (punto del foglio)
+  eclissi: { centro: [83, 89] as const },
 } as const;
