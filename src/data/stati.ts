@@ -74,6 +74,29 @@ export const RUOLI = {
 } as const;
 
 /**
+ * Devozione (proposta di Edoardo dell'11/11, valori da rivedere): più armi della stessa affinità possiedi, più forte è il suo
+ * stato. Grado 1 = 1 arma (o nessuna: lo stato viene da un'abilità, un amuleto o altro), 2 = 2 armi, 3 = 3 o più.
+ * Il grado 1 vale come gli stati di sempre (STATI). Il grado dello stato che una reazione consuma (quello che il nemico
+ * aveva già) moltiplica anche la reazione: danno di Eclissi ed Esorcismo, anime in più della Rivelazione, fermo e danno
+ * in più dell'Interramento. Vale con gli Stati certi; con «Stati a caso (vecchi)» tutto resta al grado 1.
+ */
+export const DEVOZIONE = {
+  abbagliato: [0.15, 0.2, 0.25], // danno subito in più
+  consacrato: [0.25, 0.32, 0.4], // rallentamento
+  maledetto: [0.02, 0.03, 0.04], // salute massima persa al secondo (élite e Seth con le riduzioni di STATI)
+  sepolto: [0.6, 0.8, 1.0], // secondi di fermo
+  reazione: [1, 1.25, 1.5], // moltiplicatore della reazione che consuma lo stato
+  lentoMassimo: 0.8, // il rallentamento non supera questo (con i Riti potrebbe crescere senza fine)
+} as const;
+
+/**
+ * Riti (proposta di Edoardo dell'11/11, valori da rivedere): quando non resta nulla da potenziare, ogni «ogni» livelli si apre
+ * la scelta dei Riti: una carta per affinità delle armi che hai (al massimo «carte», a caso se sono di più). Ogni Rito dà
+ * +«stato» alla forza dello stato di quella affinità e +«reazione» alle reazioni che lo consumano; senza fine, si sommano.
+ */
+export const RITI = { ogni: 3, carte: 3, stato: 0.08, reazione: 0.08 } as const;
+
+/**
  * Stati certi: una prova, accesa dall'interruttore «Stati certi» del Laboratorio (spento di partenza) o, per il bot,
  * da ?stati=certi. Spento, il gioco è identico a prima. Acceso, ogni colpo lascia lo stato della sua affinità
  * (STATI.probabilita, STATI.probabilitaZone, RUOLI.rosarioMaledice e RUOLI.veloConsacra non contano) e valgono questi numeri.

@@ -9,8 +9,9 @@ import { CARTE } from '../data/progressione';
 import { ROSARIO } from '../data/rosario';
 import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { PASSIVI, type IdDono, type Passivo } from '../data/doni';
-import { CAMPI_ARMA, chiaro, DATI_DONI, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
+import { CAMPI_ARMA, chiaro, DATI_DONI, gradoDevozione, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { STRISCIA } from '../data/hud';
+import { INTERRUTTORI } from './interruttori';
 import { arte, registraArte } from './arte';
 import { iconaAmuleto } from './amuleti';
 import type { Dono } from './doni';
@@ -87,9 +88,14 @@ function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
       dati.push({ nome: campo.nome, prima: virgola(prima[k] as number), dopo: virgola(v) + unita, tono: 'bene' });
     }
   }
+  const aff = AFFINITA_ARMI[arma.id], info = INFO_AFFINITA[aff];
+  // Devozione: un'arma nuova che alza il grado della sua affinità lo dice («Devozione Luce 2 › 3»)
+  if (l === 1 && INTERRUTTORI.statiCerti) {
+    const stesse = c.armi.filter((a) => AFFINITA_ARMI[a.id] === aff).length, prima = gradoDevozione(stesse), dopo = gradoDevozione(stesse + 1);
+    if (dopo > prima) dati.push({ nome: `Devozione ${info.nome}`, prima: String(prima), dopo: String(dopo), tono: 'bene' });
+  }
   const righe: Riga[] = [];
   if (novita || !dati.length) righe.push({ testo: String(ora.testo) });
-  const aff = AFFINITA_ARMI[arma.id], info = INFO_AFFINITA[aff];
   righe.push({ testo: `${info.verbo} il nemico: ${info.effetto()}`, simbolo: info.simbolo, colore: info.colore });
   for (const a of c.armi) {
     const r = a !== arma ? reazioneTra(aff, AFFINITA_ARMI[a.id]) : undefined;

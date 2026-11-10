@@ -17,7 +17,7 @@ import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
 import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
-import { REAZIONI, STATI, STATI_CERTI } from '../data/stati';
+import { DEVOZIONE, REAZIONI, RITI, STATI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
 import { Simboli } from './simboli';
 import { COLPI } from '../data/armi';
@@ -99,6 +99,12 @@ export class Orda {
   readonly scattoY = new Float32Array(CAPIENZA);
   private anime = new Float32Array(CAPIENZA);
   // per la simulazione: salute tolta dalla maledizione (Maledetto) e, con gli Stati certi, dall'Interramento che ha consumato l'Ombra
+  // Devozione: grado (1–3) e moltiplicatore dei Riti di ogni affinità (indice LUCE…TERRA); li imposta la scena
+  private grado = new Uint8Array([1, 1, 1, 1, 1]);
+  private ritiStato = new Float32Array([1, 1, 1, 1, 1]); // forza dello stato in più dei Riti (1 = nessuno)
+  private ritiReazione = new Float32Array([1, 1, 1, 1, 1]); // forza in più delle reazioni che consumano lo stato
+  moltReazione = 1; // della reazione restituita dall'ultima marca(): grado e Riti dello stato consumato
+  private moltInterrato = new Float32Array(CAPIENZA); // l'Interramento in corso: danno in più × questo
   dannoMaledizione = 0;
   marcato = false; // l'ultima marca() ha lasciato lo stato (per la simulazione)
   dannoMaledizioneInterrata = 0;
@@ -138,7 +144,7 @@ export class Orda {
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
-    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo];
+    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo, this.moltInterrato];
 
   constructor(
     scena: Phaser.Scene,
@@ -206,7 +212,7 @@ export class Orda {
       const fermo = this.aggiornaStati(i, dt);
       if (!fermo && this.tipo[i] === ID_MIETITORE && this.muoviMietitore(i, dt, dx, dy, d, gx, gy, secondi)) continue;
       let v = fermo ? 0 : this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
-      if (this.sConsacrato[i] > 0) v *= 1 - STATI.consacrato.lento * (this.tipo[i] === ID_MIETITORE ? MIETITORE.rallentamento : 1);
+      if (this.sConsacrato[i] > 0) v *= 1 - this.forza(SACRO) * (this.tipo[i] === ID_MIETITORE ? MIETITORE.rallentamento : 1);
       let tx = gx;
       let ty = gy;
       const b = this.branco[i] - 1;
@@ -283,7 +289,7 @@ export class Orda {
   /** Colpisce il nemico i: toglie salute, lo illumina (se lampeggia e non l'ha fatto da poco) e lo spinge nella direzione (dx, dy), lunga 1. */
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number, lampeggia = true): void {
     // abbagliato e interrato subiscono di più
-    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? this.piuInterrato(i) : 0));
+    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? this.forza(LUCE) : 0) + (this.sInterrato[i] > 0 ? this.piuInterrato(i) : 0));
     if (lampeggia && this.pausaLampo[i] <= 0) {
       this.lampo[i] = COLPI.lampoNemico;
       this.pausaLampo[i] = COLPI.lampoNemicoPausa;
@@ -315,9 +321,35 @@ export class Orda {
     this.ritmo[aff - 1][i] = STATI_CERTI.ritmo;
   }
 
-  /** Quanto danno in più subisce mentre è interrato: +30%, +50% con gli Stati certi se l'Interramento ha consumato la Luce. */
+  /** Quanto danno in più subisce mentre è interrato: +30%, +50% con gli Stati certi se l'Interramento ha consumato la Luce; × Devozione e Riti. */
   piuInterrato(i: number): number {
-    return this.interraTipo[i] === LUCE ? STATI_CERTI.interramento.dannoLuce : REAZIONI.interramento.danno; // interraTipo è 0 senza la regola nuova
+    return (this.interraTipo[i] === LUCE ? STATI_CERTI.interramento.dannoLuce : REAZIONI.interramento.danno) * this.moltInterrato[i]; // interraTipo è 0 senza la regola nuova
+  }
+
+  /**
+   * Devozione e Riti (src/data/stati.ts): gradi[aff] = armi di quell'affinità (indice LUCE…TERRA), riti[aff] = Riti presi.
+   * Con «Stati a caso (vecchi)» tutto torna al grado 1 senza Riti.
+   */
+  impostaDevozione(armi: ArrayLike<number>, riti: ArrayLike<number>): void {
+    const certi = INTERRUTTORI.statiCerti;
+    for (let a = 1; a <= 4; a++) {
+      this.grado[a] = certi ? Math.min(3, Math.max(1, armi[a])) : 1;
+      this.ritiStato[a] = certi ? 1 + RITI.stato * riti[a] : 1;
+      this.ritiReazione[a] = certi ? 1 + RITI.reazione * riti[a] : 1;
+    }
+  }
+
+  /** Grado della Devozione dell'affinità a (1–3). */
+  gradoDi(a: number): number {
+    return this.grado[a];
+  }
+
+  /** Forza dello stato dell'affinità a, con Devozione e Riti: danno in più (Luce), rallentamento (Sacro), salute al secondo (Ombra), secondi di fermo (Terra). */
+  forza(a: number): number {
+    const g = this.grado[a] - 1, D = DEVOZIONE;
+    const base = a === LUCE ? D.abbagliato[g] : a === SACRO ? D.consacrato[g] : a === OMBRA ? D.maledetto[g] : D.sepolto[g];
+    const f = base * this.ritiStato[a];
+    return a === SACRO ? Math.min(D.lentoMassimo, f) : f;
   }
 
   /**
@@ -342,18 +374,23 @@ export class Orda {
     if (r) {
       // lo stato consumato insieme alla Terra (con gli Stati certi decide l'effetto in più dell'Interramento)
       const consumato = aff !== TERRA ? aff : abb ? LUCE : cons ? SACRO : OMBRA;
+      // Devozione: la reazione si moltiplica per il grado (e i Riti) dello stato che il nemico aveva già
+      const gia = r === INTERRAMENTO ? (aff === TERRA ? consumato : TERRA) : r === ECLISSI ? (aff === LUCE ? OMBRA : LUCE)
+        : r === RIVELAZIONE ? (aff === LUCE ? SACRO : LUCE) : aff === SACRO ? OMBRA : SACRO;
+      this.moltReazione = DEVOZIONE.reazione[this.grado[gia] - 1] * this.ritiReazione[gia];
       this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = 0;
       this.ultimoStato[i] = 0;
       if (certi) this.quiete[i] = STATI_CERTI.quiete;
       if (r === INTERRAMENTO) {
         this.interraTipo[i] = certi ? consumato : 0;
         const fermo = this.interraTipo[i] === SACRO ? STATI_CERTI.interramento.fermoSacro : REAZIONI.interramento.fermo;
-        this.sInterrato[i] = fermo * resiste;
+        this.sInterrato[i] = fermo * resiste * this.moltReazione;
+        this.moltInterrato[i] = this.moltReazione;
         this.pausaSepolto[i] = STATI.sepolto.pausa;
       } else if (r === RIVELAZIONE && !this.rivelato[i]) {
         // una volta sola: sul Mietitore, colpito di continuo, le anime raddoppiavano all'infinito
         const R = STATI_CERTI.rivelazione;
-        if (certi) { if (this.anime[i] >= R.da) this.anime[i] += Math.floor(this.anime[i] * R.anime); }
+        if (certi) { if (this.anime[i] >= R.da) this.anime[i] += Math.floor(this.anime[i] * R.anime * this.moltReazione); }
         else this.anime[i] *= REAZIONI.rivelazione.anime;
         this.rivelato[i] = 1;
       }
@@ -363,7 +400,7 @@ export class Orda {
     else if (aff === SACRO) this.sConsacrato[i] = STATI.durata * this.durataStati;
     else if (aff === OMBRA) this.sMaledetto[i] = STATI.durata * this.durataStati;
     else {
-      this.sSepolto[i] = STATI.sepolto.fermo * resiste;
+      this.sSepolto[i] = this.forza(TERRA) * resiste;
       this.pausaSepolto[i] = STATI.sepolto.pausa;
     }
     this.ultimoStato[i] = aff;
@@ -422,7 +459,7 @@ export class Orda {
     if (this.sMaledetto[i] > 0) {
       this.sMaledetto[i] -= dt;
       const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
-      const via = this.saluteMassima[i] * STATI.maledetto.perSecondo * f * dt;
+      const via = this.saluteMassima[i] * this.forza(OMBRA) * f * dt;
       this.dannoMaledizione += Math.min(via, Math.max(0, this.salute[i])); // per la simulazione: solo la salute tolta davvero
       this.salute[i] -= via;
     }
@@ -437,7 +474,7 @@ export class Orda {
       // Stati certi: se l'Interramento ha consumato l'Ombra, la maledizione continua al doppio
       if (this.interraTipo[i] === OMBRA) { // interraTipo è 0 senza la regola nuova
         const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
-        const via = this.saluteMassima[i] * STATI.maledetto.perSecondo * STATI_CERTI.interramento.maledettoOmbra * f * dt;
+        const via = this.saluteMassima[i] * this.forza(OMBRA) * STATI_CERTI.interramento.maledettoOmbra * this.moltInterrato[i] * f * dt;
         this.dannoMaledizioneInterrata += Math.min(via, Math.max(0, this.salute[i]));
         this.salute[i] -= via;
       }
@@ -658,6 +695,7 @@ export class Orda {
     this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
     this.quiete[i] = this.pausaSfioro[i] = 0;
     for (const r of this.ritmo) r[i] = 0;
+    this.moltInterrato[i] = 1;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];

@@ -26,6 +26,17 @@ export const INFO_AFFINITA: Record<IdAffinita, InfoAffinita> = {
   terra: { nome: 'Terra', stato: 'Sepolto', verbo: 'Seppellisce', simbolo: 'Simbolo_Sepolto', colore: '#b89a74', effetto: () => `resta fermo ${virgola(STATI.sepolto.fermo)} s` },
 };
 
+/** L'effetto di uno stato con una forza data (Devozione e Riti): «subisce +20% danno». */
+export const EFFETTO_FORZA: Record<IdAffinita, (f: number) => string> = {
+  luce: (f) => `subisce +${percento(f)} danno`,
+  sacro: (f) => `rallenta del ${percento(f)}`,
+  ombra: (f) => `perde il ${percento(f)} di salute al secondo`,
+  terra: (f) => `resta fermo ${virgola(f)} s`,
+};
+
+/** Grado della Devozione con n armi di un'affinità: 1 (anche senza armi), 2, 3 con 3 o più. */
+export const gradoDevozione = (n: number): number => Math.min(3, Math.max(1, n));
+
 export interface InfoReazione {
   nome: string;
   stati: [IdAffinita, IdAffinita | null]; // null = con qualsiasi altro stato

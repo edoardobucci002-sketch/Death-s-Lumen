@@ -543,6 +543,12 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 
   // Stati certi: la regola del gioco dal 10/11
   const SC = ST.STATI_CERTI;
+  const DV = ST.DEVOZIONE;
+  frase('Devozione: Abbagliato', '| Abbagliato, danno subito in più | {}% | {}% | {}% |', ...DV.abbagliato.map(pct));
+  frase('Devozione: Consacrato', '| Consacrato, rallentamento | {}% | {}% | {}% |', ...DV.consacrato.map(pct));
+  frase('Devozione: Maledetto', '| Maledetto, salute al secondo | {}% | {}% | {}% |', ...DV.maledetto.map(pct));
+  frase('Devozione: Sepolto', '| Sepolto, fermo | {} s | {} s | {} s |', ...DV.sepolto);
+  frase('Devozione: reazione', '| Reazione che consuma lo stato | ×{} | ×{} | ×{} |', ...DV.reazione);
   frase('Stati certi: ritmo', 'al massimo una volta ogni {} s (ritmo delle zone', SC.ritmo);
   frase('Stati certi: quiete', 'il nemico non può reagire di nuovo per {} s', SC.quiete);
   frase('Stati certi: Eclissi', 'esplosione di {} px; danno = {}% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il {p} del danno del colpo che la innesca (se non c\'è un colpo, come con Lucciola e Martire, {})', RZ.eclissi.raggio, pct(SC.eclissi.parte), SC.eclissi.colpoElite, RZ.eclissi.tetto);

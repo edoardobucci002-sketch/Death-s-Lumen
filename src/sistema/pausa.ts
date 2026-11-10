@@ -38,6 +38,8 @@ export interface DatiPausa {
   unite: VoceUnioneFatta[]; // fatte almeno una volta, in qualsiasi notte: restano per sempre in Stati
   statistiche: { nome: string; valore: string }[];
   affinita: IdAffinita[]; // gli stati che la build può lasciare
+  // Devozione e Riti di ogni affinità (solo con gli Stati certi): grado, armi, Riti, effetto con la forza di adesso, reazioni ×
+  devozione: Partial<Record<IdAffinita, { grado: number; armi: number; riti: number; effetto: string; reazioni: string }>>;
   attesa: 'dono' | 'reliquiario' | null; // la scelta aperta sotto la pausa
 }
 
@@ -378,7 +380,9 @@ export class Pausa {
     const tuoi = AFFINITA_TUTTE.filter((a) => d.affinita.includes(a)), altri = AFFINITA_TUTTE.filter((a) => !d.affinita.includes(a));
     const stato = (a: IdAffinita, spenta: boolean): HTMLElement => {
       const i = INFO_AFFINITA[a];
-      return div(`pausa-voce ${spenta ? 'spenta' : ''}`, this.simbolo(i.simbolo), div('', this.parola(i.stato, spenta ? '#9c907c' : i.colore, this.lettera), div('pausa-riga', `${i.nome}: ${i.effetto()}`)));
+      const dv = d.devozione[a];
+      const sotto = dv ? [div('pausa-sotto', `Devozione ${dv.grado} (${dv.armi} ${dv.armi === 1 ? 'arma' : 'armi'})${dv.riti ? ` · Riti ${dv.riti}` : ''} · reazioni ${dv.reazioni}`)] : [];
+      return div(`pausa-voce ${spenta ? 'spenta' : ''}`, this.simbolo(i.simbolo), div('', this.parola(i.stato, spenta ? '#9c907c' : i.colore, this.lettera), div('pausa-riga', `${i.nome}: ${dv?.effetto ?? i.effetto()}`), ...sotto));
     };
     const reazioni = INFO_REAZIONI.map((r) => {
       const [a, b] = r.stati, possibile = d.affinita.includes(a) && (b ? d.affinita.includes(b) : d.affinita.length > 1);

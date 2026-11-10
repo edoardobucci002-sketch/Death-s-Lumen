@@ -464,6 +464,18 @@ Ogni arma e ogni abilità ha un'affinità. **Regola del gioco dal 10/11 (Stati c
 | Ombra | Bastone, Fuoco fatuo, Falce, Rito proibito | Maledetto | perde il 2% della salute massima al secondo (élite 40% di questo, Seth 10%) |
 | Terra | Pala, Sepoltura | Sepolto | resta fermo 0,6 s; poi per 4 s non può esserlo di nuovo |
 
+**Devozione** (proposta di Edoardo dell'11/11, `DEVOZIONE` in `src/data/stati.ts`, valori *da rivedere*): più armi della stessa affinità possiedi, più forte è il suo stato. Grado 1 = 1 arma (o nessuna: lo stato viene da un'abilità, un amuleto o altro), grado 2 = 2 armi, grado 3 = 3 o più. Lo stato lasciato dall'abilità speciale prende il grado della sua affinità ma non conta come un'arma in più (lettura di Claude, *da rivedere*).
+
+| Stato | Grado 1 | Grado 2 | Grado 3 |
+| --- | --- | --- | --- |
+| Abbagliato, danno subito in più | 15% | 20% | 25% |
+| Consacrato, rallentamento | 25% | 32% | 40% |
+| Maledetto, salute al secondo | 2% | 3% | 4% |
+| Sepolto, fermo | 0,6 s | 0,8 s | 1,0 s |
+| Reazione che consuma lo stato | ×1 | ×1,25 | ×1,5 |
+
+Il Maledetto mantiene le riduzioni di sempre per élite e Seth. Il moltiplicatore della reazione usa il grado dello stato che il nemico aveva già (quello consumato) e vale per il danno di Eclissi ed Esorcismo, le anime in più della Rivelazione, il fermo e il danno in più dell'Interramento. Un'arma nuova che alza il grado lo dice sulla sua striscia («Devozione Luce 2 › 3»); la pausa (scheda Stati) mostra per ogni stato il grado, quante armi, l'effetto con la forza di adesso e il moltiplicatore delle reazioni. Con «Stati a caso (vecchi)» tutto resta al grado 1.
+
 Due stati diversi sullo stesso nemico si consumano e fanno una reazione. Con la regola del gioco:
 - **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
 - le **abilità speciali** ignorano la quiete (e il ritmo delle zone): il loro primo scatto fa reagire tutti i nemici nel cerchio che hanno uno stato diverso;

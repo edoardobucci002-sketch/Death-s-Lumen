@@ -294,6 +294,7 @@ export class Arsenale {
   private qX = new Float32Array(MAX_CODA);
   private qY = new Float32Array(MAX_CODA);
   private qDanno = new Float32Array(MAX_CODA);
+  private qMolt = new Float32Array(MAX_CODA); // Devozione: moltiplicatore della reazione in coda
   private qComune = new Uint8Array(MAX_CODA); // 1 = nemico comune (né bruto, né élite, né Seth): con gli Stati certi niente nome
   private cDt = 0;
   private cProiettile = 0;
@@ -977,7 +978,10 @@ export class Arsenale {
     let eclissi = o.tipo[j] === ID_MIETITORE ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
     // Stati certi: senza tetto sui nemici normali e sui bruti; su élite e Seth il doppio del colpo (senza colpo, il tetto)
     if (INTERRUTTORI.statiCerti) eclissi = !forte ? STATI_CERTI.eclissi.parte * o.saluteMassima[j] : danno > 0 ? danno * STATI_CERTI.eclissi.colpoElite : REAZIONI.eclissi.tetto;
-    this.qDanno[k] = tipo === ECLISSI ? eclissi : danno;
+    // Devozione e Riti: la reazione si moltiplica per il grado dello stato consumato (orda.moltReazione, dall'ultima marca)
+    const molt = tipo === ESPLOSIONE ? 1 : o.moltReazione;
+    this.qMolt[k] = molt;
+    this.qDanno[k] = tipo === ECLISSI ? eclissi * molt : danno;
     this.qComune[k] = forte || o.tipo[j] === ID_BRUTO ? 0 : 1;
   }
 
@@ -1008,7 +1012,7 @@ export class Arsenale {
         this.fonte = F.esorcismo;
         // Stati certi: fiammelle al 60% del colpo che l'ha innescata (senza colpo, il danno di sempre)
         const certi = INTERRUTTORI.statiCerti, quante = certi ? STATI_CERTI.esorcismo.fiammelle : e.fiammelle;
-        const dannoF = certi && this.qDanno[k] > 0 ? this.qDanno[k] * STATI_CERTI.esorcismo.colpo : e.danno;
+        const dannoF = (certi && this.qDanno[k] > 0 ? this.qDanno[k] * STATI_CERTI.esorcismo.colpo : e.danno) * this.qMolt[k];
         for (let f = 0; f < quante; f++) {
           const prima = this.proiettili;
           this.lancia(FUOCO_FATUO.effetto, -1, e.velocita, e.vita, dannoF, 1, FUOCO_FATUO.raggio, FUOCO_FATUO.sterzo, FUOCO_FATUO.portata, false, (f / quante) * Math.PI * 2, 0, x, y);

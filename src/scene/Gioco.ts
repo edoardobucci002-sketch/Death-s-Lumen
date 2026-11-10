@@ -61,8 +61,8 @@ import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SECONDA_CANDELA, typ
 import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
-import { chiaro, INFO_REAZIONI, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
-import { AFFINITA_ABILITA, AFFINITA_ARMI } from '../data/stati';
+import { AFFINITA_TUTTE, chiaro, EFFETTO_FORZA, INFO_REAZIONI, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
+import { AFFINITA_ABILITA, AFFINITA_ARMI, DEVOZIONE, RITI, type IdAffinita } from '../data/stati';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { Rompibili } from '../sistema/rompibili';
 import { Chiazze } from '../sistema/chiazze';
@@ -79,6 +79,8 @@ const SOGLIA = (id: IdOggetto): number => SBLOCCHI_OGGETTI.find((o) => o.id === 
 
 /** «#c0262d» → numero, per i colori di Phaser. */
 const esadecimale = (h: string): number => parseInt(h.slice(1), 16);
+/** Il codice di ogni affinità nell'orda (LUCE…TERRA). */
+const CODICE_AFF: Record<IdAffinita, number> = { luce: LUCE_AFF, sacro: SACRO_AFF, ombra: OMBRA_AFF, terra: TERRA_AFF };
 /** Quante cifre ha un numero intero (senza creare stringhe a ogni fotogramma). */
 const quanteCifre = (n: number): number => {
   let c = 1;
@@ -149,7 +151,9 @@ export class Gioco extends Phaser.Scene {
   private schivateNotte = 0; // schivate perfette in questa veglia (imprese)
   private secondiNubi = 0; // secondi passati dentro le nubi in questa veglia (imprese)
   private oggettiSbloccati = new Set<string>();
-  private senza = new Set<string>(); // ?senza=…: armi e doni tolti dalle carte (simulazioni)
+  private senza = new Set<string>();
+  private armiPerAffinita = new Uint8Array(5); // indice LUCE…TERRA (Devozione)
+  private riti = new Uint8Array(5); // Riti presi per affinità (indice LUCE…TERRA) // ?senza=…: armi e doni tolti dalle carte (simulazioni)
   private sethSconfitti = 0;
   // Rosario: amuleti trovati nei reliquiari e quali sono accesi (si spengono dalla pausa)
   private amuletiPosseduti: IdAmuleto[] = [];
@@ -222,6 +226,7 @@ export class Gioco extends Phaser.Scene {
     this.amuletiAccesi.clear();
     this.sangueFreddoAttivo = false;
     this.secondiGrazia = this.paneDaSolo = 0;
+    this.riti.fill(0); // la scena si riusa: i Riti non passano alla notte dopo
     this.reliquiariInAttesa = 0;
     this.pausaLab = false;
     this.fineFinta = 0; // la scena si riusa: ciò che fa la Prova prestazioni non deve restare nella notte dopo
@@ -680,6 +685,7 @@ export class Gioco extends Phaser.Scene {
   /** Interruttore «Stati certi» (src/data/stati.ts, STATI_CERTI): vale subito e resta per le notti dopo, finché la pagina non si ricarica. */
   labStatiCerti(on: boolean): void {
     INTERRUTTORI.statiCerti = on;
+    this.aggiornaDevozione();
   }
 
   /** Porta la notte al minuto m: gli eventi già passati non si ripetono, gli altri partono al loro turno. */
@@ -1343,8 +1349,17 @@ export class Gioco extends Phaser.Scene {
   }
 
   private aggiornaBuild(): void {
+    this.aggiornaDevozione();
     this.hud.build(this.build());
     this.scopriUnioni();
+  }
+
+  /** Devozione: armi per affinità (le abilità non contano: il loro stato prende il grado della sua affinità) e Riti, all'orda. */
+  private aggiornaDevozione(): void {
+    const n = this.armiPerAffinita;
+    n.fill(0);
+    for (const p of this.arsenale.possedute) n[CODICE_AFF[AFFINITA_ARMI[p.arma.id]]]++;
+    this.orda.impostaDevozione(n, this.riti);
   }
 
   /** Un'unione si scopre quando arma e dono arrivano ai livelli che servono: la partita si ferma per l'animazione e da allora la si nomina, anche nelle notti dopo. */
@@ -1432,6 +1447,17 @@ export class Gioco extends Phaser.Scene {
     return `${armi.find((a) => a.id === u.arma)!.nome} ${LIVELLO_ARMA_UNIONE} + ${PASSIVI.find((q) => q.id === u.dono)!.nome} ${livelloDonoUnione(u.dono)}`;
   }
 
+  /** Devozione e Riti per la scheda Stati della pausa (solo con gli Stati certi). */
+  private devozionePausa(): DatiPausa['devozione'] {
+    if (!INTERRUTTORI.statiCerti) return {};
+    const fuori: DatiPausa['devozione'] = {};
+    for (const a of AFFINITA_TUTTE) {
+      const k = CODICE_AFF[a], g = this.orda.gradoDi(k);
+      fuori[a] = { grado: g, armi: this.armiPerAffinita[k], riti: this.riti[k], effetto: EFFETTO_FORZA[a](this.orda.forza(k)), reazioni: `×${virgola(DEVOZIONE.reazione[g - 1] * (1 + RITI.reazione * this.riti[k]))}` };
+    }
+    return fuori;
+  }
+
   /** Tutto quello che la pausa mostra, letto ora. */
   private datiPausa(): DatiPausa {
     const voci = this.unioniSbloccate ? this.vociUnioni() : [];
@@ -1451,6 +1477,7 @@ export class Gioco extends Phaser.Scene {
       unioni: this.unioniSbloccate ? { voci, scoperte: this.unioniScoperte.size, totali: UNIONI.length } : null,
       unite: UNIONI.filter((u) => this.unioniUnite.has(u.id)).map((u) => ({ nome: u.nome, icona: iconaUnione(u.id), testo: u.testo, ricetta: this.ricettaUnione(u) })),
       statistiche: this.statistiche(),
+      devozione: this.devozionePausa(),
       affinita: [...new Set([...this.arsenale.possedute.map((p) => AFFINITA_ARMI[p.arma.id]), AFFINITA_ABILITA[this.pg.abilita]])],
       attesa: !this.doni.aperta ? null : this.doni.reliquiario ? 'reliquiario' : 'dono',
     };

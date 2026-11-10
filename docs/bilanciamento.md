@@ -46,6 +46,20 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - Con la regola nuova, primo livello da fermi: Badessa 1,8–2,4 s, Lampionaio 2,3 s, con ogni raggio.
 - Bot, 3 notti per personaggio (campione piccolo, solo per vedere che niente si rompe): Lampionaio muore a 7:10 (liv. 24), 11:46 (liv. 51) e 11:23 (liv. 59); Becchino vince due volte (liv. 63 e 72) e muore a 11:38 (liv. 52); Badessa muore a 11:10 (liv. 48) e 13:52 (liv. 67), vince una volta (liv. 56); Strega muore a 7:52 (liv. 31) e 11:19 (liv. 63), vince una volta (liv. 72). Nessuno muore sempre prima del minuto 5.
 
+### 11/11 — Voce 1: Devozione
+
+Più armi della stessa affinità, più forte il suo stato (gradi 1 / 2 / 3: Abbagliato 15 / 20 / 25%, Consacrato 25 / 32 / 40%, Maledetto 2 / 3 / 4% al secondo, Sepolto 0,6 / 0,8 / 1,0 s; la reazione che consuma lo stato × 1 / 1,25 / 1,5). Tutti i valori *da rivedere*. Stesse simulazioni e stesse colonne della voce 0.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| voce 0, vuota | 22/48 (3, 3, 6, 10) | 2, 0, 0, 0 | 2/2, 0/2, 0/0, 0/0 | 3/2, 7/1, 6/0, 1/0 | 5,0%, 8,8%, 6,3%, 16,7% | 503, 3749, 3805, 2967 | 57 |
+| **voce 1, vuota** | **23/48** (4, 2, 8, 9) | **2**, 1, 0, 0 | 2/2, 1/2, 0/0, 0/0 | 4/0, 5/2, 2/1, 2/0 | 8,1%, 9,4%, 10,9%, 19,7% | 598, 4049, 3431, 2694 | 57 |
+| voce 0, completa | 31/48 (7, 8, 9, 7) | 0, 0, 0, 0 | 0/3, 0/0, 0/0, 0/0 | 0/0, 2/0, 3/0, 1/0 | 15,6%, 8,3%, 12,3%, 25,1% | 2495, 6002, 2023, 2569 | 66 |
+| **voce 1, completa** | **37/48** (6, 11, 9, 11) | 0, 0, 0, 0 | 0/2, 0/0, 0/0, 0/0 | 3/0, 0/0, 2/0, 0/0 | 22,3%, 15,5%, 18,3%, 26,5% | 3616, 6829, 2133, 3231 | 68 |
+
+- **Vincoli: reggono.** Lampionaio prima del minuto 5 in 2 notti su 12 (al massimo 3); nessuno muore più spesso prima del primo boss che contro di lui (Lampionaio 2 e 2, Becchino 1 e 2).
+- La parte del danno fatta dalle reazioni sale per tutti (a Cappella completa il Lampionaio da 15,6% a 22,3%, la Badessa da 12,3% a 18,3%): con due o tre armi della stessa affinità le reazioni che consumano quello stato valgono fino a 1,5 volte. A Cappella completa le vittorie salgono da 31 a 37 (Becchino da 8 a 11, Strega da 7 a 11); a Cappella vuota restano uguali (22 → 23).
+
 ### 11/11 — Voce 0: copione dalle 3:00, vincolo del primo boss, barre a 41
 
 Decisioni di Edoardo del 10/11 sera: dalle 3:00 il copione è «zombi 3, scheletro 1» (l'orda a cuneo di scheletri del minuto 3 resta); tolti i parametri `minuto3` e `lanterna`; il vincolo «Seth del 5 è il primo vero ostacolo» diventa «il primo boss della notte è il primo vero ostacolo: nessun personaggio muore più spesso prima del primo boss che contro di lui» (`npm run sim` lo controlla e stampa il conto); barre della salute e delle tacche larghe 41 con 1 pixel di bordo per lato, 39 dentro (misurate sulla foto del S25 a ×2: `prove/barre-41-tacche-8.png`, `prove/barre-41-tacche-4-danza.png`).
