@@ -36,6 +36,7 @@ export interface Riepilogo {
   build: VoceBuild[];
   cera: number; // Cera guadagnata nella veglia (meta progressione)
   sbloccato: string | null; // personaggio sbloccato con un'impresa in questa veglia
+  grazia: string; // parte della notte passata in Grazia, già scritta («1,6%»)
 }
 
 export interface AzioniHud {
@@ -437,6 +438,7 @@ export class Hud {
     const numeri = [
       r.vittoria ? 'Hai attraversato la notte.' : `La lanterna ha resistito ${tempo(Math.floor(r.secondi))}`,
       `Livello ${r.livello} · ${Math.floor(r.anime)} anime · danno ${Math.round(r.danno)}`,
+      `In Grazia il ${r.grazia} della notte`,
       `Record ${tempo(Math.floor(r.record))}${r.nuovoRecord ? ' · nuovo!' : ''}`,
       `+${r.cera} Cera per la Cappella`,
     ];

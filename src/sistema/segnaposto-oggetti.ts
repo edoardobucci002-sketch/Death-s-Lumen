@@ -59,6 +59,8 @@ export function creaIconeUnioni(): void {
 export const SPRITE_SCIA = 'Volo_Scia';
 export const SPRITE_LAPIDE = 'Volo_Lapide';
 export const SPRITE_SASSO = 'Volo_Sasso';
+export const SASSO_LARGO = 20; // pixel del sampietrino provvisorio (prima era 6×5 ingrandito × 3)
+export const SASSO_ALTO = 16;
 export const SPRITE_GRANO = 'Volo_Grano';
 export const SPRITE_CORVO = 'Volo_Corvo';
 export const SPRITE_VELO = 'Volo_Velo';
@@ -70,16 +72,25 @@ export function creaSpriteOggetti(scena: Phaser.Scene): void {
     if (!scena.textures.exists(k)) scena.textures.addCanvas(k, arte(icona)!.tela);
   }
   if (!scena.textures.exists(SPRITE_SASSO)) {
-    // il sampietrino in volo, 6×5 (segnaposto)
+    // il sampietrino in volo (segnaposto), SASSO_LARGO × SASSO_ALTO: un ciottolo squadrato con il contorno scuro,
+    // chiaro in alto a sinistra e scuro in basso a destra. In volo si ingrandisce di un intero fino alla larghezza dell'area
     const c = document.createElement('canvas');
-    c.width = 6;
-    c.height = 5;
+    c.width = SASSO_LARGO;
+    c.height = SASSO_ALTO;
     const g = c.getContext('2d')!;
-    ['.OOOO.', 'OLLLGO', 'OLGGDO', 'OGGDDO', '.OOOO.'].forEach((r, y) => [...r].forEach((ch, x) => {
-      if (ch === '.') return;
-      g.fillStyle = COLORI[ch];
-      g.fillRect(x, y, 1, 1);
-    }));
+    const dentro = (x: number, y: number): boolean => {
+      const u = (x + 0.5 - SASSO_LARGO / 2) / (SASSO_LARGO / 2), v = (y + 0.5 - SASSO_ALTO / 2) / (SASSO_ALTO / 2);
+      return u ** 4 + v ** 4 <= 1;
+    };
+    for (let y = 0; y < SASSO_ALTO; y++) {
+      for (let x = 0; x < SASSO_LARGO; x++) {
+        if (!dentro(x, y)) continue;
+        const bordo = !dentro(x - 1, y) || !dentro(x + 1, y) || !dentro(x, y - 1) || !dentro(x, y + 1);
+        const luce = x / SASSO_LARGO + y / SASSO_ALTO; // 0 in alto a sinistra, 2 in basso a destra
+        g.fillStyle = COLORI[bordo ? 'O' : luce < 0.6 ? 'L' : luce > 1.35 ? 'D' : 'G'];
+        g.fillRect(x, y, 1, 1);
+      }
+    }
     scena.textures.addCanvas(SPRITE_SASSO, c);
   }
   if (!scena.textures.exists(SPRITE_SCIA)) {

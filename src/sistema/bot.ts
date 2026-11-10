@@ -50,6 +50,11 @@ export class Bot {
     this.aggressione = BOT.attaccoDavanti[armaIniziale.id] ?? 0;
   }
 
+  /** Con Lanterna e Pala che mirano non serve girare intorno ai nemici per tenerli davanti. */
+  senzaAttaccoDavanti(): void {
+    this.aggressione = 0;
+  }
+
   /** Modo «esplora»: da ora sceglie a caso tra le carte offerte (seme diverso da quello della notte). */
   esplorando(seme: number): void {
     this.esplora = new Caso((seme * 7919 + BOT.semeEsplora) >>> 0);

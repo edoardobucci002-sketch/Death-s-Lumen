@@ -80,9 +80,14 @@ export interface RisultatoSim {
   tacche: number; // tacche di Grazia guadagnate sfiorando i nemici
   pozzeCuranti: number; // Acquasantiera con la fiaschetta piena: pozze che hanno curato…
   curaPozze: number; // …e la salute che hanno ridato davvero
+  paneDaSolo: number; // «Pane e vino» preso da solo, senza aprire la scelta
+  dannoMaledizione: number; // salute tolta dalla maledizione (Maledetto), fuori da «danno»…
+  dannoMaledizioneInterrata: number; // …e dall'Interramento che ha consumato l'Ombra (Stati certi)
+  statiArmi: Record<string, number>; // stati lasciati da ogni arma
+  reazioniArmi: Record<string, number>; // reazioni fatte partire dai colpi di ogni arma
 }
 
-type Misure = Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti' | 'secondiGrazia' | 'tacche'>;
+export type Misure = Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti' | 'secondiGrazia' | 'tacche' | 'paneDaSolo' | 'dannoMaledizione' | 'dannoMaledizioneInterrata' | 'statiArmi' | 'reazioniArmi'>;
 
 export class Simulazione {
   urna(): void {

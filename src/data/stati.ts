@@ -86,7 +86,9 @@ export const STATI_CERTI = {
   eclissi: { parte: 0.1, colpoElite: 2 },
   // Esorcismo: 3 fiammelle, ognuna al 60% del danno del colpo che la innesca (senza colpo: REAZIONI.esorcismo.danno)
   esorcismo: { fiammelle: 3, colpo: 0.6 },
-  rivelazione: { anime: 0.5, minimo: 1 }, // +50% anime, almeno +1, una volta per nemico
+  // +50% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno «da» anime
+  // (correzione del 10/11: la proposta dava «almeno +1» a tutti, un errore di Claude)
+  rivelazione: { anime: 0.5, da: 2 },
   // Interramento: come sempre, più un effetto dallo stato consumato
   interramento: {
     dannoLuce: 0.5, // Luce: subisce +50% danno invece di +30%

@@ -120,7 +120,6 @@ export interface Sampietrini extends Comune {
   voloRimbalzo: number; // secondi di ogni rimbalzo
   altezza: number; // pixel dell'arco del lancio…
   altezzaRimbalzo: number; // …e dei rimbalzi
-  ingrandimento: number; // del sasso
   livelli: { ricarica: number; quantita: number; rimbalzi: number; danno: number; testo: string }[];
 }
 /** Aura intorno al personaggio. */
@@ -340,7 +339,7 @@ export const ARMI_INIZIALI: Record<'lanterna' | 'pala' | 'turibolo' | 'bastone',
  */
 export const SAMPIETRINI: Sampietrini = {
   id: 'sampietrini', nome: 'Sampietrini', icona: 'Icona_Sampietrini', effetto: 'Pala_Impatto', respinta: 0,
-  portata: 350, raggio: 40, salto: 90, volo: 0.45, voloRimbalzo: 0.3, altezza: 60, altezzaRimbalzo: 24, ingrandimento: 3,
+  portata: 350, raggio: 40, salto: 90, volo: 0.45, voloRimbalzo: 0.3, altezza: 60, altezzaRimbalzo: 24,
   livelli: [
     { ricarica: 1.5, quantita: 1, rimbalzi: 1, danno: 14, testo: 'Lancia un sampietrino sul nemico più vicino: colpisce, rimbalza in avanti e colpisce di nuovo.' },
     { ricarica: 1.5, quantita: 1, rimbalzi: 1, danno: 18, testo: '+4 danno.' },
@@ -352,6 +351,14 @@ export const SAMPIETRINI: Sampietrini = {
     { ricarica: 1.2, quantita: 3, rimbalzi: 2, danno: 26, testo: '+4 danno.' },
   ],
 };
+
+/**
+ * Lanterna e Pala che mirano (interruttore di prova del Laboratorio, spento di partenza; per il bot ?mira=1).
+ * Acceso: l'arco della Lanterna si gira verso il nemico più vicino entro «lanterna» px (il raggio della luce) e l'impatto
+ * della Pala si centra sul nemico più vicino entro «pala» px; senza nemici così vicini colpiscono verso dove cammini.
+ * Il colpo alle spalle (livello 8) resta alle spalle della direzione del colpo. Proposta di Edoardo del 10/11, da provare.
+ */
+export const MIRA = { lanterna: 260, pala: 150 } as const;
 
 export const ARMI_COMUNI: Arma[] = [CANDELA, FALCE, CAMPANA, FUOCO_FATUO, ACQUA_SANTA, LAMA_DI_LUCE, LAPIDE, ROSARIO_SPEZZATO, CORVO, VELO_FUNEBRE, SAMPIETRINI];
 export const MAX_ARMI = 6;

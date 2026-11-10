@@ -40,6 +40,71 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 10/11 (sera) — Correzioni senza effetto sulle notti, e misure: Stati certi a pezzi, Sampietrini, amuleti rari, mira
+
+Qui si misura: nessun numero della notte normale è cambiato.
+
+**Controllo della Parte 1** (pane da solo, Calamita in pixel, indicatore delle tacche, Grazia in pausa e a fine notte, sasso e polvere dei Sampietrini). `npm run sim -- 3 tutti`, Cappella vuota e completa, stessi semi, prima e dopo: 24 notti, 3641 campi confrontati, **0 differenze**; cambia solo il conto delle schermate di «Pane e vino» (prima scelto 86 volte a Cappella vuota, ora preso da solo 86 volte). Rifatto dopo la Parte 2 con gli interruttori spenti: ancora 0 differenze. In quelle 24 notti «Pane e vino» si è preso da solo 86 volte a Cappella vuota (8 notti su 12) e 165 a Cappella completa (7 su 12).
+
+**1 · Stati certi a pezzi** (`npm run sim -- 12 tutti stati=…`, Cappella vuota, semi 1001–1012, 48 notti per riga; incertezza circa ±12 punti). a = stati certi, quiete e abilità che ignora la quiete, reazioni con i numeri di sempre; b–e = a più una reazione nuova; f = tutto (Rivelazione corretta: +50% per difetto, solo da 2 anime). Mediana della morte con le vittorie contate a 15:00. «Con la maledizione» aggiunge al totale la salute tolta da Maledetto e dall'Interramento sull'Ombra (prima non contata).
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana | Livello medio | Reazioni a notte: Eclissi, Rivelazione, Esorcismo, Interramento | Danno delle reazioni sul totale | … con la maledizione | Maledizione a notte (Maledetto + Interramento) | Danno a notte: Eclissi, Esorcismo, parte in più dell'Interramento |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| spento | 7/48 (1, 4, 1, 1) | 12 | 11:12 | 44 | 43, 135, 225, 168 | 1,2% | 1,2% | 9 mila + 0 | 19, 17, 13 mila |
+| a | **26/48** (5, 9, 5, 7) | 6 | 15:00 | 59 | 528, 3399, 4696, 3945 | 9,3% | 9,2% | 75 mila + 0 | 146, 388, 193 mila |
+| b (Eclissi) | 17/48 (0, 7, 3, 7) | 8 | 11:32 | 56 | 468, 2611, 4413, 3589 | 10,6% | 10,5% | 63 mila + 0 | 179, 366, 166 mila |
+| c (Esorcismo) | 22/48 (2, 8, 5, 7) | 7 | 11:46 | 56 | 391, 2969, 3701, 3723 | 9,0% | 8,9% | 62 mila + 0 | 111, 320, 175 mila |
+| d (Rivelazione) | 19/48 (2, 6, 4, 7) | 6 | 11:49 | 56 | 523, 3213, 3772, 3470 | 9,1% | 9,0% | 63 mila + 0 | 146, 303, 160 mila |
+| e (Interramento) | 17/48 (4, 7, 3, 3) | 7 | 11:22 | 57 | 539, 3041, 4499, 3524 | 10,5% | 10,5% | 60 mila + 3 mila | 140, 360, 189 mila |
+| f (tutto) | 14/48 (3, 3, 4, 4) | 7 | 11:23 | 51 | 401, 2562, 3671, 2634 | 10,7% | 10,7% | 55 mila + 3 mila | 146, 306, 133 mila |
+
+- **Quale regola spiega le vittorie in più: nessuna delle quattro reazioni nuove, ma la a.** Ogni colpo che lascia lo stato porta da 7 a 26 vittorie; aggiungere una reazione nuova non ne aggiunge (b–e tra 17 e 22, f 14: dentro l'incertezza, ma sempre sotto a). Le reazioni passano da circa 570 a 12 500 a notte: le Rivelazioni da 135 a 3400, con i numeri di sempre (anime ×2) le anime a notte salgono da 52 a 94 mila e il livello medio da 44 a 59. Il danno delle reazioni resta il 9–11% del totale: le vittorie vengono soprattutto da più livelli (Rivelazione) e dai nemici fermi e rallentati (3900 Interramenti, Consacrato su tutti), non dal danno. Con la Rivelazione corretta (d, f) le anime scendono (82 e 68 mila) e anche le vittorie.
+- **La maledizione**, ora contata: 9 mila a notte a stati spenti, 55–75 mila con gli Stati certi; resta fuori dal «danno totale» e cambia di poco la parte delle reazioni (la sua parte nell'Interramento sull'Ombra è 3 mila).
+- **Reazioni a catena: no.** Le fiammelle dell'Esorcismo e l'esplosione dell'Eclissi colpiscono senza affinità: non lasciano stati e non fanno partire altre reazioni.
+- **Perché la Strega vince tanto** (11 su 12 il 10/11 a Cappella completa, 9 su 12 oggi con f): la sua abilità (Rito proibito, Ombra) e le pozze dell'Acqua santa (Sacro) feriscono ogni 0,3 s. Prima lasciavano lo stato solo nel 5% dei colpi; con gli Stati certi ogni colpo, quindi tutto il campo è Maledetto e Consacrato di continuo. A Cappella completa con f le reazioni sono il 24% del suo danno (5% a stati spenti): 6200 Eclissi e 5400 Esorcismi a notte, partiti soprattutto dall'Acqua santa (5700) e dall'abilità (5500); la maledizione che toglie passa da 23 a 154 mila a notte. Il Bastone resta il 9% del suo danno.
+- **Da notare, già prima di oggi**: a Cappella vuota e stati spenti il Lampionaio muore prima del minuto 5 in **8 notti su 12** (mediana 3:02 nella prova della mira) e il Becchino in 4. Non muoiono *sempre* prima del 5, quindi il vincolo regge, ma di poco; il 10/11 mattina erano 6 su 48 in tutto. Non corretto: è da guardare (vedi «Da confermare»).
+
+**2 · Sampietrini** (`npm run sim -- 12 tutti meta=max`, con e senza `senza=sampietrini`, Stati certi spenti e f; 48 notti per riga).
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana | Livello | Notti con i Sampietrini (vinte) | Scelti/offerti | Danno a notte (parte del totale) | Sepolto lasciato a notte | Interramenti fatti partire |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| spenti, con | 18/48 (3, 5, 7, 3) | 0 | 11:43 | 60 | 28 (8) | 181/385 | 392 mila (7,8%) | 4816 | 227 |
+| spenti, senza | **32/48** (7, 10, 8, 7) | 0 | 15:00 | 69 | – | – | – | – | – |
+| f, con | 36/48 (8, 11, 8, 9) | 0 | 15:00 | 71 | 20 (16) | 132/373 | 653 mila (7,1%) | 3729 | 2667 |
+| f, senza | 37/48 (7, 11, 10, 9) | 1 | 15:00 | 71 | – | – | – | – | – |
+
+- A stati spenti i Sampietrini **costano 14 vittorie su 48**: nelle notti in cui il bot li prende ne vince 8 su 28. Fanno poco danno (7,8%) e prendono il posto di un'arma forte; il Sepolto che lasciano (4800 a notte) fa partire pochi Interramenti (227).
+- Con gli Stati certi la differenza sparisce (36 contro 37): i Sampietrini fanno partire 2667 Interramenti a notte, 12 volte di più, e le notti con loro vinte sono 16 su 20.
+
+**3 · Amuleti rari** (`npm run sim -- 3 tutti meta=max amuleto=…`, 12 notti per riga, semi 1001–1003, Stati certi spenti; con 12 notti l'incertezza è di circa ±3 vittorie: si guardano solo le cose grandi). Danno subito e salute curata sono medie a notte.
+
+| Amuleto imposto | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana | Livello | Salute curata dal Patto | Danno subito (al minuto) | Anime | Salute da pane e fiaschetta |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| nessuno | 5/12 (1, 1, 2, 1) | 0 | 12:43 | 62 | – | 519 (50) | 86 mila | 448 |
+| Martire | 3/12 (1, 0, 1, 1) | 0 | 11:44 | 64 | – | 395 (30) | 82 mila | 362 |
+| Patto di sangue | 5/12 (2, 2, 0, 1) | 0 | 12:31 | 63 | 486 | 465 (36) | 78 mila | 3 |
+| Specchio rotto | 6/12 (2, 0, 2, 2) | 0 | 14:27 | 63 | – | 310 (26) | 87 mila | 339 |
+| Cuore avido | 5/12 (0, 3, 1, 1) | 0 | 11:43 | 70 | – | 401 (31) | 91 mila | 303 |
+| Lanterna cieca | **9/12** (2, 3, 2, 2) | 0 | 15:00 | 69 | – | 548 (39) | 104 mila | 422 |
+
+- Nessuno è un disastro: con 12 notti Martire, Patto, Specchio rotto e Cuore avido stanno dentro il rumore rispetto a «nessuno». La **Lanterna cieca** (+35% danno, alone quasi spento) vince 9 su 12: per il bot, che non guarda il buio, il rovescio non pesa. Per un giocatore umano il buio conta: da provare a mano.
+- **Martire**: il danno subito al minuto scende da 50 a 30 (i nemici vicini restano fermi), ma non vince di più. **Specchio rotto**: +25% danno subito sulla carta, eppure il danno subito al minuto scende (26 contro 50): il proiettile in più uccide prima chi si avvicina. **Patto di sangue**: cura 486 a notte, quasi quanto pane e fiaschetta senza amuleto (448), che col Patto non si usa più. **Cuore avido**: +5% anime e 8 livelli in più, pane e fiaschetta curano un terzo in meno.
+
+**4 · Lanterna e Pala che mirano** (`npm run sim -- 12 lampionaio,becchino`, con e senza `mira=1`; «mira, girando» = `mira=1 davanti=1`, il bot gira ancora intorno ai nemici per tenerli davanti; 12 notti per personaggio per riga). Danno dell'arma iniziale a notte, al minuto e parte del danno totale.
+
+| Cappella | Prova | Lampionaio: vittorie, morti prima del 5, mediana, livello | Lanterna: danno (al minuto), parte | Becchino: vittorie, morti prima del 5, mediana, livello | Pala: danno (al minuto), parte |
+| --- | --- | --- | --- | --- | --- |
+| vuota | senza mira | 1/12, 8, 3:02, 21 | 77 mila (7264), 14,0% | 4/12, 4, 9:25, 39 | 34 mila (3611), 7,8% |
+| vuota | mira, senza girare | 2/12, 7, 3:21, 27 | 160 mila (13 969), 25,2% | 1/12, **9**, 3:29, 22 | 22 mila (4006), 19,3% |
+| vuota | mira, girando | 2/12, **4**, 9:11, 36 | 243 mila (21 374), 19,8% | 4/12, **1**, 11:41, 52 | 74 mila (7095), 7,1% |
+| completa | senza mira | 3/12, 0, 8:04, 45 | 373 mila (32 273), 20,2% | 5/12, 0, 11:41, 58 | 112 mila (9977), 5,0% |
+| completa | mira, senza girare | 3/12, 2, 7:11, 38 | 217 mila (20 459), 21,4% | 4/12, 0, 11:36, 59 | 110 mila (10 593), 7,1% |
+| completa | mira, girando | 4/12, 0, 7:36, 43 | 204 mila (19 363), 17,7% | 5/12, 0, 13:05, 55 | 190 mila (17 183), 10,1% |
+
+- **La mira raddoppia il danno al minuto delle due armi** a Cappella vuota (Lanterna da 7300 a 14–21 mila, Pala da 3600 a 4000–7100), e a Cappella completa raddoppia quello della Pala se il bot continua a girare.
+- **Togliere al bot `attaccoDavanti` peggiora molto**: senza girare intorno ai nemici il Becchino a Cappella vuota muore prima del 5 in 9 notti su 12 (prima 4) e la mediana scende a 3:29. Il giro non serve solo a mirare: tiene il bot in movimento e lontano dalla folla. Con la mira e il giro le morti prima del 5 scendono (Lampionaio da 8 a 4, Becchino da 4 a 1) e le mediane salgono di molti minuti (3:02 → 9:11, 9:25 → 11:41).
+- Le vittorie cambiano poco (12 notti per riga): l'effetto si vede sui primi minuti.
+
 ### 10/11 (pomeriggio) — Cinque voci di Edoardo, una alla volta
 
 Ogni voce ha la sua simulazione: `npm run sim -- 6 tutti meta=max`, stessi semi (1001–1006), Stati certi spenti; 24 notti, quindi l'incertezza è grande (circa ±20 punti): si guardano le tendenze.

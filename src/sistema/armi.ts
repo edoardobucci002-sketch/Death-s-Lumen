@@ -21,7 +21,7 @@ import { PROFONDITA, type Effetti } from './effetti';
 import { EFFETTI } from '../data/effetti';
 import type { Abilita } from '../data/abilita';
 import {
-  ACQUA_SANTA, BASTONE, CAMPANA, CANDELA, COLPI, SAMPIETRINI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
+  ACQUA_SANTA, BASTONE, CAMPANA, CANDELA, COLPI, SAMPIETRINI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, MIRA, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
 } from '../data/armi';
 import { MOLTIPLICA_CRITICO } from '../data/doni';
 import { NUMERI_UNIONI as U } from '../data/unioni';
@@ -29,7 +29,7 @@ import type { Anime } from './anime';
 import type { Chiazze } from './chiazze';
 import type { Rompibili } from './rompibili';
 import { CHIAZZE, ROMPIBILI } from '../data/rompibili';
-import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SASSO, SPRITE_SCIA, SPRITE_VELO } from './segnaposto-oggetti';
+import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SASSO, SASSO_LARGO, SPRITE_SCIA, SPRITE_VELO } from './segnaposto-oggetti';
 
 const NUBE = 1;
 const POZZA = 2;
@@ -87,6 +87,8 @@ export class Arsenale {
   reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)
   readonly reazioniPerTipo = new Uint32Array(5); // per la simulazione: indice = ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO
   readonly dannoFonti = new Float64Array(FONTI.length); // per la simulazione: danno di ogni fonte (stessa misura di dannoTotale)
+  readonly statiFonti = new Float64Array(FONTI.length); // …stati lasciati da ogni fonte
+  readonly reazioniFonti = new Float64Array(FONTI.length); // …reazioni fatte partire dai colpi di ogni fonte
   private fonte = 0; // la fonte del colpo in corso
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
   richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
@@ -296,6 +298,8 @@ export class Arsenale {
   private visitaVicino = (j: number): void => this.vicino(j);
   private visitaGrano = (j: number): void => this.vicinoGrano(j);
   private scelti = new Int32Array(8); // bersagli già presi dalla raffica di candele
+  private mX = 0; // la direzione scelta da mira()
+  private mY = 0;
 
   constructor(scena: Phaser.Scene, orda: Orda, caso: Caso, bonus: Bonus, effetti: Effetti) {
     this.scena = scena;
@@ -310,7 +314,7 @@ export class Arsenale {
     for (let i = 0; i < MAX_LAME; i++) this.lame.push(scena.add.sprite(0, 0, FALCE.lama).setScale(this.scalaLama).setVisible(false).setDepth(PROFONDITA.sopra));
     for (let i = 0; i < MAX_RITARDATI; i++) this.rtArma.push(PALA);
     creaSpriteOggetti(scena);
-    for (let i = 0; i < MAX_SASSI; i++) this.ssSprite.push(scena.add.sprite(0, 0, SPRITE_SASSO).setScale(SAMPIETRINI.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
+    for (let i = 0; i < MAX_SASSI; i++) this.ssSprite.push(scena.add.sprite(0, 0, SPRITE_SASSO).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_LAPIDI; i++) this.lpSprite.push(scena.add.sprite(0, 0, SPRITE_LAPIDE).setOrigin(0.5, 1).setScale(LAPIDE.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_GRANI; i++) this.grSprite.push(scena.add.sprite(0, 0, SPRITE_GRANO).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_CORVI; i++) this.cvSprite.push(scena.add.sprite(0, 0, SPRITE_CORVO).setScale(CORVO.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
@@ -508,14 +512,18 @@ export class Arsenale {
           this.arco(this.dx, this.dy, l.raggio * area, 360, l.danno, U.faro.abbaglia);
           return l.ricarica;
         }
-        this.arco(this.dx, this.dy, l.raggio * area, l.ampiezza, l.danno);
-        if (l.spalle) this.arco(-this.dx, -this.dy, l.raggio * area, l.ampiezza, l.danno);
+        this.mira(MIRA.lanterna);
+        this.arco(this.mX, this.mY, l.raggio * area, l.ampiezza, l.danno);
+        if (l.spalle) this.arco(-this.mX, -this.mY, l.raggio * area, l.ampiezza, l.danno);
         return l.ricarica;
       }
       case 'pala': {
         const l = a.livelli[p.livello - 1];
-        this.impatto(this.dx, this.dy, l.raggio * area, l.danno);
-        if (l.doppio) this.ritarda(a, a.ritardoDoppio, l.raggio * area, l.danno, Math.atan2(-this.dy, -this.dx));
+        const j = this.mira(MIRA.pala), o = this.orda;
+        // mirando, l'impatto cade sul nemico; altrimenti davanti al personaggio, come sempre
+        if (j >= 0) this.impatto(this.mX, this.mY, l.raggio * area, l.danno, o.x[j], o.y[j] - o.raggio[j]);
+        else this.impatto(this.mX, this.mY, l.raggio * area, l.danno);
+        if (l.doppio) this.ritarda(a, a.ritardoDoppio, l.raggio * area, l.danno, Math.atan2(-this.mY, -this.mX));
         return l.ricarica;
       }
       case 'campana': {
@@ -740,7 +748,8 @@ export class Arsenale {
     this.ssR[i] = raggio;
     this.ssResto[i] = rimbalzi;
     this.ssUnito[i] = 0;
-    this.ssSprite[i].setVisible(true);
+    // provvisorio: il sasso largo quanto l'area che colpisce, con un ingrandimento intero
+    this.ssSprite[i].setScale(Math.max(1, Math.round((2 * raggio) / SASSO_LARGO))).setVisible(true);
   }
 
   /** I sampietrini volano; arrivati colpiscono (Terra, come la Pala) e, se hanno rimbalzi, ripartono in avanti. */
@@ -764,7 +773,7 @@ export class Arsenale {
       this.cAff = TERRA;
       this.orda.griglia.nelRaggio(x, y, this.ssR[i] + 40, this.visitaColpo);
       this.rompiForma();
-      this.effetto(S.effetto, x, y, this.ssR[i], PROFONDITA.aTerra, EFFETTI.impattoPala);
+      this.effetti.polvere(x, y, this.ssR[i]); // provvisoria, larga quanto l'area (S.effetto, la polvere della Pala, quando ci sarà la sua)
       if (this.ssResto[i] > 0) {
         this.ssResto[i]--;
         this.ssX0[i] = x;
@@ -888,6 +897,8 @@ export class Arsenale {
     // con gli Stati certi ogni colpo lascia lo stato, senza tirare il dado
     const r = aff && (INTERRUTTORI.statiCerti || this.casoStati.numero() < probabilita) ? o.marca(j, aff, this.cForza) : 0;
     if (r) this.accoda(r, j, danno);
+    if (r) this.reazioniFonti[this.fonte]++;
+    else if (o.marcato) this.statiFonti[this.fonte]++;
     this.dannoTotale += danno;
     suona('colpo');
     if (reazione) this.effetti.sommaReazione(reazione, this.cRX, this.cRY, danno, this.cRAperta);
@@ -924,7 +935,7 @@ export class Arsenale {
     // l'Eclissi toglie una parte della salute massima, con un tetto (il Mietitore subisce sempre il tetto)
     let eclissi = o.tipo[j] === ID_MIETITORE ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
     // Stati certi: senza tetto sui nemici normali e sui bruti; su élite e Seth il doppio del colpo (senza colpo, il tetto)
-    if (INTERRUTTORI.statiCerti) eclissi = !forte ? STATI_CERTI.eclissi.parte * o.saluteMassima[j] : danno > 0 ? danno * STATI_CERTI.eclissi.colpoElite : REAZIONI.eclissi.tetto;
+    if (INTERRUTTORI.statiCerti && INTERRUTTORI.regole.eclissi) eclissi = !forte ? STATI_CERTI.eclissi.parte * o.saluteMassima[j] : danno > 0 ? danno * STATI_CERTI.eclissi.colpoElite : REAZIONI.eclissi.tetto;
     this.qDanno[k] = tipo === ECLISSI ? eclissi : danno;
     this.qComune[k] = forte || o.tipo[j] === ID_BRUTO ? 0 : 1;
   }
@@ -952,7 +963,7 @@ export class Arsenale {
         const e = REAZIONI.esorcismo, id = this.prossimaIdReazione++;
         this.fonte = F.esorcismo;
         // Stati certi: fiammelle al 60% del colpo che l'ha innescata (senza colpo, il danno di sempre)
-        const certi = INTERRUTTORI.statiCerti, quante = certi ? STATI_CERTI.esorcismo.fiammelle : e.fiammelle;
+        const certi = INTERRUTTORI.statiCerti && INTERRUTTORI.regole.esorcismo, quante = certi ? STATI_CERTI.esorcismo.fiammelle : e.fiammelle;
         const dannoF = certi && this.qDanno[k] > 0 ? this.qDanno[k] * STATI_CERTI.esorcismo.colpo : e.danno;
         for (let f = 0; f < quante; f++) {
           const prima = this.proiettili;
@@ -978,8 +989,27 @@ export class Arsenale {
     this.code = 0;
   }
 
-  private impatto(dx: number, dy: number, raggio: number, danno: number): void {
-    this.prepara(0, this.px + dx * PALA.distanza, this.py + dy * PALA.distanza, raggio, danno, PALA.respinta);
+  /**
+   * La direzione del colpo di Lanterna e Pala, in (mX, mY): con l'interruttore «mira» verso il nemico più vicino entro
+   * «portata» px (ne restituisce il numero), altrimenti verso dove cammini (e restituisce −1). Non tira il caso.
+   */
+  private mira(portata: number): number {
+    this.mX = this.dx;
+    this.mY = this.dy;
+    if (!INTERRUTTORI.mira) return -1;
+    const j = this.piuVicino(portata, 0), o = this.orda;
+    if (j < 0) return -1;
+    const ex = o.x[j] - this.px, ey = o.y[j] - o.raggio[j] - this.py, d = Math.hypot(ex, ey);
+    if (d > 0) {
+      this.mX = ex / d;
+      this.mY = ey / d;
+    }
+    return j;
+  }
+
+  /** L'impatto della Pala: di solito davanti al personaggio nella direzione (dx, dy); (cx, cy) lo mette altrove (la Pala che mira). */
+  private impatto(dx: number, dy: number, raggio: number, danno: number, cx = this.px + dx * PALA.distanza, cy = this.py + dy * PALA.distanza): void {
+    this.prepara(0, cx, cy, raggio, danno, PALA.respinta);
     this.cAff = TERRA;
     if (this.unite.pala) {
       this.cFerma = U.vanga.fermo;

@@ -12,7 +12,9 @@
  * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (armi già a quel livello),
  * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle),
  * ?seme=7 (un'altra notte), ?bot (gioca il bot, senza disegno e più veloce possibile: lo usa npm run sim),
- * ?esplora=1 (il bot sceglie le carte a caso), ?stati=certi (accende l'interruttore «Stati certi» del Laboratorio).
+ * ?esplora=1 (il bot sceglie le carte a caso), ?stati=certi (accende l'interruttore «Stati certi» del Laboratorio; a…f una regola
+ * alla volta), ?mira=1 (Lanterna e Pala mirano; ?davanti=1 lascia al bot il giro intorno ai nemici), ?senza=sampietrini
+ * (un'arma o un dono che non esce mai tra le carte), ?amuleto=martire (la notte parte con quell'amuleto acceso).
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
@@ -51,7 +53,7 @@ import { LUCE as LUCE_AFF, OMBRA as OMBRA_AFF, SACRO as SACRO_AFF, TERRA as TERR
 import { Orda, type CategoriaNemico } from '../sistema/orda';
 import { Minacce } from '../sistema/minacce';
 import { leggiRecord, salvaRecord } from '../sistema/record';
-import { Simulazione, type RisultatoSim } from '../sistema/simulazione';
+import { Simulazione, type Misure } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
 import { BAGLIORE, FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
@@ -104,7 +106,8 @@ export class Gioco extends Phaser.Scene {
   giocatore!: Phaser.GameObjects.Sprite;
   speciale!: Speciale;
   private tacche!: GraziaTacche; // Grazia a tacche: sfiorare i nemici riempie le tacche
-  private secondiGrazia = 0; // secondi passati in Grazia in questa notte (per la simulazione)
+  private secondiGrazia = 0; // secondi passati in Grazia in questa notte (pausa, fine e simulazione)
+  private paneDaSolo = 0; // volte in cui «Pane e vino» si è preso da solo (la scelta non si è aperta)
   private livelliDaScegliere = 0;
   private anime!: Anime;
   private oggetti!: Oggetti;
@@ -146,6 +149,7 @@ export class Gioco extends Phaser.Scene {
   private schivateNotte = 0; // schivate perfette in questa veglia (imprese)
   private secondiNubi = 0; // secondi passati dentro le nubi in questa veglia (imprese)
   private oggettiSbloccati = new Set<string>();
+  private senza = new Set<string>(); // ?senza=…: armi e doni tolti dalle carte (simulazioni)
   private sethSconfitti = 0;
   // Rosario: amuleti trovati nei reliquiari e quali sono accesi (si spengono dalla pausa)
   private amuletiPosseduti: IdAmuleto[] = [];
@@ -208,6 +212,7 @@ export class Gioco extends Phaser.Scene {
     this.meta = bonusMeta(carica(), parametri.get('meta') ?? (parametri.has('bot') ? '0' : null));
     this.oggettiSbloccati = new Set(parametri.has('senzaoggetti') ? [] : parametri.has('oggetti') ? SBLOCCHI_OGGETTI.map((o) => o.id) : this.meta.oggetti); // ?senzaoggetti, ?oggetti: per confrontare le simulazioni
     for (const id of (parametri.get('blocca') ?? '').split(',')) this.oggettiSbloccati.delete(id as IdOggetto); // ?blocca=corvo,lapide: per le simulazioni
+    this.senza = new Set((parametri.get('senza') ?? '').split(',').filter(Boolean)); // ?senza=sampietrini: non escono mai tra le carte (simulazioni)
     this.unioniSbloccate = (this.meta.unioni && !parametri.has('senzaunioni')) || parametri.has('unioni');
     this.unioniScoperte = new Set(carica().unioniScoperte);
     this.unioniUnite = new Set(carica().unioniUnite);
@@ -216,7 +221,7 @@ export class Gioco extends Phaser.Scene {
     this.amuletiPosseduti = [];
     this.amuletiAccesi.clear();
     this.sangueFreddoAttivo = false;
-    this.secondiGrazia = 0;
+    this.secondiGrazia = this.paneDaSolo = 0;
     this.reliquiariInAttesa = 0;
     this.pausaLab = false;
     this.fineFinta = 0; // la scena si riusa: ciò che fa la Prova prestazioni non deve restare nella notte dopo
@@ -224,7 +229,15 @@ export class Gioco extends Phaser.Scene {
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
-    if (parametri.get('stati') === 'certi') INTERRUTTORI.statiCerti = true; // altrimenti resta com'è nel Laboratorio (spento di partenza)
+    // ?stati=certi (o f) accende gli Stati certi con tutte le regole nuove; a…e una regola alla volta (vedi INTERRUTTORI.regole).
+    // Senza, resta com'è nel Laboratorio (spento di partenza)
+    const stati = parametri.get('stati');
+    if (/^([a-f]|certi)$/.test(stati ?? '')) {
+      INTERRUTTORI.statiCerti = true;
+      const tutte = stati === 'certi' || stati === 'f';
+      Object.assign(INTERRUTTORI.regole, { eclissi: tutte || stati === 'b', esorcismo: tutte || stati === 'c', rivelazione: tutte || stati === 'd', interramento: tutte || stati === 'e' });
+    }
+    if (parametri.get('mira') === '1') INTERRUTTORI.mira = true;
     this.automatico = parametri.has('automatico');
     this.caso = new Caso(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.x = this.y = 0;
@@ -308,9 +321,9 @@ export class Gioco extends Phaser.Scene {
       if (!this.fermo()) this.anims.resumeAll();
     });
     this.mosaico = new Mosaico(interfaccia);
-    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate, scoperte: this.unioniScoperte }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
+    this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate, scoperte: this.unioniScoperte, metaRaccolta: this.meta.raccolta }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
-    this.tacche = new GraziaTacche(this, esadecimale(this.pg.colore), !parametri.has('bot'));
+    this.tacche = new GraziaTacche(this, !parametri.has('bot'));
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.fermo()) return false;
       this.arsenale.abilita(ABILITA[this.pg.abilita]);
@@ -318,7 +331,6 @@ export class Gioco extends Phaser.Scene {
       vibra('media');
       return true;
     });
-    this.speciale.mettiSopra(this.tacche.fascia, GRAZIA.tacche.fascia.spazio);
     this.fiaschetta = new Fiaschetta(interfaccia, `Speciale_${this.pg.nome.replace(/ /g, '_')}`, () => {
       if (this.finito || this.fermo() || this.salute >= this.saluteMassima || this.ha('pattoDiSangue')) return false;
       suona('cura');
@@ -329,8 +341,18 @@ export class Gioco extends Phaser.Scene {
     this.aggiornaBuild();
     this.bot = parametri.has('bot') ? new Bot(this.orda, this.anime, this.oggetti, this.minacce, arma) : null;
     if (this.bot && parametri.has('cercaurne')) this.bot.urne = this.rompibili;
+    // con Lanterna e Pala che mirano il bot non gira intorno ai nemici per tenerli davanti (?davanti=1 lo lascia fare, per confrontare)
+    if (this.bot && INTERRUTTORI.mira && parametri.get('davanti') !== '1') this.bot.senzaAttaccoDavanti();
     if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.sim = this.bot ? new Simulazione() : null;
+    // ?amuleto=martire: la notte parte con quell'amuleto già trovato e acceso, che occupa i suoi grani (per misurarlo con il bot)
+    const imposto = AMULETI.find((a) => a.id === parametri.get('amuleto'));
+    if (imposto) {
+      this.amuletiPosseduti.push(imposto.id);
+      this.amuletiAccesi.add(imposto.id);
+      this.dopoPassivo();
+      this.aggiornaBuild();
+    }
     this.cameras.main.setVisible(!this.bot);
 
     const riempi = Number(parametri.get('nemici'));
@@ -351,7 +373,6 @@ export class Gioco extends Phaser.Scene {
       this.rivelazione.distruggi();
       this.mosaico.distruggi();
       this.speciale.distruggi();
-      this.tacche.distruggi();
       this.fiaschetta.distruggi();
       this.anims.resumeAll();
     });
@@ -939,6 +960,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Può uscire nella scelta: tutto ciò che non è in SBLOCCHI_OGGETTI, o quello che è stato sbloccato. */
   private disponibile(id: string): boolean {
+    if (this.senza.has(id)) return false;
     return this.oggettiSbloccati.has(id) || !SBLOCCHI_OGGETTI.some((o) => o.id === id);
   }
 
@@ -1137,6 +1159,17 @@ export class Gioco extends Phaser.Scene {
   /** Ferma il gioco e mostra le carte; dopo la scelta, se ci sono altri livelli da scegliere, le rimostra. */
   private apriDoni(): void {
     if (this.doni.aperta) return; // un reliquiario è già aperto: i livelli aspettano
+    // l'unica carta possibile sarebbe «Pane e vino»: la scelta non si apre, il pane si prende da solo (una volta per livello)
+    if (this.doni.soloPane()) {
+      for (; this.livelliDaScegliere > 0; this.livelliDaScegliere--) {
+        this.salute = Math.min(this.saluteMassima, this.salute + CARTE.paneEVino);
+        this.paneDaSolo++;
+      }
+      this.effetti.paneDaSolo();
+      suona('cura');
+      this.dopoScelta();
+      return;
+    }
     this.anims.pauseAll();
     this.comandi.lascia();
     this.doni.mostra((d: Dono) => {
@@ -1198,11 +1231,12 @@ export class Gioco extends Phaser.Scene {
       build: this.build(),
       cera: veglia.totale,
       sbloccato: veglia.sbloccato,
+      grazia: this.parteInGrazia(),
     });
   }
 
   /** Per la simulazione: oggetti posseduti, danno di ogni fonte e reazioni per tipo. */
-  private misureSim(): Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti' | 'secondiGrazia' | 'tacche'> {
+  private misureSim(): Misure {
     const a = this.arsenale, nomiArmi = new Map<string, string>([...ARMI_COMUNI, ...Object.values(ARMI_INIZIALI)].map((x) => [x.id, x.nome]));
     const dannoArmi: Record<string, number> = {}, dannoReazioni: Record<string, number> = {};
     const altre: Record<string, string> = { abilita: 'Abilità speciale', martire: 'Martire', fuoco: "Fuoco dell'olio" };
@@ -1213,6 +1247,12 @@ export class Gioco extends Phaser.Scene {
       if (reazioni[f]) dannoReazioni[reazioni[f]] = v;
       else dannoArmi[nomiArmi.get(f) ?? altre[f]] = v;
     });
+    const statiArmi: Record<string, number> = {}, reazioniArmi: Record<string, number> = {};
+    FONTI.forEach((f, i) => {
+      const nome = nomiArmi.get(f) ?? altre[f] ?? reazioni[f];
+      if (a.statiFonti[i]) statiArmi[nome] = a.statiFonti[i];
+      if (a.reazioniFonti[i]) reazioniArmi[nome] = a.reazioniFonti[i];
+    });
     const reazioniPerTipo: Record<string, number> = {};
     INFO_REAZIONI.forEach((r, k) => (reazioniPerTipo[r.nome] = a.reazioniPerTipo[k + 1]));
     return {
@@ -1222,7 +1262,8 @@ export class Gioco extends Phaser.Scene {
         amuleti: this.amuletiPosseduti.map((id) => ({ nome: amuleto(id).nome, acceso: this.ha(id) })),
       },
       dannoArmi, dannoReazioni, reazioniPerTipo, pozzeCuranti: a.pozzeCuranti,
-      secondiGrazia: Math.round(this.secondiGrazia * 10) / 10, tacche: this.tacche.guadagnate,
+      secondiGrazia: Math.round(this.secondiGrazia * 10) / 10, tacche: this.tacche.guadagnate, paneDaSolo: this.paneDaSolo,
+      dannoMaledizione: Math.round(this.orda.dannoMaledizione), dannoMaledizioneInterrata: Math.round(this.orda.dannoMaledizioneInterrata), statiArmi, reazioniArmi,
     };
   }
 
@@ -1362,10 +1403,16 @@ export class Gioco extends Phaser.Scene {
       { nome: chiaro('Durata'), valore: segnoPercento(this.bonus.durata) },
       { nome: 'Critico', valore: segnoPercento(this.bonus.critico) },
       { nome: 'Velocità', valore: segnoPercento(this.velocita / BASE.velocita - 1) },
-      { nome: 'Raccolta', valore: segnoPercento(this.raccolta / BASE.raccolta - 1) },
+      { nome: 'Raccolta', valore: `${Math.round(this.raccolta)} px` }, // 40 px di partenza: la percentuale diceva poco
       { nome: 'Anime', valore: segnoPercento(this.moltAnime - 1) },
       { nome: 'Sorsi', valore: `${this.fiaschetta.sorsi}/${this.fiaschetta.massimo}` },
+      { nome: 'In Grazia', valore: this.parteInGrazia() },
     ];
+  }
+
+  /** La parte della notte passata finora in Grazia (schivate perfette e tacche), già scritta: «1,6%». */
+  private parteInGrazia(): string {
+    return `${virgola(Math.round((1000 * this.secondiGrazia) / Math.max(1, this.secondi)) / 10)}%`;
   }
 
   /** Come si combina: «Lanterna 6 + Stoppino lungo 3». */
@@ -1389,7 +1436,7 @@ export class Gioco extends Phaser.Scene {
         amuleti: this.amuletiPosseduti.map((id) => { const a = amuleto(id); return { id, nome: a.nome, icona: iconaAmuleto(id), grani: a.grani, vantaggio: a.vantaggio, rovescio: a.rovescio, acceso: this.ha(id) }; }),
       } : null,
       armi: this.arsenale.possedute.map((p) => voceArma(p.arma, p.livello, !!p.unita, unioneDiArma(p.arma.id))),
-      doni: PASSIVI.filter((q) => this.passivi[q.id]).map((q) => voceDono(q, this.passivi[q.id])),
+      doni: PASSIVI.filter((q) => this.passivi[q.id]).map((q) => voceDono(q, this.passivi[q.id], this.meta.raccolta)),
       unioni: this.unioniSbloccate ? { voci, scoperte: this.unioniScoperte.size, totali: UNIONI.length } : null,
       unite: UNIONI.filter((u) => this.unioniUnite.has(u.id)).map((u) => ({ nome: u.nome, icona: iconaUnione(u.id), testo: u.testo, ricetta: this.ricettaUnione(u) })),
       statistiche: this.statistiche(),
@@ -1482,8 +1529,7 @@ export class Gioco extends Phaser.Scene {
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
     this.buio.setPosition(bx, by);
     this.disegnaSalute(px, py, this.fermo() ? 0 : dt);
-    this.tacche.mostra(px, py, py + BARRA_SALUTE.distanza + BARRA_SALUTE.altezza * this.zSalute, this.zSalute, COLPI.corpo, this.tacchePerGrazia(), this.grazia > 0);
-    if (this.tacche.fasciaCambiata) this.speciale.ridisponi();
+    this.tacche.mostra(this.saluteRett.x, this.saluteRett.y, this.saluteLarga, BARRA_SALUTE.altezza, this.zSalute, this.tacchePerGrazia(), this.grazia > 0, !this.morto);
     this.hud.mostraRosario(this.graniUsati(), this.grani(), this.amuletiPosseduti.length);
     const boss = this.orda.mietitore();
     this.hud.aggiorna(

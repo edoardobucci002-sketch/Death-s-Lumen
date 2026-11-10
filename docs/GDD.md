@@ -83,7 +83,7 @@ Al massimo 6 armi, ognuna fino al livello 8. Le quattro armi iniziali sono **esc
 
 #### Lanterna
 
-Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge di 259 (110 × 2,35). Raggi già × 2,35. Arma iniziale del Lampionaio, esclusiva.
+Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge di 259 (110 × 2,35). Raggi già × 2,35. Arma iniziale del Lampionaio, esclusiva. Con l'interruttore di prova «Lanterna e Pala mirano» (vedi Pala) l'arco si gira verso il nemico più vicino entro 260 px.
 
 | Lv | Ricarica (s) | Danno | Raggio | Ampiezza arco (°) | Colpo alle spalle | Cosa cambia |
 |---|---|---|---|---|---|---|
@@ -99,6 +99,8 @@ Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge
 #### Pala
 
 Impatto circolare 61 px davanti a te (26 × 2,35), nella direzione di cammino; respinge di 423 (180 × 2,35). Raggi già × 2,35. A Lv 8 un secondo colpo alle spalle 0,22 s dopo. Arma iniziale del Becchino, esclusiva.
+
+**Lanterna e Pala mirano** (prova, `MIRA` in `src/data/armi.ts`, proposta di Edoardo del 10/11, *da rivedere*): un interruttore del Laboratorio (scheda Oggetti, spento di partenza; per il bot `?mira=1`). Acceso, l'arco della Lanterna si centra sul nemico più vicino entro 260 px (il raggio della luce) e l'impatto della Pala cade sul nemico più vicino entro 150 px; senza nemici così vicini colpiscono verso dove cammini, come sempre. Il colpo alle spalle del livello 8 resta alle spalle della direzione del colpo. Con la mira accesa il bot non gira intorno ai nemici per tenerli davanti (`?davanti=1` glielo lascia fare, per confrontare).
 
 | Lv | Ricarica (s) | Danno | Raggio | Distanza colpo | Colpo doppio | Cosa cambia |
 |---|---|---|---|---|---|---|
@@ -266,7 +268,7 @@ Cade sul nemico con più salute in vista: scende da 180 px in 0,2 s, colpisce e 
 
 #### Sampietrini
 
-Terza arma di Terra (bozza confermata da Edoardo il 10/11), libera da subito, nei pesi delle armi comuni. Lancia sampietrini sui nemici più vicini entro 350 px: ognuno vola 0,45 s con un arco alto 60 px, colpisce entro 40 px e lascia Sepolto come la Pala (nel 10% dei colpi); poi rimbalza 90 px in avanti, nella direzione del lancio (0,3 s, arco di 24 px), e colpisce di nuovo. Le misure del volo sono di Claude, *da rivedere*. Sasso, icona e polvere provvisori (la polvere è l'impatto della Pala).
+Terza arma di Terra (bozza confermata da Edoardo il 10/11), libera da subito, nei pesi delle armi comuni. Lancia sampietrini sui nemici più vicini entro 350 px: ognuno vola 0,45 s con un arco alto 60 px, colpisce entro 40 px e lascia Sepolto come la Pala (nel 10% dei colpi); poi rimbalza 90 px in avanti, nella direzione del lancio (0,3 s, arco di 24 px), e colpisce di nuovo. Le misure del volo sono di Claude, *da rivedere*. Sasso, icona e polvere provvisori, disegnati dal codice e grandi quanto l'area che colpiscono: il sasso è un ciottolo di 20×16 pixel ingrandito di un intero fino alla larghezza dell'area (× 4 con il raggio di 40 px, 80 px; di più con lo Stoppino lungo); la polvere è un anello largo quanto l'area (pieno, poi a retino, 0,3 s).
 
 | Lv | Ricarica (s) | Quantità | Rimbalzi | Danno | Cosa cambia |
 |---|---|---|---|---|---|
@@ -345,6 +347,8 @@ Doni a 3 livelli (decisione di Edoardo del 10/11, *da rivedere*): i doni che arr
 | Chiodo di bara | +30% probabilità di colpo critico (danno doppio) | 3 | +10% |
 | Lacrima di lumen | +2 sorsi della fiaschetta (si riempie anche quel sorso) | 2 | +1 |
 | Campanella d'argento | +0,2 s di finestra per la schivata perfetta e +16 px di sfioramento per le tacche della Grazia | 2 | +0,1 s e +8 px |
+
+Sulle strisce della scelta e nella pausa i doni mostrano i numeri del loro effetto. Dove il valore di partenza è piccolo una percentuale dice poco e si scrive il valore vero: l'unico caso oggi è la **raccolta della Calamita**, in pixel, già dal livello 1 («Raccolta 40 › 107 px», poi 173 e 240; con il cero della raccolta della Cappella i numeri salgono). Anche la statistica «Raccolta» della pausa è in pixel. Gli altri doni restano come sono: salute, salute al secondo, sorsi, critico e Campanella sono già valori veri; danno, ricarica, area, velocità, durata, danno subito e anime sono percentuali di valori grandi.
 
 Gli oggetti nuovi non diluiscono i potenziamenti: il peso delle armi e dei doni non ancora presi si divide come se fossero sempre 6 e 9 (`CARTE.pool`, `src/data/progressione.ts`).
 
@@ -447,7 +451,7 @@ Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle 
 
 - **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, Seth riempie la fiaschetta. Il pulsante è tondo, con la stessa cornice dell'abilità e la fiala dentro (composto dal codice, *da rivedere*, finché non c'è `Fiaschetta_Lumen_Tonda_V1`); su computer e tablet sta a destra dell'abilità, staccata di 12 pixel disegnati. I sorsi si leggono sulle tacche intorno al pulsante, una per sorso massimo (fino a 5 con la Lacrima di lumen): accese se piene, scure se vuote, con un lampo di 0,25 s quando un sorso si riempie (*da rivedere*). La fiaschetta diventerà uno sblocco con la sua questline (vedi [lore.md](lore.md) e [roadmap.md](roadmap.md)).
 - **Grazia**: scatta uscendo da un cerchio rosso di Seth quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova; una Grazia nuova non accorcia mai quella in corso.
-- **Grazia a tacche** (decisione di Edoardo del 10/11, tutti i valori *da rivedere*; vale per tutti i personaggi, senza amuleti). Ogni nemico normale (né élite né Seth) sfiorato entro 16 px oltre il contatto, senza toccarlo, dà una tacca; lo stesso nemico non più di una volta ogni 2 s. Con 8 tacche parte una Grazia di 2 s; durante la Grazia le tacche non salgono; senza sfiorare ne cala una ogni 2 s. La schivata perfetta su Seth dà subito la Grazia di 3 s, come sopra. A ogni tacca un suono secco e una piccola scintilla (segnaposto dal codice). L'indicatore ha tre posti da provare dal Laboratorio (LAB → Eventi → Grazia a tacche): **arco** sotto la barra della salute ai piedi (di partenza, *da rivedere*), **anello** intorno al personaggio, **fascia** accanto al pulsante dell'abilità, verso il centro (tacche di 4 pixel disegnati); arco e anello si vedono solo con almeno una tacca, la fascia sempre. Tacche piene del colore del personaggio, vuote scure; in Grazia tutte piene. La Campanella d'argento allunga lo sfioramento di 8 px per livello.
+- **Grazia a tacche** (decisione di Edoardo del 10/11, tutti i valori *da rivedere*; vale per tutti i personaggi, senza amuleti). Ogni nemico normale (né élite né Seth) sfiorato entro 16 px oltre il contatto, senza toccarlo, dà una tacca; lo stesso nemico non più di una volta ogni 2 s. Con 8 tacche parte una Grazia di 2 s; durante la Grazia le tacche non salgono; senza sfiorare ne cala una ogni 2 s. La schivata perfetta su Seth dà subito la Grazia di 3 s, come sopra. A ogni tacca un suono secco e una piccola scintilla (segnaposto dal codice). **Indicatore** (scelta di Edoardo del 10/11): un rettangolo sotto la barra della salute, largo e alto come lei (ne condivide il bordo di sotto), diviso in tante caselle quante sono le tacche (8, con la Danza macabra 4), senza cifre; si vede sempre. Caselle piene azzurre, vuote blu notte (colori *da rivedere*: diversi dal rosso, dall'ambra e dal verde della barra e dai colori dei personaggi); in Grazia tutte piene. La parte della notte passata in Grazia si legge nella pausa (Build → Statistiche, «In Grazia») e nella schermata di fine («In Grazia il N% della notte»). La Campanella d'argento allunga lo sfioramento di 8 px per livello.
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
@@ -473,13 +477,13 @@ Ruoli delle armi: l'esplosione del dardo del Bastone ferisce in 40 px al 35% del
 
 La **scelta dei doni** è fatta di strisce orizzontali una sotto l'altra (`src/sistema/scheda.ts`, parole in `src/data/spiegazioni.ts`): nome, numeri grandi che cambiano («Danno 24 › 32»), il simbolo dello stato che lascia l'arma con il suo effetto, la reazione che si otterrebbe con un'arma già posseduta. Gli amuleti mostrano i grani dopo averli presi, vantaggio in verde, rovescio in rosso e l'avviso di Peccato se si sfora. Quando scatta una reazione il suo nome sale sopra il nemico, ingrandito × 2, nel colore dello stato con il contorno scuro: Eclissi viola, Rivelazione oro, Esorcismo ambra, Interramento seppia. Lo stesso nome torna al massimo ogni 2 s, al massimo 3 nomi sullo schermo insieme (oltre non si creano: la reazione avviene lo stesso). Il nome resta fuori da 90 px intorno al personaggio, spostandosi sopra quel cerchio, e dentro lo schermo (*da rivedere*). Stati e reazioni si leggono nella scheda **Stati** della pausa, che si apre anche dal «?» della scelta dei doni.
 
-**Stati certi (prova, `STATI_CERTI`; tutti i valori *da rivedere*).** Un interruttore del Laboratorio (scheda Eventi, «Stati certi», spento di partenza; per il bot `?stati=certi`) prova un'altra regola. Spento, tutto resta come sopra. Acceso, vale finché la pagina non si ricarica:
+**Stati certi (prova, `STATI_CERTI`; tutti i valori *da rivedere*).** Un interruttore del Laboratorio (scheda Eventi, «Stati certi», spento di partenza; per il bot `?stati=certi`) prova un'altra regola. Spento, tutto resta come sopra. Acceso, vale finché la pagina non si ricarica. Le quattro reazioni nuove si accendono anche una alla volta (Laboratorio, sotto «Stati certi»; per il bot `?stati=a` nessuna, `b` Eclissi, `c` Esorcismo, `d` Rivelazione, `e` Interramento, `f` tutte); una reazione spenta usa i numeri di sempre:
 - ogni colpo lascia lo stato della sua affinità: non contano il 10% e il 5% qui sopra, né le probabilità del Rosario spezzato e del Velo funebre;
 - **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
 - le **abilità speciali** ignorano la quiete: il loro primo scatto fa reagire tutti i nemici nel cerchio che hanno uno stato diverso;
 - **Eclissi**: danno = 10% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il doppio del danno del colpo che la innesca (se non c'è un colpo, come con Lucciola e Martire, il tetto di sempre);
 - **Esorcismo**: 3 fiammelle, ognuna al 60% del danno del colpo che la innesca (senza colpo, il danno di sempre);
-- **Rivelazione**: +50% anime, almeno +1, una volta per nemico;
+- **Rivelazione**: +50% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno 2 anime;
 - **Interramento**: come sopra, più un effetto dallo stato consumato: Luce, +50% danno subito invece di +30%; Sacro, fermo 2,5 s; Ombra, la maledizione continua al doppio durante l'Interramento;
 - **disegno**: sui nemici comuni il nome della reazione non compare; al massimo 12 cerchi delle reazioni sullo schermo (oltre, la reazione avviene senza disegno).
 
@@ -593,7 +597,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - arma nuova 1
   - dono posseduto 1,2
   - dono nuovo 0,9
-- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare, esce «Pane e vino» (+40 salute).
+- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare la scelta non si apre: «Pane e vino» (+40 salute) si prende da solo, una volta per livello, con una scritta verde «Pane e vino +40» che sale sopra la testa e il suono della cura (scritta *da rivedere*).
 
 ## 10. Regole di combattimento
 
@@ -658,7 +662,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Centro della luce | 42 px sopra i piedi | |
 | Tremolio della fiamma | ±7 px ogni 0,12 s | |
 | Frequenza dello schermo | logica sempre a 60 passi al secondo, il disegno segue lo schermo | nessun limite del gioco: a 60, 90 e 120 Hz la notte è identica (`npm run prova`) |
-| Prova prestazioni | minuto 14, 400 nemici, lanterna in vista, 6 armi al livello 8, 60 s; la notte si ferma a 14:30; a fine prova misura a parte la ricostruzione del buio | `PRESTAZIONI`; riporta media, fotogrammi saltati, secondi sotto 55 fps e blocchi sopra 100 ms; obiettivo sul telefono minimo: media 60, meno dell'1% dei secondi sotto 55, nessun blocco sopra 100 ms (*da rivedere*) |
+| Prova prestazioni | minuto 14, 400 nemici, lanterna in vista, 6 armi al livello 8, 60 s; la notte si ferma a 14:30; a fine prova misura a parte la ricostruzione del buio; lanciata da una partita chiede conferma, la chiude, torna al menu e parte da lì; il risultato dice quanti nemici c'erano in media durante la misura | `PRESTAZIONI`; riporta media, fotogrammi saltati, secondi sotto 55 fps e blocchi sopra 100 ms; obiettivo sul telefono minimo: media 60, meno dell'1% dei secondi sotto 55, nessun blocco sopra 100 ms (*da rivedere*) |
 | Terreno | riquadro di 1120 px che si ripete, celle di 56 px | tombe 4%, croci 2%, erba 24% per cella |
 | Joystick | raggio 44 px dello schermo, zona morta 18% | compare dove si appoggia il dito; sul telefono in verticale base da 56 pixel disegnati, opacità 50% quando copre un pulsante (*da rivedere*) |
 

@@ -272,7 +272,6 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(tasto('Scelta del dono', scegli((x) => x.labSceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
       riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.labOggetti(true)))),
       titolo('Grazia a tacche'),
-      riga(...(['arco', 'anello', 'fascia'] as const).map((p) => tasto({ arco: 'Arco sotto la salute', anello: 'Anello intorno', fascia: 'Fascia accanto all\'abilità' }[p], fai(() => { INTERRUTTORI.tacchePosto = p; }), INTERRUTTORI.tacchePosto === p ? 'acceso' : ''))),
       riga(
         tasto(INTERRUTTORI.taccheScintilla ? 'Scintilla: sì' : 'Scintilla: no', fai(() => { INTERRUTTORI.taccheScintilla = !INTERRUTTORI.taccheScintilla; }), INTERRUTTORI.taccheScintilla ? 'acceso' : ''),
         tasto(INTERRUTTORI.taccheSuono ? 'Suono: sì' : 'Suono: no', fai(() => { INTERRUTTORI.taccheSuono = !INTERRUTTORI.taccheSuono; }), INTERRUTTORI.taccheSuono ? 'acceso' : ''),
@@ -284,7 +283,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       el('p', 'lab-nota', 'La pozza che nasce quando il sorso trova la fiaschetta piena: 4 s, cura il 3% della salute massima al secondo. Ferisciti (Immortale) e mettiti dentro.'),
       titolo('Stati certi (prova: ogni colpo lascia lo stato)'),
       riga(tasto(INTERRUTTORI.statiCerti ? 'Stati certi: sì' : 'Stati certi: no', fai((x) => x.labStatiCerti(!INTERRUTTORI.statiCerti)), INTERRUTTORI.statiCerti ? 'acceso' : '')),
-      el('p', 'lab-nota', 'Acceso: ogni colpo lascia lo stato; dopo una reazione il nemico resta 3 s in quiete; reazioni più forti. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → stati → STATI_CERTI.'),
+      riga(...(['eclissi', 'esorcismo', 'rivelazione', 'interramento'] as const).map((k) => tasto(`${k[0].toUpperCase()}${k.slice(1)} nuova: ${INTERRUTTORI.regole[k] ? 'sì' : 'no'}`, fai(() => { INTERRUTTORI.regole[k] = !INTERRUTTORI.regole[k]; }), INTERRUTTORI.regole[k] ? 'acceso piccolo' : 'piccolo'))),
+      el('p', 'lab-nota', 'Acceso: ogni colpo lascia lo stato; dopo una reazione il nemico resta 3 s in quiete. Le quattro reazioni usano i numeri nuovi solo se la loro riga dice «sì» (con «no», i numeri di sempre). Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → stati → STATI_CERTI.'),
       titolo('Stati sui nemici vicini (due diversi = reazione)'),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.labStatoVicini(a))))),
       el('p', 'lab-nota', 'Per vederli lascia il gioco in corso (scheda Partita) e premi uno stato, poi un altro.'),
@@ -305,6 +305,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const am = p.labAmuletiSnapshot();
     const unite = p.labStatoUnioni().unite;
     return [
+      titolo('Lanterna e Pala mirano (prova)'),
+      riga(tasto(INTERRUTTORI.mira ? 'Lanterna e Pala mirano: sì' : 'Lanterna e Pala mirano: no', fai(() => { INTERRUTTORI.mira = !INTERRUTTORI.mira; }), INTERRUTTORI.mira ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Acceso: l\'arco della Lanterna si gira verso il nemico più vicino entro la luce (260 px) e l\'impatto della Pala cade sul nemico più vicino entro 150 px; senza nemici vicini colpiscono verso dove cammini, come sempre. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → armi → MIRA.'),
       titolo('Armi (si sale di livello; per toglierle riavvia la partita)'),
       ...tutteLeArme.map((a) => riga(el('b', '', `${a.nome} · ${livelloArma(a) || '—'}`), tasto('+1', fai((x) => x.labArma(a, livelloArma(a) + 1)), 'piccolo'), tasto('Liv. 8', fai((x) => x.labArma(a, 8)), 'piccolo'))),
       titolo('Doni passivi'),
@@ -430,8 +433,12 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         ridisegna();
       }, scambiati ? 'acceso' : '')),
       titolo('Prova prestazioni'),
-      el('p', 'lab-nota', 'Un tocco e aspetta un minuto senza toccare niente: alla fine c\'è un testo da copiare. La partita in corso si perde; Cera, record e sblocchi non cambiano.'),
-      riga(tasto('Prova prestazioni', () => { mostra(false); void avviaProvaPrestazioni(gioco); }, 'acceso')),
+      el('p', 'lab-nota', 'Un tocco e aspetta un minuto senza toccare niente: alla fine c\'è un testo da copiare. Da una partita chiede conferma, la chiude, torna al menu e parte da lì; Cera, record e sblocchi non cambiano.'),
+      riga(tasto('Prova prestazioni', () => {
+        if (partita() && !confirm('La partita in corso si perde: la prova la chiude e riparte dal menu. Continuare?')) return;
+        mostra(false);
+        void avviaProvaPrestazioni(gioco);
+      }, 'acceso')),
       titolo('Fotogrammi al secondo'),
       riga(tasto(contatoreAcceso() ? 'Contatore: acceso' : 'Contatore: spento', () => { accendiContatore(gioco, !contatoreAcceso()); ridisegna(); }, contatoreAcceso() ? 'acceso' : '')),
       el('p', 'lab-nota', 'Resta acceso in tutte le schermate, anche nella selezione: media e peggiore dell\'ultimo secondo. Le prove qui sotto servono a capire cosa pesa sul telefono.'),

@@ -4,8 +4,11 @@
  */
 export const INTERRUTTORI = {
   statiCerti: false, // ogni colpo lascia lo stato, con quiete e reazioni nuove (STATI_CERTI in src/data/stati.ts)
-  // Grazia a tacche: dove sta l'indicatore (da scegliere con Edoardo sul telefono), scintilla e suono a ogni tacca
-  tacchePosto: 'arco' as 'arco' | 'anello' | 'fascia',
+  // con gli Stati certi accesi, quali reazioni usano i numeri nuovi (spente: i numeri di sempre). Per misurarle una alla volta:
+  // ?stati=a (nessuna), b (Eclissi), c (Esorcismo), d (Rivelazione), e (Interramento), f o certi (tutte)
+  regole: { eclissi: true, esorcismo: true, rivelazione: true, interramento: true },
+  mira: false, // la Lanterna e la Pala mirano al nemico più vicino (MIRA in src/data/armi.ts); per il bot ?mira=1
+  // Grazia a tacche: scintilla e suono a ogni tacca
   taccheScintilla: true,
   taccheSuono: true,
 };

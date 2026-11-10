@@ -76,28 +76,44 @@ function pannello(testo: string, gioco: Phaser.Game): void {
   document.body.append(d);
 }
 
+/** Aspetta che pronto() diventi vero, guardando ogni 50 ms. */
+function aspetta(pronto: () => boolean): Promise<void> {
+  return new Promise((fine) => {
+    const guarda = (): void => { if (pronto()) fine(); else setTimeout(guarda, 50); };
+    guarda();
+  });
+}
+
 export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
   const avviso = document.createElement('div');
   avviso.className = 'lab-prova-avviso';
   avviso.textContent = 'Prova prestazioni: non toccare niente';
   document.body.append(avviso);
+  // da una partita in corso: prima la si chiude e si torna al menu. Prima la scena Gioco (che si riusa) veniva fermata e
+  // ripartita insieme, e la prova partiva sulla scena vecchia: la create() della nuova la azzerava e si misurava un campo vuoto
+  if (gioco.scene.isActive('Gioco')) {
+    gioco.scene.getScenes(true).forEach((s) => s.scene.key !== 'Menu' && s.scene.stop());
+    gioco.scene.start('Menu');
+    await aspetta(() => gioco.scene.isActive('Menu') && !gioco.scene.isActive('Gioco'));
+  }
   const hz = await frequenza();
+  const partita = gioco.scene.getScene('Gioco') as Gioco;
+  let creata = false; // la prova parte solo dopo la create() della partita nuova
+  partita.events.once('create', () => { creata = true; });
   gioco.scene.getScenes(true).forEach((s) => s.scene.stop());
   gioco.scene.start('Gioco', { pg: PRESTAZIONI.personaggio });
-  await new Promise<void>((pronto) => {
-    const guarda = (): void => { if (gioco.scene.isActive('Gioco')) pronto(); else setTimeout(guarda, 50); };
-    guarda();
-  });
-  const partita = gioco.scene.getScene('Gioco') as Gioco;
+  await aspetta(() => creata && gioco.scene.isActive('Gioco'));
   partita.labProvaPrestazioni();
   await misuraDisegni(gioco, PRESTAZIONI.avvio);
-  let interrotta = false, secondo = 0;
+  let interrotta = false, secondo = 0, contati = 0, conte = 0; // nemici in campo, contati una volta al secondo
   const visibilita = (): void => { if (document.hidden) interrotta = true; };
   document.addEventListener('visibilitychange', visibilita);
   const tempi = await misuraDisegni(gioco, PRESTAZIONI.secondi, (t) => {
     const s = Math.floor(t);
     if (s === secondo) return;
     secondo = s;
+    contati += partita.labStato().nemici;
+    conte++;
     partita.labProvaRiempi(); // i nemici restano quanti devono essere: le armi ne uccidono di continuo
     avviso.textContent = `Prova prestazioni: non toccare niente · ${PRESTAZIONI.secondi - s} s`;
   });
@@ -133,6 +149,7 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     `WebView o Chrome: ${c.webview}`,
     `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}`,
     `Minuto ${PRESTAZIONI.minuto}, ${PRESTAZIONI.nemici} nemici, lanterna in vista, ${PRESTAZIONI.secondi} s`,
+    `In campo durante la misura: ${Math.round(contati / Math.max(1, conte))} nemici in media, minuto ${Math.floor(partita.labStato().secondi / 60)}`,
     `Media: ${((tempi.length * 1000) / totale).toFixed(1)} fps`,
     `Fotogrammi saltati: ${saltati}`,
     `Secondi sotto ${PRESTAZIONI.secondoLento} fps: ${((lenti * 100) / Math.max(1, secondi)).toFixed(1)}%`,

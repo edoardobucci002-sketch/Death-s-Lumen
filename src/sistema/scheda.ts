@@ -32,6 +32,7 @@ export interface Contesto {
   doni: Record<IdDono, number>; // livello di ogni dono
   unioni: boolean; // le unioni sono sbloccate
   scoperte: ReadonlySet<IdUnione>; // solo queste si nominano: le altre si svelano giocando
+  metaRaccolta: number; // cero della raccolta della Cappella: la raccolta si scrive in pixel veri
 }
 
 /** Un'arma o un dono visti nella pausa: la casella e il riquadro di dettaglio. */
@@ -64,8 +65,8 @@ export function voceArma(arma: Arma, livello: number, unita: boolean, unione?: {
 }
 
 /** Dettaglio di un dono al suo livello. */
-export function voceDono(q: Passivo, livello: number): VoceDettaglio {
-  return { chiave: q.id, nome: q.nome, icona: q.icona, livello, massimo: q.massimo, unita: false, numeri: DATI_DONI[q.id](q, livello).map((n) => ({ ...n, nome: n.nome === 'Quantità' ? NOME_COLPI_IN_PIU : chiaro(n.nome) })), righe: [{ testo: SPIEGA_DONI[q.id] }] };
+export function voceDono(q: Passivo, livello: number, metaRaccolta = 0): VoceDettaglio {
+  return { chiave: q.id, nome: q.nome, icona: q.icona, livello, massimo: q.massimo, unita: false, numeri: DATI_DONI[q.id](q, livello, metaRaccolta).map((n) => ({ valore: n.valore, nome: n.nome === 'Quantità' ? NOME_COLPI_IN_PIU : chiaro(n.nome) })), righe: [{ testo: SPIEGA_DONI[q.id] }] };
 }
 
 const tagLivello = (l: number, massimo: number, nuovo: string): string => (l === 1 ? nuovo : `Liv ${l - 1} › ${l === massimo ? 'MAX' : l}`);
@@ -109,12 +110,13 @@ export function schedaDono(d: Dono, c: Contesto): Scheda {
   switch (d.tipo) {
     case 'arma': return schedaArma(d.arma, d.livello, c);
     case 'passivo': {
-      const q = d.passivo, ora = DATI_DONI[q.id](q, d.livello), prima = d.livello > 1 ? DATI_DONI[q.id](q, d.livello - 1) : null;
+      const q = d.passivo, ora = DATI_DONI[q.id](q, d.livello, c.metaRaccolta), prima = DATI_DONI[q.id](q, d.livello - 1, c.metaRaccolta);
       // un dono può aprire più Unioni (lo Scudo di ferro: Vanga del custode e Selciato)
       const unioni = c.unioni ? UNIONI.filter((x) => x.dono === q.id && c.scoperte.has(x.id) && c.armi.some((a) => a.id === x.arma)) : [];
       return {
         nome: q.nome, icona: q.icona, categoria: 'dono', tag: tagLivello(d.livello, q.massimo, 'Nuovo dono'),
-        dati: ora.map((v, i) => ({ nome: v.nome, prima: prima?.[i].valore, dopo: v.valore, tono: 'bene' })),
+        // al livello 1 il «prima» si scrive solo per i valori veri (daZero): «Raccolta 40 › 107 px», non «+0% › +167%»
+        dati: ora.map((v, i) => ({ nome: v.nome, prima: d.livello > 1 || v.daZero ? prima[i].valore : undefined, dopo: v.valore, tono: 'bene' })),
         righe: [{ testo: SPIEGA_DONI[q.id] }, ...unioni.map((u) => ({ testo: `Al liv ${livelloDonoUnione(q.id)}, con ${c.armi.find((a) => a.id === u.arma)!.nome} al liv ${LIVELLO_ARMA_UNIONE}: ${u.nome}`, tono: 'reazione' as const }))],
       };
     }

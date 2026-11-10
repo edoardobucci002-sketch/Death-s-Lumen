@@ -248,6 +248,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 // --- 4. Armi -----------------------------------------------------------------------------------
 
 {
+  frase('Lanterna e Pala mirano', 'si centra sul nemico più vicino entro {} px (il raggio della luce) e l\'impatto della Pala cade sul nemico più vicino entro {} px', A.MIRA.lanterna, A.MIRA.pala);
+  frase('Pane e vino da solo', '«Pane e vino» (+{} salute) si prende da solo', PR.CARTE.paneEVino);
   frase('Armi massime', 'Al massimo {} armi, ognuna fino al livello {}', A.MAX_ARMI, PR.CARTE.livelloMassimo);
 
   // tabelle livello per livello: colonna del GDD → campo del livello, oppure funzione per i valori fissi dell'arma
@@ -544,7 +546,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('Stati certi: quiete', 'il nemico non può reagire di nuovo per {} s', SC.quiete);
   frase('Stati certi: Eclissi', 'danno = {}% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il {p} del danno del colpo', pct(SC.eclissi.parte), SC.eclissi.colpoElite);
   frase('Stati certi: Esorcismo', '**Esorcismo**: {} fiammelle, ognuna al {}% del danno del colpo', SC.esorcismo.fiammelle, pct(SC.esorcismo.colpo));
-  frase('Stati certi: Rivelazione', '**Rivelazione**: +{}% anime, almeno +{}', pct(SC.rivelazione.anime), SC.rivelazione.minimo);
+  frase('Stati certi: Rivelazione', '**Rivelazione**: +{}% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno {} anime', pct(SC.rivelazione.anime), SC.rivelazione.da);
   frase('Stati certi: Interramento', 'Luce, +{}% danno subito invece di +{}%; Sacro, fermo {} s; Ombra, la maledizione continua al {p}', pct(SC.interramento.dannoLuce), pct(ST.REAZIONI.interramento.danno), SC.interramento.fermoSacro, SC.interramento.maledettoOmbra);
   frase('Stati certi: cerchi', 'al massimo {} cerchi delle reazioni sullo schermo', SC.cerchiMassimi);
 }

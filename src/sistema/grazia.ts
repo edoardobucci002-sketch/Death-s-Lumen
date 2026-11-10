@@ -1,9 +1,9 @@
 /*
  * Grazia a tacche: sfiorare un nemico normale (né élite né Seth) senza toccarlo dà una tacca; lo stesso nemico
  * non più di una volta ogni tanto. Piene le tacche, parte la Grazia; senza sfiorare calano piano.
- * Qui ci sono anche l'indicatore (tre posti da provare dal Laboratorio: arco sotto la barra della salute,
- * anello intorno al personaggio, tacche nella fascia accanto all'abilità) e la scintilla di ogni tacca.
- * Numeri in GRAZIA.tacche (src/data/sopravvivenza.ts); scelte del Laboratorio in INTERRUTTORI.
+ * Qui ci sono anche l'indicatore (un rettangolo sotto la barra della salute, largo e alto come lei, diviso in
+ * caselle quante sono le tacche) e la scintilla di ogni tacca.
+ * Numeri in GRAZIA.tacche (src/data/sopravvivenza.ts); scintilla e suono si spengono dal Laboratorio (INTERRUTTORI).
  */
 import Phaser from 'phaser';
 import { GRAZIA } from '../data/sopravvivenza';
@@ -26,14 +26,11 @@ export class GraziaTacche {
   private sY = new Float32Array(MAX_SCINTILLE);
   private sVita = new Float32Array(MAX_SCINTILLE);
   private prossima = 0;
-  readonly fascia = document.createElement('canvas'); // il posto «fascia»: la mette Speciale accanto al pulsante dell'abilità
-  private fasciaVista = '';
-  fasciaCambiata = false; // la tela della fascia ha cambiato misura: va rimessa a posto sopra l'abilità
+  private vista = -1; // «piene, caselle, larghezza» dell'ultimo disegno: si ridisegna solo quando cambia
 
-  constructor(scena: Phaser.Scene, private colore: number, private disegna: boolean) {
+  constructor(scena: Phaser.Scene, private disegna: boolean) {
     this.disegno = scena.add.graphics().setDepth(PROFONDITA.barra);
     this.scintille = scena.add.graphics().setDepth(PROFONDITA.sopra);
-    this.fascia.className = 'arte grazia-fascia';
   }
 
   /**
@@ -84,32 +81,26 @@ export class GraziaTacche {
   }
 
   /**
-   * Disegno, a ogni fotogramma: (px, py) piedi del personaggio già arrotondati, yBarra il bordo basso della barra
-   * della salute, z l'ingrandimento della barra, corpo l'altezza del centro del corpo. In Grazia le tacche sono tutte piene.
+   * Disegno, a ogni fotogramma: (sx, sy) l'angolo in alto a sinistra della barra della salute, già arrotondato;
+   * larga e alta le sue misure in pixel disegnati, z il suo ingrandimento. Il rettangolo delle tacche sta sotto la barra
+   * e ne condivide il bordo di sotto. In Grazia le caselle sono tutte piene.
    */
-  mostra(px: number, py: number, yBarra: number, z: number, corpo: number, massimo: number, inGrazia: boolean): void {
-    this.fasciaCambiata = false;
-    const T = GRAZIA.tacche, g = this.disegno, piene = inGrazia ? massimo : this.tacche, posto = INTERRUTTORI.tacchePosto;
-    g.clear();
-    if (this.disegna && piene > 0 && posto !== 'fascia') {
-      const l = T.lato * z;
-      for (let k = 0; k < massimo; k++) {
-        let x: number, y: number;
-        if (posto === 'arco') {
-          // un arco a sorriso sotto la barra, largo quanto la barra
-          const t = massimo > 1 ? k / (massimo - 1) - 0.5 : 0;
-          x = px + t * (massimo * (T.lato + 1)) * z;
-          y = yBarra + T.sottoBarra * z + Math.round(t * t * 4) * z;
-        } else {
-          const a = -Math.PI / 2 + (k / massimo) * Math.PI * 2;
-          x = px + Math.cos(a) * T.raggioAnello * z;
-          y = py - corpo + Math.sin(a) * T.raggioAnello * z;
+  mostra(sx: number, sy: number, larga: number, alta: number, z: number, massimo: number, inGrazia: boolean, visibile: boolean): void {
+    const T = GRAZIA.tacche, g = this.disegno, piene = inGrazia ? massimo : this.tacche;
+    g.setVisible(this.disegna && visibile);
+    if (this.disegna && visibile) {
+      const chiave = (piene * 100 + massimo) * 1000 + larga;
+      if (chiave !== this.vista) {
+        this.vista = chiave;
+        // caselle separate da una colonna del bordo: la prima e l'ultima toccano il bordo
+        const dentro = larga - 2, passo = (dentro + 1) / massimo;
+        g.clear().fillStyle(T.bordo).fillRect(0, 0, larga, alta);
+        for (let k = 0; k < massimo; k++) {
+          const x0 = 1 + Math.round(k * passo), x1 = Math.round((k + 1) * passo); // x1: la colonna di bordo dopo la casella
+          g.fillStyle(k < piene ? T.piena : T.vuota).fillRect(x0, 1, x1 - x0, alta - 2);
         }
-        x = Math.round(x - l / 2);
-        y = Math.round(y);
-        g.fillStyle(T.bordo).fillRect(x - z, y - z, l + 2 * z, l + 2 * z);
-        g.fillStyle(k < piene ? this.colore : T.vuota).fillRect(x, y, l, l);
       }
+      g.setPosition(sx, sy + (alta - 1) * z).setScale(z);
     }
     // scintille: una crocetta che si spegne
     const s = this.scintille.clear(), S = T.scintilla, m = Math.round(S.lato * z);
@@ -118,33 +109,6 @@ export class GraziaTacche {
       const x = Math.round(this.sX[k]), y = Math.round(this.sY[k]);
       s.fillStyle(S.colore).fillRect(x - m, y - Math.round(z / 2), 2 * m, Math.max(1, Math.round(z))).fillRect(x - Math.round(z / 2), y - m, Math.max(1, Math.round(z)), 2 * m);
     }
-    this.mostraFascia(posto === 'fascia' ? piene : -1, massimo);
   }
 
-  /** Il posto «fascia»: una fila di tacche su una piccola tela sopra il pulsante dell'abilità (pixel disegnati). */
-  private mostraFascia(piene: number, massimo: number): void {
-    const chiave = `${piene}/${massimo}`;
-    if (chiave === this.fasciaVista) return;
-    this.fasciaVista = chiave;
-    this.fascia.hidden = piene < 0;
-    if (piene < 0) return;
-    const T = GRAZIA.tacche, lato = T.fascia.lato, passo = lato + 2, c = this.fascia, larga = massimo * passo + 1;
-    if (c.width !== larga || c.height !== lato + 2) {
-      c.width = larga;
-      c.height = lato + 2;
-      this.fasciaCambiata = true;
-    }
-    const g = c.getContext('2d')!;
-    const esa = (n: number): string => `#${n.toString(16).padStart(6, '0')}`;
-    for (let k = 0; k < massimo; k++) {
-      g.fillStyle = esa(T.bordo);
-      g.fillRect(k * passo, 0, lato + 2, lato + 2);
-      g.fillStyle = esa(k < piene ? this.colore : T.vuota);
-      g.fillRect(k * passo + 1, 1, lato, lato);
-    }
-  }
-
-  distruggi(): void {
-    this.fascia.remove();
-  }
 }

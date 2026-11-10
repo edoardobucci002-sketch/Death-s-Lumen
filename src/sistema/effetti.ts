@@ -12,6 +12,7 @@ import { REAZIONI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
 import { INFO_REAZIONI } from '../data/spiegazioni';
 import { telaContorno } from './scritte';
+import { CARTE } from '../data/progressione';
 
 /** Ordine di disegno, dal basso verso l'alto. Personaggio e nemici stanno in mezzo, ordinati per i piedi. */
 export const PROFONDITA = {
@@ -28,6 +29,7 @@ const MAX_NUMERI = 64;
 const MAX_SCOPPI = 48;
 const MAX_ARCHI = 4;
 const MAX_REAZIONI = 24;
+const MAX_POLVERI = 12;
 const MAX_ETICHETTE = 8;
 // cifre 3×5: ogni riga è una cifra, 1 = pixel acceso
 const CIFRE = [
@@ -72,6 +74,12 @@ export class Effetti {
   private durataReazione = 0.25;
   private scossa = 0; // secondi rimasti
   private forzaScossa = 0;
+  private polveri: Phaser.GameObjects.Image[] = []; // la polvere dei Sampietrini (provvisoria)
+  private polvereVita = new Float32Array(MAX_POLVERI);
+  private polvereChiave: string[] = [];
+  private prossimaPolvere = 0;
+  private pane: Phaser.GameObjects.Image; // la scritta «Pane e vino +40» sopra la testa
+  private paneVita = 0;
   scossaX = 0; // spostamento della telecamera in questo fotogramma, in pixel interi
   scossaY = 0;
 
@@ -93,6 +101,13 @@ export class Effetti {
       if (!scena.textures.exists(k)) scena.textures.addCanvas(k, telaContorno(r.nome, `#${r.coloreNome.toString(16).padStart(6, '0')}`, '#120c0a'));
     }
     for (let i = 0; i < MAX_ETICHETTE; i++) this.etichette.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.barra).setScale(REAZIONI.etichetta.ingrandimento).setVisible(false));
+    for (let i = 0; i < MAX_POLVERI; i++) {
+      this.polveri.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.aTerra).setVisible(false));
+      this.polvereChiave.push('');
+    }
+    const P = EFFETTI.paneDaSolo;
+    if (!scena.textures.exists('Scritta_Pane')) scena.textures.addCanvas('Scritta_Pane', telaContorno(`Pane e vino +${CARTE.paneEVino}`, P.colore, P.bordo));
+    this.pane = scena.add.image(0, 0, 'Scritta_Pane').setScale(P.ingrandimento).setDepth(PROFONDITA.barra).setVisible(false);
     for (let i = 0; i < MAX_ARCHI; i++) {
       this.archi.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.aTerra + 1).setVisible(false));
       this.arcoChiave.push('');
@@ -271,6 +286,22 @@ export class Effetti {
     this.posaY = Math.max(cam.scrollY + mezzaA, Math.min(cam.scrollY + cam.height - mezzaA, su));
   }
 
+  /** La polvere di un sampietrino che cade in (x, y): un anello largo quanto l'area colpita, pieno e poi a retino. */
+  polvere(x: number, y: number, raggio: number): void {
+    const P = EFFETTI.polvereSampietrini, r = Math.round(raggio), chiave = `polvere-${r}`;
+    if (!this.scena.textures.exists(`${chiave}-0`)) creaPolvere(this.scena, chiave, r, P.colore, P.scuro);
+    const i = this.prossimaPolvere;
+    this.prossimaPolvere = (i + 1) % MAX_POLVERI;
+    this.polvereVita[i] = P.durata;
+    this.polvereChiave[i] = chiave;
+    this.polveri[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setVisible(true);
+  }
+
+  /** «Pane e vino» preso da solo: la scritta verde sale sopra la testa del personaggio. */
+  paneDaSolo(): void {
+    this.paneVita = EFFETTI.paneDaSolo.durata;
+  }
+
   /** Scuote lo schermo; resta la scossa più forte tra quelle in corso. */
   scuoti(forza: number, durata: number): void {
     if (this.scossa <= 0 || forza >= this.forzaScossa) this.forzaScossa = forza;
@@ -311,6 +342,18 @@ export class Effetti {
       // seconda metà della vita: lo stesso arco a retino, poi sparisce
       if (this.arcoVita[i] <= 0) this.archi[i].setVisible(false);
       else if (this.arcoVita[i] < EFFETTI.arco.durata / 2) this.archi[i].setTexture(`${this.arcoChiave[i]}-1`);
+    }
+    for (let i = 0; i < MAX_POLVERI; i++) {
+      if (this.polvereVita[i] <= 0) continue;
+      this.polvereVita[i] -= dt;
+      if (this.polvereVita[i] <= 0) this.polveri[i].setVisible(false);
+      else if (this.polvereVita[i] < EFFETTI.polvereSampietrini.durata / 2) this.polveri[i].setTexture(`${this.polvereChiave[i]}-1`);
+    }
+    if (this.paneVita > 0) {
+      const P = EFFETTI.paneDaSolo;
+      this.paneVita -= dt;
+      const fatto = 1 - this.paneVita / P.durata;
+      this.pane.setPosition(Math.round(gx), Math.round(gy - P.sopra - P.sale * fatto)).setVisible(this.paneVita > 0);
     }
     for (let i = 1; i < this.pausaEtichetta.length; i++) if (this.pausaEtichetta[i] > 0) this.pausaEtichetta[i] -= dt;
     for (let i = 0; i < MAX_ETICHETTE; i++) {
@@ -447,6 +490,31 @@ function creaReazione(scena: Phaser.Scene, chiave: string, r: number, colore: st
         const anello = d > r - 4;
         if (retino ? (x + y) % 2 : !anello && (x % 2 || y % 2)) continue;
         g.fillStyle = d > r - 1.5 ? bordo : colore;
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+    tela.refresh();
+  }
+}
+
+/**
+ * La polvere provvisoria dei Sampietrini, raggio r: un anello fitto sul bordo dell'area e qualche granello dentro
+ * (sempre gli stessi, da una formula, senza tirare il caso). Due fotogrammi: pieno e a retino.
+ */
+function creaPolvere(scena: Phaser.Scene, chiave: string, r: number, colore: string, scuro: string): void {
+  const L = 2 * r + 2;
+  for (const retino of [0, 1]) {
+    const tela = scena.textures.createCanvas(`${chiave}-${retino}`, L, L)!;
+    const g = tela.getContext();
+    for (let y = 0; y < L; y++) {
+      for (let x = 0; x < L; x++) {
+        const d = Math.hypot(x + 0.5 - L / 2, y + 0.5 - L / 2);
+        if (d > r) continue;
+        const granello = ((x * 7 + y * 13) * 31) % 17 === 0; // dentro: pochi granelli sparsi
+        if (d < r - 5 && !granello) continue;
+        if (retino && (x + y) % 2) continue;
+        if (d >= r - 5 && d < r - 1.5 && (x % 2) !== (y % 2)) continue; // l'anello è a scacchi, il bordo pieno
+        g.fillStyle = d > r - 1.5 ? scuro : colore;
         g.fillRect(x, y, 1, 1);
       }
     }

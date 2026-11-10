@@ -96,6 +96,10 @@ export class Orda {
   readonly scattoX = new Float32Array(CAPIENZA);
   readonly scattoY = new Float32Array(CAPIENZA);
   private anime = new Float32Array(CAPIENZA);
+  // per la simulazione: salute tolta dalla maledizione (Maledetto) e, con gli Stati certi, dall'Interramento che ha consumato l'Ombra
+  dannoMaledizione = 0;
+  marcato = false; // l'ultima marca() ha lasciato lo stato (per la simulazione)
+  dannoMaledizioneInterrata = 0;
   private fianco = new Float32Array(CAPIENZA); // accerchia: di quanto gira intorno al giocatore (radianti, ±)
   // orde: a quale orda appartiene (0 = nessuna) e il suo posto nella formazione rispetto al centro
   private branco = new Uint8Array(CAPIENZA);
@@ -290,7 +294,7 @@ export class Orda {
 
   /** Quanto danno in più subisce mentre è interrato: +30%, +50% con gli Stati certi se l'Interramento ha consumato la Luce. */
   piuInterrato(i: number): number {
-    return INTERRUTTORI.statiCerti && this.interraTipo[i] === LUCE ? STATI_CERTI.interramento.dannoLuce : REAZIONI.interramento.danno;
+    return this.interraTipo[i] === LUCE ? STATI_CERTI.interramento.dannoLuce : REAZIONI.interramento.danno; // interraTipo è 0 senza la regola nuova
   }
 
   /**
@@ -300,6 +304,7 @@ export class Orda {
    * forza = true (primo scatto di un'abilità speciale) la ignora.
    */
   marca(i: number, aff: number, forza = false): number {
+    this.marcato = false;
     if (!aff || this.salute[i] <= 0) return 0;
     const abb = this.sAbbagliato[i] > 0, cons = this.sConsacrato[i] > 0, mal = this.sMaledetto[i] > 0, sep = this.sSepolto[i] > 0;
     let r = 0;
@@ -318,13 +323,14 @@ export class Orda {
       this.ultimoStato[i] = 0;
       if (certi) this.quiete[i] = STATI_CERTI.quiete;
       if (r === INTERRAMENTO) {
-        this.interraTipo[i] = certi ? consumato : 0;
-        const fermo = certi && consumato === SACRO ? STATI_CERTI.interramento.fermoSacro : REAZIONI.interramento.fermo;
+        this.interraTipo[i] = certi && INTERRUTTORI.regole.interramento ? consumato : 0;
+        const fermo = this.interraTipo[i] === SACRO ? STATI_CERTI.interramento.fermoSacro : REAZIONI.interramento.fermo;
         this.sInterrato[i] = fermo * resiste;
         this.pausaSepolto[i] = STATI.sepolto.pausa;
       } else if (r === RIVELAZIONE && !this.rivelato[i]) {
         // una volta sola: sul Mietitore, colpito di continuo, le anime raddoppiavano all'infinito
-        if (certi) this.anime[i] += Math.max(STATI_CERTI.rivelazione.minimo, this.anime[i] * STATI_CERTI.rivelazione.anime);
+        const R = STATI_CERTI.rivelazione;
+        if (certi && INTERRUTTORI.regole.rivelazione) { if (this.anime[i] >= R.da) this.anime[i] += Math.floor(this.anime[i] * R.anime); }
         else this.anime[i] *= REAZIONI.rivelazione.anime;
         this.rivelato[i] = 1;
       }
@@ -338,6 +344,7 @@ export class Orda {
       this.pausaSepolto[i] = STATI.sepolto.pausa;
     }
     this.ultimoStato[i] = aff;
+    this.marcato = true;
     return 0;
   }
 
@@ -392,7 +399,9 @@ export class Orda {
     if (this.sMaledetto[i] > 0) {
       this.sMaledetto[i] -= dt;
       const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
-      this.salute[i] -= this.saluteMassima[i] * STATI.maledetto.perSecondo * f * dt;
+      const via = this.saluteMassima[i] * STATI.maledetto.perSecondo * f * dt;
+      this.dannoMaledizione += Math.min(via, Math.max(0, this.salute[i])); // per la simulazione: solo la salute tolta davvero
+      this.salute[i] -= via;
     }
     let fermo = false;
     if (this.sSepolto[i] > 0) {
@@ -403,9 +412,11 @@ export class Orda {
       this.sInterrato[i] -= dt;
       fermo = true;
       // Stati certi: se l'Interramento ha consumato l'Ombra, la maledizione continua al doppio
-      if (this.interraTipo[i] === OMBRA && INTERRUTTORI.statiCerti) {
+      if (this.interraTipo[i] === OMBRA) { // interraTipo è 0 senza la regola nuova
         const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
-        this.salute[i] -= this.saluteMassima[i] * STATI.maledetto.perSecondo * STATI_CERTI.interramento.maledettoOmbra * f * dt;
+        const via = this.saluteMassima[i] * STATI.maledetto.perSecondo * STATI_CERTI.interramento.maledettoOmbra * f * dt;
+        this.dannoMaledizioneInterrata += Math.min(via, Math.max(0, this.salute[i]));
+        this.salute[i] -= via;
       }
     }
     if (this.quiete[i] > 0) this.quiete[i] -= dt;

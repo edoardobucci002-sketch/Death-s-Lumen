@@ -2,7 +2,7 @@
  * Scelta del dono a ogni livello: il gioco si ferma e mostra fino a 3 carte estratte a caso con i pesi del GDD.
  * Si sceglie toccando una striscia o con i tasti 1-2-3 (4 nei reliquiari); «Rimescola» estrae carte nuove (2 volte per partita).
  * Escono: armi possedute da potenziare, armi comuni nuove (fino a 6 armi), doni passivi (fino a 6).
- * Quando non resta nulla da potenziare esce «Pane e vino».
+ * Quando non resta nulla da potenziare la scelta non si apre: «Pane e vino» si prende da solo (soloPane, in Gioco.apriDoni).
  * Lo stesso schermo serve ai reliquiari (mostraReliquiario): tre amuleti del Rosario e il potenziamento, senza Rimescola.
  * Le scelte sono strisce orizzontali una sotto l'altra (Striscia_Dono, e Striscia_Dono_Scelta sotto il dito o il cursore):
  * icona, nome, numeri che cambiano e spiegazione, a colpo d'occhio (src/sistema/scheda.ts). Se non ci stanno, scendono di un ingrandimento intero.
@@ -43,7 +43,7 @@ export class Doni {
     private armaIniziale: Arma,
     private passivi: Record<IdDono, number>, // livello di ogni dono passivo (0 = non posseduto)
     private caso: Caso,
-    private rosario: () => { usati: number; totale: number; unioni: boolean; scoperte: ReadonlySet<IdUnione> },
+    private rosario: () => { usati: number; totale: number; unioni: boolean; scoperte: ReadonlySet<IdUnione>; metaRaccolta: number },
     private legenda: () => void,
     private disponibile: (id: string) => boolean, // armi e doni nuovi: solo se sbloccati nella Cappella
   ) {
@@ -123,8 +123,16 @@ export class Doni {
     this.radice.remove();
   }
 
-  private estrai(): void {
-    // possibili doni con il loro peso
+  /**
+   * Nessuna carta da offrire: resterebbe solo «Pane e vino». In quel caso la scelta non si apre (lo decide la scena).
+   * Non tira il caso: si può chiamare quante volte si vuole.
+   */
+  soloPane(): boolean {
+    return this.possibili().length === 0;
+  }
+
+  /** Le carte che possono uscire, con il loro peso. */
+  private possibili(): { dono: Dono; peso: number }[] {
     const possibili: { dono: Dono; peso: number }[] = [];
     // sbloccare oggetti aggiunge varietà, non toglie potenziamenti: il peso degli oggetti nuovi si divide tra tutti quelli disponibili
     const fattoreArmi = CARTE.pool.armi / ARMI_COMUNI.filter((a) => this.disponibile(a.id)).length;
@@ -145,6 +153,11 @@ export class Doni {
       if (l >= q.massimo || (!l && (posseduti >= MAX_PASSIVI || !this.disponibile(q.id)))) continue;
       possibili.push({ dono: { tipo: 'passivo', passivo: q, livello: l + 1 }, peso: l ? CARTE.donoPosseduto : CARTE.donoNuovo * fattoreDoni });
     }
+    return possibili;
+  }
+
+  private estrai(): void {
+    const possibili = this.possibili();
     this.carte = [];
     while (this.carte.length < CARTE.quante && possibili.length) {
       let totale = 0;
@@ -177,7 +190,7 @@ export class Doni {
 
   private carta(d: Dono, n: number): HTMLElement {
     const r = this.rosario();
-    const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni, scoperte: r.scoperte });
+    const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni, scoperte: r.scoperte, metaRaccolta: r.metaRaccolta });
     const b = document.createElement('button');
     b.type = 'button';
     b.className = `doni-carta ${sc.categoria}`;

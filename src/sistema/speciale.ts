@@ -27,7 +27,6 @@ export class Speciale {
   private ricaricaAttuale: number;
   private chiave: string;
   private attesaMisure = 0;
-  private sopra: { tela: HTMLCanvasElement; spazio: number } | null = null; // tacche della Grazia (posto «fascia»), accanto al pulsante
 
   constructor(
     contenitore: HTMLElement,
@@ -151,24 +150,6 @@ export class Speciale {
     posa(this.conto, (c.x - c.r) * z, (c.y - c.r) * z, m); // un quadrato attorno al disco: il numero sta al centro
     misura(this.conto, c.r * 2, c.r * 2, z, m);
     Object.assign(this.conto.style, { fontSize: `${TESTI.ricarica * z * m.px}px`, lineHeight: '1' });
-    if (this.sopra) {
-      // accanto al pulsante, verso il centro dello schermo, all'altezza del disco
-      const t = this.sopra.tela, aSinistra = this.pulsante.getBoundingClientRect().left < innerWidth / 2;
-      posa(t, aSinistra ? (a.w + this.sopra.spazio) * z : -(t.width + this.sopra.spazio) * z, (c.y - t.height / 2) * z, m);
-      misura(t, t.width, t.height, z, m);
-    }
-  }
-
-  /** Una piccola tela accanto al pulsante, verso il centro (le tacche della Grazia), a pixel disegnati come il pulsante. */
-  mettiSopra(tela: HTMLCanvasElement, spazio: number): void {
-    this.sopra = { tela, spazio };
-    this.pulsante.append(tela);
-    this.disponi();
-  }
-
-  /** Da chiamare quando la tela sopra cambia misura. */
-  ridisponi(): void {
-    this.disponi();
   }
 
   private tasto = (e: KeyboardEvent): void => {

@@ -9,7 +9,10 @@
 //      npm run sim -- 3 strega,becchino
 //      npm run sim -- 6 tutti meta=max   (Cappella completa; meta=meta a metà; senza, vuota)
 //      npm run sim -- 24 tutti esplora   (una notte su tre di ogni personaggio il bot sceglie le carte a caso: ?esplora=1)
-//      npm run sim -- 12 tutti stati=certi   (con l'interruttore «Stati certi» acceso)
+//      npm run sim -- 12 tutti stati=certi   (con l'interruttore «Stati certi» acceso; stati=a…e una regola nuova alla volta)
+//      npm run sim -- 12 lampionaio,becchino mira=1   (Lanterna e Pala mirano; davanti=1 lascia al bot il giro intorno ai nemici)
+//      npm run sim -- 3 tutti meta=max senza=sampietrini   (un oggetto che non esce mai tra le carte)
+//      npm run sim -- 3 tutti meta=max amuleto=martire   (la notte parte con quell'amuleto acceso)
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -19,7 +22,10 @@ const argomenti = process.argv.slice(2);
 const meta = (argomenti.find((a) => a.startsWith('meta=')) ?? 'meta=0').slice(5);
 const esplora = argomenti.includes('esplora');
 const stati = (argomenti.find((a) => a.startsWith('stati=')) ?? '').slice(6);
-const altri = argomenti.filter((a) => !a.startsWith('meta=') && !a.startsWith('stati=') && a !== 'esplora');
+// altri parametri dell'indirizzo passati così come sono: mira=1, davanti=1, senza=sampietrini, amuleto=martire
+const PASSANO = ['mira=', 'davanti=', 'senza=', 'amuleto='];
+const passati = argomenti.filter((a) => PASSANO.some((p) => a.startsWith(p)));
+const altri = argomenti.filter((a) => !a.startsWith('meta=') && !a.startsWith('stati=') && a !== 'esplora' && !passati.includes(a));
 const partite = Number(altri[0]) || 3;
 const scelti = altri[1] && altri[1] !== 'tutti' ? altri[1].split(',') : PERSONAGGI;
 // obiettivi di vittoria del bot secondo la Cappella (proposta sulla meta progressione)
@@ -49,7 +55,7 @@ async function gioca({ pg, seme, esplora }) {
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}&sicura=${AREA_SICURA}${esplora ? '&esplora=1' : ''}${stati ? `&stati=${stati}` : ''}${process.env.DL_EXTRA ?? ''}`);
+  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}&sicura=${AREA_SICURA}${esplora ? '&esplora=1' : ''}${stati ? `&stati=${stati}` : ''}${passati.map((a) => `&${a}`).join('')}${process.env.DL_EXTRA ?? ''}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 10 * 60_000, polling: 1000 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();
@@ -60,7 +66,7 @@ async function gioca({ pg, seme, esplora }) {
 }
 
 console.log(`Simulazione: ${partite} partite per ${scelti.join(', ')}, Cappella ${meta === '0' ? 'vuota' : meta === 'meta' ? 'a metà' : 'completa'}` +
-  `${esplora ? ', una notte su tre esplorativa' : ''}${stati ? `, stati=${stati}` : ''}\n`);
+  `${esplora ? ', una notte su tre esplorativa' : ''}${stati ? `, stati=${stati}` : ''}${passati.length ? `, ${passati.join(', ')}` : ''}\n`);
 const lavori = [];
 for (let n = 0; n < INSIEME; n++) {
   lavori.push((async () => {
@@ -178,7 +184,11 @@ if (notti.length) {
   // il danno totale conta Eclissi ed Esorcismo ma non la parte in più dell'Interramento: la si aggiunge
   const dannoReaz = notti.reduce((a, r) => a + Object.values(r.dannoReazioni ?? {}).reduce((x, y) => x + y, 0), 0);
   const dannoTot = notti.reduce((a, r) => a + (r.danno ?? 0) + (r.dannoReazioni?.Interramento ?? 0), 0);
-  if (dannoTot) console.log(`Danno delle reazioni sul danno totale: ${((dannoReaz * 100) / dannoTot).toFixed(1)}% (la maledizione non è contata)`);
+  if (dannoTot) console.log(`Danno delle reazioni sul danno totale: ${((dannoReaz * 100) / dannoTot).toFixed(1)}% (senza la maledizione)`);
+  // la maledizione (Maledetto, e con gli Stati certi l'Interramento che consuma l'Ombra) è fuori dal danno totale: si conta a parte
+  const mal = notti.reduce((a, r) => a + (r.dannoMaledizione ?? 0), 0), malI = notti.reduce((a, r) => a + (r.dannoMaledizioneInterrata ?? 0), 0);
+  if (mal + malI) console.log(`Maledizione a notte: ${Math.round(mal / notti.length)} (Maledetto) + ${Math.round(malI / notti.length)} (Interramento sull'Ombra); ` +
+    `reazioni sul totale contando la maledizione: ${(((dannoReaz + malI) * 100) / (dannoTot + mal + malI)).toFixed(1)}%`);
   const offerte = notti.filter((r) => r.unioneOfferta !== null), prese = notti.filter((r) => r.unionePresa !== null);
   const minuto = (m) => tempo(m * 60);
   console.log(`Prima Unione offerta in ${offerte.length}/${notti.length} notti` + (offerte.length ? `, in media a ${minuto(media(offerte.map((r) => r.unioneOfferta)))}` : '') +
@@ -189,6 +199,8 @@ if (notti.length) {
   const inGrazia = notti.filter((r) => r.secondiGrazia !== undefined);
   if (inGrazia.length) console.log(`Grazia: ${(media(inGrazia.map((r) => r.secondiGrazia / r.secondi)) * 100).toFixed(1)}% della notte in media; tacche a notte ${Math.round(media(inGrazia.map((r) => r.tacche)))}; ` +
     scelti.map((pg) => `${pg} ${(media(inGrazia.filter((r) => r.pg === pg).map((r) => r.secondiGrazia / r.secondi)) * 100).toFixed(1)}%`).join(', '));
+  const pane = notti.filter((r) => r.paneDaSolo);
+  console.log(`«Pane e vino» preso da solo (la scelta non si apre): ${notti.reduce((a, r) => a + (r.paneDaSolo ?? 0), 0)} volte, in ${pane.length}/${notti.length} notti`);
   const pozze = notti.filter((r) => r.pozzeCuranti);
   if (pozze.length) console.log(`Acquasantiera, pozze che curano: in ${pozze.length} notti, in media ${media(pozze.map((r) => r.pozzeCuranti)).toFixed(1)} a notte, ${Math.round(media(pozze.map((r) => r.curaPozze ?? 0)))} salute ridata a notte`);
 }

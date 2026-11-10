@@ -53,13 +53,12 @@ export const GRAZIA = {
     calo: 2,
     durata: 2,
     campanella: 8, // Campanella d'argento: +8 px di sfioramento per livello
-    // disegno provvisorio dal codice: tacche piene del colore del personaggio, vuote scure
-    lato: 2, // pixel di gioco di una tacca (arco e anello); nella fascia, pixel disegnati
-    raggioAnello: 22, // anello intorno al personaggio, dal centro del corpo
-    sottoBarra: 3, // l'arco sta così sotto la barra della salute
-    fascia: { lato: 4, spazio: 4 }, // posto «fascia»: tacche di 4 pixel disegnati, staccate di 4 dal pulsante dell'abilità, verso il centro
-    vuota: 0x2a1f17,
-    bordo: 0x000000,
+    // indicatore (scelta di Edoardo del 10/11): un rettangolo sotto la barra della salute, largo e alto come lei,
+    // diviso in tante caselle quante sono le tacche, senza cifre. Colori proposti da Claude, da rivedere: un azzurro
+    // che non si confonde con il rosso, l'ambra e il verde della barra né con i colori dei personaggi
+    piena: 0x86c5e8,
+    vuota: 0x10222e,
+    bordo: 0x120606, // come il bordo della barra della salute
     scintilla: { durata: 0.2, lato: 3, colore: 0xfff2c0 },
   },
 } as const;

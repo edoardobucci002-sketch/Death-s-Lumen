@@ -4,6 +4,7 @@
  */
 import { REAZIONI, STATI, type IdAffinita } from './stati';
 import { GRAZIA } from './sopravvivenza';
+import { BASE } from './personaggi';
 import { animeDono, effettoDono, ricaricaDono, type IdDono, type Passivo } from './doni';
 
 export const virgola = (v: number): string => String(Math.round(v * 100) / 100).replace('.', ',');
@@ -62,16 +63,21 @@ export const CAMPI_ARMA: Record<string, { nome: string; unita?: string; meglioBa
   anime: { nome: 'Anime' },
 };
 
-/** Il dato principale di ogni dono passivo a un dato livello. */
+/**
+ * Il dato principale di ogni dono passivo a un dato livello. Dove il valore di partenza è piccolo (la raccolta: 40 px)
+ * una percentuale dice poco: si scrive il valore vero, e «daZero» lo mostra anche al livello 1 («Raccolta 40 › 107 px»).
+ * metaRaccolta: il cero della raccolta della Cappella (0 se spento), che si somma come il dono.
+ */
 const piu = (v: number): string => `+${percento(v)}`;
 const meno = (v: number): string => `−${percento(v)}`;
-export const DATI_DONI: Record<IdDono, (q: Passivo, l: number) => { nome: string; valore: string }[]> = {
+export interface DatoDono { nome: string; valore: string; daZero?: boolean }
+export const DATI_DONI: Record<IdDono, (q: Passivo, l: number, metaRaccolta?: number) => DatoDono[]> = {
   cuoreDiCera: (q, l) => [{ nome: 'Salute', valore: `+${Math.round(effettoDono(q, l))}` }],
   saleNero: (q, l) => [{ nome: 'Danno', valore: piu(effettoDono(q, l)) }],
   clessidra: (q, l) => [{ nome: 'Ricarica', valore: meno(1 - ricaricaDono(q, l)) }],
   stoppinoLungo: (q, l) => [{ nome: 'Area', valore: piu(effettoDono(q, l)) }],
   aliDiFalena: (q, l) => [{ nome: 'Velocità', valore: piu(effettoDono(q, l)) }],
-  calamita: (q, l) => [{ nome: 'Raccolta', valore: piu(effettoDono(q, l)) }, { nome: 'Anime', valore: piu(animeDono(q, l)) }],
+  calamita: (q, l, m = 0) => [{ nome: 'Raccolta', valore: `${Math.round(BASE.raccolta * (1 + effettoDono(q, l) + m))} px`, daZero: true }, { nome: 'Anime', valore: piu(animeDono(q, l)) }],
   erbeAmare: (q, l) => [{ nome: 'Salute/s', valore: `+${virgola(effettoDono(q, l))}` }],
   scudoDiFerro: (q, l) => [{ nome: 'Danno subito', valore: meno(effettoDono(q, l)) }],
   specchio: (q, l) => [{ nome: 'Quantità', valore: `+${effettoDono(q, l)}` }],
