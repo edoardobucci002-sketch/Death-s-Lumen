@@ -72,3 +72,28 @@ export const RUOLI = {
   rosarioMaledice: 0.35, // probabilità di maledire a ogni rimbalzo
   veloConsacra: 0.2, // probabilità di consacrare a ogni colpo dell'aura
 } as const;
+
+/**
+ * Stati certi: una prova, accesa dall'interruttore «Stati certi» del Laboratorio (spento di partenza) o, per il bot,
+ * da ?stati=certi. Spento, il gioco è identico a prima. Acceso, ogni colpo lascia lo stato della sua affinità
+ * (STATI.probabilita, STATI.probabilitaZone, RUOLI.rosarioMaledice e RUOLI.veloConsacra non contano) e valgono questi numeri.
+ * Tutti da rivedere (proposta di Edoardo del 10/11, valori ancora da provare).
+ */
+export const STATI_CERTI = {
+  quiete: 3, // dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso (le abilità la ignorano al primo scatto)
+  // Eclissi: su nemici normali e bruti il 10% della salute massima, senza tetto; su élite e Seth il doppio del danno del colpo
+  // che la innesca (senza colpo, cioè da Lucciola, Martire o Laboratorio, vale il tetto di REAZIONI.eclissi)
+  eclissi: { parte: 0.1, colpoElite: 2 },
+  // Esorcismo: 3 fiammelle, ognuna al 60% del danno del colpo che la innesca (senza colpo: REAZIONI.esorcismo.danno)
+  esorcismo: { fiammelle: 3, colpo: 0.6 },
+  rivelazione: { anime: 0.5, minimo: 1 }, // +50% anime, almeno +1, una volta per nemico
+  // Interramento: come sempre, più un effetto dallo stato consumato
+  interramento: {
+    dannoLuce: 0.5, // Luce: subisce +50% danno invece di +30%
+    fermoSacro: 2.5, // Sacro: fermo 2,5 s invece di 1,5 (Seth a metà)
+    maledettoOmbra: 2, // Ombra: durante l'Interramento la maledizione continua, al doppio
+  },
+  // Disegno: sui nemici comuni il nome della reazione non compare; al massimo tanti cerchi delle reazioni sullo schermo
+  // (oltre, la reazione avviene senza disegno)
+  cerchiMassimi: 12,
+} as const;

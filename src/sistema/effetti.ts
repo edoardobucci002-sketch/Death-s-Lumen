@@ -8,7 +8,8 @@
 import Phaser from 'phaser';
 import { Caso } from './caso';
 import { EFFETTI } from '../data/effetti';
-import { REAZIONI } from '../data/stati';
+import { REAZIONI, STATI_CERTI } from '../data/stati';
+import { INTERRUTTORI } from './interruttori';
 import { INFO_REAZIONI } from '../data/spiegazioni';
 import { telaContorno } from './scritte';
 
@@ -224,6 +225,12 @@ export class Effetti {
 
   /** Cerchio di una reazione in (x, y): pieno, poi a retino, poi sparisce. Colori come '#rrggbb'. */
   reazione(x: number, y: number, raggio: number, colore: string, bordo: string, durata: number): void {
+    // Stati certi: oltre STATI_CERTI.cerchiMassimi cerchi sullo schermo la reazione avviene senza disegno
+    if (INTERRUTTORI.statiCerti) {
+      let attivi = 0;
+      for (let k = 0; k < MAX_REAZIONI; k++) if (this.reazioneVita[k] > 0) attivi++;
+      if (attivi >= STATI_CERTI.cerchiMassimi) return;
+    }
     const r = Math.round(raggio * REAZIONI.ingrandimentoEffetto);
     const chiave = `reazione-${r}-${colore}-${bordo}`;
     if (!this.scena.textures.exists(`${chiave}-0`)) creaReazione(this.scena, chiave, r, colore, bordo);

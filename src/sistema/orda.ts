@@ -17,7 +17,8 @@ import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
 import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
-import { REAZIONI, STATI } from '../data/stati';
+import { REAZIONI, STATI, STATI_CERTI } from '../data/stati';
+import { INTERRUTTORI } from './interruttori';
 import { Simboli } from './simboli';
 import { COLPI } from '../data/armi';
 
@@ -82,6 +83,9 @@ export class Orda {
   private fermo = new Float32Array(CAPIENZA); // fermato da altro (secondo rintocco della Campana)
   private ultimoStato = new Uint8Array(CAPIENZA); // affinità dell'ultimo stato, per il colore
   private rivelato = new Uint8Array(CAPIENZA); // 1 = le sue anime sono già raddoppiate (Rivelazione una volta sola)
+  // solo con gli Stati certi (INTERRUTTORI.statiCerti):
+  private quiete = new Float32Array(CAPIENZA); // secondi prima che possa reagire di nuovo
+  private interraTipo = new Uint8Array(CAPIENZA); // lo stato consumato dall'Interramento in corso (LUCE, SACRO, OMBRA)
   private tempo = 0;
   // Mietitore: 0 cammina, 1 si ferma e pulsa (preavviso), 2 fa la mossa (letti anche dal bot, per schivare)
   readonly fase = new Uint8Array(CAPIENZA);
@@ -126,7 +130,7 @@ export class Orda {
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
-    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY];
+    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete];
 
   constructor(
     scena: Phaser.Scene,
@@ -271,7 +275,7 @@ export class Orda {
   /** Colpisce il nemico i: toglie salute, lo illumina (se lampeggia e non l'ha fatto da poco) e lo spinge nella direzione (dx, dy), lunga 1. */
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number, lampeggia = true): void {
     // abbagliato e interrato subiscono di più
-    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? REAZIONI.interramento.danno : 0));
+    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? STATI.abbagliato.danno : 0) + (this.sInterrato[i] > 0 ? this.piuInterrato(i) : 0));
     if (lampeggia && this.pausaLampo[i] <= 0) {
       this.lampo[i] = COLPI.lampoNemico;
       this.pausaLampo[i] = COLPI.lampoNemicoPausa;
@@ -283,29 +287,44 @@ export class Orda {
     }
   }
 
+  /** Quanto danno in più subisce mentre è interrato: +30%, +50% con gli Stati certi se l'Interramento ha consumato la Luce. */
+  piuInterrato(i: number): number {
+    return INTERRUTTORI.statiCerti && this.interraTipo[i] === LUCE ? STATI_CERTI.interramento.dannoLuce : REAZIONI.interramento.danno;
+  }
+
   /**
    * Lascia sul nemico i lo stato dell'affinità aff. Se aveva già uno stato diverso, li consuma e restituisce
    * la reazione (ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO); Rivelazione e Interramento li applica qui.
+   * Con gli Stati certi, dopo una reazione il nemico resta in quiete (riceve gli stati ma non reagisce);
+   * forza = true (primo scatto di un'abilità speciale) la ignora.
    */
-  marca(i: number, aff: number): number {
+  marca(i: number, aff: number, forza = false): number {
     if (!aff || this.salute[i] <= 0) return 0;
-    if (aff === TERRA && this.pausaSepolto[i] > 0) return 0;
     const abb = this.sAbbagliato[i] > 0, cons = this.sConsacrato[i] > 0, mal = this.sMaledetto[i] > 0, sep = this.sSepolto[i] > 0;
     let r = 0;
     if (aff === TERRA ? abb || cons || mal : sep) r = INTERRAMENTO;
     else if ((aff === LUCE && mal) || (aff === OMBRA && abb)) r = ECLISSI;
     else if ((aff === LUCE && cons) || (aff === SACRO && abb)) r = RIVELAZIONE;
     else if ((aff === SACRO && mal) || (aff === OMBRA && cons)) r = ESORCISMO;
+    const certi = INTERRUTTORI.statiCerti;
+    if (certi && r && !forza && this.quiete[i] > 0) r = 0; // in quiete: lo stato arriva, la reazione no
+    if (aff === TERRA && this.pausaSepolto[i] > 0 && !(forza && r)) return 0;
     const resiste = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1;
     if (r) {
+      // lo stato consumato insieme alla Terra (con gli Stati certi decide l'effetto in più dell'Interramento)
+      const consumato = aff !== TERRA ? aff : abb ? LUCE : cons ? SACRO : OMBRA;
       this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = 0;
       this.ultimoStato[i] = 0;
+      if (certi) this.quiete[i] = STATI_CERTI.quiete;
       if (r === INTERRAMENTO) {
-        this.sInterrato[i] = REAZIONI.interramento.fermo * resiste;
+        this.interraTipo[i] = certi ? consumato : 0;
+        const fermo = certi && consumato === SACRO ? STATI_CERTI.interramento.fermoSacro : REAZIONI.interramento.fermo;
+        this.sInterrato[i] = fermo * resiste;
         this.pausaSepolto[i] = STATI.sepolto.pausa;
       } else if (r === RIVELAZIONE && !this.rivelato[i]) {
         // una volta sola: sul Mietitore, colpito di continuo, le anime raddoppiavano all'infinito
-        this.anime[i] *= REAZIONI.rivelazione.anime;
+        if (certi) this.anime[i] += Math.max(STATI_CERTI.rivelazione.minimo, this.anime[i] * STATI_CERTI.rivelazione.anime);
+        else this.anime[i] *= REAZIONI.rivelazione.anime;
         this.rivelato[i] = 1;
       }
       return r;
@@ -377,7 +396,13 @@ export class Orda {
     if (this.sInterrato[i] > 0) {
       this.sInterrato[i] -= dt;
       fermo = true;
+      // Stati certi: se l'Interramento ha consumato l'Ombra, la maledizione continua al doppio
+      if (this.interraTipo[i] === OMBRA && INTERRUTTORI.statiCerti) {
+        const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
+        this.salute[i] -= this.saluteMassima[i] * STATI.maledetto.perSecondo * STATI_CERTI.interramento.maledettoOmbra * f * dt;
+      }
     }
+    if (this.quiete[i] > 0) this.quiete[i] -= dt;
     if (this.fermo[i] > 0) {
       this.fermo[i] -= dt;
       fermo = true;
@@ -587,7 +612,8 @@ export class Orda {
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
     this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
     this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
-    this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = 0;
+    this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
+    this.quiete[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];
@@ -703,6 +729,7 @@ export class Orda {
     this.branco[i] = this.branco[u];
     this.ultimoStato[i] = this.ultimoStato[u];
     this.rivelato[i] = this.rivelato[u];
+    this.interraTipo[i] = this.interraTipo[u];
     this.nellAlone[i] = this.nellAlone[u];
     this.id[i] = this.id[u];
     this.segno[i] = this.segno[u];

@@ -44,4 +44,6 @@ export const BOT = {
   passiviPreferiti: { saleNero: 1, cuoreDiCera: 0.8, clessidra: 0.9, stoppinoLungo: 0.7, aliDiFalena: 0.5, calamita: 0.3, erbeAmare: 0.5, scudoDiFerro: 0.6, specchio: 1, ceraVotiva: 0.6, chiodoDiBara: 0.8, lacrimaDiLumen: 0.7, campanellaDArgento: 0.2 } satisfies Record<IdDono, number>,
   // velocità della simulazione: millisecondi di calcolo per ogni fotogramma del browser
   msPerFotogramma: 40,
+  // modo «esplora» (?esplora=1, npm run sim -- … esplora): il seme del suo caso è mescolato con questo numero
+  semeEsplora: 104729,
 } as const;

@@ -13,7 +13,8 @@ import Phaser from 'phaser';
 import { ingrandimento, raggioDisegnato } from './asset';
 import { Caso } from './caso';
 import { ECLISSI, ESORCISMO, INTERRAMENTO, LUCE, OMBRA, RIVELAZIONE, SACRO, TERRA, type Orda } from './orda';
-import { AFFINITA_ABILITA, REAZIONI, RUOLI, STATI } from '../data/stati';
+import { AFFINITA_ABILITA, REAZIONI, RUOLI, STATI, STATI_CERTI } from '../data/stati';
+import { INTERRUTTORI } from './interruttori';
 import { NEMICI } from '../data/nemici';
 import { suona } from './audio';
 import { PROFONDITA, type Effetti } from './effetti';
@@ -36,6 +37,7 @@ const ESPLOSIONE = 5; // in coda insieme alle reazioni: l'esplosione del dardo d
 const MAX_CODA = 48;
 const CODICE_AFFINITA = { luce: LUCE, sacro: SACRO, ombra: OMBRA, terra: TERRA } as const;
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
+const ID_BRUTO = NEMICI.findIndex((t) => t.id === 'bruto');
 const MAX_EFFETTI = 48;
 const MAX_ZONE = 64;
 const MAX_PROIETTILI = 96;
@@ -138,6 +140,7 @@ export class Arsenale {
   private zTipo = new Uint8Array(MAX_ZONE); // 0 abilità, 1 nube, 2 pozza (nubi e pozze non si sommano: COLPI.zoneNonCumulative)
   private zAff = new Uint8Array(MAX_ZONE); // affinità della zona
   private zFonte = new Uint8Array(MAX_ZONE); // da dove viene (FONTI)
+  private zPrimo = new Uint8Array(MAX_ZONE); // 1 = abilità speciale che non ha ancora fatto il primo scatto (Stati certi: ignora la quiete)
   private zCampi = [this.zX, this.zY, this.zR, this.zDanno, this.zVita, this.zIntervallo, this.zTick, this.zRallenta, this.zAttira, this.zCura];
   private zSprite: Phaser.GameObjects.Sprite[] = [];
 
@@ -239,6 +242,7 @@ export class Arsenale {
   private cFermaTerra = false; // il fermo del colpo in corso è della Vanga: rispetta la pausa del Sepolto
   private critico = false; // l'ultimo colpo calcolato è un critico?
   private cReazione = 0; // la reazione a cui appartiene il colpo in corso (0 = nessuna): il suo danno va in un solo numero
+  private cForza = false; // Stati certi: il colpo in corso è il primo scatto di un'abilità, che ignora la quiete
   private cRX = 0; // il centro della sua zona
   private cRY = 0;
   private cRAperta = 0; // secondi in cui quella reazione può ancora colpire (per il numero)
@@ -251,6 +255,7 @@ export class Arsenale {
   private qX = new Float32Array(MAX_CODA);
   private qY = new Float32Array(MAX_CODA);
   private qDanno = new Float32Array(MAX_CODA);
+  private qComune = new Uint8Array(MAX_CODA); // 1 = nemico comune (né bruto, né élite, né Seth): con gli Stati certi niente nome
   private cDt = 0;
   private cProiettile = 0;
   private cMigliore = -1;
@@ -746,10 +751,11 @@ export class Arsenale {
     const o = this.orda;
     const danno = this.danno(base);
     this.dannoFonti[this.fonte] += danno;
-    if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * REAZIONI.interramento.danno; // la parte in più dell'Interramento
+    if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * o.piuInterrato(j); // la parte in più dell'Interramento
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
-    const r = aff && this.casoStati.numero() < probabilita ? o.marca(j, aff) : 0;
-    if (r) this.accoda(r, j, 0);
+    // con gli Stati certi ogni colpo lascia lo stato, senza tirare il dado
+    const r = aff && (INTERRUTTORI.statiCerti || this.casoStati.numero() < probabilita) ? o.marca(j, aff, this.cForza) : 0;
+    if (r) this.accoda(r, j, danno);
     this.dannoTotale += danno;
     suona('colpo');
     if (reazione) this.effetti.sommaReazione(reazione, this.cRX, this.cRY, danno, this.cRAperta);
@@ -770,7 +776,10 @@ export class Arsenale {
     this.effetti.arco(this.px, this.py, Math.atan2(dy, dx), raggio, ampiezza);
   }
 
-  /** Mette in coda una reazione (o un'esplosione) sul nemico j, da eseguire alla fine del passo. */
+  /**
+   * Mette in coda una reazione (o un'esplosione) sul nemico j, da eseguire alla fine del passo.
+   * danno: per l'esplosione il suo danno; per una reazione il danno del colpo che l'ha innescata (0 se non c'è colpo).
+   */
   private accoda(tipo: number, j: number, danno: number): void {
     if (this.code >= MAX_CODA) return;
     const k = this.code++;
@@ -779,9 +788,13 @@ export class Arsenale {
     this.qJ[k] = j;
     this.qX[k] = o.x[j];
     this.qY[k] = o.y[j] - o.raggio[j];
+    const forte = o.tipo[j] === ID_MIETITORE || o.elite[j];
     // l'Eclissi toglie una parte della salute massima, con un tetto (il Mietitore subisce sempre il tetto)
-    const eclissi = o.tipo[j] === ID_MIETITORE ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
+    let eclissi = o.tipo[j] === ID_MIETITORE ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
+    // Stati certi: senza tetto sui nemici normali e sui bruti; su élite e Seth il doppio del colpo (senza colpo, il tetto)
+    if (INTERRUTTORI.statiCerti) eclissi = !forte ? STATI_CERTI.eclissi.parte * o.saluteMassima[j] : danno > 0 ? danno * STATI_CERTI.eclissi.colpoElite : REAZIONI.eclissi.tetto;
     this.qDanno[k] = tipo === ECLISSI ? eclissi : danno;
+    this.qComune[k] = forte || o.tipo[j] === ID_BRUTO ? 0 : 1;
   }
 
   /** Esegue le reazioni e le esplosioni in coda (i nemici non hanno ancora cambiato posto: i morti si tolgono dopo). */
@@ -806,9 +819,12 @@ export class Arsenale {
       } else if (t === ESORCISMO) {
         const e = REAZIONI.esorcismo, id = this.prossimaIdReazione++;
         this.fonte = F.esorcismo;
-        for (let f = 0; f < e.fiammelle; f++) {
+        // Stati certi: fiammelle al 60% del colpo che l'ha innescata (senza colpo, il danno di sempre)
+        const certi = INTERRUTTORI.statiCerti, quante = certi ? STATI_CERTI.esorcismo.fiammelle : e.fiammelle;
+        const dannoF = certi && this.qDanno[k] > 0 ? this.qDanno[k] * STATI_CERTI.esorcismo.colpo : e.danno;
+        for (let f = 0; f < quante; f++) {
           const prima = this.proiettili;
-          this.lancia(FUOCO_FATUO.effetto, -1, e.velocita, e.vita, e.danno, 1, FUOCO_FATUO.raggio, FUOCO_FATUO.sterzo, FUOCO_FATUO.portata, false, (f / e.fiammelle) * Math.PI * 2, 0, x, y);
+          this.lancia(FUOCO_FATUO.effetto, -1, e.velocita, e.vita, dannoF, 1, FUOCO_FATUO.raggio, FUOCO_FATUO.sterzo, FUOCO_FATUO.portata, false, (f / quante) * Math.PI * 2, 0, x, y);
           if (this.proiettili > prima) {
             this.prReazione[prima] = id;
             this.prOX[prima] = x;
@@ -824,7 +840,7 @@ export class Arsenale {
       if (t !== ESPLOSIONE) {
         this.reazioni++;
         this.reazioniPerTipo[t]++;
-        this.effetti.etichetta(t, x, y - REAZIONI.etichetta.sopra);
+        if (!(this.qComune[k] && INTERRUTTORI.statiCerti)) this.effetti.etichetta(t, x, y - REAZIONI.etichetta.sopra);
       }
     }
     this.code = 0;
@@ -1022,6 +1038,7 @@ export class Arsenale {
     this.zTipo[i] = tipo;
     this.zAff[i] = aff;
     this.zFonte[i] = this.fonte;
+    this.zPrimo[i] = this.fonte === F.abilita ? 1 : 0;
     const s = this.zSprite[i];
     if (chiave === SPRITE_SCIA) {
       s.stop();
@@ -1051,7 +1068,10 @@ export class Arsenale {
       this.zTick[i] += this.zIntervallo[i];
       this.fonte = this.zFonte[i];
       this.colpo++;
+      this.cForza = this.zPrimo[i] === 1 && INTERRUTTORI.statiCerti; // primo scatto di un'abilità: reagiscono tutti, anche in quiete
+      this.zPrimo[i] = 0;
       this.orda.griglia.nelRaggio(this.zX[i], this.zY[i], this.zR[i] + 40, this.visitaZona);
+      this.cForza = false;
       this.rompibili?.colpitoDa(this.zX[i], this.zY[i], this.zR[i]);
     }
   }
@@ -1102,6 +1122,7 @@ export class Arsenale {
     this.zTipo[i] = this.zTipo[u];
     this.zAff[i] = this.zAff[u];
     this.zFonte[i] = this.zFonte[u];
+    this.zPrimo[i] = this.zPrimo[u];
     this.zSprite[i] = this.zSprite[u];
     this.zSprite[u] = s;
   }

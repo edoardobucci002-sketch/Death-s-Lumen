@@ -7,6 +7,8 @@
  * Con un'arma che colpisce dove cammina (Lanterna, Pala) gira intorno ai nemici tenendoli davanti.
  * Sceglie le carte con le preferenze di data/bot.ts e usa l'abilità quando è circondato.
  * Non usa il caso: a parità di seme gioca sempre la stessa partita.
+ * Modo «esplora» (?esplora=1): carte, amuleti e Unioni a caso tra quelle offerte, per misurare anche gli oggetti
+ * che con le preferenze non prenderebbe mai. Il caso del bot ha un suo generatore: comparse e drop non cambiano.
  */
 import { BOT } from '../data/bot';
 import { NEMICI } from '../data/nemici';
@@ -17,6 +19,7 @@ import type { Anime } from './anime';
 import type { Rompibili } from './rompibili';
 import type { Minacce } from './minacce';
 import { PANE, type Oggetti } from './oggetti';
+import { Caso } from './caso';
 
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 const ID_BRUTO = NEMICI.findIndex((t) => t.id === 'bruto');
@@ -33,6 +36,7 @@ export class Bot {
   private quanti = 0;
   private aggressione: number;
   urne: Rompibili | null = null; // solo per misurare: con ?cercaurne va apposta verso le urne
+  private esplora: Caso | null = null; // modo «esplora»: sceglie a caso, con un generatore suo
 
   constructor(
     private orda: Orda,
@@ -44,6 +48,18 @@ export class Bot {
     this.vicini = new Int32Array(orda.x.length);
     this.pesi = new Float32Array(orda.x.length);
     this.aggressione = BOT.attaccoDavanti[armaIniziale.id] ?? 0;
+  }
+
+  /** Modo «esplora»: da ora sceglie a caso tra le carte offerte (seme diverso da quello della notte). */
+  esplorando(seme: number): void {
+    this.esplora = new Caso((seme * 7919 + BOT.semeEsplora) >>> 0);
+  }
+
+  /** Una carta a caso tra quelle che vanno bene. */
+  private aCaso(carte: readonly Dono[], va: (d: Dono) => boolean): number {
+    const buone: number[] = [];
+    carte.forEach((d, n) => { if (va(d)) buone.push(n); });
+    return buone.length ? buone[this.esplora!.intero(0, buone.length - 1)] : 0;
   }
 
   /** Decide dove camminare; (gx, gy) sono i piedi del personaggio, salute tra 0 e 1. */
@@ -172,6 +188,8 @@ export class Bot {
 
   /** Reliquiario: l'amuleto migliore che sta nei grani liberi, altrimenti il potenziamento. Restituisce la posizione della carta. */
   amuleto = (carte: readonly Dono[], graniLiberi: number): number => {
+    // a caso, ma senza andare in Peccato: il bot non sa spegnere gli amuleti
+    if (this.esplora) return this.aCaso(carte, (d) => d.tipo !== 'amuleto' || d.amuleto.grani <= graniLiberi);
     const unione = carte.findIndex((d) => d.tipo === 'unione');
     if (unione >= 0) return unione;
     let scelta = carte.findIndex((d) => d.tipo === 'potenziamento');
@@ -189,6 +207,7 @@ export class Bot {
 
   /** Quale carta prendere: restituisce la sua posizione. armi è quante ne possiede. */
   carta = (carte: readonly Dono[], armi: number): number => {
+    if (this.esplora) return this.aCaso(carte, () => true);
     let scelta = 0;
     let meglio = -Infinity;
     carte.forEach((d, n) => {

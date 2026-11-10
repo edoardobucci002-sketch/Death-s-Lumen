@@ -24,6 +24,7 @@ import { FIRMA } from './firma';
 import { letturaSchermo } from './lettura-schermo';
 import { avviaProvaPrestazioni } from './prova-prestazioni';
 import { carica, salva } from './salvataggio';
+import { INTERRUTTORI } from './interruttori';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
 import * as doni from '../data/doni';
@@ -270,6 +271,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Scelte'),
       riga(tasto('Scelta del dono', scegli((x) => x.labSceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
       riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.labOggetti(true)))),
+      titolo('Stati certi (prova: ogni colpo lascia lo stato)'),
+      riga(tasto(INTERRUTTORI.statiCerti ? 'Stati certi: sì' : 'Stati certi: no', fai((x) => x.labStatiCerti(!INTERRUTTORI.statiCerti)), INTERRUTTORI.statiCerti ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Acceso: ogni colpo lascia lo stato; dopo una reazione il nemico resta 3 s in quiete; reazioni più forti. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → stati → STATI_CERTI.'),
       titolo('Stati sui nemici vicini (due diversi = reazione)'),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.labStatoVicini(a))))),
       el('p', 'lab-nota', 'Per vederli lascia il gioco in corso (scheda Partita) e premi uno stato, poi un altro.'),

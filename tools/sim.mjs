@@ -8,6 +8,8 @@
 //      npm run sim -- 5       (5 partite per personaggio)
 //      npm run sim -- 3 strega,becchino
 //      npm run sim -- 6 tutti meta=max   (Cappella completa; meta=meta a metà; senza, vuota)
+//      npm run sim -- 24 tutti esplora   (una notte su tre di ogni personaggio il bot sceglie le carte a caso: ?esplora=1)
+//      npm run sim -- 12 tutti stati=certi   (con l'interruttore «Stati certi» acceso)
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -15,7 +17,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const PERSONAGGI = ['lampionaio', 'becchino', 'badessa', 'strega'];
 const argomenti = process.argv.slice(2);
 const meta = (argomenti.find((a) => a.startsWith('meta=')) ?? 'meta=0').slice(5);
-const altri = argomenti.filter((a) => !a.startsWith('meta='));
+const esplora = argomenti.includes('esplora');
+const stati = (argomenti.find((a) => a.startsWith('stati=')) ?? '').slice(6);
+const altri = argomenti.filter((a) => !a.startsWith('meta=') && !a.startsWith('stati=') && a !== 'esplora');
 const partite = Number(altri[0]) || 3;
 const scelti = altri[1] && altri[1] !== 'tutti' ? altri[1].split(',') : PERSONAGGI;
 // obiettivi di vittoria del bot secondo la Cappella (proposta sulla meta progressione)
@@ -34,27 +38,29 @@ const browser = await chromium.launch();
 const inizio = Date.now();
 
 const coda = [];
-for (const pg of scelti) for (let k = 0; k < partite; k++) coda.push({ pg, seme: 1001 + k });
+// con «esplora», una notte su tre di ogni personaggio (la terza, la sesta…) il bot sceglie a caso
+for (const pg of scelti) for (let k = 0; k < partite; k++) coda.push({ pg, seme: 1001 + k, esplora: esplora && k % 3 === 2 });
 const totale = coda.length;
 const risultati = [];
 let fatte = 0;
 
-async function gioca({ pg, seme }) {
+async function gioca({ pg, seme, esplora }) {
   const ctx = await browser.newContext({ ...TELEFONO, serviceWorkers: 'block' });
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}&sicura=${AREA_SICURA}${process.env.DL_EXTRA ?? ''}`);
+  await pag.goto(`http://localhost:${porta}/?pg=${pg}&seme=${seme}&bot&meta=${meta}&sicura=${AREA_SICURA}${esplora ? '&esplora=1' : ''}${stati ? `&stati=${stati}` : ''}${process.env.DL_EXTRA ?? ''}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 10 * 60_000, polling: 1000 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();
   fatte++;
   const esito = !r ? 'errore' : r.vittoria ? 'alba' : `morto a ${tempo(r.secondi)}`;
-  console.log(`  [${fatte}/${totale}] ${pg.padEnd(10)} seme ${seme}: ${esito}, livello ${r?.livello ?? '?'}${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
-  risultati.push({ pg, seme, ...r, errori });
+  console.log(`  [${fatte}/${totale}] ${pg.padEnd(10)} seme ${seme}${esplora ? ' (esplora)' : ''}: ${esito}, livello ${r?.livello ?? '?'}${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
+  risultati.push({ pg, seme, esplora, ...r, errori });
 }
 
-console.log(`Simulazione: ${partite} partite per ${scelti.join(', ')}, Cappella ${meta === '0' ? 'vuota' : meta === 'meta' ? 'a metà' : 'completa'}\n`);
+console.log(`Simulazione: ${partite} partite per ${scelti.join(', ')}, Cappella ${meta === '0' ? 'vuota' : meta === 'meta' ? 'a metà' : 'completa'}` +
+  `${esplora ? ', una notte su tre esplorativa' : ''}${stati ? `, stati=${stati}` : ''}\n`);
 const lavori = [];
 for (let n = 0; n < INSIEME; n++) {
   lavori.push((async () => {
@@ -148,14 +154,19 @@ if (notti.length) {
     }
   }
   const vinteTutte = notti.filter((r) => r.vittoria).length;
+  // percentuale di vittorie nelle notti in cui l'oggetto c'era e in quelle in cui non c'era («poche» sotto 8 notti)
+  const POCHE = 8;
+  const quota = (v, n) => (n < POCHE ? 'poche' : `${Math.round((v * 100) / n)}%`);
   const ordine = ['arma', 'unione', 'dono', 'amuleto', 'altro'];
   const chiavi = [...righe.keys()].sort((x, y) => ordine.indexOf(x.split(':')[0]) - ordine.indexOf(y.split(':')[0]) || righe.get(y).notti - righe.get(x).notti);
-  console.log(`\nOggetti (${notti.length} notti, ${vinteTutte} vinte): notti in cui c'era a fine notte, notti vinte in cui c'era, scelto/offerto, livello medio, danno medio a notte`);
-  console.log('  ' + 'oggetto'.padEnd(34) + 'notti'.padStart(7) + 'vinte'.padStart(7) + 'scelto/offerto'.padStart(16) + 'livello'.padStart(9) + 'danno'.padStart(10));
+  const esplorative = notti.filter((r) => r.esplora).length;
+  console.log(`\nOggetti (${notti.length} notti${esplorative ? `, ${esplorative} esplorative` : ''}, ${vinteTutte} vinte): notti in cui c'era a fine notte, notti vinte in cui c'era, % vinte con e senza, scelto/offerto, livello medio, danno medio a notte`);
+  console.log('  ' + 'oggetto'.padEnd(34) + 'notti'.padStart(7) + 'vinte'.padStart(7) + 'con'.padStart(7) + 'senza'.padStart(7) + 'scelto/offerto'.padStart(16) + 'livello'.padStart(9) + 'danno'.padStart(10));
   for (const k of chiavi) {
     const x = righe.get(k);
     const danno = x.notti && x.danno ? String(Math.round(x.danno / x.notti)) : '';
-    console.log('  ' + k.padEnd(34) + String(x.notti).padStart(7) + String(x.vinte).padStart(7) + `${x.scelta}/${x.offerta}`.padStart(16) +
+    const con = quota(x.vinte, x.notti), senza = quota(vinteTutte - x.vinte, notti.length - x.notti);
+    console.log('  ' + k.padEnd(34) + String(x.notti).padStart(7) + String(x.vinte).padStart(7) + con.padStart(7) + senza.padStart(7) + `${x.scelta}/${x.offerta}`.padStart(16) +
       (x.livelli.length ? media(x.livelli).toFixed(1) : '').padStart(9) + danno.padStart(10));
   }
   if (altreFonti.size) console.log('\nAltro danno a notte (media su tutte le notti): ' + [...altreFonti].map(([n, d]) => `${n} ${Math.round(d / notti.length)}`).join(', '));
@@ -164,6 +175,10 @@ if (notti.length) {
   console.log('\nReazioni a notte (media): ' + tipi.map((t) => `${t} ${Math.round(media(notti.map((r) => r.reazioniPerTipo[t] ?? 0)))}`).join(', '));
   const dr = [...new Set(notti.flatMap((r) => Object.keys(r.dannoReazioni ?? {})))];
   if (dr.length) console.log('Danno delle reazioni a notte (media): ' + dr.map((t) => `${t} ${Math.round(media(notti.map((r) => r.dannoReazioni[t] ?? 0)))}`).join(', '));
+  // il danno totale conta Eclissi ed Esorcismo ma non la parte in più dell'Interramento: la si aggiunge
+  const dannoReaz = notti.reduce((a, r) => a + Object.values(r.dannoReazioni ?? {}).reduce((x, y) => x + y, 0), 0);
+  const dannoTot = notti.reduce((a, r) => a + (r.danno ?? 0) + (r.dannoReazioni?.Interramento ?? 0), 0);
+  if (dannoTot) console.log(`Danno delle reazioni sul danno totale: ${((dannoReaz * 100) / dannoTot).toFixed(1)}% (la maledizione non è contata)`);
   const offerte = notti.filter((r) => r.unioneOfferta !== null), prese = notti.filter((r) => r.unionePresa !== null);
   const minuto = (m) => tempo(m * 60);
   console.log(`Prima Unione offerta in ${offerte.length}/${notti.length} notti` + (offerte.length ? `, in media a ${minuto(media(offerte.map((r) => r.unioneOfferta)))}` : '') +

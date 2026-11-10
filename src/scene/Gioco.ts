@@ -11,7 +11,8 @@
  * Nell'indirizzo, per le prove: ?pg=becchino (salta il menu), ?minuto=5 (parte da quel minuto),
  * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (armi già a quel livello),
  * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle),
- * ?seme=7 (un'altra notte), ?bot (gioca il bot, senza disegno e più veloce possibile: lo usa npm run sim).
+ * ?seme=7 (un'altra notte), ?bot (gioca il bot, senza disegno e più veloce possibile: lo usa npm run sim),
+ * ?esplora=1 (il bot sceglie le carte a caso), ?stati=certi (accende l'interruttore «Stati certi» del Laboratorio).
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
@@ -34,6 +35,7 @@ import { Bot } from '../sistema/bot';
 import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { scorri } from '../sistema/scorrimento';
 import { Caso } from '../sistema/caso';
+import { INTERRUTTORI } from '../sistema/interruttori';
 import { Comandi } from '../sistema/comandi';
 import { Doni, type Dono } from '../sistema/doni';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
@@ -220,6 +222,7 @@ export class Gioco extends Phaser.Scene {
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
+    if (parametri.get('stati') === 'certi') INTERRUTTORI.statiCerti = true; // altrimenti resta com'è nel Laboratorio (spento di partenza)
     this.automatico = parametri.has('automatico');
     this.caso = new Caso(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.x = this.y = 0;
@@ -322,6 +325,7 @@ export class Gioco extends Phaser.Scene {
     this.aggiornaBuild();
     this.bot = parametri.has('bot') ? new Bot(this.orda, this.anime, this.oggetti, this.minacce, arma) : null;
     if (this.bot && parametri.has('cercaurne')) this.bot.urne = this.rompibili;
+    if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.sim = this.bot ? new Simulazione() : null;
     this.cameras.main.setVisible(!this.bot);
 
@@ -630,6 +634,11 @@ export class Gioco extends Phaser.Scene {
 
   labImmortale(on: boolean): void {
     this.immortale = on;
+  }
+
+  /** Interruttore «Stati certi» (src/data/stati.ts, STATI_CERTI): vale subito e resta per le notti dopo, finché la pagina non si ricarica. */
+  labStatiCerti(on: boolean): void {
+    INTERRUTTORI.statiCerti = on;
   }
 
   /** Porta la notte al minuto m: gli eventi già passati non si ripetono, gli altri partono al loro turno. */

@@ -527,6 +527,15 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('Fuoco fatuo: preda', '(li vede {} volte più vicini)', 1 / RU.fuocoFatuoPreda);
   frase('Falce: crescita', 'allunga la lama del {}% per {} s (al massimo +{}%)', pct(RU.falceCrescita.perUccisione), RU.falceCrescita.durata, pct(RU.falceCrescita.massimo));
   frase('Campana: fermo', 'ferma i nemici per {} s', RU.campanaFermo);
+
+  // Stati certi (interruttore di prova del Laboratorio)
+  const SC = ST.STATI_CERTI;
+  frase('Stati certi: quiete', 'il nemico non può reagire di nuovo per {} s', SC.quiete);
+  frase('Stati certi: Eclissi', 'danno = {}% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il {p} del danno del colpo', pct(SC.eclissi.parte), SC.eclissi.colpoElite);
+  frase('Stati certi: Esorcismo', '**Esorcismo**: {} fiammelle, ognuna al {}% del danno del colpo', SC.esorcismo.fiammelle, pct(SC.esorcismo.colpo));
+  frase('Stati certi: Rivelazione', '**Rivelazione**: +{}% anime, almeno +{}', pct(SC.rivelazione.anime), SC.rivelazione.minimo);
+  frase('Stati certi: Interramento', 'Luce, +{}% danno subito invece di +{}%; Sacro, fermo {} s; Ombra, la maledizione continua al {p}', pct(SC.interramento.dannoLuce), pct(ST.REAZIONI.interramento.danno), SC.interramento.fermoSacro, SC.interramento.maledettoOmbra);
+  frase('Stati certi: cerchi', 'al massimo {} cerchi delle reazioni sullo schermo', SC.cerchiMassimi);
 }
 
 // --- 8d. Meta progressione ---------------------------------------------------------------------
