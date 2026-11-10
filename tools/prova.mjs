@@ -747,7 +747,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   // arma e dono insieme non bastano; ai livelli giusti parte l'animazione, la partita si ferma e poi riparte
   await gioco('(s) => { s.riprendi(); s.passivi.stoppinoLungo = 1; s.dopoPassivo(); s.aggiornaBuild(); }');
   if (await gioco('(s) => s.unioniScoperte.size')) errori.push('l\'unione si scopre prima dei livelli giusti');
-  await gioco('(s) => { s.labArma(s.arsenale.possedute[0].arma, 8); s.passivi.stoppinoLungo = 3; s.dopoPassivo(); s.aggiornaBuild(); }');
+  await gioco('(s) => { s.labArma(s.arsenale.possedute[0].arma, 6); s.passivi.stoppinoLungo = 3; s.dopoPassivo(); s.aggiornaBuild(); }');
   await pag.waitForTimeout(80);
   if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('l\'animazione della scoperta non parte');
   const t0 = await gioco('(s) => s.secondi');
@@ -757,7 +757,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('un tocco chiude l\'animazione prima che l\'Unione compaia');
   await pag.waitForTimeout(1400);
   await pag.screenshot({ path: 'prove/scoperta-unione.png' });
-  if (!(await pag.evaluate(() => document.querySelector('.rivelazione').innerText.includes('Lanterna 8 + Stoppino lungo 3')))) errori.push('l\'animazione non dice la ricetta');
+  if (!(await pag.evaluate(() => document.querySelector('.rivelazione').innerText.includes('Lanterna 6 + Stoppino lungo 3')))) errori.push('l\'animazione non dice la ricetta');
   if (!(await pag.evaluate(() => document.querySelector('.rivelazione-chiudi')?.innerText.includes('per chiudere')))) errori.push('manca l\'avviso per chiudere l\'Unione');
   await pag.waitForTimeout(3500); // nessuna chiusura a tempo
   if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('l\'Unione si chiude da sola');
@@ -789,7 +789,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   await gioco(`(s) => { s.riprendi(); s.scoperteDiProva = false; s.segnaUnita('faroDeiMorti'); s.labPausa('stati'); }`);
   await pag.waitForTimeout(80);
   const unita = await pag.evaluate(() => [...document.querySelectorAll('.pausa-unita')].map((e) => e.innerText).join());
-  if (!unita.includes('Lanterna 8 + Stoppino lungo 3') || !unita.includes('L\'arco')) errori.push(`in Stati manca l'unione fatta: ${unita}`);
+  if (!unita.includes('Lanterna 6 + Stoppino lungo 3') || !unita.includes('L\'arco')) errori.push(`in Stati manca l'unione fatta: ${unita}`);
   if (!(await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).unioniUnite?.includes('faroDeiMorti')))) errori.push('l\'unione fatta non resta nel salvataggio');
   // i numeri della striscia e le statistiche sono quelli veri
   const testa = await gioco('(s) => { s.uccisi = 7; s.frammenti = 2; s.labPausa("build"); return document.querySelector(".pausa-testa").innerText; }');
