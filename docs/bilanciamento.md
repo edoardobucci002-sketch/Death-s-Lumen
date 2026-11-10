@@ -46,6 +46,23 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - Con la regola nuova, primo livello da fermi: Badessa 1,8–2,4 s, Lampionaio 2,3 s, con ogni raggio.
 - Bot, 3 notti per personaggio (campione piccolo, solo per vedere che niente si rompe): Lampionaio muore a 7:10 (liv. 24), 11:46 (liv. 51) e 11:23 (liv. 59); Becchino vince due volte (liv. 63 e 72) e muore a 11:38 (liv. 52); Badessa muore a 11:10 (liv. 48) e 13:52 (liv. 67), vince una volta (liv. 56); Strega muore a 7:52 (liv. 31) e 11:19 (liv. 63), vince una volta (liv. 72). Nessuno muore sempre prima del minuto 5.
 
+### 11/11 — Voce 3: Riti
+
+Quando non resta nulla da potenziare, ogni 3 livelli si apre la scelta dei Riti (una carta per affinità delle armi che hai, al massimo 3); ogni Rito +8% alla forza dello stato e +8% alle reazioni che lo consumano, senza fine. Il bot sceglie l'affinità con più armi. Stesse simulazioni e stesse colonne della voce 0.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| voce 2, vuota | 28/48 (6, 7, 8, 7) | 2, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 1/0, 4/0, 3/0, 2/0 | 10,6%, 11,6%, 11,6%, 17,2% | 565, 3909, 4849, 3710 | 61 |
+| **voce 3, vuota** | **31/48** (7, 7, 9, 8) | **2**, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 0/0, 3/1, 1/0, 1/0 | 12,1%, 12,0%, 13,2%, 19,1% | 588, 4107, 4979, 3790 | 61 |
+| voce 2, completa | 38/48 (7, 10, 11, 10) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 23,7%, 17,5%, 13,6%, 21,8% | 2643, 8151, 2274, 2859 | 70 |
+| **voce 3, completa** | **39/48** (7, 10, 11, 11) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 24,1%, 19,1%, 15,3%, 23,6% | 2727, 8571, 2087, 2752 | 70 |
+
+- **Vincoli: reggono** (Lampionaio 2 notti su 12 prima del minuto 5; primo boss come nella voce 2).
+- **Primo Rito: in media al livello 53 a Cappella vuota (in 38 notti su 48) e 56 a Cappella completa (36 su 48).** Nelle altre notti il bot ha ancora qualcosa da potenziare fino alla fine o muore prima.
+- **Riti a notte: 5,0 a Cappella vuota e 6,3 a completa** (contando le notti senza; 6,4 e 8,4 nelle notti in cui si aprono). Per personaggio, a Cappella vuota: Lampionaio 4,3, Becchino 4,1, Badessa 5,1, Strega 6,7; a completa: 3,4, 5,5, 8,7, 7,8.
+- «Pane e vino» da solo resta frequente: 523 volte in 48 notti a Cappella vuota, 645 a completa (circa 11–13 a notte).
+- Le vittorie salgono di poco (28 → 31 e 38 → 39, dentro l'incertezza): i Riti arrivano tardi, verso il minuto 11–12.
+
 ### 11/11 — Voce 2: Voti
 
 Un Voto per personaggio, sempre attivo (`src/data/voti.ts`, *da rivedere*): Lampionaio, dentro l'alone la quiete dura 1,5 s invece di 3; Becchino, +40% danno ai nemici fermi; Badessa, i consacrati fanno il 20% di danno in meno; Strega, nelle reazioni il Maledetto non si consuma. Tra le carte le armi nuove dell'affinità del personaggio pesano 1,3. Stesse simulazioni e stesse colonne della voce 0.

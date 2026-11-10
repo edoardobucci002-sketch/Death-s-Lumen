@@ -271,7 +271,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(tasto('Seth', fai((x) => x.labAvviso('Seth', 'il Rinnovato è venuto per te'))), tasto('Sciame', fai((x) => x.labAvviso('Lo sciame', 'ti circonda'))), tasto('Due orde', fai((x) => x.labAvviso('Due orde', 'ti stringono'))), tasto('Reliquiario', fai((x) => x.labAvviso('Reliquiario', 'Lanterna, Candela, Falce')))),
       titolo('Scelte'),
       riga(tasto('Scelta del dono', scegli((x) => x.labSceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
-      riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.labOggetti(true)))),
+      riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.labOggetti(true))), tasto('Scelta dei Riti', scegli((x) => x.labRiti()))),
+      el('p', 'lab-nota', 'I Riti: una carta per ogni affinità delle tue armi (al massimo 3). Nel gioco si aprono ogni 3 livelli quando non resta nulla da potenziare. Quanti Riti hai: Pausa → Stati. Numeri in Numeri → stati → RITI.'),
       titolo('Grazia a tacche'),
       riga(
         tasto(INTERRUTTORI.taccheScintilla ? 'Scintilla: sì' : 'Scintilla: no', fai(() => { INTERRUTTORI.taccheScintilla = !INTERRUTTORI.taccheScintilla; }), INTERRUTTORI.taccheScintilla ? 'acceso' : ''),

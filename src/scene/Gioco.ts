@@ -62,7 +62,7 @@ import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SECONDA_CANDELA, typ
 import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
-import { AFFINITA_TUTTE, chiaro, EFFETTO_FORZA, INFO_REAZIONI, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
+import { AFFINITA_TUTTE, chiaro, INFO_AFFINITA, EFFETTO_FORZA, INFO_REAZIONI, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
 import { AFFINITA_ABILITA, AFFINITA_ARMI, DEVOZIONE, RITI, type IdAffinita } from '../data/stati';
 import { bonusMeta, carica, salva, type BonusMeta, type VoceVeglia } from '../sistema/salvataggio';
 import { Rompibili } from '../sistema/rompibili';
@@ -154,7 +154,8 @@ export class Gioco extends Phaser.Scene {
   private oggettiSbloccati = new Set<string>();
   private senza = new Set<string>();
   private armiPerAffinita = new Uint8Array(5); // indice LUCE…TERRA (Devozione)
-  private riti = new Uint8Array(5); // Riti presi per affinità (indice LUCE…TERRA) // ?senza=…: armi e doni tolti dalle carte (simulazioni)
+  private riti = new Uint8Array(5); // Riti presi per affinità (indice LUCE…TERRA)
+  private livelliSenzaCarte = 0; // livelli in cui non restava nulla da potenziare: ogni RITI.ogni si apre la scelta dei Riti // ?senza=…: armi e doni tolti dalle carte (simulazioni)
   private sethSconfitti = 0;
   // Rosario: amuleti trovati nei reliquiari e quali sono accesi (si spengono dalla pausa)
   private amuletiPosseduti: IdAmuleto[] = [];
@@ -228,6 +229,7 @@ export class Gioco extends Phaser.Scene {
     this.sangueFreddoAttivo = false;
     this.secondiGrazia = this.paneDaSolo = 0;
     this.riti.fill(0); // la scena si riusa: i Riti non passano alla notte dopo
+    this.livelliSenzaCarte = 0;
     this.reliquiariInAttesa = 0;
     this.pausaLab = false;
     this.fineFinta = 0; // la scena si riusa: ciò che fa la Prova prestazioni non deve restare nella notte dopo
@@ -1184,14 +1186,21 @@ export class Gioco extends Phaser.Scene {
   /** Ferma il gioco e mostra le carte; dopo la scelta, se ci sono altri livelli da scegliere, le rimostra. */
   private apriDoni(): void {
     if (this.doni.aperta) return; // un reliquiario è già aperto: i livelli aspettano
-    // l'unica carta possibile sarebbe «Pane e vino»: la scelta non si apre, il pane si prende da solo (una volta per livello)
+    // l'unica carta possibile sarebbe «Pane e vino»: la scelta non si apre, il pane si prende da solo (una volta per livello);
+    // ma ogni RITI.ogni di questi livelli si apre la scelta dei Riti (con gli Stati certi)
     if (this.doni.soloPane()) {
+      let pane = false;
       for (; this.livelliDaScegliere > 0; this.livelliDaScegliere--) {
+        if (INTERRUTTORI.statiCerti && ++this.livelliSenzaCarte % RITI.ogni === 0) {
+          if (pane) { this.effetti.paneDaSolo(); suona('cura'); }
+          this.apriRiti();
+          return;
+        }
         this.salute = Math.min(this.saluteMassima, this.salute + CARTE.paneEVino);
         this.paneDaSolo++;
+        pane = true;
       }
-      this.effetti.paneDaSolo();
-      suona('cura');
+      if (pane) { this.effetti.paneDaSolo(); suona('cura'); }
       this.dopoScelta();
       return;
     }
@@ -1213,6 +1222,53 @@ export class Gioco extends Phaser.Scene {
     });
     if (this.bot) this.doni.scegliCon((carte) => this.sceltaBot(carte, this.bot!.carta(carte, this.arsenale.possedute.length)));
     else if (this.automatico) this.doni.scegliPrima();
+  }
+
+  /**
+   * La scelta dei Riti (src/data/stati.ts, RITI): una carta per ogni affinità delle armi che hai, al massimo RITI.carte
+   * (a caso se sono di più). Il Rito scelto rende più forte lo stato di quella affinità e le reazioni che lo consumano.
+   */
+  private apriRiti(): void {
+    const tutte = [...new Set(this.arsenale.possedute.map((p) => AFFINITA_ARMI[p.arma.id]))];
+    const carte: Dono[] = [];
+    while (carte.length < RITI.carte && tutte.length) {
+      const aff = tutte.length + carte.length > RITI.carte ? tutte.splice(this.caso.intero(0, tutte.length - 1), 1)[0] : tutte.shift()!;
+      carte.push({ tipo: 'rito', aff, gia: this.riti[CODICE_AFF[aff]] });
+    }
+    this.anims.pauseAll();
+    this.comandi.lascia();
+    suona('reliquiario');
+    this.doni.mostraRiti(carte, (d: Dono) => {
+      if (d.tipo === 'rito') {
+        this.riti[CODICE_AFF[d.aff]]++;
+        this.aggiornaDevozione();
+        this.sim?.rito(this.livello);
+        this.hud.avviso(`Rito: ${INFO_AFFINITA[d.aff].nome}`, `Riti ${this.riti[CODICE_AFF[d.aff]]}`);
+      }
+      this.livelliDaScegliere--;
+      this.aggiornaBuild();
+      this.dopoScelta();
+    });
+    // il bot sceglie il Rito dell'affinità con più armi
+    if (this.bot) this.doni.scegliCon((c) => this.sceltaBot(c, this.ritoDelBot(c)));
+    else if (this.automatico) this.doni.scegliPrima();
+  }
+
+  /** Il Rito che sceglie il bot: l'affinità con più armi (a pari merito la prima carta). */
+  private ritoDelBot(carte: readonly Dono[]): number {
+    let k = 0, migliore = -1;
+    carte.forEach((d, n) => {
+      const armi = d.tipo === 'rito' ? this.armiPerAffinita[CODICE_AFF[d.aff]] : -1;
+      if (armi > migliore) { migliore = armi; k = n; }
+    });
+    return k;
+  }
+
+  /** Laboratorio: apre subito la scelta dei Riti (come se non restasse nulla da potenziare, al terzo livello). */
+  labRiti(): void {
+    this.livelliDaScegliere++;
+    this.livello++;
+    this.apriRiti();
   }
 
   private apriPausa(scheda?: SchedaPausa): void {
@@ -1488,7 +1544,7 @@ export class Gioco extends Phaser.Scene {
       devozione: this.devozionePausa(),
       voto: VOTI[this.pg.id] ? { nome: VOTI[this.pg.id].nome, testo: VOTI[this.pg.id].testo } : null,
       affinita: [...new Set([...this.arsenale.possedute.map((p) => AFFINITA_ARMI[p.arma.id]), AFFINITA_ABILITA[this.pg.abilita]])],
-      attesa: !this.doni.aperta ? null : this.doni.reliquiario ? 'reliquiario' : 'dono',
+      attesa: !this.doni.aperta ? null : this.doni.reliquiario ? 'reliquiario' : this.doni.riti ? 'riti' : 'dono',
     };
   }
 

@@ -214,6 +214,8 @@ if (notti.length) {
   const inGrazia = notti.filter((r) => r.secondiGrazia !== undefined);
   if (inGrazia.length) console.log(`Grazia: ${(media(inGrazia.map((r) => r.secondiGrazia / r.secondi)) * 100).toFixed(1)}% della notte in media; tacche a notte ${Math.round(media(inGrazia.map((r) => r.tacche)))}; ` +
     scelti.map((pg) => `${pg} ${(media(inGrazia.filter((r) => r.pg === pg).map((r) => r.secondiGrazia / r.secondi)) * 100).toFixed(1)}%`).join(', '));
+  const conRiti = notti.filter((r) => r.primoRito !== null && r.primoRito !== undefined);
+  if (conRiti.length) console.log(`Riti: la prima scelta si apre in ${conRiti.length}/${notti.length} notti, in media al livello ${media(conRiti.map((r) => r.primoRito)).toFixed(1)}; Riti a notte ${media(notti.map((r) => r.riti ?? 0)).toFixed(1)} (nelle notti con Riti ${media(conRiti.map((r) => r.riti)).toFixed(1)})`);
   const pane = notti.filter((r) => r.paneDaSolo);
   console.log(`«Pane e vino» preso da solo (la scelta non si apre): ${notti.reduce((a, r) => a + (r.paneDaSolo ?? 0), 0)} volte, in ${pane.length}/${notti.length} notti`);
   const pozze = notti.filter((r) => r.pozzeCuranti);

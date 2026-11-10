@@ -27,7 +27,8 @@ export type Dono =
   | { tipo: 'pane' }
   | { tipo: 'amuleto'; amuleto: Amuleto } // dal reliquiario (Rosario)
   | { tipo: 'unione'; unione: Unione; arma: Arma } // dal reliquiario: l'arma diventa la sua versione unita
-  | { tipo: 'potenziamento' }; // dal reliquiario: il potenziamento a caso di prima
+  | { tipo: 'potenziamento' } // dal reliquiario: il potenziamento a caso di prima
+  | { tipo: 'rito'; aff: IdAffinita; gia: number }; // la scelta dei Riti: +forza allo stato di quell'affinità (gia = Riti già presi)
 
 export class Doni {
   sospesa = false; // la pausa è aperta sopra la scelta: i tasti 1-2-3-4 non scelgono
@@ -36,6 +37,7 @@ export class Doni {
   private rimescola: HTMLButtonElement;
   private rimescolate: number = CARTE.rimescolate;
   private conRimescola = true;
+  private diRiti = false; // la scelta aperta è quella dei Riti
   private carte: Dono[] = [];
   affinitaVoto: IdAffinita | null = null; // Voto: le armi nuove di questa affinità pesano di più tra le carte
   private scegli: ((d: Dono) => void) | null = null;
@@ -86,7 +88,21 @@ export class Doni {
 
   /** La scelta aperta è quella di un reliquiario. */
   get reliquiario(): boolean {
-    return this.aperta && !this.conRimescola;
+    return this.aperta && !this.conRimescola && !this.diRiti;
+  }
+
+  /** La scelta aperta è quella dei Riti. */
+  get riti(): boolean {
+    return this.aperta && this.diRiti;
+  }
+
+  /** La scelta dei Riti: una carta per affinità, niente rimescolate. */
+  mostraRiti(carte: Dono[], scegli: (d: Dono) => void): void {
+    this.scegli = scegli;
+    this.carte = carte;
+    this.radice.hidden = false;
+    this.diRiti = true;
+    this.disegnaCarte(false);
   }
 
   /** Stesse carte, numeri di oggi: dopo aver acceso o spento un amuleto dalla pausa. Non tira il caso e non consuma rimescolate. */
@@ -96,6 +112,7 @@ export class Doni {
 
   /** Mostra le carte; quando il giocatore sceglie, chiama scegli(dono). */
   mostra(scegli: (d: Dono) => void): void {
+    this.diRiti = false;
     this.scegli = scegli;
     this.radice.hidden = false;
     this.estrai();
@@ -103,6 +120,7 @@ export class Doni {
 
   /** Il reliquiario: le carte sono già scelte (amuleti e potenziamento), niente rimescolate. */
   mostraReliquiario(carte: Dono[], scegli: (d: Dono) => void): void {
+    this.diRiti = false;
     this.scegli = scegli;
     this.carte = carte;
     this.radice.hidden = false;
@@ -184,7 +202,7 @@ export class Doni {
     this.conRimescola = conRimescola;
     this.rimescola.hidden = !conRimescola;
     (this.radice.querySelector('.doni-rimaste') as HTMLElement).hidden = !conRimescola;
-    scritta(this.radice.querySelector('h2')!, conRimescola ? 'Un nuovo dono' : 'Un reliquiario');
+    scritta(this.radice.querySelector('h2')!, conRimescola ? 'Un nuovo dono' : this.diRiti ? 'I Riti' : 'Un reliquiario');
     this.elenco.replaceChildren(...this.carte.map((d, n) => this.carta(d, n)));
     // «Rimescola (2)» non stava nella targhetta: quante ne restano lo dice la riga sotto
     scritta(this.rimescola.lastElementChild!, 'Rimescola');

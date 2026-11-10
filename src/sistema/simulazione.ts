@@ -19,6 +19,7 @@ export function nomeCarta(d: Dono): string {
     case 'unione': return `unione:${d.unione.nome}`;
     case 'pane': return 'altro:Pane e vino';
     case 'potenziamento': return 'altro:Potenziamento';
+    case 'rito': return `rito:${d.aff}`;
   }
 }
 
@@ -81,6 +82,8 @@ export interface RisultatoSim {
   pozzeCuranti: number; // Acquasantiera con la fiaschetta piena: pozze che hanno curato…
   curaPozze: number; // …e la salute che hanno ridato davvero
   paneDaSolo: number; // «Pane e vino» preso da solo, senza aprire la scelta
+  riti: number; // Riti scelti nella notte
+  primoRito: number | null; // livello a cui si è aperta la prima scelta dei Riti
   abilitaPrima5: number; // volte in cui ha usato l'abilità speciale prima del minuto 5
   causaMorte: string | null; // il colpo che ha ucciso: «Seth (mossa)», «Seth (contatto)», «élite», «orda (tipo)», «contatto (tipo)»
   dannoMaledizione: number; // salute tolta dalla maledizione (Maledetto), fuori da «danno»…
@@ -119,6 +122,14 @@ export class Simulazione {
   private curaPozze = 0;
   causaMorte: string | null = null;
   private abilitaPrima5 = 0;
+  private riti = 0;
+  private primoRito: number | null = null;
+
+  /** Si è aperta la scelta dei Riti al livello indicato e se ne è preso uno. */
+  rito(livello: number): void {
+    this.riti++;
+    this.primoRito ??= livello;
+  }
 
   /** L'abilità speciale è partita. */
   abilita(secondi: number): void {
@@ -218,7 +229,7 @@ export class Simulazione {
       curaFiaschetta: Math.round(this.curaFiaschetta), sorsi: this.sorsi, grazie: this.grazie,
       urne: this.urne,
       carte: this.carte, unioneOfferta: this.unioneOfferta, unionePresa: this.unionePresa,
-      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri, curaPozze: Math.round(this.curaPozze), causaMorte: this.causaMorte, abilitaPrima5: this.abilitaPrima5,
+      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri, curaPozze: Math.round(this.curaPozze), causaMorte: this.causaMorte, abilitaPrima5: this.abilitaPrima5, riti: this.riti, primoRito: this.primoRito,
     };
   }
 }

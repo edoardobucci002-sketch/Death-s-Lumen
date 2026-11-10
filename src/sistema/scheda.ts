@@ -4,7 +4,7 @@
  * Qui c'è anche la striscia provvisoria, disegnata dal codice finché Edoardo non esporta Striscia_Dono.
  */
 import type { Arma } from '../data/armi';
-import { AFFINITA_ARMI } from '../data/stati';
+import { AFFINITA_ARMI, RITI } from '../data/stati';
 import { CARTE } from '../data/progressione';
 import { ROSARIO } from '../data/rosario';
 import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
@@ -145,6 +145,13 @@ export function schedaDono(d: Dono, c: Contesto): Scheda {
     }
     case 'potenziamento':
       return { nome: 'Potenziamento', icona: null, categoria: 'altro', tag: 'Reliquiario', dati: [], righe: [{ testo: 'Un\'arma o un dono sale di livello (a volte tre).' }] };
+    case 'rito': {
+      const info = INFO_AFFINITA[d.aff], piu = `+${Math.round(RITI.stato * 100)}%`;
+      return {
+        nome: `Rito: ${info.nome}`, icona: null, categoria: 'altro', tag: 'Rito', dati: [{ nome: `Riti ${info.nome}`, prima: String(d.gia), dopo: String(d.gia + 1), tono: 'bene' }],
+        righe: [{ testo: `${piu} forza allo stato ${info.stato}`, simbolo: info.simbolo, colore: info.colore }, { testo: `+${Math.round(RITI.reazione * 100)}% alle reazioni che lo consumano`, tono: 'reazione' }],
+      };
+    }
     case 'pane':
       return { nome: 'Pane e vino', icona: null, categoria: 'altro', tag: 'Ristoro', dati: [{ nome: 'Salute', dopo: `+${CARTE.paneEVino}`, tono: 'bene' }], righe: [{ testo: 'Un ristoro nella notte.' }] };
   }

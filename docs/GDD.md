@@ -487,6 +487,8 @@ Ogni arma e ogni abilità ha un'affinità. **Regola del gioco dal 10/11 (Stati c
 
 Il Maledetto mantiene le riduzioni di sempre per élite e Seth. Il moltiplicatore della reazione usa il grado dello stato che il nemico aveva già (quello consumato) e vale per il danno di Eclissi ed Esorcismo, le anime in più della Rivelazione, il fermo e il danno in più dell'Interramento. Un'arma nuova che alza il grado lo dice sulla sua striscia («Devozione Luce 2 › 3»); la pausa (scheda Stati) mostra per ogni stato il grado, quante armi, l'effetto con la forza di adesso e il moltiplicatore delle reazioni. Con «Stati a caso (vecchi)» tutto resta al grado 1.
 
+**Riti** (proposta di Edoardo dell'11/11, `RITI` in `src/data/stati.ts`, valori *da rivedere*): quando non resta nulla da potenziare il pane continua a prendersi da solo, ma ogni 3 di questi livelli si apre invece la scelta dei Riti («I Riti»): una carta per ogni affinità delle armi che hai, al massimo 3 (a caso se sono di più). Ogni Rito dà +8% alla forza dello stato di quella affinità e +8% alle reazioni che lo consumano; senza fine, si sommano (il rallentamento del Consacrato non supera l'80%). Nella pausa (Stati) si legge quanti Riti hai per affinità. Il bot sceglie il Rito dell'affinità con più armi. Con «Stati a caso (vecchi)» i Riti non si aprono.
+
 Due stati diversi sullo stesso nemico si consumano e fanno una reazione. Con la regola del gioco:
 - **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
 - le **abilità speciali** ignorano la quiete (e il ritmo delle zone): il loro primo scatto fa reagire tutti i nemici nel cerchio che hanno uno stato diverso;
@@ -619,7 +621,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - arma nuova 1
   - dono posseduto 1,2
   - dono nuovo 0,9
-- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare la scelta non si apre: «Pane e vino» (+40 salute) si prende da solo, una volta per livello, con una scritta verde «Pane e vino +40 salute» che sale sopra la testa e il suono della cura (scritta *da rivedere*).
+- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare la scelta non si apre: «Pane e vino» (+40 salute) si prende da solo, una volta per livello (ma ogni 3 di questi livelli si apre la scelta dei Riti, sezione 8c), con una scritta verde «Pane e vino +40 salute» che sale sopra la testa e il suono della cura (scritta *da rivedere*).
 
 ## 10. Regole di combattimento
 

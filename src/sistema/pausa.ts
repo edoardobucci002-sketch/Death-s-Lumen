@@ -41,7 +41,7 @@ export interface DatiPausa {
   // Devozione e Riti di ogni affinità (solo con gli Stati certi): grado, armi, Riti, effetto con la forza di adesso, reazioni ×
   voto: { nome: string; testo: string } | null; // il Voto del personaggio
   devozione: Partial<Record<IdAffinita, { grado: number; armi: number; riti: number; effetto: string; reazioni: string }>>;
-  attesa: 'dono' | 'reliquiario' | null; // la scelta aperta sotto la pausa
+  attesa: 'dono' | 'reliquiario' | 'riti' | null; // la scelta aperta sotto la pausa
 }
 
 export interface AzioniPausa {
@@ -51,7 +51,7 @@ export interface AzioniPausa {
 }
 
 const NOMI: Record<SchedaPausa, string> = { build: 'Build', rosario: 'Rosario', stati: 'Stati', opzioni: 'Opzioni' };
-const ATTESA = { dono: 'Un dono in attesa', reliquiario: 'Reliquiario in attesa' };
+const ATTESA = { dono: 'Un dono in attesa', reliquiario: 'Reliquiario in attesa', riti: 'I Riti in attesa' };
 const TITOLO_CONFERMA = 'Abbandonare la veglia?';
 const TESTO_CONFERMA = 'La veglia finisce qui e la Cera raccolta in questa notte va persa.';
 
