@@ -107,6 +107,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Amuleti rari misurati con `amuleto=` (12 notti l'uno, bilanciamento 10/11 sera): nessuno è un disastro; la Lanterna cieca vince 9 su 12 perché il bot non guarda il buio, da provare a mano | bilanciamento 10/11 |
 | Copione dalle 3:00 «zombi 3, scheletro 1» (decisione del 10/11 sera): con questo il Lampionaio rispetta il vincolo (2 notti su 12 prima del minuto 5) | GDD «Il copione della notte»; bilanciamento 11/11 |
 | Devozione: tutti i numeri (gradi 1–3 degli stati, reazioni × 1 / 1,25 / 1,5); lo stato dell'abilità prende il grado ma non conta come arma (lettura di Claude) | GDD 8c; `DEVOZIONE` in `src/data/stati.ts` |
+| Voti: nomi («Voto della Luce»…), quiete 1,5 s, +40% sui fermi, −20% dai consacrati (solo a contatto, non le mosse di Seth), peso 1,3 solo per le armi nuove | GDD §2; `src/data/voti.ts` |
 | Ritmo delle zone (1 s): la Strega non scende (reazioni −7% a Cappella completa) perché lo stato dura 3 s; da decidere se allungarlo verso 3 s o accorciare gli stati delle zone | bilanciamento 10/11 notte; `STATI_CERTI.ritmo` |
 | Notti esplorative del bot: una su tre; il bot non prende amuleti che lo manderebbero in Peccato | decisioni 10/11; `tools/sim.mjs` |
 | Copione della notte, respiro (50 s + 10 s al 25%), comparse 1,4 + 2,9 m, tetto 250, bruti al massimo 100, copione e forme delle orde, preavviso 3 s, salute ×3 dal minuto 6, Lumen accorpato a 28 px: tutti i valori. Il bot vince 7 notti su 48 |

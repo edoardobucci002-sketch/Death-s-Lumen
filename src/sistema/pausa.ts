@@ -39,6 +39,7 @@ export interface DatiPausa {
   statistiche: { nome: string; valore: string }[];
   affinita: IdAffinita[]; // gli stati che la build può lasciare
   // Devozione e Riti di ogni affinità (solo con gli Stati certi): grado, armi, Riti, effetto con la forza di adesso, reazioni ×
+  voto: { nome: string; testo: string } | null; // il Voto del personaggio
   devozione: Partial<Record<IdAffinita, { grado: number; armi: number; riti: number; effetto: string; reazioni: string }>>;
   attesa: 'dono' | 'reliquiario' | null; // la scelta aperta sotto la pausa
 }
@@ -390,6 +391,7 @@ export class Pausa {
         div('', div('pausa-titolo-voce', this.parola(r.nome, possibile ? r.colore : '#9c907c', this.lettera), ...(possibile ? [div('pausa-possibile', 'Possibile')] : [])), div('pausa-riga', `${b ? '' : 'Con qualsiasi altro stato: '}${r.effetto()}`))) };
     });
     return [
+      ...(d.voto ? [this.sezione('Il tuo Voto'), div('pausa-voce', div('', this.parola(d.voto.nome, 'var', this.lettera, this.larghezzaPagina()), div('pausa-riga', d.voto.testo)))] : []),
       this.sezione('Le tue armi lasciano'), ...tuoi.map((a) => stato(a, false)),
       ...(altri.length ? [this.sezione('Gli altri stati'), ...altri.map((a) => stato(a, true))] : []),
       this.sezione('Reazioni'), div('pausa-vuoto', 'Due stati diversi sullo stesso nemico si consumano e fanno:'),

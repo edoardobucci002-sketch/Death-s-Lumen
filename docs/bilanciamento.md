@@ -46,6 +46,21 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - Con la regola nuova, primo livello da fermi: Badessa 1,8–2,4 s, Lampionaio 2,3 s, con ogni raggio.
 - Bot, 3 notti per personaggio (campione piccolo, solo per vedere che niente si rompe): Lampionaio muore a 7:10 (liv. 24), 11:46 (liv. 51) e 11:23 (liv. 59); Becchino vince due volte (liv. 63 e 72) e muore a 11:38 (liv. 52); Badessa muore a 11:10 (liv. 48) e 13:52 (liv. 67), vince una volta (liv. 56); Strega muore a 7:52 (liv. 31) e 11:19 (liv. 63), vince una volta (liv. 72). Nessuno muore sempre prima del minuto 5.
 
+### 11/11 — Voce 2: Voti
+
+Un Voto per personaggio, sempre attivo (`src/data/voti.ts`, *da rivedere*): Lampionaio, dentro l'alone la quiete dura 1,5 s invece di 3; Becchino, +40% danno ai nemici fermi; Badessa, i consacrati fanno il 20% di danno in meno; Strega, nelle reazioni il Maledetto non si consuma. Tra le carte le armi nuove dell'affinità del personaggio pesano 1,3. Stesse simulazioni e stesse colonne della voce 0.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| voce 1, vuota | 23/48 (4, 2, 8, 9) | 2, 1, 0, 0 | 2/2, 1/2, 0/0, 0/0 | 4/0, 5/2, 2/1, 2/0 | 8,1%, 9,4%, 10,9%, 19,7% | 598, 4049, 3431, 2694 | 57 |
+| **voce 2, vuota** | **28/48** (6, 7, 8, 7) | **2**, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 1/0, 4/0, 3/0, 2/0 | 10,6%, 11,6%, 11,6%, 17,2% | 565, 3909, 4849, 3710 | 61 |
+| voce 1, completa | 37/48 (6, 11, 9, 11) | 0, 0, 0, 0 | 0/2, 0/0, 0/0, 0/0 | 3/0, 0/0, 2/0, 0/0 | 22,3%, 15,5%, 18,3%, 26,5% | 3616, 6829, 2133, 3231 | 68 |
+| **voce 2, completa** | **38/48** (7, 10, 11, 10) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 23,7%, 17,5%, 13,6%, 21,8% | 2643, 8151, 2274, 2859 | 70 |
+
+- **Vincoli: reggono.** Lampionaio prima del minuto 5 in 2 notti su 12; primo boss: Lampionaio 2 prima e 2 contro, Becchino 1 e 1 (non più spesso prima).
+- A Cappella vuota le vittorie salgono da 23 a 28, soprattutto Lampionaio (4 → 6) e Becchino (2 → 7): il Becchino, con il +40% sui nemici fermi, fa reazioni e Interramenti che valgono di più (danno delle reazioni da 9,4% a 11,6%). Le morti per Seth scendono (Becchino da 7 a 4 a contatto).
+- La Strega con il Voto dell'Ombra non sale (a Cappella vuota 9 → 7, a completa 11 → 10, dentro l'incertezza): il Maledetto che resta dopo la reazione la fa reagire di nuovo solo dopo la quiete di 3 s.
+
 ### 11/11 — Voce 1: Devozione
 
 Più armi della stessa affinità, più forte il suo stato (gradi 1 / 2 / 3: Abbagliato 15 / 20 / 25%, Consacrato 25 / 32 / 40%, Maledetto 2 / 3 / 4% al secondo, Sepolto 0,6 / 0,8 / 1,0 s; la reazione che consuma lo stato × 1 / 1,25 / 1,5). Tutti i valori *da rivedere*. Stesse simulazioni e stesse colonne della voce 0.

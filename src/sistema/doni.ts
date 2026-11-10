@@ -18,6 +18,8 @@ import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import type { Amuleto } from '../data/rosario';
 import type { IdUnione, Unione } from '../data/unioni';
 import { creaStrisce, schedaDono, type Riga } from './scheda';
+import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
+import { NUMERI_VOTI } from '../data/voti';
 
 export type Dono =
   | { tipo: 'arma'; arma: Arma; livello: number }
@@ -35,6 +37,7 @@ export class Doni {
   private rimescolate: number = CARTE.rimescolate;
   private conRimescola = true;
   private carte: Dono[] = [];
+  affinitaVoto: IdAffinita | null = null; // Voto: le armi nuove di questa affinità pesano di più tra le carte
   private scegli: ((d: Dono) => void) | null = null;
 
   constructor(
@@ -145,7 +148,11 @@ export class Doni {
       });
     }
     if (this.arsenale.possedute.length < MAX_ARMI) {
-      for (const a of ARMI_COMUNI) if (!this.arsenale.livello(a) && this.disponibile(a.id)) possibili.push({ dono: { tipo: 'arma', arma: a, livello: 1 }, peso: CARTE.armaNuova * fattoreArmi });
+      for (const a of ARMI_COMUNI) {
+        if (this.arsenale.livello(a) || !this.disponibile(a.id)) continue;
+        const voto = AFFINITA_ARMI[a.id] === this.affinitaVoto ? NUMERI_VOTI.pesoAffinita : 1;
+        possibili.push({ dono: { tipo: 'arma', arma: a, livello: 1 }, peso: CARTE.armaNuova * fattoreArmi * voto });
+      }
     }
     const posseduti = PASSIVI.filter((q) => this.passivi[q.id] > 0).length;
     for (const q of PASSIVI) {

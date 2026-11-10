@@ -25,6 +25,7 @@ import {
   ACQUA_SANTA, BASTONE, CAMPANA, CANDELA, COLPI, SAMPIETRINI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, MIRA, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
 } from '../data/armi';
 import { MOLTIPLICA_CRITICO } from '../data/doni';
+import { NUMERI_VOTI } from '../data/voti';
 import { NUMERI_UNIONI as U } from '../data/unioni';
 import type { Anime } from './anime';
 import type { Chiazze } from './chiazze';
@@ -308,6 +309,7 @@ export class Arsenale {
   private visitaVicino = (j: number): void => this.vicino(j);
   private visitaGrano = (j: number): void => this.vicinoGrano(j);
   private scelti = new Int32Array(8); // bersagli già presi dalla raffica di candele
+  votoFermi = false; // Voto della Terra (Becchino): +NUMERI_VOTI.dannoFermi ai nemici fermi
   private mX = 0; // la direzione scelta da mira()
   private mY = 0;
 
@@ -927,7 +929,8 @@ export class Arsenale {
   /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno; lampeggia = false per le zone e le aure, reazione = id della reazione a cui appartiene il colpo. */
   private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true, reazione = 0): void {
     const o = this.orda;
-    const danno = this.danno(base);
+    // Voto della Terra (Becchino): più danno ai nemici fermi
+    const danno = this.danno(base) * (this.votoFermi && o.fermoOra(j) ? 1 + NUMERI_VOTI.dannoFermi : 1);
     this.dannoFonti[this.fonte] += danno;
     if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * o.piuInterrato(j); // la parte in più dell'Interramento
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);

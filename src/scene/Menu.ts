@@ -6,6 +6,7 @@
  * il pulsante della Cappella apre i ceri votivi e il codice di salvataggio (sistema/cappella.ts).
  */
 import Phaser from 'phaser';
+import { VOTI } from '../data/voti';
 import { PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { ARMI_INIZIALI } from '../data/armi';
 import { ABILITA } from '../data/abilita';
@@ -120,6 +121,7 @@ export class Menu extends Phaser.Scene {
         <dl class="scheda-doti">
           <div><dt>Arma iniziale</dt><dd>${img(arma.icona)}${arma.nome}</dd></div>
           <div><dt>Abilità speciale</dt><dd>${img(abilita.icona)}${abilita.nome}</dd></div>
+          ${VOTI[p.id] ? `<div><dt>${VOTI[p.id].nome}</dt><dd>${VOTI[p.id].testo}</dd></div>` : ''}
         </dl>
         <div class="scheda-barre">${p.barre.map((v, k) => `<div><span>${BARRE[k]}</span><i>${'<b></b>'.repeat(v)}${'<b class="vuota"></b>'.repeat(6 - v)}</i></div>`).join('')}</div>
         ${this.blocco(p)}

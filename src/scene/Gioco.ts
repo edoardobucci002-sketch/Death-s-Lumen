@@ -31,6 +31,7 @@ import { animeDono, effettoDono, PASSIVI, RICARICA_MINIMA, ricaricaDono, type Id
 import { ANIME, animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
 import { BOT } from '../data/bot';
+import { NUMERI_VOTI, VOTI } from '../data/voti';
 import { Anime } from '../sistema/anime';
 import { Arsenale, FONTI, type Bonus } from '../sistema/armi';
 import { Bot } from '../sistema/bot';
@@ -292,6 +293,7 @@ export class Gioco extends Phaser.Scene {
       this.giocatore.setOrigin(0.5, 1);
     }
     this.areaLuce = this.fattoreLuce();
+    this.orda.raggioAlone = LUCE.raggio * this.areaLuce; // Voto della Luce
     this.misureBuio = creaBuio(this, this.campoL, this.campoA, LUCE.raggio * this.areaLuce);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     this.alone = this.add.image(0, 0, CHIAVI_ALONE[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD);
@@ -323,6 +325,11 @@ export class Gioco extends Phaser.Scene {
     this.mosaico = new Mosaico(interfaccia);
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate, scoperte: this.unioniScoperte, metaRaccolta: this.meta.raccolta }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
+    // Voto del personaggio (src/data/voti.ts)
+    const voto = VOTI[this.pg.id];
+    this.orda.voto = voto ? this.pg.id : '';
+    this.arsenale.votoFermi = this.pg.id === 'becchino';
+    this.doni.affinitaVoto = voto?.affinita ?? null;
     this.tacche = new GraziaTacche(this, !parametri.has('bot'));
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.fermo()) return false;
@@ -1027,6 +1034,7 @@ export class Gioco extends Phaser.Scene {
     const luce = this.fattoreLuce();
     if (luce !== this.areaLuce) {
       this.areaLuce = luce;
+      this.orda.raggioAlone = LUCE.raggio * luce;
       this.ridimensiona();
     }
   }
@@ -1478,6 +1486,7 @@ export class Gioco extends Phaser.Scene {
       unite: UNIONI.filter((u) => this.unioniUnite.has(u.id)).map((u) => ({ nome: u.nome, icona: iconaUnione(u.id), testo: u.testo, ricetta: this.ricettaUnione(u) })),
       statistiche: this.statistiche(),
       devozione: this.devozionePausa(),
+      voto: VOTI[this.pg.id] ? { nome: VOTI[this.pg.id].nome, testo: VOTI[this.pg.id].testo } : null,
       affinita: [...new Set([...this.arsenale.possedute.map((p) => AFFINITA_ARMI[p.arma.id]), AFFINITA_ABILITA[this.pg.abilita]])],
       attesa: !this.doni.aperta ? null : this.doni.reliquiario ? 'reliquiario' : 'dono',
     };
@@ -1503,8 +1512,10 @@ export class Gioco extends Phaser.Scene {
       const dx = o.x[i] - this.x;
       const dy = o.y[i] - this.y;
       const d2 = dx * dx + dy * dy;
-      if (d2 < r * r && o.danno[i] > colpo) {
-        colpo = o.danno[i];
+      // Voto del Sacro (Badessa): i consacrati fanno meno danno
+      const forza = o.danno[i] * (this.pg.id === 'badessa' && o.consacratoOra(i) ? 1 - NUMERI_VOTI.consacratiDanno : 1);
+      if (d2 < r * r && forza > colpo) {
+        colpo = forza;
         chi = i;
       }
     }

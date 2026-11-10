@@ -46,6 +46,17 @@ Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 40 px, 
 | La Badessa | Preghiere per ciò che è stato | `#dcc07a` | Turibolo | Benedizione | +10 salute, +0,3 salute/s, +15% area |
 | La Strega | Conosce nomi che non dovrebbero essere detti | `#a57ae0` | Bastone | Rito proibito | −5 salute, +10% danno, −10% ricarica |
 
+**Voti** (decisione di Edoardo del 10/11, `VOTI` e `NUMERI_VOTI` in `src/data/voti.ts`; nomi e numeri *da rivedere*): uno per personaggio, sempre attivo, legato alla sua affinità. Si legge nella scheda del personaggio (menu) e nella pausa (scheda Stati, «Il tuo Voto»).
+
+| Personaggio | Voto | Effetto |
+| --- | --- | --- |
+| Il Lampionaio | Voto della Luce | dentro l'alone di luce la quiete dopo una reazione dura 1,5 s invece di 3 |
+| Il Becchino | Voto della Terra | +40% danno ai nemici fermi (sepolti, interrati, fermati da Campana, Vanga o Sepoltura) |
+| La Badessa | Voto del Sacro | i nemici consacrati fanno il 20% di danno in meno (a contatto) |
+| La Strega | Voto dell'Ombra | nelle reazioni il Maledetto non si consuma; gli altri stati sì |
+
+Tra le carte, le armi nuove dell'affinità del personaggio pesano 1,3 invece di 1.
+
 **Barre della scheda** (su 6: Vitalità, Danno, Velocità, Raggio, Controllo)
 
 | Personaggio | Vit. | Dan. | Vel. | Rag. | Con. |

@@ -250,6 +250,15 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 {
   frase('Lanterna e Pala mirano', 'si centra sul nemico più vicino entro {} px (il raggio della luce) e l\'impatto della Pala cade sul nemico più vicino entro {} px', A.MIRA.lanterna, A.MIRA.pala);
   frase('Pane e vino da solo', '«Pane e vino» (+{} salute) si prende da solo', PR.CARTE.paneEVino);
+  {
+    {
+      const N = D('voti').NUMERI_VOTI;
+      frase('Voto della Luce', 'la quiete dopo una reazione dura {} s invece di {}', N.quieteAlone, ST.STATI_CERTI.quiete);
+      frase('Voto della Terra', '+{}% danno ai nemici fermi', pct(N.dannoFermi));
+      frase('Voto del Sacro', 'i nemici consacrati fanno il {}% di danno in meno', pct(N.consacratiDanno));
+      frase('Voto: peso delle armi', 'le armi nuove dell\'affinità del personaggio pesano {} invece di 1', N.pesoAffinita);
+    }
+  }
   frase('Armi massime', 'Al massimo {} armi, ognuna fino al livello {}', A.MAX_ARMI, PR.CARTE.livelloMassimo);
 
   // tabelle livello per livello: colonna del GDD → campo del livello, oppure funzione per i valori fissi dell'arma

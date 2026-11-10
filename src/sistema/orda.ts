@@ -18,6 +18,7 @@ import type { Minacce } from './minacce';
 import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { DEVOZIONE, REAZIONI, RITI, STATI, STATI_CERTI } from '../data/stati';
+import { NUMERI_VOTI } from '../data/voti';
 import { INTERRUTTORI } from './interruttori';
 import { Simboli } from './simboli';
 import { COLPI } from '../data/armi';
@@ -103,6 +104,11 @@ export class Orda {
   private grado = new Uint8Array([1, 1, 1, 1, 1]);
   private ritiStato = new Float32Array([1, 1, 1, 1, 1]); // forza dello stato in più dei Riti (1 = nessuno)
   private ritiReazione = new Float32Array([1, 1, 1, 1, 1]); // forza in più delle reazioni che consumano lo stato
+  // Voti (src/data/voti.ts): quale personaggio gioca; per il Lampionaio la quiete è più corta dentro l'alone (raggio in px)
+  voto = '';
+  raggioAlone = 0;
+  private gx = 0; // ultima posizione del personaggio (per l'alone del Voto della Luce)
+  private gy = 0;
   moltReazione = 1; // della reazione restituita dall'ultima marca(): grado e Riti dello stato consumato
   private moltInterrato = new Float32Array(CAPIENZA); // l'Interramento in corso: danno in più × questo
   dannoMaledizione = 0;
@@ -170,6 +176,8 @@ export class Orda {
    * (dirX, dirY) è il comando di movimento del giocatore (lungo da 0 a 1), vel la sua velocità.
    */
   aggiorna(dt: number, secondi: number, gx: number, gy: number, dirX: number, dirY: number, vel: number, mezzaL: number, mezzaA: number): void {
+    this.gx = gx;
+    this.gy = gy;
     const m = secondi / 60;
     const massimi = Math.min(DIFFICOLTA.tetto, DIFFICOLTA.massimiBase + DIFFICOLTA.massimiPerMinuto * m);
     const calma = secondi >= RESPIRO.dal && secondi % RESPIRO.ciclo >= RESPIRO.marea;
@@ -378,9 +386,16 @@ export class Orda {
       const gia = r === INTERRAMENTO ? (aff === TERRA ? consumato : TERRA) : r === ECLISSI ? (aff === LUCE ? OMBRA : LUCE)
         : r === RIVELAZIONE ? (aff === LUCE ? SACRO : LUCE) : aff === SACRO ? OMBRA : SACRO;
       this.moltReazione = DEVOZIONE.reazione[this.grado[gia] - 1] * this.ritiReazione[gia];
+      // Voto dell'Ombra (Strega): il Maledetto non si consuma
+      const tieni = this.voto === 'strega' ? this.sMaledetto[i] : 0;
       this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = 0;
-      this.ultimoStato[i] = 0;
-      if (certi) this.quiete[i] = STATI_CERTI.quiete;
+      this.sMaledetto[i] = tieni;
+      this.ultimoStato[i] = tieni > 0 ? OMBRA : 0;
+      if (certi) {
+        // Voto della Luce (Lampionaio): dentro l'alone la quiete è più corta
+        const dx = this.x[i] - this.gx, dy = this.y[i] - this.gy, alone = this.voto === 'lampionaio' && dx * dx + dy * dy < this.raggioAlone * this.raggioAlone;
+        this.quiete[i] = alone ? NUMERI_VOTI.quieteAlone : STATI_CERTI.quiete;
+      }
       if (r === INTERRAMENTO) {
         this.interraTipo[i] = certi ? consumato : 0;
         const fermo = this.interraTipo[i] === SACRO ? STATI_CERTI.interramento.fermoSacro : REAZIONI.interramento.fermo;
@@ -438,6 +453,11 @@ export class Orda {
   /** Il nemico i è fermo adesso (Sepolto, Interrato o fermato da Campana, Vanga, Martire)? Per il Selciato. */
   fermoOra(i: number): boolean {
     return this.sSepolto[i] > 0 || this.sInterrato[i] > 0 || this.fermo[i] > 0;
+  }
+
+  /** Il nemico i è consacrato adesso (Voto del Sacro: fa meno danno)? */
+  consacratoOra(i: number): boolean {
+    return this.sConsacrato[i] > 0;
   }
 
   /** Il nemico i è interrato (subisce di più)? */
