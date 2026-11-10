@@ -40,6 +40,26 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 10/11 (pomeriggio) — Cinque voci di Edoardo, una alla volta
+
+Ogni voce ha la sua simulazione: `npm run sim -- 6 tutti meta=max`, stessi semi (1001–1006), Stati certi spenti; 24 notti, quindi l'incertezza è grande (circa ±20 punti): si guardano le tendenze.
+
+| Dopo | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana della morte | Livello medio | Seth del 5 ucciso | Prima Unione presa | «Pane e vino» offerto |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| partenza (c7c0ae1) | 11/24 (1, 3, 4, 3) | 2 | 7:43 | 59 | 21/22 | 16 notti, in media a 6:21 | 207 volte (8,6 a notte) |
+| 1 · Unioni | 11/24 (1, 3, 3, 4) | 2 | 7:43 | 59 | 21/22 | 16 notti, in media a 7:16 | 211 (8,8) |
+| 2 · Doni a 3 livelli | 16/24 (3, 4, 3, 6) | 0 | 11:14 | 65 | 23/24 | 19 notti, in media a 6:27 | 348 (14,5) |
+| 3 · Acquasantiera | 15/24 (3, 3, 3, 6) | 0 | 11:14 | 65 | 23/24 | 19 notti, in media a 6:27 | 341 (14,2) |
+| 4 · Grazia a tacche | 18/24 (5, 5, 5, 3) | 0 | 11:22 | 68 | 23/24 | 19 notti, in media a 6:07 | 386 (16,1) |
+| 5 · Sampietrini | 8/24 (2, 1, 4, 1) | 0 | 11:20 | 58 | 22/24 | 16 notti, in media a 6:47 | 246 (10,3) |
+
+- **1 · Unioni** (arma al 6, dono al massimo, sblocco con «Sconfiggi Seth»): le vittorie non cambiano; la prima Unione arriva **più tardi** (7:16 invece di 6:21), perché portare un dono al 5 costa più carte che portarlo al 3. Con i doni a 3 livelli (voce 2) il conto cambia.
+- **2 · Doni a 3 livelli** (stesso effetto al massimo; Specchio, Lacrima e Campanella come prima): vittorie da 11 a 16 su 24, nessuna morte prima del 5, livello medio da 59 a 65; la Strega vince 6 notti su 6. «Pane e vino» esce **348 volte invece di 211** (14,5 a notte invece di 8,8; in 18 notti su 24 invece di 14): con meno livelli dei doni le carte da potenziare finiscono prima. La prima Unione torna prima (6:27) e le Unioni a fine notte salgono da 33 a 40.
+- **3 · Acquasantiera** (con la fiaschetta piena il sorso diventa una pozza che cura 3% al secondo per 4 s): nelle 4 notti con l'Acquasantiera, 8,8 pozze che curano a notte, ma solo **4 salute ridata a notte**: le pozze nascono dove muoiono i nemici e il bot non ci entra apposta. Un giocatore che le cerca ne avrà molto di più; il bot non è stato cambiato. I sorsi veri sono scesi a 2 a notte in 2 notti (prima ~9 guadagnati, quasi tutti persi). Vittorie 15 contro 16: rumore.
+- **4 · Grazia a tacche**: il bot passa in Grazia l'**1,6% della notte** (Lampionaio 1,1%, Becchino 2,4%, Badessa 1,6%, Strega 1,3%), con 72 tacche a notte; l'obiettivo provvisorio è 20–30%. Per starci servono circa 0,8 tacche al secondo per tutta la notte (90 Grazie da 2 s = 720 tacche): sfiorare quasi un nemico al secondo. Come impara a sfiorare il bot (proposta, *da rivedere*): sopra metà salute e fuori dalla Grazia sceglie il nemico normale più vicino (entro 120 px) che si può sfiorare e preferisce le direzioni che tra un passo lo lasciano a metà della fascia dello sfioramento. Prove fatte, stessi semi: la prima idea (premio a chi ha un nemico nella fascia tra un passo) con peso 0,6 / 2 / 4 dava 1,2% / 1,2% / 1,5% e con peso 4 morivano di più (11 vittorie); il «giro intorno al nemico» con peso 1 dà 1,6% e 18 vittorie, con peso 3 2,8% ma 11 vittorie. Il bot ha paura della folla e le armi uccidono i nemici prima che li sfiori: per misurare l'obiettivo serve la prova a mano di Edoardo. Le vittorie (18) sono dentro il rumore rispetto a 15–16.
+- **5 · Sampietrini** (livelli di Edoardo; misure del volo di Claude): vittorie da 18 a **8** su 24, una discesa più grande dell'incertezza. Il bot li prende in 12 notti su 24 (79 volte su 191 offerte) e ne vince 2 (17%; senza, 50%); fanno 326 mila danni a notte, come Falce (386) e Corvo (239), molto meno di Lapide (2,9 milioni) e Acqua santa (3,2). Il bot (preferenza 1, come il Rosario spezzato) li sceglie al posto delle armi forti: Acqua santa passa da 15 a 12 notti, Campana da 15 a 12. Selciato fatto in 2 notti. Il bot per la Grazia arriva al 2,1% della notte (88 tacche). Non si corregge nulla: i numeri sono quelli della bozza.
+- **Controllo finale** (stessi semi, codice finale, dopo il solo ingrandimento del sasso): 24 notti, 840 campi confrontati, 0 differenze rispetto alla voce 5.
+
 ### 10/11 — Notti esplorative del bot e interruttore «Stati certi» (nessun numero della notte normale cambia)
 
 **Controllo.** `npm run sim -- 3 tutti`, Cappella vuota e completa, stessi semi, prima e dopo, con `esplora` e Stati certi spenti: 24 notti, 744 campi confrontati, **0 differenze**. Rifatto sul codice con le barre della salute nuove (5da9386, e3cf404): ancora 0 differenze, e quelle barre non cambiano le notti del bot (stesse notti di prima).

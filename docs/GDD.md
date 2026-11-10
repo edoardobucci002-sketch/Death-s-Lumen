@@ -239,7 +239,7 @@ Fendente orizzontale alto 103 px verso il lato in cui guardi; il colpo alle spal
 
 ### Armi nuove
 
-Si trovano tra le armi comuni, ma solo dopo averle sbloccate (sezione 8d). I numeri sono in `src/data/armi.ts`.
+Si trovano tra le armi comuni: Lapide, Rosario spezzato, Corvo e Velo funebre solo dopo averle sbloccate (sezione 8d), i Sampietrini da subito. I numeri sono in `src/data/armi.ts`.
 
 | Arma | Affinità | Cosa fa | Livello 1 | Livello 8 |
 | --- | --- | --- | --- | --- |
@@ -247,6 +247,7 @@ Si trovano tra le armi comuni, ma solo dopo averle sbloccate (sezione 8d). I num
 | Rosario spezzato | Ombra | un grano rimbalza tra i nemici vicini (entro 190 px); 35% di maledire a ogni rimbalzo | 18 danni, 4 rimbalzi, ogni 1,6 s | 40 danni, 8 rimbalzi, 2 grani, ogni 1,2 s |
 | Corvo | Luce | vola intorno, becca il nemico più vicino (entro 330 px) e fa tornare le anime ferme più lontane | 26 danni, 1 corvo, ogni 1 s, 1 anima | 44 danni, 3 corvi, ogni 0,75 s, 4 anime |
 | Velo funebre | Sacro | aura intorno al personaggio; 20% di consacrare a ogni colpo | 7 danni, raggio 110, ogni 0,5 s | 21 danni, raggio 160, ogni 0,4 s |
+| Sampietrini | Terra | lancia sampietrini sui nemici più vicini (entro 350 px); ognuno colpisce entro 40 px, lascia Sepolto come la Pala, rimbalza 90 px in avanti e colpisce di nuovo (*da rivedere*) | 14 danni, 1 sampietrino, 1 rimbalzo, ogni 1,5 s | 26 danni, 3 sampietrini, 2 rimbalzi, ogni 1,2 s |
 
 #### Lapide
 
@@ -262,6 +263,21 @@ Cade sul nemico con più salute in vista: scende da 180 px in 0,2 s, colpisce e 
 | 6 | 2,8 | 190 | 96 | 2 | +1 lapide. |
 | 7 | 2,4 | 190 | 110 | 2 | Cade più spesso, impatto più largo. |
 | 8 | 2,4 | 260 | 110 | 2 | +70 danno. |
+
+#### Sampietrini
+
+Terza arma di Terra (bozza confermata da Edoardo il 10/11), libera da subito, nei pesi delle armi comuni. Lancia sampietrini sui nemici più vicini entro 350 px: ognuno vola 0,45 s con un arco alto 60 px, colpisce entro 40 px e lascia Sepolto come la Pala (nel 10% dei colpi); poi rimbalza 90 px in avanti, nella direzione del lancio (0,3 s, arco di 24 px), e colpisce di nuovo. Le misure del volo sono di Claude, *da rivedere*. Sasso, icona e polvere provvisori (la polvere è l'impatto della Pala).
+
+| Lv | Ricarica (s) | Quantità | Rimbalzi | Danno | Cosa cambia |
+|---|---|---|---|---|---|
+| 1 | 1,5 | 1 | 1 | 14 | Lancia un sampietrino sul nemico più vicino: colpisce, rimbalza in avanti e colpisce di nuovo. |
+| 2 | 1,5 | 1 | 1 | 18 | +4 danno. |
+| 3 | 1,5 | 2 | 1 | 18 | +1 sampietrino. |
+| 4 | 1,35 | 2 | 1 | 18 | Lancia più spesso. |
+| 5 | 1,35 | 2 | 2 | 22 | +4 danno, +1 rimbalzo. |
+| 6 | 1,35 | 3 | 2 | 22 | +1 sampietrino. |
+| 7 | 1,2 | 3 | 2 | 22 | Lancia più spesso. |
+| 8 | 1,2 | 3 | 2 | 26 | +4 danno. |
 
 #### Rosario spezzato
 
@@ -312,21 +328,23 @@ Aura intorno al personaggio: la ricarica dice ogni quanto ferisce chi è dentro.
 
 Al massimo 6 doni passivi diversi.
 
-| Dono | Effetto per livello | Livello max |
-| --- | --- | --- |
-| Cuore di cera | +20 salute massima | 5 |
-| Sale nero | +10% danno | 5 |
-| Clessidra | −7% ricarica, si moltiplica (minimo 40% della ricarica base) | 5 |
-| Stoppino lungo | +10% area (raggi, archi, nubi, pozze, abilità, alone di luce; nel gioco nuovo anche il bonus area del personaggio allarga l'alone) | 5 |
-| Ali di falena | +8% velocità | 5 |
-| Calamita | +100% raggio di raccolta e +5% anime | 5 |
-| Erbe amare | +0,25 salute al secondo | 5 |
-| Scudo di ferro | −6% danno subito | 4 |
-| Specchio | +1 proiettile, nube, fiala, fuoco o falce | 1 |
-| Cera votiva | +15% durata di zone e stati | 5 |
-| Chiodo di bara | +6% probabilità di colpo critico (danno doppio) | 5 |
-| Lacrima di lumen | +1 sorso della fiaschetta (si riempie anche quel sorso) | 2 |
-| Campanella d'argento | +0,1 s di finestra per la schivata perfetta | 2 |
+Doni a 3 livelli (decisione di Edoardo del 10/11, *da rivedere*): i doni che arrivavano a 4 o 5 arrivano a 3, con lo stesso effetto al massimo; ogni livello ne dà una parte uguale. Specchio, Lacrima di lumen e Campanella d'argento restano come prima.
+
+| Dono | Effetto al massimo | Livello max | Per livello (arrotondato) |
+| --- | --- | --- | --- |
+| Cuore di cera | +100 salute massima | 3 | +33,3 |
+| Sale nero | +50% danno | 3 | +16,7% |
+| Clessidra | −30,43% ricarica, si moltiplica a ogni livello (minimo 40% della ricarica base) | 3 | −11,4% |
+| Stoppino lungo | +50% area (raggi, archi, nubi, pozze, abilità, alone di luce; nel gioco nuovo anche il bonus area del personaggio allarga l'alone) | 3 | +16,7% |
+| Ali di falena | +40% velocità | 3 | +13,3% |
+| Calamita | +500% raggio di raccolta e +25% anime | 3 | +166,7% e +8,3% |
+| Erbe amare | +1,25 salute al secondo | 3 | +0,42 |
+| Scudo di ferro | −24% danno subito | 3 | −8% |
+| Specchio | +1 proiettile, nube, fiala, fuoco o falce | 1 | +1 |
+| Cera votiva | +75% durata di zone e stati | 3 | +25% |
+| Chiodo di bara | +30% probabilità di colpo critico (danno doppio) | 3 | +10% |
+| Lacrima di lumen | +2 sorsi della fiaschetta (si riempie anche quel sorso) | 2 | +1 |
+| Campanella d'argento | +0,2 s di finestra per la schivata perfetta e +16 px di sfioramento per le tacche della Grazia | 2 | +0,1 s e +8 px |
 
 Gli oggetti nuovi non diluiscono i potenziamenti: il peso delle armi e dei doni non ancora presi si divide come se fossero sempre 6 e 9 (`CARTE.pool`, `src/data/progressione.ts`).
 
@@ -428,7 +446,8 @@ Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle 
 ## 8b. Fiaschetta e Grazia (`src/data/sopravvivenza.ts`)
 
 - **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, Seth riempie la fiaschetta. Il pulsante è tondo, con la stessa cornice dell'abilità e la fiala dentro (composto dal codice, *da rivedere*, finché non c'è `Fiaschetta_Lumen_Tonda_V1`); su computer e tablet sta a destra dell'abilità, staccata di 12 pixel disegnati. I sorsi si leggono sulle tacche intorno al pulsante, una per sorso massimo (fino a 5 con la Lacrima di lumen): accese se piene, scure se vuote, con un lampo di 0,25 s quando un sorso si riempie (*da rivedere*). La fiaschetta diventerà uno sblocco con la sua questline (vedi [lore.md](lore.md) e [roadmap.md](roadmap.md)).
-- **Grazia**: scatta uscendo da un cerchio rosso di Seth quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova.
+- **Grazia**: scatta uscendo da un cerchio rosso di Seth quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova; una Grazia nuova non accorcia mai quella in corso.
+- **Grazia a tacche** (decisione di Edoardo del 10/11, tutti i valori *da rivedere*; vale per tutti i personaggi, senza amuleti). Ogni nemico normale (né élite né Seth) sfiorato entro 16 px oltre il contatto, senza toccarlo, dà una tacca; lo stesso nemico non più di una volta ogni 2 s. Con 8 tacche parte una Grazia di 2 s; durante la Grazia le tacche non salgono; senza sfiorare ne cala una ogni 2 s. La schivata perfetta su Seth dà subito la Grazia di 3 s, come sopra. A ogni tacca un suono secco e una piccola scintilla (segnaposto dal codice). L'indicatore ha tre posti da provare dal Laboratorio (LAB → Eventi → Grazia a tacche): **arco** sotto la barra della salute ai piedi (di partenza, *da rivedere*), **anello** intorno al personaggio, **fascia** accanto al pulsante dell'abilità, verso il centro (tacche di 4 pixel disegnati); arco e anello si vedono solo con almeno una tacca, la fascia sempre. Tacche piene del colore del personaggio, vuote scure; in Grazia tutte piene. La Campanella d'argento allunga lo sfioramento di 8 px per livello.
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
@@ -515,7 +534,7 @@ Le «reliquie dimenticate» della proposta (oggetti trovati in partita e pagati 
 | Cuore avido | 2 | +30% anime | pane e fiaschetta curano la metà |
 | Sangue freddo | 1 | sotto il 30% di salute, +40% danno | nessuno |
 | Martire | 2 | ogni colpo subito libera un'onda sacra di 150 px: non ferisce, lascia Consacrato e ferma i nemici per 0,6 s (Seth a metà) (*da rivedere*) | −20% salute massima |
-| Danza macabra | 2 | la Grazia scatta anche sfiorando (entro 16 px) i nemici normali, non più di una ogni 3 s | la Grazia dura 2 s invece di 3 |
+| Danza macabra | 2 | bastano 4 tacche per la Grazia (*da rivedere*) | la Grazia delle tacche dura 1,5 s invece di 2 (la schivata perfetta su Seth resta di 3 s) |
 | Ceri gemelli | 2 | l'abilità speciale ha 2 cariche | ricarica +10% (*da rivedere*) |
 | Lucciola | 2 | alone di luce +20%; un nemico è abbagliato quando entra nell'alone, non più di una volta ogni 4 s (*da rivedere*) | nessuno |
 | Ossa d'élite | 2 (*da rivedere*) | le élite lasciano 2 reliquiari | le élite hanno +40% salute |
@@ -525,7 +544,7 @@ Le «reliquie dimenticate» della proposta (oggetti trovati in partita e pagati 
 
 ## 8f. Le Unioni (`src/data/unioni.ts`)
 
-Un'arma al livello 8 più il suo dono al livello 3 (o al massimo del dono, se è più basso: Lacrima di lumen arriva a 2): il reliquiario successivo offre l'unione come prima striscia. L'arma tiene i suoi numeri e guadagna un effetto. Una sola unione per reliquiario; con l'unione gli amuleti offerti scendono a 2, per restare a quattro strisce.
+Un'arma al livello 6 più il suo dono al livello massimo (decisione di Edoardo del 10/11; il 6 è *da rivedere*): il reliquiario successivo offre l'unione come prima striscia. L'arma tiene i suoi numeri, guadagna un effetto e continua a salire fino al livello 8. Una sola unione per reliquiario; con l'unione gli amuleti offerti scendono a 2, per restare a quattro strisce.
 
 | Arma | + Dono | Arma unita | Effetto |
 | --- | --- | --- | --- |
@@ -537,12 +556,13 @@ Un'arma al livello 8 più il suo dono al livello 3 (o al massimo del dono, se è
 | Falce | Sale nero | Falce di Seth | uccide i nemici normali sotto il 15% di salute (non élite e Seth) |
 | Campana | Cera votiva | Campana a morto | ogni rintocco ferma per 0,8 s |
 | Fuoco fatuo | Calamita | Fuochi erranti | i fuochi raccolgono le anime entro 120 px |
-| Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso, al massimo uno ogni 45 s (*da rivedere*) |
+| Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso, al massimo uno ogni 45 s; con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico, che per 4 s cura il 3% della salute massima al secondo a chi ci sta dentro (non si somma con altre pozze; pozza tinta d'oro, disegno provvisorio dal codice) (*da rivedere*) |
 | Lama di luce | Ali di falena | Lama dell'alba | un secondo fendente parte da dove eri 0,5 s prima |
+| Sampietrini | Scudo di ferro | Selciato | un sampietrino che colpisce un nemico fermo (Sepolto, Interrato o fermato) rimbalza 1 volta in più, una sola volta per sasso (*da rivedere*) |
 
-Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni. **Sblocco**: si sbloccano vincendo 3 veglie, in tutto (`SBLOCCO_UNIONI`); la Cappella mostra il conto e non le vende più. Chi le aveva già sbloccate le tiene. Le Unioni **si svelano giocando**, in tre passi:
+Lapide, Rosario spezzato, Corvo e Velo funebre non hanno unioni. Lo Scudo di ferro apre due Unioni (Vanga del custode e Selciato). **Sblocco**: si sbloccano con l'impresa «Sconfiggi Seth», con qualsiasi personaggio, anche in una veglia persa (`SBLOCCO_UNIONI`, decisione di Edoardo del 10/11); la Cappella dice come e non le vende. Chi le aveva già sbloccate le tiene. Le Unioni **si svelano giocando**, in tre passi:
 - **Non scoperta**: nessun testo la nomina, nemmeno le strisce dei doni.
-- **Scoperta**, quando arma e dono arrivano ai livelli dell'unione: arma all'8, dono al 3 o al suo massimo (*da rivedere*: Edoardo ha detto «al livello massimo», vedi «Da confermare»). La partita si ferma per un'**animazione** a tutto schermo (`src/sistema/rivelazione.ts`, tempi in `RIVELAZIONE`, `src/data/hud.ts`, segnaposto dal codice, *da rivedere*): arma e dono si avvicinano, un lampo a retino, compaiono l'Unione, il nome e la ricetta. Dopo la comparsa l'Unione resta sullo schermo finché il giocatore non tocca, clicca o preme Spazio (nessuna chiusura a tempo; Spazio in quel momento non usa l'abilità); in basso al centro un avviso lampeggiante, 1 s a ciclo, dice come chiuderla («Tocca per chiudere» sul telefono, «Clicca o premi Spazio per chiudere» su computer); aprire la pausa la salta. Da allora le strisce la nominano e, nelle notti dopo, la Build della pausa la mostra con nome, ricetta e stato («Pronta», «Manca» o «Unita») se hai l'arma in mano. L'effetto non si legge ancora, se non sulla carta del reliquiario.
+- **Scoperta**, quando arma e dono arrivano ai livelli dell'unione: arma al 6, dono al suo massimo. La partita si ferma per un'**animazione** a tutto schermo (`src/sistema/rivelazione.ts`, tempi in `RIVELAZIONE`, `src/data/hud.ts`, segnaposto dal codice, *da rivedere*): arma e dono si avvicinano, un lampo a retino, compaiono l'Unione, il nome e la ricetta. Dopo la comparsa l'Unione resta sullo schermo finché il giocatore non tocca, clicca o preme Spazio (nessuna chiusura a tempo; Spazio in quel momento non usa l'abilità); in basso al centro un avviso lampeggiante, 1 s a ciclo, dice come chiuderla («Tocca per chiudere» sul telefono, «Clicca o premi Spazio per chiudere» su computer); aprire la pausa la salta. Da allora le strisce la nominano e, nelle notti dopo, la Build della pausa la mostra con nome, ricetta e stato («Pronta», «Manca» o «Unita») se hai l'arma in mano. L'effetto non si legge ancora, se non sulla carta del reliquiario.
 - **Unita** almeno una volta: resta per sempre nella scheda Stati, in ogni notte, con come si combina e che cosa fa.
 
 Scoperte e unite si ricordano sul dispositivo. Icone provvisorie: l'icona dell'arma con quattro angoli d'oro.
