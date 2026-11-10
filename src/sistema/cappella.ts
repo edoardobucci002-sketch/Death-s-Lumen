@@ -3,6 +3,7 @@
  * livello per livello e da spegnere a piacere, la Seconda candela, il conto dell'ultima veglia
  * e il codice di salvataggio da copiare o da incollare. Si apre dal menu; ogni acquisto si salva subito.
  */
+import { LIVELLO_ARMA_UNIONE } from '../data/unioni';
 import { CERI, COSTI_CERO, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECONDA_CANDELA, rimescolateCero, type IdCero } from '../data/meta';
 import { carica, codice, daCodice, salva, type Salvataggio } from './salvataggio';
 
@@ -66,10 +67,10 @@ export class Cappella {
         </li>`;
     const su = SBLOCCO_UNIONI;
     const unioni = `<li class="cero">
-          <div class="cero-testo"><h3>Le Unioni</h3><p>Un'arma al livello 8 e il suo dono al livello 3 si uniscono nel reliquiario in un'arma nuova. Si sbloccano vincendo ${su.vittorie} veglie.</p></div>
+          <div class="cero-testo"><h3>Le Unioni</h3><p>Un'arma al livello ${LIVELLO_ARMA_UNIONE} e il suo dono al livello massimo si uniscono nel reliquiario in un'arma nuova. Si sbloccano con l'impresa «${su.impresa}», con qualsiasi personaggio.</p></div>
           <span class="cero-livelli" aria-label="${s.unioni ? 'Sbloccate' : 'Bloccate'}">${s.unioni ? '<b></b>' : '<b class="vuota"></b>'}</span>
           <div class="cero-azioni">
-            <span class="cero-pieno">${s.unioni ? 'Sbloccate' : `Veglie vinte ${Math.min(s.vittorie, su.vittorie)}/${su.vittorie}`}</span>
+            <span class="cero-pieno">${s.unioni ? 'Sbloccate' : 'Da sbloccare'}</span>
           </div>
         </li>`;
     const oggetti = SBLOCCHI_OGGETTI.map((o) => {

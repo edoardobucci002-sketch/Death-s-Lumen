@@ -54,8 +54,8 @@ import { Simulazione, type RisultatoSim } from '../sistema/simulazione';
 import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
 import { BAGLIORE, FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
-import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECONDA_CANDELA, type IdOggetto } from '../data/meta';
-import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
+import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SECONDA_CANDELA, type IdOggetto } from '../data/meta';
+import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
 import { chiaro, INFO_REAZIONI, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
@@ -868,13 +868,18 @@ export class Gioco extends Phaser.Scene {
     return this.arsenale.possedute.find((p) => p.arma.id === id)?.arma;
   }
 
-  /** Le unioni pronte: arma al massimo, dono al livello giusto, non ancora unite. */
+  /** Le unioni pronte: arma al LIVELLO_ARMA_UNIONE, dono al massimo, non ancora unite. */
   private unioniPronte(): Unione[] {
     if (!this.unioniSbloccate) return [];
     return UNIONI.filter((u) => {
       const a = this.armaDi(u.arma);
-      return a && this.arsenale.livello(a) >= CARTE.livelloMassimo && !this.arsenale.unita(a) && this.passivi[u.dono] >= livelloDonoUnione(u.dono);
+      return a && this.arsenale.livello(a) >= LIVELLO_ARMA_UNIONE && !this.arsenale.unita(a) && this.passivi[u.dono] >= livelloDonoUnione(u.dono);
     });
+  }
+
+  /** Il livello massimo del dono id (per le prove). */
+  labMassimoDono(id: IdDono): number {
+    return PASSIVI.find((q) => q.id === id)!.massimo;
   }
 
   /** Porta arma e dono ai livelli giusti: con unisci li unisce subito, altrimenti aspetta il reliquiario. */
@@ -883,7 +888,7 @@ export class Gioco extends Phaser.Scene {
     this.unioniSbloccate = this.scoperteDiProva = true;
     this.unioniScoperte.add(u.id); // qui non si vuole l'animazione: la mostra LAB → Schermate
     const arma = this.armaDi(u.arma) ?? ARMI_COMUNI.find((a) => a.id === u.arma) ?? Object.values(ARMI_INIZIALI).find((a) => a.id === u.arma)!;
-    this.labArma(arma, CARTE.livelloMassimo);
+    this.labArma(arma, Math.max(this.arsenale.livello(arma), LIVELLO_ARMA_UNIONE));
     this.labDono(u.dono, Math.max(this.passivi[u.dono], livelloDonoUnione(u.dono)));
     if (unisci) {
       this.arsenale.unisci(arma);
@@ -1197,7 +1202,7 @@ export class Gioco extends Phaser.Scene {
     s.cera += totale;
     let sbloccatoOggetto: string | null = null;
     if (vittoria) s.vittorie++;
-    if (!s.unioni && s.vittorie >= SBLOCCO_UNIONI.vittorie) {
+    if (!s.unioni && this.sethSconfitti > 0) { // SBLOCCO_UNIONI: «Sconfiggi Seth», con qualsiasi personaggio
       s.unioni = true;
       sbloccatoOggetto = 'Le Unioni';
     }
@@ -1301,8 +1306,8 @@ export class Gioco extends Phaser.Scene {
     const ordine = { Pronta: 0, Manca: 1, Unita: 2 };
     return UNIONI.filter((u) => this.unioniScoperte.has(u.id) && this.armaDi(u.arma)).map((u): VoceUnione => {
       const a = this.armaDi(u.arma)!, q = PASSIVI.find((x) => x.id === u.dono)!, serve = livelloDonoUnione(u.dono), l = this.arsenale.livello(a);
-      const stato = this.arsenale.unita(a) ? 'Unita' : l >= CARTE.livelloMassimo && this.passivi[u.dono] >= serve ? 'Pronta' : 'Manca';
-      return { nome: u.nome, icona: iconaUnione(u.id), testo: this.unioniUnite.has(u.id) ? u.testo : '', stato, ricetta: `${a.nome} ${l}/${CARTE.livelloMassimo} · ${q.nome} ${Math.min(serve, this.passivi[u.dono])}/${serve}` };
+      const stato = this.arsenale.unita(a) ? 'Unita' : l >= LIVELLO_ARMA_UNIONE && this.passivi[u.dono] >= serve ? 'Pronta' : 'Manca';
+      return { nome: u.nome, icona: iconaUnione(u.id), testo: this.unioniUnite.has(u.id) ? u.testo : '', stato, ricetta: `${a.nome} ${Math.min(l, LIVELLO_ARMA_UNIONE)}/${LIVELLO_ARMA_UNIONE} · ${q.nome} ${Math.min(serve, this.passivi[u.dono])}/${serve}` };
     }).sort((x, y) => ordine[x.stato] - ordine[y.stato]);
   }
 
@@ -1326,10 +1331,10 @@ export class Gioco extends Phaser.Scene {
     ];
   }
 
-  /** Come si combina: «Lanterna 8 + Stoppino lungo 3». */
+  /** Come si combina: «Lanterna 6 + Stoppino lungo 3». */
   private ricettaUnione(u: Unione): string {
     const armi = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
-    return `${armi.find((a) => a.id === u.arma)!.nome} ${CARTE.livelloMassimo} + ${PASSIVI.find((q) => q.id === u.dono)!.nome} ${livelloDonoUnione(u.dono)}`;
+    return `${armi.find((a) => a.id === u.arma)!.nome} ${LIVELLO_ARMA_UNIONE} + ${PASSIVI.find((q) => q.id === u.dono)!.nome} ${livelloDonoUnione(u.dono)}`;
   }
 
   /** Tutto quello che la pausa mostra, letto ora. */

@@ -1,15 +1,16 @@
 /*
- * Unioni (tappa 6 della proposta su oggetti e build): un'arma al livello massimo più un dono al livello
- * LIVELLO_DONO_UNIONE. Il reliquiario successivo offre l'unione: l'arma resta al suo livello e guadagna un effetto nuovo.
+ * Unioni (tappa 6 della proposta su oggetti e build): un'arma al livello LIVELLO_ARMA_UNIONE più il suo dono
+ * al livello massimo. Il reliquiario successivo offre l'unione: l'arma guadagna un effetto nuovo e continua a salire fino all'8.
  * Ogni modifica qui va riportata anche nel GDD (sezione 8f). Tempi in secondi, distanze in pixel di gioco.
  */
 import type { IdArma } from './armi';
 import { PASSIVI, type IdDono } from './doni';
 import { STATI } from './stati';
 
-export const LIVELLO_DONO_UNIONE = 3;
-/** Il livello che serve al dono: LIVELLO_DONO_UNIONE, o il suo massimo se è più basso (Lacrima di lumen arriva a 2). */
-export const livelloDonoUnione = (id: IdDono): number => Math.min(LIVELLO_DONO_UNIONE, PASSIVI.find((q) => q.id === id)!.massimo);
+/** Il livello che serve all'arma (decisione di Edoardo del 10/11: 6 invece di 8; da rivedere). Dopo l'unione l'arma sale fino all'8. */
+export const LIVELLO_ARMA_UNIONE = 6;
+/** Il livello che serve al dono: il suo massimo (decisione di Edoardo del 10/11). */
+export const livelloDonoUnione = (id: IdDono): number => PASSIVI.find((q) => q.id === id)!.massimo;
 
 export const NUMERI_UNIONI = {
   faro: { abbaglia: 0.5 }, // il cerchio abbaglia un nemico su due

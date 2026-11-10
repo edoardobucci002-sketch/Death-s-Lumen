@@ -7,7 +7,7 @@ import type { Arma } from '../data/armi';
 import { AFFINITA_ARMI } from '../data/stati';
 import { CARTE } from '../data/progressione';
 import { ROSARIO } from '../data/rosario';
-import { iconaUnione, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
+import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import { CAMPI_ARMA, chiaro, DATI_DONI, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { STRISCIA } from '../data/hud';
@@ -98,8 +98,8 @@ function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
     }
   }
   const trovata = unioneDi(arma.id), u = c.unioni && trovata && c.scoperte.has(trovata.id) ? trovata : undefined;
-  if (u && (l === CARTE.livelloMassimo || c.doni[u.dono])) {
-    righe.push({ testo: `Al liv ${CARTE.livelloMassimo}, con ${PASSIVI.find((q) => q.id === u.dono)!.nome} al liv ${livelloDonoUnione(u.dono)}: ${u.nome}`, tono: 'reazione' });
+  if (u && (l === LIVELLO_ARMA_UNIONE || c.doni[u.dono])) {
+    righe.push({ testo: `Al liv ${LIVELLO_ARMA_UNIONE}, con ${PASSIVI.find((q) => q.id === u.dono)!.nome} al liv ${livelloDonoUnione(u.dono)}: ${u.nome}`, tono: 'reazione' });
   }
   return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, CARTE.livelloMassimo, 'Nuova arma'), dati, righe };
 }
@@ -115,7 +115,7 @@ export function schedaDono(d: Dono, c: Contesto): Scheda {
       return {
         nome: q.nome, icona: q.icona, categoria: 'dono', tag: tagLivello(d.livello, q.massimo, 'Nuovo dono'),
         dati: ora.map((v, i) => ({ nome: v.nome, prima: prima?.[i].valore, dopo: v.valore, tono: 'bene' })),
-        righe: [{ testo: SPIEGA_DONI[q.id] }, ...(u && arma ? [{ testo: `Al liv ${livelloDonoUnione(q.id)}, con ${arma.nome} al liv ${CARTE.livelloMassimo}: ${u.nome}`, tono: 'reazione' as const }] : [])],
+        righe: [{ testo: SPIEGA_DONI[q.id] }, ...(u && arma ? [{ testo: `Al liv ${livelloDonoUnione(q.id)}, con ${arma.nome} al liv ${LIVELLO_ARMA_UNIONE}: ${u.nome}`, tono: 'reazione' as const }] : [])],
       };
     }
     case 'amuleto': {

@@ -40,6 +40,17 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 10/11 (pomeriggio) — Cinque voci di Edoardo, una alla volta
+
+Ogni voce ha la sua simulazione: `npm run sim -- 6 tutti meta=max`, stessi semi (1001–1006), Stati certi spenti; 24 notti, quindi l'incertezza è grande (circa ±20 punti): si guardano le tendenze.
+
+| Dopo | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana della morte | Livello medio | Seth del 5 ucciso | Prima Unione presa | «Pane e vino» offerto |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| partenza (c7c0ae1) | 11/24 (1, 3, 4, 3) | 2 | 7:43 | 59 | 21/22 | 16 notti, in media a 6:21 | 207 volte (8,6 a notte) |
+| 1 · Unioni | 11/24 (1, 3, 3, 4) | 2 | 7:43 | 59 | 21/22 | 16 notti, in media a 7:16 | 211 (8,8) |
+
+- **1 · Unioni** (arma al 6, dono al massimo, sblocco con «Sconfiggi Seth»): le vittorie non cambiano; la prima Unione arriva **più tardi** (7:16 invece di 6:21), perché portare un dono al 5 costa più carte che portarlo al 3. Con i doni a 3 livelli (voce 2) il conto cambia.
+
 ### 10/11 — Notti esplorative del bot e interruttore «Stati certi» (nessun numero della notte normale cambia)
 
 **Controllo.** `npm run sim -- 3 tutti`, Cappella vuota e completa, stessi semi, prima e dopo, con `esplora` e Stati certi spenti: 24 notti, 744 campi confrontati, **0 differenze**. Rifatto sul codice con le barre della salute nuove (5da9386, e3cf404): ancora 0 differenze, e quelle barre non cambiano le notti del bot (stesse notti di prima).

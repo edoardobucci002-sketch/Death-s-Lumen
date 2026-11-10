@@ -918,7 +918,7 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await ctx.close();
 }
 
-// Unioni che si svelano: la carta non nomina una non scoperta; 3 veglie vinte le sbloccano e la Cappella non le vende più
+// Unioni che si svelano: la carta non nomina una non scoperta; sconfiggere Seth le sblocca e la Cappella non le vende più
 {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });
   const pag = await ctx.newPage();
@@ -939,18 +939,22 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   if ((await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta nomina un\'unione non scoperta');
   await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.passivi.stoppinoLungo = 1; s.aggiornaBuild(); });
   if ((await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta nomina l\'unione con il dono al primo livello');
-  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.labArma(s.arsenale.possedute[0].arma, 8); s.passivi.stoppinoLungo = 3; s.aggiornaBuild(); });
+  // arma al livello dell'unione (6) ma dono non al massimo: non ancora
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.labArma(s.arsenale.possedute[0].arma, 6); s.passivi.stoppinoLungo = 1; s.aggiornaBuild(); });
+  if (await pag.evaluate(() => window.__dl.scene.getScene('Gioco').unioniPronte().length)) errori.push('l\'unione è pronta con il dono sotto il massimo');
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.passivi.stoppinoLungo = s.labMassimoDono('stoppinoLungo'); s.aggiornaBuild(); });
+  if (!(await pag.evaluate(() => window.__dl.scene.getScene('Gioco').unioniPronte().length))) errori.push('l\'unione non è pronta con l\'arma al 6 e il dono al massimo');
   if (!(await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta non nomina l\'unione scoperta');
-  // tre veglie vinte
-  await pag.evaluate(() => { const v = JSON.parse(localStorage.getItem('dl-salvataggio')); v.unioni = false; v.vittorie = 2; localStorage.setItem('dl-salvataggio', JSON.stringify(v)); });
+  // l'impresa «Sconfiggi Seth», con qualsiasi personaggio
+  await pag.evaluate(() => { const v = JSON.parse(localStorage.getItem('dl-salvataggio')); v.unioni = false; v.vittorie = 0; localStorage.setItem('dl-salvataggio', JSON.stringify(v)); });
   await pag.reload();
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non riparte'));
   await pag.waitForTimeout(200);
-  const dopo = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.contaCera(false); const a = JSON.parse(localStorage.getItem('dl-salvataggio')); s.contaCera(true); const b = JSON.parse(localStorage.getItem('dl-salvataggio')); return { a: [a.unioni, a.vittorie], b: [b.unioni, b.vittorie] }; });
-  if (dopo.a[0] || dopo.a[1] !== 2) errori.push(`una sconfitta conta come vittoria: ${dopo.a}`);
-  if (!dopo.b[0] || dopo.b[1] !== 3) errori.push(`la terza vittoria non sblocca: ${dopo.b}`);
+  const dopo = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.contaCera(true); const a = JSON.parse(localStorage.getItem('dl-salvataggio')); s.sethSconfitti = 1; s.contaCera(false); const b = JSON.parse(localStorage.getItem('dl-salvataggio')); return { a: a.unioni, b: b.unioni }; });
+  if (dopo.a) errori.push('una vittoria senza Seth sconfitto sblocca le Unioni');
+  if (!dopo.b) errori.push('sconfiggere Seth (anche perdendo la veglia) non sblocca le Unioni');
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} Unioni: si svelano giocando e si sbloccano con 3 veglie vinte${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} Unioni: si svelano giocando, arma al 6 e dono al massimo, si sbloccano sconfiggendo Seth${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

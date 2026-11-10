@@ -624,10 +624,10 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 
 {
   const s = sezione('## 8f.');
-  const lacrima = DO.PASSIVI.find((d) => d.id === 'lacrimaDiLumen');
-  inTesto(s, 'Unioni: requisiti', 'Un\'arma al livello {} più il suo dono al livello {} (o al massimo del dono, se è più basso: Lacrima di lumen arriva a {})', PR.CARTE.livelloMassimo, U.LIVELLO_DONO_UNIONE, lacrima.massimo);
+  inTesto(s, 'Unioni: requisiti', 'Un\'arma al livello {} più il suo dono al livello massimo', U.LIVELLO_ARMA_UNIONE);
+  inTesto(s, 'Unioni: l\'arma continua', 'continua a salire fino al livello {}', PR.CARTE.livelloMassimo);
   inTesto(s, 'Unioni: amuleti offerti', 'con l\'unione gli amuleti offerti scendono a {}', R.ROSARIO.proposteConUnione);
-  inTesto(s, 'Sblocco delle Unioni', 'si sbloccano vincendo {} veglie', M.SBLOCCO_UNIONI.vittorie);
+  testoUguale('Sblocco delle Unioni', /si sbloccano con l'impresa «([^»]+)»/.exec(s)?.[1] ?? 'frase non trovata', M.SBLOCCO_UNIONI.impresa);
 
   const t = tabella('| Arma | + Dono |');
   const armi = [...Object.values(A.ARMI_INIZIALI), ...A.ARMI_COMUNI];
