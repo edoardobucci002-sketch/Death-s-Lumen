@@ -18,7 +18,7 @@ export const ANIME = {
   media: 6, // da 6 anime in su il Lumen è ambra…
   grande: 20, // …da 20 in su azzurro
   sprite: { piccola: 'Anima_piccola', media: 'Anima_media', grande: 'Anima_grande' },
-  ingrandimento: 2, // gli sprite V2 hanno da 9×11 a 15×19 pixel: si disegnano grandi il doppio, sopra il buio (da rivedere)
+  ingrandimento: 1, // gli sprite V2 hanno da 9×11 a 15×19 pixel: a grandezza naturale, sopra il buio (era 2: con il campo pieno coprivano troppo; 10/11, da rivedere)
   volo: 420, // velocità iniziale verso il personaggio quando entra nel raggio di raccolta
   accelerazione: 900, // quanto accelera mentre vola
   presa: 24, // a questa distanza dal personaggio l'anima è raccolta

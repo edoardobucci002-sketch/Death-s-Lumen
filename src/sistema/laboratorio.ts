@@ -19,6 +19,7 @@ import { AMULETI } from '../data/rosario';
 import { PERSONAGGI } from '../data/personaggi';
 import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
 import { UNIONI } from '../data/unioni';
+import { PIXELFX } from '../data/effetti';
 import { accendiContatore, contatoreAcceso, riprendiContatore } from './contatore';
 import { FIRMA } from './firma';
 import { letturaSchermo } from './lettura-schermo';
@@ -278,6 +279,11 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       ),
       riga(tasto('Riempi tacche', fai((x) => x.labTacche(true))), tasto('Svuota tacche', fai((x) => x.labTacche(false)))),
       el('p', 'lab-nota', 'Sfiora i nemici senza toccarli: ogni nemico dà una tacca (non più di una ogni 2 s). «Riempi» le lascia a una dallo scatto: al prossimo sfioro parte la Grazia. Tacche, distanza e calo: Numeri → sopravvivenza → GRAZIA.tacche.'),
+      titolo('Effetti pixelfx (prova: vecchio contro nuovo)'),
+      riga(tasto(INTERRUTTORI.pixelfx ? 'Effetti pixelfx: sì' : 'Effetti pixelfx: no', fai((x) => x.labPixelfx(!INTERRUTTORI.pixelfx)), INTERRUTTORI.pixelfx ? 'acceso' : '')),
+      riga(tasto('Sepoltura qui', fai((x) => x.labVediEffetto('sepoltura'))), tasto('Eclissi qui', fai((x) => x.labVediEffetto('eclissi')))),
+      riga(...PIXELFX.pozza.raggi.map((r) => tasto(`Pozza ${r}`, fai((x) => x.labVediEffetto('pozza', r)), 'piccolo'))),
+      el('p', 'lab-nota', 'Acceso: Sepoltura, Pozza dell\'Acqua santa ed Eclissi usano gli sprite presi da pixelfx (a retino, a grandezza naturale); spento, quelli di sempre. Cambia solo il disegno: aree, danni e tempi restano uguali. I tasti mostrano l\'effetto accanto a te senza ferire nessuno: premili con l\'interruttore acceso e spento per confrontarli. La Pozza sceglie la misura più vicina all\'area vera. Vale finché non ricarichi la pagina. Numeri in Numeri → effetti → PIXELFX.'),
       titolo('Acquasantiera'),
       riga(tasto('Pozza che cura qui', fai((x) => x.labPozzaCurativa()))),
       el('p', 'lab-nota', 'La pozza che nasce quando il sorso trova la fiaschetta piena: 4 s, cura il 3% della salute massima al secondo. Ferisciti (Immortale) e mettiti dentro.'),

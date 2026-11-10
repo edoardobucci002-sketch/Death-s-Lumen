@@ -63,7 +63,7 @@ DEATH'S LUMEN/
     public/                        manifest, icone
       assets/                      export di Aseprite + elenco.json, generati da `npm run asset`, mai a mano
     segnaposto/                    sprite provvisori della v0 (versione V0), finché Edoardo non esporta i suoi
-    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sim, controlla-gdd
+    tools/                         export-asset, icone, dividi-v0, genera-sw, prova, sim, controlla-gdd; pixelfx/ (effetti da pixelfx, vedi il suo LEGGIMI)
     android/  ios/                 progetti nativi Capacitor
     .github/workflows/             pubblicazione su GitHub Pages e APK Android automatici
 ```

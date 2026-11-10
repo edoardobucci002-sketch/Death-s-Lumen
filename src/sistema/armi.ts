@@ -18,8 +18,8 @@ import { INTERRUTTORI } from './interruttori';
 import { NEMICI } from '../data/nemici';
 import { suona } from './audio';
 import { PROFONDITA, type Effetti } from './effetti';
-import { EFFETTI } from '../data/effetti';
-import type { Abilita } from '../data/abilita';
+import { EFFETTI, PIXELFX } from '../data/effetti';
+import { ABILITA, type Abilita } from '../data/abilita';
 import {
   ACQUA_SANTA, BASTONE, CAMPANA, CANDELA, COLPI, SAMPIETRINI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, MIRA, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
 } from '../data/armi';
@@ -33,6 +33,13 @@ import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPI
 
 const NUBE = 1;
 const POZZA = 2;
+// prova pixelfx: le Pozze a sprite, una per raggio (Pixelfx_Pozza_089 …), con i nomi preparati prima della partita
+const CHIAVI_POZZA = PIXELFX.pozza.raggi.map((r) => `Pixelfx_Pozza_${String(r).padStart(3, '0')}`);
+function chiavePozzaPixelfx(raggio: number): string {
+  let m = 0;
+  for (let k = 1; k < PIXELFX.pozza.raggi.length; k++) if (Math.abs(PIXELFX.pozza.raggi[k] - raggio) < Math.abs(PIXELFX.pozza.raggi[m] - raggio)) m = k;
+  return CHIAVI_POZZA[m];
+}
 const ESPLOSIONE = 5; // in coda insieme alle reazioni: l'esplosione del dardo del Bastone
 const MAX_CODA = 48;
 const CODICE_AFFINITA = { luce: LUCE, sacro: SACRO, ombra: OMBRA, terra: TERRA } as const;
@@ -462,6 +469,21 @@ export class Arsenale {
     const prima = this.zone;
     this.zona(ACQUA_SANTA.effetto, x, y, l.raggio * (1 + this.bonus.area), 0, l.durata, ACQUA_SANTA.intervallo, 0, 0, 0, false, true, POZZA, SACRO);
     if (this.zone > prima) this.pozzaCura(prima);
+  }
+
+  /**
+   * Laboratorio, prova pixelfx: mostra un effetto nel punto (x, y) senza ferire nessuno, per confrontare vecchio e nuovo.
+   * «raggio» vale per la Pozza; la Sepoltura usa il suo raggio con il dono dell'area.
+   */
+  labVediEffetto(cosa: 'sepoltura' | 'pozza' | 'eclissi', x: number, y: number, raggio = 0): void {
+    if (cosa === 'eclissi') {
+      if (INTERRUTTORI.pixelfx) this.effetti.eclissiPixelfx(x, y);
+      else this.effetti.reazione(x, y, REAZIONI.eclissi.raggio, REAZIONI.eclissi.colore, REAZIONI.eclissi.bordo, REAZIONI.durataEffetto);
+      return;
+    }
+    const a = ABILITA.sepoltura;
+    if (cosa === 'sepoltura') this.zona(a.effetto, x, y, a.raggio * (1 + this.bonus.area), 0, a.durata, a.intervallo, 0, 0, 0, false, false);
+    else this.zona(ACQUA_SANTA.effetto, x, y, raggio, 0, ACQUA_SANTA.livelli[0].durata, ACQUA_SANTA.intervallo, 0, 0, 0, false, true, POZZA, SACRO);
   }
 
   /** Secondi che il personaggio passa dentro le nubi del Turibolo: 1 se è dentro una nube adesso (impresa del Velo funebre). */
@@ -958,7 +980,10 @@ export class Arsenale {
         this.orda.griglia.nelRaggio(x, y, r + 40, this.visitaColpo);
         this.rompiForma();
         if (t === ECLISSI) this.eclissi++;
-        if (t === ECLISSI) this.effetti.reazione(x, y, r, REAZIONI.eclissi.colore, REAZIONI.eclissi.bordo, REAZIONI.durataEffetto);
+        if (t === ECLISSI) {
+          if (INTERRUTTORI.pixelfx) this.effetti.eclissiPixelfx(x, y);
+          else this.effetti.reazione(x, y, r, REAZIONI.eclissi.colore, REAZIONI.eclissi.bordo, REAZIONI.durataEffetto);
+        }
       } else if (t === ESORCISMO) {
         const e = REAZIONI.esorcismo, id = this.prossimaIdReazione++;
         this.fonte = F.esorcismo;
@@ -1206,6 +1231,21 @@ export class Arsenale {
     if (chiave === SPRITE_SCIA) {
       s.stop();
       s.setTexture(chiave).setScale(2).setVisible(true);
+      return;
+    }
+    // prova pixelfx: la Pozza nella misura più vicina, a grandezza naturale; la Sepoltura a gruppi di mani (effetti.ts)
+    if (INTERRUTTORI.pixelfx && chiave === ACQUA_SANTA.effetto) {
+      const k = chiavePozzaPixelfx(raggio);
+      if (this.scena.textures.exists(k)) {
+        s.setTexture(k).setScale(1).setVisible(true);
+        s.play({ key: `${k}:idle`, repeat: -1 }); // la chiave dell'animazione la crea Avvio.ts
+        return;
+      }
+    }
+    if (INTERRUTTORI.pixelfx && chiave === ABILITA.sepoltura.effetto && this.scena.textures.exists('Pixelfx_Sepoltura_mani')) {
+      s.stop();
+      s.setVisible(false);
+      this.effetti.maniSepoltura(x, y, raggio, this.zVita[i]);
       return;
     }
     s.setTexture(chiave).setScale(raggio / this.raggioDi(chiave)).setVisible(true);

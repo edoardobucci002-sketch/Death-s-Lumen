@@ -11,4 +11,6 @@ export const INTERRUTTORI = {
   // Grazia a tacche: scintilla e suono a ogni tacca
   taccheScintilla: true,
   taccheSuono: true,
+  // prova pixelfx: Sepoltura, Pozza dell'Acqua santa ed Eclissi con gli sprite presi da pixelfx (PIXELFX in src/data/effetti.ts)
+  pixelfx: false,
 };

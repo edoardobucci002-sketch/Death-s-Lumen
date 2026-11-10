@@ -98,6 +98,8 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
+| Prova pixelfx (10/11): 15 fotogrammi al secondo; Sepoltura a gruppi di mani (uno ogni 9000 px², al massimo 24, nessun fondo scuro sotto); 5 misure della Pozza (circa 19 MB di memoria video); alone delle mani a puntini; primo anello dell'Eclissi più largo dell'area; tenerli, rifarli o toglierli | GDD §11; `PIXELFX` in `src/data/effetti.ts`; decisioni 10/11 |
+| Lacrime di Lumen a grandezza naturale (× 1, da 9×11 a 15×19 px); per una via di mezzo andrebbero ridisegnate più grandi | GDD §10 e §11; `ANIME.ingrandimento` |
 | Barre della salute (personaggio 40 × 9 px, Seth alta 12 px; rosso `#c0262d`, vuoto `#3a0c10`; scorrimento 0,5 s, ambra `#d98a2b` per il danno, verde `#6fbf4a` per la cura) e grandezza del conto alla rovescia dell'abilità (16) | GDD §HUD; `src/data/mondo.ts` (`BARRA_SALUTE`), `src/data/hud.ts` (`BARRA_SETH`, `TESTI`) |
 | Stati certi (prova, interruttore del LAB): tutti i numeri di `STATI_CERTI` (quiete 3 s, Eclissi 10% senza tetto e ×2 del colpo su élite e Seth, Esorcismo 3 × 60%, Rivelazione +50% per difetto solo da 2 anime in su, Interramento Luce +50%, Sacro 2,5 s, Ombra ×2), i casi senza colpo, l'ordine dell'Interramento con più stati, il tetto dei cerchi (12) | GDD §8c; `src/data/stati.ts`; decisioni 10/11 |
 | Amuleti rari misurati con `amuleto=` (12 notti l'uno, bilanciamento 10/11 sera): nessuno è un disastro; la Lanterna cieca vince 9 su 12 perché il bot non guarda il buio, da provare a mano | bilanciamento 10/11 |

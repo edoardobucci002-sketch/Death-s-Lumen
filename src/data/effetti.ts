@@ -50,3 +50,18 @@ export const EFFETTI = {
     scossa: { forza: 3, durata: 0.15 }, // la falciata scuote lo schermo
   },
 } as const;
+
+// Prova pilota pixelfx (10/11): tre effetti presi dalla libreria pixelfx, esportati come sprite a retino
+// (segnaposto/EFFETTI/Pixelfx …_V0.aseprite). Si accendono dal Laboratorio (Eventi → Effetti pixelfx);
+// spenti, il gioco usa i vecchi. Cambiano solo il disegno: aree, danni e tempi dei colpi restano gli stessi.
+// Tutti i valori sono da rivedere.
+export const PIXELFX = {
+  // Pozza dell'Acqua santa: una versione per raggio; il gioco prende quella più vicina all'area vera
+  // (i nomi dei file sono Pixelfx_Pozza_089 … Pixelfx_Pozza_186)
+  pozza: { raggi: [89, 107, 129, 155, 186] },
+  // Sepoltura: gruppi di 4 mani sparsi nell'area, un gruppo ogni «areaPerGruppo» pixel quadrati dell'ellisse,
+  // con partenze sfalsate lungo tutta la durata dell'abilità
+  sepoltura: { areaPerGruppo: 9000, massimo: 24, perno: [53, 71] as const, bordo: 40 },
+  // Eclissi: 1,1 s, il centro della sfera nera cade sul nemico che reagisce
+  eclissi: { centro: [83, 97] as const },
+} as const;

@@ -495,6 +495,62 @@
       ]
     },
     {
+      "chiave": "Pixelfx_Eclissi",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Eclissi.png",
+      "dati": "assets/effetti/Pixelfx_Eclissi.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Pozza_089",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Pozza_089.png",
+      "dati": "assets/effetti/Pixelfx_Pozza_089.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Pozza_107",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Pozza_107.png",
+      "dati": "assets/effetti/Pixelfx_Pozza_107.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Pozza_129",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Pozza_129.png",
+      "dati": "assets/effetti/Pixelfx_Pozza_129.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Pozza_155",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Pozza_155.png",
+      "dati": "assets/effetti/Pixelfx_Pozza_155.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Pozza_186",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Pozza_186.png",
+      "dati": "assets/effetti/Pixelfx_Pozza_186.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Sepoltura_mani",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Sepoltura_mani.png",
+      "dati": "assets/effetti/Pixelfx_Sepoltura_mani.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
       "chiave": "Reliquiario",
       "categoria": "oggetti",
       "immagine": "assets/oggetti/Reliquiario.png",

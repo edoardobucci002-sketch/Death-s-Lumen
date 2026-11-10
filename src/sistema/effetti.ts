@@ -7,7 +7,7 @@
  */
 import Phaser from 'phaser';
 import { Caso } from './caso';
-import { EFFETTI } from '../data/effetti';
+import { EFFETTI, PIXELFX } from '../data/effetti';
 import { REAZIONI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
 import { INFO_REAZIONI } from '../data/spiegazioni';
@@ -31,6 +31,8 @@ const MAX_ARCHI = 4;
 const MAX_REAZIONI = 24;
 const MAX_POLVERI = 12;
 const MAX_ETICHETTE = 8;
+const MAX_MANI = 32; // prova pixelfx: gruppi di mani della Sepoltura
+const MAX_ECLISSI = 8; // prova pixelfx: Eclissi sullo schermo nello stesso momento
 // cifre 3×5: ogni riga è una cifra, 1 = pixel acceso
 const CIFRE = [
   '111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001',
@@ -80,6 +82,12 @@ export class Effetti {
   private prossimaPolvere = 0;
   private pane: Phaser.GameObjects.Image; // la scritta «Pane e vino +40» sopra la testa
   private paneVita = 0;
+  // prova pixelfx (Laboratorio → Eventi → Effetti pixelfx): gruppi di mani della Sepoltura ed Eclissi a sprite
+  private mani: Phaser.GameObjects.Sprite[] = [];
+  private maniAttesa = new Float32Array(MAX_MANI); // secondi prima che il gruppo spunti
+  private maniVita = new Float32Array(MAX_MANI); // secondi di animazione rimasti (0 = libero)
+  private eclissi: Phaser.GameObjects.Sprite[] = [];
+  private eclissiVita = new Float32Array(MAX_ECLISSI);
   scossaX = 0; // spostamento della telecamera in questo fotogramma, in pixel interi
   scossaY = 0;
 
@@ -104,6 +112,14 @@ export class Effetti {
     for (let i = 0; i < MAX_POLVERI; i++) {
       this.polveri.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.aTerra).setVisible(false));
       this.polvereChiave.push('');
+    }
+    if (scena.textures.exists('Pixelfx_Sepoltura_mani')) {
+      const [px, py] = PIXELFX.sepoltura.perno, f = scena.textures.getFrame('Pixelfx_Sepoltura_mani', '0');
+      for (let i = 0; i < MAX_MANI; i++) this.mani.push(scena.add.sprite(0, 0, 'Pixelfx_Sepoltura_mani').setOrigin(px / f.realWidth, py / f.realHeight).setVisible(false));
+    }
+    if (scena.textures.exists('Pixelfx_Eclissi')) {
+      const [cx, cy] = PIXELFX.eclissi.centro, f = scena.textures.getFrame('Pixelfx_Eclissi', '0');
+      for (let i = 0; i < MAX_ECLISSI; i++) this.eclissi.push(scena.add.sprite(0, 0, 'Pixelfx_Eclissi').setOrigin(cx / f.realWidth, cy / f.realHeight).setDepth(PROFONDITA.sopra).setVisible(false));
     }
     const P = EFFETTI.paneDaSolo;
     if (!scena.textures.exists('Scritta_Pane')) scena.textures.addCanvas('Scritta_Pane', telaContorno(`Pane e vino +${CARTE.paneEVino}`, P.colore, P.bordo));
@@ -257,6 +273,37 @@ export class Effetti {
     this.reazioni[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setVisible(true);
   }
 
+  /** Prova pixelfx: l'Eclissi a sprite in (x, y), centro della sfera sul punto; se sono tutte in uso non si crea. */
+  eclissiPixelfx(x: number, y: number): void {
+    let i = 0;
+    while (i < this.eclissi.length && this.eclissiVita[i] > 0) i++;
+    if (i >= this.eclissi.length) return;
+    const s = this.eclissi[i].setPosition(Math.round(x), Math.round(y)).setVisible(true);
+    s.play({ key: 'Pixelfx_Eclissi:idle', repeat: 0 });
+    this.eclissiVita[i] = (this.scena.anims.get('Pixelfx_Eclissi:idle')?.duration ?? 1100) / 1000;
+  }
+
+  /**
+   * Prova pixelfx: la Sepoltura come gruppi di mani sparsi nell'ellisse (2:1) di raggio r intorno a (x, y),
+   * uno ogni PIXELFX.sepoltura.areaPerGruppo pixel quadrati, con partenze sfalsate in modo che finiscano entro «durata».
+   */
+  maniSepoltura(x: number, y: number, r: number, durata: number): void {
+    const S = PIXELFX.sepoltura, anim = this.scena.anims.get('Pixelfx_Sepoltura_mani:idle');
+    if (!anim || !this.mani.length) return;
+    const lunga = anim.duration / 1000, rx = Math.max(0, r - S.bordo), ry = Math.max(0, r / 2 - S.bordo / 2);
+    let n = Math.min(S.massimo, Math.max(1, Math.round((Math.PI * r * (r / 2)) / S.areaPerGruppo)));
+    for (let i = 0; i < this.mani.length && n > 0; i++) {
+      if (this.maniVita[i] > 0) continue;
+      n--;
+      // punto a caso dentro l'ellisse (radice: densità uniforme)
+      const a = this.caso.numero() * Math.PI * 2, d = Math.sqrt(this.caso.numero());
+      const mx = Math.round(x + Math.cos(a) * d * rx), my = Math.round(y + Math.sin(a) * d * ry);
+      this.maniAttesa[i] = Math.max(0.001, this.caso.numero() * Math.max(0, durata - lunga)); // > 0: spunta al prossimo passo
+      this.maniVita[i] = lunga;
+      this.mani[i].setPosition(mx, my).setDepth(PROFONDITA.aTerra + my).setVisible(false);
+    }
+  }
+
   /** Il nome della reazione (1 = Eclissi, come in orda.ts) sale sopra il punto (x, y); oltre il limite non si crea. */
   etichetta(reazione: number, x: number, y: number): void {
     if (this.pausaEtichetta[reazione] > 0 || this.etichetteAttive >= Math.min(REAZIONI.etichetta.massimi, MAX_ETICHETTE)) return;
@@ -369,6 +416,17 @@ export class Effetti {
       this.reazioneVita[i] -= dt;
       if (this.reazioneVita[i] <= 0) this.reazioni[i].setVisible(false);
       else if (this.reazioneVita[i] < this.durataReazione / 2) this.reazioni[i].setTexture(`${this.reazioneChiave[i]}-1`);
+    }
+    for (let i = 0; i < this.mani.length; i++) {
+      if (this.maniVita[i] <= 0) continue;
+      if (this.maniAttesa[i] > 0) {
+        if ((this.maniAttesa[i] -= dt) <= 0) this.mani[i].setVisible(true).play({ key: 'Pixelfx_Sepoltura_mani:idle', repeat: 0 });
+        continue;
+      }
+      if ((this.maniVita[i] -= dt) <= 0) this.mani[i].stop().setVisible(false);
+    }
+    for (let i = 0; i < this.eclissi.length; i++) {
+      if (this.eclissiVita[i] > 0 && (this.eclissiVita[i] -= dt) <= 0) this.eclissi[i].stop().setVisible(false);
     }
     if (this.scossa > 0) {
       this.scossa -= dt;
