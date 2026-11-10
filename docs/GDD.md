@@ -583,14 +583,14 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 
 - **HUD sul telefono in verticale: due fasce fisse fuori dal campo** (misure in `FASCE`, `src/data/hud.ts`, tutte *da rivedere*). Il campo è vero: finisce al bordo delle fasce per la telecamera, la comparsa e il ricollocamento dei nemici e tutte le armi che scelgono bersagli «sullo schermo».
   - altezza calcolata per ogni telefono: area sicura (la più grande tra `env()` e Capacitor, fissata 1,5 s dopo l'apertura, *da rivedere*: le barre di sistema temporanee non spostano niente) + contenuto. Sul Galaxy S25 (area sicura in alto 105 pixel fisici, in basso 0): fascia alta 81 pixel disegnati (324 fisici), fascia bassa 94 (376 fisici), campo 540×820 pixel di gioco. Un pixel disegnato vale 4 pixel fisici;
-  - fascia alta: stemma del livello ed esperienza; sotto, la riga dell'orologio e della barra sottile di Seth. Gli avvisi non stanno nella fascia ma nel campo, subito sotto;
-  - fascia bassa: fiaschetta nell'angolo a sinistra e abilità nell'angolo a destra, scambiabili dal LAB, con cornice rotonda uguale; l'abilità tiene l'anello continuo della ricarica e, con più cariche (Ceri gemelli), anche una tacca per carica; pausa piccola al centro, senza area di tocco invisibile (*da rivedere*). Il joystick può nascere anche nella fascia bassa;
+  - fascia alta: stemma del livello ed esperienza; sotto, la riga dell'orologio e della barra rossa di Seth, con dentro «salute rimasta/massima». Gli avvisi non stanno nella fascia ma nel campo, subito sotto;
+  - fascia bassa: fiaschetta nell'angolo a sinistra e abilità nell'angolo a destra, scambiabili dal LAB, con cornice rotonda uguale; l'abilità tiene l'anello continuo della ricarica, con sopra l'icona i secondi che mancano finché non c'è nessuna carica (*da rivedere*: grandezza 16) e, con più cariche (Ceri gemelli), anche una tacca per carica; pausa piccola al centro, senza area di tocco invisibile (*da rivedere*). Il joystick può nascere anche nella fascia bassa;
   - fuori dall'HUD di partita: anime, Cera, Rosario e griglia degli oggetti, che stanno nella pausa e nella schermata di fine;
   - segnali sul bordo del campo: salute bassa (rosso che pulsa), Peccato (cornice viola a retino), reliquiario fuori vista (freccia al confine con le fasce);
   - joystick con base più piccola, sempre centrata sotto il dito. Il tocco non inizia mai su un pulsante; se la base copre fiaschetta, pausa o abilità si disegna sopra di loro, mezza trasparente (*da rivedere*), solo finché il dito trascina, e i pulsanti coperti non ricevono il tocco.
 - **HUD su computer, tablet e telefono in orizzontale** (invariato):
   - in alto: barra dell'esperienza, armi e doni con il loro livello, livello e anime; l'orologio sta nella colonna di destra, sotto anime e Cera, dove le caselle non arrivano mai (*da rivedere*);
-  - barra del boss quando c'è Seth;
+  - barra di Seth quando c'è: rettangolo rosso con «salute rimasta/massima» al centro;
   - in basso a sinistra: l'abilità speciale con la ricarica circolare; in basso a destra: la pausa.
 - **Feedback**:
   - numeri del danno, bianchi; in ambra solo i critici, la somma del danno delle reazioni e il numero sommato su élite e Seth;
@@ -640,7 +640,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Ricollocamento | oltre 2,2 × 48 px fuori dallo schermo | torna davanti al giocatore, entro ±0,7 radianti dalla direzione in cui cammina |
 | Separazione tra nemici | forza 0,5; si toccano sotto il 75% della somma dei raggi | i fantasmi attraversano gli altri |
 | Sprite segnaposto V0 | ingranditi × 2 | disegnati per personaggi di 34 px |
-| Barra della salute | riempimento 47 × 6 pixel disegnati, 5 px sotto i piedi | decisa da Edoardo: sotto il personaggio, non in alto (`src/data/mondo.ts`) |
+| Barra della salute | rettangolo rosso 40 × 9 pixel, 5 px sotto i piedi (si allarga se i numeri non ci stanno), con «salute rimasta/massima» in cifre bianche; il rosso si accorcia da destra col danno | decisa da Edoardo: sotto il personaggio, non in alto; rettangolo semplice con i numeri (10/11). Misure e colori *da rivedere* (`src/data/mondo.ts`) |
 | Lampo quando sei colpito | 0,1 s | bianco pieno |
 | Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 
