@@ -40,6 +40,12 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 11/11 — Lacrime di Lumen: raggio di unione 56 px (richiesta di Edoardo)
+- `ANIME.accorpa` da 28 a 56 px: una lacrima che cade entro 56 px da una ferma si unisce a lei (il valore si somma). Nel LAB si prova tra 28, 40, 56 e 72 px. Disegno di nuovo × 2.
+- Effetto non voluto, corretto: con 56 o 72 px una lacrima caduta accanto al personaggio si univa a una ferma più lontana, fuori dal raggio di raccolta, e chi stava fermo non saliva più di livello (la Badessa ferma, in 30 s, mai; con 28 px in 4,4 s). Regola nuova: si unisce solo a una ferma non più lontana di lei dal personaggio. Prima avevo provato a spostare la lacrima unita nel punto più vicino al personaggio: regalava esperienza (la Strega arrivava al livello 4 al secondo 60 invece del 3 al 62), scartata.
+- Con la regola nuova, primo livello da fermi: Badessa 1,8–2,4 s, Lampionaio 2,3 s, con ogni raggio.
+- Bot, 3 notti per personaggio (campione piccolo, solo per vedere che niente si rompe): Lampionaio muore a 7:10 (liv. 24), 11:46 (liv. 51) e 11:23 (liv. 59); Becchino vince due volte (liv. 63 e 72) e muore a 11:38 (liv. 52); Badessa muore a 11:10 (liv. 48) e 13:52 (liv. 67), vince una volta (liv. 56); Strega muore a 7:52 (liv. 31) e 11:19 (liv. 63), vince una volta (liv. 72). Nessuno muore sempre prima del minuto 5.
+
 ### 10/11 (notte, seconda) — Misura del Lampionaio: orda del minuto 3 e Lanterna (nessun numero del gioco cambia)
 
 Due parametri solo per il bot (`PROVE_BOT` in `src/data/bot.ts`): `minuto3=leggero` (l'orda del minuto 3 è un cuneo di zombi invece che di scheletri e il copione dalle 3:00 diventa «zombi 3, scheletro 1» invece di «scheletro 3, zombi 2») e `lanterna=forte` (la Lanterna fa il 25% di danno in più). `npm run sim -- 12 lampionaio,becchino`, Cappella vuota, semi 1001–1012. La versione normale è identica alle notti della voce precedente (24 notti, 0 differenze). «Prima di Seth» = danno subito al minuto nei minuti 2–5; «durante» = al minuto mentre Seth del 5 è in campo. Livello alla fine del minuto 3 (3:00); abilità = volte in cui il bot la usa prima del minuto 5.
