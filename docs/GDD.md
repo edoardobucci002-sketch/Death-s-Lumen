@@ -328,7 +328,7 @@ Doni a 3 livelli (decisione di Edoardo del 10/11, *da rivedere*): i doni che arr
 | Cera votiva | +75% durata di zone e stati | 3 | +25% |
 | Chiodo di bara | +30% probabilità di colpo critico (danno doppio) | 3 | +10% |
 | Lacrima di lumen | +2 sorsi della fiaschetta (si riempie anche quel sorso) | 2 | +1 |
-| Campanella d'argento | +0,2 s di finestra per la schivata perfetta | 2 | +0,1 s |
+| Campanella d'argento | +0,2 s di finestra per la schivata perfetta e +16 px di sfioramento per le tacche della Grazia | 2 | +0,1 s e +8 px |
 
 Gli oggetti nuovi non diluiscono i potenziamenti: il peso delle armi e dei doni non ancora presi si divide come se fossero sempre 6 e 9 (`CARTE.pool`, `src/data/progressione.ts`).
 
@@ -430,7 +430,8 @@ Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle 
 ## 8b. Fiaschetta e Grazia (`src/data/sopravvivenza.ts`)
 
 - **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, Seth riempie la fiaschetta. Il pulsante è tondo, con la stessa cornice dell'abilità e la fiala dentro (composto dal codice, *da rivedere*, finché non c'è `Fiaschetta_Lumen_Tonda_V1`); su computer e tablet sta a destra dell'abilità, staccata di 12 pixel disegnati. I sorsi si leggono sulle tacche intorno al pulsante, una per sorso massimo (fino a 5 con la Lacrima di lumen): accese se piene, scure se vuote, con un lampo di 0,25 s quando un sorso si riempie (*da rivedere*). La fiaschetta diventerà uno sblocco con la sua questline (vedi [lore.md](lore.md) e [roadmap.md](roadmap.md)).
-- **Grazia**: scatta uscendo da un cerchio rosso di Seth quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova.
+- **Grazia**: scatta uscendo da un cerchio rosso di Seth quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova; una Grazia nuova non accorcia mai quella in corso.
+- **Grazia a tacche** (decisione di Edoardo del 10/11, tutti i valori *da rivedere*; vale per tutti i personaggi, senza amuleti). Ogni nemico normale (né élite né Seth) sfiorato entro 16 px oltre il contatto, senza toccarlo, dà una tacca; lo stesso nemico non più di una volta ogni 2 s. Con 8 tacche parte una Grazia di 2 s; durante la Grazia le tacche non salgono; senza sfiorare ne cala una ogni 2 s. La schivata perfetta su Seth dà subito la Grazia di 3 s, come sopra. A ogni tacca un suono secco e una piccola scintilla (segnaposto dal codice). L'indicatore ha tre posti da provare dal Laboratorio (LAB → Eventi → Grazia a tacche): **arco** sotto la barra della salute ai piedi (di partenza, *da rivedere*), **anello** intorno al personaggio, **fascia** accanto al pulsante dell'abilità, verso il centro (tacche di 4 pixel disegnati); arco e anello si vedono solo con almeno una tacca, la fascia sempre. Tacche piene del colore del personaggio, vuote scure; in Grazia tutte piene. La Campanella d'argento allunga lo sfioramento di 8 px per livello.
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
@@ -517,7 +518,7 @@ Le «reliquie dimenticate» della proposta (oggetti trovati in partita e pagati 
 | Cuore avido | 2 | +30% anime | pane e fiaschetta curano la metà |
 | Sangue freddo | 1 | sotto il 30% di salute, +40% danno | nessuno |
 | Martire | 2 | ogni colpo subito libera un'onda sacra di 150 px: non ferisce, lascia Consacrato e ferma i nemici per 0,6 s (Seth a metà) (*da rivedere*) | −20% salute massima |
-| Danza macabra | 2 | la Grazia scatta anche sfiorando (entro 16 px) i nemici normali, non più di una ogni 3 s | la Grazia dura 2 s invece di 3 |
+| Danza macabra | 2 | bastano 4 tacche per la Grazia (*da rivedere*) | la Grazia delle tacche dura 1,5 s invece di 2 (la schivata perfetta su Seth resta di 3 s) |
 | Ceri gemelli | 2 | l'abilità speciale ha 2 cariche | ricarica +10% (*da rivedere*) |
 | Lucciola | 2 | alone di luce +20%; un nemico è abbagliato quando entra nell'alone, non più di una volta ogni 4 s (*da rivedere*) | nessuno |
 | Ossa d'élite | 2 (*da rivedere*) | le élite lasciano 2 reliquiari | le élite hanno +40% salute |

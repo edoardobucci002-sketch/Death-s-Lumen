@@ -71,6 +71,7 @@ export class Orda {
   readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
   readonly pausaNube = new Float32Array(CAPIENZA); // …una nube del Turibolo
   readonly pausaPozza = new Float32Array(CAPIENZA); // …una pozza dell'Acqua santa
+  readonly pausaSfioro = new Float32Array(CAPIENZA); // secondi prima che sfiorarlo dia un'altra tacca di Grazia
   // stati: secondi rimasti (0 = assente)
   private sAbbagliato = new Float32Array(CAPIENZA);
   private sConsacrato = new Float32Array(CAPIENZA);
@@ -130,7 +131,7 @@ export class Orda {
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
-    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete];
+    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro];
 
   constructor(
     scena: Phaser.Scene,
@@ -403,6 +404,7 @@ export class Orda {
       }
     }
     if (this.quiete[i] > 0) this.quiete[i] -= dt;
+    if (this.pausaSfioro[i] > 0) this.pausaSfioro[i] -= dt;
     if (this.fermo[i] > 0) {
       this.fermo[i] -= dt;
       fermo = true;
@@ -613,7 +615,7 @@ export class Orda {
     this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
     this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
     this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
-    this.quiete[i] = 0;
+    this.quiete[i] = this.pausaSfioro[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];

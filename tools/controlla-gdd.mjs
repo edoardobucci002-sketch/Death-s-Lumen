@@ -487,6 +487,11 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('Fiaschetta: distanza', 'staccata di {} pixel disegnati', FI.distanza);
   frase('Grazia: finestra', 'quando mancavano al massimo {} s al colpo', GR.finestra);
   frase('Grazia: sfioro', '(entro {} px oltre il bordo)', GR.sfioro);
+  const TA = GR.tacche;
+  frase('Grazia a tacche', 'sfiorato entro {} px oltre il contatto, senza toccarlo, dà una tacca; lo stesso nemico non più di una volta ogni {} s. Con {} tacche parte una Grazia di {} s', TA.sfioro, TA.pausaNemico, TA.massimo, TA.durata);
+  frase('Grazia a tacche: calo', 'senza sfiorare ne cala una ogni {} s', TA.calo);
+  frase('Grazia a tacche: Campanella', 'allunga lo sfioramento di {} px per livello', TA.campanella);
+  frase('Campanella: sfioramento', '+{} px di sfioramento per le tacche', TA.campanella * DO.PASSIVI.find((d) => d.id === 'campanellaDArgento').massimo);
   frase('Grazia: effetto', 'Dura {} s: +{}% danno, +{}% velocità, il personaggio lampeggia di chiaro ({} volte al secondo)', GR.durata, pct(GR.danno), pct(GR.velocita), GR.lampi);
 }
 
@@ -606,7 +611,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     cuoreAvido: [['Vantaggio', '+{}% anime', pct(AN.cuoreAvido.anime)], ['Rovescio', 'curano la {p}', AN.cuoreAvido.cura]],
     sangueFreddo: [['Vantaggio', 'sotto il {}% di salute, +{}% danno', pct(AN.sangueFreddo.sotto), pct(AN.sangueFreddo.danno)]],
     martire: [['Vantaggio', 'onda sacra di {} px: non ferisce, lascia Consacrato e ferma i nemici per {} s', AN.martire.raggio, AN.martire.fermo], ['Rovescio', '−{}% salute massima', -pct(AN.martire.salute)]],
-    danzaMacabra: [['Vantaggio', '(entro {} px) i nemici normali, non più di una ogni {} s', AN.danzaMacabra.sfiora, AN.danzaMacabra.recupero], ['Rovescio', 'la Grazia dura {} s invece di {}', AN.danzaMacabra.durataGrazia, SO.GRAZIA.durata]],
+    danzaMacabra: [['Vantaggio', 'bastano {} tacche per la Grazia', AN.danzaMacabra.tacche], ['Rovescio', 'la Grazia delle tacche dura {} s invece di {}', AN.danzaMacabra.durataGrazia, SO.GRAZIA.tacche.durata]],
     ceriGemelli: [['Vantaggio', '{} cariche', AN.ceriGemelli.cariche], ['Rovescio', 'ricarica +{}%', pct(AN.ceriGemelli.ricarica)]],
     lucciola: [['Vantaggio', 'alone di luce +{}%', pct(AN.lucciola.alone)], ['Vantaggio', 'non più di una volta ogni {} s', AN.lucciola.pausa]],
     ossaDelite: [['Vantaggio', 'lasciano {} reliquiari', AN.ossaDelite.reliquiari], ['Rovescio', '+{}% salute', pct(AN.ossaDelite.salute)]],

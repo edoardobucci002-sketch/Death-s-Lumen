@@ -3,6 +3,7 @@
  * I numeri non si scrivono qui: si leggono da stati.ts e doni.ts, così cambiando un numero (anche dal Laboratorio) cambia il testo.
  */
 import { REAZIONI, STATI, type IdAffinita } from './stati';
+import { GRAZIA } from './sopravvivenza';
 import { animeDono, effettoDono, ricaricaDono, type IdDono, type Passivo } from './doni';
 
 export const virgola = (v: number): string => String(Math.round(v * 100) / 100).replace('.', ',');
@@ -77,7 +78,7 @@ export const DATI_DONI: Record<IdDono, (q: Passivo, l: number) => { nome: string
   ceraVotiva: (q, l) => [{ nome: 'Durata', valore: piu(effettoDono(q, l)) }],
   chiodoDiBara: (q, l) => [{ nome: 'Critico', valore: percento(effettoDono(q, l)) }],
   lacrimaDiLumen: (q, l) => [{ nome: 'Sorsi', valore: `+${effettoDono(q, l)}` }],
-  campanellaDArgento: (q, l) => [{ nome: 'Schivata', valore: `+${virgola(effettoDono(q, l))} s` }],
+  campanellaDArgento: (q, l) => [{ nome: 'Schivata', valore: `+${virgola(effettoDono(q, l))} s` }, { nome: 'Sfioro', valore: `+${GRAZIA.tacche.campanella * l} px` }],
 };
 
 /** Che cosa fa ogni dono, in parole: i numeri stanno già nei dati grandi. */
@@ -94,7 +95,7 @@ export const SPIEGA_DONI: Record<IdDono, string> = {
   ceraVotiva: 'Nubi, pozze, abilità e stati durano di più.',
   chiodoDiBara: 'Ogni colpo può fare il doppio del danno.',
   lacrimaDiLumen: 'Una fiaschetta più capiente, subito piena di un sorso.',
-  campanellaDArgento: 'Più tempo per la Grazia: uscire dai cerchi rossi all\'ultimo istante è più facile.',
+  campanellaDArgento: 'Più tempo per la Grazia: uscire dai cerchi rossi all\'ultimo istante è più facile, e sfiori i nemici da più lontano.',
 };
 
 /** Un bonus in percentuale con il suo segno, per le statistiche nella pausa: «+10%», «−14%», «0%». */

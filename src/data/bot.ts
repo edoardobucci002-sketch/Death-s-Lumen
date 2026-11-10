@@ -46,4 +46,8 @@ export const BOT = {
   msPerFotogramma: 40,
   // modo «esplora» (?esplora=1, npm run sim -- … esplora): il seme del suo caso è mescolato con questo numero
   semeEsplora: 104729,
+  // Grazia a tacche (proposta di Claude, da rivedere): sopra metà salute e fuori dalla Grazia il bot sceglie il nemico normale
+  // più vicino entro «cerca» px che si può sfiorare e preferisce le direzioni che tra un passo lo lasciano a metà della fascia
+  // dello sfioramento (oltre il contatto). passo = pixel guardati avanti; peso = quanto conta; sopra = parte di salute minima
+  sfioro: { passo: 18, peso: 1, sopra: 0.5, cerca: 120 },
 } as const;

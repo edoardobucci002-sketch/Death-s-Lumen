@@ -4,10 +4,10 @@
  * Ogni suono ha un intervallo minimo, così cento colpi nello stesso istante non diventano un frastuono.
  * Acceso o spento si ricorda sul dispositivo (tasto M o menu di pausa).
  */
-export type Suono = 'colpo' | 'sparo' | 'anima' | 'cera' | 'danno' | 'campana' | 'livello' | 'reliquiario' | 'vetro' | 'mietitore' | 'cura' | 'speciale' | 'morte' | 'alba';
+export type Suono = 'colpo' | 'sparo' | 'anima' | 'cera' | 'danno' | 'campana' | 'livello' | 'reliquiario' | 'vetro' | 'mietitore' | 'cura' | 'speciale' | 'morte' | 'alba' | 'tacca';
 
 const PAUSA_MINIMA: Record<Suono, number> = {
-  colpo: 0.05, sparo: 0.07, anima: 0.035, cera: 0.1, danno: 0.1, campana: 0.3, livello: 0.2, reliquiario: 0.3, vetro: 0.3, mietitore: 1, cura: 0.4, speciale: 0.3, morte: 1, alba: 1,
+  colpo: 0.05, sparo: 0.07, anima: 0.035, cera: 0.1, danno: 0.1, campana: 0.3, livello: 0.2, reliquiario: 0.3, vetro: 0.3, mietitore: 1, cura: 0.4, speciale: 0.3, morte: 1, alba: 1, tacca: 0.04,
 };
 const VOLUME = 0.35;
 
@@ -109,6 +109,9 @@ function produci(s: Suono): void {
       break;
     case 'morte':
       [392, 330, 262, 196].forEach((f, k) => tono(t + k * 0.18, 'triangle', f, f, 0.3, 0.3));
+      break;
+    case 'tacca': // Grazia a tacche: un suono secco (segnaposto)
+      tono(t, 'square', 1800, 1400, 0.03, 0.12);
       break;
     case 'alba':
       [262, 330, 392, 523].forEach((f, k) => tono(t + k * 0.12, 'triangle', f, f, 1.2, 0.22));

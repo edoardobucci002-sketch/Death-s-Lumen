@@ -35,6 +35,7 @@ import { Bot } from '../sistema/bot';
 import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
 import { scorri } from '../sistema/scorrimento';
 import { Caso } from '../sistema/caso';
+import { GraziaTacche } from '../sistema/grazia';
 import { INTERRUTTORI } from '../sistema/interruttori';
 import { Comandi } from '../sistema/comandi';
 import { Doni, type Dono } from '../sistema/doni';
@@ -102,6 +103,8 @@ export class Gioco extends Phaser.Scene {
   passivi = {} as Record<IdDono, number>;
   giocatore!: Phaser.GameObjects.Sprite;
   speciale!: Speciale;
+  private tacche!: GraziaTacche; // Grazia a tacche: sfiorare i nemici riempie le tacche
+  private secondiGrazia = 0; // secondi passati in Grazia in questa notte (per la simulazione)
   private livelliDaScegliere = 0;
   private anime!: Anime;
   private oggetti!: Oggetti;
@@ -153,7 +156,6 @@ export class Gioco extends Phaser.Scene {
   private unioniUnite = new Set<IdUnione>(); // fatte almeno una volta: restano per sempre nella scheda Stati
   private scoperteDiProva = false; // il Laboratorio ha forzato le unioni: non si salvano
   private sangueFreddoAttivo = false;
-  private ultimaDanza = -99; // secondi dell'ultima Grazia data dalla Danza macabra
   private reliquiariInAttesa = 0; // reliquiari raccolti mentre era già aperta una scelta
   private pausaLab = false; // il Laboratorio tiene fermo il gioco
   private inMoto = false;
@@ -214,7 +216,7 @@ export class Gioco extends Phaser.Scene {
     this.amuletiPosseduti = [];
     this.amuletiAccesi.clear();
     this.sangueFreddoAttivo = false;
-    this.ultimaDanza = -99;
+    this.secondiGrazia = 0;
     this.reliquiariInAttesa = 0;
     this.pausaLab = false;
     this.fineFinta = 0; // la scena si riusa: ciò che fa la Prova prestazioni non deve restare nella notte dopo
@@ -308,6 +310,7 @@ export class Gioco extends Phaser.Scene {
     this.mosaico = new Mosaico(interfaccia);
     this.doni = new Doni(interfaccia, this.arsenale, arma, this.passivi, this.caso, () => ({ usati: this.graniUsati(), totale: this.grani(), unioni: this.unioniSbloccate, scoperte: this.unioniScoperte }), () => this.apriPausa('stati'), (id) => this.disponibile(id));
     this.doni.aggiungiRimescolate(this.meta.rimescolate);
+    this.tacche = new GraziaTacche(this, esadecimale(this.pg.colore), !parametri.has('bot'));
     this.speciale = new Speciale(interfaccia, ABILITA[this.pg.abilita], this.pg.nome.replace(/ /g, '_'), () => {
       if (this.finito || this.fermo()) return false;
       this.arsenale.abilita(ABILITA[this.pg.abilita]);
@@ -315,6 +318,7 @@ export class Gioco extends Phaser.Scene {
       vibra('media');
       return true;
     });
+    this.speciale.mettiSopra(this.tacche.fascia, GRAZIA.tacche.fascia.spazio);
     this.fiaschetta = new Fiaschetta(interfaccia, `Speciale_${this.pg.nome.replace(/ /g, '_')}`, () => {
       if (this.finito || this.fermo() || this.salute >= this.saluteMassima || this.ha('pattoDiSangue')) return false;
       suona('cura');
@@ -347,6 +351,7 @@ export class Gioco extends Phaser.Scene {
       this.rivelazione.distruggi();
       this.mosaico.distruggi();
       this.speciale.distruggi();
+      this.tacche.distruggi();
       this.fiaschetta.distruggi();
       this.anims.resumeAll();
     });
@@ -408,7 +413,7 @@ export class Gioco extends Phaser.Scene {
     let dx = this.comandi.dx;
     let dy = this.comandi.dy;
     if (this.bot) {
-      this.bot.guida(dt, this.x, this.y, this.salute / this.saluteMassima);
+      this.bot.guida(dt, this.x, this.y, this.salute / this.saluteMassima, this.grazia > 0 ? 0 : this.sfioro());
       dx = this.bot.dx;
       dy = this.bot.dy;
     }
@@ -463,6 +468,12 @@ export class Gioco extends Phaser.Scene {
       this.minacce.schivate = 0;
       this.iniziaGrazia();
     }
+    // Grazia a tacche: sfiorare i nemici normali; con la Danza macabra bastano meno tacche e la Grazia dura meno
+    const danza = this.ha('danzaMacabra');
+    if (this.tacche.aggiorna(dt, this.orda, this.x, this.y, this.grazia > 0, this.tacchePerGrazia(), this.sfioro())) {
+      this.iniziaGrazia(danza ? AM.danzaMacabra.durataGrazia : GRAZIA.tacche.durata);
+    }
+    if (this.grazia > 0) this.secondiGrazia += dt;
     this.contatti(dt, minaccia);
     const freddo = this.ha('sangueFreddo') && this.salute < this.saluteMassima * AM.sangueFreddo.sotto;
     if (freddo !== this.sangueFreddoAttivo) {
@@ -566,10 +577,23 @@ export class Gioco extends Phaser.Scene {
     }
   }
 
-  /** Schivata perfetta: qualche secondo di Grazia (più danno, più velocità); un'altra schivata la rinnova. */
-  private iniziaGrazia(): void {
+  /** Tacche che servono per la Grazia: 8, con la Danza macabra 4. */
+  private tacchePerGrazia(): number {
+    return this.ha('danzaMacabra') ? AM.danzaMacabra.tacche : GRAZIA.tacche.massimo;
+  }
+
+  /** Distanza di sfioramento oltre il contatto: 16 px, più 8 per livello della Campanella d'argento. */
+  private sfioro(): number {
+    return GRAZIA.tacche.sfioro + GRAZIA.tacche.campanella * this.passivi.campanellaDArgento;
+  }
+
+  /**
+   * Grazia (più danno, più velocità) per «durata» secondi: 3 dalla schivata perfetta su Seth, 2 dalle tacche
+   * (1,5 con la Danza macabra). Una Grazia nuova non accorcia quella in corso.
+   */
+  private iniziaGrazia(durata: number = GRAZIA.durata): void {
     const giaAttiva = this.grazia > 0;
-    this.grazia = this.ha('danzaMacabra') ? AM.danzaMacabra.durataGrazia : GRAZIA.durata;
+    this.grazia = Math.max(this.grazia, durata);
     if (!giaAttiva) this.ricalcola();
     this.hud.avviso('Grazia');
     suona('speciale');
@@ -771,6 +795,11 @@ export class Gioco extends Phaser.Scene {
         this.inMoto = false;
         break;
     }
+  }
+
+  /** Grazia a tacche: «riempi» lascia le tacche a una dallo scatto (al prossimo sfioro parte la Grazia), «svuota» le azzera. */
+  labTacche(riempi: boolean): void {
+    this.tacche.imposta(riempi ? this.tacchePerGrazia() - 1 : 0);
   }
 
   /** Acquasantiera: una pozza che cura sotto i piedi del personaggio (come quando il sorso trova la fiaschetta piena). */
@@ -1173,7 +1202,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Per la simulazione: oggetti posseduti, danno di ogni fonte e reazioni per tipo. */
-  private misureSim(): Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti'> {
+  private misureSim(): Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti' | 'secondiGrazia' | 'tacche'> {
     const a = this.arsenale, nomiArmi = new Map<string, string>([...ARMI_COMUNI, ...Object.values(ARMI_INIZIALI)].map((x) => [x.id, x.nome]));
     const dannoArmi: Record<string, number> = {}, dannoReazioni: Record<string, number> = {};
     const altre: Record<string, string> = { abilita: 'Abilità speciale', martire: 'Martire', fuoco: "Fuoco dell'olio" };
@@ -1193,6 +1222,7 @@ export class Gioco extends Phaser.Scene {
         amuleti: this.amuletiPosseduti.map((id) => ({ nome: amuleto(id).nome, acceso: this.ha(id) })),
       },
       dannoArmi, dannoReazioni, reazioniPerTipo, pozzeCuranti: a.pozzeCuranti,
+      secondiGrazia: Math.round(this.secondiGrazia * 10) / 10, tacche: this.tacche.guadagnate,
     };
   }
 
@@ -1383,23 +1413,12 @@ export class Gioco extends Phaser.Scene {
     }
     const o = this.orda;
     let colpo = minaccia;
-    const sfiora = this.ha('danzaMacabra') ? AM.danzaMacabra.sfiora : 0;
-    let sfiorato = false;
     for (let i = 0; i < o.numero; i++) {
       const r = o.raggio[i] + COMBATTIMENTO.raggioGiocatore;
       const dx = o.x[i] - this.x;
       const dy = o.y[i] - this.y;
       const d2 = dx * dx + dy * dy;
-      if (d2 < r * r) {
-        if (o.danno[i] > colpo) colpo = o.danno[i];
-      } else if (sfiora && !sfiorato && d2 < (r + sfiora) * (r + sfiora)) {
-        sfiorato = true;
-      }
-    }
-    // Danza macabra: sfiorare i nemici senza farsi toccare dà la Grazia (non più di una ogni tanto)
-    if (!colpo && sfiorato && this.secondi - this.ultimaDanza > AM.danzaMacabra.recupero) {
-      this.ultimaDanza = this.secondi;
-      this.iniziaGrazia();
+      if (d2 < r * r && o.danno[i] > colpo) colpo = o.danno[i];
     }
     if (!colpo) return;
     this.invulnerabile = COMBATTIMENTO.invulnerabilita;
@@ -1463,6 +1482,8 @@ export class Gioco extends Phaser.Scene {
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
     this.buio.setPosition(bx, by);
     this.disegnaSalute(px, py, this.fermo() ? 0 : dt);
+    this.tacche.mostra(px, py, py + BARRA_SALUTE.distanza + BARRA_SALUTE.altezza * this.zSalute, this.zSalute, COLPI.corpo, this.tacchePerGrazia(), this.grazia > 0);
+    if (this.tacche.fasciaCambiata) this.speciale.ridisponi();
     this.hud.mostraRosario(this.graniUsati(), this.grani(), this.amuletiPosseduti.length);
     const boss = this.orda.mietitore();
     this.hud.aggiorna(

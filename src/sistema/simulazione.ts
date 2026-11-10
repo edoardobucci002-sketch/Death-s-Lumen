@@ -76,11 +76,13 @@ export interface RisultatoSim {
   curaPatto: number; // salute curata da Patto di sangue
   sorsiAcquasantiera: number; // sorsi guadagnati con l'Acquasantiera…
   sorsiAcquasantieraVeri: number; // …e quanti sono entrati davvero nella fiaschetta (non oltre il massimo)
+  secondiGrazia: number; // secondi passati in Grazia
+  tacche: number; // tacche di Grazia guadagnate sfiorando i nemici
   pozzeCuranti: number; // Acquasantiera con la fiaschetta piena: pozze che hanno curato…
   curaPozze: number; // …e la salute che hanno ridato davvero
 }
 
-type Misure = Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti'>;
+type Misure = Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti' | 'secondiGrazia' | 'tacche'>;
 
 export class Simulazione {
   urna(): void {

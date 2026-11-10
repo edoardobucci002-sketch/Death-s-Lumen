@@ -42,4 +42,24 @@ export const GRAZIA = {
   velocita: 0.15, // +15% velocità
   alone: 0x707070, // colore aggiunto allo sprite, a lampi, mentre dura
   lampi: 10, // lampi al secondo
+  // Grazia a tacche (decisione di Edoardo del 10/11; tutti i valori da rivedere). Vale per tutti i personaggi, senza amuleti:
+  // sfiorare un nemico normale (non élite né Seth) entro «sfioro» px oltre il contatto, senza toccarlo, dà una tacca;
+  // lo stesso nemico non più di una volta ogni «pausaNemico» s. A «massimo» tacche parte una Grazia di «durata» s;
+  // durante la Grazia le tacche non salgono; senza sfiorare ne cala una ogni «calo» s.
+  tacche: {
+    massimo: 8,
+    sfioro: 16,
+    pausaNemico: 2,
+    calo: 2,
+    durata: 2,
+    campanella: 8, // Campanella d'argento: +8 px di sfioramento per livello
+    // disegno provvisorio dal codice: tacche piene del colore del personaggio, vuote scure
+    lato: 2, // pixel di gioco di una tacca (arco e anello); nella fascia, pixel disegnati
+    raggioAnello: 22, // anello intorno al personaggio, dal centro del corpo
+    sottoBarra: 3, // l'arco sta così sotto la barra della salute
+    fascia: { lato: 4, spazio: 4 }, // posto «fascia»: tacche di 4 pixel disegnati, staccate di 4 dal pulsante dell'abilità, verso il centro
+    vuota: 0x2a1f17,
+    bordo: 0x000000,
+    scintilla: { durata: 0.2, lato: 3, colore: 0xfff2c0 },
+  },
 } as const;

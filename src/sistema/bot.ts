@@ -11,7 +11,7 @@
  * che con le preferenze non prenderebbe mai. Il caso del bot ha un suo generatore: comparse e drop non cambiano.
  */
 import { BOT } from '../data/bot';
-import { NEMICI } from '../data/nemici';
+import { COMBATTIMENTO, NEMICI } from '../data/nemici';
 import { MAX_ARMI, type Arma } from '../data/armi';
 import type { Dono } from './doni';
 import type { Orda } from './orda';
@@ -62,8 +62,12 @@ export class Bot {
     return buone.length ? buone[this.esplora!.intero(0, buone.length - 1)] : 0;
   }
 
-  /** Decide dove camminare; (gx, gy) sono i piedi del personaggio, salute tra 0 e 1. */
-  guida(dt: number, gx: number, gy: number, salute: number): void {
+  /**
+   * Decide dove camminare; (gx, gy) sono i piedi del personaggio, salute tra 0 e 1;
+   * sfioro = distanza di sfioramento per le tacche della Grazia (0 = non cercarle, per esempio in Grazia).
+   */
+  guida(dt: number, gx: number, gy: number, salute: number, sfioro = 0): void {
+    const cercaSfioro = sfioro > 0 && salute >= BOT.sfioro.sopra;
     const o = this.orda;
     this.quanti = 0;
     const p2 = BOT.pericolo * BOT.pericolo;
@@ -134,6 +138,21 @@ export class Bot {
       versoY /= lv;
     }
 
+    // Grazia a tacche: il nemico normale più vicino che si può sfiorare adesso (senza pausa)
+    let bersaglio = -1, distanzaGiusta = 0;
+    if (cercaSfioro) {
+      let vicino = BOT.sfioro.cerca * BOT.sfioro.cerca;
+      for (let n = 0; n < this.quanti; n++) {
+        const i = this.vicini[n];
+        if (this.pesi[n] !== 1 || o.pausaSfioro[i] > 0) continue;
+        const d2 = (o.x[i] - gx) ** 2 + (o.y[i] - gy) ** 2;
+        if (d2 < vicino) {
+          vicino = d2;
+          bersaglio = i;
+        }
+      }
+      if (bersaglio >= 0) distanzaGiusta = o.raggio[bersaglio] + COMBATTIMENTO.raggioGiocatore + sfioro / 2;
+    }
     let scelta = 0;
     let costoMinimo = Infinity;
     for (let k = 0; k < BOT.direzioni; k++) {
@@ -160,6 +179,12 @@ export class Bot {
         const fx = mi.fX[f] + mi.fVX[f] * BOT.anticipoFalci;
         const fy = mi.fY[f] + mi.fVY[f] * BOT.anticipoFalci;
         costo += BOT.pesoFalce / (0.15 + ((fx - px) ** 2 + (fy - py) ** 2) / (BOT.sguardo * BOT.sguardo));
+      }
+      // Grazia a tacche: resta alla distanza giusta dal nemico normale più vicino, per sfiorarlo senza toccarlo
+      if (bersaglio >= 0) {
+        const qx = gx + COS[k] * BOT.sfioro.passo, qy = gy + SIN[k] * BOT.sfioro.passo;
+        const d = Math.hypot(o.x[bersaglio] - qx, o.y[bersaglio] - qy);
+        costo += (BOT.sfioro.peso * Math.abs(d - distanzaGiusta)) / BOT.sfioro.passo;
       }
       // di lato rispetto allo scatto: il prodotto vettoriale è 1 in perpendicolare, 0 lungo la linea
       if (schivaX || schivaY) costo -= BOT.schivata * Math.abs(COS[k] * schivaY - SIN[k] * schivaX);

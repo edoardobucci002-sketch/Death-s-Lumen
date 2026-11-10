@@ -4,4 +4,8 @@
  */
 export const INTERRUTTORI = {
   statiCerti: false, // ogni colpo lascia lo stato, con quiete e reazioni nuove (STATI_CERTI in src/data/stati.ts)
+  // Grazia a tacche: dove sta l'indicatore (da scegliere con Edoardo sul telefono), scintilla e suono a ogni tacca
+  tacchePosto: 'arco' as 'arco' | 'anello' | 'fascia',
+  taccheScintilla: true,
+  taccheSuono: true,
 };
