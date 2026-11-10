@@ -539,7 +539,7 @@ Un'arma al livello 6 più il suo dono al livello massimo (decisione di Edoardo d
 | Falce | Sale nero | Falce di Seth | uccide i nemici normali sotto il 15% di salute (non élite e Seth) |
 | Campana | Cera votiva | Campana a morto | ogni rintocco ferma per 0,8 s |
 | Fuoco fatuo | Calamita | Fuochi erranti | i fuochi raccolgono le anime entro 120 px |
-| Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso, al massimo uno ogni 45 s (*da rivedere*) |
+| Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso, al massimo uno ogni 45 s; con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico, che per 4 s cura il 3% della salute massima al secondo a chi ci sta dentro (non si somma con altre pozze; pozza tinta d'oro, disegno provvisorio dal codice) (*da rivedere*) |
 | Lama di luce | Ali di falena | Lama dell'alba | un secondo fendente parte da dove eri 0,5 s prima |
 
 Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni. **Sblocco**: si sbloccano con l'impresa «Sconfiggi Seth», con qualsiasi personaggio, anche in una veglia persa (`SBLOCCO_UNIONI`, decisione di Edoardo del 10/11); la Cappella dice come e non le vende. Chi le aveva già sbloccate le tiene. Le Unioni **si svelano giocando**, in tre passi:

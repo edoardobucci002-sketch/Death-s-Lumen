@@ -440,13 +440,15 @@ export class Gioco extends Phaser.Scene {
     if (this.finito) return;
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, this.velocita, mezzaL, mezzaA);
     if (this.ha('lucciola')) this.arsenale.lucciola(this.x, this.y - COLPI.corpo, LUCE.raggio * this.areaLuce, AM.lucciola.pausa);
+    this.arsenale.fiaschettaPiena = this.fiaschetta.sorsi >= this.fiaschetta.massimo;
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, mezzaL, mezzaA);
     this.chiazze?.aggiorna(dt);
-    const cura = this.arsenale.cura();
+    const cura = this.arsenale.cura(this.saluteMassima);
     if (cura && this.salute < this.saluteMassima) suona('cura');
     const primaCura = this.salute;
     this.salute = Math.min(this.saluteMassima, this.salute + (this.rigenerazione + cura) * dt);
     this.sim?.curato('altro', this.salute - primaCura);
+    if (this.sim && this.arsenale.curaPozzaOra) this.sim.curaPozza(((this.salute - primaCura) * this.arsenale.curaPozzaOra) / (this.rigenerazione + cura));
     const primaSorso = this.salute;
     this.salute = Math.min(this.saluteMassima, this.salute + this.fiaschetta.aggiorna(dt) * this.saluteMassima * (this.ha('cuoreAvido') ? AM.cuoreAvido.cura : 1));
     this.sim?.curato('fiaschetta', this.salute - primaSorso);
@@ -769,6 +771,11 @@ export class Gioco extends Phaser.Scene {
         this.inMoto = false;
         break;
     }
+  }
+
+  /** Acquasantiera: una pozza che cura sotto i piedi del personaggio (come quando il sorso trova la fiaschetta piena). */
+  labPozzaCurativa(): void {
+    this.arsenale.labPozzaCurativa(this.x, this.y - COLPI.corpo);
   }
 
   /** Lascia lo stato dell'affinità (luce, sacro, ombra, terra) ai nemici vicini: due stati diversi fanno la reazione. */
@@ -1166,7 +1173,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Per la simulazione: oggetti posseduti, danno di ogni fonte e reazioni per tipo. */
-  private misureSim(): Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo'> {
+  private misureSim(): Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti'> {
     const a = this.arsenale, nomiArmi = new Map<string, string>([...ARMI_COMUNI, ...Object.values(ARMI_INIZIALI)].map((x) => [x.id, x.nome]));
     const dannoArmi: Record<string, number> = {}, dannoReazioni: Record<string, number> = {};
     const altre: Record<string, string> = { abilita: 'Abilità speciale', martire: 'Martire', fuoco: "Fuoco dell'olio" };
@@ -1185,7 +1192,7 @@ export class Gioco extends Phaser.Scene {
         doni: PASSIVI.filter((q) => this.passivi[q.id] > 0).map((q) => ({ nome: q.nome, livello: this.passivi[q.id] })),
         amuleti: this.amuletiPosseduti.map((id) => ({ nome: amuleto(id).nome, acceso: this.ha(id) })),
       },
-      dannoArmi, dannoReazioni, reazioniPerTipo,
+      dannoArmi, dannoReazioni, reazioniPerTipo, pozzeCuranti: a.pozzeCuranti,
     };
   }
 

@@ -21,7 +21,7 @@ import { PROFONDITA, type Effetti } from './effetti';
 import { EFFETTI } from '../data/effetti';
 import type { Abilita } from '../data/abilita';
 import {
-  BASTONE, CAMPANA, CANDELA, COLPI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
+  ACQUA_SANTA, BASTONE, CAMPANA, CANDELA, COLPI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
 } from '../data/armi';
 import { MOLTIPLICA_CRITICO } from '../data/doni';
 import { NUMERI_UNIONI as U } from '../data/unioni';
@@ -90,6 +90,9 @@ export class Arsenale {
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
   richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
+  fiaschettaPiena = false; // la scena lo aggiorna a ogni passo: con la fiaschetta piena il sorso diventa una pozza che cura
+  pozzeCuranti = 0; // pozze che hanno curato in questa notte (per la simulazione)
+  curaPozzaOra = 0; // salute al secondo che danno le pozze adesso (l'ultimo cura(); per la simulazione)
   anime: Anime | null = null; // per i Fuochi erranti
   rompibili: Rompibili | null = null; // le armi li rompono con il loro impatto
   chiazze: Chiazze | null = null; // le armi di fuoco accendono l'olio
@@ -136,12 +139,13 @@ export class Arsenale {
   private zRallenta = new Float32Array(MAX_ZONE);
   private zAttira = new Float32Array(MAX_ZONE);
   private zCura = new Float32Array(MAX_ZONE);
+  private zCuraPozza = new Float32Array(MAX_ZONE); // Acquasantiera: secondi in cui la pozza cura ancora (0 = non cura)
   private zSegue = new Uint8Array(MAX_ZONE);
   private zTipo = new Uint8Array(MAX_ZONE); // 0 abilità, 1 nube, 2 pozza (nubi e pozze non si sommano: COLPI.zoneNonCumulative)
   private zAff = new Uint8Array(MAX_ZONE); // affinità della zona
   private zFonte = new Uint8Array(MAX_ZONE); // da dove viene (FONTI)
   private zPrimo = new Uint8Array(MAX_ZONE); // 1 = abilità speciale che non ha ancora fatto il primo scatto (Stati certi: ignora la quiete)
-  private zCampi = [this.zX, this.zY, this.zR, this.zDanno, this.zVita, this.zIntervallo, this.zTick, this.zRallenta, this.zAttira, this.zCura];
+  private zCampi = [this.zX, this.zY, this.zR, this.zDanno, this.zVita, this.zIntervallo, this.zTick, this.zRallenta, this.zAttira, this.zCura, this.zCuraPozza];
   private zSprite: Phaser.GameObjects.Sprite[] = [];
 
   // proiettili
@@ -393,18 +397,41 @@ export class Arsenale {
     }
   }
 
-  /** Salute al secondo che il personaggio riceve dalle zone che curano (Benedizione) in cui si trova. */
-  cura(): number {
-    let c = 0, nube = 0;
+  /**
+   * Salute al secondo che il personaggio riceve dalle zone che curano (Benedizione, nubi dell'Incensiere,
+   * pozze dell'Acquasantiera) in cui si trova. saluteMassima serve alle pozze, che curano una parte di quella.
+   */
+  cura(saluteMassima: number): number {
+    let c = 0, nube = 0, pozza = 0;
     for (let i = 0; i < this.zone; i++) {
-      if (!this.zCura[i]) continue;
+      if (!this.zCura[i] && !(this.zCuraPozza[i] > 0)) continue;
       const dx = this.px - this.zX[i];
       const dy = this.py - this.zY[i];
       if (dx * dx + dy * dy > this.zR[i] * this.zR[i]) continue;
+      if (this.zCuraPozza[i] > 0) pozza = U.acquasantiera.curaParte * saluteMassima; // le pozze che curano non si sommano
+      if (!this.zCura[i]) continue;
       if (this.zTipo[i] === NUBE) nube = this.zCura[i]; // le nubi non si sommano
       else c += this.zCura[i];
     }
-    return c + nube;
+    this.curaPozzaOra = pozza;
+    return c + nube + pozza;
+  }
+
+  /** Acquasantiera con la fiaschetta piena: la pozza i cura per qualche secondo (dura almeno fino ad allora). */
+  private pozzaCura(i: number): void {
+    const A = U.acquasantiera;
+    this.zCuraPozza[i] = A.curaDurata;
+    this.zVita[i] = Math.max(this.zVita[i], A.curaDurata);
+    this.zSprite[i].setTint(A.colore);
+    this.pozzeCuranti++;
+  }
+
+  /** Laboratorio: una pozza dell'Acqua santa che cura, nel punto (x, y). */
+  labPozzaCurativa(x: number, y: number): void {
+    const l = ACQUA_SANTA.livelli[0];
+    const prima = this.zone;
+    this.zona(ACQUA_SANTA.effetto, x, y, l.raggio * (1 + this.bonus.area), 0, l.durata, ACQUA_SANTA.intervallo, 0, 0, 0, false, true, POZZA, SACRO);
+    if (this.zone > prima) this.pozzaCura(prima);
   }
 
   /** Secondi che il personaggio passa dentro le nubi del Turibolo: 1 se è dentro una nube adesso (impresa del Velo funebre). */
@@ -1038,6 +1065,7 @@ export class Arsenale {
     this.zTipo[i] = tipo;
     this.zAff[i] = aff;
     this.zFonte[i] = this.fonte;
+    this.zCuraPozza[i] = 0;
     this.zPrimo[i] = this.fonte === F.abilita ? 1 : 0;
     const s = this.zSprite[i];
     if (chiave === SPRITE_SCIA) {
@@ -1053,6 +1081,7 @@ export class Arsenale {
     this.cDt = dt;
     for (let i = this.zone - 1; i >= 0; i--) {
       this.zVita[i] -= dt;
+      if (this.zCuraPozza[i] > 0 && (this.zCuraPozza[i] -= dt) <= 0) this.zSprite[i].clearTint();
       if (this.zVita[i] <= 0) {
         this.togliZona(i);
         continue;
@@ -1100,7 +1129,8 @@ export class Arsenale {
     if (this.zTipo[i] === POZZA && this.unite.acquaSanta && o.salute[j] <= 0 && ++this.uccisiPozze >= U.acquasantiera.uccisioni && this.attesaSorso <= 0) {
       this.uccisiPozze = 0;
       this.attesaSorso = U.acquasantiera.pausa;
-      this.sorsiGuadagnati++;
+      if (this.fiaschettaPiena) this.pozzaCura(i); // il sorso non entrerebbe: si versa nella pozza
+      else this.sorsiGuadagnati++;
     }
     if (this.zRallenta[i]) o.rallenta(j, this.zRallenta[i], this.zIntervallo[i] + 0.05);
   }
@@ -1115,7 +1145,7 @@ export class Arsenale {
     const u = --this.zone;
     const s = this.zSprite[i];
     s.stop();
-    s.setVisible(false);
+    s.setVisible(false).clearTint();
     if (i === u) return;
     for (const a of this.zCampi) a[i] = a[u];
     this.zSegue[i] = this.zSegue[u];

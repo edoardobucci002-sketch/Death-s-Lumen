@@ -186,6 +186,8 @@ if (notti.length) {
   const patto = notti.filter((r) => r.curaPatto), acqua = notti.filter((r) => r.sorsiAcquasantiera);
   console.log(`Patto di sangue: ha curato in ${patto.length} notti` + (patto.length ? `, in media ${Math.round(media(patto.map((r) => r.curaPatto)))} salute a notte` : ''));
   console.log(`Acquasantiera: sorsi in ${acqua.length} notti` + (acqua.length ? `, in media ${media(acqua.map((r) => r.sorsiAcquasantiera)).toFixed(1)} a notte (${media(acqua.map((r) => r.sorsiAcquasantieraVeri)).toFixed(1)} entrati davvero)` : ''));
+  const pozze = notti.filter((r) => r.pozzeCuranti);
+  if (pozze.length) console.log(`Acquasantiera, pozze che curano: in ${pozze.length} notti, in media ${media(pozze.map((r) => r.pozzeCuranti)).toFixed(1)} a notte, ${Math.round(media(pozze.map((r) => r.curaPozze ?? 0)))} salute ridata a notte`);
 }
 
 console.log('\nObiettivi (CLAUDE.md, «Verifica»)');

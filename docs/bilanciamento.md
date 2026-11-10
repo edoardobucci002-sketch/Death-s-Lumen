@@ -49,9 +49,11 @@ Ogni voce ha la sua simulazione: `npm run sim -- 6 tutti meta=max`, stessi semi 
 | partenza (c7c0ae1) | 11/24 (1, 3, 4, 3) | 2 | 7:43 | 59 | 21/22 | 16 notti, in media a 6:21 | 207 volte (8,6 a notte) |
 | 1 · Unioni | 11/24 (1, 3, 3, 4) | 2 | 7:43 | 59 | 21/22 | 16 notti, in media a 7:16 | 211 (8,8) |
 | 2 · Doni a 3 livelli | 16/24 (3, 4, 3, 6) | 0 | 11:14 | 65 | 23/24 | 19 notti, in media a 6:27 | 348 (14,5) |
+| 3 · Acquasantiera | 15/24 (3, 3, 3, 6) | 0 | 11:14 | 65 | 23/24 | 19 notti, in media a 6:27 | 341 (14,2) |
 
 - **1 · Unioni** (arma al 6, dono al massimo, sblocco con «Sconfiggi Seth»): le vittorie non cambiano; la prima Unione arriva **più tardi** (7:16 invece di 6:21), perché portare un dono al 5 costa più carte che portarlo al 3. Con i doni a 3 livelli (voce 2) il conto cambia.
 - **2 · Doni a 3 livelli** (stesso effetto al massimo; Specchio, Lacrima e Campanella come prima): vittorie da 11 a 16 su 24, nessuna morte prima del 5, livello medio da 59 a 65; la Strega vince 6 notti su 6. «Pane e vino» esce **348 volte invece di 211** (14,5 a notte invece di 8,8; in 18 notti su 24 invece di 14): con meno livelli dei doni le carte da potenziare finiscono prima. La prima Unione torna prima (6:27) e le Unioni a fine notte salgono da 33 a 40.
+- **3 · Acquasantiera** (con la fiaschetta piena il sorso diventa una pozza che cura 3% al secondo per 4 s): nelle 4 notti con l'Acquasantiera, 8,8 pozze che curano a notte, ma solo **4 salute ridata a notte**: le pozze nascono dove muoiono i nemici e il bot non ci entra apposta. Un giocatore che le cerca ne avrà molto di più; il bot non è stato cambiato. I sorsi veri sono scesi a 2 a notte in 2 notti (prima ~9 guadagnati, quasi tutti persi). Vittorie 15 contro 16: rumore.
 
 ### 10/11 — Notti esplorative del bot e interruttore «Stati certi» (nessun numero della notte normale cambia)
 

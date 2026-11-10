@@ -21,7 +21,12 @@ export const NUMERI_UNIONI = {
   falce: { sotto: 0.15 }, // uccide i nemici normali sotto questa parte di salute
   campana: { fermo: 0.8 }, // ogni rintocco ferma
   fuochi: { raggio: 120 }, // anime che i fuochi portano con sé
-  acquasantiera: { uccisioni: 40, pausa: 45 }, // uccisioni dentro le pozze per ogni sorso; al massimo un sorso ogni 45 s (da rivedere)
+  acquasantiera: {
+    uccisioni: 40, pausa: 45, // uccisioni dentro le pozze per ogni sorso; al massimo un sorso ogni 45 s (da rivedere)
+    // con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico: per 4 s cura il 3% della salute
+    // massima al secondo a chi ci sta dentro, senza sommarsi con altre pozze (decisione di Edoardo del 10/11; valori da rivedere)
+    curaDurata: 4, curaParte: 0.03, colore: 0xffe08a, // colore: tinta provvisoria della pozza che cura
+  },
   lama: { ritardo: 0.5 }, // il secondo fendente parte dove eri tanti secondi prima
 } as const;
 

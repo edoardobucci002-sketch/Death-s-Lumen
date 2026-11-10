@@ -76,9 +76,11 @@ export interface RisultatoSim {
   curaPatto: number; // salute curata da Patto di sangue
   sorsiAcquasantiera: number; // sorsi guadagnati con l'Acquasantiera…
   sorsiAcquasantieraVeri: number; // …e quanti sono entrati davvero nella fiaschetta (non oltre il massimo)
+  pozzeCuranti: number; // Acquasantiera con la fiaschetta piena: pozze che hanno curato…
+  curaPozze: number; // …e la salute che hanno ridato davvero
 }
 
-type Misure = Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo'>;
+type Misure = Pick<RisultatoSim, 'oggetti' | 'dannoArmi' | 'dannoReazioni' | 'reazioniPerTipo' | 'pozzeCuranti'>;
 
 export class Simulazione {
   urna(): void {
@@ -105,6 +107,7 @@ export class Simulazione {
   private curaPatto = 0;
   private sorsiAcquasantiera = 0;
   private sorsiAcquasantieraVeri = 0;
+  private curaPozze = 0;
 
   /** Il bot ha visto queste carte e ha scelto quella in posizione scelta. */
   scelta(carte: readonly Dono[], scelta: number, secondi: number): void {
@@ -122,6 +125,11 @@ export class Simulazione {
 
   patto(quanto: number): void {
     this.curaPatto += quanto;
+  }
+
+  /** Salute ridata davvero dalle pozze che curano dell'Acquasantiera. */
+  curaPozza(salute: number): void {
+    this.curaPozze += salute;
   }
 
   acquasantiera(sorsi: number, veri: number): void {
@@ -194,7 +202,7 @@ export class Simulazione {
       curaFiaschetta: Math.round(this.curaFiaschetta), sorsi: this.sorsi, grazie: this.grazie,
       urne: this.urne,
       carte: this.carte, unioneOfferta: this.unioneOfferta, unionePresa: this.unionePresa,
-      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri,
+      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri, curaPozze: Math.round(this.curaPozze),
     };
   }
 }

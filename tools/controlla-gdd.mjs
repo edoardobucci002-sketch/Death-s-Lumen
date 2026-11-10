@@ -642,7 +642,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     falceDelMietitore: ['sotto il {}% di salute', pct(NU.falce.sotto)],
     campanaAMorto: ['ferma per {} s', NU.campana.fermo],
     fuochiErranti: ['entro {} px', NU.fuochi.raggio],
-    acquasantiera: ['ogni {} uccisioni nelle pozze torna un sorso, al massimo uno ogni {} s', NU.acquasantiera.uccisioni, NU.acquasantiera.pausa],
+    acquasantiera: ['ogni {} uccisioni nelle pozze torna un sorso, al massimo uno ogni {} s; con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico, che per {} s cura il {}% della salute massima al secondo', NU.acquasantiera.uccisioni, NU.acquasantiera.pausa, NU.acquasantiera.curaDurata, pct(NU.acquasantiera.curaParte)],
     lamaDellAlba: ['da dove eri {} s prima', NU.lama.ritardo],
   };
   stessiNomi('Unioni', t, U.UNIONI.map((u) => armi.find((a) => a.id === u.arma).nome));
