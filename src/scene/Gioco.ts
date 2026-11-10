@@ -30,7 +30,7 @@ import { ABILITA } from '../data/abilita';
 import { animeDono, effettoDono, PASSIVI, RICARICA_MINIMA, ricaricaDono, type IdDono } from '../data/doni';
 import { ANIME, animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
-import { BOT, PROVE_BOT } from '../data/bot';
+import { BOT } from '../data/bot';
 import { Anime } from '../sistema/anime';
 import { Arsenale, FONTI, type Bonus } from '../sistema/armi';
 import { Bot } from '../sistema/bot';
@@ -149,7 +149,6 @@ export class Gioco extends Phaser.Scene {
   private schivateNotte = 0; // schivate perfette in questa veglia (imprese)
   private secondiNubi = 0; // secondi passati dentro le nubi in questa veglia (imprese)
   private oggettiSbloccati = new Set<string>();
-  private minuto3Leggero = false; // ?minuto3=leggero (solo bot)
   private senza = new Set<string>(); // ?senza=…: armi e doni tolti dalle carte (simulazioni)
   private sethSconfitti = 0;
   // Rosario: amuleti trovati nei reliquiari e quali sono accesi (si spengono dalla pausa)
@@ -340,10 +339,6 @@ export class Gioco extends Phaser.Scene {
     if (this.bot && parametri.has('cercaurne')) this.bot.urne = this.rompibili;
     if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.sim = this.bot ? new Simulazione() : null;
-    // misure del Lampionaio (solo con il bot): ?minuto3=leggero, ?lanterna=forte (PROVE_BOT in src/data/bot.ts)
-    this.minuto3Leggero = !!this.bot && parametri.get('minuto3') === 'leggero';
-    if (this.minuto3Leggero) this.orda.copioneDiProva = { 3: PROVE_BOT.minuto3.copione };
-    this.arsenale.moltLanterna = this.bot && parametri.get('lanterna') === 'forte' ? 1 + PROVE_BOT.lanternaForte : 1;
     // ?amuleto=martire: la notte parte con quell'amuleto già trovato e acceso, che occupa i suoi grani (per misurarlo con il bot)
     const imposto = AMULETI.find((a) => a.id === parametri.get('amuleto'));
     if (imposto) {
@@ -578,8 +573,7 @@ export class Gioco extends Phaser.Scene {
       if (this.secondi >= o.minuto * 60) {
         this.prossimaOrda++;
         this.ordaAnnunciata = false;
-        const tipo = this.minuto3Leggero && o.minuto === 3 ? PROVE_BOT.minuto3.orda : o.tipo;
-        this.lanciaOrda(o.forma, NEMICI.findIndex((t) => t.id === tipo), o.minuto, this.angoloOrda, mezzaL, mezzaA);
+        this.lanciaOrda(o.forma, NEMICI.findIndex((t) => t.id === o.tipo), o.minuto, this.angoloOrda, mezzaL, mezzaA);
       }
     }
     if (this.mietitoriArrivati < MIETITORE.minuti.length && this.secondi >= MIETITORE.minuti[this.mietitoriArrivati] * 60) {

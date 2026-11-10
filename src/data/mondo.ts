@@ -72,7 +72,7 @@ export const PIEDI_SEGNAPOSTO = { x: 28, y: 61 } as const;
  */
 export const BARRA_SALUTE = {
   distanza: 5, // quanto sotto i piedi
-  larghezza: 39, // il rettangolo intero, bordo compreso (decisione di Edoardo del 10/11: 39, come le 8 tacche da 4 con 7 stacchi da 1)
+  larghezza: 41, // il rettangolo intero, bordo compreso (decisione di Edoardo del 10/11 sera): 1 di bordo per lato, dentro 39 come le 8 tacche da 4 con 7 stacchi da 1
   altezza: 9, // cifre alte 5, una riga di rosso sopra e sotto, più il bordo
   rosso: '#c0262d', // la salute che resta
   vuoto: '#3a0c10', // la salute che manca

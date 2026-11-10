@@ -22,8 +22,8 @@ const argomenti = process.argv.slice(2);
 const meta = (argomenti.find((a) => a.startsWith('meta=')) ?? 'meta=0').slice(5);
 const esplora = argomenti.includes('esplora');
 const stati = (argomenti.find((a) => a.startsWith('stati=')) ?? '').slice(6);
-// altri parametri dell'indirizzo passati così come sono: mira=0, senza=sampietrini, amuleto=martire, minuto3=leggero, lanterna=forte
-const PASSANO = ['mira=', 'senza=', 'amuleto=', 'minuto3=', 'lanterna='];
+// altri parametri dell'indirizzo passati così come sono: mira=0, senza=sampietrini, amuleto=martire
+const PASSANO = ['mira=', 'senza=', 'amuleto='];
 const passati = argomenti.filter((a) => PASSANO.some((p) => a.startsWith(p)));
 const altri = argomenti.filter((a) => !a.startsWith('meta=') && !a.startsWith('stati=') && a !== 'esplora' && !passati.includes(a));
 const partite = Number(altri[0]) || 3;
@@ -135,7 +135,13 @@ for (const pg of scelti) {
   if (pg === 'lampionaio' && meta === '0' && rr.length && presto > (rr.length * LAMPIONAIO_PRESTO) / 12) {
     problemi.push(`il Lampionaio muore prima del minuto 5 in ${presto} notti su ${rr.length} (al massimo ${LAMPIONAIO_PRESTO} su 12)`);
   }
-  if (m5.length && !(durante > primaAlMinuto)) problemi.push(`per ${pg} il Mietitore del 5 non fa più male dei minuti prima`);
+  // vincolo (Edoardo, 10/11 sera): il primo boss della notte (oggi Seth del minuto 5) è il primo vero ostacolo. Nessun personaggio
+  // muore più spesso prima del primo boss che contro di lui (dalla sua comparsa alla sua morte). Il danno al minuto resta nel resoconto
+  const primaDelBoss = rr.filter((r) => !r.vittoria && (!r.mietitori[0] || r.secondi < r.mietitori[0].arrivo)).length;
+  const controIlBoss = rr.filter((r) => !r.vittoria && r.mietitori[0] && r.secondi >= r.mietitori[0].arrivo && (r.mietitori[0].morte === null || r.secondi <= r.mietitori[0].morte));
+  const daSeth = controIlBoss.filter((r) => r.causaMorte === 'Seth (contatto)').length, daMosse = controIlBoss.filter((r) => r.causaMorte === 'Seth (mossa)').length;
+  console.log(`     primo boss: ${primaDelBoss} morti prima di lui, ${controIlBoss.length} contro di lui (Seth a contatto ${daSeth}, sue mosse ${daMosse}, altri nemici ${controIlBoss.length - daSeth - daMosse})`);
+  if (primaDelBoss > controIlBoss.length) problemi.push(`${pg} muore più spesso prima del primo boss (${primaDelBoss}) che contro di lui (${controIlBoss.length})`);
 }
 
 // ——— oggetti: in quante notti c'erano, in quante vinte, quante volte scelti su quante offerti ———

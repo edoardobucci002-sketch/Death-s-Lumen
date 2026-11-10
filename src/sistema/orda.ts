@@ -15,7 +15,7 @@ import { ingrandimento } from './asset';
 import type { Caso } from './caso';
 import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
-import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE, type TipoNemico } from '../data/nemici';
+import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { REAZIONI, STATI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
@@ -797,12 +797,8 @@ export class Orda {
     this.y[i] = gy + s * d;
   }
 
-  /** Solo per il bot (misure): righe del copione al posto di quelle di COPIONE (per esempio ?minuto3=leggero). */
-  copioneDiProva: Partial<Record<number, Partial<Record<TipoNemico['id'], number>>>> = {};
-
   private scegliTipo(secondi: number): number {
-    const k = Math.min(COPIONE.length - 1, Math.floor(secondi / 60));
-    const riga = this.copioneDiProva[k] ?? COPIONE[k];
+    const riga = COPIONE[Math.min(COPIONE.length - 1, Math.floor(secondi / 60))];
     let totale = 0;
     for (const t of NEMICI) totale += riga[t.id] ?? 0;
     let r = this.caso.numero() * totale, scelto = 0;

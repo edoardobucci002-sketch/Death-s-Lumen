@@ -95,7 +95,7 @@ export const COPIONE: Partial<Record<TipoNemico['id'], number>>[] = [
   { pipistrello: 3, zombi: 2 },
   { zombi: 3, fantasma: 2 },
   { fantasma: 3, pipistrello: 2, scheletro: 1 },
-  { scheletro: 3, zombi: 2 },
+  { zombi: 3, scheletro: 1 }, // dalle 3:00 (decisione di Edoardo del 10/11, da rivedere: era scheletro 3, zombi 2); l'orda del minuto 3 resta di scheletri
   { pipistrello: 3, segugio: 2 },
   { zombi: 3, scheletro: 1 },
   { segugio: 3, fantasma: 2 },
