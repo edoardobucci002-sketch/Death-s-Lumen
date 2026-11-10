@@ -9,8 +9,8 @@
 //      npm run sim -- 3 strega,becchino
 //      npm run sim -- 6 tutti meta=max   (Cappella completa; meta=meta a metà; senza, vuota)
 //      npm run sim -- 24 tutti esplora   (una notte su tre di ogni personaggio il bot sceglie le carte a caso: ?esplora=1)
-//      npm run sim -- 12 tutti stati=certi   (con l'interruttore «Stati certi» acceso; stati=a…e una regola nuova alla volta)
-//      npm run sim -- 12 lampionaio,becchino mira=1   (Lanterna e Pala mirano; davanti=1 lascia al bot il giro intorno ai nemici)
+//      npm run sim -- 12 tutti stati=caso   (gli stati a caso di prima, per confrontare: la regola del gioco sono gli Stati certi)
+//      npm run sim -- 12 lampionaio,becchino mira=0   (Lanterna e Pala verso dove cammini, per confrontare)
 //      npm run sim -- 3 tutti meta=max senza=sampietrini   (un oggetto che non esce mai tra le carte)
 //      npm run sim -- 3 tutti meta=max amuleto=martire   (la notte parte con quell'amuleto acceso)
 import { chromium, devices } from 'playwright';
@@ -22,8 +22,8 @@ const argomenti = process.argv.slice(2);
 const meta = (argomenti.find((a) => a.startsWith('meta=')) ?? 'meta=0').slice(5);
 const esplora = argomenti.includes('esplora');
 const stati = (argomenti.find((a) => a.startsWith('stati=')) ?? '').slice(6);
-// altri parametri dell'indirizzo passati così come sono: mira=1, davanti=1, senza=sampietrini, amuleto=martire
-const PASSANO = ['mira=', 'davanti=', 'senza=', 'amuleto='];
+// altri parametri dell'indirizzo passati così come sono: mira=0, senza=sampietrini, amuleto=martire
+const PASSANO = ['mira=', 'senza=', 'amuleto='];
 const passati = argomenti.filter((a) => PASSANO.some((p) => a.startsWith(p)));
 const altri = argomenti.filter((a) => !a.startsWith('meta=') && !a.startsWith('stati=') && a !== 'esplora' && !passati.includes(a));
 const partite = Number(altri[0]) || 3;
@@ -31,6 +31,7 @@ const scelti = altri[1] && altri[1] !== 'tutti' ? altri[1].split(',') : PERSONAG
 // obiettivi di vittoria del bot secondo la Cappella (proposta sulla meta progressione)
 const OBIETTIVI = { 0: [0.05, 0.15], meta: [0.3, 0.45], max: [0.6, 0.75] };
 const VITTORIE_MASSIME = (OBIETTIVI[meta] ?? OBIETTIVI[0])[1];
+const LAMPIONAIO_PRESTO = 3; // vincolo: a Cappella vuota, morti del Lampionaio prima del minuto 5 su 12 notti (docs/bilanciamento.md)
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
 const porta = Number(process.env.DL_PORTA) || 4320;
 // il Galaxy S25: 360×780 punti, 3 pixel fisici per punto, area sicura in alto di 35 punti (105 fisici)
@@ -116,16 +117,24 @@ for (const pg of scelti) {
   const saluteMinima = media(vinte.map((r) => Math.min(...r.minuti.map((m) => m.saluteMinima))));
   const alMinuto = (f) => media(rr.map((r) => f(r) / (r.secondi / 60)));
   console.log(`  ${pg}: vince ${vinte.length}/${rr.length}` +
-    (morti.length ? `, muore in media a ${tempo(media(morti))} (${morti.map(tempo).join(', ')})` : '') +
+    (morti.length ? `, muore in media a ${tempo(media(morti))} (${morti.map(tempo).join(', ')}); prima del 5: ${morti.filter((s) => s < 300).length}` : '') +
     `\n     Mietitore del 5: ucciso in ${uccisoM5.length}/${m5.length}` + (uccisoM5.length ? ` dopo ${Math.round(media(uccisoM5))} s in media` : '') +
     `; danno subito al minuto ${Math.round(primaAlMinuto)} prima, ${Math.round(durante)} durante` +
     (vinte.length ? `\n     nelle vittorie la salute più bassa è stata in media ${Math.round(saluteMinima)}` : '') +
     `\n     al minuto: ${alMinuto((r) => r.pani).toFixed(1)} pani, ${alMinuto((r) => r.calamite).toFixed(2)} calamite; ` +
     `salute recuperata ${Math.round(alMinuto((r) => r.curaPane))} col pane, ${Math.round(alMinuto((r) => r.curaFiaschetta ?? 0))} con la fiaschetta, ${Math.round(alMinuto((r) => r.curaAltro))} con rigenerazione e abilità` +
     `\n     a notte: ${media(rr.map((r) => r.sorsi ?? 0)).toFixed(1)} sorsi, ${media(rr.map((r) => r.grazie ?? 0)).toFixed(1)} schivate perfette, ${Math.round(media(rr.map((r) => r.reazioni ?? 0)))} reazioni, ${Math.round(media(rr.map((r) => r.cera ?? 0)))} Cera`);
+  const cause = {};
+  for (const r of rr) if (!r.vittoria && r.causaMorte) cause[r.causaMorte] = (cause[r.causaMorte] ?? 0) + 1;
+  if (Object.keys(cause).length) console.log(`     ucciso da: ${Object.entries(cause).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${n}`).join(', ')}`);
   if (rr.length && vinte.length / rr.length > VITTORIE_MASSIME) problemi.push(`${pg} vince troppo spesso (${vinte.length}/${rr.length}; al massimo ${Math.round(VITTORIE_MASSIME * 100)}%)`);
   if (rr.length && vinte.length === rr.length && saluteMinima > 50) problemi.push(`${pg} vince sempre senza sforzo (salute mai sotto ${Math.round(saluteMinima)})`);
   if (rr.length && morti.length === rr.length && Math.max(...morti) < 300) problemi.push(`${pg} muore sempre prima del minuto 5`);
+  // vincolo del 10/11 (Edoardo): a Cappella vuota il Lampionaio muore prima del minuto 5 al massimo in 3 notti su 12
+  const presto = morti.filter((s) => s < 300).length;
+  if (pg === 'lampionaio' && meta === '0' && rr.length && presto > (rr.length * LAMPIONAIO_PRESTO) / 12) {
+    problemi.push(`il Lampionaio muore prima del minuto 5 in ${presto} notti su ${rr.length} (al massimo ${LAMPIONAIO_PRESTO} su 12)`);
+  }
   if (m5.length && !(durante > primaAlMinuto)) problemi.push(`per ${pg} il Mietitore del 5 non fa più male dei minuti prima`);
 }
 

@@ -87,6 +87,8 @@ export class Orda {
   // solo con gli Stati certi (INTERRUTTORI.statiCerti):
   private quiete = new Float32Array(CAPIENZA); // secondi prima che possa reagire di nuovo
   private interraTipo = new Uint8Array(CAPIENZA); // lo stato consumato dall'Interramento in corso (LUCE, SACRO, OMBRA)
+  // ritmo delle zone: per ogni affinità, secondi prima che una zona o un'abilità possa lasciare di nuovo quello stato
+  private ritmo = [new Float32Array(CAPIENZA), new Float32Array(CAPIENZA), new Float32Array(CAPIENZA), new Float32Array(CAPIENZA)];
   private tempo = 0;
   // Mietitore: 0 cammina, 1 si ferma e pulsa (preavviso), 2 fa la mossa (letti anche dal bot, per schivare)
   readonly fase = new Uint8Array(CAPIENZA);
@@ -135,7 +137,7 @@ export class Orda {
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
-    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro];
+    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo];
 
   constructor(
     scena: Phaser.Scene,
@@ -292,6 +294,21 @@ export class Orda {
     }
   }
 
+  /** Il nemico i fa parte di un'orda in formazione (per la simulazione: cosa uccide il personaggio). */
+  inOrda(i: number): boolean {
+    return this.branco[i] > 0;
+  }
+
+  /** Ritmo delle zone (Stati certi): una zona o un'abilità può lasciare ora lo stato aff (1–4) sul nemico i? */
+  ritmoLibero(i: number, aff: number): boolean {
+    return this.ritmo[aff - 1][i] <= 0;
+  }
+
+  /** Una zona o un'abilità ha appena lasciato lo stato aff sul nemico i: il prossimo tra STATI_CERTI.ritmo secondi. */
+  segnaRitmo(i: number, aff: number): void {
+    this.ritmo[aff - 1][i] = STATI_CERTI.ritmo;
+  }
+
   /** Quanto danno in più subisce mentre è interrato: +30%, +50% con gli Stati certi se l'Interramento ha consumato la Luce. */
   piuInterrato(i: number): number {
     return this.interraTipo[i] === LUCE ? STATI_CERTI.interramento.dannoLuce : REAZIONI.interramento.danno; // interraTipo è 0 senza la regola nuova
@@ -323,14 +340,14 @@ export class Orda {
       this.ultimoStato[i] = 0;
       if (certi) this.quiete[i] = STATI_CERTI.quiete;
       if (r === INTERRAMENTO) {
-        this.interraTipo[i] = certi && INTERRUTTORI.regole.interramento ? consumato : 0;
+        this.interraTipo[i] = certi ? consumato : 0;
         const fermo = this.interraTipo[i] === SACRO ? STATI_CERTI.interramento.fermoSacro : REAZIONI.interramento.fermo;
         this.sInterrato[i] = fermo * resiste;
         this.pausaSepolto[i] = STATI.sepolto.pausa;
       } else if (r === RIVELAZIONE && !this.rivelato[i]) {
         // una volta sola: sul Mietitore, colpito di continuo, le anime raddoppiavano all'infinito
         const R = STATI_CERTI.rivelazione;
-        if (certi && INTERRUTTORI.regole.rivelazione) { if (this.anime[i] >= R.da) this.anime[i] += Math.floor(this.anime[i] * R.anime); }
+        if (certi) { if (this.anime[i] >= R.da) this.anime[i] += Math.floor(this.anime[i] * R.anime); }
         else this.anime[i] *= REAZIONI.rivelazione.anime;
         this.rivelato[i] = 1;
       }
@@ -420,6 +437,7 @@ export class Orda {
       }
     }
     if (this.quiete[i] > 0) this.quiete[i] -= dt;
+    for (const r of this.ritmo) if (r[i] > 0) r[i] -= dt;
     if (this.pausaSfioro[i] > 0) this.pausaSfioro[i] -= dt;
     if (this.fermo[i] > 0) {
       this.fermo[i] -= dt;
@@ -632,6 +650,7 @@ export class Orda {
     this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
     this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
     this.quiete[i] = this.pausaSfioro[i] = 0;
+    for (const r of this.ritmo) r[i] = 0;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
 
     const a = this.aspetto[t];

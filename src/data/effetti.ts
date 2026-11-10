@@ -29,7 +29,7 @@ export const EFFETTI = {
     bordo: '#ffe2a8',
     interno: '#9a5a1e',
   },
-  // «Pane e vino» preso da solo (quando non resta nulla da potenziare la scelta non si apre): una scritta verde
+  // «Pane e vino» preso da solo (quando non resta nulla da potenziare la scelta non si apre): la scritta verde «Pane e vino +40 salute»
   // sale sopra la testa del personaggio. Valori da rivedere (proposta di Claude del 10/11)
   paneDaSolo: { colore: '#6fbf4a', bordo: '#120c0a', ingrandimento: 2, durata: 1.2, sopra: 64, sale: 18 },
   // Sampietrini, finché Edoardo non disegna i suoi: la polvere dell'impatto è un anello largo quanto l'area colpita

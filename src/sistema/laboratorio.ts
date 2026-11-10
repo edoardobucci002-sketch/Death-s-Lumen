@@ -18,7 +18,7 @@ import { PASSIVI } from '../data/doni';
 import { AMULETI } from '../data/rosario';
 import { PERSONAGGI } from '../data/personaggi';
 import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
-import { UNIONI } from '../data/unioni';
+import { LIVELLO_ARMA_UNIONE, UNIONI } from '../data/unioni';
 import { PIXELFX } from '../data/effetti';
 import { accendiContatore, contatoreAcceso, riprendiContatore } from './contatore';
 import { FIRMA } from './firma';
@@ -287,10 +287,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Acquasantiera'),
       riga(tasto('Pozza che cura qui', fai((x) => x.labPozzaCurativa()))),
       el('p', 'lab-nota', 'La pozza che nasce quando il sorso trova la fiaschetta piena: 4 s, cura il 3% della salute massima al secondo. Ferisciti (Immortale) e mettiti dentro.'),
-      titolo('Stati certi (prova: ogni colpo lascia lo stato)'),
-      riga(tasto(INTERRUTTORI.statiCerti ? 'Stati certi: sì' : 'Stati certi: no', fai((x) => x.labStatiCerti(!INTERRUTTORI.statiCerti)), INTERRUTTORI.statiCerti ? 'acceso' : '')),
-      riga(...(['eclissi', 'esorcismo', 'rivelazione', 'interramento'] as const).map((k) => tasto(`${k[0].toUpperCase()}${k.slice(1)} nuova: ${INTERRUTTORI.regole[k] ? 'sì' : 'no'}`, fai(() => { INTERRUTTORI.regole[k] = !INTERRUTTORI.regole[k]; }), INTERRUTTORI.regole[k] ? 'acceso piccolo' : 'piccolo'))),
-      el('p', 'lab-nota', 'Acceso: ogni colpo lascia lo stato; dopo una reazione il nemico resta 3 s in quiete. Le quattro reazioni usano i numeri nuovi solo se la loro riga dice «sì» (con «no», i numeri di sempre). Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → stati → STATI_CERTI.'),
+      titolo('Stati a caso (vecchi, per confrontare)'),
+      riga(tasto(!INTERRUTTORI.statiCerti ? 'Stati a caso (vecchi): sì' : 'Stati a caso (vecchi): no', fai((x) => x.labStatiCerti(!INTERRUTTORI.statiCerti)), !INTERRUTTORI.statiCerti ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Spento (di partenza) vale la regola del gioco: ogni colpo lascia lo stato, le zone e le abilità al massimo una volta al secondo sullo stesso nemico, dopo una reazione 3 s di quiete. Acceso torna la regola di prima: lo stato solo nel 10% dei colpi (5% per zone e abilità), reazioni con i numeri vecchi. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → stati → STATI_CERTI.'),
       titolo('Stati sui nemici vicini (due diversi = reazione)'),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.labStatoVicini(a))))),
       el('p', 'lab-nota', 'Per vederli lascia il gioco in corso (scheda Partita) e premi uno stato, poi un altro.'),
@@ -311,16 +310,16 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const am = p.labAmuletiSnapshot();
     const unite = p.labStatoUnioni().unite;
     return [
-      titolo('Lanterna e Pala mirano (prova)'),
-      riga(tasto(INTERRUTTORI.mira ? 'Lanterna e Pala mirano: sì' : 'Lanterna e Pala mirano: no', fai(() => { INTERRUTTORI.mira = !INTERRUTTORI.mira; }), INTERRUTTORI.mira ? 'acceso' : '')),
-      el('p', 'lab-nota', 'Acceso: l\'arco della Lanterna si gira verso il nemico più vicino entro la luce (260 px) e l\'impatto della Pala cade sul nemico più vicino entro 150 px; senza nemici vicini colpiscono verso dove cammini, come sempre. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → armi → MIRA.'),
+      titolo('Lanterna e Pala verso dove cammini (vecchio, per confrontare)'),
+      riga(tasto(!INTERRUTTORI.mira ? 'Lanterna e Pala verso dove cammini: sì' : 'Lanterna e Pala verso dove cammini: no', fai(() => { INTERRUTTORI.mira = !INTERRUTTORI.mira; }), !INTERRUTTORI.mira ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Spento (di partenza) vale la regola del gioco: l\'arco della Lanterna si gira verso il nemico più vicino entro la luce (260 px) e l\'impatto della Pala cade sul nemico più vicino entro 150 px; senza nemici vicini colpiscono verso dove cammini. Acceso colpiscono sempre verso dove cammini, come prima. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → armi → MIRA.'),
       titolo('Armi (si sale di livello; per toglierle riavvia la partita)'),
       ...tutteLeArme.map((a) => riga(el('b', '', `${a.nome} · ${livelloArma(a) || '—'}`), tasto('+1', fai((x) => x.labArma(a, livelloArma(a) + 1)), 'piccolo'), tasto('Liv. 8', fai((x) => x.labArma(a, 8)), 'piccolo'))),
       titolo('Doni passivi'),
       ...PASSIVI.map((q) => riga(el('b', '', `${q.nome} · ${liv.doni[q.id] || '—'}`), tasto('−1', fai((x) => x.labDono(q.id, (liv.doni[q.id] || 0) - 1)), 'piccolo'), tasto('+1', fai((x) => x.labDono(q.id, (liv.doni[q.id] || 0) + 1)), 'piccolo'), tasto('Max', fai((x) => x.labDono(q.id, q.massimo)), 'piccolo'))),
       titolo('Amuleti del Rosario'),
       ...AMULETI.map((a) => riga(el('b', '', `${a.nome} (${a.grani})`), tasto(am.posseduti.includes(a.id) ? 'Presente' : 'Aggiungi', fai((x) => x.labAmuleto(a.id, !am.posseduti.includes(a.id))), am.posseduti.includes(a.id) ? 'acceso piccolo' : 'piccolo'))),
-      titolo('Unioni (Prepara: arma 8 e dono 3, poi apri un reliquiario)'),
+      titolo(`Unioni (Prepara: arma al ${LIVELLO_ARMA_UNIONE} e dono al massimo, poi apri un reliquiario)`),
       ...UNIONI.map((u) => riga(el('b', '', u.nome), tasto('Prepara', fai((x) => x.labUnione(u.id, false)), 'piccolo'), tasto(unite.includes(u.id) ? 'Unita' : 'Unisci', fai((x) => x.labUnione(u.id, true)), unite.includes(u.id) ? 'acceso piccolo' : 'piccolo'))),
     ];
   }

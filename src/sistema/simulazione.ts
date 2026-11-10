@@ -81,6 +81,7 @@ export interface RisultatoSim {
   pozzeCuranti: number; // Acquasantiera con la fiaschetta piena: pozze che hanno curato…
   curaPozze: number; // …e la salute che hanno ridato davvero
   paneDaSolo: number; // «Pane e vino» preso da solo, senza aprire la scelta
+  causaMorte: string | null; // il colpo che ha ucciso: «Seth (mossa)», «Seth (contatto)», «élite», «orda (tipo)», «contatto (tipo)»
   dannoMaledizione: number; // salute tolta dalla maledizione (Maledetto), fuori da «danno»…
   dannoMaledizioneInterrata: number; // …e dall'Interramento che ha consumato l'Ombra (Stati certi)
   statiArmi: Record<string, number>; // stati lasciati da ogni arma
@@ -115,6 +116,7 @@ export class Simulazione {
   private sorsiAcquasantiera = 0;
   private sorsiAcquasantieraVeri = 0;
   private curaPozze = 0;
+  causaMorte: string | null = null;
 
   /** Il bot ha visto queste carte e ha scelto quella in posizione scelta. */
   scelta(carte: readonly Dono[], scelta: number, secondi: number): void {
@@ -209,7 +211,7 @@ export class Simulazione {
       curaFiaschetta: Math.round(this.curaFiaschetta), sorsi: this.sorsi, grazie: this.grazie,
       urne: this.urne,
       carte: this.carte, unioneOfferta: this.unioneOfferta, unionePresa: this.unionePresa,
-      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri, curaPozze: Math.round(this.curaPozze),
+      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri, curaPozze: Math.round(this.curaPozze), causaMorte: this.causaMorte,
     };
   }
 }

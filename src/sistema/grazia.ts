@@ -92,12 +92,11 @@ export class GraziaTacche {
       const chiave = (piene * 100 + massimo) * 1000 + larga;
       if (chiave !== this.vista) {
         this.vista = chiave;
-        // caselle separate da una colonna del bordo: la prima e l'ultima toccano il bordo
-        const dentro = larga - 2, passo = (dentro + 1) / massimo;
+        // caselle e stacchi tutti larghi uguali, in pixel disegnati interi (caselleIntere); il bordo scuro intorno
+        const c = caselleIntere(larga - 2, massimo);
         g.clear().fillStyle(T.bordo).fillRect(0, 0, larga, alta);
         for (let k = 0; k < massimo; k++) {
-          const x0 = 1 + Math.round(k * passo), x1 = Math.round((k + 1) * passo); // x1: la colonna di bordo dopo la casella
-          g.fillStyle(k < piene ? T.piena : T.vuota).fillRect(x0, 1, x1 - x0, alta - 2);
+          g.fillStyle(k < piene ? T.piena : T.vuota).fillRect(1 + c.margine + k * (c.casella + c.stacco), 1, c.casella, alta - 2);
         }
       }
       g.setPosition(sx, sy + (alta - 1) * z).setScale(z);
@@ -111,4 +110,21 @@ export class GraziaTacche {
     }
   }
 
+}
+
+/**
+ * Caselle a pixel interi (richiesta di Edoardo): «n» caselle tutte larghe uguali, separate da stacchi tutti larghi uguali,
+ * dentro «dentro» pixel disegnati. Prova lo stacco più stretto (da 1 in su, sempre più stretto della casella) con cui
+ * caselle e stacchi riempiono esattamente lo spazio. Se non c'è, caselle e stacchi restano uguali e i pixel che avanzano
+ * diventano bordo, divisi tra i due lati (margine). Con la barra di 40 (dentro 38): 8 caselle da 3 e 7 stacchi da 2;
+ * con 4 tacche (Danza macabra) 4 caselle da 8 e 3 stacchi da 2.
+ */
+export function caselleIntere(dentro: number, n: number): { casella: number; stacco: number; margine: number } {
+  for (let stacco = 1; stacco <= dentro; stacco++) {
+    const resto = dentro - (n - 1) * stacco;
+    if (resto < n) break;
+    if (resto % n === 0 && resto / n > stacco) return { casella: resto / n, stacco, margine: 0 };
+  }
+  const casella = Math.max(1, Math.floor((dentro - (n - 1)) / n));
+  return { casella, stacco: 1, margine: Math.floor((dentro - n * casella - (n - 1)) / 2) };
 }

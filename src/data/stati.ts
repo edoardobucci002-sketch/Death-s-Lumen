@@ -80,6 +80,10 @@ export const RUOLI = {
  * Tutti da rivedere (proposta di Edoardo del 10/11, valori ancora da provare).
  */
 export const STATI_CERTI = {
+  // ritmo delle zone (decisione di Edoardo del 10/11, valore da rivedere): un'arma a zona (Turibolo, Acqua santa, Velo funebre)
+  // o un'abilità speciale lascia il suo stato sullo stesso nemico al massimo una volta ogni «ritmo» secondi; il danno resta ogni 0,3 s.
+  // I colpi diretti non hanno limite; il primo scatto dell'abilità (che ignora la quiete) neanche
+  ritmo: 1,
   quiete: 3, // dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso (le abilità la ignorano al primo scatto)
   // Eclissi: su nemici normali e bruti il 10% della salute massima, senza tetto; su élite e Seth il doppio del danno del colpo
   // che la innesca (senza colpo, cioè da Lucciola, Martire o Laboratorio, vale il tetto di REAZIONI.eclissi)

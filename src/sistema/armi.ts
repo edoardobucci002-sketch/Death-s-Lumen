@@ -280,6 +280,7 @@ export class Arsenale {
   private critico = false; // l'ultimo colpo calcolato è un critico?
   private cReazione = 0; // la reazione a cui appartiene il colpo in corso (0 = nessuna): il suo danno va in un solo numero
   private cForza = false; // Stati certi: il colpo in corso è il primo scatto di un'abilità, che ignora la quiete
+  private cRitmo = false; // Stati certi: il colpo in corso è di una zona, di un'abilità o del Velo funebre (STATI_CERTI.ritmo)
   private cRX = 0; // il centro della sua zona
   private cRY = 0;
   private cRAperta = 0; // secondi in cui quella reazione può ancora colpire (per il numero)
@@ -679,7 +680,9 @@ export class Arsenale {
         this.cAff = SACRO;
         this.cProb = RUOLI.veloConsacra;
         this.cLampo = false;
+        this.cRitmo = true; // un'aura: è una zona intorno al personaggio
         this.orda.griglia.nelRaggio(this.cx, this.cy, this.raggioVelo + 40, this.visitaColpo);
+        this.cRitmo = false;
         this.rompiForma();
         return l.ricarica;
       }
@@ -917,10 +920,15 @@ export class Arsenale {
     if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * o.piuInterrato(j); // la parte in più dell'Interramento
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
     // con gli Stati certi ogni colpo lascia lo stato, senza tirare il dado
-    const r = aff && (INTERRUTTORI.statiCerti || this.casoStati.numero() < probabilita) ? o.marca(j, aff, this.cForza) : 0;
+    // con gli Stati certi ogni colpo lascia lo stato; zone e abilità (cRitmo) al massimo una volta ogni STATI_CERTI.ritmo s
+    // per nemico e affinità, tranne il primo scatto dell'abilità (cForza)
+    const ritmo = aff && this.cRitmo && INTERRUTTORI.statiCerti && !this.cForza;
+    const prova = aff && (INTERRUTTORI.statiCerti ? !ritmo || o.ritmoLibero(j, aff) : this.casoStati.numero() < probabilita);
+    const r = prova ? o.marca(j, aff, this.cForza) : 0;
+    if (ritmo && prova && (r || o.marcato)) o.segnaRitmo(j, aff);
     if (r) this.accoda(r, j, danno);
     if (r) this.reazioniFonti[this.fonte]++;
-    else if (o.marcato) this.statiFonti[this.fonte]++;
+    else if (prova && o.marcato) this.statiFonti[this.fonte]++; // solo se marca() è stata chiamata ora: marcato resta dal colpo prima
     this.dannoTotale += danno;
     suona('colpo');
     if (reazione) this.effetti.sommaReazione(reazione, this.cRX, this.cRY, danno, this.cRAperta);
@@ -957,7 +965,7 @@ export class Arsenale {
     // l'Eclissi toglie una parte della salute massima, con un tetto (il Mietitore subisce sempre il tetto)
     let eclissi = o.tipo[j] === ID_MIETITORE ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
     // Stati certi: senza tetto sui nemici normali e sui bruti; su élite e Seth il doppio del colpo (senza colpo, il tetto)
-    if (INTERRUTTORI.statiCerti && INTERRUTTORI.regole.eclissi) eclissi = !forte ? STATI_CERTI.eclissi.parte * o.saluteMassima[j] : danno > 0 ? danno * STATI_CERTI.eclissi.colpoElite : REAZIONI.eclissi.tetto;
+    if (INTERRUTTORI.statiCerti) eclissi = !forte ? STATI_CERTI.eclissi.parte * o.saluteMassima[j] : danno > 0 ? danno * STATI_CERTI.eclissi.colpoElite : REAZIONI.eclissi.tetto;
     this.qDanno[k] = tipo === ECLISSI ? eclissi : danno;
     this.qComune[k] = forte || o.tipo[j] === ID_BRUTO ? 0 : 1;
   }
@@ -988,7 +996,7 @@ export class Arsenale {
         const e = REAZIONI.esorcismo, id = this.prossimaIdReazione++;
         this.fonte = F.esorcismo;
         // Stati certi: fiammelle al 60% del colpo che l'ha innescata (senza colpo, il danno di sempre)
-        const certi = INTERRUTTORI.statiCerti && INTERRUTTORI.regole.esorcismo, quante = certi ? STATI_CERTI.esorcismo.fiammelle : e.fiammelle;
+        const certi = INTERRUTTORI.statiCerti, quante = certi ? STATI_CERTI.esorcismo.fiammelle : e.fiammelle;
         const dannoF = certi && this.qDanno[k] > 0 ? this.qDanno[k] * STATI_CERTI.esorcismo.colpo : e.danno;
         for (let f = 0; f < quante; f++) {
           const prima = this.proiettili;
@@ -1300,7 +1308,9 @@ export class Arsenale {
       pausa[j] = this.zIntervallo[i] - 0.01;
     }
     o.segno[j] = this.colpo;
+    this.cRitmo = true;
     this.ferisci(j, this.zDanno[i], 0, 0, 0, this.zAff[i], STATI.probabilitaZone, false);
+    this.cRitmo = false;
     if (this.zTipo[i] === POZZA && this.unite.acquaSanta && o.salute[j] <= 0 && ++this.uccisiPozze >= U.acquasantiera.uccisioni && this.attesaSorso <= 0) {
       this.uccisiPozze = 0;
       this.attesaSorso = U.acquasantiera.pausa;

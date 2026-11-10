@@ -506,7 +506,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 
 {
   const S = ST.STATI, RZ = ST.REAZIONI, RU = ST.RUOLI;
-  frase('Stati', 'uno stato di {} s, nel {}% dei colpi ({}% per nubi, pozze e abilità', S.durata, pct(S.probabilita), pct(S.probabilitaZone));
+  frase('Stati', 'lo stato resta {} s, nel {}% dei colpi ({}% per nubi, pozze e abilità', S.durata, pct(S.probabilita), pct(S.probabilitaZone));
   frase('Simboli', 'grande il {p} dei suoi', S.simboli.ingrandimento);
   frase('Simboli massimi', 'al massimo {} simboli', S.simboli.massimi);
 
@@ -541,12 +541,14 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('Falce: crescita', 'allunga la lama del {}% per {} s (al massimo +{}%)', pct(RU.falceCrescita.perUccisione), RU.falceCrescita.durata, pct(RU.falceCrescita.massimo));
   frase('Campana: fermo', 'ferma i nemici per {} s', RU.campanaFermo);
 
-  // Stati certi (interruttore di prova del Laboratorio)
+  // Stati certi: la regola del gioco dal 10/11
   const SC = ST.STATI_CERTI;
+  frase('Stati certi: ritmo', 'al massimo una volta ogni {} s (ritmo delle zone', SC.ritmo);
   frase('Stati certi: quiete', 'il nemico non può reagire di nuovo per {} s', SC.quiete);
-  frase('Stati certi: Eclissi', 'danno = {}% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il {p} del danno del colpo', pct(SC.eclissi.parte), SC.eclissi.colpoElite);
-  frase('Stati certi: Esorcismo', '**Esorcismo**: {} fiammelle, ognuna al {}% del danno del colpo', SC.esorcismo.fiammelle, pct(SC.esorcismo.colpo));
-  frase('Stati certi: Rivelazione', '**Rivelazione**: +{}% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno {} anime', pct(SC.rivelazione.anime), SC.rivelazione.da);
+  frase('Stati certi: Eclissi', 'esplosione di {} px; danno = {}% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il {p} del danno del colpo che la innesca (se non c\'è un colpo, come con Lucciola e Martire, {})', RZ.eclissi.raggio, pct(SC.eclissi.parte), SC.eclissi.colpoElite, RZ.eclissi.tetto);
+  frase('Stati certi: Esorcismo', '**Esorcismo** (Sacro + Ombra): {} fiammelle, ognuna al {}% del danno del colpo che la innesca (senza colpo, {} danni)', SC.esorcismo.fiammelle, pct(SC.esorcismo.colpo), RZ.esorcismo.danno);
+  frase('Stati certi: Rivelazione', '**Rivelazione** (Luce + Sacro): +{}% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno {} anime', pct(SC.rivelazione.anime), SC.rivelazione.da);
+  frase('Stati certi: Interramento base', '**Interramento** (Terra + qualsiasi): fermo {} s e +{}% danno subito (Seth a {p} durata)', RZ.interramento.fermo, pct(RZ.interramento.danno), S.mietitore.fermo);
   frase('Stati certi: Interramento', 'Luce, +{}% danno subito invece di +{}%; Sacro, fermo {} s; Ombra, la maledizione continua al {p}', pct(SC.interramento.dannoLuce), pct(ST.REAZIONI.interramento.danno), SC.interramento.fermoSacro, SC.interramento.maledettoOmbra);
   frase('Stati certi: cerchi', 'al massimo {} cerchi delle reazioni sullo schermo', SC.cerchiMassimi);
 }

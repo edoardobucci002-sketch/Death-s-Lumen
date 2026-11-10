@@ -122,7 +122,7 @@ export class Effetti {
       for (let i = 0; i < MAX_ECLISSI; i++) this.eclissi.push(scena.add.sprite(0, 0, 'Pixelfx_Eclissi').setOrigin(cx / f.realWidth, cy / f.realHeight).setDepth(PROFONDITA.sopra).setVisible(false));
     }
     const P = EFFETTI.paneDaSolo;
-    if (!scena.textures.exists('Scritta_Pane')) scena.textures.addCanvas('Scritta_Pane', telaContorno(`Pane e vino +${CARTE.paneEVino}`, P.colore, P.bordo));
+    if (!scena.textures.exists('Scritta_Pane')) scena.textures.addCanvas('Scritta_Pane', telaContorno(`Pane e vino +${CARTE.paneEVino} salute`, P.colore, P.bordo));
     this.pane = scena.add.image(0, 0, 'Scritta_Pane').setScale(P.ingrandimento).setDepth(PROFONDITA.barra).setVisible(false);
     for (let i = 0; i < MAX_ARCHI; i++) {
       this.archi.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.aTerra + 1).setVisible(false));

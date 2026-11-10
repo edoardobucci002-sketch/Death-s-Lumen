@@ -12,8 +12,8 @@
  * ?nemici=400 (riempie subito il campo), ?immortale (non si muore), ?livello=8 (armi già a quel livello),
  * ?automatico (sceglie da solo la prima carta a ogni livello), ?armi=candela,falce (armi in più, per provarle),
  * ?seme=7 (un'altra notte), ?bot (gioca il bot, senza disegno e più veloce possibile: lo usa npm run sim),
- * ?esplora=1 (il bot sceglie le carte a caso), ?stati=certi (accende l'interruttore «Stati certi» del Laboratorio; a…f una regola
- * alla volta), ?mira=1 (Lanterna e Pala mirano; ?davanti=1 lascia al bot il giro intorno ai nemici), ?senza=sampietrini
+ * ?esplora=1 (il bot sceglie le carte a caso), ?stati=caso (gli stati a caso di prima, per confrontare), ?mira=0 (Lanterna e
+ * Pala verso dove cammini, per confrontare), ?senza=sampietrini
  * (un'arma o un dono che non esce mai tra le carte), ?amuleto=martire (la notte parte con quell'amuleto acceso).
  */
 import Phaser from 'phaser';
@@ -229,15 +229,10 @@ export class Gioco extends Phaser.Scene {
     this.ricalcola();
     this.salute = this.saluteMassima;
     this.immortale = parametri.has('immortale');
-    // ?stati=certi (o f) accende gli Stati certi con tutte le regole nuove; a…e una regola alla volta (vedi INTERRUTTORI.regole).
-    // Senza, resta com'è nel Laboratorio (spento di partenza)
-    const stati = parametri.get('stati');
-    if (/^([a-f]|certi)$/.test(stati ?? '')) {
-      INTERRUTTORI.statiCerti = true;
-      const tutte = stati === 'certi' || stati === 'f';
-      Object.assign(INTERRUTTORI.regole, { eclissi: tutte || stati === 'b', esorcismo: tutte || stati === 'c', rivelazione: tutte || stati === 'd', interramento: tutte || stati === 'e' });
-    }
-    if (parametri.get('mira') === '1') INTERRUTTORI.mira = true;
+    // per i confronti: ?stati=caso torna agli stati a caso di prima, ?mira=0 alla Lanterna e alla Pala verso dove cammini.
+    // Senza, resta com'è nel Laboratorio (Stati certi e mira accesi di partenza)
+    if (parametri.get('stati') === 'caso') INTERRUTTORI.statiCerti = false;
+    if (parametri.get('mira') === '0') INTERRUTTORI.mira = false;
     this.automatico = parametri.has('automatico');
     this.caso = new Caso(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.x = this.y = 0;
@@ -341,8 +336,6 @@ export class Gioco extends Phaser.Scene {
     this.aggiornaBuild();
     this.bot = parametri.has('bot') ? new Bot(this.orda, this.anime, this.oggetti, this.minacce, arma) : null;
     if (this.bot && parametri.has('cercaurne')) this.bot.urne = this.rompibili;
-    // con Lanterna e Pala che mirano il bot non gira intorno ai nemici per tenerli davanti (?davanti=1 lo lascia fare, per confrontare)
-    if (this.bot && INTERRUTTORI.mira && parametri.get('davanti') !== '1') this.bot.senzaAttaccoDavanti();
     if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.sim = this.bot ? new Simulazione() : null;
     // ?amuleto=martire: la notte parte con quell'amuleto già trovato e acceso, che occupa i suoi grani (per misurarlo con il bot)
@@ -1471,13 +1464,16 @@ export class Gioco extends Phaser.Scene {
       return;
     }
     const o = this.orda;
-    let colpo = minaccia;
+    let colpo = minaccia, chi = -1; // chi: il nemico che dà il colpo (−1: una mossa di Seth)
     for (let i = 0; i < o.numero; i++) {
       const r = o.raggio[i] + COMBATTIMENTO.raggioGiocatore;
       const dx = o.x[i] - this.x;
       const dy = o.y[i] - this.y;
       const d2 = dx * dx + dy * dy;
-      if (d2 < r * r && o.danno[i] > colpo) colpo = o.danno[i];
+      if (d2 < r * r && o.danno[i] > colpo) {
+        colpo = o.danno[i];
+        chi = i;
+      }
     }
     if (!colpo) return;
     this.invulnerabile = COMBATTIMENTO.invulnerabilita;
@@ -1504,6 +1500,10 @@ export class Gioco extends Phaser.Scene {
       this.morto = this.finito = true;
       this.attesaFine = COMBATTIMENTO.attesaFine;
       this.inMoto = false;
+      if (this.sim) {
+        const id = chi >= 0 ? NEMICI[o.tipo[chi]].id : '';
+        this.sim.causaMorte = chi < 0 ? 'Seth (mossa)' : id === 'mietitore' ? 'Seth (contatto)' : o.elite[chi] ? 'élite' : o.inOrda(chi) ? `orda (${id})` : `contatto (${id})`;
+      }
       suona('morte');
       vibra('forte');
     }
