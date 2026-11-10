@@ -46,6 +46,17 @@ Valori di base comuni: 100 salute, velocità 245, raccolta delle anime a 40 px, 
 | La Badessa | Preghiere per ciò che è stato | `#dcc07a` | Turibolo | Benedizione | +10 salute, +0,3 salute/s, +15% area |
 | La Strega | Conosce nomi che non dovrebbero essere detti | `#a57ae0` | Bastone | Rito proibito | −5 salute, +10% danno, −10% ricarica |
 
+**Voti** (decisione di Edoardo del 10/11, `VOTI` e `NUMERI_VOTI` in `src/data/voti.ts`; nomi e numeri *da rivedere*): uno per personaggio, sempre attivo, legato alla sua affinità. Si legge nella scheda del personaggio (menu) e nella pausa (scheda Stati, «Il tuo Voto»).
+
+| Personaggio | Voto | Effetto |
+| --- | --- | --- |
+| Il Lampionaio | Voto della Luce | dentro l'alone di luce la quiete dopo una reazione dura 1,5 s invece di 3 |
+| Il Becchino | Voto della Terra | +40% danno ai nemici fermi (sepolti, interrati, fermati da Campana, Vanga o Sepoltura) |
+| La Badessa | Voto del Sacro | i nemici consacrati fanno il 20% di danno in meno (a contatto) |
+| La Strega | Voto dell'Ombra | nelle reazioni il Maledetto non si consuma; gli altri stati sì |
+
+Tra le carte, le armi nuove dell'affinità del personaggio pesano 1,3 invece di 1.
+
 **Barre della scheda** (su 6: Vitalità, Danno, Velocità, Raggio, Controllo)
 
 | Personaggio | Vit. | Dan. | Vel. | Rag. | Con. |
@@ -402,14 +413,14 @@ Valori al minuto 0, in `src/data/nemici.ts`; la velocità varia a caso del ±10%
 
 - **Élite**: l'alone ambra è un colore aggiunto allo sprite; ingrandite × 1,5 anche nel raggio dei contatti.
 
-**Il copione della notte** (`COPIONE`, `src/data/nemici.ts`, *da rivedere*): chi compare da quel minuto e con che peso (più alto, più spesso).
+**Il copione della notte** (`COPIONE`, `src/data/nemici.ts`, *da rivedere*): chi compare da quel minuto e con che peso (più alto, più spesso). Dalle 3:00 «zombi 3, scheletro 1» invece di «scheletro 3, zombi 2» (decisione di Edoardo del 10/11 sera: gli scheletri delle comparse uccidevano il Lampionaio prima del minuto 5); l'orda a cuneo di scheletri del minuto 3 resta.
 
 | Da | Nemici |
 | --- | --- |
 | 0:00 | pipistrello 3, zombi 2 |
 | 1:00 | zombi 3, fantasma 2 |
 | 2:00 | fantasma 3, pipistrello 2, scheletro 1 |
-| 3:00 | scheletro 3, zombi 2 |
+| 3:00 | zombi 3, scheletro 1 |
 | 4:00 | pipistrello 3, segugio 2 |
 | 5:00 | zombi 3, scheletro 1 |
 | 6:00 | segugio 3, fantasma 2 |
@@ -451,7 +462,7 @@ Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle 
 
 - **Fiaschetta di lumen**: 3 sorsi all'inizio della notte (anche il massimo). Un sorso cura il 35% della salute massima in 1 s; si beve con il pulsante accanto all'anello dell'abilità o con il tasto F, solo se non si ha la salute piena e non si sta già bevendo. Un'élite uccisa ridà 1 sorso, Seth riempie la fiaschetta. Il pulsante è tondo, con la stessa cornice dell'abilità e la fiala dentro (composto dal codice, *da rivedere*, finché non c'è `Fiaschetta_Lumen_Tonda_V1`); su computer e tablet sta a destra dell'abilità, staccata di 12 pixel disegnati. I sorsi si leggono sulle tacche intorno al pulsante, una per sorso massimo (fino a 5 con la Lacrima di lumen): accese se piene, scure se vuote, con un lampo di 0,25 s quando un sorso si riempie (*da rivedere*). La fiaschetta diventerà uno sblocco con la sua questline (vedi [lore.md](lore.md) e [roadmap.md](roadmap.md)).
 - **Grazia**: scatta uscendo da un cerchio rosso di Seth quando mancavano al massimo 0,25 s al colpo, o lasciandosi sfiorare da una falce spettrale (entro 30 px oltre il bordo) senza esserne toccati. Dura 3 s: +30% danno, +15% velocità, il personaggio lampeggia di chiaro (10 volte al secondo). Un'altra schivata perfetta la rinnova; una Grazia nuova non accorcia mai quella in corso.
-- **Grazia a tacche** (decisione di Edoardo del 10/11, tutti i valori *da rivedere*; vale per tutti i personaggi, senza amuleti). Ogni nemico normale (né élite né Seth) sfiorato entro 16 px oltre il contatto, senza toccarlo, dà una tacca; lo stesso nemico non più di una volta ogni 2 s. Con 8 tacche parte una Grazia di 2 s; durante la Grazia le tacche non salgono; senza sfiorare ne cala una ogni 2 s. La schivata perfetta su Seth dà subito la Grazia di 3 s, come sopra. A ogni tacca un suono secco e una piccola scintilla (segnaposto dal codice). **Indicatore** (scelta di Edoardo del 10/11): un rettangolo sotto la barra della salute, largo e alto come lei (ne condivide il bordo di sotto), diviso in tante caselle quante sono le tacche (8, con la Danza macabra 4), senza cifre; si vede sempre. Tutto a pixel disegnati interi, su tutta la larghezza di 39: 8 caselle da 4 e 7 stacchi da 1 (8 × 4 + 7 = 39); con la Danza macabra 4 caselle da 9 e 3 stacchi da 1 (4 × 9 + 3 = 39). Le caselle arrivano fino al bordo esterno della barra; sopra e sotto c'è la riga scura del bordo. Caselle piene azzurre, vuote blu notte (colori *da rivedere*: diversi dal rosso, dall'ambra e dal verde della barra e dai colori dei personaggi); in Grazia tutte piene. La parte della notte passata in Grazia si legge nella pausa (Build → Statistiche, «In Grazia») e nella schermata di fine («In Grazia il N% della notte»). La Campanella d'argento allunga lo sfioramento di 8 px per livello.
+- **Grazia a tacche** (decisione di Edoardo del 10/11, tutti i valori *da rivedere*; vale per tutti i personaggi, senza amuleti). Ogni nemico normale (né élite né Seth) sfiorato entro 16 px oltre il contatto, senza toccarlo, dà una tacca; lo stesso nemico non più di una volta ogni 2 s. Con 8 tacche parte una Grazia di 2 s; durante la Grazia le tacche non salgono; senza sfiorare ne cala una ogni 2 s. La schivata perfetta su Seth dà subito la Grazia di 3 s, come sopra. A ogni tacca un suono secco e una piccola scintilla (segnaposto dal codice). **Indicatore** (scelta di Edoardo del 10/11): un rettangolo sotto la barra della salute, largo e alto come lei (ne condivide il bordo di sotto), diviso in tante caselle quante sono le tacche (8, con la Danza macabra 4), senza cifre; si vede sempre. Tutto a pixel disegnati interi: la barra è larga 41, con un bordo scuro da 1 pixel a ogni lato, sopra e sotto; dentro 39: 8 caselle da 4 e 7 stacchi da 1 (8 × 4 + 7 = 39); con la Danza macabra 4 caselle da 9 e 3 stacchi da 1 (4 × 9 + 3 = 39). Caselle piene azzurre, vuote blu notte (colori *da rivedere*: diversi dal rosso, dall'ambra e dal verde della barra e dai colori dei personaggi); in Grazia tutte piene. La parte della notte passata in Grazia si legge nella pausa (Build → Statistiche, «In Grazia») e nella schermata di fine («In Grazia il N% della notte»). La Campanella d'argento allunga lo sfioramento di 8 px per livello.
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
@@ -463,6 +474,20 @@ Ogni arma e ogni abilità ha un'affinità. **Regola del gioco dal 10/11 (Stati c
 | Sacro | Turibolo, Acqua santa, Campana, Benedizione | Consacrato | va più lento del 25% (Seth a metà) |
 | Ombra | Bastone, Fuoco fatuo, Falce, Rito proibito | Maledetto | perde il 2% della salute massima al secondo (élite 40% di questo, Seth 10%) |
 | Terra | Pala, Sepoltura | Sepolto | resta fermo 0,6 s; poi per 4 s non può esserlo di nuovo |
+
+**Devozione** (proposta di Edoardo dell'11/11, `DEVOZIONE` in `src/data/stati.ts`, valori *da rivedere*): più armi della stessa affinità possiedi, più forte è il suo stato. Grado 1 = 1 arma (o nessuna: lo stato viene da un'abilità, un amuleto o altro), grado 2 = 2 armi, grado 3 = 3 o più. Lo stato lasciato dall'abilità speciale prende il grado della sua affinità ma non conta come un'arma in più (lettura di Claude, *da rivedere*).
+
+| Stato | Grado 1 | Grado 2 | Grado 3 |
+| --- | --- | --- | --- |
+| Abbagliato, danno subito in più | 15% | 20% | 25% |
+| Consacrato, rallentamento | 25% | 32% | 40% |
+| Maledetto, salute al secondo | 2% | 3% | 4% |
+| Sepolto, fermo | 0,6 s | 0,8 s | 1,0 s |
+| Reazione che consuma lo stato | ×1 | ×1,25 | ×1,5 |
+
+Il Maledetto mantiene le riduzioni di sempre per élite e Seth. Il moltiplicatore della reazione usa il grado dello stato che il nemico aveva già (quello consumato) e vale per il danno di Eclissi ed Esorcismo, le anime in più della Rivelazione, il fermo e il danno in più dell'Interramento. Un'arma nuova che alza il grado lo dice sulla sua striscia («Devozione Luce 2 › 3»); la pausa (scheda Stati) mostra per ogni stato il grado, quante armi, l'effetto con la forza di adesso e il moltiplicatore delle reazioni. Con «Stati a caso (vecchi)» tutto resta al grado 1.
+
+**Riti** (proposta di Edoardo dell'11/11, `RITI` in `src/data/stati.ts`, valori *da rivedere*): quando non resta nulla da potenziare il pane continua a prendersi da solo, ma ogni 3 di questi livelli si apre invece la scelta dei Riti («I Riti»): una carta per ogni affinità delle armi che hai, al massimo 3 (a caso se sono di più). Ogni Rito dà +8% alla forza dello stato di quella affinità e +8% alle reazioni che lo consumano; senza fine, si sommano (il rallentamento del Consacrato non supera l'80%). Nella pausa (Stati) si legge quanti Riti hai per affinità. Il bot sceglie il Rito dell'affinità con più armi. Con «Stati a caso (vecchi)» i Riti non si aprono.
 
 Due stati diversi sullo stesso nemico si consumano e fanno una reazione. Con la regola del gioco:
 - **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
@@ -596,7 +621,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - arma nuova 1
   - dono posseduto 1,2
   - dono nuovo 0,9
-- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare la scelta non si apre: «Pane e vino» (+40 salute) si prende da solo, una volta per livello, con una scritta verde «Pane e vino +40 salute» che sale sopra la testa e il suono della cura (scritta *da rivedere*).
+- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare la scelta non si apre: «Pane e vino» (+40 salute) si prende da solo, una volta per livello (ma ogni 3 di questi livelli si apre la scelta dei Riti, sezione 8c), con una scritta verde «Pane e vino +40 salute» che sale sopra la testa e il suono della cura (scritta *da rivedere*).
 
 ## 10. Regole di combattimento
 
@@ -673,7 +698,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Ricollocamento | oltre 2,2 × 48 px fuori dallo schermo | torna davanti al giocatore, entro ±0,7 radianti dalla direzione in cui cammina |
 | Separazione tra nemici | forza 0,5; si toccano sotto il 75% della somma dei raggi | i fantasmi attraversano gli altri |
 | Sprite segnaposto V0 | ingranditi × 2 | disegnati per personaggi di 34 px |
-| Barra della salute | rettangolo rosso 39 × 9 pixel, 5 px sotto i piedi (larghezza decisa da Edoardo il 10/11) (si allarga se i numeri non ci stanno), con «salute rimasta/massima» in cifre bianche; danno e cura scorrono in 0,5 s (mai più lenti del 30% della salute massima al secondo): il pezzo perso resta ambra e si consuma, quello guadagnato è verde e il rosso lo riempie; i numeri seguono. La barra di Seth fa lo stesso | decisa da Edoardo: sotto il personaggio, non in alto; rettangolo semplice con i numeri (10/11). Misure e colori *da rivedere* (`src/data/mondo.ts`) |
+| Barra della salute | rettangolo rosso 41 × 9 pixel, 5 px sotto i piedi (larghezza decisa da Edoardo il 10/11 sera: 1 di bordo per lato, dentro 39) (si allarga se i numeri non ci stanno), con «salute rimasta/massima» in cifre bianche; danno e cura scorrono in 0,5 s (mai più lenti del 30% della salute massima al secondo): il pezzo perso resta ambra e si consuma, quello guadagnato è verde e il rosso lo riempie; i numeri seguono. La barra di Seth fa lo stesso | decisa da Edoardo: sotto il personaggio, non in alto; rettangolo semplice con i numeri (10/11). Misure e colori *da rivedere* (`src/data/mondo.ts`) |
 | Lampo quando sei colpito | 0,1 s | bianco pieno |
 | Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 

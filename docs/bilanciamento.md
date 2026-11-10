@@ -19,7 +19,7 @@ Quante notti servono per completare la Cappella è una domanda aperta: si decide
 
 **Il campione.** Con 48 notti per condizione l'incertezza è di circa ±12 punti: differenze più piccole sono rumore. Per il bilanciamento finale servono almeno 200 notti per condizione (circa 50 per personaggio).
 
-**Restano vincolanti, in tutte le condizioni:** Seth del minuto 5 è il primo vero ostacolo; nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota; **a Cappella vuota il Lampionaio muore prima del minuto 5 al massimo in 3 notti su 12** (decisione di Edoardo del 10/11). `npm run sim` controlla tutti e tre.
+**Restano vincolanti, in tutte le condizioni:** ~~Seth del minuto 5 è il primo vero ostacolo~~ (riscritto da Edoardo il 10/11 sera:) **il primo boss della notte (oggi Seth del minuto 5) è il primo vero ostacolo: nessun personaggio muore più spesso prima del primo boss che contro di lui** (contro di lui = dalla sua comparsa alla sua morte; il danno subito al minuto prima e durante resta nel resoconto ma non è più un vincolo); nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota; **a Cappella vuota il Lampionaio muore prima del minuto 5 al massimo in 3 notti su 12** (decisione di Edoardo del 10/11). `npm run sim` controlla tutti e tre.
 
 Le righe qui sotto sono del 4/11, con il bot su un Pixel 7 e prima delle fasce: l'ultima simulazione è nel registro, alla voce «Campo vero».
 
@@ -45,6 +45,70 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - Effetto non voluto, corretto: con 56 o 72 px una lacrima caduta accanto al personaggio si univa a una ferma più lontana, fuori dal raggio di raccolta, e chi stava fermo non saliva più di livello (la Badessa ferma, in 30 s, mai; con 28 px in 4,4 s). Regola nuova: si unisce solo a una ferma non più lontana di lei dal personaggio. Prima avevo provato a spostare la lacrima unita nel punto più vicino al personaggio: regalava esperienza (la Strega arrivava al livello 4 al secondo 60 invece del 3 al 62), scartata.
 - Con la regola nuova, primo livello da fermi: Badessa 1,8–2,4 s, Lampionaio 2,3 s, con ogni raggio.
 - Bot, 3 notti per personaggio (campione piccolo, solo per vedere che niente si rompe): Lampionaio muore a 7:10 (liv. 24), 11:46 (liv. 51) e 11:23 (liv. 59); Becchino vince due volte (liv. 63 e 72) e muore a 11:38 (liv. 52); Badessa muore a 11:10 (liv. 48) e 13:52 (liv. 67), vince una volta (liv. 56); Strega muore a 7:52 (liv. 31) e 11:19 (liv. 63), vince una volta (liv. 72). Nessuno muore sempre prima del minuto 5.
+
+### 11/11 — Voce 3: Riti
+
+Quando non resta nulla da potenziare, ogni 3 livelli si apre la scelta dei Riti (una carta per affinità delle armi che hai, al massimo 3); ogni Rito +8% alla forza dello stato e +8% alle reazioni che lo consumano, senza fine. Il bot sceglie l'affinità con più armi. Stesse simulazioni e stesse colonne della voce 0.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| voce 2, vuota | 28/48 (6, 7, 8, 7) | 2, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 1/0, 4/0, 3/0, 2/0 | 10,6%, 11,6%, 11,6%, 17,2% | 565, 3909, 4849, 3710 | 61 |
+| **voce 3, vuota** | **31/48** (7, 7, 9, 8) | **2**, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 0/0, 3/1, 1/0, 1/0 | 12,1%, 12,0%, 13,2%, 19,1% | 588, 4107, 4979, 3790 | 61 |
+| voce 2, completa | 38/48 (7, 10, 11, 10) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 23,7%, 17,5%, 13,6%, 21,8% | 2643, 8151, 2274, 2859 | 70 |
+| **voce 3, completa** | **39/48** (7, 10, 11, 11) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 24,1%, 19,1%, 15,3%, 23,6% | 2727, 8571, 2087, 2752 | 70 |
+
+- **Vincoli: reggono** (Lampionaio 2 notti su 12 prima del minuto 5; primo boss come nella voce 2).
+- **Primo Rito: in media al livello 53 a Cappella vuota (in 38 notti su 48) e 56 a Cappella completa (36 su 48).** Nelle altre notti il bot ha ancora qualcosa da potenziare fino alla fine o muore prima.
+- **Riti a notte: 5,0 a Cappella vuota e 6,3 a completa** (contando le notti senza; 6,4 e 8,4 nelle notti in cui si aprono). Per personaggio, a Cappella vuota: Lampionaio 4,3, Becchino 4,1, Badessa 5,1, Strega 6,7; a completa: 3,4, 5,5, 8,7, 7,8.
+- «Pane e vino» da solo resta frequente: 523 volte in 48 notti a Cappella vuota, 645 a completa (circa 11–13 a notte).
+- Le vittorie salgono di poco (28 → 31 e 38 → 39, dentro l'incertezza): i Riti arrivano tardi, verso il minuto 11–12.
+
+### 11/11 — Voce 2: Voti
+
+Un Voto per personaggio, sempre attivo (`src/data/voti.ts`, *da rivedere*): Lampionaio, dentro l'alone la quiete dura 1,5 s invece di 3; Becchino, +40% danno ai nemici fermi; Badessa, i consacrati fanno il 20% di danno in meno; Strega, nelle reazioni il Maledetto non si consuma. Tra le carte le armi nuove dell'affinità del personaggio pesano 1,3. Stesse simulazioni e stesse colonne della voce 0.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| voce 1, vuota | 23/48 (4, 2, 8, 9) | 2, 1, 0, 0 | 2/2, 1/2, 0/0, 0/0 | 4/0, 5/2, 2/1, 2/0 | 8,1%, 9,4%, 10,9%, 19,7% | 598, 4049, 3431, 2694 | 57 |
+| **voce 2, vuota** | **28/48** (6, 7, 8, 7) | **2**, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 1/0, 4/0, 3/0, 2/0 | 10,6%, 11,6%, 11,6%, 17,2% | 565, 3909, 4849, 3710 | 61 |
+| voce 1, completa | 37/48 (6, 11, 9, 11) | 0, 0, 0, 0 | 0/2, 0/0, 0/0, 0/0 | 3/0, 0/0, 2/0, 0/0 | 22,3%, 15,5%, 18,3%, 26,5% | 3616, 6829, 2133, 3231 | 68 |
+| **voce 2, completa** | **38/48** (7, 10, 11, 10) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 23,7%, 17,5%, 13,6%, 21,8% | 2643, 8151, 2274, 2859 | 70 |
+
+- **Vincoli: reggono.** Lampionaio prima del minuto 5 in 2 notti su 12; primo boss: Lampionaio 2 prima e 2 contro, Becchino 1 e 1 (non più spesso prima).
+- A Cappella vuota le vittorie salgono da 23 a 28, soprattutto Lampionaio (4 → 6) e Becchino (2 → 7): il Becchino, con il +40% sui nemici fermi, fa reazioni e Interramenti che valgono di più (danno delle reazioni da 9,4% a 11,6%). Le morti per Seth scendono (Becchino da 7 a 4 a contatto).
+- La Strega con il Voto dell'Ombra non sale (a Cappella vuota 9 → 7, a completa 11 → 10, dentro l'incertezza): il Maledetto che resta dopo la reazione la fa reagire di nuovo solo dopo la quiete di 3 s.
+
+### 11/11 — Voce 1: Devozione
+
+Più armi della stessa affinità, più forte il suo stato (gradi 1 / 2 / 3: Abbagliato 15 / 20 / 25%, Consacrato 25 / 32 / 40%, Maledetto 2 / 3 / 4% al secondo, Sepolto 0,6 / 0,8 / 1,0 s; la reazione che consuma lo stato × 1 / 1,25 / 1,5). Tutti i valori *da rivedere*. Stesse simulazioni e stesse colonne della voce 0.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| voce 0, vuota | 22/48 (3, 3, 6, 10) | 2, 0, 0, 0 | 2/2, 0/2, 0/0, 0/0 | 3/2, 7/1, 6/0, 1/0 | 5,0%, 8,8%, 6,3%, 16,7% | 503, 3749, 3805, 2967 | 57 |
+| **voce 1, vuota** | **23/48** (4, 2, 8, 9) | **2**, 1, 0, 0 | 2/2, 1/2, 0/0, 0/0 | 4/0, 5/2, 2/1, 2/0 | 8,1%, 9,4%, 10,9%, 19,7% | 598, 4049, 3431, 2694 | 57 |
+| voce 0, completa | 31/48 (7, 8, 9, 7) | 0, 0, 0, 0 | 0/3, 0/0, 0/0, 0/0 | 0/0, 2/0, 3/0, 1/0 | 15,6%, 8,3%, 12,3%, 25,1% | 2495, 6002, 2023, 2569 | 66 |
+| **voce 1, completa** | **37/48** (6, 11, 9, 11) | 0, 0, 0, 0 | 0/2, 0/0, 0/0, 0/0 | 3/0, 0/0, 2/0, 0/0 | 22,3%, 15,5%, 18,3%, 26,5% | 3616, 6829, 2133, 3231 | 68 |
+
+- **Vincoli: reggono.** Lampionaio prima del minuto 5 in 2 notti su 12 (al massimo 3); nessuno muore più spesso prima del primo boss che contro di lui (Lampionaio 2 e 2, Becchino 1 e 2).
+- La parte del danno fatta dalle reazioni sale per tutti (a Cappella completa il Lampionaio da 15,6% a 22,3%, la Badessa da 12,3% a 18,3%): con due o tre armi della stessa affinità le reazioni che consumano quello stato valgono fino a 1,5 volte. A Cappella completa le vittorie salgono da 31 a 37 (Becchino da 8 a 11, Strega da 7 a 11); a Cappella vuota restano uguali (22 → 23).
+
+### 11/11 — Voce 0: copione dalle 3:00, vincolo del primo boss, barre a 41
+
+Decisioni di Edoardo del 10/11 sera: dalle 3:00 il copione è «zombi 3, scheletro 1» (l'orda a cuneo di scheletri del minuto 3 resta); tolti i parametri `minuto3` e `lanterna`; il vincolo «Seth del 5 è il primo vero ostacolo» diventa «il primo boss della notte è il primo vero ostacolo: nessun personaggio muore più spesso prima del primo boss che contro di lui» (`npm run sim` lo controlla e stampa il conto); barre della salute e delle tacche larghe 41 con 1 pixel di bordo per lato, 39 dentro (misurate sulla foto del S25 a ×2: `prove/barre-41-tacche-8.png`, `prove/barre-41-tacche-4-danza.png`).
+
+**Come si leggono le tabelle di questa voce e delle prossime.** `npm run sim -- 12 tutti`, Cappella vuota e completa, semi 1001–1012, 48 notti per riga. Valori per personaggio nell'ordine Lampionaio, Becchino, Badessa, Strega. «Primo boss» = morti prima di Seth del 5 / morti contro di lui (dalla sua comparsa alla sua morte). «Morti per Seth» = sconfitte in cui il colpo che uccide è Seth a contatto / una sua mossa (tutti e due i Seth). Danno delle reazioni = Eclissi, Esorcismo e parte in più dell'Interramento sul danno totale, senza la maledizione. Reazioni a notte: Eclissi, Rivelazione, Esorcismo, Interramento.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| prima, vuota | 21/48 (1, 6, 8, 6) | 5, 3, 0, 0 | 5/2, 3/1, 0/0, 0/0 | 4/0, 2/0, 4/0, 2/0 | 9,9%, 7,6%, 6,7%, 14,5% | 443, 3192, 4430, 3184 | 55 |
+| **voce 0, vuota** | **22/48** (3, 3, 6, 10) | **2**, 0, 0, 0 | 2/2, 0/2, 0/0, 0/0 | 3/2, 7/1, 6/0, 1/0 | 5,0%, 8,8%, 6,3%, 16,7% | 503, 3749, 3805, 2967 | 57 |
+| prima, completa | 36/48 (6, 11, 9, 10) | 0, 0, 0, 0 | 0/2, 0/0, 0/0, 0/0 | 2/1, 0/0, 2/0, 0/0 | 13,9%, 15,3%, 9,0%, 27,9% | 2728, 9173, 1660, 3014 | 68 |
+| **voce 0, completa** | **31/48** (7, 8, 9, 7) | 0, 0, 0, 0 | 0/3, 0/0, 0/0, 0/0 | 0/0, 2/0, 3/0, 1/0 | 15,6%, 8,3%, 12,3%, 25,1% | 2495, 6002, 2023, 2569 | 66 |
+
+- **Vincolo del Lampionaio: regge.** A Cappella vuota muore prima del minuto 5 in 2 notti su 12 (al massimo 3): a 3:28 per uno scheletro e a 2:53 per un fantasma, tutti e due delle comparse.
+- **Vincolo del primo boss: regge per tutti.** Il Lampionaio a Cappella vuota muore 2 volte prima di Seth e 2 contro di lui (non più spesso prima); il Becchino 0 prima e 2 contro.
+- **Morti per Seth**: a Cappella vuota il Becchino muore 7 volte per il contatto con Seth e 1 per una sua mossa, la Badessa 6 e 0, il Lampionaio 3 e 2, la Strega 1 e 0; a Cappella completa contano poco (Becchino 2, Badessa 3, Strega 1, tutte per contatto). Quasi tutte sono del secondo Seth (tra 11:00 e 11:50). Le mosse uccidono di rado: chi muore per Seth muore toccandolo.
+- A Cappella completa le vittorie scendono da 36 a 31: dentro l'incertezza di 48 notti (±12 punti), con il Becchino da 11 a 8 e la Strega da 10 a 7.
 
 ### 10/11 (notte, seconda) — Misura del Lampionaio: orda del minuto 3 e Lanterna (nessun numero del gioco cambia)
 
