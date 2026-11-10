@@ -40,6 +40,27 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 10/11 (notte, seconda) — Misura del Lampionaio: orda del minuto 3 e Lanterna (nessun numero del gioco cambia)
+
+Due parametri solo per il bot (`PROVE_BOT` in `src/data/bot.ts`): `minuto3=leggero` (l'orda del minuto 3 è un cuneo di zombi invece che di scheletri e il copione dalle 3:00 diventa «zombi 3, scheletro 1» invece di «scheletro 3, zombi 2») e `lanterna=forte` (la Lanterna fa il 25% di danno in più). `npm run sim -- 12 lampionaio,becchino`, Cappella vuota, semi 1001–1012. La versione normale è identica alle notti della voce precedente (24 notti, 0 differenze). «Prima di Seth» = danno subito al minuto nei minuti 2–5; «durante» = al minuto mentre Seth del 5 è in campo. Livello alla fine del minuto 3 (3:00); abilità = volte in cui il bot la usa prima del minuto 5.
+
+| Versione | Personaggio | Vittorie | Morti prima del 5 (minuto, chi uccide) | Danno subito prima di Seth / durante | Seth del 5 primo ostacolo | Livello a 3:00 | Abilità prima del 5 | Chi uccide in tutte le sconfitte |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| normale | Lampionaio | 1/12 | **5** (3:22, 3:25, 3:27, 3:42, 3:58: tutti scheletri delle comparse) | 36 / 72 | sì | 13,0 | 14,0 | scheletro delle comparse 5, Seth a contatto 4, élite 1, bruto 1 |
+| normale | Becchino | 6/12 | 3 (3:26 e 3:28 scheletro, 4:23 pipistrello, tutti delle comparse) | 55 / 52 | **no** | 14,6 | 16,8 | scheletro 2, Seth a contatto 2, pipistrello 1, bruto 1 |
+| minuto3=leggero | Lampionaio | 4/12 | **2** (3:39 scheletro, 4:39 segugio, delle comparse) | 46 / 110 | sì | 13,0 | 15,7 | bruto 3, scheletro 2, segugio 1, mossa di Seth 1, Seth a contatto 1 |
+| minuto3=leggero | Becchino | 7/12 | 1 (3:33 scheletro delle comparse) | 56 / 41 | **no** | 14,6 | 17,2 | Seth a contatto 3, scheletro 1, bruto 1 |
+| lanterna=forte | Lampionaio | 2/12 | **3** (3:12 e 3:43 scheletro delle comparse, 4:49 segugio delle comparse) | 46 / 97 | sì | 13,4 | 13,8 | Seth a contatto 4, scheletro delle comparse 2, mossa di Seth 1, segugio 1, scheletro di un'orda sciolta 1, bruto 1 |
+| lanterna=forte | Becchino | 6/12 | 3 (come la normale: la Lanterna non è sua) | 55 / 52 | **no** | 14,6 | 16,8 | come la normale |
+| tutti e due | Lampionaio | 2/12 | **2** (3:13 scheletro delle comparse, 4:45 élite) | 43 / 58 | sì | 13,4 | 14,3 | Seth a contatto 4, bruto 3, scheletro 2, élite 1 |
+| tutti e due | Becchino | 7/12 | 1 (3:33 scheletro delle comparse) | 56 / 41 | **no** | 14,6 | 17,2 | come «minuto3=leggero» |
+
+- **Vincolo del Lampionaio (al massimo 3 notti su 12 prima del minuto 5)**: la normale non lo rispetta (5); lo rispettano **minuto3=leggero (2)**, **lanterna=forte (3, al limite)** e **tutti e due (2)**.
+- **Chi lo uccide davvero**: nella voce precedente avevo scritto che gli scheletri arrivavano «subito dopo l'orda a cuneo del minuto 3». Con il nuovo segno (`natoInOrda`) si vede che **non sono scheletri dell'orda ma delle comparse normali**, quelle del copione dalle 3:00 (scheletro 3, zombi 2): per questo `minuto3=leggero`, che cambia anche il copione, funziona meglio della sola Lanterna.
+- **Seth del 5 come primo ostacolo per il Becchino: nessuna versione lo rimette.** Il Becchino subisce 55–56 al minuto prima di Seth e 41–52 durante; con `minuto3=leggero` il danno durante Seth scende ancora (41), perché arriva al minuto 5 più forte. `lanterna=forte` non lo tocca (le sue notti sono identiche alla normale). Per lui serve altro (per esempio un Seth più duro o un minuto 4 più leggero): da decidere.
+- Il livello a 3:00 non cambia con il copione (13,0 per il Lampionaio, 14,6 per il Becchino); con la Lanterna più forte il Lampionaio arriva a 13,4. L'abilità prima del 5 si usa 14–17 volte, simile in tutte le versioni.
+- Nessuna modifica al gioco: decide Edoardo.
+
 ### 10/11 (notte) — Stati certi e mira diventano la regola; ritmo delle zone; vincolo del Lampionaio
 
 Decisioni di Edoardo: la prova f degli Stati certi e Lanterna e Pala che mirano diventano la regola del gioco; ritmo delle zone di 1 s (*da rivedere*); il bot torna a girare intorno ai nemici. Nuovo vincolo: a Cappella vuota il Lampionaio muore prima del minuto 5 al massimo in 3 notti su 12. Nessun numero della notte è stato ritoccato per le vittorie.

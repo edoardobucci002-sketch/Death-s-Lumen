@@ -22,8 +22,8 @@ const argomenti = process.argv.slice(2);
 const meta = (argomenti.find((a) => a.startsWith('meta=')) ?? 'meta=0').slice(5);
 const esplora = argomenti.includes('esplora');
 const stati = (argomenti.find((a) => a.startsWith('stati=')) ?? '').slice(6);
-// altri parametri dell'indirizzo passati così come sono: mira=0, senza=sampietrini, amuleto=martire
-const PASSANO = ['mira=', 'senza=', 'amuleto='];
+// altri parametri dell'indirizzo passati così come sono: mira=0, senza=sampietrini, amuleto=martire, minuto3=leggero, lanterna=forte
+const PASSANO = ['mira=', 'senza=', 'amuleto=', 'minuto3=', 'lanterna='];
 const passati = argomenti.filter((a) => PASSANO.some((p) => a.startsWith(p)));
 const altri = argomenti.filter((a) => !a.startsWith('meta=') && !a.startsWith('stati=') && a !== 'esplora' && !passati.includes(a));
 const partite = Number(altri[0]) || 3;

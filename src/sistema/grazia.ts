@@ -92,11 +92,12 @@ export class GraziaTacche {
       const chiave = (piene * 100 + massimo) * 1000 + larga;
       if (chiave !== this.vista) {
         this.vista = chiave;
-        // caselle e stacchi tutti larghi uguali, in pixel disegnati interi (caselleIntere); il bordo scuro intorno
-        const c = caselleIntere(larga - 2, massimo);
+        // caselle e stacchi tutti larghi uguali, in pixel disegnati interi, su tutta la larghezza della barra (caselleIntere):
+        // la prima e l'ultima casella arrivano al bordo esterno; sopra e sotto resta la riga scura del bordo
+        const c = caselleIntere(larga, massimo);
         g.clear().fillStyle(T.bordo).fillRect(0, 0, larga, alta);
         for (let k = 0; k < massimo; k++) {
-          g.fillStyle(k < piene ? T.piena : T.vuota).fillRect(1 + c.margine + k * (c.casella + c.stacco), 1, c.casella, alta - 2);
+          g.fillStyle(k < piene ? T.piena : T.vuota).fillRect(c.margine + k * (c.casella + c.stacco), 1, c.casella, alta - 2);
         }
       }
       g.setPosition(sx, sy + (alta - 1) * z).setScale(z);
@@ -114,17 +115,17 @@ export class GraziaTacche {
 
 /**
  * Caselle a pixel interi (richiesta di Edoardo): «n» caselle tutte larghe uguali, separate da stacchi tutti larghi uguali,
- * dentro «dentro» pixel disegnati. Prova lo stacco più stretto (da 1 in su, sempre più stretto della casella) con cui
- * caselle e stacchi riempiono esattamente lo spazio. Se non c'è, caselle e stacchi restano uguali e i pixel che avanzano
- * diventano bordo, divisi tra i due lati (margine). Con la barra di 40 (dentro 38): 8 caselle da 3 e 7 stacchi da 2;
- * con 4 tacche (Danza macabra) 4 caselle da 8 e 3 stacchi da 2.
+ * su «larga» pixel disegnati (la larghezza intera della barra). Prova lo stacco più stretto (da 1 in su, sempre più stretto
+ * della casella) con cui caselle e stacchi fanno esattamente «larga». Se non c'è, caselle e stacchi restano uguali e i pixel
+ * che avanzano diventano bordo, divisi tra i due lati (margine). Con la barra di 39: 8 caselle da 4 e 7 stacchi da 1
+ * (8 × 4 + 7 = 39); con 4 tacche (Danza macabra) 4 caselle da 9 e 3 stacchi da 1 (4 × 9 + 3 = 39).
  */
-export function caselleIntere(dentro: number, n: number): { casella: number; stacco: number; margine: number } {
-  for (let stacco = 1; stacco <= dentro; stacco++) {
-    const resto = dentro - (n - 1) * stacco;
+export function caselleIntere(larga: number, n: number): { casella: number; stacco: number; margine: number } {
+  for (let stacco = 1; stacco <= larga; stacco++) {
+    const resto = larga - (n - 1) * stacco;
     if (resto < n) break;
     if (resto % n === 0 && resto / n > stacco) return { casella: resto / n, stacco, margine: 0 };
   }
-  const casella = Math.max(1, Math.floor((dentro - (n - 1)) / n));
-  return { casella, stacco: 1, margine: Math.floor((dentro - n * casella - (n - 1)) / 2) };
+  const casella = Math.max(1, Math.floor((larga - (n - 1)) / n));
+  return { casella, stacco: 1, margine: Math.floor((larga - n * casella - (n - 1)) / 2) };
 }

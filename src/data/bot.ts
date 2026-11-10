@@ -6,6 +6,15 @@ import type { IdArma } from './armi';
 import type { IdDono } from './doni';
 import type { IdAmuleto } from './rosario';
 
+/**
+ * Solo per le misure con il bot (10/11, nessun effetto sul gioco): ?minuto3=leggero e ?lanterna=forte.
+ * minuto3: l'orda del minuto 3 e il copione dalle 3:00; lanternaForte: danno in più della Lanterna.
+ */
+export const PROVE_BOT = {
+  minuto3: { orda: 'zombi', copione: { zombi: 3, scheletro: 1 } },
+  lanternaForte: 0.25,
+} as const;
+
 export const BOT = {
   direzioni: 16, // a ogni passo prova 16 direzioni e sceglie la più sicura
   sguardo: 120, // quanto lontano guarda in ogni direzione (pixel di gioco)

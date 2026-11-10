@@ -15,7 +15,7 @@ import { ingrandimento } from './asset';
 import type { Caso } from './caso';
 import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
-import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE } from '../data/nemici';
+import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE, type TipoNemico } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { REAZIONI, STATI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
@@ -105,6 +105,7 @@ export class Orda {
   private fianco = new Float32Array(CAPIENZA); // accerchia: di quanto gira intorno al giocatore (radianti, ±)
   // orde: a quale orda appartiene (0 = nessuna) e il suo posto nella formazione rispetto al centro
   private branco = new Uint8Array(CAPIENZA);
+  private daOrda = new Uint8Array(CAPIENZA); // 1 = è nato in un'orda (resta anche quando esce dalla formazione: per la simulazione)
   private postoX = new Float32Array(CAPIENZA);
   private postoY = new Float32Array(CAPIENZA);
   private bAttiva = new Uint8Array(MAX_BRANCHI);
@@ -297,6 +298,11 @@ export class Orda {
   /** Il nemico i fa parte di un'orda in formazione (per la simulazione: cosa uccide il personaggio). */
   inOrda(i: number): boolean {
     return this.branco[i] > 0;
+  }
+
+  /** Il nemico i è nato in un'orda, anche se adesso non è più in formazione (per la simulazione). */
+  natoInOrda(i: number): boolean {
+    return this.daOrda[i] > 0;
   }
 
   /** Ritmo delle zone (Stati certi): una zona o un'abilità può lasciare ora lo stato aff (1–4) sul nemico i? */
@@ -528,6 +534,7 @@ export class Orda {
       const dietro = cuneo ? r * spazio * 0.8 : fila * spazio; // più lontano da te
       const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA, tipo);
       this.branco[i] = b + 1;
+      this.daOrda[i] = 1;
       if (secondi >= ORDE.saluteDal * 60) this.salute[i] = this.saluteMassima[i] *= ORDE.salute;
       this.postoX[i] = -sn * lato + c * dietro;
       this.postoY[i] = c * lato + sn * dietro;
@@ -642,7 +649,7 @@ export class Orda {
     this.salute[i] = this.saluteMassima[i] = tipo.salute * (1 + DIFFICOLTA.salutePerMinuto * m + DIFFICOLTA.saluteAccelera * oltre * oltre);
     this.anime[i] = tipo.anime;
     this.elite[i] = this.anello[i] = 0;
-    this.fase[i] = this.mossa[i] = this.volta[i] = this.branco[i] = 0;
+    this.fase[i] = this.mossa[i] = this.volta[i] = this.branco[i] = this.daOrda[i] = 0;
     this.fianco[i] = (this.caso.numero() < 0.5 ? -1 : 1) * (IA.accerchia.angolo[0] + this.caso.numero() * (IA.accerchia.angolo[1] - IA.accerchia.angolo[0]));
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
@@ -760,6 +767,7 @@ export class Orda {
     this.tipo[i] = this.tipo[u];
     this.elite[i] = this.elite[u];
     this.anello[i] = this.anello[u];
+    this.daOrda[i] = this.daOrda[u];
     this.fase[i] = this.fase[u];
     this.mossa[i] = this.mossa[u];
     this.volta[i] = this.volta[u];
@@ -789,8 +797,12 @@ export class Orda {
     this.y[i] = gy + s * d;
   }
 
+  /** Solo per il bot (misure): righe del copione al posto di quelle di COPIONE (per esempio ?minuto3=leggero). */
+  copioneDiProva: Partial<Record<number, Partial<Record<TipoNemico['id'], number>>>> = {};
+
   private scegliTipo(secondi: number): number {
-    const riga = COPIONE[Math.min(COPIONE.length - 1, Math.floor(secondi / 60))];
+    const k = Math.min(COPIONE.length - 1, Math.floor(secondi / 60));
+    const riga = this.copioneDiProva[k] ?? COPIONE[k];
     let totale = 0;
     for (const t of NEMICI) totale += riga[t.id] ?? 0;
     let r = this.caso.numero() * totale, scelto = 0;

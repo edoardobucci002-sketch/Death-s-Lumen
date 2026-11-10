@@ -306,6 +306,7 @@ export class Arsenale {
   private visitaVicino = (j: number): void => this.vicino(j);
   private visitaGrano = (j: number): void => this.vicinoGrano(j);
   private scelti = new Int32Array(8); // bersagli già presi dalla raffica di candele
+  moltLanterna = 1; // solo per le misure con il bot (?lanterna=forte): danno della Lanterna × questo
   private mX = 0; // la direzione scelta da mira()
   private mY = 0;
 
@@ -532,12 +533,12 @@ export class Arsenale {
       case 'lanterna': {
         const l = a.livelli[p.livello - 1];
         if (this.unite.lanterna) {
-          this.arco(this.dx, this.dy, l.raggio * area, 360, l.danno, U.faro.abbaglia);
+          this.arco(this.dx, this.dy, l.raggio * area, 360, l.danno * this.moltLanterna, U.faro.abbaglia);
           return l.ricarica;
         }
         this.mira(MIRA.lanterna);
-        this.arco(this.mX, this.mY, l.raggio * area, l.ampiezza, l.danno);
-        if (l.spalle) this.arco(-this.mX, -this.mY, l.raggio * area, l.ampiezza, l.danno);
+        this.arco(this.mX, this.mY, l.raggio * area, l.ampiezza, l.danno * this.moltLanterna);
+        if (l.spalle) this.arco(-this.mX, -this.mY, l.raggio * area, l.ampiezza, l.danno * this.moltLanterna);
         return l.ricarica;
       }
       case 'pala': {
