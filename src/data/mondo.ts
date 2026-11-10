@@ -66,7 +66,8 @@ export const PIEDI_SEGNAPOSTO = { x: 28, y: 61 } as const;
 
 /**
  * Barra della salute sotto i piedi del personaggio (pixel di gioco): un rettangolo rosso con dentro
- * «salute rimasta/salute massima», che si accorcia da destra quando si prende danno. Misure e colori da rivedere.
+ * «salute rimasta/salute massima», che si accorcia da destra quando si prende danno. Danno e cura scorrono
+ * (src/sistema/scorrimento.ts): il pezzo perso resta ambra e si consuma, quello guadagnato è verde e si riempie. Misure e colori da rivedere.
  * Gli stessi colori valgono per la barra di Seth nell'HUD (src/sistema/hud.ts).
  */
 export const BARRA_SALUTE = {
@@ -76,4 +77,8 @@ export const BARRA_SALUTE = {
   rosso: '#c0262d', // la salute che resta
   vuoto: '#3a0c10', // la salute che manca
   bordo: '#120606',
+  danno: '#d98a2b', // il pezzo appena perso, ambra, che si consuma (le cifre bianche ci si leggono)
+  cura: '#6fbf4a', // il pezzo appena guadagnato, verde, che il rosso riempie
+  // il valore mostrato raggiunge quello vero in «durata» secondi; mai più lento di «minimo» della salute massima al secondo
+  scorrimento: { durata: 0.5, minimo: 0.3 },
 } as const;

@@ -640,7 +640,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Ricollocamento | oltre 2,2 × 48 px fuori dallo schermo | torna davanti al giocatore, entro ±0,7 radianti dalla direzione in cui cammina |
 | Separazione tra nemici | forza 0,5; si toccano sotto il 75% della somma dei raggi | i fantasmi attraversano gli altri |
 | Sprite segnaposto V0 | ingranditi × 2 | disegnati per personaggi di 34 px |
-| Barra della salute | rettangolo rosso 40 × 9 pixel, 5 px sotto i piedi (si allarga se i numeri non ci stanno), con «salute rimasta/massima» in cifre bianche; il rosso si accorcia da destra col danno | decisa da Edoardo: sotto il personaggio, non in alto; rettangolo semplice con i numeri (10/11). Misure e colori *da rivedere* (`src/data/mondo.ts`) |
+| Barra della salute | rettangolo rosso 40 × 9 pixel, 5 px sotto i piedi (si allarga se i numeri non ci stanno), con «salute rimasta/massima» in cifre bianche; danno e cura scorrono in 0,5 s (mai più lenti del 30% della salute massima al secondo): il pezzo perso resta ambra e si consuma, quello guadagnato è verde e il rosso lo riempie; i numeri seguono. La barra di Seth fa lo stesso | decisa da Edoardo: sotto il personaggio, non in alto; rettangolo semplice con i numeri (10/11). Misure e colori *da rivedere* (`src/data/mondo.ts`) |
 | Lampo quando sei colpito | 0,1 s | bianco pieno |
 | Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 

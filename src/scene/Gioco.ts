@@ -32,6 +32,7 @@ import { Anime } from '../sistema/anime';
 import { Arsenale, FONTI, type Bonus } from '../sistema/armi';
 import { Bot } from '../sistema/bot';
 import { suona, audioAttivo, impostaAudio } from '../sistema/audio';
+import { scorri } from '../sistema/scorrimento';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Doni, type Dono } from '../sistema/doni';
@@ -73,6 +74,12 @@ const SOGLIA = (id: IdOggetto): number => SBLOCCHI_OGGETTI.find((o) => o.id === 
 
 /** «#c0262d» → numero, per i colori di Phaser. */
 const esadecimale = (h: string): number => parseInt(h.slice(1), 16);
+/** Quante cifre ha un numero intero (senza creare stringhe a ogni fotogramma). */
+const quanteCifre = (n: number): number => {
+  let c = 1;
+  while (n >= 10) { n = Math.floor(n / 10); c++; }
+  return c;
+};
 
 export class Gioco extends Phaser.Scene {
   pg!: Personaggio;
@@ -169,6 +176,7 @@ export class Gioco extends Phaser.Scene {
   private saluteMostrata = -1; // «salute*10000+massima» dell'ultimo disegno
   private saluteLarga: number = BARRA_SALUTE.larghezza;
   private saluteTestoX = 0;
+  private saluteVista = 0; // la salute che la barra mostra: scorre verso quella vera
   private zSalute = 1;
   private misureBuio = { w: 0, h: 0 };
   private comandi!: Comandi;
@@ -273,6 +281,7 @@ export class Gioco extends Phaser.Scene {
     this.saluteRett = this.add.graphics().setDepth(PROFONDITA.barra);
     this.saluteNumeri = this.add.bitmapText(0, 0, 'cifre-nette', '').setOrigin(0).setDepth(PROFONDITA.barra + 0.1);
     this.saluteMostrata = -1;
+    this.saluteVista = this.salute;
     this.scalaSalute();
 
     const interfaccia = document.getElementById('interfaccia')!;
@@ -1432,13 +1441,13 @@ export class Gioco extends Phaser.Scene {
     this.buio.setTexture(this.foriBuio && this.rompibili && this.chiazze ? this.rompibili.buio(chiaveBuio, this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam, this.chiazze) : chiaveBuio);
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
     this.buio.setPosition(bx, by);
-    this.disegnaSalute(px, py);
+    this.disegnaSalute(px, py, this.fermo() ? 0 : dt);
     this.hud.mostraRosario(this.graniUsati(), this.grani(), this.amuletiPosseduti.length);
     const boss = this.orda.mietitore();
     this.hud.aggiorna(
       this.secondi, !this.finito && this.salute < this.saluteMassima * COMBATTIMENTO.saluteBassa, this.livello,
       this.esperienza / animePerLivello(this.livello), this.animeTotali,
-      boss >= 0 ? Math.max(0, this.orda.salute[boss]) : -1, this.ceraRaccolta, boss >= 0 ? this.orda.saluteMassima[boss] : 1,
+      boss >= 0 ? Math.max(0, this.orda.salute[boss]) : -1, this.ceraRaccolta, boss >= 0 ? this.orda.saluteMassima[boss] : 1, this.fermo() ? 0 : dt,
     );
   }
 
@@ -1457,27 +1466,35 @@ export class Gioco extends Phaser.Scene {
 
   /**
    * Barra della salute sotto i piedi: rettangolo con il rosso che si accorcia da destra e «rimasta/massima» al centro.
-   * Il disegno e la scritta si rifanno solo quando i numeri cambiano; altrimenti si sposta e basta.
+   * Il valore mostrato scorre verso quello vero: col danno il pezzo perso resta ambra e si consuma,
+   * con la cura il pezzo guadagnato è verde e il rosso lo riempie; i numeri seguono il valore mostrato.
+   * Il disegno e la scritta si rifanno solo quando cambia qualcosa; altrimenti si sposta e basta.
    */
-  private disegnaSalute(px: number, py: number): void {
+  private disegnaSalute(px: number, py: number, dt: number): void {
     const b = BARRA_SALUTE, z = this.zSalute;
-    const ora = Math.max(0, Math.ceil(this.salute)), max = Math.max(1, Math.round(this.saluteMassima));
-    const chiave = ora * 10000 + max;
+    const vera = Math.max(0, Math.min(this.salute, this.saluteMassima)), max = Math.max(1, Math.round(this.saluteMassima));
+    this.saluteVista = scorri(this.saluteVista, vera, this.saluteMassima, dt);
+    const ora = Math.max(0, Math.ceil(this.saluteVista));
+    const testo = (quanteCifre(ora) + 1 + quanteCifre(max)) * 4 - 1; // cifre larghe 3 più una colonna vuota, l'ultima non conta
+    const L = Math.max(b.larghezza, testo + 4), dentro = L - 2;
+    const pxVista = Math.round(dentro * Math.min(1, this.saluteVista / max)), pxVera = Math.round(dentro * Math.min(1, vera / max));
+    const chiave = ((ora * 10000 + max) * 1000 + pxVista) * 1000 + pxVera;
     if (chiave !== this.saluteMostrata) {
       this.saluteMostrata = chiave;
       this.saluteNumeri.setText(`${ora}/${max}`);
-      const testo = this.saluteNumeri.text.length * 4 - 1; // cifre larghe 3 più una colonna vuota, l'ultima non conta
-      const L = (this.saluteLarga = Math.max(b.larghezza, testo + 4));
-      const dentro = L - 2, rosso = Math.round(dentro * Math.min(1, ora / max));
+      this.saluteLarga = L;
+      const rosso = Math.min(pxVista, pxVera), scia = Math.max(pxVista, pxVera) - rosso;
       const g = this.saluteRett.clear();
       g.fillStyle(esadecimale(b.bordo)).fillRect(0, 0, L, b.altezza);
       g.fillStyle(esadecimale(b.vuoto)).fillRect(1, 1, dentro, b.altezza - 2);
       if (rosso > 0) g.fillStyle(esadecimale(b.rosso)).fillRect(1, 1, rosso, b.altezza - 2);
+      if (scia > 0) g.fillStyle(esadecimale(pxVista > pxVera ? b.danno : b.cura)).fillRect(1 + rosso, 1, scia, b.altezza - 2);
       this.saluteTestoX = Math.floor((L - testo) / 2);
     }
     const sx = px - Math.floor((this.saluteLarga * z) / 2), sy = py + b.distanza;
     this.saluteRett.setPosition(sx, sy).setVisible(!this.morto);
-    this.saluteNumeri.setPosition(sx + this.saluteTestoX * z, sy + Math.floor((b.altezza - 5) / 2) * z).setVisible(!this.morto);
+    const tx = sx + this.saluteTestoX * z, ty = sy + Math.floor((b.altezza - 5) / 2) * z;
+    this.saluteNumeri.setPosition(tx, ty).setVisible(!this.morto);
   }
 
   /** Il campo vero: sul telefono in verticale finisce al bordo delle fasce, per la telecamera e per tutta la logica «sullo schermo». */

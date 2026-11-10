@@ -13,6 +13,7 @@ import { adattaZoom, angoliFascia, arte, bordiHud, fasce, immagine, ingr, masche
 import { Pausa, type DatiPausa, type SchedaPausa } from './pausa';
 import { scritta, scriviNel, tela } from './scritte';
 import { disponiTasto, scalaTasti, tasto } from './tasti';
+import { scorri } from './scorrimento';
 
 /** Un'arma o un dono posseduto, per le caselle e i riepiloghi. */
 export interface VoceBuild {
@@ -97,13 +98,16 @@ class Barra {
 class BarraSalute {
   el: HTMLElement;
   private piena = blocco('hud-salute-piena');
+  private scia = blocco('hud-salute-piena'); // il pezzo appena perso (ambra) o guadagnato (verde)
   private numeri = blocco('hud-salute-numeri');
   private dentro = 1; // larghezza interna, pixel di gioco
   private z = 1;
-  private ora = -1;
+  private vera = -1; // −1: nessun boss
+  private vista = 0; // la salute mostrata: scorre verso quella vera (src/sistema/scorrimento.ts)
   private max = 1;
+  private chiave = -1; // ultimo disegno: numero e pixel
   constructor(classe: string, private finestra: string) {
-    this.el = blocco(`${classe} hud-salute`, blocco('hud-salute-vuota', this.piena), this.numeri);
+    this.el = blocco(`${classe} hud-salute`, blocco('hud-salute-vuota', this.piena, this.scia), this.numeri);
     Object.assign(this.el.style, { background: BARRA_SALUTE.bordo });
     Object.assign((this.el.firstElementChild as HTMLElement).style, { background: BARRA_SALUTE.vuoto });
     this.piena.style.background = BARRA_SALUTE.rosso;
@@ -123,18 +127,31 @@ class BarraSalute {
     const v = this.el.firstElementChild as HTMLElement;
     posa(v, z, z, m);
     misura(v, L - 2, H - 2, z, m);
-    this.piena.style.height = '100%';
+    this.piena.style.height = this.scia.style.height = '100%';
     Object.assign(this.numeri.style, { left: '0', top: '0', width: '100%', height: `${H * z * px}px`, lineHeight: `${H * z * px}px`, fontSize: `${TESTI.seth * z * px}px` });
-    this.mostra(this.ora, this.max, m, true);
+    this.chiave = -1;
+    this.disegna(m);
   }
-  /** Salute rimasta e massima; la larghezza del rosso va a pixel di gioco interi. */
-  mostra(ora: number, max: number, m: MisureHud, sempre = false): void {
-    if (ora === this.ora && max === this.max && !sempre) return;
-    this.ora = ora;
-    this.max = max;
-    const l = Math.round(this.dentro * Math.max(0, Math.min(1, ora / Math.max(1, max))));
-    this.piena.style.width = `${l * this.z * m.px}px`;
-    this.numeri.textContent = ora < 0 ? '' : `${ora}/${max}`;
+  /** Salute vera e massima (vera −1 = nessun boss); dt in secondi per lo scorrimento. Quando il boss arriva, parte piena. */
+  mostra(vera: number, max: number, dt: number, m: MisureHud): void {
+    if (vera >= 0 && (this.vera < 0 || max !== this.max)) this.vista = vera;
+    this.vera = vera;
+    this.max = Math.max(1, max);
+    if (vera >= 0) this.vista = scorri(this.vista, vera, this.max, dt);
+    this.disegna(m);
+  }
+  private disegna(m: MisureHud): void {
+    const ora = this.vera < 0 ? -1 : Math.ceil(this.vista);
+    const pv = Math.round(this.dentro * Math.max(0, Math.min(1, this.vista / this.max)));
+    const pr = Math.round(this.dentro * Math.max(0, Math.min(1, this.vera / this.max)));
+    const chiave = ((ora + 1) * 1000 + pv) * 1000 + pr;
+    if (chiave === this.chiave) return;
+    this.chiave = chiave;
+    const rosso = Math.min(pv, pr), scia = Math.max(pv, pr) - rosso, u = this.z * m.px;
+    this.piena.style.width = `${rosso * u}px`;
+    this.scia.hidden = scia <= 0;
+    Object.assign(this.scia.style, { left: `${rosso * u}px`, width: `${scia * u}px`, background: pv > pr ? BARRA_SALUTE.danno : BARRA_SALUTE.cura });
+    this.numeri.textContent = ora < 0 ? '' : `${ora}/${Math.round(this.max)}`;
   }
 }
 
@@ -253,7 +270,7 @@ export class Hud {
   }
 
   /** Aggiorna solo quando qualcosa cambia davvero, per non toccare la pagina a ogni fotogramma. */
-  aggiorna(secondi: number, saluteBassa: boolean, livello: number, parteEsperienza: number, anime: number, boss: number, cera = 0, bossMassima = 1): void {
+  aggiorna(secondi: number, saluteBassa: boolean, livello: number, parteEsperienza: number, anime: number, boss: number, cera = 0, bossMassima = 1, dt = 0): void {
     const s = Math.floor(secondi);
     if (s !== this.ultimoSecondo) {
       this.ultimoSecondo = s;
@@ -273,18 +290,17 @@ export class Hud {
       this.cera.textContent = `Cera ${cera}`;
     }
     this.xp.mostra(parteEsperienza, this.m);
-    // boss: salute rimasta (bossMassima è quella piena), oppure −1 se non c'è
+    // boss: salute rimasta (bossMassima è quella piena), oppure −1 se non c'è; la barra scorre anche a salute ferma
     const b = boss < 0 ? -1 : Math.ceil(boss);
+    if (b >= 0 || this.ultimoBoss >= 0) {
+      this.mietitore.mostra(b < 0 ? -1 : boss, bossMassima, dt, this.m);
+      this.seth.mostra(b < 0 ? -1 : boss, bossMassima, dt, this.m);
+    }
     if (b !== this.ultimoBoss) {
       const cambia = (b < 0) !== (this.ultimoBoss < 0);
       this.ultimoBoss = b;
       this.mietitore.el.hidden = b < 0 || this.conFasce;
       this.seth.el.hidden = b < 0 || !this.conFasce;
-      if (b >= 0) {
-        const mx = Math.round(bossMassima);
-        this.mietitore.mostra(b, mx, this.m);
-        this.seth.mostra(b, mx, this.m);
-      }
       if (cambia) this.disponi(); // l'avviso scende sotto la barra
     }
     this.bordo.hidden = !saluteBassa;

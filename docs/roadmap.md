@@ -96,7 +96,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Barre della salute (personaggio 40 × 9 px, Seth alta 12 px; rosso `#c0262d`, vuoto `#3a0c10`) e grandezza del conto alla rovescia dell'abilità (16) | GDD §HUD; `src/data/mondo.ts` (`BARRA_SALUTE`), `src/data/hud.ts` (`BARRA_SETH`, `TESTI`) |
+| Barre della salute (personaggio 40 × 9 px, Seth alta 12 px; rosso `#c0262d`, vuoto `#3a0c10`; scorrimento 0,5 s, ambra `#d98a2b` per il danno, verde `#6fbf4a` per la cura) e grandezza del conto alla rovescia dell'abilità (16) | GDD §HUD; `src/data/mondo.ts` (`BARRA_SALUTE`), `src/data/hud.ts` (`BARRA_SETH`, `TESTI`) |
 | Copione della notte, respiro (50 s + 10 s al 25%), comparse 1,4 + 2,9 m, tetto 250, bruti al massimo 100, copione e forme delle orde, preavviso 3 s, salute ×3 dal minuto 6, Lumen accorpato a 28 px: tutti i valori. Il bot vince 7 notti su 48 |
 | Mosaici: disegno V1, probabilità dell'urna (26%, misurata con il bot che cerca le urne), numeri del Bagliore (20 s, +30% velocità, luce × 1,5), raggio di raccolta 40 px | `docs/asset_da_creare.md`, `docs/GDD.md` |
 | Scoperta di un'Unione: Edoardo ha detto «arma e dono al livello massimo», ma l'unione oggi chiede il dono al 3 (5 è il massimo di molti doni). Rimandato al bilanciamento finale (6/11): per ora vale il livello dell'unione | GDD §8f; `LIVELLO_DONO_UNIONE` |
