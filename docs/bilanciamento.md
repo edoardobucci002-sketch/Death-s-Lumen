@@ -19,7 +19,7 @@ Quante notti servono per completare la Cappella è una domanda aperta: si decide
 
 **Il campione.** Con 48 notti per condizione l'incertezza è di circa ±12 punti: differenze più piccole sono rumore. Per il bilanciamento finale servono almeno 200 notti per condizione (circa 50 per personaggio).
 
-**Restano vincolanti, in tutte le condizioni, solo due cose:** Seth del minuto 5 è il primo vero ostacolo; nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota.
+**Restano vincolanti, in tutte le condizioni:** Seth del minuto 5 è il primo vero ostacolo; nessuno muore sempre prima del minuto 5, nemmeno con la Cappella vuota; **a Cappella vuota il Lampionaio muore prima del minuto 5 al massimo in 3 notti su 12** (decisione di Edoardo del 10/11). `npm run sim` controlla tutti e tre.
 
 Le righe qui sotto sono del 4/11, con il bot su un Pixel 7 e prima delle fasce: l'ultima simulazione è nel registro, alla voce «Campo vero».
 
@@ -39,6 +39,31 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - Il cero della fiaschetta e i Patti non ci sono ancora: ricontrollare quando arrivano.
 
 ## Registro
+
+### 10/11 (notte) — Stati certi e mira diventano la regola; ritmo delle zone; vincolo del Lampionaio
+
+Decisioni di Edoardo: la prova f degli Stati certi e Lanterna e Pala che mirano diventano la regola del gioco; ritmo delle zone di 1 s (*da rivedere*); il bot torna a girare intorno ai nemici. Nuovo vincolo: a Cappella vuota il Lampionaio muore prima del minuto 5 al massimo in 3 notti su 12. Nessun numero della notte è stato ritoccato per le vittorie.
+
+`npm run sim -- 12 tutti`, Cappella vuota e completa, semi 1001–1012, 12 notti per personaggio. **Partenza**: il codice prima di queste voci, con `stati=certi mira=1` (in quel codice, con la mira, il bot non girava intorno ai nemici). **Dopo**: le regole nuove di partenza, con il ritmo delle zone e il bot che gira. Mediana della morte tra le notti perse; parte del danno fatta dalle reazioni (Eclissi, Esorcismo, parte in più dell'Interramento), senza la maledizione.
+
+| Cappella | Personaggio | Vittorie (partenza → dopo) | Morti prima del 5 | Mediana della morte | Livello medio | Danno delle reazioni | Rivelazioni a notte |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| vuota | Lampionaio | 2 → 1 | 6 → **5** | 3:58 → 7:07 | 31 → 35 | 6,0% → 9,9% | 2562 → 3237 |
+| vuota | Becchino | 4 → 6 | 5 → 3 | 3:07 → 5:59 | 40 → 49 | 6,2% → 7,6% | 1304 → 2478 |
+| vuota | Badessa | 4 → 8 | 0 → 0 | 11:16 → 11:25 | 60 → 66 | 10,5% → 6,7% | 3152 → 4119 |
+| vuota | Strega | 4 → 6 | 0 → 0 | 11:27 → 11:30 | 67 → 70 | 12,7% → 14,5% | 2520 → 2933 |
+| completa | Lampionaio | 5 → 6 | 0 → 0 | 7:46 → 9:25 | 52 → 55 | 17,9% → 13,9% | 3461 → 9532 |
+| completa | Becchino | 11 → 11 | 0 → 0 | 11:40 → 7:45 (1 notte persa) | 68 → 66 | 15,2% → 15,3% | 5153 → 5076 |
+| completa | Badessa | 8 → 9 | 0 → 0 | 11:25 → 11:44 | 74 → 76 | 6,6% → 9,0% | 16 824 → 14 520 |
+| completa | Strega | 9 → 10 | 0 → 0 | 14:29 → 14:25 | 79 → 77 | 24,1% → 27,9% | 7808 → 7565 |
+
+In tutto: Cappella vuota 14 → **21 su 48**, completa 33 → **36 su 48**. Il Becchino torna a stare in piedi nei primi minuti perché il bot gira di nuovo intorno ai nemici (morti prima del 5 da 5 a 3).
+
+- **La Strega con il ritmo delle zone non scende**: vittorie 4 → 6 a Cappella vuota e 9 → 10 a completa (dentro il rumore di 12 notti). A Cappella completa le sue reazioni a notte scendono poco, da 21 258 a 19 779 (−7%): quelle fatte partire dall'abilità da 5522 a 4279, dall'Acqua santa da 5703 a 5033. Perché poco: lo stato dura 3 s e una zona lo rinnova ogni 1 s, quindi i nemici dentro le pozze e il Rito proibito restano comunque sempre in stato; il ritmo toglie i rinnovi inutili, non la copertura. Per ridurre davvero servirebbe un ritmo vicino alla durata dello stato (3 s) o stati delle zone più corti: non applicato, da decidere.
+- **Il Lampionaio supera il vincolo**: a Cappella vuota muore prima del minuto 5 in **5 notti su 12** (il vincolo ne permette 3: **2 di troppo**). Muore tra 3:22 e 3:58 (3:22, 3:25, 3:27, 3:42, 3:58), tutte e 5 le volte per il **contatto con uno scheletro**: subito dopo l'orda a cuneo di scheletri del minuto 3 (al momento del colpo lo scheletro non era più in formazione: o l'orda si era già sciolta, o era uno scheletro delle comparse normali). Nessuna morte da Seth prima del 5. `npm run sim` ora lo segnala. Non corretto.
+- **Seth del 5 come primo ostacolo: non regge per il Becchino a Cappella vuota** (danno subito al minuto 55 prima di Seth, 52 durante); alla partenza non reggeva già né per il Becchino (67 prima, 38 durante) né per il Lampionaio, e a Cappella completa non reggeva per il Becchino (35 e 30), che ora regge (46 e 55). Il Becchino uccide Seth in 58 s in media: per lui il pericolo sono gli scheletri del minuto 3 più di Seth. Non corretto. Nessuno muore sempre prima del minuto 5.
+- **Controllo delle regole vecchie**: con `stati=caso mira=0` le notti sono identiche a quelle di oggi pomeriggio a stati spenti (48 notti, stesse vittorie e stessi numeri): gli interruttori riportano davvero al gioco di prima.
+- **Correzione di una misura**: la simulazione contava uno «stato lasciato» anche quando il dado (stati a caso) o il ritmo saltavano il colpo, perché leggeva un segnale rimasto dal colpo prima. Le notti non cambiano (rifatte, identiche); cambiano solo i conteggi degli stati per arma. Nella voce del pomeriggio i Sampietrini a stati spenti lasciano **332** Sepolto a notte, non 4816; i numeri con gli Stati certi (f) erano giusti.
 
 ### 10/11 (sera) — Correzioni senza effetto sulle notti, e misure: Stati certi a pezzi, Sampietrini, amuleti rari, mira
 
@@ -68,12 +93,12 @@ Qui si misura: nessun numero della notte normale è cambiato.
 
 | Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Mediana | Livello | Notti con i Sampietrini (vinte) | Scelti/offerti | Danno a notte (parte del totale) | Sepolto lasciato a notte | Interramenti fatti partire |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| spenti, con | 18/48 (3, 5, 7, 3) | 0 | 11:43 | 60 | 28 (8) | 181/385 | 392 mila (7,8%) | 4816 | 227 |
+| spenti, con | 18/48 (3, 5, 7, 3) | 0 | 11:43 | 60 | 28 (8) | 181/385 | 392 mila (7,8%) | ~~4816~~ 332 (corretto la sera: vedi sotto) | 227 |
 | spenti, senza | **32/48** (7, 10, 8, 7) | 0 | 15:00 | 69 | – | – | – | – | – |
 | f, con | 36/48 (8, 11, 8, 9) | 0 | 15:00 | 71 | 20 (16) | 132/373 | 653 mila (7,1%) | 3729 | 2667 |
 | f, senza | 37/48 (7, 11, 10, 9) | 1 | 15:00 | 71 | – | – | – | – | – |
 
-- A stati spenti i Sampietrini **costano 14 vittorie su 48**: nelle notti in cui il bot li prende ne vince 8 su 28. Fanno poco danno (7,8%) e prendono il posto di un'arma forte; il Sepolto che lasciano (4800 a notte) fa partire pochi Interramenti (227).
+- A stati spenti i Sampietrini **costano 14 vittorie su 48**: nelle notti in cui il bot li prende ne vince 8 su 28. Fanno poco danno (7,8%) e prendono il posto di un'arma forte; il Sepolto che lasciano (~~4800~~ 332 a notte, corretto la sera) fa partire pochi Interramenti (227).
 - Con gli Stati certi la differenza sparisce (36 contro 37): i Sampietrini fanno partire 2667 Interramenti a notte, 12 volte di più, e le notti con loro vinte sono 16 su 20.
 
 **3 · Amuleti rari** (`npm run sim -- 3 tutti meta=max amuleto=…`, 12 notti per riga, semi 1001–1003, Stati certi spenti; con 12 notti l'incertezza è di circa ±3 vittorie: si guardano solo le cose grandi). Danno subito e salute curata sono medie a notte.

@@ -83,7 +83,7 @@ Al massimo 6 armi, ognuna fino al livello 8. Le quattro armi iniziali sono **esc
 
 #### Lanterna
 
-Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge di 259 (110 × 2,35). Raggi già × 2,35. Arma iniziale del Lampionaio, esclusiva. Con l'interruttore di prova «Lanterna e Pala mirano» (vedi Pala) l'arco si gira verso il nemico più vicino entro 260 px.
+Arco centrato sul nemico più vicino entro 260 px (se non ce n'è, sulla direzione in cui cammini), misurato dal personaggio; respinge di 259 (110 × 2,35). Raggi già × 2,35. Arma iniziale del Lampionaio, esclusiva. Vedi «Lanterna e Pala mirano» sotto la Pala.
 
 | Lv | Ricarica (s) | Danno | Raggio | Ampiezza arco (°) | Colpo alle spalle | Cosa cambia |
 |---|---|---|---|---|---|---|
@@ -98,9 +98,9 @@ Arco centrato sulla direzione in cui cammini, misurato dal personaggio; respinge
 
 #### Pala
 
-Impatto circolare 61 px davanti a te (26 × 2,35), nella direzione di cammino; respinge di 423 (180 × 2,35). Raggi già × 2,35. A Lv 8 un secondo colpo alle spalle 0,22 s dopo. Arma iniziale del Becchino, esclusiva.
+Impatto circolare 61 px davanti a te (26 × 2,35), nella direzione di cammino, oppure centrato sul nemico più vicino entro 150 px (vedi sotto); respinge di 423 (180 × 2,35). Raggi già × 2,35. A Lv 8 un secondo colpo alle spalle 0,22 s dopo. Arma iniziale del Becchino, esclusiva.
 
-**Lanterna e Pala mirano** (prova, `MIRA` in `src/data/armi.ts`, proposta di Edoardo del 10/11, *da rivedere*): un interruttore del Laboratorio (scheda Oggetti, spento di partenza; per il bot `?mira=1`). Acceso, l'arco della Lanterna si centra sul nemico più vicino entro 260 px (il raggio della luce) e l'impatto della Pala cade sul nemico più vicino entro 150 px; senza nemici così vicini colpiscono verso dove cammini, come sempre. Il colpo alle spalle del livello 8 resta alle spalle della direzione del colpo. Con la mira accesa il bot non gira intorno ai nemici per tenerli davanti (`?davanti=1` glielo lascia fare, per confrontare).
+**Lanterna e Pala mirano** (regola del gioco dal 10/11, decisione di Edoardo; `MIRA` in `src/data/armi.ts`, valori *da rivedere*): l'arco della Lanterna si centra sul nemico più vicino entro 260 px (il raggio della luce) e l'impatto della Pala cade sul nemico più vicino entro 150 px; senza nemici così vicini colpiscono verso dove cammini. Il colpo alle spalle del livello 8 resta alle spalle della direzione del colpo. Il bot continua a girare intorno ai nemici per tenerli davanti. Per confrontare con la regola di prima: Laboratorio, scheda Oggetti, «Lanterna e Pala verso dove cammini» (spento di partenza; per il bot `?mira=0`).
 
 | Lv | Ricarica (s) | Danno | Raggio | Distanza colpo | Colpo doppio | Cosa cambia |
 |---|---|---|---|---|---|---|
@@ -455,7 +455,7 @@ Lumen (le anime): tre dimensioni che pulsano con 4 fotogrammi, nei colori delle 
 
 ## 8c. Affinità, stati e reazioni (`src/data/stati.ts`)
 
-Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato di 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s). Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa di bruti, élite e Seth compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole giallo, croce bianca e oro, teschio viola, lapide grigio terra (la lapide resta anche durante l'Interramento). Sui nemici comuni lo stato funziona lo stesso, ma senza simbolo. Niente cambi di colore né intermittenza; al massimo 40 simboli sullo schermo (*da rivedere*), con questa precedenza: prima Seth, poi le élite, poi i bruti più vicini al personaggio.
+Ogni arma e ogni abilità ha un'affinità. **Regola del gioco dal 10/11 (Stati certi, decisione di Edoardo; numeri in `STATI_CERTI`, tutti *da rivedere*): ogni colpo lascia sul nemico lo stato della sua affinità**, per 3 s. Le armi a zona (Turibolo, Acqua santa, Velo funebre) e le abilità speciali feriscono ogni 0,3 s come prima, ma lasciano il loro stato sullo stesso nemico al massimo una volta ogni 1 s (ritmo delle zone, `STATI_CERTI.ritmo`); i colpi diretti non hanno limite; le chiazze che bruciano non lasciano stati. Gli stati hanno un loro generatore del caso, così non cambiano carte, comparse e drop. Sopra la testa di bruti, élite e Seth compare il simbolo dello stato, grande il doppio dei suoi 11×11 pixel: sole giallo, croce bianca e oro, teschio viola, lapide grigio terra (la lapide resta anche durante l'Interramento). Sui nemici comuni lo stato funziona lo stesso, ma senza simbolo. Niente cambi di colore né intermittenza; al massimo 40 simboli sullo schermo (*da rivedere*), con questa precedenza: prima Seth, poi le élite, poi i bruti più vicini al personaggio.
 
 | Affinità | Armi e abilità | Stato | Effetto |
 | --- | --- | --- | --- |
@@ -464,7 +464,16 @@ Ogni arma e ogni abilità ha un'affinità; colpendo lascia sul nemico uno stato 
 | Ombra | Bastone, Fuoco fatuo, Falce, Rito proibito | Maledetto | perde il 2% della salute massima al secondo (élite 40% di questo, Seth 10%) |
 | Terra | Pala, Sepoltura | Sepolto | resta fermo 0,6 s; poi per 4 s non può esserlo di nuovo |
 
-Due stati diversi sullo stesso nemico si consumano e fanno una reazione:
+Due stati diversi sullo stesso nemico si consumano e fanno una reazione. Con la regola del gioco:
+- **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
+- le **abilità speciali** ignorano la quiete (e il ritmo delle zone): il loro primo scatto fa reagire tutti i nemici nel cerchio che hanno uno stato diverso;
+- **Eclissi** (Luce + Ombra): esplosione di 64 px; danno = 10% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il doppio del danno del colpo che la innesca (se non c'è un colpo, come con Lucciola e Martire, 80);
+- **Rivelazione** (Luce + Sacro): +50% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno 2 anime;
+- **Esorcismo** (Sacro + Ombra): 3 fiammelle, ognuna al 60% del danno del colpo che la innesca (senza colpo, 18 danni); le fiammelle non lasciano stati, quindi niente reazioni a catena;
+- **Interramento** (Terra + qualsiasi): fermo 1,5 s e +30% danno subito (Seth a metà durata), più un effetto dallo stato consumato: Luce, +50% danno subito invece di +30%; Sacro, fermo 2,5 s; Ombra, la maledizione continua al doppio durante l'Interramento;
+- **disegno**: sui nemici comuni il nome della reazione non compare; al massimo 12 cerchi delle reazioni sullo schermo (oltre, la reazione avviene senza disegno).
+
+**Stati a caso (vecchi, solo per confrontare).** Un interruttore del Laboratorio (scheda Eventi, «Stati a caso (vecchi)», spento di partenza; per il bot `?stati=caso`) torna alla regola di prima: lo stato resta 3 s, nel 10% dei colpi (5% per nubi, pozze e abilità, che feriscono ogni 0,3 s), senza quiete né ritmo, e le reazioni valgono così:
 
 | Stati | Reazione | Effetto |
 | --- | --- | --- |
@@ -476,16 +485,6 @@ Due stati diversi sullo stesso nemico si consumano e fanno una reazione:
 Ruoli delle armi: l'esplosione del dardo del Bastone ferisce in 40 px al 35% del danno; il Fuoco fatuo insegue per primi élite e Seth (li vede 4 volte più vicini); ogni uccisione della Falce allunga la lama del 2% per 5 s (al massimo +30%); il fendente della Lama di luce segue la direzione in cui cammini; il secondo rintocco della Campana (livello 8) ferma i nemici per 0,6 s. I cerchi delle reazioni sono disegnati dal codice a retino finché Edoardo non disegna i suoi.
 
 La **scelta dei doni** è fatta di strisce orizzontali una sotto l'altra (`src/sistema/scheda.ts`, parole in `src/data/spiegazioni.ts`): nome, numeri grandi che cambiano («Danno 24 › 32»), il simbolo dello stato che lascia l'arma con il suo effetto, la reazione che si otterrebbe con un'arma già posseduta. Gli amuleti mostrano i grani dopo averli presi, vantaggio in verde, rovescio in rosso e l'avviso di Peccato se si sfora. Quando scatta una reazione il suo nome sale sopra il nemico, ingrandito × 2, nel colore dello stato con il contorno scuro: Eclissi viola, Rivelazione oro, Esorcismo ambra, Interramento seppia. Lo stesso nome torna al massimo ogni 2 s, al massimo 3 nomi sullo schermo insieme (oltre non si creano: la reazione avviene lo stesso). Il nome resta fuori da 90 px intorno al personaggio, spostandosi sopra quel cerchio, e dentro lo schermo (*da rivedere*). Stati e reazioni si leggono nella scheda **Stati** della pausa, che si apre anche dal «?» della scelta dei doni.
-
-**Stati certi (prova, `STATI_CERTI`; tutti i valori *da rivedere*).** Un interruttore del Laboratorio (scheda Eventi, «Stati certi», spento di partenza; per il bot `?stati=certi`) prova un'altra regola. Spento, tutto resta come sopra. Acceso, vale finché la pagina non si ricarica. Le quattro reazioni nuove si accendono anche una alla volta (Laboratorio, sotto «Stati certi»; per il bot `?stati=a` nessuna, `b` Eclissi, `c` Esorcismo, `d` Rivelazione, `e` Interramento, `f` tutte); una reazione spenta usa i numeri di sempre:
-- ogni colpo lascia lo stato della sua affinità: non contano il 10% e il 5% qui sopra, né le probabilità del Rosario spezzato e del Velo funebre;
-- **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
-- le **abilità speciali** ignorano la quiete: il loro primo scatto fa reagire tutti i nemici nel cerchio che hanno uno stato diverso;
-- **Eclissi**: danno = 10% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il doppio del danno del colpo che la innesca (se non c'è un colpo, come con Lucciola e Martire, il tetto di sempre);
-- **Esorcismo**: 3 fiammelle, ognuna al 60% del danno del colpo che la innesca (senza colpo, il danno di sempre);
-- **Rivelazione**: +50% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno 2 anime;
-- **Interramento**: come sopra, più un effetto dallo stato consumato: Luce, +50% danno subito invece di +30%; Sacro, fermo 2,5 s; Ombra, la maledizione continua al doppio durante l'Interramento;
-- **disegno**: sui nemici comuni il nome della reazione non compare; al massimo 12 cerchi delle reazioni sullo schermo (oltre, la reazione avviene senza disegno).
 
 ## 8d. Meta progressione (`src/data/meta.ts`)
 
@@ -597,7 +596,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
   - arma nuova 1
   - dono posseduto 1,2
   - dono nuovo 0,9
-- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare la scelta non si apre: «Pane e vino» (+40 salute) si prende da solo, una volta per livello, con una scritta verde «Pane e vino +40» che sale sopra la testa e il suono della cura (scritta *da rivedere*).
+- 2 rimescolate per partita (più quelle del Cero della scelta). Se non resta nulla da potenziare la scelta non si apre: «Pane e vino» (+40 salute) si prende da solo, una volta per livello, con una scritta verde «Pane e vino +40 salute» che sale sopra la testa e il suono della cura (scritta *da rivedere*).
 
 ## 10. Regole di combattimento
 
