@@ -312,21 +312,23 @@ Aura intorno al personaggio: la ricarica dice ogni quanto ferisce chi è dentro.
 
 Al massimo 6 doni passivi diversi.
 
-| Dono | Effetto per livello | Livello max |
-| --- | --- | --- |
-| Cuore di cera | +20 salute massima | 5 |
-| Sale nero | +10% danno | 5 |
-| Clessidra | −7% ricarica, si moltiplica (minimo 40% della ricarica base) | 5 |
-| Stoppino lungo | +10% area (raggi, archi, nubi, pozze, abilità, alone di luce; nel gioco nuovo anche il bonus area del personaggio allarga l'alone) | 5 |
-| Ali di falena | +8% velocità | 5 |
-| Calamita | +100% raggio di raccolta e +5% anime | 5 |
-| Erbe amare | +0,25 salute al secondo | 5 |
-| Scudo di ferro | −6% danno subito | 4 |
-| Specchio | +1 proiettile, nube, fiala, fuoco o falce | 1 |
-| Cera votiva | +15% durata di zone e stati | 5 |
-| Chiodo di bara | +6% probabilità di colpo critico (danno doppio) | 5 |
-| Lacrima di lumen | +1 sorso della fiaschetta (si riempie anche quel sorso) | 2 |
-| Campanella d'argento | +0,1 s di finestra per la schivata perfetta | 2 |
+Doni a 3 livelli (decisione di Edoardo del 10/11, *da rivedere*): i doni che arrivavano a 4 o 5 arrivano a 3, con lo stesso effetto al massimo; ogni livello ne dà una parte uguale. Specchio, Lacrima di lumen e Campanella d'argento restano come prima.
+
+| Dono | Effetto al massimo | Livello max | Per livello (arrotondato) |
+| --- | --- | --- | --- |
+| Cuore di cera | +100 salute massima | 3 | +33,3 |
+| Sale nero | +50% danno | 3 | +16,7% |
+| Clessidra | −30,43% ricarica, si moltiplica a ogni livello (minimo 40% della ricarica base) | 3 | −11,4% |
+| Stoppino lungo | +50% area (raggi, archi, nubi, pozze, abilità, alone di luce; nel gioco nuovo anche il bonus area del personaggio allarga l'alone) | 3 | +16,7% |
+| Ali di falena | +40% velocità | 3 | +13,3% |
+| Calamita | +500% raggio di raccolta e +25% anime | 3 | +166,7% e +8,3% |
+| Erbe amare | +1,25 salute al secondo | 3 | +0,42 |
+| Scudo di ferro | −24% danno subito | 3 | −8% |
+| Specchio | +1 proiettile, nube, fiala, fuoco o falce | 1 | +1 |
+| Cera votiva | +75% durata di zone e stati | 3 | +25% |
+| Chiodo di bara | +30% probabilità di colpo critico (danno doppio) | 3 | +10% |
+| Lacrima di lumen | +2 sorsi della fiaschetta (si riempie anche quel sorso) | 2 | +1 |
+| Campanella d'argento | +0,2 s di finestra per la schivata perfetta | 2 | +0,1 s |
 
 Gli oggetti nuovi non diluiscono i potenziamenti: il peso delle armi e dei doni non ancora presi si divide come se fossero sempre 6 e 9 (`CARTE.pool`, `src/data/progressione.ts`).
 

@@ -25,7 +25,7 @@ import { COMBATTIMENTO, COMPARSA, DIFFICOLTA, ELITE, MIETITORE, NEMICI, ORDE, ty
 import { EFFETTI } from '../data/effetti';
 import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, MAX_ARMI, type Arma } from '../data/armi';
 import { ABILITA } from '../data/abilita';
-import { PASSIVI, RICARICA_MINIMA, type IdDono } from '../data/doni';
+import { animeDono, effettoDono, PASSIVI, RICARICA_MINIMA, ricaricaDono, type IdDono } from '../data/doni';
 import { animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
 import { BOT } from '../data/bot';
@@ -595,7 +595,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Ricalcola statistiche e bonus delle armi da personaggio e doni passivi (GDD, sezioni 2 e 5). */
   private ricalcola(): void {
-    const per = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
+    const per = (id: IdDono): number => effettoDono(PASSIVI.find((q) => q.id === id)!, this.passivi[id]);
     const m = this.meta;
     this.saluteMassima = (BASE.salute + this.pg.salute + per('cuoreDiCera')) * (1 + m.salute) * (1 + (this.ha('martire') ? AM.martire.salute : 0));
     const grazia = this.grazia > 0;
@@ -603,10 +603,10 @@ export class Gioco extends Phaser.Scene {
     this.raccolta = BASE.raccolta * (1 + per('calamita') + m.raccolta);
     this.rigenerazione = this.pg.rigenerazione + per('erbeAmare');
     this.armatura = Math.min(BASE.armaturaMassima, BASE.armatura + this.pg.armatura + per('scudoDiFerro'));
-    this.moltAnime = 1 + this.passivi.calamita * (PASSIVI.find((q) => q.id === 'calamita')!.anime ?? 0) + m.anime + (this.ha('cuoreAvido') ? AM.cuoreAvido.anime : 0);
+    this.moltAnime = 1 + animeDono(PASSIVI.find((q) => q.id === 'calamita')!, this.passivi.calamita) + m.anime + (this.ha('cuoreAvido') ? AM.cuoreAvido.anime : 0);
     this.bonus.danno = this.pg.danno + per('saleNero') + m.danno + (grazia ? GRAZIA.danno : 0)
       + (this.ha('lanternaCieca') ? AM.lanternaCieca.danno : 0) + (this.sangueFreddoAttivo ? AM.sangueFreddo.danno : 0);
-    this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * (1 - PASSIVI.find((q) => q.id === 'clessidra')!.per) ** this.passivi.clessidra);
+    this.bonus.ricarica = Math.max(RICARICA_MINIMA, (1 - this.pg.ricarica) * ricaricaDono(PASSIVI.find((q) => q.id === 'clessidra')!, this.passivi.clessidra));
     this.bonus.area = this.pg.area + per('stoppinoLungo');
     this.bonus.quantita = per('specchio') + (this.ha('specchioRotto') ? AM.specchioRotto.proiettili : 0);
     this.bonus.durata = per('ceraVotiva');
@@ -942,7 +942,7 @@ export class Gioco extends Phaser.Scene {
   private dopoPassivo(): void {
     const prima = this.saluteMassima;
     this.ricalcola();
-    const dono = (id: IdDono): number => this.passivi[id] * PASSIVI.find((q) => q.id === id)!.per;
+    const dono = (id: IdDono): number => effettoDono(PASSIVI.find((q) => q.id === id)!, this.passivi[id]);
     this.orda.durataStati = 1 + dono('ceraVotiva');
     this.minacce.finestra = GRAZIA.finestra + dono('campanellaDArgento');
     const sorsi = FIASCHETTA.sorsi + dono('lacrimaDiLumen'), inPiu = sorsi - this.fiaschetta.massimo;

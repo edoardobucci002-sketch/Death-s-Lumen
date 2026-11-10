@@ -3,7 +3,7 @@
  * I numeri non si scrivono qui: si leggono da stati.ts e doni.ts, così cambiando un numero (anche dal Laboratorio) cambia il testo.
  */
 import { REAZIONI, STATI, type IdAffinita } from './stati';
-import type { IdDono, Passivo } from './doni';
+import { animeDono, effettoDono, ricaricaDono, type IdDono, type Passivo } from './doni';
 
 export const virgola = (v: number): string => String(Math.round(v * 100) / 100).replace('.', ',');
 const percento = (v: number): string => `${virgola(Math.round(v * 1000) / 10)}%`;
@@ -65,19 +65,19 @@ export const CAMPI_ARMA: Record<string, { nome: string; unita?: string; meglioBa
 const piu = (v: number): string => `+${percento(v)}`;
 const meno = (v: number): string => `−${percento(v)}`;
 export const DATI_DONI: Record<IdDono, (q: Passivo, l: number) => { nome: string; valore: string }[]> = {
-  cuoreDiCera: (q, l) => [{ nome: 'Salute', valore: `+${q.per * l}` }],
-  saleNero: (q, l) => [{ nome: 'Danno', valore: piu(q.per * l) }],
-  clessidra: (q, l) => [{ nome: 'Ricarica', valore: meno(q.per * l) }],
-  stoppinoLungo: (q, l) => [{ nome: 'Area', valore: piu(q.per * l) }],
-  aliDiFalena: (q, l) => [{ nome: 'Velocità', valore: piu(q.per * l) }],
-  calamita: (q, l) => [{ nome: 'Raccolta', valore: piu(q.per * l) }, { nome: 'Anime', valore: piu((q.anime ?? 0) * l) }],
-  erbeAmare: (q, l) => [{ nome: 'Salute/s', valore: `+${virgola(q.per * l)}` }],
-  scudoDiFerro: (q, l) => [{ nome: 'Danno subito', valore: meno(q.per * l) }],
-  specchio: (q, l) => [{ nome: 'Quantità', valore: `+${q.per * l}` }],
-  ceraVotiva: (q, l) => [{ nome: 'Durata', valore: piu(q.per * l) }],
-  chiodoDiBara: (q, l) => [{ nome: 'Critico', valore: percento(q.per * l) }],
-  lacrimaDiLumen: (q, l) => [{ nome: 'Sorsi', valore: `+${q.per * l}` }],
-  campanellaDArgento: (q, l) => [{ nome: 'Schivata', valore: `+${virgola(q.per * l)} s` }],
+  cuoreDiCera: (q, l) => [{ nome: 'Salute', valore: `+${Math.round(effettoDono(q, l))}` }],
+  saleNero: (q, l) => [{ nome: 'Danno', valore: piu(effettoDono(q, l)) }],
+  clessidra: (q, l) => [{ nome: 'Ricarica', valore: meno(1 - ricaricaDono(q, l)) }],
+  stoppinoLungo: (q, l) => [{ nome: 'Area', valore: piu(effettoDono(q, l)) }],
+  aliDiFalena: (q, l) => [{ nome: 'Velocità', valore: piu(effettoDono(q, l)) }],
+  calamita: (q, l) => [{ nome: 'Raccolta', valore: piu(effettoDono(q, l)) }, { nome: 'Anime', valore: piu(animeDono(q, l)) }],
+  erbeAmare: (q, l) => [{ nome: 'Salute/s', valore: `+${virgola(effettoDono(q, l))}` }],
+  scudoDiFerro: (q, l) => [{ nome: 'Danno subito', valore: meno(effettoDono(q, l)) }],
+  specchio: (q, l) => [{ nome: 'Quantità', valore: `+${effettoDono(q, l)}` }],
+  ceraVotiva: (q, l) => [{ nome: 'Durata', valore: piu(effettoDono(q, l)) }],
+  chiodoDiBara: (q, l) => [{ nome: 'Critico', valore: percento(effettoDono(q, l)) }],
+  lacrimaDiLumen: (q, l) => [{ nome: 'Sorsi', valore: `+${effettoDono(q, l)}` }],
+  campanellaDArgento: (q, l) => [{ nome: 'Schivata', valore: `+${virgola(effettoDono(q, l))} s` }],
 };
 
 /** Che cosa fa ogni dono, in parole: i numeri stanno già nei dati grandi. */

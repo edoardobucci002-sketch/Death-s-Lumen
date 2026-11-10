@@ -341,30 +341,31 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 {
   frase('Doni massimi', 'Al massimo {} doni passivi diversi', DO.MAX_PASSIVI);
   frase('Peso degli oggetti nuovi', 'come se fossero sempre {} e {}', PR.CARTE.pool.armi, PR.CARTE.pool.doni);
-  const t = tabella('| Dono | Effetto per livello |');
+  const t = tabella('| Dono | Effetto al massimo |');
   stessiNomi('Doni', t, DO.PASSIVI.map((d) => d.nome));
   const dono = (id) => DO.PASSIVI.find((d) => d.id === id);
+  // l'effetto al livello massimo (totale); la colonna «per livello» è solo una lettura arrotondata
   const EFFETTI_DONI = {
-    cuoreDiCera: (d) => ['+{} salute massima', d.per],
-    saleNero: (d) => ['+{}% danno', pct(d.per)],
-    clessidra: (d) => ['−{}% ricarica, si moltiplica (minimo {}% della ricarica base)', pct(d.per), pct(DO.RICARICA_MINIMA)],
-    stoppinoLungo: (d) => ['+{}% area', pct(d.per)],
-    aliDiFalena: (d) => ['+{}% velocità', pct(d.per)],
-    calamita: (d) => ['+{}% raggio di raccolta e +{}% anime', pct(d.per), pct(d.anime)],
-    erbeAmare: (d) => ['+{} salute al secondo', d.per],
-    scudoDiFerro: (d) => ['−{}% danno subito', pct(d.per)],
-    specchio: (d) => ['+{} proiettile', d.per],
-    ceraVotiva: (d) => ['+{}% durata', pct(d.per)],
-    chiodoDiBara: (d) => ['+{}% probabilità di colpo critico (danno {p})', pct(d.per), DO.MOLTIPLICA_CRITICO],
-    lacrimaDiLumen: (d) => ['+{} sorso', d.per],
-    campanellaDArgento: (d) => ['+{} s di finestra', d.per],
+    cuoreDiCera: (d) => ['+{} salute massima', d.totale],
+    saleNero: (d) => ['+{}% danno', pct(d.totale)],
+    clessidra: (d) => ['−{}% ricarica, si moltiplica a ogni livello (minimo {}% della ricarica base)', pct(d.totale), pct(DO.RICARICA_MINIMA)],
+    stoppinoLungo: (d) => ['+{}% area', pct(d.totale)],
+    aliDiFalena: (d) => ['+{}% velocità', pct(d.totale)],
+    calamita: (d) => ['+{}% raggio di raccolta e +{}% anime', pct(d.totale), pct(d.anime)],
+    erbeAmare: (d) => ['+{} salute al secondo', d.totale],
+    scudoDiFerro: (d) => ['−{}% danno subito', pct(d.totale)],
+    specchio: (d) => ['+{} proiettile', d.totale],
+    ceraVotiva: (d) => ['+{}% durata', pct(d.totale)],
+    chiodoDiBara: (d) => ['+{}% probabilità di colpo critico (danno {p})', pct(d.totale), DO.MOLTIPLICA_CRITICO],
+    lacrimaDiLumen: (d) => ['+{} sorsi', d.totale],
+    campanellaDArgento: (d) => ['+{} s di finestra', d.totale],
   };
   for (const d of DO.PASSIVI) {
     conRiga(t, d.nome, (r) => {
       inTesto(r['Livello max'], `${d.nome}: livello massimo`, '{}', d.massimo);
       if (!EFFETTI_DONI[d.id]) { diff.push(`Dono ${d.id}: senza corrispondenza nello script`); return; }
       const [modello, ...attesi] = EFFETTI_DONI[d.id](dono(d.id));
-      inTesto(r['Effetto per livello'], d.nome, modello, ...attesi);
+      inTesto(r['Effetto al massimo'], d.nome, modello, ...attesi);
     });
   }
 }

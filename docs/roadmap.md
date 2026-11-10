@@ -104,6 +104,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Notti esplorative del bot: una su tre; il bot non prende amuleti che lo manderebbero in Peccato | decisioni 10/11; `tools/sim.mjs` |
 | Copione della notte, respiro (50 s + 10 s al 25%), comparse 1,4 + 2,9 m, tetto 250, bruti al massimo 100, copione e forme delle orde, preavviso 3 s, salute ×3 dal minuto 6, Lumen accorpato a 28 px: tutti i valori. Il bot vince 7 notti su 48 |
 | Mosaici: disegno V1, probabilità dell'urna (26%, misurata con il bot che cerca le urne), numeri del Bagliore (20 s, +30% velocità, luce × 1,5), raggio di raccolta 40 px | `docs/asset_da_creare.md`, `docs/GDD.md` |
+| Doni a 3 livelli, stesso effetto al massimo; «Pane e vino» esce molto più spesso (14,5 volte a notte invece di 8,8): da decidere se va bene | GDD §5; `PASSIVI`, `src/data/doni.ts`; bilanciamento 10/11 |
 | Unioni: arma al livello 6 (decisione di Edoardo del 10/11, il valore 6 è da rivedere), dono al massimo, sblocco con «Sconfiggi Seth» | GDD §8f; `LIVELLO_ARMA_UNIONE`, `SBLOCCO_UNIONI` |
 | Animazione della scoperta: segnaposto dal codice; Edoardo la vuole semplice ma con la «scarica di dopamina» dell'evoluzione di un Pokémon; durata da decidere quando ci sarà quella vera; tela e fotogrammi da definire | GDD §8f; `asset_da_creare.md` |
 | Abbreviazioni della pausa: Attesa colpi, Colpi, Colpi extra, Durata zone | GDD «La pausa»; `NOMI_CHIARI` in `src/data/spiegazioni.ts` |
