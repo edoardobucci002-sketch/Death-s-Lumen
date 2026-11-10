@@ -239,7 +239,7 @@ Fendente orizzontale alto 103 px verso il lato in cui guardi; il colpo alle spal
 
 ### Armi nuove
 
-Si trovano tra le armi comuni, ma solo dopo averle sbloccate (sezione 8d). I numeri sono in `src/data/armi.ts`.
+Si trovano tra le armi comuni: Lapide, Rosario spezzato, Corvo e Velo funebre solo dopo averle sbloccate (sezione 8d), i Sampietrini da subito. I numeri sono in `src/data/armi.ts`.
 
 | Arma | Affinità | Cosa fa | Livello 1 | Livello 8 |
 | --- | --- | --- | --- | --- |
@@ -247,6 +247,7 @@ Si trovano tra le armi comuni, ma solo dopo averle sbloccate (sezione 8d). I num
 | Rosario spezzato | Ombra | un grano rimbalza tra i nemici vicini (entro 190 px); 35% di maledire a ogni rimbalzo | 18 danni, 4 rimbalzi, ogni 1,6 s | 40 danni, 8 rimbalzi, 2 grani, ogni 1,2 s |
 | Corvo | Luce | vola intorno, becca il nemico più vicino (entro 330 px) e fa tornare le anime ferme più lontane | 26 danni, 1 corvo, ogni 1 s, 1 anima | 44 danni, 3 corvi, ogni 0,75 s, 4 anime |
 | Velo funebre | Sacro | aura intorno al personaggio; 20% di consacrare a ogni colpo | 7 danni, raggio 110, ogni 0,5 s | 21 danni, raggio 160, ogni 0,4 s |
+| Sampietrini | Terra | lancia sampietrini sui nemici più vicini (entro 350 px); ognuno colpisce entro 40 px, lascia Sepolto come la Pala, rimbalza 90 px in avanti e colpisce di nuovo (*da rivedere*) | 14 danni, 1 sampietrino, 1 rimbalzo, ogni 1,5 s | 26 danni, 3 sampietrini, 2 rimbalzi, ogni 1,2 s |
 
 #### Lapide
 
@@ -262,6 +263,21 @@ Cade sul nemico con più salute in vista: scende da 180 px in 0,2 s, colpisce e 
 | 6 | 2,8 | 190 | 96 | 2 | +1 lapide. |
 | 7 | 2,4 | 190 | 110 | 2 | Cade più spesso, impatto più largo. |
 | 8 | 2,4 | 260 | 110 | 2 | +70 danno. |
+
+#### Sampietrini
+
+Terza arma di Terra (bozza confermata da Edoardo il 10/11), libera da subito, nei pesi delle armi comuni. Lancia sampietrini sui nemici più vicini entro 350 px: ognuno vola 0,45 s con un arco alto 60 px, colpisce entro 40 px e lascia Sepolto come la Pala (nel 10% dei colpi); poi rimbalza 90 px in avanti, nella direzione del lancio (0,3 s, arco di 24 px), e colpisce di nuovo. Le misure del volo sono di Claude, *da rivedere*. Sasso, icona e polvere provvisori (la polvere è l'impatto della Pala).
+
+| Lv | Ricarica (s) | Quantità | Rimbalzi | Danno | Cosa cambia |
+|---|---|---|---|---|---|
+| 1 | 1,5 | 1 | 1 | 14 | Lancia un sampietrino sul nemico più vicino: colpisce, rimbalza in avanti e colpisce di nuovo. |
+| 2 | 1,5 | 1 | 1 | 18 | +4 danno. |
+| 3 | 1,5 | 2 | 1 | 18 | +1 sampietrino. |
+| 4 | 1,35 | 2 | 1 | 18 | Lancia più spesso. |
+| 5 | 1,35 | 2 | 2 | 22 | +4 danno, +1 rimbalzo. |
+| 6 | 1,35 | 3 | 2 | 22 | +1 sampietrino. |
+| 7 | 1,2 | 3 | 2 | 22 | Lancia più spesso. |
+| 8 | 1,2 | 3 | 2 | 26 | +4 danno. |
 
 #### Rosario spezzato
 
@@ -542,8 +558,9 @@ Un'arma al livello 6 più il suo dono al livello massimo (decisione di Edoardo d
 | Fuoco fatuo | Calamita | Fuochi erranti | i fuochi raccolgono le anime entro 120 px |
 | Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso, al massimo uno ogni 45 s; con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico, che per 4 s cura il 3% della salute massima al secondo a chi ci sta dentro (non si somma con altre pozze; pozza tinta d'oro, disegno provvisorio dal codice) (*da rivedere*) |
 | Lama di luce | Ali di falena | Lama dell'alba | un secondo fendente parte da dove eri 0,5 s prima |
+| Sampietrini | Scudo di ferro | Selciato | un sampietrino che colpisce un nemico fermo (Sepolto, Interrato o fermato) rimbalza 1 volta in più, una sola volta per sasso (*da rivedere*) |
 
-Le 4 armi nuove (Lapide, Rosario spezzato, Corvo, Velo funebre) non hanno unioni. **Sblocco**: si sbloccano con l'impresa «Sconfiggi Seth», con qualsiasi personaggio, anche in una veglia persa (`SBLOCCO_UNIONI`, decisione di Edoardo del 10/11); la Cappella dice come e non le vende. Chi le aveva già sbloccate le tiene. Le Unioni **si svelano giocando**, in tre passi:
+Lapide, Rosario spezzato, Corvo e Velo funebre non hanno unioni. Lo Scudo di ferro apre due Unioni (Vanga del custode e Selciato). **Sblocco**: si sbloccano con l'impresa «Sconfiggi Seth», con qualsiasi personaggio, anche in una veglia persa (`SBLOCCO_UNIONI`, decisione di Edoardo del 10/11); la Cappella dice come e non le vende. Chi le aveva già sbloccate le tiene. Le Unioni **si svelano giocando**, in tre passi:
 - **Non scoperta**: nessun testo la nomina, nemmeno le strisce dei doni.
 - **Scoperta**, quando arma e dono arrivano ai livelli dell'unione: arma al 6, dono al suo massimo. La partita si ferma per un'**animazione** a tutto schermo (`src/sistema/rivelazione.ts`, tempi in `RIVELAZIONE`, `src/data/hud.ts`, segnaposto dal codice, *da rivedere*): arma e dono si avvicinano, un lampo a retino, compaiono l'Unione, il nome e la ricetta. Dopo la comparsa l'Unione resta sullo schermo finché il giocatore non tocca, clicca o preme Spazio (nessuna chiusura a tempo; Spazio in quel momento non usa l'abilità); in basso al centro un avviso lampeggiante, 1 s a ciclo, dice come chiuderla («Tocca per chiudere» sul telefono, «Clicca o premi Spazio per chiudere» su computer); aprire la pausa la salta. Da allora le strisce la nominano e, nelle notti dopo, la Build della pausa la mostra con nome, ricetta e stato («Pronta», «Manca» o «Unita») se hai l'arma in mano. L'effetto non si legge ancora, se non sulla carta del reliquiario.
 - **Unita** almeno una volta: resta per sempre nella scheda Stati, in ogni notte, con come si combina e che cosa fa.

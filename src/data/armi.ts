@@ -3,7 +3,7 @@
  * con distanze e velocità della v0 × 2,35. Ogni modifica qui va riportata anche nel GDD.
  * «testo» è la riga mostrata sulla carta quando l'arma sale a quel livello.
  */
-export type IdArma = 'lanterna' | 'pala' | 'turibolo' | 'bastone' | 'candela' | 'falce' | 'campana' | 'fuocoFatuo' | 'acquaSanta' | 'lamaDiLuce' | 'lapide' | 'rosarioSpezzato' | 'corvo' | 'veloFunebre';
+export type IdArma = 'lanterna' | 'pala' | 'turibolo' | 'bastone' | 'candela' | 'falce' | 'campana' | 'fuocoFatuo' | 'acquaSanta' | 'lamaDiLuce' | 'lapide' | 'rosarioSpezzato' | 'corvo' | 'veloFunebre' | 'sampietrini';
 
 interface Comune {
   nome: string;
@@ -110,12 +110,25 @@ export interface Corvo extends Comune {
   ingrandimento: number;
   livelli: { ricarica: number; danno: number; quantita: number; anime: number; testo: string }[];
 }
+/** Lancia sampietrini sui nemici più vicini: ognuno cade, colpisce, rimbalza in avanti e colpisce di nuovo. */
+export interface Sampietrini extends Comune {
+  id: 'sampietrini';
+  portata: number; // bersagli entro questa distanza
+  raggio: number; // ogni impatto colpisce entro questo raggio (il dono dell'area lo allarga)
+  salto: number; // il rimbalzo va avanti di tanti pixel, nella direzione del lancio
+  volo: number; // secondi del lancio
+  voloRimbalzo: number; // secondi di ogni rimbalzo
+  altezza: number; // pixel dell'arco del lancio…
+  altezzaRimbalzo: number; // …e dei rimbalzi
+  ingrandimento: number; // del sasso
+  livelli: { ricarica: number; quantita: number; rimbalzi: number; danno: number; testo: string }[];
+}
 /** Aura intorno al personaggio. */
 export interface VeloFunebre extends Comune {
   id: 'veloFunebre';
   livelli: { ricarica: number; danno: number; raggio: number; testo: string }[];
 }
-export type Arma = Lanterna | Pala | Turibolo | Bastone | Candela | Falce | Campana | FuocoFatuo | AcquaSanta | LamaDiLuce | Lapide | RosarioSpezzato | Corvo | VeloFunebre;
+export type Arma = Lanterna | Pala | Turibolo | Bastone | Candela | Falce | Campana | FuocoFatuo | AcquaSanta | LamaDiLuce | Lapide | RosarioSpezzato | Corvo | VeloFunebre | Sampietrini;
 
 export const LANTERNA: Lanterna = {
   id: 'lanterna', nome: 'Lanterna', icona: 'Icona_Lanterna', effetto: 'Lanterna_Arco', respinta: 259,
@@ -321,7 +334,26 @@ export const VELO_FUNEBRE: VeloFunebre = {
 
 export const ARMI_INIZIALI: Record<'lanterna' | 'pala' | 'turibolo' | 'bastone', Arma> = { lanterna: LANTERNA, pala: PALA, turibolo: TURIBOLO, bastone: BASTONE };
 /** Armi che si trovano tra i doni di livello (le iniziali sono esclusive del loro personaggio). */
-export const ARMI_COMUNI: Arma[] = [CANDELA, FALCE, CAMPANA, FUOCO_FATUO, ACQUA_SANTA, LAMA_DI_LUCE, LAPIDE, ROSARIO_SPEZZATO, CORVO, VELO_FUNEBRE];
+/*
+ * Sampietrini (bozza confermata da Edoardo il 10/11): terza arma di Terra, libera da subito. Livelli di Edoardo;
+ * le misure del volo (portata a parte) sono di Claude. Tutto da rivedere.
+ */
+export const SAMPIETRINI: Sampietrini = {
+  id: 'sampietrini', nome: 'Sampietrini', icona: 'Icona_Sampietrini', effetto: 'Pala_Impatto', respinta: 0,
+  portata: 350, raggio: 40, salto: 90, volo: 0.45, voloRimbalzo: 0.3, altezza: 60, altezzaRimbalzo: 24, ingrandimento: 3,
+  livelli: [
+    { ricarica: 1.5, quantita: 1, rimbalzi: 1, danno: 14, testo: 'Lancia un sampietrino sul nemico più vicino: colpisce, rimbalza in avanti e colpisce di nuovo.' },
+    { ricarica: 1.5, quantita: 1, rimbalzi: 1, danno: 18, testo: '+4 danno.' },
+    { ricarica: 1.5, quantita: 2, rimbalzi: 1, danno: 18, testo: '+1 sampietrino.' },
+    { ricarica: 1.35, quantita: 2, rimbalzi: 1, danno: 18, testo: 'Lancia più spesso.' },
+    { ricarica: 1.35, quantita: 2, rimbalzi: 2, danno: 22, testo: '+4 danno, +1 rimbalzo.' },
+    { ricarica: 1.35, quantita: 3, rimbalzi: 2, danno: 22, testo: '+1 sampietrino.' },
+    { ricarica: 1.2, quantita: 3, rimbalzi: 2, danno: 22, testo: 'Lancia più spesso.' },
+    { ricarica: 1.2, quantita: 3, rimbalzi: 2, danno: 26, testo: '+4 danno.' },
+  ],
+};
+
+export const ARMI_COMUNI: Arma[] = [CANDELA, FALCE, CAMPANA, FUOCO_FATUO, ACQUA_SANTA, LAMA_DI_LUCE, LAPIDE, ROSARIO_SPEZZATO, CORVO, VELO_FUNEBRE, SAMPIETRINI];
 export const MAX_ARMI = 6;
 
 /** Regole comuni a tutte le armi (GDD, sezione 10). */

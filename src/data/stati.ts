@@ -15,7 +15,7 @@ export const AFFINITA_ARMI: Record<IdArma, IdAffinita> = {
   turibolo: 'sacro', acquaSanta: 'sacro', campana: 'sacro',
   bastone: 'ombra', fuocoFatuo: 'ombra', falce: 'ombra',
   pala: 'terra',
-  lapide: 'terra', rosarioSpezzato: 'ombra', corvo: 'luce', veloFunebre: 'sacro',
+  lapide: 'terra', rosarioSpezzato: 'ombra', corvo: 'luce', veloFunebre: 'sacro', sampietrini: 'terra',
 };
 export const AFFINITA_ABILITA: Record<IdAbilita, IdAffinita> = {
   cerchioDiLuce: 'luce', benedizione: 'sacro', ritoProibito: 'ombra', sepoltura: 'terra',

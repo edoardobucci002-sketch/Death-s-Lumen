@@ -110,12 +110,12 @@ export function schedaDono(d: Dono, c: Contesto): Scheda {
     case 'arma': return schedaArma(d.arma, d.livello, c);
     case 'passivo': {
       const q = d.passivo, ora = DATI_DONI[q.id](q, d.livello), prima = d.livello > 1 ? DATI_DONI[q.id](q, d.livello - 1) : null;
-      const u = c.unioni ? UNIONI.find((x) => x.dono === q.id && c.scoperte.has(x.id) && c.armi.some((a) => a.id === x.arma)) : undefined;
-      const arma = u && c.armi.find((a) => a.id === u.arma);
+      // un dono può aprire più Unioni (lo Scudo di ferro: Vanga del custode e Selciato)
+      const unioni = c.unioni ? UNIONI.filter((x) => x.dono === q.id && c.scoperte.has(x.id) && c.armi.some((a) => a.id === x.arma)) : [];
       return {
         nome: q.nome, icona: q.icona, categoria: 'dono', tag: tagLivello(d.livello, q.massimo, 'Nuovo dono'),
         dati: ora.map((v, i) => ({ nome: v.nome, prima: prima?.[i].valore, dopo: v.valore, tono: 'bene' })),
-        righe: [{ testo: SPIEGA_DONI[q.id] }, ...(u && arma ? [{ testo: `Al liv ${livelloDonoUnione(q.id)}, con ${arma.nome} al liv ${LIVELLO_ARMA_UNIONE}: ${u.nome}`, tono: 'reazione' as const }] : [])],
+        righe: [{ testo: SPIEGA_DONI[q.id] }, ...unioni.map((u) => ({ testo: `Al liv ${livelloDonoUnione(q.id)}, con ${c.armi.find((a) => a.id === u.arma)!.nome} al liv ${LIVELLO_ARMA_UNIONE}: ${u.nome}`, tono: 'reazione' as const }))],
       };
     }
     case 'amuleto': {

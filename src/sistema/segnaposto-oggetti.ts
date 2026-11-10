@@ -1,5 +1,5 @@
 /*
- * Icone e disegni provvisori delle 4 armi e dei 4 doni nuovi (tappa 5): piccoli disegni 12×12 ingranditi × 2 (24×24).
+ * Icone e disegni provvisori delle armi nuove (tappa 5 e Sampietrini) e dei 4 doni nuovi: piccoli disegni 12×12 ingranditi × 2 (24×24).
  * Finché Edoardo non esporta le sue (ICONE/<Nome>/Icona_<Nome>_V#.aseprite), il gioco usa queste.
  * Le stesse immagini servono da sprite provvisori in partita: la lapide che cade, il grano, il corvo.
  */
@@ -17,6 +17,7 @@ const DISEGNI: Record<string, string[]> = {
   Icona_Lapide: ['....OOOO....', '...OLLLLO...', '..OLLGGLLO..', '..OLGGGGLO..', '..OLLGGLLO..', '..OLLGGLLO..', '..OLLLLLGO..', '..OLLLLLGO..', '..OLLLLGGO..', '.OOOOOOOOOO.', '.ODDDDDDDDO.', '.OOOOOOOOOO.'],
   Icona_Rosario_spezzato: ['...OOOOO....', '..OVOVOVO...', '.OVO...OVO..', '.OO.....O...', '.OVO........', '.OO......O..', '.OVO....OVO.', '..OVO..OVNO.', '...OOOOOOO..', '.....ONO....', '.....OVO....', '......O.....'],
   Icona_Corvo: ['............', '........OOO.', '.......OBYOO', '......OBBBOF', '..OOOOBBCBO.', '.OBBBBBCCBO.', 'OBCCBBBCBO..', '.OBCCCBBBO..', '..OOBBBBO...', '....OOOBO...', '......O.O...', '......O.O...'],
+  Icona_Sampietrini: ['............', '..OOOO......', '.OLLLGO.....', '.OLGGGO.OOO.', '.OGGGDO.OLLO', '..OOOO.OLGGO', '...OOOO.OGDO', '..OLLLGO.OO.', '..OLGGGDO...', '..OGGGDDO...', '...OOOOOO...', '............'],
   Icona_Velo_funebre: ['....OOOO....', '...OSSSSO...', '..OSSWWSSO..', '..OSWOOWSO..', '.OSSWOOWSSO.', '.OSSSOOSSSO.', '.OSSSSSSSSO.', 'OSSOSSSSOSSO', 'OSSOSSSSOSSO', 'OSO.OSSO.OSO', '.O..OSSO..O.', '.....OO.....'],
   Icona_Cera_votiva: ['.....OO.....', '....OFO.....', '....OYFO....', '.....OO.....', '....OWWO....', '....OWWO....', '...OWWWYO...', '...OWWWYO...', '...OWWWYO...', '...OWWYYO...', '..OYYYYYYO..', '..OOOOOOOO..'],
   Icona_Chiodo_di_bara: ['..OOOOOOOO..', '.OLRRRRRLGO.', '..OOGGGOO...', '....OLGO....', '....OLGO....', '....OLGO....', '....OLGO....', '....OLGO....', '....OLGO....', '.....OGO....', '.....OGO....', '......O.....'],
@@ -57,6 +58,7 @@ export function creaIconeUnioni(): void {
 
 export const SPRITE_SCIA = 'Volo_Scia';
 export const SPRITE_LAPIDE = 'Volo_Lapide';
+export const SPRITE_SASSO = 'Volo_Sasso';
 export const SPRITE_GRANO = 'Volo_Grano';
 export const SPRITE_CORVO = 'Volo_Corvo';
 export const SPRITE_VELO = 'Volo_Velo';
@@ -66,6 +68,19 @@ export const RAGGIO_VELO = 64;
 export function creaSpriteOggetti(scena: Phaser.Scene): void {
   for (const [k, icona] of [[SPRITE_LAPIDE, 'Icona_Lapide'], [SPRITE_GRANO, 'Icona_Rosario_spezzato'], [SPRITE_CORVO, 'Icona_Corvo']] as const) {
     if (!scena.textures.exists(k)) scena.textures.addCanvas(k, arte(icona)!.tela);
+  }
+  if (!scena.textures.exists(SPRITE_SASSO)) {
+    // il sampietrino in volo, 6×5 (segnaposto)
+    const c = document.createElement('canvas');
+    c.width = 6;
+    c.height = 5;
+    const g = c.getContext('2d')!;
+    ['.OOOO.', 'OLLLGO', 'OLGGDO', 'OGGDDO', '.OOOO.'].forEach((r, y) => [...r].forEach((ch, x) => {
+      if (ch === '.') return;
+      g.fillStyle = COLORI[ch];
+      g.fillRect(x, y, 1, 1);
+    }));
+    scena.textures.addCanvas(SPRITE_SASSO, c);
   }
   if (!scena.textures.exists(SPRITE_SCIA)) {
     // una fiammella della scia del Candelabro funebre, 7×9

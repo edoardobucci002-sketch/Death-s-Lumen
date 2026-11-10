@@ -28,12 +28,13 @@ export const NUMERI_UNIONI = {
     curaDurata: 4, curaParte: 0.03, colore: 0xffe08a, // colore: tinta provvisoria della pozza che cura
   },
   lama: { ritardo: 0.5 }, // il secondo fendente parte dove eri tanti secondi prima
+  selciato: { rimbalzi: 1 }, // un sampietrino che colpisce un nemico fermo rimbalza tante volte in più (una sola volta per sasso; da rivedere)
 } as const;
 
 const num = (v: number): string => String(v).replace('.', ',');
 const N = NUMERI_UNIONI;
 
-export type IdUnione = 'faroDeiMorti' | 'vangaDelCustode' | 'incensiereUltimaOra' | 'vergaDeiNomi' | 'candelabroFunebre' | 'falceDelMietitore' | 'campanaAMorto' | 'fuochiErranti' | 'acquasantiera' | 'lamaDellAlba';
+export type IdUnione = 'faroDeiMorti' | 'vangaDelCustode' | 'incensiereUltimaOra' | 'vergaDeiNomi' | 'candelabroFunebre' | 'falceDelMietitore' | 'campanaAMorto' | 'fuochiErranti' | 'acquasantiera' | 'lamaDellAlba' | 'selciato';
 
 export interface Unione { id: IdUnione; arma: IdArma; dono: IdDono; nome: string; testo: string }
 
@@ -48,6 +49,7 @@ export const UNIONI: Unione[] = [
   { id: 'fuochiErranti', arma: 'fuocoFatuo', dono: 'calamita', nome: 'Fuochi erranti', testo: 'I fuochi raccolgono le anime che attraversano.' },
   { id: 'acquasantiera', arma: 'acquaSanta', dono: 'lacrimaDiLumen', nome: 'Acquasantiera', testo: `Ogni ${N.acquasantiera.uccisioni} uccisioni nelle pozze torna un sorso di fiaschetta, al massimo uno ogni ${N.acquasantiera.pausa} s.` },
   { id: 'lamaDellAlba', arma: 'lamaDiLuce', dono: 'aliDiFalena', nome: "Lama dell'alba", testo: 'Un secondo fendente parte da dove eri mezzo secondo prima.' },
+  { id: 'selciato', arma: 'sampietrini', dono: 'scudoDiFerro', nome: 'Selciato', testo: 'Un sampietrino che colpisce un nemico fermo rimbalza una volta in più.' },
 ];
 
 export const unioneDi = (arma: IdArma): Unione | undefined => UNIONI.find((u) => u.arma === arma);

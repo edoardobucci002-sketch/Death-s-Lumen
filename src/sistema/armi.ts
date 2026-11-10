@@ -21,7 +21,7 @@ import { PROFONDITA, type Effetti } from './effetti';
 import { EFFETTI } from '../data/effetti';
 import type { Abilita } from '../data/abilita';
 import {
-  ACQUA_SANTA, BASTONE, CAMPANA, CANDELA, COLPI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
+  ACQUA_SANTA, BASTONE, CAMPANA, CANDELA, COLPI, SAMPIETRINI, CORVO, FALCE, FUOCO_FATUO, LAMA_DI_LUCE, LANTERNA, LAPIDE, PALA, ROSARIO_SPEZZATO, TURIBOLO, type Arma,
 } from '../data/armi';
 import { MOLTIPLICA_CRITICO } from '../data/doni';
 import { NUMERI_UNIONI as U } from '../data/unioni';
@@ -29,7 +29,7 @@ import type { Anime } from './anime';
 import type { Chiazze } from './chiazze';
 import type { Rompibili } from './rompibili';
 import { CHIAZZE, ROMPIBILI } from '../data/rompibili';
-import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SCIA, SPRITE_VELO } from './segnaposto-oggetti';
+import { creaSpriteOggetti, RAGGIO_VELO, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SASSO, SPRITE_SCIA, SPRITE_VELO } from './segnaposto-oggetti';
 
 const NUBE = 1;
 const POZZA = 2;
@@ -45,6 +45,7 @@ const MAX_LAME = 8;
 const MAX_RITARDATI = 8;
 const MAX_LAPIDI = 8;
 const MAX_GRANI = 6;
+const MAX_SASSI = 24; // sampietrini in volo insieme
 const MAX_RIMBALZI = 12; // un grano ricorda fino a tanti nemici già colpiti
 const MAX_CORVI = 5;
 const PASSI_STORIA = 64; // posizioni ricordate per la Lama dell'alba (più di un secondo)
@@ -60,7 +61,7 @@ const PROIETTILI_V0: Record<string, { fotogramma: string; x: number; y: number }
 /** Da dove viene il danno (per la simulazione): le armi, l'abilità, il Martire, il fuoco dell'olio e le reazioni che feriscono. */
 export const FONTI = [
   'lanterna', 'pala', 'turibolo', 'bastone', 'candela', 'falce', 'campana', 'fuocoFatuo', 'acquaSanta', 'lamaDiLuce',
-  'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'abilita', 'martire', 'fuoco', 'eclissi', 'esorcismo', 'interramento',
+  'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'sampietrini', 'abilita', 'martire', 'fuoco', 'eclissi', 'esorcismo', 'interramento',
 ] as const;
 const F = Object.fromEntries(FONTI.map((f, i) => [f, i])) as Record<(typeof FONTI)[number], number>;
 
@@ -188,6 +189,29 @@ export class Arsenale {
   private lpCampi = [this.lpX, this.lpY, this.lpR, this.lpDanno, this.lpVita];
   private lpSprite: Phaser.GameObjects.Sprite[] = [];
 
+  // sampietrini in volo: da (x0, y0) a (x1, y1) in «durata» secondi, con un arco alto «alto»; poi colpiscono e rimbalzano
+  private sassi = 0;
+  private ssX0 = new Float32Array(MAX_SASSI);
+  private ssY0 = new Float32Array(MAX_SASSI);
+  private ssX1 = new Float32Array(MAX_SASSI);
+  private ssY1 = new Float32Array(MAX_SASSI);
+  private ssDX = new Float32Array(MAX_SASSI); // direzione del lancio, lunga 1: i rimbalzi vanno avanti di lì
+  private ssDY = new Float32Array(MAX_SASSI);
+  private ssT = new Float32Array(MAX_SASSI);
+  private ssDurata = new Float32Array(MAX_SASSI);
+  private ssAlto = new Float32Array(MAX_SASSI);
+  private ssDanno = new Float32Array(MAX_SASSI);
+  private ssR = new Float32Array(MAX_SASSI);
+  private ssResto = new Uint8Array(MAX_SASSI); // rimbalzi ancora da fare
+  private ssUnito = new Uint8Array(MAX_SASSI); // Selciato: 1 = il rimbalzo in più l'ha già avuto
+  private ssCampi = [this.ssX0, this.ssY0, this.ssX1, this.ssY1, this.ssDX, this.ssDY, this.ssT, this.ssDurata, this.ssAlto, this.ssDanno, this.ssR];
+  private ssSprite: Phaser.GameObjects.Sprite[] = [];
+  private trovatoFermo = false;
+  private visitaFermo = (j: number): void => {
+    const o = this.orda, dx = o.x[j] - this.cx, dy = o.y[j] - o.raggio[j] - this.cy, r = this.cr + o.raggio[j];
+    if (o.salute[j] > 0 && dx * dx + dy * dy <= r * r && o.fermoOra(j)) this.trovatoFermo = true;
+  };
+
   // grani del Rosario spezzato
   private grani = 0;
   private grX = new Float32Array(MAX_GRANI);
@@ -286,6 +310,7 @@ export class Arsenale {
     for (let i = 0; i < MAX_LAME; i++) this.lame.push(scena.add.sprite(0, 0, FALCE.lama).setScale(this.scalaLama).setVisible(false).setDepth(PROFONDITA.sopra));
     for (let i = 0; i < MAX_RITARDATI; i++) this.rtArma.push(PALA);
     creaSpriteOggetti(scena);
+    for (let i = 0; i < MAX_SASSI; i++) this.ssSprite.push(scena.add.sprite(0, 0, SPRITE_SASSO).setScale(SAMPIETRINI.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_LAPIDI; i++) this.lpSprite.push(scena.add.sprite(0, 0, SPRITE_LAPIDE).setOrigin(0.5, 1).setScale(LAPIDE.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_GRANI; i++) this.grSprite.push(scena.add.sprite(0, 0, SPRITE_GRANO).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_CORVI; i++) this.cvSprite.push(scena.add.sprite(0, 0, SPRITE_CORVO).setScale(CORVO.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
@@ -344,6 +369,7 @@ export class Arsenale {
     this.aggiornaZone(dt);
     this.aggiornaProiettili(dt);
     this.aggiornaLapidi(dt);
+    this.aggiornaSassi(dt);
     this.aggiornaGrani(dt);
     this.aggiornaCorvi(dt);
     this.eseguiCoda();
@@ -453,6 +479,11 @@ export class Arsenale {
     for (let i = 0; i < this.lapidi; i++) {
       const sale = this.lpCaduta[i] ? (LAPIDE.altezza * (this.lpVita[i] - LAPIDE.resta)) / LAPIDE.caduta : 0;
       this.lpSprite[i].setPosition(Math.round(this.lpX[i]), Math.round(this.lpY[i] - sale));
+    }
+    for (let i = 0; i < this.sassi; i++) {
+      const u = Math.min(1, this.ssT[i] / this.ssDurata[i]), x = this.ssX0[i] + (this.ssX1[i] - this.ssX0[i]) * u;
+      const y = this.ssY0[i] + (this.ssY1[i] - this.ssY0[i]) * u - this.ssAlto[i] * 4 * u * (1 - u);
+      this.ssSprite[i].setPosition(Math.round(x), Math.round(y));
     }
     for (let i = 0; i < this.grani; i++) this.grSprite[i].setPosition(Math.round(this.grX[i]), Math.round(this.grY[i]));
     for (let i = 0; i < this.corvi; i++) this.cvSprite[i].setPosition(Math.round(this.cvX[i]), Math.round(this.cvY[i]));
@@ -572,6 +603,17 @@ export class Arsenale {
         }
         return l.ricarica;
       }
+      case 'sampietrini': {
+        const l = a.livelli[p.livello - 1];
+        const n = Math.min(l.quantita + piu, this.scelti.length);
+        for (let k = 0; k < n; k++) {
+          const j = this.piuVicino(a.portata, k);
+          if (j < 0) break;
+          this.scelti[k] = j;
+          this.lanciaSasso(this.orda.x[j], this.orda.y[j], a.raggio * area, l.danno, l.rimbalzi);
+        }
+        return l.ricarica;
+      }
       case 'rosarioSpezzato': {
         const l = a.livelli[p.livello - 1];
         const n = Math.min(l.quantita + piu, this.scelti.length);
@@ -678,6 +720,69 @@ export class Arsenale {
       this.lpCaduta[i] = this.lpCaduta[u];
       this.lpSprite[i] = this.lpSprite[u];
       this.lpSprite[u] = s;
+    }
+  }
+
+  // ——— Sampietrini ———
+  private lanciaSasso(x: number, y: number, raggio: number, danno: number, rimbalzi: number): void {
+    if (this.sassi >= MAX_SASSI) return;
+    const i = this.sassi++, d = Math.hypot(x - this.px, y - this.py) || 1;
+    this.ssX0[i] = this.px;
+    this.ssY0[i] = this.py;
+    this.ssX1[i] = x;
+    this.ssY1[i] = y;
+    this.ssDX[i] = (x - this.px) / d;
+    this.ssDY[i] = (y - this.py) / d;
+    this.ssT[i] = 0;
+    this.ssDurata[i] = SAMPIETRINI.volo;
+    this.ssAlto[i] = SAMPIETRINI.altezza;
+    this.ssDanno[i] = danno;
+    this.ssR[i] = raggio;
+    this.ssResto[i] = rimbalzi;
+    this.ssUnito[i] = 0;
+    this.ssSprite[i].setVisible(true);
+  }
+
+  /** I sampietrini volano; arrivati colpiscono (Terra, come la Pala) e, se hanno rimbalzi, ripartono in avanti. */
+  private aggiornaSassi(dt: number): void {
+    const S = SAMPIETRINI;
+    for (let i = this.sassi - 1; i >= 0; i--) {
+      this.ssT[i] += dt;
+      if (this.ssT[i] < this.ssDurata[i]) continue;
+      const x = this.ssX1[i], y = this.ssY1[i];
+      this.prepara(0, x, y, this.ssR[i], this.ssDanno[i], 0);
+      // Selciato: se sotto c'è un nemico fermo, un rimbalzo in più (una volta per sasso)
+      if (this.unite.sampietrini && !this.ssUnito[i]) {
+        this.trovatoFermo = false;
+        this.orda.griglia.nelRaggio(x, y, this.ssR[i] + 40, this.visitaFermo);
+        if (this.trovatoFermo) {
+          this.ssResto[i] += U.selciato.rimbalzi;
+          this.ssUnito[i] = 1;
+        }
+      }
+      this.fonte = F.sampietrini;
+      this.cAff = TERRA;
+      this.orda.griglia.nelRaggio(x, y, this.ssR[i] + 40, this.visitaColpo);
+      this.rompiForma();
+      this.effetto(S.effetto, x, y, this.ssR[i], PROFONDITA.aTerra, EFFETTI.impattoPala);
+      if (this.ssResto[i] > 0) {
+        this.ssResto[i]--;
+        this.ssX0[i] = x;
+        this.ssY0[i] = y;
+        this.ssX1[i] = x + this.ssDX[i] * S.salto;
+        this.ssY1[i] = y + this.ssDY[i] * S.salto;
+        this.ssT[i] = 0;
+        this.ssDurata[i] = S.voloRimbalzo;
+        this.ssAlto[i] = S.altezzaRimbalzo;
+        continue;
+      }
+      const u = --this.sassi, s = this.ssSprite[i];
+      s.setVisible(false);
+      for (const a of this.ssCampi) a[i] = a[u];
+      this.ssResto[i] = this.ssResto[u];
+      this.ssUnito[i] = this.ssUnito[u];
+      this.ssSprite[i] = this.ssSprite[u];
+      this.ssSprite[u] = s;
     }
   }
 

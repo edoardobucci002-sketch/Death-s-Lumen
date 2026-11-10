@@ -40,7 +40,7 @@ export const BOT = {
   amuletiPreferiti: { specchioRotto: 0, lanternaCieca: 0, cuoreAvido: 0, sangueFreddo: 0.8, martire: 0, danzaMacabra: 0.7, ceriGemelli: 0.9, lucciola: 1, ossaDelite: 0.8, pattoDiSangue: 0 } satisfies Record<IdAmuleto, number>,
   massimoArmi: 4, // oltre, non prende armi nuove
   // armi nuove: più alto = la preferisce (dalle simulazioni: come un giocatore che ha capito quali rendono)
-  armiPreferite: { acquaSanta: 1.15, campana: 1.1, falce: 1.1, lapide: 1.05, rosarioSpezzato: 1, candela: 0.95, lamaDiLuce: 0.95, fuocoFatuo: 0.9, veloFunebre: 0.9, corvo: 0.85 } as Partial<Record<IdArma, number>>,
+  armiPreferite: { acquaSanta: 1.15, campana: 1.1, falce: 1.1, lapide: 1.05, rosarioSpezzato: 1, sampietrini: 1, candela: 0.95, lamaDiLuce: 0.95, fuocoFatuo: 0.9, veloFunebre: 0.9, corvo: 0.85 } as Partial<Record<IdArma, number>>,
   passiviPreferiti: { saleNero: 1, cuoreDiCera: 0.8, clessidra: 0.9, stoppinoLungo: 0.7, aliDiFalena: 0.5, calamita: 0.3, erbeAmare: 0.5, scudoDiFerro: 0.6, specchio: 1, ceraVotiva: 0.6, chiodoDiBara: 0.8, lacrimaDiLumen: 0.7, campanellaDArgento: 0.2 } satisfies Record<IdDono, number>,
   // velocità della simulazione: millisecondi di calcolo per ogni fotogramma del browser
   msPerFotogramma: 40,

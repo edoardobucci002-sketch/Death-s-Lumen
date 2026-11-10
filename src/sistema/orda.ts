@@ -368,6 +368,11 @@ export class Orda {
     return entra;
   }
 
+  /** Il nemico i è fermo adesso (Sepolto, Interrato o fermato da Campana, Vanga, Martire)? Per il Selciato. */
+  fermoOra(i: number): boolean {
+    return this.sSepolto[i] > 0 || this.sInterrato[i] > 0 || this.fermo[i] > 0;
+  }
+
   /** Il nemico i è interrato (subisce di più)? */
   interrato(i: number): boolean {
     return this.sInterrato[i] > 0;

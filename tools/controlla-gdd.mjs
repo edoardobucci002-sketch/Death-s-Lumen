@@ -266,6 +266,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Rosario spezzato', A.ROSARIO_SPEZZATO, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Rimbalzi: 'rimbalzi', 'Quantità': 'quantita' }],
     ['Corvo', A.CORVO, { 'Ricarica (s)': 'ricarica', Danno: 'danno', 'Quantità': 'quantita', 'Anime riportate': 'anime' }],
     ['Velo funebre', A.VELO_FUNEBRE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio' }],
+    ['Sampietrini', A.SAMPIETRINI, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Rimbalzi: 'rimbalzi', Danno: 'danno' }],
   ];
   for (const [nome, arma, colonne] of LIVELLI) {
     const t = tabella('#### ' + nome);
@@ -309,6 +310,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Lama di luce', 'il colpo alle spalle parte {} s dopo; respinge di {}.', A.LAMA_DI_LUCE.ritardoSpalle, A.LAMA_DI_LUCE.respinta],
     ['Lapide', 'scende da {} px in {} s, colpisce e resta a terra {} s', A.LAPIDE.altezza, A.LAPIDE.caduta, A.LAPIDE.resta],
     ['Rosario spezzato', 'Cerca il primo bersaglio entro {} px, poi rimbalza sui nemici entro {} px, un rimbalzo ogni {} s', A.ROSARIO_SPEZZATO.portata, A.ROSARIO_SPEZZATO.salto, A.ROSARIO_SPEZZATO.intervallo],
+    ['Sampietrini', 'sui nemici più vicini entro {} px: ognuno vola {} s con un arco alto {} px, colpisce entro {} px', A.SAMPIETRINI.portata, A.SAMPIETRINI.volo, A.SAMPIETRINI.altezza, A.SAMPIETRINI.raggio],
+    ['Sampietrini', 'nel {}% dei colpi); poi rimbalza {} px in avanti, nella direzione del lancio ({} s, arco di {} px)', pct(ST.STATI.probabilita), A.SAMPIETRINI.salto, A.SAMPIETRINI.voloRimbalzo, A.SAMPIETRINI.altezzaRimbalzo],
     ['Corvo', 'Vola intorno a te a {} px, a {} giri al secondo; becca il nemico più vicino entro {} px, volando a {} px/s', A.CORVO.orbita, A.CORVO.giri, A.CORVO.portata, A.CORVO.velocita],
   ];
   for (const [nome, modello, ...attesi] of frasi) inTesto(s(nome), nome, modello, ...attesi);
@@ -320,6 +323,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     [A.ROSARIO_SPEZZATO, '{} danni, {} rimbalzi, ogni {} s', ['danno', 'rimbalzi', 'ricarica'], '{} danni, {} rimbalzi, {} grani, ogni {} s', ['danno', 'rimbalzi', 'quantita', 'ricarica']],
     [A.CORVO, '{} danni, {} corvo, ogni {} s, {} anima', ['danno', 'quantita', 'ricarica', 'anime'], '{} danni, {} corvi, ogni {} s, {} anime', ['danno', 'quantita', 'ricarica', 'anime']],
     [A.VELO_FUNEBRE, '{} danni, raggio {}, ogni {} s', ['danno', 'raggio', 'ricarica'], '{} danni, raggio {}, ogni {} s', ['danno', 'raggio', 'ricarica']],
+    [A.SAMPIETRINI, '{} danni, {} sampietrino, {} rimbalzo, ogni {} s', ['danno', 'quantita', 'rimbalzi', 'ricarica'], '{} danni, {} sampietrini, {} rimbalzi, ogni {} s', ['danno', 'quantita', 'rimbalzi', 'ricarica']],
   ];
   stessiNomi('Armi nuove', t, NUOVE.map(([a]) => a.nome));
   for (const [arma, m1, c1, m8, c8] of NUOVE) {
@@ -332,6 +336,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   }
   conRiga(t, 'Rosario spezzato', (r) => inTesto(r['Cosa fa'], 'Rosario spezzato', '(entro {} px); {}% di maledire', A.ROSARIO_SPEZZATO.salto, pct(ST.RUOLI.rosarioMaledice)));
   conRiga(t, 'Corvo', (r) => inTesto(r['Cosa fa'], 'Corvo', '(entro {} px)', A.CORVO.portata));
+  conRiga(t, 'Sampietrini', (r) => inTesto(r['Cosa fa'], 'Sampietrini', '(entro {} px); ognuno colpisce entro {} px, lascia Sepolto come la Pala, rimbalza {} px', A.SAMPIETRINI.portata, A.SAMPIETRINI.raggio, A.SAMPIETRINI.salto));
   conRiga(t, 'Velo funebre', (r) => inTesto(r['Cosa fa'], 'Velo funebre', '{}% di consacrare', pct(ST.RUOLI.veloConsacra)));
   conRiga(t, 'Lapide', (r) => vero('Lapide', (ST.RUOLI.lapideSeppellisce === 1) === r['Cosa fa'].includes('resta sempre Sepolto'), 'nei dati la probabilità di seppellire non è «sempre»'));
 }
@@ -647,6 +652,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     falceDelMietitore: ['sotto il {}% di salute', pct(NU.falce.sotto)],
     campanaAMorto: ['ferma per {} s', NU.campana.fermo],
     fuochiErranti: ['entro {} px', NU.fuochi.raggio],
+    selciato: ['rimbalza {} volta in più, una sola volta per sasso', NU.selciato.rimbalzi],
     acquasantiera: ['ogni {} uccisioni nelle pozze torna un sorso, al massimo uno ogni {} s; con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico, che per {} s cura il {}% della salute massima al secondo', NU.acquasantiera.uccisioni, NU.acquasantiera.pausa, NU.acquasantiera.curaDurata, pct(NU.acquasantiera.curaParte)],
     lamaDellAlba: ['da dove eri {} s prima', NU.lama.ritardo],
   };
