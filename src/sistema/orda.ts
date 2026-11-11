@@ -352,12 +352,20 @@ export class Orda {
     return this.grado[a];
   }
 
-  /** Forza dello stato dell'affinità a, con Devozione e Riti: danno in più (Luce), rallentamento (Sacro), salute al secondo (Ombra), secondi di fermo (Terra). */
+  /** Forza dello stato dell'affinità a, con Devozione e Riti: danno in più (Luce), rallentamento (Sacro), salute al secondo (Ombra), secondi di fermo (Terra). Sacro e Ombra hanno un tetto. */
   forza(a: number): number {
     const g = this.grado[a] - 1, D = DEVOZIONE;
     const base = a === LUCE ? D.abbagliato[g] : a === SACRO ? D.consacrato[g] : a === OMBRA ? D.maledetto[g] : D.sepolto[g];
     const f = base * this.ritiStato[a];
-    return a === SACRO ? Math.min(D.lentoMassimo, f) : f;
+    return a === SACRO ? Math.min(D.lentoMassimo, f) : a === OMBRA ? Math.min(D.maledettoMassimo, f) : f;
+  }
+
+  /** true se lo stato dell'affinità a è al suo tetto (Consacrato e Maledetto: DEVOZIONE.lentoMassimo e maledettoMassimo). */
+  alTetto(a: number): boolean {
+    const g = this.grado[a] - 1, D = DEVOZIONE;
+    if (a === SACRO) return D.consacrato[g] * this.ritiStato[a] >= D.lentoMassimo;
+    if (a === OMBRA) return D.maledetto[g] * this.ritiStato[a] >= D.maledettoMassimo;
+    return false;
   }
 
   /**

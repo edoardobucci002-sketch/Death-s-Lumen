@@ -86,7 +86,10 @@ export const DEVOZIONE = {
   maledetto: [0.02, 0.03, 0.04], // salute massima persa al secondo (élite e Seth con le riduzioni di STATI)
   sepolto: [0.6, 0.8, 1.0], // secondi di fermo
   reazione: [1, 1.25, 1.5], // moltiplicatore della reazione che consuma lo stato
-  lentoMassimo: 0.8, // il rallentamento non supera questo (con i Riti potrebbe crescere senza fine)
+  // tetti (decisione di Edoardo dell'11/11, valori da rivedere): con i Riti la forza crescerebbe senza fine.
+  // Nella pausa (scheda Stati) uno stato al tetto dice «al massimo»
+  lentoMassimo: 0.6, // il rallentamento del Consacrato non supera il 60% (era 80%)
+  maledettoMassimo: 0.05, // il Maledetto non toglie più del 5% della salute massima al secondo; le riduzioni di élite, Seth e Mietitore valgono dopo il tetto
 } as const;
 
 /**

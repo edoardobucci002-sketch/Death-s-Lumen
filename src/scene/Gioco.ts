@@ -1537,7 +1537,7 @@ export class Gioco extends Phaser.Scene {
     const fuori: DatiPausa['devozione'] = {};
     for (const a of AFFINITA_TUTTE) {
       const k = CODICE_AFF[a], g = this.orda.gradoDi(k);
-      fuori[a] = { grado: g, armi: this.armiPerAffinita[k], riti: this.riti[k], effetto: EFFETTO_FORZA[a](this.orda.forza(k)), reazioni: `×${virgola(DEVOZIONE.reazione[g - 1] * (1 + RITI.reazione * this.riti[k]))}` };
+      fuori[a] = { grado: g, armi: this.armiPerAffinita[k], riti: this.riti[k], effetto: EFFETTO_FORZA[a](this.orda.forza(k)), alMassimo: this.orda.alTetto(k), reazioni: `×${virgola(DEVOZIONE.reazione[g - 1] * (1 + RITI.reazione * this.riti[k]))}` };
     }
     return fuori;
   }

@@ -553,7 +553,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   // Stati certi: la regola del gioco dal 10/11
   const SC = ST.STATI_CERTI;
   frase('Riti', 'ogni {} di questi livelli si apre invece la scelta dei Riti («I Riti»): una carta per ogni affinità delle armi che hai, al massimo {} (a caso se sono di più). Ogni Rito dà +{}% alla forza dello stato di quella affinità e +{}% alle reazioni', ST.RITI.ogni, ST.RITI.carte, pct(ST.RITI.stato), pct(ST.RITI.reazione));
-  frase('Riti: tetto del rallentamento', 'il rallentamento del Consacrato non supera l\'{}%', pct(ST.DEVOZIONE.lentoMassimo));
+  frase('Tetti', 'il rallentamento del Consacrato non supera il {}% e il Maledetto non toglie più del {}% della salute massima al secondo', pct(ST.DEVOZIONE.lentoMassimo), pct(ST.DEVOZIONE.maledettoMassimo));
   const DV = ST.DEVOZIONE;
   frase('Devozione: Abbagliato', '| Abbagliato, danno subito in più | {}% | {}% | {}% |', ...DV.abbagliato.map(pct));
   frase('Devozione: Consacrato', '| Consacrato, rallentamento | {}% | {}% | {}% |', ...DV.consacrato.map(pct));

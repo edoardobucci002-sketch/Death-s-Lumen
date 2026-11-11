@@ -40,7 +40,7 @@ export interface DatiPausa {
   affinita: IdAffinita[]; // gli stati che la build può lasciare
   // Devozione e Riti di ogni affinità (solo con gli Stati certi): grado, armi, Riti, effetto con la forza di adesso, reazioni ×
   voto: { nome: string; testo: string } | null; // il Voto del personaggio
-  devozione: Partial<Record<IdAffinita, { grado: number; armi: number; riti: number; effetto: string; reazioni: string }>>;
+  devozione: Partial<Record<IdAffinita, { grado: number; armi: number; riti: number; effetto: string; alMassimo: boolean; reazioni: string }>>;
   attesa: 'dono' | 'reliquiario' | 'riti' | null; // la scelta aperta sotto la pausa
 }
 
@@ -383,7 +383,7 @@ export class Pausa {
       const i = INFO_AFFINITA[a];
       const dv = d.devozione[a];
       const sotto = dv ? [div('pausa-sotto', `Devozione ${dv.grado} (${dv.armi} ${dv.armi === 1 ? 'arma' : 'armi'})${dv.riti ? ` · Riti ${dv.riti}` : ''} · reazioni ${dv.reazioni}`)] : [];
-      return div(`pausa-voce ${spenta ? 'spenta' : ''}`, this.simbolo(i.simbolo), div('', this.parola(i.stato, spenta ? '#9c907c' : i.colore, this.lettera), div('pausa-riga', `${i.nome}: ${dv?.effetto ?? i.effetto()}`), ...sotto));
+      return div(`pausa-voce ${spenta ? 'spenta' : ''}`, this.simbolo(i.simbolo), div('', this.parola(i.stato, spenta ? '#9c907c' : i.colore, this.lettera), div('pausa-riga', `${i.nome}: ${dv?.effetto ?? i.effetto()}${dv?.alMassimo ? ' (al massimo)' : ''}`), ...sotto));
     };
     const reazioni = INFO_REAZIONI.map((r) => {
       const [a, b] = r.stati, possibile = d.affinita.includes(a) && (b ? d.affinita.includes(b) : d.affinita.length > 1);
