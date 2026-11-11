@@ -178,6 +178,9 @@ Regole del registro (4 novembre 2026, scelte di Edoardo):
 | 2026-11-10 | **Lacrime di Lumen di nuovo × 2**; raggio di unione 56 px (era 28), con un selettore nel LAB (28, 40, 56, 72 px) per provarlo in partita. | Edoardo, 10/11: a × 1 erano troppo piccole sul S25; unendole di più il campo resta più pulito. |
 | 2026-11-11 | **Lacrime di Lumen: si uniscono solo a una lacrima ferma non più lontana dal personaggio** (proposta di Claude, *da rivedere*). | Con il raggio di unione a 56 px il valore delle lacrime cadute accanto al personaggio finiva su lacrime lontane, fuori dal raggio di raccolta: chi stava fermo non saliva più di livello. Spostare la lacrima unita verso il personaggio regalava esperienza: scartato. |
 | 2026-11-11 | **Prova «élite e sciame» (`npm run prova`) guarda per 9 s** se si sono visti l'élite e lo sciame, invece di un solo istante dopo 7 s. | La Strega a volte uccide l'élite un attimo prima che arrivi lo sciame: la prova falliva per un secondo di differenza, non per un errore del gioco. |
+| 2026-11-11 | **Raggio di unione delle lacrime di Lumen: 56 px è il valore di serie** (confermato; nel LAB restano 28, 40 e 72 per provarli). | Edoardo, 11/11, dopo la prova in partita. |
+| 2026-11-11 | **Eclissi pixelfx: selettore 12 / 24 fotogrammi al secondo nel LAB**; di serie 12. Il foglio da 24 (1,7 MB di memoria video) si carica solo quando lo si sceglie e si toglie tornando a 12. | Edoardo, 11/11: confrontare la fluidità sul telefono. |
+| 2026-11-11 | **Prova prestazioni «Con effetti»**: durante la misura Sepoltura, Pozza ed Eclissi a ripetizione, nuove o di sempre secondo l'interruttore pixelfx; la Pozza usa la misura già in memoria. | Edoardo, 11/11: misurare anche gli effetti nuovi. Con la Pozza sempre da 186 px, due misure si davano il cambio ogni 2 s e ogni cambio bloccava il gioco per circa 140 ms: un caso che nel gioco non esiste. |
 
 ## Riferimenti della v0 e dei link
 

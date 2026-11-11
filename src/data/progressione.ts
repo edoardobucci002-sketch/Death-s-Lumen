@@ -22,7 +22,7 @@ export const ANIME = {
   volo: 420, // velocità iniziale verso il personaggio quando entra nel raggio di raccolta
   accelerazione: 900, // quanto accelera mentre vola
   presa: 24, // a questa distanza dal personaggio l'anima è raccolta
-  accorpa: 56, // un'anima che cade così vicina a una ferma si unisce a lei: il valore si somma (era 28; Edoardo lo prova dal LAB tra 28, 40, 56 e 72, 10/11; da rivedere)
+  accorpa: 56, // un'anima che cade così vicina a una ferma si unisce a lei: il valore si somma (era 28; 56 confermato da Edoardo l'11/11; nel LAB si prova anche 28, 40 e 72)
 } as const;
 
 /** Pesi delle carte a ogni livello: più alto = esce più spesso. */

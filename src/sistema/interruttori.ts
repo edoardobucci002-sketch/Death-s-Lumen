@@ -14,4 +14,6 @@ export const INTERRUTTORI = {
   taccheSuono: true,
   // prova pixelfx: Sepoltura, Pozza dell'Acqua santa ed Eclissi con gli sprite presi da pixelfx (PIXELFX in src/data/effetti.ts)
   pixelfx: false,
+  eclissi24: false, // l'Eclissi pixelfx a 24 fotogrammi al secondo invece di 12 (foglio caricato al volo)
+  provaConEffetti: false, // la Prova prestazioni fa partire Sepoltura, Pozza grande ed Eclissi a ripetizione (PRESTAZIONI.effetti)
 };

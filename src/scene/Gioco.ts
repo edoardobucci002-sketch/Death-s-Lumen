@@ -24,7 +24,8 @@ import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { BARRA_SALUTE, LUCE, PRESTAZIONI, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, DIFFICOLTA, ELITE, MIETITORE, NEMICI, ORDE, type FormaOrda } from '../data/nemici';
-import { EFFETTI } from '../data/effetti';
+import { EFFETTI, PIXELFX } from '../data/effetti';
+import { pozzaCaricata } from '../sistema/al-volo';
 import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, MAX_ARMI, type Arma } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { animeDono, effettoDono, PASSIVI, RICARICA_MINIMA, ricaricaDono, type IdDono } from '../data/doni';
@@ -848,6 +849,25 @@ export class Gioco extends Phaser.Scene {
   /** Raggio di unione delle lacrime di Lumen (ANIME.accorpa), da provare in partita. Vale finché non ricarichi la pagina. */
   labUnioneLacrime(px: number): void {
     (ANIME as { accorpa: number }).accorpa = px;
+  }
+
+  /** LAB: Eclissi pixelfx a 24 fotogrammi al secondo (true) o a 12. */
+  labEclissi24(on: boolean): void {
+    this.effetti.labEclissi24(on);
+  }
+
+  /** Prova prestazioni «con effetti»: al secondo s della misura fa partire Sepoltura, Pozza grande ed Eclissi (PRESTAZIONI.effetti). */
+  labProvaEffetti(s: number): void {
+    const E = PRESTAZIONI.effetti, y = this.y - COLPI.corpo;
+    if (s % E.sepolturaOgni === 0) this.arsenale.labVediEffetto('sepoltura', this.x, this.y);
+    // la Pozza usa la misura già in memoria (quella dell'Acqua santa in mano): con due misure diverse a turno
+    // si caricava e scaricava un foglio ogni 2 s, cosa che nel gioco non succede
+    const caricata = pozzaCaricata(), raggio = caricata ? Number(caricata.slice(PIXELFX.pozza.prefisso.length)) : E.raggioPozza;
+    if (s % E.pozzaOgni === 0) this.arsenale.labVediEffetto('pozza', this.x, y + E.distanza, raggio);
+    for (let k = 0; k < E.eclissiAlSecondo; k++) {
+      const a = s + (k * Math.PI * 2) / E.eclissiAlSecondo;
+      this.arsenale.labVediEffetto('eclissi', this.x + Math.cos(a) * E.distanza, y + Math.sin(a) * E.distanza * 0.5);
+    }
   }
 
   labPozzaCurativa(): void {

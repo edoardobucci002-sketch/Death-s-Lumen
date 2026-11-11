@@ -282,11 +282,13 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       el('p', 'lab-nota', 'Sfiora i nemici senza toccarli: ogni nemico dà una tacca (non più di una ogni 2 s). «Riempi» le lascia a una dallo scatto: al prossimo sfioro parte la Grazia. Tacche, distanza e calo: Numeri → sopravvivenza → GRAZIA.tacche.'),
       titolo('Lacrime di Lumen: raggio di unione'),
       riga(...([28, 40, 56, 72] as const).map((r) => tasto(`${r} px`, fai((x) => x.labUnioneLacrime(r)), progressione.ANIME.accorpa === r ? 'acceso piccolo' : 'piccolo'))),
-      el('p', 'lab-nota', 'Una lacrima che cade entro questa distanza da una ferma si unisce a lei: il valore si somma e la lacrima cambia dimensione e colore. Più grande = meno lacrime sul campo. Vale subito, per le lacrime che cadono da adesso, finché non ricarichi la pagina. Di partenza 56 px (era 28).'),
+      el('p', 'lab-nota', 'Una lacrima che cade entro questa distanza da una ferma si unisce a lei: il valore si somma e la lacrima cambia dimensione e colore. Più grande = meno lacrime sul campo. Vale subito, per le lacrime che cadono da adesso, finché non ricarichi la pagina. Di serie 56 px (era 28; confermato da Edoardo, 11/11).'),
       titolo('Effetti pixelfx (prova: vecchio contro nuovo)'),
       riga(tasto(INTERRUTTORI.pixelfx ? 'Effetti pixelfx: sì' : 'Effetti pixelfx: no', fai((x) => x.labPixelfx(!INTERRUTTORI.pixelfx)), INTERRUTTORI.pixelfx ? 'acceso' : '')),
       riga(tasto('Sepoltura qui', fai((x) => x.labVediEffetto('sepoltura'))), tasto('Eclissi qui', fai((x) => x.labVediEffetto('eclissi')))),
       riga(...PIXELFX.pozza.raggi.map((r) => tasto(`Pozza ${r}`, fai((x) => x.labVediEffetto('pozza', r)), 'piccolo'))),
+      riga('Eclissi', ...([12, 24] as const).map((f) => tasto(`${f} fps`, fai((x) => x.labEclissi24(f === 24)), (f === 24) === INTERRUTTORI.eclissi24 ? 'acceso piccolo' : 'piccolo'))),
+      el('p', 'lab-nota', 'Eclissi pixelfx a 12 fotogrammi al secondo (di serie, 0,9 MB di memoria video) o a 24 (1,7 MB in più, caricata solo quando la scegli e tolta quando torni a 12). La prima Eclissi dopo la scelta può essere ancora a 12: il foglio sta arrivando.'),
       el('p', 'lab-nota', 'Acceso: Sepoltura, Pozza dell\'Acqua santa ed Eclissi usano gli sprite presi da pixelfx (a retino, a grandezza naturale); spento, quelli di sempre. Cambia solo il disegno: aree, danni e tempi restano uguali. I tasti mostrano l\'effetto accanto a te senza ferire nessuno: premili con l\'interruttore acceso e spento per confrontarli. La Pozza sceglie la misura più vicina all\'area vera. Vale finché non ricarichi la pagina. Numeri in Numeri → effetti → PIXELFX.'),
       titolo('Acquasantiera'),
       riga(tasto('Pozza che cura qui', fai((x) => x.labPozzaCurativa()))),
@@ -443,6 +445,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       }, scambiati ? 'acceso' : '')),
       titolo('Prova prestazioni'),
       el('p', 'lab-nota', 'Un tocco e aspetta un minuto senza toccare niente: alla fine c\'è un testo da copiare. Da una partita chiede conferma, la chiude, torna al menu e parte da lì; Cera, record e sblocchi non cambiano.'),
+      riga(tasto(INTERRUTTORI.provaConEffetti ? 'Con effetti: sì' : 'Con effetti: no', () => { INTERRUTTORI.provaConEffetti = !INTERRUTTORI.provaConEffetti; ridisegna(); }, INTERRUTTORI.provaConEffetti ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Con effetti: durante la misura partono a ripetizione la Sepoltura (ogni 5 s), la Pozza più grande (ogni 2 s) e 3 Eclissi al secondo, senza ferire nessuno. Con «Effetti pixelfx» acceso (scheda Eventi) sono quelli nuovi, spento quelli di sempre: fai la prova nei due modi e confronta i risultati. Il testo finale dice quali erano accesi.'),
       riga(tasto('Prova prestazioni', () => {
         if (partita() && !confirm('La partita in corso si perde: la prova la chiude e riparte dal menu. Continuare?')) return;
         mostra(false);

@@ -135,16 +135,19 @@ for (const raggio of RAGGI_POZZA) {
   totale += salva(`Pozza_${String(raggio).padStart(3, '0')}`, r, r.frames.map(() => Math.round(1000 / FPS)), raggio);
 }
 
-// 3) Eclissi: colori originali, rimpicciolita fino all'area disegnata (64 × 1,35 ≈ 86 px di raggio) e accelerata a 1,1 s
-{
+// 3) Eclissi: colori originali, rimpicciolita fino all'area disegnata (64 × 1,35 ≈ 86 px di raggio) e accelerata a 1,1 s.
+//    Due versioni: 12 fotogrammi al secondo (di serie) e 24 (Eclissi_24, si sceglie nel LAB e si carica al volo)
+for (const [nome, fps] of [['Eclissi', FPS], ['Eclissi_24', 24]]) {
   const fx = await loadEffect('shadow/dark-explosion', join(PFX, 'src/fx'));
   const RAGGIO = Math.round(64 * 1.35), NATIVO = 122; // NATIVO: raggio massimo dell'anello originale, misurato sui fotogrammi
   const scala = RAGGIO / NATIVO;
   const x = rendi(fx, { fps: 30, scala, margine: 0 });
-  const DUR = 1.1, n = Math.round(DUR * FPS);
+  const DUR = 1.1, n = Math.round(DUR * fps);
   const scelti = Array.from({ length: n }, (_, i) => x.frames[Math.round((i * (x.frames.length - 1)) / (n - 1))]);
   const r = rifila(scelti, x.w, x.h, x.perno);
   const passo = Math.round((DUR * 1000) / n);
-  totale += salva('Eclissi', r, r.frames.map(() => passo), RAGGIO);
+  // il centro della sfera nera: 54 px sopra il perno nell'effetto originale, rimpicciolito
+  console.log(`  centro della sfera di ${nome}: ${r.perno[0]}, ${Math.round(r.perno[1] - 54 * scala)}`);
+  totale += salva(nome, r, r.frames.map(() => passo), RAGGIO);
 }
 console.log(`totale memoria video ≈ ${totale.toFixed(1)} MB`);

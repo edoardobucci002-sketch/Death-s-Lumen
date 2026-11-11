@@ -9,6 +9,7 @@ import { PRESTAZIONI } from '../data/mondo';
 import { FIRMA } from './firma';
 import { misuraDisegni } from './fotogrammi';
 import { nativo } from './mobile';
+import { INTERRUTTORI } from './interruttori';
 
 interface DatiTelefono { model?: string; platformVersion?: string; fullVersionList?: { brand: string; version: string }[] }
 
@@ -115,6 +116,7 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     contati += partita.labStato().nemici;
     conte++;
     partita.labProvaRiempi(); // i nemici restano quanti devono essere: le armi ne uccidono di continuo
+    if (INTERRUTTORI.provaConEffetti) partita.labProvaEffetti(s); // Sepoltura, Pozza grande ed Eclissi a ripetizione
     avviso.textContent = `Prova prestazioni: non toccare niente · ${PRESTAZIONI.secondi - s} s`;
   });
   document.removeEventListener('visibilitychange', visibilita);
@@ -149,6 +151,7 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     `WebView o Chrome: ${c.webview}`,
     `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}`,
     `Minuto ${PRESTAZIONI.minuto}, ${PRESTAZIONI.nemici} nemici, lanterna in vista, ${PRESTAZIONI.secondi} s`,
+    `Effetti a ripetizione: ${INTERRUTTORI.provaConEffetti ? (INTERRUTTORI.pixelfx ? `sì, pixelfx (Eclissi a ${INTERRUTTORI.eclissi24 ? 24 : 12} fps)` : 'sì, quelli di sempre') : 'no'}`,
     `In campo durante la misura: ${Math.round(contati / Math.max(1, conte))} nemici in media, minuto ${Math.floor(partita.labStato().secondi / 60)}`,
     `Media: ${((tempi.length * 1000) / totale).toFixed(1)} fps`,
     `Fotogrammi saltati: ${saltati}`,
