@@ -40,6 +40,23 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 11/11 — Tetti degli stati (decisione di Edoardo)
+
+`DEVOZIONE.lentoMassimo` da 0,8 a 0,6 (il Consacrato rallenta al massimo del 60%) e nuovo `DEVOZIONE.maledettoMassimo` 0,05 (il Maledetto toglie al massimo il 5% della salute massima al secondo; élite, Seth e Mietitore con le loro riduzioni dopo il tetto). Valori da rivedere. Stesse simulazioni (12 notti per personaggio, semi 1001–1012) e stesse colonne della voce 3.
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte (Ecl, Riv, Eso, Int) | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| voce 3, vuota | 31/48 (7, 7, 9, 8) | 2, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 0/0, 3/1, 1/0, 1/0 | 12,1%, 12,0%, 13,2%, 19,1% | 588, 4107, 4979, 3790 | 61 |
+| **tetti, vuota** | **32/48** (7, 7, 9, 9) | **2**, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 0/0, 3/1, 1/0, 1/0 | 15,6%, 13,9%, 13,3%, 19,2% | 593, 4114, 4974, 3789 | 61 |
+| voce 3, completa | 39/48 (7, 10, 11, 11) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 24,1%, 19,1%, 15,3%, 23,6% | 2727, 8571, 2087, 2752 | 70 |
+| **tetti, completa** | **39/48** (7, 10, 11, 11) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 22,5%, 23,2%, 14,6%, 23,9% | 2752, 8505, 2092, 2771 | 70 |
+
+- **Vincoli: reggono.** Lampionaio a Cappella vuota 2 notti su 12 prima del minuto 5 (3:51 e 3:26, scheletri delle comparse); il primo boss resta il primo ostacolo come nella voce 3.
+- **Danno delle reazioni sul totale: 15,8% a Cappella vuota, 20,8% a completa** (senza la maledizione; 15,7% e 20,7% contandola). Maledizione a notte: 135094 + 10648 nell'Interramento a Cappella vuota, 120933 + 18773 a completa.
+- Le colonne per personaggio del danno delle reazioni cambiano di qualche punto rispetto alla voce 3: in questa voce le ho ricalcolate da `prove/sim.json` con la stessa formula del riepilogo (Interramento aggiunto al totale); le differenze stanno dentro il rumore di 12 notti.
+- **I tetti non cambiano quasi niente oggi**: vittorie 31 → 32 e 39 → 39, dentro l'incertezza (circa ±12 punti con 48 notti). Il Maledetto arriva al tetto solo con 3 armi d’Ombra e almeno 4 Riti (4% × 1,32); il Consacrato solo con 3 armi di Sacro e 7 Riti. Servono a fermare le notti lunghe con molti Riti, non a rendere più dura la notte di oggi: quello resta per la sessione dei nemici.
+- Primo Rito: in 38/48 notti al livello 53 (vuota), in 36/48 al 56 (completa); Riti a notte 5,1 e 6,3.
+
 ### 11/11 (notte) — Raggio di unione confermato, prova prestazioni con gli effetti (nessun numero della notte cambia)
 - `ANIME.accorpa` = 56 px confermato da Edoardo come valore di serie (era già 56 dal giorno prima).
 - Prova prestazioni «Con effetti» sul Mac con il processore rallentato 6 volte (Pixel 7 emulato, circa 300 nemici in media; la misura vera è sul S25): effetti pixelfx con l'Eclissi a 12 fps 58,4 fps di media, 42 fotogrammi saltati; a 24 fps 58,7 fps e 62 saltati; effetti di sempre 58,7 fps e 27 saltati; nessun blocco sopra 100 ms in tutti e tre.
