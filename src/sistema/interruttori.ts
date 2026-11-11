@@ -12,8 +12,10 @@ export const INTERRUTTORI = {
   // Grazia a tacche: scintilla e suono a ogni tacca
   taccheScintilla: true,
   taccheSuono: true,
-  // prova pixelfx: Sepoltura, Pozza dell'Acqua santa ed Eclissi con gli sprite presi da pixelfx (PIXELFX in src/data/effetti.ts)
-  pixelfx: false,
-  eclissi24: false, // l'Eclissi pixelfx a 24 fotogrammi al secondo invece di 12 (foglio caricato al volo)
+  // effetti pixelfx (di serie dall'11/11): Pozza dell'Acqua santa ed Eclissi con gli sprite presi da pixelfx (PIXELFX in
+  // src/data/effetti.ts). Spento solo per i confronti: LAB «Effetti pixelfx: no»
+  pixelfx: true,
+  // Sepoltura pixelfx: spenta finché non si rifà dopo il rework del combattimento (i file restano); LAB «Sepoltura pixelfx»
+  sepolturaPixelfx: false,
   provaConEffetti: false, // la Prova prestazioni fa partire Sepoltura, Pozza grande ed Eclissi a ripetizione (PRESTAZIONI.effetti)
 };

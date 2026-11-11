@@ -1259,7 +1259,7 @@ export class Arsenale {
       s.setTexture(chiave).setScale(2).setVisible(true);
       return;
     }
-    // prova pixelfx: la Pozza nella misura più vicina, a grandezza naturale; la Sepoltura a gruppi di mani (effetti.ts)
+    // pixelfx: la Pozza nella misura più vicina, a grandezza naturale; la Sepoltura a gruppi di mani (effetti.ts, spenta)
     if (INTERRUTTORI.pixelfx && chiave === ACQUA_SANTA.effetto) {
       // si carica solo la misura in uso; finché arriva si usa quella in memoria, o la pozza di sempre
       chiediPozza(this.scena, chiavePozzaPixelfx(raggio), this.cambiaPozza);
@@ -1270,7 +1270,7 @@ export class Arsenale {
         return;
       }
     }
-    if (INTERRUTTORI.pixelfx && chiave === ABILITA.sepoltura.effetto && this.scena.textures.exists('Pixelfx_Sepoltura_mani')) {
+    if (INTERRUTTORI.sepolturaPixelfx && chiave === ABILITA.sepoltura.effetto && this.scena.textures.exists('Pixelfx_Sepoltura_mani')) {
       s.stop();
       s.setVisible(false);
       this.effetti.maniSepoltura(x, y, raggio, this.zVita[i]);

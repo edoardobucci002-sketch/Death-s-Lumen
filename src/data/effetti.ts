@@ -51,10 +51,9 @@ export const EFFETTI = {
   },
 } as const;
 
-// Prova pilota pixelfx (10/11): tre effetti presi dalla libreria pixelfx, esportati come sprite a retino
-// (segnaposto/EFFETTI/Pixelfx …_V0.aseprite). Si accendono dal Laboratorio (Eventi → Effetti pixelfx);
-// spenti, il gioco usa i vecchi. Cambiano solo il disegno: aree, danni e tempi dei colpi restano gli stessi.
-// Tutti i valori sono da rivedere.
+// Effetti pixelfx: presi dalla libreria pixelfx, esportati come sprite a retino (segnaposto/EFFETTI/Pixelfx …_V0.aseprite).
+// Pozza ed Eclissi sono di serie dall'11/11 (spegnibili dal Laboratorio, Eventi → Effetti pixelfx); la Sepoltura è spenta
+// finché non si rifà dopo il rework del combattimento. Cambiano solo il disegno: aree, danni e tempi dei colpi restano gli stessi.
 export const PIXELFX = {
   // Pozza dell'Acqua santa: una versione per raggio; il gioco prende quella più vicina all'area vera
   // (i nomi dei file sono Pixelfx_Pozza_089 … Pixelfx_Pozza_186). Si carica solo quella in uso (src/sistema/al-volo.ts)
@@ -63,7 +62,6 @@ export const PIXELFX = {
   // larga «fascia» px dal bordo, centro vuoto; «gruppi» gruppi a passi regolari intorno all'ellisse (con un po' di caso),
   // partenze sfalsate lungo tutta la durata dell'abilità. perno: i piedi del gruppo nel foglio
   sepoltura: { gruppi: 8, fascia: 40, perno: [52, 71] as const },
-  // Eclissi: 1,1 s, il centro della sfera nera cade sul nemico che reagisce (punto del foglio).
-  // Di serie a 12 fotogrammi al secondo; nel LAB si sceglie 24 (foglio Pixelfx_Eclissi_24, caricato al volo, 1,7 MB di memoria video)
-  eclissi: { centro: [83, 89] as const, chiave24: 'Pixelfx_Eclissi_24', centro24: [87, 93] as const },
+  // Eclissi: 1,1 s a 12 fotogrammi al secondo, il centro della sfera nera cade sul nemico che reagisce (punto del foglio)
+  eclissi: { centro: [83, 89] as const },
 } as const;

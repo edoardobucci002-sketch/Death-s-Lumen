@@ -17,7 +17,7 @@ export const SEME_PREDEFINITO = 1031;
 export const PRESTAZIONI = { personaggio: 'lampionaio', minuto: 14, secondiFine: 870, nemici: 400, secondi: 60, avvio: 3, blocco: 100, secondoLento: 55, livello: 100, livelloArmi: 8, lanterna: { dx: 110, dy: -120 },
   // «Con effetti» (LAB → Schermo): durante la misura partono a ripetizione Sepoltura (ogni «sepolturaOgni» s), la Pozza
   // più grande (ogni «pozzaOgni» s, sotto il personaggio) ed «eclissiAlSecondo» Eclissi intorno a lui, a «distanza» px.
-  // Senza ferire nessuno. Con l'interruttore pixelfx acceso sono gli effetti nuovi, spento quelli di sempre (da rivedere)
+  // Senza ferire nessuno. Nuovi o di sempre secondo gli interruttori pixelfx e Sepoltura pixelfx (da rivedere)
   effetti: { sepolturaOgni: 5, pozzaOgni: 2, raggioPozza: 186, eclissiAlSecondo: 3, distanza: 140 } };
 
 /** Link di prova: ogni quanti secondi controlla se c'è una versione nuova (da rivedere). */

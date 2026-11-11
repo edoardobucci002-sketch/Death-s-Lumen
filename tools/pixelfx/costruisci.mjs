@@ -136,8 +136,8 @@ for (const raggio of RAGGI_POZZA) {
 }
 
 // 3) Eclissi: colori originali, rimpicciolita fino all'area disegnata (64 × 1,35 ≈ 86 px di raggio) e accelerata a 1,1 s.
-//    Due versioni: 12 fotogrammi al secondo (di serie) e 24 (Eclissi_24, si sceglie nel LAB e si carica al volo)
-for (const [nome, fps] of [['Eclissi', FPS], ['Eclissi_24', 24]]) {
+//    A 12 fotogrammi al secondo (la versione a 24 è stata provata e scartata l'11/11)
+for (const [nome, fps] of [['Eclissi', FPS]]) {
   const fx = await loadEffect('shadow/dark-explosion', join(PFX, 'src/fx'));
   const RAGGIO = Math.round(64 * 1.35), NATIVO = 122; // NATIVO: raggio massimo dell'anello originale, misurato sui fotogrammi
   const scala = RAGGIO / NATIVO;

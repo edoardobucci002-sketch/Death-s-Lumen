@@ -834,7 +834,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Acquasantiera: una pozza che cura sotto i piedi del personaggio (come quando il sorso trova la fiaschetta piena). */
-  /** Prova pixelfx: accende o spegne gli effetti presi da pixelfx (Sepoltura, Pozza, Eclissi). Solo disegno. */
+  /** LAB: accende o spegne Pozza ed Eclissi pixelfx (accese di serie). Solo disegno. */
   labPixelfx(on: boolean): void {
     INTERRUTTORI.pixelfx = on;
   }
@@ -851,9 +851,9 @@ export class Gioco extends Phaser.Scene {
     (ANIME as { accorpa: number }).accorpa = px;
   }
 
-  /** LAB: Eclissi pixelfx a 24 fotogrammi al secondo (true) o a 12. */
-  labEclissi24(on: boolean): void {
-    this.effetti.labEclissi24(on);
+  /** LAB: accende o spegne la Sepoltura pixelfx (spenta di serie). Solo disegno. */
+  labSepolturaPixelfx(on: boolean): void {
+    INTERRUTTORI.sepolturaPixelfx = on;
   }
 
   /** Prova prestazioni «con effetti»: al secondo s della misura fa partire Sepoltura, Pozza grande ed Eclissi (PRESTAZIONI.effetti). */

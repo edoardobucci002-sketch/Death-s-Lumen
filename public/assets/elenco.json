@@ -503,14 +503,6 @@
       "tag": []
     },
     {
-      "chiave": "Pixelfx_Eclissi_24",
-      "categoria": "effetti",
-      "immagine": "assets/effetti/Pixelfx_Eclissi_24.png",
-      "dati": "assets/effetti/Pixelfx_Eclissi_24.json",
-      "versioneFile": 0,
-      "tag": []
-    },
-    {
       "chiave": "Pixelfx_Pozza_089",
       "categoria": "effetti",
       "immagine": "assets/effetti/Pixelfx_Pozza_089.png",

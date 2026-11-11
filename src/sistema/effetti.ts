@@ -10,7 +10,6 @@ import { Caso } from './caso';
 import { EFFETTI, PIXELFX } from '../data/effetti';
 import { REAZIONI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
-import { foglioPronto, scaricaFoglio } from './al-volo';
 import { INFO_REAZIONI } from '../data/spiegazioni';
 import { telaContorno } from './scritte';
 import { CARTE } from '../data/progressione';
@@ -34,8 +33,6 @@ const MAX_POLVERI = 12;
 const MAX_ETICHETTE = 8;
 const MAX_MANI = 16; // prova pixelfx: gruppi di mani della Sepoltura (due Sepolture insieme)
 const MAX_ECLISSI = 8; // prova pixelfx: Eclissi sullo schermo nello stesso momento
-const ECLISSI_12 = 'Pixelfx_Eclissi:idle';
-const ECLISSI_24 = `${PIXELFX.eclissi.chiave24}:idle`;
 // cifre 3×5: ogni riga è una cifra, 1 = pixel acceso
 const CIFRE = [
   '111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001',
@@ -277,23 +274,6 @@ export class Effetti {
     this.reazioni[i].setTexture(`${chiave}-0`).setPosition(Math.round(x), Math.round(y)).setVisible(true);
   }
 
-  /** LAB: Eclissi pixelfx a 24 fotogrammi al secondo (true) o a 12. Tornando a 12 il foglio da 24 si scarica. */
-  labEclissi24(on: boolean): void {
-    INTERRUTTORI.eclissi24 = on;
-    const k = PIXELFX.eclissi.chiave24;
-    if (on) {
-      foglioPronto(this.scena, k); // comincia a caricarlo subito
-      return;
-    }
-    for (let i = 0; i < this.eclissi.length; i++) {
-      if (this.eclissi[i].texture.key !== k) continue;
-      this.eclissiVita[i] = 0;
-      this.eclissi[i].stop().setVisible(false).setTexture('Pixelfx_Eclissi');
-    }
-    this.durate.delete(k);
-    scaricaFoglio(this.scena, k);
-  }
-
   /**
    * Durata in secondi di un foglio esportato da Aseprite: la somma delle durate dei fotogrammi.
    * (La durata dell'animazione di Phaser non le conta: si calcola con 24 fotogrammi al secondo.)
@@ -313,12 +293,9 @@ export class Effetti {
     let i = 0;
     while (i < this.eclissi.length && this.eclissiVita[i] > 0) i++;
     if (i >= this.eclissi.length) return;
-    // a 24 fotogrammi al secondo se scelto nel LAB e già caricato; finché arriva, quella da 12
-    const E = PIXELFX.eclissi, a24 = INTERRUTTORI.eclissi24 && foglioPronto(this.scena, E.chiave24);
-    const k = a24 ? E.chiave24 : 'Pixelfx_Eclissi', [cx, cy] = a24 ? E.centro24 : E.centro, f = this.scena.textures.getFrame(k, '0');
-    const s = this.eclissi[i].setTexture(k).setOrigin(cx / f.realWidth, cy / f.realHeight).setPosition(Math.round(x), Math.round(y)).setVisible(true);
-    s.play({ key: a24 ? ECLISSI_24 : ECLISSI_12, repeat: 0 });
-    this.eclissiVita[i] = this.durataFoglio(k);
+    const s = this.eclissi[i].setPosition(Math.round(x), Math.round(y)).setVisible(true);
+    s.play({ key: 'Pixelfx_Eclissi:idle', repeat: 0 });
+    this.eclissiVita[i] = this.durataFoglio('Pixelfx_Eclissi');
   }
 
   /**

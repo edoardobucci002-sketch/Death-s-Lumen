@@ -34,6 +34,7 @@ Parti della M8 già fatte:
 - **Fasce del telefono in verticale con il campo vero: fatte, verificate sul S25 il 6/11**, con i segnaposto dal codice. Sul link di prova e sull'APK di prova, non ancora sul link pubblico. Prossimi: pausa, scelta dei doni e menu
 - Laboratorio (LAB) sul link di prova (3/11)
 - **Prove sugli stati (10/11)**: notti esplorative del bot (`esplora`) e interruttore «Stati certi» nel LAB (Eventi), spento di partenza; risultati in [bilanciamento.md](bilanciamento.md). Da decidere se tenerlo
+- **Effetti pixelfx (chiusa la prova 11/11)**: Pozza dell'Acqua santa ed Eclissi (12 fps) di serie; Sepoltura pixelfx spenta, si rifà dopo il rework del combattimento; lacrime di Lumen: unione solo verso il personaggio, 56 px, confermate
 - **Devozione, Voti e Riti (11/11)**: una voce alla volta, con la simulazione dopo ognuna (bilanciamento 11/11)
 - **Regole del 10/11 (sera)**: Stati certi e Lanterna e Pala che mirano diventano la regola (nel LAB restano gli interruttori per tornare indietro), ritmo delle zone, vincolo del Lampionaio, tacche a pixel interi
 - **Misure del 10/11 (pomeriggio)**: «Pane e vino» da solo, raccolta della Calamita in pixel, indicatore delle tacche sotto la barra, Grazia in pausa e a fine notte, sasso e polvere dei Sampietrini grandi quanto l'area; regole degli Stati certi una alla volta, Sampietrini e amuleti rari misurati con il bot, interruttore «Lanterna e Pala mirano» (LAB → Oggetti), Prova prestazioni da una partita. Risultati in [bilanciamento.md](bilanciamento.md)
@@ -100,8 +101,6 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Prova pixelfx (10/11, esito del S25: Pozza ed Eclissi vanno bene): Sepoltura con 8 gruppi di mani lungo il bordo, senza alone (da riprovare); Eclissi a 12 o 24 fotogrammi al secondo (selettore nel LAB); «Con effetti» della Prova prestazioni (ritmo in `PRESTAZIONI.effetti`); tenere gli effetti, ritoccarli o toglierli | GDD §11; `PIXELFX` in `src/data/effetti.ts`; decisioni 10–11/11 |
-| Lacrime di Lumen: si uniscono solo a una lacrima ferma non più lontana dal personaggio (regola di Claude; il raggio di 56 px è confermato) | GDD §10; `ANIME.accorpa`; bilanciamento 11/11 |
 | Barre della salute (personaggio 41 × 9 px con 1 di bordo per lato, decisa da Edoardo il 10/11 sera; Seth alta 12 px; rosso `#c0262d`, vuoto `#3a0c10`; scorrimento 0,5 s, ambra `#d98a2b` per il danno, verde `#6fbf4a` per la cura) e grandezza del conto alla rovescia dell'abilità (16) | GDD §HUD; `src/data/mondo.ts` (`BARRA_SALUTE`), `src/data/hud.ts` (`BARRA_SETH`, `TESTI`) |
 | Stati certi, regola del gioco dal 10/11: tutti i numeri di `STATI_CERTI` (ritmo delle zone 1 s, quiete 3 s, Eclissi 10% senza tetto e ×2 del colpo su élite e Seth, Esorcismo 3 × 60%, Rivelazione +50% per difetto solo da 2 anime in su, Interramento Luce +50%, Sacro 2,5 s, Ombra ×2), i casi senza colpo, l'ordine dell'Interramento con più stati, il tetto dei cerchi (12) | GDD §8c; `src/data/stati.ts`; decisioni 10/11 |
 | Amuleti rari misurati con `amuleto=` (12 notti l'uno, bilanciamento 10/11 sera): nessuno è un disastro; la Lanterna cieca vince 9 su 12 perché il bot non guarda il buio, da provare a mano | bilanciamento 10/11 |
