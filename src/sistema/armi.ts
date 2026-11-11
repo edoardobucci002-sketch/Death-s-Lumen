@@ -100,12 +100,11 @@ export class Arsenale {
   readonly reazioniFonti = new Float64Array(FONTI.length); // …reazioni fatte partire dai colpi di ogni fonte
   private fonte = 0; // la fonte del colpo in corso
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
-  richiami = 0; // anime che il Corvo vuole riportare: le legge e le azzera la scena
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
   fiaschettaPiena = false; // la scena lo aggiorna a ogni passo: con la fiaschetta piena il sorso diventa una pozza che cura
   pozzeCuranti = 0; // pozze che hanno curato in questa notte (per la simulazione)
   curaPozzaOra = 0; // salute al secondo che danno le pozze adesso (l'ultimo cura(); per la simulazione)
-  anime: Anime | null = null; // per i Fuochi erranti
+  anime: Anime | null = null; // per i Fuochi erranti e il Corvo
   rompibili: Rompibili | null = null; // le armi li rompono con il loro impatto
   chiazze: Chiazze | null = null; // le armi di fuoco accendono l'olio
   private unite: Partial<Record<Arma['id'], boolean>> = {};
@@ -591,7 +590,9 @@ export class Arsenale {
             nx = this.px + Math.cos(ang) * d;
             ny = this.py + Math.sin(ang) * d;
           }
-          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, a.rallenta, 0, this.unite.turibolo ? U.incensiere.cura : 0, false, false, NUBE, SACRO);
+          // Incensiere dell'ultima ora: le nubi curano e rallentano di più (con il tetto: vedi toccaZona)
+          const inc = !!this.unite.turibolo;
+          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, inc ? Math.max(a.rallenta, U.incensiere.rallenta) : a.rallenta, 0, inc ? U.incensiere.cura : 0, false, false, NUBE, SACRO);
         }
         return l.ricarica;
       }
@@ -683,8 +684,9 @@ export class Arsenale {
           this.cvMira[k] = 0.18;
           this.ferisci(j, l.danno, 0, 0, 0, LUCE);
           this.rompibili?.colpitoDa(this.cvMX[k], this.cvMY[k], ROMPIBILI.raggio);
+          // a ogni beccata le anime a terra intorno al nemico beccato volano verso il personaggio
+          this.anime?.attiraVicino(o.x[j], o.y[j], a.richiamo);
         }
-        this.richiami += l.anime;
         return l.ricarica;
       }
       case 'veloFunebre': {
@@ -1094,7 +1096,10 @@ export class Arsenale {
     this.cY1 = h;
     this.cDX = dx;
     this.cDY = dy;
+    // i colpi della Lama di luce ignorano la quiete, come il primo scatto delle abilità (decisione di Edoardo dell'11/11)
+    this.cForza = INTERRUTTORI.statiCerti && RUOLI.lamaIgnoraQuiete;
     this.orda.griglia.nelRaggio(this.cx, this.cy, this.cr + 40, this.visitaColpo);
+    this.cForza = false;
     this.rompiForma();
     // il fendente della v0 parte dal bordo sinistro della tela e va a destra: si allunga e si gira nella direzione;
     // verso sinistra si capovolge anche in verticale, così il disegno non resta sottosopra
@@ -1337,7 +1342,7 @@ export class Arsenale {
       if (this.fiaschettaPiena) this.pozzaCura(i); // il sorso non entrerebbe: si versa nella pozza
       else this.sorsiGuadagnati++;
     }
-    if (this.zRallenta[i]) o.rallenta(j, this.zRallenta[i], this.zIntervallo[i] + 0.05);
+    if (this.zRallenta[i]) o.rallenta(j, this.zRallenta[i], this.zIntervallo[i] + 0.05, this.zTipo[i] === NUBE && !!this.unite.turibolo);
   }
 
   private attiraZona(j: number): void {
@@ -1397,8 +1402,10 @@ export class Arsenale {
     const ex = o.x[j] - this.px;
     const ey = o.y[j] - o.raggio[j] - this.py;
     const d = Math.hypot(ex, ey) || 1;
+    // Falce di Seth: la soglia dipende dallo stato che il nemico aveva prima del colpo (la Falce stessa maledice)
+    const soglia = o.maledetto(j) ? U.falce.maledetti : U.falce.sotto;
     this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
-    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < U.falce.sotto * o.saluteMassima[j]) {
+    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < soglia * o.saluteMassima[j]) {
       this.dannoFonti[F.falce] += o.salute[j];
       o.colpisci(j, o.salute[j], 0, 0, 0);
     }

@@ -258,7 +258,7 @@ Si trovano tra le armi comuni: Lapide, Rosario spezzato, Corvo e Velo funebre so
 | --- | --- | --- | --- | --- |
 | Lapide | Terra | cade sul nemico con più salute in vista; chi è sotto resta sempre Sepolto | 120 danni, ogni 3,2 s, raggio 84 | 260 danni, 2 lapidi, ogni 2,4 s, raggio 110 |
 | Rosario spezzato | Ombra | un grano rimbalza tra i nemici vicini (entro 190 px); 35% di maledire a ogni rimbalzo | 18 danni, 4 rimbalzi, ogni 1,6 s | 40 danni, 8 rimbalzi, 2 grani, ogni 1,2 s |
-| Corvo | Luce | vola intorno, becca il nemico più vicino (entro 330 px) e fa tornare le anime ferme più lontane | 26 danni, 1 corvo, ogni 1 s, 1 anima | 44 danni, 3 corvi, ogni 0,75 s, 4 anime |
+| Corvo | Luce | vola intorno e becca il nemico più vicino (entro 330 px); a ogni beccata le anime a terra entro 150 px dal nemico beccato volano verso di te (*da rivedere*) | 26 danni, 1 corvo, ogni 1 s | 44 danni, 3 corvi, ogni 0,75 s |
 | Velo funebre | Sacro | aura intorno al personaggio; 20% di consacrare a ogni colpo | 7 danni, raggio 110, ogni 0,5 s | 21 danni, raggio 160, ogni 0,4 s |
 | Sampietrini | Terra | lancia sampietrini sui nemici più vicini (entro 350 px); ognuno colpisce entro 40 px, lascia Sepolto come la Pala, rimbalza 90 px in avanti e colpisce di nuovo (*da rivedere*) | 14 danni, 1 sampietrino, 1 rimbalzo, ogni 1,5 s | 26 danni, 3 sampietrini, 2 rimbalzi, ogni 1,2 s |
 
@@ -309,18 +309,18 @@ Cerca il primo bersaglio entro 420 px, poi rimbalza sui nemici entro 190 px, un 
 
 #### Corvo
 
-Vola intorno a te a 90 px, a 0,35 giri al secondo; becca il nemico più vicino entro 330 px, volando a 1100 px/s.
+Vola intorno a te a 90 px, a 0,35 giri al secondo; becca il nemico più vicino entro 330 px, volando a 1100 px/s; a ogni beccata le anime a terra entro 150 px dal nemico beccato volano verso di te (decisione di Edoardo dell'11/11, *da rivedere*; prima riportava da 1 a 4 anime, le più lontane). Il livello 3, che prima riportava più anime, oggi dà +4 danno: segnaposto di Claude, *da rivedere*.
 
-| Lv | Ricarica (s) | Danno | Quantità | Anime riportate | Cosa cambia |
-|---|---|---|---|---|---|
-| 1 | 1 | 26 | 1 | 1 | Becca il nemico più vicino e ti riporta le anime lontane. |
-| 2 | 1 | 33 | 1 | 1 | +7 danno. |
-| 3 | 1 | 33 | 1 | 2 | Riporta più anime. |
-| 4 | 0,9 | 33 | 1 | 2 | Becca più spesso. |
-| 5 | 0,9 | 33 | 2 | 2 | +1 corvo. |
-| 6 | 0,9 | 44 | 2 | 3 | +11 danno, riporta più anime. |
-| 7 | 0,75 | 44 | 2 | 3 | Becca più spesso. |
-| 8 | 0,75 | 44 | 3 | 4 | +1 corvo, riporta più anime. |
+| Lv | Ricarica (s) | Danno | Quantità | Cosa cambia |
+|---|---|---|---|---|
+| 1 | 1 | 26 | 1 | Becca il nemico più vicino e ti riporta le anime intorno a lui. |
+| 2 | 1 | 33 | 1 | +7 danno. |
+| 3 | 1 | 37 | 1 | +4 danno. |
+| 4 | 0,9 | 37 | 1 | Becca più spesso. |
+| 5 | 0,9 | 37 | 2 | +1 corvo. |
+| 6 | 0,9 | 44 | 2 | +7 danno. |
+| 7 | 0,75 | 44 | 2 | Becca più spesso. |
+| 8 | 0,75 | 44 | 3 | +1 corvo. |
 
 #### Velo funebre
 
@@ -494,6 +494,7 @@ Il Maledetto mantiene le riduzioni di sempre per élite e Seth. Il moltiplicator
 Due stati diversi sullo stesso nemico si consumano e fanno una reazione. Con la regola del gioco:
 - **quiete**: dopo una reazione il nemico non può reagire di nuovo per 3 s; gli stati li riceve lo stesso;
 - le **abilità speciali** ignorano la quiete (e il ritmo delle zone): il loro primo scatto fa reagire tutti i nemici nel cerchio che hanno uno stato diverso;
+- anche i colpi della **Lama di luce** ignorano la quiete, ogni volta (decisione di Edoardo dell'11/11; `RUOLI.lamaIgnoraQuiete`);
 - **Eclissi** (Luce + Ombra): esplosione di 64 px; danno = 10% della salute massima, senza tetto, su nemici normali e bruti; su élite e Seth il doppio del danno del colpo che la innesca (se non c'è un colpo, come con Lucciola e Martire, 80);
 - **Rivelazione** (Luce + Sacro): +50% anime arrotondato per difetto, una volta per nemico, solo ai nemici che valgono almeno 2 anime;
 - **Esorcismo** (Sacro + Ombra): 3 fiammelle, ognuna al 60% del danno del colpo che la innesca (senza colpo, 18 danni); le fiammelle non lasciano stati, quindi niente reazioni a catena;
@@ -580,10 +581,10 @@ Un'arma al livello 6 più il suo dono al livello massimo (decisione di Edoardo d
 | --- | --- | --- | --- |
 | Lanterna | Stoppino lungo | Faro dei morti | l'arco diventa un cerchio; abbaglia un nemico su due |
 | Pala | Scudo di ferro | Vanga del custode | ogni colpo pianta una lapide: chi è sotto resta fermo 1,5 s (Seth a metà); poi la Vanga non può fermarlo di nuovo per 4 s, la stessa pausa del Sepolto, che vale per tutti e due (*da rivedere*) |
-| Turibolo | Erbe amare | Incensiere dell'ultima ora | dentro le nubi +1 salute al secondo (non si somma tra nubi) |
+| Turibolo | Erbe amare | Incensiere dell'ultima ora | dentro le nubi +1 salute al secondo (non si somma tra nubi); i nemici dentro le nubi rallentano almeno del 50%, in tutto non più del 60%, il tetto del Consacrato (decisione di Edoardo dell'11/11, *da rivedere*) |
 | Bastone | Clessidra | Verga dei nomi | ogni 5ª raffica colpisce tutti i maledetti sullo schermo, con il danno di un dardo |
-| Candela | Cuore di cera | Candelabro funebre | le fiammelle lasciano una scia: una fiamma ogni 0,12 s, 36 px, 1 s, 40% del danno ogni 0,3 s |
-| Falce | Sale nero | Falce di Seth | uccide i nemici normali sotto il 15% di salute (non élite e Seth) |
+| Candela | Cuore di cera | Candelabro funebre | le fiammelle lasciano una scia: una fiamma ogni 0,12 s, 36 px, 1 s, 40% del danno ogni 0,3 s; la scia è di Luce e lascia Abbagliato a chi la attraversa (con il ritmo delle zone, una volta ogni 1 s) |
+| Falce | Sale nero | Falce di Seth | uccide i nemici normali sotto il 15% di salute, i maledetti sotto il 30% (non élite e Seth; conta lo stato che il nemico aveva prima del colpo, perché la Falce stessa maledice: lettura di Claude, *da rivedere*) |
 | Campana | Cera votiva | Campana a morto | ogni rintocco ferma per 0,8 s |
 | Fuoco fatuo | Calamita | Fuochi erranti | i fuochi raccolgono le anime entro 120 px |
 | Acqua santa | Lacrima di lumen | Acquasantiera | ogni 40 uccisioni nelle pozze torna un sorso, al massimo uno ogni 45 s; con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico, che per 4 s cura il 3% della salute massima al secondo a chi ci sta dentro (non si somma con altre pozze; pozza tinta d'oro, disegno provvisorio dal codice) (*da rivedere*) |

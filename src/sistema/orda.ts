@@ -67,6 +67,7 @@ export class Orda {
   private respintaY = new Float32Array(CAPIENZA);
   private lento = new Float32Array(CAPIENZA); // parte di velocità tolta (0,3 = −30%)
   private lentoPer = new Float32Array(CAPIENZA); // secondi rimasti di rallentamento
+  private tettoPer = new Float32Array(CAPIENZA); // Incensiere: secondi in cui il rallentamento totale non supera DEVOZIONE.lentoMassimo
   private lampo = new Float32Array(CAPIENZA);
   private pausaLampo = new Float32Array(CAPIENZA); // secondi prima che possa lampeggiare di nuovo
   readonly pausaFalce = new Float32Array(CAPIENZA); // secondi prima che una falce possa colpirlo di nuovo
@@ -148,7 +149,7 @@ export class Orda {
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
-  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
+  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.tettoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
     this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo, this.moltInterrato];
 
@@ -212,6 +213,7 @@ export class Orda {
       const dy = gy - this.y[i];
       const d = Math.hypot(dx, dy);
       if (this.lentoPer[i] > 0) this.lentoPer[i] -= dt;
+      if (this.tettoPer[i] > 0) this.tettoPer[i] -= dt;
       if (this.lampo[i] > 0) this.lampo[i] -= dt;
       if (this.pausaLampo[i] > 0) this.pausaLampo[i] -= dt;
       if (this.pausaFalce[i] > 0) this.pausaFalce[i] -= dt;
@@ -221,6 +223,8 @@ export class Orda {
       if (!fermo && this.tipo[i] === ID_MIETITORE && this.muoviMietitore(i, dt, dx, dy, d, gx, gy, secondi)) continue;
       let v = fermo ? 0 : this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
       if (this.sConsacrato[i] > 0) v *= 1 - this.forza(SACRO) * (this.tipo[i] === ID_MIETITORE ? MIETITORE.rallentamento : 1);
+      // Incensiere dell'ultima ora: dentro le nubi il rallentamento totale resta sotto il tetto del Consacrato
+      if (this.tettoPer[i] > 0 && !fermo) v = Math.max(v, this.velocita[i] * (1 - DEVOZIONE.lentoMassimo));
       let tx = gx;
       let ty = gy;
       const b = this.branco[i] - 1;
@@ -518,11 +522,15 @@ export class Orda {
     return fermo;
   }
 
-  /** Rallenta il nemico i per qualche istante; resta il rallentamento più forte. */
-  rallenta(i: number, quanto: number, secondi: number): void {
+  /**
+   * Rallenta il nemico i per qualche istante; resta il rallentamento più forte. Con tetto = true (nubi dell'Incensiere)
+   * per quei secondi il rallentamento totale, Consacrato compreso, non supera DEVOZIONE.lentoMassimo.
+   */
+  rallenta(i: number, quanto: number, secondi: number, tetto = false): void {
     if (this.tipo[i] === ID_MIETITORE) quanto *= MIETITORE.rallentamento;
     if (this.lentoPer[i] <= 0 || quanto >= this.lento[i]) this.lento[i] = quanto;
     this.lentoPer[i] = Math.max(this.lentoPer[i], secondi);
+    if (tetto) this.tettoPer[i] = Math.max(this.tettoPer[i], secondi);
   }
 
   /** Tira il nemico i verso (tx, ty) di passo pixel (bruti ed élite a metà, il Mietitore a un quarto). */
@@ -718,7 +726,7 @@ export class Orda {
     this.fianco[i] = (this.caso.numero() < 0.5 ? -1 : 1) * (IA.accerchia.angolo[0] + this.caso.numero() * (IA.accerchia.angolo[1] - IA.accerchia.angolo[0]));
     this.danno[i] = tipo.danno * (1 + DIFFICOLTA.dannoPerMinuto * m);
     this.velocita[i] = tipo.velocita * (1 + (this.caso.numero() * 2 - 1) * DIFFICOLTA.variazioneVelocita);
-    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
+    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.tettoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
     this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
     this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
     this.quiete[i] = this.pausaSfioro[i] = 0;

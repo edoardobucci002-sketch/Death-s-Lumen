@@ -100,7 +100,7 @@ export interface RosarioSpezzato extends Comune {
   intervallo: number; // secondi tra un rimbalzo e l'altro
   livelli: { ricarica: number; danno: number; rimbalzi: number; quantita: number; testo: string }[];
 }
-/** Vola intorno, becca il nemico più vicino e richiama le anime più lontane. */
+/** Vola intorno e becca il nemico più vicino; a ogni beccata richiama le anime a terra intorno al nemico beccato. */
 export interface Corvo extends Comune {
   id: 'corvo';
   portata: number;
@@ -108,7 +108,8 @@ export interface Corvo extends Comune {
   giri: number; // giri al secondo
   velocita: number; // del volo
   ingrandimento: number;
-  livelli: { ricarica: number; danno: number; quantita: number; anime: number; testo: string }[];
+  richiamo: number; // a ogni beccata le anime a terra entro tanti px dal nemico beccato volano verso il personaggio
+  livelli: { ricarica: number; danno: number; quantita: number; testo: string }[];
 }
 /** Lancia sampietrini sui nemici più vicini: ognuno cade, colpisce, rimbalza in avanti e colpisce di nuovo. */
 export interface Sampietrini extends Comune {
@@ -304,16 +305,19 @@ export const ROSARIO_SPEZZATO: RosarioSpezzato = {
 };
 
 export const CORVO: Corvo = {
+  // richiamo: decisione di Edoardo dell'11/11 (prima 1–4 anime lontane a seconda del livello); da rivedere
   id: 'corvo', nome: 'Corvo', icona: 'Icona_Corvo', effetto: 'Candela_Fiammella', respinta: 0, portata: 330, orbita: 90, giri: 0.35, velocita: 1100, ingrandimento: 2,
+  richiamo: 150,
   livelli: [
-    { ricarica: 1, danno: 26, quantita: 1, anime: 1, testo: 'Becca il nemico più vicino e ti riporta le anime lontane.' },
-    { ricarica: 1, danno: 33, quantita: 1, anime: 1, testo: '+7 danno.' },
-    { ricarica: 1, danno: 33, quantita: 1, anime: 2, testo: 'Riporta più anime.' },
-    { ricarica: 0.9, danno: 33, quantita: 1, anime: 2, testo: 'Becca più spesso.' },
-    { ricarica: 0.9, danno: 33, quantita: 2, anime: 2, testo: '+1 corvo.' },
-    { ricarica: 0.9, danno: 44, quantita: 2, anime: 3, testo: '+11 danno, riporta più anime.' },
-    { ricarica: 0.75, danno: 44, quantita: 2, anime: 3, testo: 'Becca più spesso.' },
-    { ricarica: 0.75, danno: 44, quantita: 3, anime: 4, testo: '+1 corvo, riporta più anime.' },
+    { ricarica: 1, danno: 26, quantita: 1, testo: 'Becca il nemico più vicino e ti riporta le anime intorno a lui.' },
+    { ricarica: 1, danno: 33, quantita: 1, testo: '+7 danno.' },
+    // livello 3: prima «riporta più anime»; +4 danno è un segnaposto di Claude (da rivedere)
+    { ricarica: 1, danno: 37, quantita: 1, testo: '+4 danno.' },
+    { ricarica: 0.9, danno: 37, quantita: 1, testo: 'Becca più spesso.' },
+    { ricarica: 0.9, danno: 37, quantita: 2, testo: '+1 corvo.' },
+    { ricarica: 0.9, danno: 44, quantita: 2, testo: '+7 danno.' },
+    { ricarica: 0.75, danno: 44, quantita: 2, testo: 'Becca più spesso.' },
+    { ricarica: 0.75, danno: 44, quantita: 3, testo: '+1 corvo.' },
   ],
 };
 

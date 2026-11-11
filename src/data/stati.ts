@@ -71,6 +71,7 @@ export const RUOLI = {
   lapideSeppellisce: 1, // probabilità di lasciare Sepolto a chi è sotto la lapide
   rosarioMaledice: 0.35, // probabilità di maledire a ogni rimbalzo
   veloConsacra: 0.2, // probabilità di consacrare a ogni colpo dell'aura
+  lamaIgnoraQuiete: true, // Stati certi: i colpi della Lama di luce ignorano la quiete, come il primo scatto delle abilità (decisione di Edoardo dell'11/11)
 } as const;
 
 /**

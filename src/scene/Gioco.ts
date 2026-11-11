@@ -516,10 +516,6 @@ export class Gioco extends Phaser.Scene {
       this.sim?.acquasantiera(this.arsenale.sorsiGuadagnati, this.fiaschetta.sorsi - prima);
       this.arsenale.sorsiGuadagnati = 0;
     }
-    if (this.arsenale.richiami) {
-      this.anime.richiama(this.arsenale.richiami, this.x, this.y);
-      this.arsenale.richiami = 0;
-    }
     if (this.arsenale.dentroNube()) this.secondiNubi += dt;
     const raccolte = this.anime.aggiorna(dt, this.x, this.y - COLPI.corpo, this.raccolta);
     if (raccolte) {

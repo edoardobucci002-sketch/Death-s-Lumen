@@ -67,30 +67,13 @@ export class Anime {
     for (let i = 0; i < this.numero; i++) if (!this.volo[i]) this.volo[i] = ANIME.volo;
   }
 
-  /** Fuochi erranti: le anime ferme entro raggio da (x, y) volano verso il personaggio. */
+  /** Fuochi erranti e Corvo: le anime ferme entro raggio da (x, y) volano verso il personaggio. */
   attiraVicino(x: number, y: number, raggio: number): void {
     const r2 = raggio * raggio;
     for (let i = 0; i < this.numero; i++) {
       if (this.volo[i]) continue;
       const dx = this.x[i] - x, dy = this.y[i] - y;
       if (dx * dx + dy * dy <= r2) this.volo[i] = ANIME.volo;
-    }
-  }
-
-  /** Corvo: le n anime ferme più lontane dal personaggio volano verso di lui. */
-  richiama(n: number, gx: number, gy: number): void {
-    for (let k = 0; k < n; k++) {
-      let scelta = -1, d2max = -1;
-      for (let i = 0; i < this.numero; i++) {
-        if (this.volo[i]) continue;
-        const dx = this.x[i] - gx, dy = this.y[i] - gy, d2 = dx * dx + dy * dy;
-        if (d2 > d2max) {
-          d2max = d2;
-          scelta = i;
-        }
-      }
-      if (scelta < 0) return;
-      this.volo[scelta] = ANIME.volo;
     }
   }
 

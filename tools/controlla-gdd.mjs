@@ -275,7 +275,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Lama di luce', A.LAMA_DI_LUCE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Lunghezza: 'lunghezza', 'Colpo alle spalle': 'spalle' }],
     ['Lapide', A.LAPIDE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio', 'Quantità': 'quantita' }],
     ['Rosario spezzato', A.ROSARIO_SPEZZATO, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Rimbalzi: 'rimbalzi', 'Quantità': 'quantita' }],
-    ['Corvo', A.CORVO, { 'Ricarica (s)': 'ricarica', Danno: 'danno', 'Quantità': 'quantita', 'Anime riportate': 'anime' }],
+    ['Corvo', A.CORVO, { 'Ricarica (s)': 'ricarica', Danno: 'danno', 'Quantità': 'quantita' }],
     ['Velo funebre', A.VELO_FUNEBRE, { 'Ricarica (s)': 'ricarica', Danno: 'danno', Raggio: 'raggio' }],
     ['Sampietrini', A.SAMPIETRINI, { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Rimbalzi: 'rimbalzi', Danno: 'danno' }],
   ];
@@ -324,6 +324,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Sampietrini', 'sui nemici più vicini entro {} px: ognuno vola {} s con un arco alto {} px, colpisce entro {} px', A.SAMPIETRINI.portata, A.SAMPIETRINI.volo, A.SAMPIETRINI.altezza, A.SAMPIETRINI.raggio],
     ['Sampietrini', 'nel {}% dei colpi); poi rimbalza {} px in avanti, nella direzione del lancio ({} s, arco di {} px)', pct(ST.STATI.probabilita), A.SAMPIETRINI.salto, A.SAMPIETRINI.voloRimbalzo, A.SAMPIETRINI.altezzaRimbalzo],
     ['Corvo', 'Vola intorno a te a {} px, a {} giri al secondo; becca il nemico più vicino entro {} px, volando a {} px/s', A.CORVO.orbita, A.CORVO.giri, A.CORVO.portata, A.CORVO.velocita],
+    ['Corvo', 'a ogni beccata le anime a terra entro {} px dal nemico beccato volano verso di te', A.CORVO.richiamo],
   ];
   for (const [nome, modello, ...attesi] of frasi) inTesto(s(nome), nome, modello, ...attesi);
 
@@ -332,7 +333,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const NUOVE = [
     [A.LAPIDE, '{} danni, ogni {} s, raggio {}', ['danno', 'ricarica', 'raggio'], '{} danni, {} lapidi, ogni {} s, raggio {}', ['danno', 'quantita', 'ricarica', 'raggio']],
     [A.ROSARIO_SPEZZATO, '{} danni, {} rimbalzi, ogni {} s', ['danno', 'rimbalzi', 'ricarica'], '{} danni, {} rimbalzi, {} grani, ogni {} s', ['danno', 'rimbalzi', 'quantita', 'ricarica']],
-    [A.CORVO, '{} danni, {} corvo, ogni {} s, {} anima', ['danno', 'quantita', 'ricarica', 'anime'], '{} danni, {} corvi, ogni {} s, {} anime', ['danno', 'quantita', 'ricarica', 'anime']],
+    [A.CORVO, '{} danni, {} corvo, ogni {} s', ['danno', 'quantita', 'ricarica'], '{} danni, {} corvi, ogni {} s', ['danno', 'quantita', 'ricarica']],
     [A.VELO_FUNEBRE, '{} danni, raggio {}, ogni {} s', ['danno', 'raggio', 'ricarica'], '{} danni, raggio {}, ogni {} s', ['danno', 'raggio', 'ricarica']],
     [A.SAMPIETRINI, '{} danni, {} sampietrino, {} rimbalzo, ogni {} s', ['danno', 'quantita', 'rimbalzi', 'ricarica'], '{} danni, {} sampietrini, {} rimbalzi, ogni {} s', ['danno', 'quantita', 'rimbalzi', 'ricarica']],
   ];
@@ -347,6 +348,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   }
   conRiga(t, 'Rosario spezzato', (r) => inTesto(r['Cosa fa'], 'Rosario spezzato', '(entro {} px); {}% di maledire', A.ROSARIO_SPEZZATO.salto, pct(ST.RUOLI.rosarioMaledice)));
   conRiga(t, 'Corvo', (r) => inTesto(r['Cosa fa'], 'Corvo', '(entro {} px)', A.CORVO.portata));
+  conRiga(t, 'Corvo', (r) => inTesto(r['Cosa fa'], 'Corvo: richiamo', 'le anime a terra entro {} px', A.CORVO.richiamo));
   conRiga(t, 'Sampietrini', (r) => inTesto(r['Cosa fa'], 'Sampietrini', '(entro {} px); ognuno colpisce entro {} px, lascia Sepolto come la Pala, rimbalza {} px', A.SAMPIETRINI.portata, A.SAMPIETRINI.raggio, A.SAMPIETRINI.salto));
   conRiga(t, 'Velo funebre', (r) => inTesto(r['Cosa fa'], 'Velo funebre', '{}% di consacrare', pct(ST.RUOLI.veloConsacra)));
   conRiga(t, 'Lapide', (r) => vero('Lapide', (ST.RUOLI.lapideSeppellisce === 1) === r['Cosa fa'].includes('resta sempre Sepolto'), 'nei dati la probabilità di seppellire non è «sempre»'));
@@ -667,10 +669,10 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const MODELLI = {
     faroDeiMorti: ['abbaglia un nemico su {p}', 1 / NU.faro.abbaglia],
     vangaDelCustode: ['resta fermo {} s (Seth a {p}); poi la Vanga non può fermarlo di nuovo per {} s', NU.vanga.fermo, ST.STATI.mietitore.fermo, ST.STATI.sepolto.pausa],
-    incensiereUltimaOra: ['+{} salute al secondo', NU.incensiere.cura],
+    incensiereUltimaOra: ['+{} salute al secondo (non si somma tra nubi); i nemici dentro le nubi rallentano almeno del {}%, in tutto non più del {}%', NU.incensiere.cura, pct(NU.incensiere.rallenta), pct(ST.DEVOZIONE.lentoMassimo)],
     vergaDeiNomi: ['ogni {}ª raffica colpisce tutti i maledetti sullo schermo, con il danno di {p} dardo', NU.verga.ogni, NU.verga.danno],
     candelabroFunebre: ['una fiamma ogni {} s, {} px, {} s, {}% del danno ogni {} s', NU.candelabro.ogni, NU.candelabro.raggio, NU.candelabro.durata, pct(NU.candelabro.danno), NU.candelabro.intervallo],
-    falceDelMietitore: ['sotto il {}% di salute', pct(NU.falce.sotto)],
+    falceDelMietitore: ['sotto il {}% di salute, i maledetti sotto il {}%', pct(NU.falce.sotto), pct(NU.falce.maledetti)],
     campanaAMorto: ['ferma per {} s', NU.campana.fermo],
     fuochiErranti: ['entro {} px', NU.fuochi.raggio],
     selciato: ['rimbalza {} volta in più, una sola volta per sasso', NU.selciato.rimbalzi],
