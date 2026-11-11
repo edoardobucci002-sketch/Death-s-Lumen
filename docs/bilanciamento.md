@@ -40,6 +40,11 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 11/11 (notte) — Raggio di unione confermato, prova prestazioni con gli effetti (nessun numero della notte cambia)
+- `ANIME.accorpa` = 56 px confermato da Edoardo come valore di serie (era già 56 dal giorno prima).
+- Prova prestazioni «Con effetti» sul Mac con il processore rallentato 6 volte (Pixel 7 emulato, circa 300 nemici in media; la misura vera è sul S25): effetti pixelfx con l'Eclissi a 12 fps 58,4 fps di media, 42 fotogrammi saltati; a 24 fps 58,7 fps e 62 saltati; effetti di sempre 58,7 fps e 27 saltati; nessun blocco sopra 100 ms in tutti e tre.
+- Un cambio di misura della Pozza (quando il raggio dell'Acqua santa cresce) costa un blocco di circa 140 ms con il processore rallentato: il foglio nuovo si decodifica e va alla scheda grafica. Succede solo quando il raggio cambia.
+
 ### 11/11 — Lacrime di Lumen: raggio di unione 56 px (richiesta di Edoardo)
 - `ANIME.accorpa` da 28 a 56 px: una lacrima che cade entro 56 px da una ferma si unisce a lei (il valore si somma). Nel LAB si prova tra 28, 40, 56 e 72 px. Disegno di nuovo × 2.
 - Effetto non voluto, corretto: con 56 o 72 px una lacrima caduta accanto al personaggio si univa a una ferma più lontana, fuori dal raggio di raccolta, e chi stava fermo non saliva più di livello (la Badessa ferma, in 30 s, mai; con 28 px in 4,4 s). Regola nuova: si unisce solo a una ferma non più lontana di lei dal personaggio. Prima avevo provato a spostare la lacrima unita nel punto più vicino al personaggio: regalava esperienza (la Strega arrivava al livello 4 al secondo 60 invece del 3 al 62), scartata.
