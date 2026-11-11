@@ -678,6 +678,10 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     selciato: ['rimbalza {} volta in più, una sola volta per sasso', NU.selciato.rimbalzi],
     acquasantiera: ['ogni {} uccisioni nelle pozze torna un sorso, al massimo uno ogni {} s; con la fiaschetta piena il sorso si versa nella pozza dove è morto il nemico, che per {} s cura il {}% della salute massima al secondo', NU.acquasantiera.uccisioni, NU.acquasantiera.pausa, NU.acquasantiera.curaDurata, pct(NU.acquasantiera.curaParte)],
     lamaDellAlba: ['da dove eri {} s prima', NU.lama.ritardo],
+    lapideInchiodata: ['resta a terra {} s invece di {} e seppellisce chi la tocca (entro {} px dal punto di caduta, misura di Claude), con la pausa di {} s del Sepolto', NU.lapide.resta, A.LAPIDE.resta, NU.lapide.tocca, ST.STATI.sepolto.pausa],
+    rosarioDeiVespri: ['{} ripartenza per lancio', NU.rosario.ripartenze],
+    stormoDelLutto: ['beccano per primi i nemici che con la Luce fanno una reazione', ],
+    sudario: ['fino a {} s in tutto dall\'inizio della Grazia', NU.sudario.fino],
   };
   stessiNomi('Unioni', t, U.UNIONI.map((u) => armi.find((a) => a.id === u.arma).nome));
   for (const u of U.UNIONI) {

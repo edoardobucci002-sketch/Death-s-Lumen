@@ -52,7 +52,7 @@ const MAX_ZONE = 64;
 const MAX_PROIETTILI = 96;
 const MAX_LAME = 8;
 const MAX_RITARDATI = 8;
-const MAX_LAPIDI = 8;
+const MAX_LAPIDI = 12; // con la Lapide inchiodata le lapidi restano a terra più a lungo
 const MAX_GRANI = 6;
 const MAX_SASSI = 24; // sampietrini in volo insieme
 const MAX_RIMBALZI = 12; // un grano ricorda fino a tanti nemici già colpiti
@@ -196,7 +196,10 @@ export class Arsenale {
   private lpDanno = new Float32Array(MAX_LAPIDI);
   private lpVita = new Float32Array(MAX_LAPIDI);
   private lpCaduta = new Uint8Array(MAX_LAPIDI); // 1 = deve ancora toccare terra
-  private lpCampi = [this.lpX, this.lpY, this.lpR, this.lpDanno, this.lpVita];
+  private lpResta = new Float32Array(MAX_LAPIDI); // secondi a terra (Lapide inchiodata: di più)
+  private lpChiodo = new Uint8Array(MAX_LAPIDI); // 1 = Lapide inchiodata: a terra seppellisce chi la tocca
+  private lpCampi = [this.lpX, this.lpY, this.lpR, this.lpDanno, this.lpVita, this.lpResta];
+  private visitaChiodo = (j: number): void => this.toccaLapide(j);
   private lpSprite: Phaser.GameObjects.Sprite[] = [];
 
   // sampietrini in volo: da (x0, y0) a (x1, y1) in «durata» secondi, con un arco alto «alto»; poi colpiscono e rimbalzano
@@ -229,6 +232,8 @@ export class Arsenale {
   private grResto = new Uint8Array(MAX_GRANI);
   private grTempo = new Float32Array(MAX_GRANI);
   private grDanno = new Float32Array(MAX_GRANI);
+  private grPieni = new Uint8Array(MAX_GRANI); // rimbalzi del livello (Rosario dei vespri: il grano che riparte ne ha altrettanti)
+  private grRipartito = new Uint8Array(MAX_GRANI); // ripartenze già usate da questo lancio (Rosario dei vespri)
   private grColpiti = new Uint32Array(MAX_GRANI * MAX_RIMBALZI);
   private grSprite: Phaser.GameObjects.Sprite[] = [];
 
@@ -517,7 +522,7 @@ export class Arsenale {
       this.prSprite[i].setPosition(Math.round(this.prX[i]), Math.round(this.prY[i])).setRotation(Math.atan2(this.prVY[i], this.prVX[i]));
     }
     for (let i = 0; i < this.lapidi; i++) {
-      const sale = this.lpCaduta[i] ? (LAPIDE.altezza * (this.lpVita[i] - LAPIDE.resta)) / LAPIDE.caduta : 0;
+      const sale = this.lpCaduta[i] ? (LAPIDE.altezza * (this.lpVita[i] - this.lpResta[i])) / LAPIDE.caduta : 0;
       this.lpSprite[i].setPosition(Math.round(this.lpX[i]), Math.round(this.lpY[i] - sale));
     }
     for (let i = 0; i < this.sassi; i++) {
@@ -675,8 +680,10 @@ export class Arsenale {
         const l = a.livelli[p.livello - 1];
         const o = this.orda;
         this.corvi = Math.min(l.quantita + piu, MAX_CORVI, this.scelti.length);
+        // Stormo del lutto: per primi i nemici che con la Luce fanno una reazione (consacrati, maledetti, sepolti)
+        const stormo = !!this.unite.corvo;
         for (let k = 0; k < this.corvi; k++) {
-          const j = this.piuVicino(a.portata, k);
+          const j = stormo ? this.piuVicinoCheReagisce(a.portata, k, LUCE) : this.piuVicino(a.portata, k);
           if (j < 0) break;
           this.scelti[k] = j;
           this.cvMX[k] = o.x[j];
@@ -741,7 +748,10 @@ export class Arsenale {
     this.lpY[i] = y;
     this.lpR[i] = raggio;
     this.lpDanno[i] = danno;
-    this.lpVita[i] = LAPIDE.caduta + LAPIDE.resta;
+    // Lapide inchiodata: solo le lapidi vere (non quelle da vedere della Vanga) restano e seppelliscono
+    this.lpChiodo[i] = danno && this.unite.lapide ? 1 : 0;
+    this.lpResta[i] = this.lpChiodo[i] ? U.lapide.resta : LAPIDE.resta;
+    this.lpVita[i] = LAPIDE.caduta + this.lpResta[i];
     this.lpCaduta[i] = 1;
     this.lpSprite[i].setVisible(true);
   }
@@ -749,7 +759,14 @@ export class Arsenale {
   private aggiornaLapidi(dt: number): void {
     for (let i = this.lapidi - 1; i >= 0; i--) {
       this.lpVita[i] -= dt;
-      if (this.lpCaduta[i] && this.lpVita[i] <= LAPIDE.resta) {
+      // Lapide inchiodata: a terra seppellisce chi la tocca (la pausa del Sepolto la fa marca())
+      if (this.lpChiodo[i] && !this.lpCaduta[i] && this.lpVita[i] > 0) {
+        this.fonte = F.lapide;
+        this.cx = this.lpX[i];
+        this.cy = this.lpY[i];
+        this.orda.griglia.nelRaggio(this.cx, this.cy, U.lapide.tocca + 40, this.visitaChiodo);
+      }
+      if (this.lpCaduta[i] && this.lpVita[i] <= this.lpResta[i]) {
         this.lpCaduta[i] = 0;
         if (this.lpDanno[i]) this.prepara(0, this.lpX[i], this.lpY[i], this.lpR[i], this.lpDanno[i], 0);
         if (this.lpDanno[i]) {
@@ -767,9 +784,23 @@ export class Arsenale {
       s.setVisible(false);
       for (const a of this.lpCampi) a[i] = a[u];
       this.lpCaduta[i] = this.lpCaduta[u];
+      this.lpChiodo[i] = this.lpChiodo[u];
       this.lpSprite[i] = this.lpSprite[u];
       this.lpSprite[u] = s;
     }
+  }
+
+  /** Lapide inchiodata: il nemico j tocca la lapide a terra in (cx, cy)? Allora è Sepolto (o reagisce), salvo la pausa del Sepolto. */
+  private toccaLapide(j: number): void {
+    const o = this.orda;
+    if (o.salute[j] <= 0) return;
+    const dx = o.x[j] - this.cx, dy = o.y[j] - this.cy, r = U.lapide.tocca + o.raggio[j];
+    if (dx * dx + dy * dy > r * r) return;
+    const k = o.marca(j, TERRA);
+    if (k) {
+      this.accoda(k, j, 0);
+      this.reazioniFonti[F.lapide]++;
+    } else if (o.marcato) this.statiFonti[F.lapide]++;
   }
 
   // ——— Sampietrini ———
@@ -842,9 +873,26 @@ export class Arsenale {
     const i = this.grani++;
     this.grColpiti.fill(0, i * MAX_RIMBALZI, (i + 1) * MAX_RIMBALZI);
     this.grResto[i] = Math.min(rimbalzi, MAX_RIMBALZI);
+    this.grPieni[i] = this.grResto[i];
+    this.grRipartito[i] = 0;
     this.grDanno[i] = danno;
     this.grSprite[i].setVisible(true);
     this.rimbalza(i, j);
+  }
+
+  /** Rosario dei vespri: dal nemico j (appena ucciso) riparte un grano con i rimbalzi e il danno del grano i. */
+  private ripartiGrano(i: number, j: number): void {
+    if (this.grani >= MAX_GRANI) return;
+    const k = this.grani++, o = this.orda;
+    this.grColpiti.fill(0, k * MAX_RIMBALZI, (k + 1) * MAX_RIMBALZI);
+    this.grResto[k] = this.grPieni[k] = this.grPieni[i];
+    this.grDanno[k] = this.grDanno[i];
+    this.grRipartito[k] = ++this.grRipartito[i]; // ripartenze già usate dal lancio (U.rosario.ripartenze): niente catene senza fine
+    this.grX[k] = o.x[j];
+    this.grY[k] = o.y[j] - o.raggio[j];
+    this.grTempo[k] = ROSARIO_SPEZZATO.intervallo; // al prossimo rimbalzo cerca il nemico più vicino
+    this.grSprite[k].setPosition(Math.round(this.grX[k]), Math.round(this.grY[k])).setVisible(true);
+    this.effetti.scoppio(this.grX[k], this.grY[k]);
   }
 
   /** Il grano i colpisce il nemico j e ci si posa sopra. */
@@ -855,7 +903,9 @@ export class Arsenale {
     this.grColpiti[i * MAX_RIMBALZI + this.grResto[i] - 1] = o.id[j];
     this.grResto[i]--;
     this.grTempo[i] = ROSARIO_SPEZZATO.intervallo;
+    const maledetto = o.maledetto(j); // lo stato di prima del colpo: il grano stesso può maledire
     this.ferisci(j, this.grDanno[i], 0, 0, 0, OMBRA, RUOLI.rosarioMaledice);
+    if (this.unite.rosarioSpezzato && maledetto && o.salute[j] <= 0 && this.grRipartito[i] < U.rosario.ripartenze) this.ripartiGrano(i, j);
   }
 
   private aggiornaGrani(dt: number): void {
@@ -885,6 +935,8 @@ export class Arsenale {
       this.grResto[i] = this.grResto[u];
       this.grTempo[i] = this.grTempo[u];
       this.grDanno[i] = this.grDanno[u];
+      this.grPieni[i] = this.grPieni[u];
+      this.grRipartito[i] = this.grRipartito[u];
       this.grColpiti.copyWithin(i * MAX_RIMBALZI, u * MAX_RIMBALZI, (u + 1) * MAX_RIMBALZI);
       this.grSprite[i] = this.grSprite[u];
       this.grSprite[u] = s;
@@ -1486,6 +1538,43 @@ export class Arsenale {
       }
     }
     return migliore;
+  }
+
+  /** Come piuVicino, ma prima cerca il più vicino che con lo stato aff farebbe una reazione; se non c'è, il più vicino. */
+  private piuVicinoCheReagisce(portata: number, salta: number, aff: number): number {
+    const o = this.orda;
+    let migliore = -1;
+    let d2min = portata * portata;
+    for (let j = 0; j < o.numero; j++) {
+      if (!o.reagisceCon(j, aff)) continue;
+      let preso = false;
+      for (let k = 0; k < salta; k++) if (this.scelti[k] === j) preso = true;
+      if (preso) continue;
+      const ex = o.x[j] - this.px, ey = o.y[j] - o.raggio[j] - this.py, d2 = ex * ex + ey * ey;
+      if (d2 < d2min) {
+        d2min = d2;
+        migliore = j;
+      }
+    }
+    return migliore >= 0 ? migliore : this.piuVicino(portata, salta);
+  }
+
+  /** Sudario: c'è almeno un nemico dentro il velo (Velo funebre unito)? Se sì, il velo prende il colore del Sudario. */
+  sudario(): boolean {
+    if (!this.unite.veloFunebre || !this.raggioVelo) return false;
+    const o = this.orda, r = this.raggioVelo;
+    let dentro = false;
+    for (let j = 0; j < o.numero && !dentro; j++) {
+      const dx = o.x[j] - this.px, dy = o.y[j] - o.raggio[j] - this.py, rr = r + o.raggio[j];
+      if (o.salute[j] > 0 && dx * dx + dy * dy <= rr * rr) dentro = true;
+    }
+    return dentro;
+  }
+
+  /** Sudario: il velo si tinge mentre tiene la Grazia (disegno provvisorio). */
+  tingiVelo(tiene: boolean): void {
+    if (tiene) this.velo.setTint(U.sudario.colore);
+    else this.velo.clearTint();
   }
 
   /** Un nemico a caso tra quelli sullo schermo (−1 se non ce ne sono). */

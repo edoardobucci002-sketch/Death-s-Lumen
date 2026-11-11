@@ -32,12 +32,20 @@ export const NUMERI_UNIONI = {
   },
   lama: { ritardo: 0.5 }, // il secondo fendente parte dove eri tanti secondi prima
   selciato: { rimbalzi: 1 }, // un sampietrino che colpisce un nemico fermo rimbalza tante volte in più (una sola volta per sasso; da rivedere)
+  // Unioni nuove dell'11/11 (nomi ed effetti di Edoardo; misure da rivedere)
+  // la lapide resta a terra «resta» secondi (invece di LAPIDE.resta) e seppellisce chi la tocca, con la pausa del Sepolto;
+  // «tocca»: pixel dal punto in cui è caduta, metà della lapide disegnata (24 px × 3, provvisoria: misura di Claude)
+  lapide: { resta: 3, tocca: 36 },
+  rosario: { ripartenze: 1 }, // da un maledetto ucciso da un grano riparte un grano nuovo; tante ripartenze per lancio
+  // stormo: i corvi beccano per primi i nemici che con la Luce farebbero una reazione (Sacro, Ombra o Terra, fuori dalla quiete)
+  sudario: { fino: 6, colore: 0xfff1b8 }, // in Grazia con un nemico nel velo la Grazia non scade, fino a 6 s in tutto; colore: velo provvisorio mentre la tiene
 } as const;
 
 const num = (v: number): string => String(v).replace('.', ',');
 const N = NUMERI_UNIONI;
 
-export type IdUnione = 'faroDeiMorti' | 'vangaDelCustode' | 'incensiereUltimaOra' | 'vergaDeiNomi' | 'candelabroFunebre' | 'falceDelMietitore' | 'campanaAMorto' | 'fuochiErranti' | 'acquasantiera' | 'lamaDellAlba' | 'selciato';
+export type IdUnione = 'faroDeiMorti' | 'vangaDelCustode' | 'incensiereUltimaOra' | 'vergaDeiNomi' | 'candelabroFunebre' | 'falceDelMietitore' | 'campanaAMorto' | 'fuochiErranti' | 'acquasantiera' | 'lamaDellAlba' | 'selciato'
+  | 'lapideInchiodata' | 'rosarioDeiVespri' | 'stormoDelLutto' | 'sudario';
 
 export interface Unione { id: IdUnione; arma: IdArma; dono: IdDono; nome: string; testo: string }
 
@@ -53,6 +61,10 @@ export const UNIONI: Unione[] = [
   { id: 'acquasantiera', arma: 'acquaSanta', dono: 'lacrimaDiLumen', nome: 'Acquasantiera', testo: `Ogni ${N.acquasantiera.uccisioni} uccisioni nelle pozze torna un sorso di fiaschetta, al massimo uno ogni ${N.acquasantiera.pausa} s.` },
   { id: 'lamaDellAlba', arma: 'lamaDiLuce', dono: 'aliDiFalena', nome: "Lama dell'alba", testo: 'Un secondo fendente parte da dove eri mezzo secondo prima.' },
   { id: 'selciato', arma: 'sampietrini', dono: 'scudoDiFerro', nome: 'Selciato', testo: 'Un sampietrino che colpisce un nemico fermo rimbalza una volta in più.' },
+  { id: 'lapideInchiodata', arma: 'lapide', dono: 'chiodoDiBara', nome: 'Lapide inchiodata', testo: `La lapide resta a terra ${num(N.lapide.resta)} s e seppellisce chi la tocca.` },
+  { id: 'rosarioDeiVespri', arma: 'rosarioSpezzato', dono: 'specchio', nome: 'Rosario dei vespri', testo: 'Quando un grano uccide un nemico maledetto, da lui riparte un grano nuovo (una volta per lancio).' },
+  { id: 'stormoDelLutto', arma: 'corvo', dono: 'calamita', nome: 'Stormo del lutto', testo: 'I corvi beccano per primi i nemici consacrati, maledetti o sepolti: ogni beccata fa una reazione.' },
+  { id: 'sudario', arma: 'veloFunebre', dono: 'campanellaDArgento', nome: 'Sudario', testo: `In Grazia, finché un nemico è dentro il velo la Grazia non scade, fino a ${num(N.sudario.fino)} s in tutto.` },
 ];
 
 export const unioneDi = (arma: IdArma): Unione | undefined => UNIONI.find((u) => u.arma === arma);

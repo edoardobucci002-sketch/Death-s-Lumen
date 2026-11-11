@@ -60,7 +60,7 @@ import { Speciale } from '../sistema/speciale';
 import { Fiaschetta } from '../sistema/fiaschetta';
 import { BAGLIORE, FIASCHETTA, GRAZIA } from '../data/sopravvivenza';
 import { CERA, SBLOCCHI, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SECONDA_CANDELA, type IdOggetto } from '../data/meta';
-import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
+import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, NUMERI_UNIONI, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { AMULETI, AMULETI_NUMERI as AM, ROSARIO, amuleto, type IdAmuleto } from '../data/rosario';
 import { iconaAmuleto } from '../sistema/amuleti';
 import { AFFINITA_TUTTE, chiaro, INFO_AFFINITA, EFFETTO_FORZA, INFO_REAZIONI, NOME_COLPI_IN_PIU, segnoPercento, virgola } from '../data/spiegazioni';
@@ -145,6 +145,8 @@ export class Gioco extends Phaser.Scene {
   private sim: Simulazione | null = null;
   private fiaschetta!: Fiaschetta;
   private grazia = 0; // secondi di Grazia rimasti
+  private graziaDa = 0; // secondi dall'inizio della Grazia in corso (Sudario)
+  private sudarioTiene = false; // il Sudario sta tenendo la Grazia
   private meta!: BonusMeta; // ceri accesi della Cappella
   private candelaUsata = false; // Seconda candela
   private eliteUccise = 0;
@@ -213,7 +215,8 @@ export class Gioco extends Phaser.Scene {
     // finché un personaggio non ha il suo sprite in gioco, usa quello del Lampionaio (segnaposto)
     this.chiaveSprite = this.textures.exists(this.pg.sprite) ? this.pg.sprite : PERSONAGGI[0].sprite;
     for (const q of PASSIVI) this.passivi[q.id] = 0;
-    this.grazia = 0;
+    this.grazia = this.graziaDa = 0;
+    this.sudarioTiene = false;
     this.candelaUsata = false;
     this.eliteUccise = this.sethSconfitti = this.ceraRaccolta = this.uccisi = 0;
     this.meta = bonusMeta(carica(), parametri.get('meta') ?? (parametri.has('bot') ? '0' : null));
@@ -463,7 +466,14 @@ export class Gioco extends Phaser.Scene {
       if (this.bot.abilita(this.x, this.y - COLPI.corpo, a.raggio * (1 + this.bonus.area), a.cura > 0, this.salute / this.saluteMassima)) this.speciale.prova();
     }
     if (this.bot && this.salute < this.saluteMassima * BOT.beviSotto) this.fiaschetta.bevi();
-    if (this.grazia > 0 && (this.grazia -= dt) <= 0) this.ricalcola();
+    // Sudario (Velo funebre unito): con un nemico dentro il velo la Grazia non scade, fino a NUMERI_UNIONI.sudario.fino s in tutto
+    const tiene = this.grazia > 0 && this.graziaDa + this.grazia < NUMERI_UNIONI.sudario.fino && this.arsenale.sudario();
+    if (tiene !== this.sudarioTiene) {
+      this.sudarioTiene = tiene;
+      this.arsenale.tingiVelo(tiene);
+    }
+    if (this.grazia > 0) this.graziaDa += dt;
+    if (this.grazia > 0 && !tiene && (this.grazia -= dt) <= 0) this.ricalcola();
     if (this.bagliore > 0 && (this.bagliore -= dt) <= 0) {
       this.bagliore = 0;
       this.dopoPassivo();
@@ -619,6 +629,7 @@ export class Gioco extends Phaser.Scene {
    */
   private iniziaGrazia(durata: number = GRAZIA.durata): void {
     const giaAttiva = this.grazia > 0;
+    if (!giaAttiva) this.graziaDa = 0;
     this.grazia = Math.max(this.grazia, durata);
     if (!giaAttiva) this.ricalcola();
     this.hud.avviso('Grazia');

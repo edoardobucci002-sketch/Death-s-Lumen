@@ -435,7 +435,21 @@ export class Orda {
     return 0;
   }
 
-  /** Ferma il nemico i per qualche secondo, senza stato (secondo rintocco della Campana); il Mietitore a metà. */
+  /**
+   * Stormo del lutto: lasciando ora lo stato dell'affinità aff, il nemico i farebbe una reazione? (ha uno stato diverso
+   * e, con gli Stati certi, non è in quiete; per la Terra non è nemmeno nella pausa del Sepolto). Non cambia niente.
+   */
+  reagisceCon(i: number, aff: number): boolean {
+    if (this.salute[i] <= 0 || (INTERRUTTORI.statiCerti && this.quiete[i] > 0)) return false;
+    const abb = this.sAbbagliato[i] > 0, cons = this.sConsacrato[i] > 0, mal = this.sMaledetto[i] > 0, sep = this.sSepolto[i] > 0;
+    if (aff === TERRA) return (abb || cons || mal) && this.pausaSepolto[i] <= 0;
+    if (sep) return true;
+    if (aff === LUCE) return cons || mal;
+    if (aff === SACRO) return abb || mal;
+    return abb || cons;
+  }
+
+  /** Il nemico i è maledetto adesso? */
   maledetto(i: number): boolean {
     return this.sMaledetto[i] > 0;
   }

@@ -117,7 +117,7 @@ export function schedaDono(d: Dono, c: Contesto): Scheda {
     case 'arma': return schedaArma(d.arma, d.livello, c);
     case 'passivo': {
       const q = d.passivo, ora = DATI_DONI[q.id](q, d.livello, c.metaRaccolta), prima = DATI_DONI[q.id](q, d.livello - 1, c.metaRaccolta);
-      // un dono può aprire più Unioni (lo Scudo di ferro: Vanga del custode e Selciato)
+      // un dono può aprire più Unioni (lo Scudo di ferro: Vanga del custode e Selciato; la Calamita: Fuochi erranti e Stormo del lutto)
       const unioni = c.unioni ? UNIONI.filter((x) => x.dono === q.id && c.scoperte.has(x.id) && c.armi.some((a) => a.id === x.arma)) : [];
       return {
         nome: q.nome, icona: q.icona, categoria: 'dono', tag: tagLivello(d.livello, q.massimo, 'Nuovo dono'),
