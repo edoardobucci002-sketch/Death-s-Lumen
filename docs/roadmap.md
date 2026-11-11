@@ -67,6 +67,19 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
    - **Dal lato del gioco servono:** identificativo definitivo `com.deathslumen.game` (non si cambia più dopo la prima pubblicazione); compilazione firmata in formato AAB, con una chiave di caricamento propria e numero di versione che cresce a ogni caricamento; icona 512×512, grafica in evidenza 1024×500, almeno due schermate del telefono; titolo, descrizione breve e completa, categoria, contatto; pagina con l'informativa sulla privacy, modulo sui dati raccolti, questionario sui contenuti; controllo delle licenze di caratteri e di ogni asset di terzi.
 9. **Più avanti**: mondi e boss nuovi come dungeon in fila nella stessa partita, alla Hades; altri boss oltre Seth; la trama dell'endgame (vedi [lore.md](lore.md)).
 
+**Da portare nelle sessioni future** (11/11, fuori dall'ordine qui sopra):
+
+- **Sessione dei nemici**:
+  - la notte va resa più dura: dopo Devozione, Voti e Riti il bot vince 31 notti su 48 a Cappella vuota (obiettivo provvisorio 2–7);
+  - Seth uccide quasi sempre a contatto, non con le sue mosse: le mosse devono pesare di più;
+  - il mini boss del minuto 3 deve rispettare il vincolo del Lampionaio (non muore sempre prima del minuto 5) e quello del primo boss (Seth del minuto 5 è il primo vero ostacolo);
+  - Edoardo ha scelto (11/11) di non aggiungere ora un comando di difficoltà.
+- **Redesign delle build, cosa resta**:
+  - le quattro Unioni nuove in bozza: Lapide + Chiodo di bara, Rosario spezzato + Specchio, Corvo + Calamita, Velo funebre + Campanella d'argento;
+  - ritocchi a Incensiere, Candelabro funebre e Falce di Seth;
+  - il Corvo riporta le anime vicine;
+  - la Lama di luce fa reagire anche i nemici in quiete.
+
 ## Idee non ancora decise
 
 - Suoni e musica originali al posto di quelli sintetizzati.
@@ -107,7 +120,9 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Copione dalle 3:00 «zombi 3, scheletro 1» (decisione del 10/11 sera): con questo il Lampionaio rispetta il vincolo (2 notti su 12 prima del minuto 5) | GDD «Il copione della notte»; bilanciamento 11/11 |
 | Devozione: tutti i numeri (gradi 1–3 degli stati, reazioni × 1 / 1,25 / 1,5); lo stato dell'abilità prende il grado ma non conta come arma (lettura di Claude) | GDD 8c; `DEVOZIONE` in `src/data/stati.ts` |
 | Voti: nomi («Voto della Luce»…), quiete 1,5 s, +40% sui fermi, −20% dai consacrati (solo a contatto, non le mosse di Seth), peso 1,3 solo per le armi nuove | GDD §2; `src/data/voti.ts` |
-| Riti: ogni 3 livelli senza carte, +8% stato e reazioni, al massimo 3 carte; tetto del rallentamento all'80% (di Claude). Il primo Rito arriva al livello 53–56 (minuto 11–12) | GDD 8c; `RITI`, `DEVOZIONE.lentoMassimo` |
+| Riti: ogni 3 livelli senza carte, +8% stato e reazioni, al massimo 3 carte. Il primo Rito arriva al livello 53–56 (minuto 11–12) | GDD 8c; `RITI` |
+| Tetti degli stati (decisione di Edoardo dell'11/11, valori da rivedere): Consacrato al massimo 60% di rallentamento (era 80%), Maledetto al massimo 5% della salute massima al secondo, con le riduzioni di élite, Seth e Mietitore dopo il tetto. Lettura di Claude: nell'Interramento che consuma l'Ombra la maledizione raddoppia anche oltre il tetto (fino al 10%) | GDD 8c; `DEVOZIONE.lentoMassimo`, `DEVOZIONE.maledettoMassimo` |
+| Scelte di Devozione, Voti e Riti su cui Edoardo non si è espresso (11/11): restano come sono. L'abilità speciale non conta come arma nella Devozione; nomi dei Voti («Voto della Luce»…); Voto del Sacro solo sul contatto (non sulle mosse di Seth); peso 1,3 solo per le armi nuove; Riti e Devozione spenti con «Stati a caso (vecchi)» | GDD §2 e 8c; `src/data/voti.ts`, `src/data/stati.ts` |
 | Ritmo delle zone (1 s): la Strega non scende (reazioni −7% a Cappella completa) perché lo stato dura 3 s; da decidere se allungarlo verso 3 s o accorciare gli stati delle zone | bilanciamento 10/11 notte; `STATI_CERTI.ritmo` |
 | Notti esplorative del bot: una su tre; il bot non prende amuleti che lo manderebbero in Peccato | decisioni 10/11; `tools/sim.mjs` |
 | Copione della notte, respiro (50 s + 10 s al 25%), comparse 1,4 + 2,9 m, tetto 250, bruti al massimo 100, copione e forme delle orde, preavviso 3 s, salute ×3 dal minuto 6, Lumen accorpato a 28 px: tutti i valori. Il bot vince 7 notti su 48 |
