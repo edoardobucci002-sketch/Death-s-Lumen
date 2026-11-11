@@ -40,6 +40,24 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 11/11 — Ritocchi alle build e quattro Unioni nuove (decisioni di Edoardo)
+
+Voce 1: Incensiere dell'ultima ora, nubi che rallentano almeno del 50%, in tutto non più del 60%; Falce di Seth, maledetti sotto il 30% (normali sempre 15%); Corvo, a ogni beccata le anime a terra entro 150 px dal nemico beccato (prima 1–4 anime lontane; il livello 3 rimasto vuoto dà +4 danno, 33 → 37, e il livello 6 sale di +7 invece di +11: segnaposto di Claude); Lama di luce, i suoi colpi ignorano la quiete. Il Candelabro funebre non cambia (la scia lasciava già Abbagliato). Voce 2: Lapide inchiodata (3 s a terra, seppellisce chi la tocca entro 36 px), Rosario dei vespri (1 ripartenza per lancio), Stormo del lutto, Sudario (fino a 6 s). Tutti i valori *da rivedere*. Simulazione dopo le due voci, stesse colonne della voce 3 e dei tetti (`npm run sim -- 12 tutti`, Cappella vuota e completa, semi 1001–1012).
+
+| Prova | Vittorie (L, B, Ba, S) | Morti prima del 5 | Primo boss: prima / contro | Morti per Seth: contatto / mosse | Danno delle reazioni | Reazioni a notte (Ecl, Riv, Eso, Int) | Livello medio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| tetti, vuota | 32/48 (7, 7, 9, 9) | 2, 1, 0, 0 | 2/2, 1/1, 0/0, 0/0 | 0/0, 3/1, 1/0, 1/0 | 15,6%, 13,9%, 13,3%, 19,2% | 593, 4114, 4974, 3789 | 61 |
+| **ritocchi e Unioni, vuota** | **32/48** (5, 6, 11, 10) | **2**, 1, 0, 0 | 2/3, 1/1, 0/0, 0/0 | 3/0, 5/0, 1/0, 0/1 | 19,1%, 14,1%, 14,9%, 20,6% | 773, 4378, 4521, 3542 | 60 |
+| tetti, completa | 39/48 (7, 10, 11, 11) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 1/0, 0/0, 1/0, 0/0 | 22,5%, 23,2%, 14,6%, 23,9% | 2752, 8505, 2092, 2771 | 70 |
+| **ritocchi e Unioni, completa** | **40/48** (9, 10, 10, 11) | 0, 0, 0, 0 | 0/1, 0/1, 0/0, 0/0 | 2/0, 0/0, 2/0, 0/0 | 24,1%, 17,1%, 11,8%, 30,4% | 3126, 10354, 1719, 3499 | 72 |
+
+- **Vincoli: reggono.** A Cappella vuota il Lampionaio muore prima del minuto 5 in 2 notti su 12 (3:51 e 3:26, scheletri delle comparse; al massimo 3); nessuno muore più spesso prima del primo boss che contro di lui (Lampionaio 2 prima e 3 contro, Becchino 1 e 1); nessuno muore sempre prima del minuto 5.
+- **Danno delle reazioni sul totale: 17,2% a Cappella vuota, 21,5% a completa** (senza la maledizione; 17,1% e 21,4% contandola). Prima 15,8% e 20,8%.
+- **A Cappella vuota le Unioni non ci sono** (si sbloccano con «Sconfiggi Seth»; il bot parte senza): lì cambiano solo la Lama di luce e il Corvo, che a Cappella vuota non è sbloccato. La Lama di luce, presa in 29 notti su 48, fa partire in media 3161 reazioni a notte. Le vittorie restano 32/48; per personaggio si spostano di 1–2 notti, dentro il rumore di 12 notti.
+- **Unioni fatte a Cappella completa** (notti in cui c'era a fine notte, su 48; la prima Unione arriva in 43 notti, in media a 6:31): Falce di Seth 14, Acquasantiera 11, **Lapide inchiodata 11**, Campana a morto 9, **Rosario dei vespri 9**, Verga dei nomi 9, Candelabro funebre 8, Fuochi erranti 7, Selciato 6, **Stormo del lutto 5**, Faro dei morti 4, Vanga del custode 3, Lama dell'alba 3, Incensiere dell'ultima ora 2, **Sudario 1**. Il bot prende ogni Unione che gli viene offerta. Il Sudario esce poco perché il bot prende di rado la Campanella d'argento (preferenza 0,2).
+- Il Corvo, a Cappella completa in 19 notti, fa partire 460 reazioni a notte; da questa misura non si separa lo Stormo del lutto (5 notti).
+- Vittorie a Cappella completa 39 → 40, dentro l'incertezza (circa ±12 punti con 48 notti). La notte resta troppo facile per gli obiettivi provvisori: è il lavoro della sessione dei nemici, non di queste voci.
+
 ### 11/11 — Tetti degli stati (decisione di Edoardo)
 
 `DEVOZIONE.lentoMassimo` da 0,8 a 0,6 (il Consacrato rallenta al massimo del 60%) e nuovo `DEVOZIONE.maledettoMassimo` 0,05 (il Maledetto toglie al massimo il 5% della salute massima al secondo; élite, Seth e Mietitore con le loro riduzioni dopo il tetto). Valori da rivedere. Stesse simulazioni (12 notti per personaggio, semi 1001–1012) e stesse colonne della voce 3.

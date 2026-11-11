@@ -36,6 +36,7 @@ Parti della M8 già fatte:
 - **Prove sugli stati (10/11)**: notti esplorative del bot (`esplora`) e interruttore «Stati certi» nel LAB (Eventi), spento di partenza; risultati in [bilanciamento.md](bilanciamento.md). Da decidere se tenerlo
 - **Effetti pixelfx (chiusa la prova 11/11)**: Pozza dell'Acqua santa ed Eclissi (12 fps) di serie; Sepoltura pixelfx spenta, si rifà dopo il rework del combattimento; lacrime di Lumen: unione solo verso il personaggio, 56 px, confermate
 - **Devozione, Voti e Riti (11/11)**: una voce alla volta, con la simulazione dopo ognuna (bilanciamento 11/11)
+- **Redesign delle build chiuso (11/11)**: tetti degli stati; ritocchi a Incensiere dell'ultima ora, Falce di Seth, Corvo e Lama di luce (il Candelabro funebre lasciava già Abbagliato); quattro Unioni nuove, Lapide inchiodata, Rosario dei vespri, Stormo del lutto e Sudario (15 Unioni in tutto). Restano le prove a mano di Edoardo e una guida dentro il gioco (vedi «Da portare nelle sessioni future»)
 - **Regole del 10/11 (sera)**: Stati certi e Lanterna e Pala che mirano diventano la regola (nel LAB restano gli interruttori per tornare indietro), ritmo delle zone, vincolo del Lampionaio, tacche a pixel interi
 - **Misure del 10/11 (pomeriggio)**: «Pane e vino» da solo, raccolta della Calamita in pixel, indicatore delle tacche sotto la barra, Grazia in pausa e a fine notte, sasso e polvere dei Sampietrini grandi quanto l'area; regole degli Stati certi una alla volta, Sampietrini e amuleti rari misurati con il bot, interruttore «Lanterna e Pala mirano» (LAB → Oggetti), Prova prestazioni da una partita. Risultati in [bilanciamento.md](bilanciamento.md)
 - **Pausa a schede (6/11)**: Build, Rosario, Stati, Opzioni, statistiche del personaggio, Unioni che si scoprono, conferma di Abbandona; sul link di prova e sull'APK di prova, da provare sul S25. LAB → Schermate → Pausa
@@ -70,15 +71,13 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
 **Da portare nelle sessioni future** (11/11, fuori dall'ordine qui sopra):
 
 - **Sessione dei nemici**:
-  - la notte va resa più dura: dopo Devozione, Voti e Riti il bot vince 31 notti su 48 a Cappella vuota (obiettivo provvisorio 2–7);
+  - la notte va resa più dura: dopo Devozione, Voti, Riti, tetti, ritocchi e Unioni nuove il bot vince 32 notti su 48 a Cappella vuota e 40 a completa (obiettivo provvisorio 2–7 a Cappella vuota);
   - Seth uccide quasi sempre a contatto, non con le sue mosse: le mosse devono pesare di più;
   - il mini boss del minuto 3 deve rispettare il vincolo del Lampionaio (non muore sempre prima del minuto 5) e quello del primo boss (Seth del minuto 5 è il primo vero ostacolo);
   - Edoardo ha scelto (11/11) di non aggiungere ora un comando di difficoltà.
-- **Redesign delle build, cosa resta**:
-  - le quattro Unioni nuove in bozza: Lapide + Chiodo di bara, Rosario spezzato + Specchio, Corvo + Calamita, Velo funebre + Campanella d'argento;
-  - ritocchi a Incensiere, Candelabro funebre e Falce di Seth;
-  - il Corvo riporta le anime vicine;
-  - la Lama di luce fa reagire anche i nemici in quiete.
+- ~~**Redesign delle build, cosa resta**: quattro Unioni nuove, ritocchi a Incensiere, Candelabro e Falce, Corvo, Lama di luce~~ (**fatto l'11/11**: il redesign delle build è chiuso). Restano:
+  - **le prove a mano di Edoardo** su Devozione, Voti, Riti, tetti, le quattro Unioni nuove e i cinque ritocchi (dal LAB);
+  - **una guida dentro il gioco a stati, reazioni e abilità**: da progettare con Edoardo (che cosa spiega, dove compare, quando), non ancora fatta.
 
 ## Idee non ancora decise
 
@@ -132,6 +131,8 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Sampietrini e Selciato: misure del volo (0,45 s e 60 px, rimbalzo 0,3 s e 24 px), probabilità di Sepolto (10%), Selciato una volta per sasso, sasso e polvere provvisori larghi quanto l'area (ciottolo 20×16 ingrandito, anello di polvere 0,3 s); con il bot le vittorie scendono da 18 a 8 su 24 | GDD §4 e §8f; `SAMPIETRINI`; bilanciamento 10/11 |
 | Lanterna e Pala mirano, regola del gioco dal 10/11: 260 px per la Lanterna, 150 px per la Pala | GDD §4 (Pala); `MIRA` in `src/data/armi.ts` |
 | Unioni: arma al livello 6 (decisione di Edoardo del 10/11, il valore 6 è da rivedere), dono al massimo, sblocco con «Sconfiggi Seth» | GDD §8f; `LIVELLO_ARMA_UNIONE`, `SBLOCCO_UNIONI` |
+| Ritocchi dell'11/11: nubi dell'Incensiere al 50% con il tetto del 60%; Falce di Seth al 30% sui maledetti (conta lo stato di prima del colpo: lettura di Claude); Corvo che richiama le anime entro 150 px dal nemico beccato; **livello 3 del Corvo, rimasto vuoto: +4 danno (segnaposto di Claude)**; Lama di luce che ignora la quiete | GDD §4 (Corvo), 8c, 8f; `NUMERI_UNIONI`, `CORVO`, `RUOLI.lamaIgnoraQuiete` |
+| Unioni nuove dell'11/11, misure e letture di Claude: Lapide inchiodata 3 s e tocco entro 36 px dal punto di caduta; Rosario dei vespri, «maledetto» prima del colpo e 1 ripartenza per lancio; Stormo del lutto che salta anche i nemici in quiete; Sudario fino a 6 s dall'inizio della Grazia, velo tinto `#fff1b8`; icone ed effetti provvisori dal codice | GDD §8f; `NUMERI_UNIONI`; `asset_da_creare.md` |
 | Animazione della scoperta: segnaposto dal codice; Edoardo la vuole semplice ma con la «scarica di dopamina» dell'evoluzione di un Pokémon; durata da decidere quando ci sarà quella vera; tela e fotogrammi da definire | GDD §8f; `asset_da_creare.md` |
 | Abbreviazioni della pausa: Attesa colpi, Colpi, Colpi extra, Durata zone | GDD «La pausa»; `NOMI_CHIARI` in `src/data/spiegazioni.ts` |
 | Rompibili: percentuali, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
