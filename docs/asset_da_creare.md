@@ -2,14 +2,29 @@
 
 Elenco di ciò che Edoardo deve ancora disegnare. Nel gioco c'è un segnaposto per ognuno (disegnato dal codice o preso dalla v0). Aggiornalo quando si aggiunge o si consegna qualcosa.
 
+## Gioco a stanze (pivot del 12/11)
+
+Per la fetta verticale **non serve disegnare niente in anticipo**: ogni pezzo nasce con un segnaposto dal codice, così si prova prima se il combattimento funziona. Le misure (tele, fotogrammi) si fissano passo per passo con la fetta e si scrivono qui; finché non ci sono, non vale la pena disegnare. Il gioco a stanze è in orizzontale anche sul telefono.
+
 | Asset | Dove serve | Stato / segnaposto |
 | --- | --- | --- |
-| **Fascia_Alta_V1** (`HUD/Pannelli/`, tela 376×124 px) | fascia alta del telefono: una sola, neutra, per tutti i personaggi | disegnata dal codice in `src/sistema/segnaposto-fasce.ts`. Sul S25 si vedono i 270×81 centrali in fondo alla tela; **filo chiaro di 1 px sull'ultima riga**, verso il campo, visibile anche contro il buio più fitto; le prime 27 righe visibili sono nell'area sicura (foro della fotocamera): niente dettagli lì |
-| **Fascia_Bassa_V1** (`HUD/Pannelli/`, tela 376×124 px) | fascia bassa del telefono | come sopra. Sul S25 si vedono i 270×94 centrali in cima alla tela; **filo chiaro di 1 px sulla prima riga**, verso il campo; niente incavi per i pulsanti finché la disposizione non è confermata |
+| **Lampionaio: animazione `attack`** (nello sprite in gioco, come tag Aseprite; poi `hurt` e `death`) | attacco a tasto della Lanterna (passo 3 della fetta) | segnaposto dal codice; misure da fissare al passo 3 |
+| **Due nemici della fetta, con l'animazione d'attacco e il suo avviso** | passo 4 della fetta | quali nemici si sceglie con Edoardo; fino ad allora segnaposto dal codice |
+| **La stanza**: pavimento, muri, porte | passi 2 e 6 della fetta | segnaposto dal codice; tela e misure al passo 2 |
+| **Simboli delle porte**: una per affinità (Luce, Sacro, Ombra, Terra) e una per il dono | porte che mostrano la ricompensa (passo 6) | segnaposto dal codice |
+| **Tasto d'attacco** e la disposizione dei tasti in orizzontale | HUD del telefono in orizzontale (passo 3) | segnaposto dal codice; misure dopo la prova sul S25 |
+| **Icona del Calice riverso** (`ICONE/Calice_riverso/Icona_Calice_riverso_V1.aseprite`, 24×24) | il dono che oggi si chiama Lacrima di lumen (+1 sorso), con il nome nuovo deciso il 12/11 | oggi c'è `Icona_Lacrima_di_lumen`; il file vecchio non si tocca, il nome nel codice cambia quando il nome nuovo entra nel gioco |
+
+## Survivor
+
+| Asset | Dove serve | Stato / segnaposto |
+| --- | --- | --- |
+| **Fascia_Alta_V1** (`HUD/Pannelli/`, tela 376×124 px) *(solo survivor, telefono in verticale: sospeso dal pivot del 12/11)* | fascia alta del telefono: una sola, neutra, per tutti i personaggi | disegnata dal codice in `src/sistema/segnaposto-fasce.ts`. Sul S25 si vedono i 270×81 centrali in fondo alla tela; **filo chiaro di 1 px sull'ultima riga**, verso il campo, visibile anche contro il buio più fitto; le prime 27 righe visibili sono nell'area sicura (foro della fotocamera): niente dettagli lì |
+| **Fascia_Bassa_V1** (`HUD/Pannelli/`, tela 376×124 px) *(solo survivor, telefono in verticale: sospeso dal pivot del 12/11)* | fascia bassa del telefono | come sopra. Sul S25 si vedono i 270×94 centrali in cima alla tela; **filo chiaro di 1 px sulla prima riga**, verso il campo; niente incavi per i pulsanti finché la disposizione non è confermata |
 | **Barra_Seth_Cornice_V1** (`HUD/Barre/`, 225×14 px, finestra in x 10, y 4, 205×6) e **Barra_Seth_Piena_V1** (205×6 px) | barra sottile di Seth, nella riga dell'orologio | non più usate (10/11): la barra di Seth ora è un rettangolo rosso con i numeri; della cornice conta solo la lunghezza della finestra (`FINESTRE.Barra_Seth_Cornice` in `src/data/hud.ts`) |
 | **Fiaschetta_Lumen_Tonda_V1** (`HUD/Pulsanti/`, tela 77×86 px come l'anello dell'abilità: stessa cornice dell'abilità, icona della fiala dentro; centro in x 39, y 36, disco interno di raggio 19) | pulsante della fiaschetta | composto dal codice in `src/sistema/fiaschetta.ts` con la cornice dell'abilità e una fiala di 15×23 px. **Tacche, da rispettare:** quadretti di 4×4 px con 1 px di bordo, a 31 px dal centro, su un arco di 150° sopra il pulsante (fino a 5 tacche, 37,5° l'una dall'altra): nessun dettaglio importante lì. Le disegna il codice (`TACCHE`, `src/data/hud.ts`) |
-| **Pulsante_Pausa_Piccolo_V1** (`HUD/Pulsanti/`, 34×34 px) | pausa nella fascia bassa | disegnato dal codice |
-| Joystick_Base_Piccola (56×56 px) e Joystick_Pomello_Piccolo (24×24 px), in `HUD/Pulsanti/` | joystick sul telefono in verticale | cerchi dal codice |
+| **Pulsante_Pausa_Piccolo_V1** (`HUD/Pulsanti/`, 34×34 px) *(solo survivor, telefono in verticale: sospeso dal pivot del 12/11)* | pausa nella fascia bassa | disegnato dal codice |
+| Joystick_Base_Piccola (56×56 px) e Joystick_Pomello_Piccolo (24×24 px), in `HUD/Pulsanti/` *(solo survivor, telefono in verticale: sospeso dal pivot del 12/11)* | joystick sul telefono in verticale | cerchi dal codice |
 | Targhetta dell'orologio (circa 38×16 px), facoltativa | riga dell'orologio | nessuna: solo le cifre |
 | **Scheda del Play Store**: grafica in evidenza 1024×500 px e icona 512×512 px | prova chiusa e pubblicazione su Google Play | c'è `public/icons/icon-512.png`; la grafica in evidenza non esiste |
 | **Goccia di cera** (oggetto a terra, 8×11 px circa; se vuole anche una versione grande per i mucchi di Seth) | gocce di Cera lasciate dai nemici | disegnata dal codice in `src/sistema/oggetti.ts`; il file `OGGETTI/Goccia_cera_V1.aseprite` la sostituisce |

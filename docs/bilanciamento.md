@@ -6,6 +6,8 @@ Il bot gioca dentro il gioco vero (`npm run sim`, vedi [LEGGIMI.md](../LEGGIMI.m
 
 ## Obiettivi (provvisori, non vincolanti)
 
+> **Dal pivot del 12/11** obiettivi e regole vincolanti di questa sezione valgono **solo per il survivor** (la notte di 15 minuti, tag `survivor-v1`). Il bot di oggi non sa giocare a stanze: per il gioco a stanze le regole vincolanti sono **sospese** finché il bot non saprà giocarci (decisione di Edoardo del 12/11). Idea di partenza, *da rivedere*: il primo Boss è il primo vero ostacolo; nessun personaggio muore sempre prima del mini-boss del Mondo 1. I numeri nuovi del pivot (per esempio l'Eclissi al 5% sui capi) entrano in questo registro quando entrano nel codice.
+
 Decisione di Edoardo (4/11): gli obiettivi della tabella sono **provvisori**. Non si ritocca nessun contenuto per inseguirli finché i contenuti del gioco non sono completi; il bilanciamento vero si fa alla fine, con tutti i contenuti. Le simulazioni servono intanto a vedere dove siamo.
 
 | Cappella (`meta=`) | Cosa simula il bot | Vittorie del bot |

@@ -1,8 +1,20 @@
 # Death's Lumen
 
-Survivor-like in pixel art (sul modello di Vampire Survivors). Una veglia in un cimitero: il giocatore cammina, le armi colpiscono da sole, si sopravvive 15 minuti fino all'alba. Quattro personaggi giocabili oggi, ognuno con un'arma iniziale esclusiva e un'abilità speciale (la Veggente e la Sguattera sono previsti: vedi `docs/roadmap.md`).
+Action roguelite a stanze in pixel art (sul modello di Hades). Una Veglia attraversa 3 Mondi fatti di stanze: in ogni stanza si combatte, alla fine si sceglie una carta tra tre, e la porta scelta decide da dove pescano le carte successive. Il personaggio attacca con la sua arma iniziale a tasto; le altre armi (gli Echi) colpiscono da sole. Quattro personaggi giocabili, ognuno con arma iniziale, abilità, Voto e passiva propri (la Veggente e la Sguattera sono previsti: vedi `docs/roadmap.md`).
+
+**Il gioco sta cambiando genere (pivot del 12/11/2026).** Fino ad allora era un survivor-like alla Vampire Survivors (una notte di 15 minuti, armi tutte automatiche): quella versione è congelata nel tag `survivor-v1` e resta sul link pubblico. Il progetto del gioco a stanze è in `docs/proposte/pivot-hades.md`; le regole del passaggio sono nella sezione «Il passaggio al gioco a stanze», qui sotto.
 
 Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioco com'è oggi: `docs/GDD.md`. Comandi, cartelle e stack: `LEGGIMI.md`. Il codice (`src/data/` e `src/`) è la fonte di verità.
+
+## Il passaggio al gioco a stanze
+
+Valgono finché il survivor e il gioco a stanze convivono sul ramo `prova` (decisioni di Edoardo del 12/11).
+
+- **Affiancati.** Il gioco a stanze nasce come scena nuova accanto al survivor e riusa i suoi sistemi (pixel perfect, HUD, salvataggi, Cappella, Laboratorio, prove). Su `/prova/` si gioca a entrambi; il codice del survivor si toglie solo quando Edoardo approva la fetta verticale, e da quel momento queste regole di passaggio decadono.
+- **Prima la fetta verticale minima** (un pezzo piccolo ma completo del gioco, da giocare dall'inizio alla fine; «verticale» non c'entra con l'orientamento dello schermo): il Lampionaio, 3 stanze collegate da porte con le 3 carte, 2 tipi di nemico che attaccano con un avviso, attacco a tasto, Grazia, abilità caricata colpendo. Niente Boss, Sosta né meta. Serve a capire se combattere è divertente sul telefono. Il piano a passi è in `docs/roadmap.md`.
+- **Le regole che parlano del survivor** (fasce del telefono in verticale, vincoli del bot su Seth al minuto 5, 400 nemici) valgono per la scena del survivor finché esiste; per il gioco a stanze vale quello che è scritto per lui.
+- **Il GDD descrive solo ciò che è nel codice.** Il gioco a stanze entra nel GDD un pezzo alla volta, quando quel pezzo esiste davvero; fino ad allora il riferimento è la proposta. Se un pezzo del gioco a stanze contraddice la proposta, vince la decisione più recente in `docs/decisioni.md`.
+- **Ogni attacco dei nemici ha un avviso chiaro e lascia spazio alla schivata perfetta**: senza scatto, la difesa attiva è la Grazia.
 
 ## Chi lavora al progetto
 
@@ -24,7 +36,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 - **Due livelli di sprite** (decisione di Edoardo):
   - **Ritratti dettagliati**: solo nella schermata di selezione del personaggio.
-  - **Sprite in gioco** molto più semplici, leggibili a colpo d'occhio, alla Vampire Survivors.
+  - **Sprite in gioco** molto più semplici, leggibili a colpo d'occhio (la scelta è nata guardando Vampire Survivors e resta nel gioco a stanze).
 - **Nomi dei file** (convenzione di Edoardo), con le parole separate da `_` e la versione in fondo:
   - `Nome_V#.aseprite`, per esempio `La_Badessa_V2.aseprite`: il **ritratto** della selezione. `Nome_ingame_V#.aseprite`: lo **sprite in gioco** (stessa cartella).
   - `Nome_idle_sheet_V#.png`, per esempio `La_Badessa_idle_sheet_V2.png`.
@@ -40,7 +52,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 ## Identità visiva
 
-- **Mondo inventato**: niente riferimenti alla realtà (feste, luoghi, nomi storici). La lore è in `docs/lore.md`. Le croci nei disegni restano: fanno parte di questo mondo. Nell'interfaccia di gioco «veglia» e «Seth»; «Rinnovato» compare dal primo Seth come primo indizio; «Rinnovo» e «Ricaduta» arrivano più avanti nella trama. Nei testi che il giocatore legge, parlando dei boss in generale si usano termini generici («capi»), non «Seth»: gli altri boss non vanno anticipati.
+- **Mondo inventato**: niente riferimenti alla realtà (feste, luoghi, nomi storici). La lore è in `docs/lore.md`. Le croci nei disegni restano: fanno parte di questo mondo. Nell'interfaccia di gioco «veglia» e «Seth»; «Rinnovato» compare dal primo Seth come primo indizio; «Rinnovo» e «Ricaduta» arrivano più avanti nella trama. Nei testi che il giocatore legge, parlando dei boss in generale si usano termini generici («capi»), non «Seth»: gli altri boss non vanno anticipati. Con i 3 Mondi della Veglia questa regola va ripensata (lore, «Aperto»): finché Edoardo non decide, resta com'è.
 - Palette notturna calda. Ogni personaggio ha il suo colore guida (nel GDD) e l'interfaccia prende il colore del personaggio scelto.
 - **Caratteri**: titoli, nastri e scritte dentro i pulsanti in **Tiny5 tutto maiuscolo**, a pixel interi (`src/sistema/scritte.ts`); numeri e HUD in Jersey 10; testi lunghi (schede, pannelli, pausa) in EB Garamond. Vanno inclusi nel pacchetto, non scaricati da internet.
 - Le schede dei personaggi riprendono lo stile della scheda di Edoardo: nome, motto, ritratto, biografia, fila di sprite, arma iniziale, abilità speciale, barre delle statistiche, citazione sopra un paesaggio.
@@ -49,7 +61,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 - **Nessun numero di bilanciamento dentro la logica.** Statistiche, curve, probabilità e tempi stanno in `src/data/`, in file leggibili da Edoardo. Quando un numero cambia, aggiorna `docs/GDD.md` (valore attuale) e `docs/bilanciamento.md` (cosa è cambiato e perché).
 - Pochi file piccoli, con nomi chiari. Un commento breve in italiano sopra ogni sistema per dire che cosa fa.
-- Prestazioni (obiettivo: 60 fps su un telefono di fascia media con 400 nemici in campo):
+- Prestazioni (obiettivo: 60 fps su un telefono di fascia media nel momento più affollato; nel survivor sono 400 nemici in campo, per il gioco a stanze il numero si fissa con la fetta verticale, *da rivedere*):
   - griglia spaziale per le collisioni;
   - pool di oggetti per nemici, proiettili e numeri del danno;
   - niente allocazioni dentro il ciclo di gioco;
@@ -59,24 +71,28 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 
 ## Mobile (obbligatorio)
 
-- Controlli touch: joystick virtuale dove si appoggia il dito; sul telefono in verticale, nella fascia bassa, fiaschetta e abilità negli angoli (scambiabili dal Laboratorio) e pausa al centro; altrove abilità in basso a sinistra con la fiaschetta accanto e pausa in basso a destra. Tastiera su desktop: WASD/frecce, Spazio (abilità), F (fiaschetta), P (pausa), M (suoni), 1-2-3-4 (scelta del dono).
-- Rispetta le safe area (notch, Dynamic Island, barre di sistema). **Su telefono il gioco è solo in verticale**; su computer e tablet è in orizzontale, come Vampire Survivors. Non si adatta l'HUD al telefono in orizzontale.
+- **Orientamento.** Il gioco a stanze è **in orizzontale su ogni dispositivo, telefono compreso** (decisione di Edoardo del 12/11): sul telefono in verticale chiede di ruotarlo, non adatta l'HUD. Il survivor, finché resta su `prova`, è solo in verticale sul telefono e in orizzontale su computer e tablet.
+- **Controlli touch del gioco a stanze** (stile Brawl Stars): joystick dove si appoggia il pollice sinistro; a destra il tasto d'attacco (tocco = nemico più vicino, trascinamento = mira) con l'abilità accanto; fiaschetta e pausa in posizioni da provare sul Galaxy S25 con la fetta (*da rivedere*).
+- **Tastiera e mouse del gioco a stanze** (proposta di Claude, *da rivedere*): WASD/frecce per muoversi, clic sinistro per attaccare verso il puntatore, J per attaccare il nemico più vicino, Spazio (abilità), F (fiaschetta), P (pausa), M (suoni), 1-2-3 (scelta della carta).
+- Controlli del survivor, finché resta su `prova`: joystick dove si appoggia il dito; sul telefono in verticale, nella fascia bassa, fiaschetta e abilità negli angoli (scambiabili dal Laboratorio) e pausa al centro; altrove abilità in basso a sinistra con la fiaschetta accanto e pausa in basso a destra. Tastiera: WASD/frecce, Spazio (abilità), F (fiaschetta), P (pausa), M (suoni), 1-2-3-4 (scelta del dono).
+- Rispetta le safe area (notch, Dynamic Island, barre di sistema): in orizzontale stanno sui lati corti, dove finiscono i pollici.
 - Comportamento dell'app:
   - pausa automatica quando l'app va in background;
   - schermo sempre acceso durante la partita;
   - vibrazione sugli eventi importanti, disattivabile;
   - il tasto Indietro apre la pausa e basta; dentro la pausa chiude solo la finestra di conferma di Abbandona, la partita riparte solo dal pulsante; dalla fine torna al menu.
 - Niente zoom con doppio tocco o pizzico; niente selezione di testo nell'interfaccia di gioco.
-- Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia `npm run prova`: controlla le fasce sul gioco vero, su sei telefoni.
+- Ogni pulsante da toccare è largo e alto almeno 44 punti. Prima di chiudere una modifica all'HUD lancia `npm run prova`: controlla le fasce del survivor sul gioco vero, su sei telefoni; per il gioco a stanze la prova dei telefoni in orizzontale si aggiunge con la fetta.
 - Funziona offline: tutti gli asset sono nel pacchetto.
 
 ## Verifica, prima di dire che una tappa è finita
 
 1. `npm run build` senza errori né avvisi di tipo.
-2. Prova nel browser con Playwright (`npm run prova`) in viewport desktop e iPhone verticale, più un Android verticale: niente errori in console.
+2. Prova nel browser con Playwright (`npm run prova`) in viewport desktop e iPhone verticale, più un Android verticale (survivor) e, appena il gioco a stanze esiste, iPhone e Android in orizzontale: niente errori in console.
    - **Guarda gli screenshot solo se la modifica cambia quello che si vede** (HUD, schermate, scritte, sprite, effetti). Per logica e bilanciamento basta che la prova passi senza errori.
    - Le immagini consumano molti token e restano nella conversazione: aprine il minimo indispensabile (di solito una per viewport toccato).
-3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Leggi il riepilogo a schermo; apri `prove/sim.json` solo per indagare un risultato strano. Gli obiettivi (vittorie del bot per Cappella vuota, a metà e completa) sono in `docs/bilanciamento.md` e sono **provvisori, non vincolanti**: non ritoccare i contenuti per inseguirli finché i contenuti non sono completi. Restano **vincolanti** solo due cose: Seth del minuto 5 è il primo vero ostacolo; nessun personaggio muore sempre prima del minuto 5. Riporta a Edoardo a che minuto muore il bot e il livello raggiunto.
+3. Per ogni modifica al bilanciamento, lancia la **simulazione con il bot** (`npm run sim`, codice in `tools/sim.mjs` e `src/sistema/bot.ts`). Leggi il riepilogo a schermo; apri `prove/sim.json` solo per indagare un risultato strano. Gli obiettivi (vittorie del bot per Cappella vuota, a metà e completa) sono in `docs/bilanciamento.md` e sono **provvisori, non vincolanti**: non ritoccare i contenuti per inseguirli finché i contenuti non sono completi. Per il survivor restano **vincolanti** solo le regole scritte in `docs/bilanciamento.md` (riscritte da Edoardo il 10/11): il primo boss della notte (Seth del minuto 5) è il primo vero ostacolo, cioè nessun personaggio muore più spesso prima di lui che contro di lui; nessuno muore sempre prima del minuto 5; a Cappella vuota il Lampionaio muore prima del minuto 5 al massimo in 3 notti su 12. Riporta a Edoardo a che minuto muore il bot e il livello raggiunto.
+   - **Gioco a stanze**: il bot oggi sa giocare solo al survivor. Le regole vincolanti del gioco a stanze sono **sospese** finché il bot non saprà giocare a stanze; si partirà da «il primo Boss è il primo vero ostacolo; nessun personaggio muore sempre prima del mini-boss del Mondo 1» (*da rivedere*). Allora il resoconto dirà in che stanza e in che Mondo muore il bot.
    - **Il campione**: con 48 notti per condizione l'incertezza è di circa ±12 punti: differenze più piccole sono rumore. Per il bilanciamento finale servono almeno 200 notti per condizione (circa 50 per personaggio).
 4. **Una tappa non è finita finché `docs/GDD.md`, `docs/roadmap.md` e `docs/asset_da_creare.md` non riflettono il codice.** Prima di dire «fatto» controlla che i contenuti, i numeri e gli asset segnaposto descritti lì coincidano con `src/data/`, e riporta le simulazioni in `docs/bilanciamento.md`.
    - Lancia `npm run controlla-gdd`: confronta le tabelle del GDD con `src/data/`. **Se segnala differenze, la tappa non è finita.**
@@ -85,7 +101,7 @@ Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioc
 6. Riassumi a Edoardo cosa è cambiato e come provarlo.
 7. **Il comportamento sul telefono si prova solo sull'APK**; il link serve per computer e amici. Ogni istruzione di prova per Edoardo indica una sola app e la firma da controllare.
 8. **Ogni resoconto finisce con «Versione da provare: <codice> <ora>»**: la firma che compare nell'angolo del menu e in cima al LAB dell'APK di prova.
-9. **Salvataggio della partita in corso** (appena la tappa esiste): il controllo con il bot (salva, ricarica, la notte finisce identica) è parte fissa di `npm run prova`, e **ogni sistema nuovo nasce già salvabile**.
+9. **Salvataggio della partita in corso** (appena la tappa esiste): il controllo con il bot (salva, ricarica, la notte o la Veglia finisce identica) è parte fissa di `npm run prova`, e **ogni sistema nuovo nasce già salvabile**.
 10. **Ultimo punto di ogni tappa: porta `docs/` su `main`** (vedi «I due link»), dopo `npm run controlla-gdd`. Su `main`: `git restore --source=origin/prova --staged --worktree -- docs/` (a differenza di `git checkout prova -- docs/` toglie anche i file eliminati su `prova`), commit «Aggiorna i documenti da prova», push. Va fatto anche subito prima di unire `prova` in `main`: se i documenti delle due parti sono diversi, l'unione va in conflitto.
 
 ## Documentazione
@@ -112,7 +128,7 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 | Ramo | Link | Cosa contiene |
 | --- | --- | --- |
 | `prova` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/ | il link personale di Edoardo: **ogni modifica nuova finisce qui**; in basso la scritta «PROVA» |
-| `main` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/ | il link pubblico (e l'APK Android): solo ciò che Edoardo ha approvato |
+| `main` | https://edoardobucci002-sketch.github.io/Death-s-Lumen/ | il link pubblico (e l'APK Android): solo ciò che Edoardo ha approvato; oggi il survivor, finché Edoardo non approva il gioco a stanze |
 
 - **APK di prova** («DL prova», con il Laboratorio): si compila a ogni push su `prova` che non tocca solo `docs/` e si scarica dal telefono, senza accedere a GitHub, da https://github.com/edoardobucci002-sketch/Death-s-Lumen/releases/download/apk-prova/dl-prova.apk. La chiave di firma sta nel segreto del repository `KEYSTORE_PROVA_BASE64`, mai nei file. Il link `prova/` aggiunto alla Home si chiama «DL link». Le versioni di prova mostrano la firma (commit e ora della build, Europe/Rome) nell'angolo del menu e in cima al LAB.
 - Ogni push su `prova` o su `main` ripubblica entrambi i link in un paio di minuti, tranne i push su `main` che toccano solo `docs/`: quelli non fanno partire né le pagine né l'APK (`.github/workflows/pagine.yml`; per `prova` lo fa partire `prova.yml`, perché GitHub pubblica solo da `main`).
@@ -125,7 +141,7 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 
 ## Il Laboratorio
 
-Edoardo è l'unico sviluppatore: non può rigiocare tutta la notte per vedere una cosa sola. Sul link `/prova/` (e in `npm run dev`, mai su `main`) c'è il **Laboratorio**: il pulsante «LAB» sul bordo sinistro apre un pannello (`src/sistema/laboratorio.ts`) con schede per partita (minuto, livello, immortale, nemici), eventi (élite, Seth, orde, drop, stati), oggetti (armi, doni, amuleti), numeri (ogni numero di `src/data/` si cambia al volo; «Copia le modifiche per Claude»), schermate e salvataggio.
+Edoardo è l'unico sviluppatore: non può rigiocare tutta la notte o tutta la Veglia per vedere una cosa sola. Sul link `/prova/` (e in `npm run dev`, mai su `main`) c'è il **Laboratorio**: il pulsante «LAB» sul bordo sinistro apre un pannello (`src/sistema/laboratorio.ts`) con schede per partita (minuto, livello, immortale, nemici), eventi (élite, Seth, orde, drop, stati), oggetti (armi, doni, amuleti), numeri (ogni numero di `src/data/` si cambia al volo; «Copia le modifiche per Claude»), schermate e salvataggio. Il gioco a stanze riceve i suoi comandi dal primo passo della fetta (per esempio: vai alla stanza N, apri le porte, fai comparire un nemico, ricarica l'abilità).
 
 **Regola per ogni nuova funzione**: aggiungi i comandi nel Laboratorio (metodi in `src/sistema/lab-partita.ts`, che si chiamano con `partita.lab.…`; scheda in `laboratorio.ts`) così Edoardo la raggiunge subito. Ogni consegna dice «apri LAB → scheda X → tocca Y per vedere Z». Le funzioni nuove nascono con il loro punto di accesso nel Laboratorio, non solo nelle schermate.
 

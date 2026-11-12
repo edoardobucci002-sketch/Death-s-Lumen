@@ -1,6 +1,8 @@
 # Death's Lumen
 
-Survivor-like in pixel art per iOS e Android: una veglia in un cimitero, 15 minuti fino all'alba (si vince sopravvivendo), quattro personaggi giocabili oggi (la Veggente e la Sguattera sono previsti). Le regole per lavorare al progetto sono in [CLAUDE.md](CLAUDE.md); il gioco com'è oggi in [docs/GDD.md](docs/GDD.md); il piano in [docs/roadmap.md](docs/roadmap.md).
+Action roguelite a stanze in pixel art per iOS e Android (sul modello di Hades): una Veglia attraversa 3 Mondi a stanze, si attacca con l'arma del personaggio e le altre armi colpiscono da sole; quattro personaggi giocabili (la Veggente e la Sguattera sono previsti). Le regole per lavorare al progetto sono in [CLAUDE.md](CLAUDE.md); il gioco com'è oggi in [docs/GDD.md](docs/GDD.md); il piano in [docs/roadmap.md](docs/roadmap.md).
+
+**Il gioco sta cambiando genere (12/11/2026).** Fino ad allora era un survivor-like: una veglia in un cimitero, 15 minuti fino all'alba. Quella versione è congelata nel tag `survivor-v1`, è ancora il link pubblico e resta giocabile su `prova` accanto al gioco a stanze, finché la fetta verticale non viene approvata. Il progetto del gioco a stanze è in [docs/proposte/pivot-hades.md](docs/proposte/pivot-hades.md). I comandi qui sotto (in particolare `npm run sim` e il bot) oggi lavorano ancora sul survivor.
 
 **Gioca (versione approvata):** https://edoardobucci002-sketch.github.io/Death-s-Lumen/
 **Prova (modifiche nuove, con il Laboratorio «LAB»):** https://edoardobucci002-sketch.github.io/Death-s-Lumen/prova/
