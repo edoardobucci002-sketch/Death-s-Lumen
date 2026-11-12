@@ -4,11 +4,12 @@
  * Misura anche gli oggetti: che cosa possiede a fine notte, quali carte gli sono state offerte e quali ha scelto,
  * il danno di ogni arma e di ogni reazione, quando arriva la prima Unione, Patto di sangue e Acquasantiera.
  * Per il confronto del pivot misura anche ogni nemico che muore: categoria, quanto è vissuto, se ha mai avuto uno stato
- * o subito una reazione.
+ * o subito una reazione, quanto è rimasto nel campo visibile, se è morto fuori dal campo e quale arma l'ha ucciso.
  * Alla fine mette il risultato in window.__sim, dove lo legge tools/sim.mjs. Non tira il caso: non cambia la notte.
  */
 import { NEMICI } from '../data/nemici';
-import { STORIA_REAZIONE, STORIA_STATO, type Orda } from './orda';
+import { STORIA_REAZIONE, STORIA_STATO, UCCISO_MALEDIZIONE, type Orda } from './orda';
+import { FONTI } from './armi';
 import { CALAMITA, PANE } from './oggetti';
 import type { Dono } from './doni';
 
@@ -106,6 +107,11 @@ export interface RisultatoSim {
   mortiPerCategoria: Record<(typeof CATEGORIE_MORTI)[number], MortiSim>;
   /** Tempo di vita dei nemici morti in ogni fase: decimi di secondo → quanti nemici (si somma tra le notti). */
   vitaPerFase: Record<(typeof FASI_VITA)[number], Record<number, number>>;
+  /** Come vitaPerFase, ma dalla prima entrata nel campo visibile (0 per chi muore senza esserci mai entrato). */
+  vitaVisibilePerFase: Record<(typeof FASI_VITA)[number], Record<number, number>>;
+  /** Nemici uccisi da ogni fonte (armi, reazioni, «maledizione», «altro»): tutti e quelli morti fuori dal campo visibile. */
+  uccisiDa: Record<string, { tutti: number; fuori: number }>;
+  mortiFuori: number; // nemici morti fuori dal campo visibile
   statiArmi: Record<string, number>; // stati lasciati da ogni arma
   reazioniArmi: Record<string, number>; // reazioni fatte partire dai colpi di ogni arma
 }
@@ -144,6 +150,9 @@ export class Simulazione {
   private primoRito: number | null = null;
   private mortiPerCategoria = Object.fromEntries(CATEGORIE_MORTI.map((c) => [c, { morti: 0, senzaReazione: 0, senzaStato: 0 }])) as RisultatoSim['mortiPerCategoria'];
   private vitaPerFase = Object.fromEntries(FASI_VITA.map((f) => [f, {}])) as RisultatoSim['vitaPerFase'];
+  private vitaVisibilePerFase = Object.fromEntries(FASI_VITA.map((f) => [f, {}])) as RisultatoSim['vitaVisibilePerFase'];
+  private uccisiDa: RisultatoSim['uccisiDa'] = {};
+  private mortiFuori = 0;
 
   /** Il nemico i dell'orda muore adesso (secondi della notte): categoria, storia degli stati e tempo di vita. */
   morto(orda: Orda, i: number, secondi: number): void {
@@ -155,9 +164,21 @@ export class Simulazione {
       if (!(orda.storia[i] & STORIA_REAZIONE)) m.senzaReazione++;
       if (!(orda.storia[i] & STORIA_STATO)) m.senzaStato++;
     }
-    const fase = this.vitaPerFase[FASI_VITA[Math.min(2, Math.floor(secondi / 300))]];
+    const f = FASI_VITA[Math.min(2, Math.floor(secondi / 300))];
+    const fase = this.vitaPerFase[f];
     const decimi = Math.max(0, Math.round((secondi - orda.natoA[i]) * 10));
     fase[decimi] = (fase[decimi] ?? 0) + 1;
+    const vista = this.vitaVisibilePerFase[f];
+    const visti = orda.entratoA[i] < 0 ? 0 : Math.max(0, Math.round((secondi - orda.entratoA[i]) * 10));
+    vista[visti] = (vista[visti] ?? 0) + 1;
+    const u = orda.uccisore[i];
+    const chi = u === UCCISO_MALEDIZIONE ? 'maledizione' : u > 0 ? FONTI[u - 1] : 'altro';
+    const c = (this.uccisiDa[chi] ??= { tutti: 0, fuori: 0 });
+    c.tutti++;
+    if (!orda.visibile(i)) {
+      c.fuori++;
+      this.mortiFuori++;
+    }
   }
 
   /** Si è aperta la scelta dei Riti al livello indicato e se ne è preso uno. */
@@ -264,7 +285,7 @@ export class Simulazione {
       curaFiaschetta: Math.round(this.curaFiaschetta), sorsi: this.sorsi, grazie: this.grazie,
       urne: this.urne,
       carte: this.carte, unioneOfferta: this.unioneOfferta, unionePresa: this.unionePresa,
-      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri, curaPozze: Math.round(this.curaPozze), causaMorte: this.causaMorte, mortiPerCategoria: this.mortiPerCategoria, vitaPerFase: this.vitaPerFase, abilitaPrima5: this.abilitaPrima5, riti: this.riti, primoRito: this.primoRito,
+      curaPatto: Math.round(this.curaPatto), sorsiAcquasantiera: this.sorsiAcquasantiera, sorsiAcquasantieraVeri: this.sorsiAcquasantieraVeri, curaPozze: Math.round(this.curaPozze), causaMorte: this.causaMorte, mortiPerCategoria: this.mortiPerCategoria, vitaPerFase: this.vitaPerFase, vitaVisibilePerFase: this.vitaVisibilePerFase, uccisiDa: this.uccisiDa, mortiFuori: this.mortiFuori, abilitaPrima5: this.abilitaPrima5, riti: this.riti, primoRito: this.primoRito,
     };
   }
 }

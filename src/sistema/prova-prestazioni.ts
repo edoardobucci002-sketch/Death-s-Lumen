@@ -152,6 +152,7 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}`,
     `Minuto ${PRESTAZIONI.minuto}, ${PRESTAZIONI.nemici} nemici, lanterna in vista, ${PRESTAZIONI.secondi} s`,
     `Effetti a ripetizione: ${INTERRUTTORI.provaConEffetti ? `sì; Pozza ed Eclissi ${INTERRUTTORI.pixelfx ? 'pixelfx' : 'di sempre'}, Sepoltura ${INTERRUTTORI.sepolturaPixelfx ? 'pixelfx' : 'di sempre'}` : 'no'}`,
+    `Pochi e forti: ${INTERRUTTORI.pochi ? 'sì' : 'no'}; armi solo nello schermo: ${INTERRUTTORI.schermo ? 'sì' : 'no'}`,
     `In campo durante la misura: ${Math.round(contati / Math.max(1, conte))} nemici in media, minuto ${Math.floor(partita.lab.stato().secondi / 60)}`,
     `Media: ${((tempi.length * 1000) / totale).toFixed(1)} fps`,
     `Fotogrammi saltati: ${saltati}`,

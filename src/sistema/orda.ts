@@ -15,7 +15,7 @@ import { ingrandimento } from './asset';
 import type { Caso } from './caso';
 import { Griglia } from './griglia';
 import type { Minacce } from './minacce';
-import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, SEPARAZIONE } from '../data/nemici';
+import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, ORDE, POCHI_E_FORTI, SEPARAZIONE } from '../data/nemici';
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { DEVOZIONE, REAZIONI, RITI, STATI, STATI_CERTI } from '../data/stati';
 import { NUMERI_VOTI } from '../data/voti';
@@ -42,6 +42,8 @@ export const [LUCE, SACRO, OMBRA, TERRA] = [1, 2, 3, 4];
 export const [ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO] = [1, 2, 3, 4];
 /** Storia di un nemico, per la simulazione: ha avuto almeno uno stato / ha subito almeno una reazione. */
 export const STORIA_STATO = 1, STORIA_REAZIONE = 2;
+/** Chi ha ucciso il nemico (per la simulazione): 0 = sconosciuto, 1… = indice in FONTI di armi.ts più 1, UCCISO_MALEDIZIONE. */
+export const UCCISO_MALEDIZIONE = 255;
 
 interface AspettoNemico {
   ingrandimento: number;
@@ -120,6 +122,10 @@ export class Orda {
   // per la simulazione (solo misure, non cambiano la notte): secondo in cui è nato e storia degli stati (STORIA_STATO, STORIA_REAZIONE)
   readonly natoA = new Float32Array(CAPIENZA);
   readonly storia = new Uint8Array(CAPIENZA);
+  readonly entratoA = new Float32Array(CAPIENZA); // secondo in cui è entrato la prima volta nel campo visibile (−1 = mai)
+  readonly uccisore = new Uint8Array(CAPIENZA); // chi gli ha tolto l'ultima salute (UCCISO_MALEDIZIONE o fonte + 1)
+  private vistaL = 0; // metà del campo visibile, intorno al personaggio (gx, gy)
+  private vistaA = 0;
   /** Con ?bot: chiamata per ogni nemico che muore, prima che lasci il suo posto. */
   misuraMorte: ((i: number) => void) | null = null;
   private fianco = new Float32Array(CAPIENZA); // accerchia: di quanto gira intorno al giocatore (radianti, ±)
@@ -158,7 +164,7 @@ export class Orda {
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.tettoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
-    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo, this.moltInterrato, this.natoA];
+    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo, this.moltInterrato, this.natoA, this.entratoA];
 
   constructor(
     scena: Phaser.Scene,
@@ -186,15 +192,24 @@ export class Orda {
   aggiorna(dt: number, secondi: number, gx: number, gy: number, dirX: number, dirY: number, vel: number, mezzaL: number, mezzaA: number): void {
     this.gx = gx;
     this.gy = gy;
+    this.vistaL = mezzaL;
+    this.vistaA = mezzaA;
     const m = secondi / 60;
-    const massimi = Math.min(DIFFICOLTA.tetto, DIFFICOLTA.massimiBase + DIFFICOLTA.massimiPerMinuto * m);
+    const pochi = INTERRUTTORI.pochi;
+    const massimi = Math.min(DIFFICOLTA.tetto, DIFFICOLTA.massimiBase + DIFFICOLTA.massimiPerMinuto * m) / (pochi ? POCHI_E_FORTI.campo : 1);
     const calma = secondi >= RESPIRO.dal && secondi % RESPIRO.ciclo >= RESPIRO.marea;
-    this.daFare += (DIFFICOLTA.comparseBase + DIFFICOLTA.comparsePerMinuto * m) * (calma ? RESPIRO.comparse : 1) * dt;
+    this.daFare += ((DIFFICOLTA.comparseBase + DIFFICOLTA.comparsePerMinuto * m) * (calma ? RESPIRO.comparse : 1) * dt) / (pochi ? POCHI_E_FORTI.comparse : 1);
     let nascite = Math.min(Math.floor(this.daFare), DIFFICOLTA.comparsePerFotogramma);
     this.daFare -= nascite;
     if (this.daFare > DIFFICOLTA.comparsePerFotogramma) this.daFare = DIFFICOLTA.comparsePerFotogramma;
     if (!calma && this.numero < massimi * DIFFICOLTA.sogliaRinforzo) nascite += DIFFICOLTA.rinforzoPerFotogramma;
-    for (; nascite > 0 && this.numero < massimi; nascite--) this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
+    for (; nascite > 0 && this.numero < massimi; nascite--) {
+      const i = this.nasci(secondi, gx, gy, 0, 0, mezzaL, mezzaA);
+      if (pochi) {
+        this.salute[i] = this.saluteMassima[i] *= POCHI_E_FORTI.salute;
+        this.anime[i] *= POCHI_E_FORTI.anime;
+      }
+    }
 
     // orde: la formazione attraversa il campo in linea retta; dall'altra parte si scioglie
     for (let b = 0; b < MAX_BRANCHI; b++) {
@@ -305,6 +320,21 @@ export class Orda {
     }
   }
 
+  /** Il nemico i è dentro il campo visibile (il rettangolo intorno al personaggio, senza le fasce dell'HUD)? */
+  visibile(i: number): boolean {
+    return Math.abs(this.x[i] - this.gx) <= this.vistaL && Math.abs(this.y[i] - this.gy) <= this.vistaA;
+  }
+
+  /** Prova «schermo»: il nemico i è fuori dal campo visibile e le armi non lo toccano. Spenta, sempre false. */
+  fuoriSchermo(i: number): boolean {
+    return INTERRUTTORI.schermo && !this.visibile(i);
+  }
+
+  /** Per la simulazione: segna quando ogni nemico entra per la prima volta nel campo visibile. */
+  segnaEntrati(secondi: number): void {
+    for (let i = 0; i < this.numero; i++) if (this.entratoA[i] < 0 && this.visibile(i)) this.entratoA[i] = secondi;
+  }
+
   /** Colpisce il nemico i: toglie salute, lo illumina (se lampeggia e non l'ha fatto da poco) e lo spinge nella direzione (dx, dy), lunga 1. */
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number, lampeggia = true): void {
     // abbagliato e interrato subiscono di più
@@ -387,7 +417,7 @@ export class Orda {
    */
   marca(i: number, aff: number, forza = false): number {
     this.marcato = false;
-    if (!aff || this.salute[i] <= 0) return 0;
+    if (!aff || this.salute[i] <= 0 || this.fuoriSchermo(i)) return 0;
     const abb = this.sAbbagliato[i] > 0, cons = this.sConsacrato[i] > 0, mal = this.sMaledetto[i] > 0, sep = this.sSepolto[i] > 0;
     let r = 0;
     if (aff === TERRA ? abb || cons || mal : sep) r = INTERRAMENTO;
@@ -516,6 +546,7 @@ export class Orda {
       const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
       const via = this.saluteMassima[i] * this.forza(OMBRA) * f * dt;
       this.dannoMaledizione += Math.min(via, Math.max(0, this.salute[i])); // per la simulazione: solo la salute tolta davvero
+      if (this.salute[i] > 0 && this.salute[i] <= via) this.uccisore[i] = UCCISO_MALEDIZIONE;
       this.salute[i] -= via;
     }
     let fermo = false;
@@ -531,6 +562,7 @@ export class Orda {
         const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
         const via = this.saluteMassima[i] * this.forza(OMBRA) * STATI_CERTI.interramento.maledettoOmbra * this.moltInterrato[i] * f * dt;
         this.dannoMaledizioneInterrata += Math.min(via, Math.max(0, this.salute[i]));
+        if (this.salute[i] > 0 && this.salute[i] <= via) this.uccisore[i] = UCCISO_MALEDIZIONE;
         this.salute[i] -= via;
       }
     }
@@ -741,7 +773,8 @@ export class Orda {
     if (t === ID_BRUTO) this.bruti++;
     this.id[i] = this.prossimoId++;
     this.natoA[i] = secondi;
-    this.storia[i] = 0;
+    this.entratoA[i] = -1;
+    this.storia[i] = this.uccisore[i] = 0;
     this.segno[i] = 0;
     this.raggio[i] = tipo.raggio;
     const oltre = Math.max(0, m - DIFFICOLTA.saluteDopo);
@@ -878,6 +911,7 @@ export class Orda {
     this.nellAlone[i] = this.nellAlone[u];
     this.id[i] = this.id[u];
     this.storia[i] = this.storia[u];
+    this.uccisore[i] = this.uccisore[u];
     this.segno[i] = this.segno[u];
     this.versoSinistra[i] = this.versoSinistra[u];
     this.sprite[i] = this.sprite[u];

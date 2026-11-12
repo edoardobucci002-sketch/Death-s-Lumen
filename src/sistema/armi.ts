@@ -222,7 +222,7 @@ export class Arsenale {
   private trovatoFermo = false;
   private visitaFermo = (j: number): void => {
     const o = this.orda, dx = o.x[j] - this.cx, dy = o.y[j] - o.raggio[j] - this.cy, r = this.cr + o.raggio[j];
-    if (o.salute[j] > 0 && dx * dx + dy * dy <= r * r && o.fermoOra(j)) this.trovatoFermo = true;
+    if (o.salute[j] > 0 && dx * dx + dy * dy <= r * r && o.fermoOra(j) && !o.fuoriSchermo(j)) this.trovatoFermo = true;
   };
 
   // grani del Rosario spezzato
@@ -793,7 +793,7 @@ export class Arsenale {
   /** Lapide inchiodata: il nemico j tocca la lapide a terra in (cx, cy)? Allora è Sepolto (o reagisce), salvo la pausa del Sepolto. */
   private toccaLapide(j: number): void {
     const o = this.orda;
-    if (o.salute[j] <= 0) return;
+    if (o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
     const dx = o.x[j] - this.cx, dy = o.y[j] - this.cy, r = U.lapide.tocca + o.raggio[j];
     if (dx * dx + dy * dy > r * r) return;
     const k = o.marca(j, TERRA);
@@ -945,7 +945,7 @@ export class Arsenale {
 
   private vicinoGrano(j: number): void {
     const o = this.orda, i = this.cProiettile;
-    if (o.salute[j] <= 0) return;
+    if (o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
     for (let k = 0; k < MAX_RIMBALZI; k++) if (this.grColpiti[i * MAX_RIMBALZI + k] === o.id[j]) return;
     const ex = o.x[j] - this.cx, ey = o.y[j] - o.raggio[j] - this.cy, d2 = ex * ex + ey * ey;
     if (d2 < this.cDistanza) {
@@ -983,11 +983,14 @@ export class Arsenale {
   /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno; lampeggia = false per le zone e le aure, reazione = id della reazione a cui appartiene il colpo. */
   private ferisci(j: number, base: number, respinta: number, dx: number, dy: number, aff = 0, probabilita: number = STATI.probabilita, lampeggia = true, reazione = 0): void {
     const o = this.orda;
+    if (o.fuoriSchermo(j)) return; // prova «schermo»
     // Voto della Terra (Becchino): più danno ai nemici fermi
     const danno = this.danno(base) * (this.votoFermi && o.fermoOra(j) ? 1 + NUMERI_VOTI.dannoFermi : 1);
     this.dannoFonti[this.fonte] += danno;
     if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * o.piuInterrato(j); // la parte in più dell'Interramento
+    const viva = o.salute[j] > 0;
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
+    if (viva && o.salute[j] <= 0) o.uccisore[j] = this.fonte + 1; // per la simulazione: chi l'ha ucciso
     // con gli Stati certi ogni colpo lascia lo stato, senza tirare il dado
     // con gli Stati certi ogni colpo lascia lo stato; zone e abilità (cRitmo) al massimo una volta ogni STATI_CERTI.ritmo s
     // per nemico e affinità, tranne il primo scatto dell'abilità (cForza)
@@ -1197,7 +1200,7 @@ export class Arsenale {
   /** Il nemico j è dentro la forma del colpo in corso? Se sì, lo colpisce. */
   private tocca(j: number): void {
     const o = this.orda;
-    if (o.segno[j] === this.colpo || o.salute[j] <= 0) return;
+    if (o.segno[j] === this.colpo || o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
     const ex = o.x[j];
     const ey = o.y[j] - o.raggio[j];
     const rx = ex - this.cx;
@@ -1376,7 +1379,7 @@ export class Arsenale {
 
   private toccaZona(j: number): void {
     const o = this.orda;
-    if (o.segno[j] === this.colpo || o.salute[j] <= 0 || !this.dentroZona(j)) return;
+    if (o.segno[j] === this.colpo || o.salute[j] <= 0 || o.fuoriSchermo(j) || !this.dentroZona(j)) return;
     const i = this.cZona;
     if (COLPI.zoneNonCumulative && this.zTipo[i]) {
       // già ferito da un'altra nube (o pozza) in questo intervallo: questa non si somma
@@ -1445,7 +1448,7 @@ export class Arsenale {
 
   private toccaFalce(j: number): void {
     const o = this.orda;
-    if (o.pausaFalce[j] > 0 || o.salute[j] <= 0) return;
+    if (o.pausaFalce[j] > 0 || o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
     const rx = o.x[j] - this.cx;
     const ry = o.y[j] - o.raggio[j] - this.cy;
     const r = this.cr + o.raggio[j];
@@ -1460,6 +1463,7 @@ export class Arsenale {
     if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < soglia * o.saluteMassima[j]) {
       this.dannoFonti[F.falce] += o.salute[j];
       o.colpisci(j, o.salute[j], 0, 0, 0);
+      o.uccisore[j] = F.falce + 1;
     }
     if (o.salute[j] <= 0) {
       // ogni uccisione allunga la lama per qualche secondo
@@ -1525,7 +1529,7 @@ export class Arsenale {
     let migliore = -1;
     let d2min = portata * portata;
     for (let j = 0; j < o.numero; j++) {
-      if (o.salute[j] <= 0) continue;
+      if (o.salute[j] <= 0 || o.fuoriSchermo(j)) continue;
       let preso = false;
       for (let k = 0; k < salta; k++) if (this.scelti[k] === j) preso = true;
       if (preso) continue;
@@ -1546,7 +1550,7 @@ export class Arsenale {
     let migliore = -1;
     let d2min = portata * portata;
     for (let j = 0; j < o.numero; j++) {
-      if (!o.reagisceCon(j, aff)) continue;
+      if (!o.reagisceCon(j, aff) || o.fuoriSchermo(j)) continue;
       let preso = false;
       for (let k = 0; k < salta; k++) if (this.scelti[k] === j) preso = true;
       if (preso) continue;
@@ -1640,7 +1644,7 @@ export class Arsenale {
 
   private vicino(j: number): void {
     const o = this.orda;
-    if (o.salute[j] <= 0) return;
+    if (o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
     const ex = o.x[j] - this.cx;
     const ey = o.y[j] - o.raggio[j] - this.cy;
     // élite e Mietitore sembrano più vicini: il fuoco fatuo li insegue per primi
@@ -1654,7 +1658,7 @@ export class Arsenale {
   private toccaProiettile(j: number): void {
     const i = this.cProiettile;
     const o = this.orda;
-    if (this.prResto[i] === 0 || o.salute[j] <= 0) return;
+    if (this.prResto[i] === 0 || o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
     for (let k = 0; k < 4; k++) if (this.prColpiti[i * 4 + k] === o.id[j]) return;
     const ex = o.x[j] - this.cx;
     const ey = o.y[j] - o.raggio[j] - this.cy;

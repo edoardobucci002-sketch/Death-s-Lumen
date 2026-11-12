@@ -14,6 +14,7 @@
 //      npm run sim -- 12 lampionaio,becchino mira=0   (Lanterna e Pala verso dove cammini, per confrontare)
 //      npm run sim -- 3 tutti meta=max senza=sampietrini   (un oggetto che non esce mai tra le carte)
 //      npm run sim -- 3 tutti meta=max amuleto=martire   (la notte parte con quell'amuleto acceso)
+//      npm run sim -- 12 tutti pochi=1 schermo=1   (prova «pochi e forti»: un terzo dei nemici tre volte più forti; armi solo nello schermo)
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -24,7 +25,7 @@ const meta = (argomenti.find((a) => a.startsWith('meta=')) ?? 'meta=0').slice(5)
 const esplora = argomenti.includes('esplora');
 const stati = (argomenti.find((a) => a.startsWith('stati=')) ?? '').slice(6);
 // altri parametri dell'indirizzo passati così come sono: mira=0, senza=sampietrini, amuleto=martire
-const PASSANO = ['mira=', 'senza=', 'amuleto='];
+const PASSANO = ['mira=', 'senza=', 'amuleto=', 'pochi=', 'schermo='];
 const passati = argomenti.filter((a) => PASSANO.some((p) => a.startsWith(p)));
 const altri = argomenti.filter((a) => !a.startsWith('meta=') && !a.startsWith('stati=') && a !== 'esplora' && !passati.includes(a));
 const partite = Number(altri[0]) || 3;
@@ -230,14 +231,15 @@ if (conMorti.length) {
   const FASI = ['0-5', '5-10', '10-15'];
   const pct = (a, b) => (b ? `${Math.round((a * 100) / b)}%` : '–');
   // tempo di vita: istogrammi in decimi di secondo, sommati tra le notti → minimo, mediana, 90° percentile
-  const vita = (rr, f) => {
+  const vita = (rr, f, campo = 'vitaPerFase') => {
     const h = new Map();
-    for (const r of rr) for (const [d, n] of Object.entries(r.vitaPerFase[f])) h.set(Number(d), (h.get(Number(d)) ?? 0) + n);
+    for (const r of rr) for (const [d, n] of Object.entries(r[campo]?.[f] ?? {})) h.set(Number(d), (h.get(Number(d)) ?? 0) + n);
     const chiavi = [...h.keys()].sort((x, y) => x - y), tot = [...h.values()].reduce((x, y) => x + y, 0);
     if (!tot) return null;
     const quantile = (q) => { let c = 0; for (const k of chiavi) { c += h.get(k); if (c >= q * tot) return k / 10; } return chiavi.at(-1) / 10; };
     return { n: tot, min: chiavi[0] / 10, mediana: quantile(0.5), p90: quantile(0.9) };
   };
+  const vitaNotte = (rr, campo) => vita(rr.map((r) => ({ [campo]: { notte: FASI.reduce((acc, f) => { for (const [d, n] of Object.entries(r[campo]?.[f] ?? {})) acc[d] = (acc[d] ?? 0) + n; return acc; }, {}) } })), 'notte', campo);
   const s1 = (x) => x.toFixed(1).replace('.', ',');
   console.log('\nConfronto per il pivot (nemici morti; tempo di vita in secondi, fase = minuto della morte)');
   for (const pg of [...scelti, 'tutti']) {
@@ -246,7 +248,20 @@ if (conMorti.length) {
     const somma = (c, k) => rr.reduce((a, r) => a + r.mortiPerCategoria[c][k], 0);
     const senzaReaz = CATEGORIE.map(([c, nome]) => `${nome} ${pct(somma(c, 'senzaReazione'), somma(c, 'morti'))} (${somma(c, 'morti')})`).join(', ');
     console.log(`  ${pg}: morti senza reazione ${senzaReaz}; morti senza stato ${pct(somma('tutti', 'senzaStato'), somma('tutti', 'morti'))}`);
-    console.log('     vita (min / mediana / 90°): ' + FASI.map((f) => { const v = vita(rr, f); return `${f} ${v ? `${s1(v.min)} / ${s1(v.mediana)} / ${s1(v.p90)}` : '–'}`; }).join('; '));
+    const riga = (campo) => FASI.map((f) => { const v = vita(rr, f, campo); return `${f} ${v ? `${s1(v.min)} / ${s1(v.mediana)} / ${s1(v.p90)}` : '–'}`; }).join('; ');
+    const tutta = (campo) => { const v = vitaNotte(rr, campo); return v ? `notte ${s1(v.mediana)} / ${s1(v.p90)}` : ''; };
+    console.log(`     vita dalla comparsa (min / mediana / 90°): ${riga('vitaPerFase')}; ${tutta('vitaPerFase')}`);
+    if (rr[0].vitaVisibilePerFase) {
+      console.log(`     vita visibile (min / mediana / 90°): ${riga('vitaVisibilePerFase')}; ${tutta('vitaVisibilePerFase')}`);
+      const fuori = rr.reduce((a, r) => a + r.mortiFuori, 0), tutti = somma('tutti', 'morti');
+      const perArma = new Map();
+      for (const r of rr) for (const [k, v] of Object.entries(r.uccisiDa)) { const x = perArma.get(k) ?? { tutti: 0, fuori: 0 }; x.tutti += v.tutti; x.fuori += v.fuori; perArma.set(k, x); }
+      const ordinate = [...perArma].filter(([, v]) => v.fuori).sort((a, b) => b[1].fuori - a[1].fuori);
+      console.log(`     uccisi fuori dal campo visibile ${pct(fuori, tutti)}; per arma (parte dei fuori schermo, e quanti dei suoi uccisi sono fuori): ` +
+        ordinate.map(([k, v]) => `${k} ${pct(v.fuori, fuori)} (${pct(v.fuori, v.tutti)})`).join(', '));
+    }
+    const tipi = [...new Set(rr.flatMap((r) => Object.keys(r.reazioniPerTipo ?? {})))];
+    console.log('     reazioni a notte: ' + tipi.map((t) => `${t} ${Math.round(media(rr.map((r) => r.reazioniPerTipo[t] ?? 0)))}`).join(', '));
   }
 }
 

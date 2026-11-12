@@ -61,6 +61,19 @@ export class LabPartita {
     g.aggiornaDevozione();
   }
 
+  /**
+   * Prova «pochi e forti» (POCHI_E_FORTI in src/data/nemici.ts): un terzo dei nemici in campo e delle comparse, nemici comuni
+   * con il triplo di salute e di anime. Vale per i nemici che nascono da adesso; resta per le notti dopo, finché la pagina non si ricarica.
+   */
+  pochiEForti(on: boolean): void {
+    INTERRUTTORI.pochi = on;
+  }
+
+  /** Prova «schermo»: le armi non colpiscono, non lasciano stati e non scelgono bersagli fuori dal campo visibile. Vale subito. */
+  soloSchermo(on: boolean): void {
+    INTERRUTTORI.schermo = on;
+  }
+
   /** Porta la notte al minuto m: gli eventi già passati non si ripetono, gli altri partono al loro turno. */
   minuto(m: number): void {
     const g = this.g;

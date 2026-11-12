@@ -87,6 +87,18 @@ export const DIFFICOLTA = {
 } as const;
 
 /**
+ * Prova «pochi e forti» (interruttore del LAB, spento di partenza): nemici massimi in campo e comparse al secondo divisi,
+ * salute e anime dei nemici comuni moltiplicate (l'esperienza della notte resta simile). Orde, élite e Seth come sempre.
+ * Valori della prova, da rivedere.
+ */
+export const POCHI_E_FORTI = {
+  campo: 3, // nemici massimi in campo ÷ 3
+  comparse: 3, // comparse al secondo ÷ 3
+  salute: 3, // salute dei nemici comuni × 3
+  anime: 3, // anime dei nemici comuni × 3
+} as const;
+
+/**
  * Il copione della notte: chi compare a ogni minuto (riga 0 = da 0:00, riga 14 = da 14:00) e con che peso.
  * Più alto il peso, più spesso esce quel nemico. Due tipi principali e al massimo uno di contorno, così ogni fase ha
  * la sua faccia; nei minuti di Seth (5 e 10) il copione è più leggero. Tutti i valori sono da rivedere.

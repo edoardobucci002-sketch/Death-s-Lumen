@@ -14,7 +14,8 @@
  * ?seme=7 (un'altra notte), ?bot (gioca il bot, senza disegno e più veloce possibile: lo usa npm run sim),
  * ?esplora=1 (il bot sceglie le carte a caso), ?stati=caso (gli stati a caso di prima, per confrontare), ?mira=0 (Lanterna e
  * Pala verso dove cammini, per confrontare), ?senza=sampietrini
- * (un'arma o un dono che non esce mai tra le carte), ?amuleto=martire (la notte parte con quell'amuleto acceso).
+ * (un'arma o un dono che non esce mai tra le carte), ?amuleto=martire (la notte parte con quell'amuleto acceso),
+ * ?pochi=1 e ?schermo=1 (prova «pochi e forti»: un terzo dei nemici, tre volte più forti; armi solo nel campo visibile).
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
@@ -248,6 +249,9 @@ export class Gioco extends Phaser.Scene {
     // Senza, resta com'è nel Laboratorio (Stati certi e mira accesi di partenza)
     if (parametri.get('stati') === 'caso') INTERRUTTORI.statiCerti = false;
     if (parametri.get('mira') === '0') INTERRUTTORI.mira = false;
+    // prova «pochi e forti» per il bot: ?pochi=1 (un terzo dei nemici, tre volte più forti), ?schermo=1 (armi solo nel campo visibile)
+    if (parametri.get('pochi') === '1') INTERRUTTORI.pochi = true;
+    if (parametri.get('schermo') === '1') INTERRUTTORI.schermo = true;
     this.automatico = parametri.has('automatico');
     this.caso = new Caso(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.x = this.y = 0;
@@ -488,6 +492,7 @@ export class Gioco extends Phaser.Scene {
     this.notte(mezzaL, mezzaA);
     if (this.finito) return;
     this.orda.aggiorna(dt, this.secondi, this.x, this.y, dx, dy, this.velocita, mezzaL, mezzaA);
+    if (this.sim) this.orda.segnaEntrati(this.secondi);
     if (this.ha('lucciola')) this.arsenale.lucciola(this.x, this.y - COLPI.corpo, LUCE.raggio * this.areaLuce, AM.lucciola.pausa);
     this.arsenale.fiaschettaPiena = this.fiaschetta.sorsi >= this.fiaschetta.massimo;
     this.arsenale.aggiorna(dt, this.x, this.y, this.dirX, this.dirY, mezzaL, mezzaA);

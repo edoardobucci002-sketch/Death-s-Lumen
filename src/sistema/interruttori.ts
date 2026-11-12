@@ -17,5 +17,10 @@ export const INTERRUTTORI = {
   pixelfx: true,
   // Sepoltura pixelfx: spenta finché non si rifà dopo il rework del combattimento (i file restano); LAB «Sepoltura pixelfx»
   sepolturaPixelfx: false,
+  // Prova «pochi e forti» (12/11, spenta di partenza; numeri in POCHI_E_FORTI, src/data/nemici.ts): LAB → Eventi, per il bot ?pochi=1 e ?schermo=1.
+  // pochi: un terzo dei nemici in campo e delle comparse, nemici comuni con il triplo di salute e di anime
+  pochi: false,
+  // schermo: le armi non colpiscono, non lasciano stati e non scelgono bersagli fuori dal campo visibile
+  schermo: false,
   provaConEffetti: false, // la Prova prestazioni fa partire Sepoltura, Pozza grande ed Eclissi a ripetizione (PRESTAZIONI.effetti)
 };
