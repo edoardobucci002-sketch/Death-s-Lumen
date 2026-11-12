@@ -19,7 +19,7 @@ import { ATTACCO, STANZA } from '../data/stanze';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
-import { AttaccoATasto } from '../sistema/attacco';
+import { AttaccoATasto, impostaGrandezzaTasti } from '../sistema/attacco';
 import { COLPI } from '../data/armi';
 import { audioAttivo, impostaAudio } from '../sistema/audio';
 import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
@@ -59,6 +59,7 @@ export class Stanze extends Phaser.Scene {
   private tastoPausa!: HTMLButtonElement;
   private pannelloPausa!: HTMLElement;
   private avvisoRuota!: HTMLElement;
+  private valoreGrandezza!: HTMLElement;
   lineaJoystick!: HTMLElement; // la linea invisibile al centro: il LAB la può mostrare
   attacco!: AttaccoATasto;
   private effetti!: Effetti;
@@ -115,11 +116,13 @@ export class Stanze extends Phaser.Scene {
     entraInPartita();
     this.game.events.on('sfondo', this.apriPausa, this);
     window.addEventListener('keydown', this.tasto);
+    window.addEventListener('resize', this.ridisponi); // anche quando il LAB cambia una misura senza cambiare lo schermo
     this.events.once('shutdown', () => {
       this.scale.off('resize', this.ridimensiona, this);
       esciDallaPartita();
       this.game.events.off('sfondo', this.apriPausa, this);
       window.removeEventListener('keydown', this.tasto);
+      window.removeEventListener('resize', this.ridisponi);
       this.comandi.distruggi();
       this.attacco.distruggi();
       this.radice.remove();
@@ -260,7 +263,19 @@ export class Stanze extends Phaser.Scene {
     this.pannelloPausa.style.backgroundImage = `url(${retino(12)})`;
     const riprendi = this.tastoScritta('Riprendi', () => this.riprendi());
     const menu = this.tastoScritta('Menu', () => this.scene.start('Menu'));
-    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), riprendi, menu);
+    // impostazione del giocatore: grandezza dei tasti (oggi il joystick d'attacco), salvata sul dispositivo
+    this.valoreGrandezza = document.createElement('span');
+    const grandezza = document.createElement('div');
+    grandezza.className = 'stanze-impostazione';
+    const cambia = (passo: number): void => {
+      impostaGrandezzaTasti(AttaccoATasto.ingrandimento(misureHud()) + passo);
+      this.disponi();
+    };
+    const riga = document.createElement('div');
+    riga.className = 'stanze-riga';
+    riga.append(this.tastoScritta('-', () => cambia(-1)), this.valoreGrandezza, this.tastoScritta('+', () => cambia(1)));
+    grandezza.append(this.scrittaPixel('Grandezza dei tasti', 'stanze-etichetta'), riga);
+    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), riprendi, grandezza, menu);
     this.avvisoRuota = document.createElement('div');
     this.avvisoRuota.className = 'stanze-ruota';
     this.avvisoRuota.hidden = true;
@@ -312,6 +327,13 @@ export class Stanze extends Phaser.Scene {
     if (!this.radice) return;
     const m = misureHud(), b = bordiHud(m), { lato, ingrandimento: z } = STANZA.pausa;
     this.attacco?.disponi(m, b);
+    if (this.attacco) {
+      const testo = `× ${AttaccoATasto.ingrandimento(m)}`;
+      if (this.valoreGrandezza.dataset.testo !== testo) {
+        this.valoreGrandezza.dataset.testo = testo;
+        this.valoreGrandezza.replaceChildren(this.scrittaPixel(testo, ''));
+      }
+    }
     this.pannelloPausa.style.backgroundSize = `${4 * m.px}px ${4 * m.px}px`;
     // pulsante piccolo, ma l'area di tocco arriva comunque a TOCCO_MINIMO punti (regola dei 44 punti)
     posa(this.tastoPausa, m.W - b.d - lato * z, b.a, m);
@@ -319,10 +341,12 @@ export class Stanze extends Phaser.Scene {
     misura(this.tastoPausa.firstElementChild as HTMLElement, lato, lato, z, m);
     this.tastoPausa.style.setProperty('--margine-tocco', `${Math.max(4, Math.ceil((TOCCO_MINIMO - lato * z * m.px) / 2))}px`);
     for (const c of this.radice.querySelectorAll<HTMLCanvasElement>('.stanze-scritta')) {
-      const k = c.classList.contains('stanze-titolo') ? 4 : 3;
+      const k = c.classList.contains('stanze-titolo') ? 4 : c.classList.contains('stanze-etichetta') ? 2 : 3;
       misura(c, Number(c.dataset.l), Number(c.dataset.a), k, m);
     }
   }
+
+  private ridisponi = (): void => this.disponi();
 
   private tasto = (e: KeyboardEvent): void => {
     if (e.code === 'KeyP' || e.code === 'Escape') {

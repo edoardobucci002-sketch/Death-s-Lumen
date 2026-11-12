@@ -1031,6 +1031,17 @@ for (const [nome, disp] of [
     const inPausa = await stato();
     if (!inPausa.pausa || !inPausa.pannello) errori.push('la pausa non si apre');
     await pag.screenshot({ path: `prove/${nome}-pausa.png` });
+    // impostazione «Grandezza dei tasti» nella pausa: + ingrandisce il joystick d'attacco, − lo rimette com'era
+    if (nome !== 'stanze-desktop') {
+      const largo = () => pag.evaluate(() => document.querySelector('.stanze-attacco').getBoundingClientRect().width);
+      const l0 = await largo();
+      await pag.click('.stanze-impostazione .stanze-tasto:last-child').catch(() => errori.push('«+» della grandezza dei tasti non toccabile'));
+      const l1 = await largo();
+      await pag.click('.stanze-impostazione .stanze-tasto:first-child').catch(() => errori.push('«−» della grandezza dei tasti non toccabile'));
+      const l2 = await largo();
+      if (!(l1 > l0) || Math.abs(l2 - l0) > 1) errori.push(`la grandezza dei tasti non cambia (${Math.round(l0)} → ${Math.round(l1)} → ${Math.round(l2)} punti)`);
+      await pag.evaluate(() => localStorage.removeItem('dl-grandezza-tasti'));
+    }
     await pag.click('.stanze-pausa .stanze-tasto').catch(() => errori.push('«Riprendi» non toccabile'));
     await pag.waitForTimeout(150);
     const ripresa = await stato();
@@ -1096,13 +1107,20 @@ for (const [nome, disp] of [
       await pag.mouse.down();
       await pag.mouse.move(t.x - 60, t.y, { steps: 5 });
       await pag.waitForTimeout(150);
+      const spostato = await pag.evaluate(() => document.querySelector('.stanze-attacco .arte:last-child').style.transform);
+      if (!/translate\(-/.test(spostato)) errori.push(`trascinando, il pomello del joystick d'attacco non segue il pollice (${spostato || 'fermo'})`);
       await pag.screenshot({ path: `prove/${nome}-mira.png` });
       await pag.mouse.up();
       await pag.waitForTimeout(100);
       const cM = await colpo();
       if (cM.colpi !== cT.colpi + 1 || cM.dx >= 0) errori.push(`trascinando a sinistra il colpo non va a sinistra (colpi ${cM.colpi}, dx ${cM.dx})`);
-      const larghezzaPunti = t.l;
-      if (larghezzaPunti < 44) errori.push(`il tasto d'attacco è largo ${Math.round(larghezzaPunti)} punti (almeno 44)`);
+      if (t.l < 44) errori.push(`il joystick d'attacco è largo ${Math.round(t.l)} punti (almeno 44)`);
+      // grande come il joystick di movimento (stessi disegni, stesso ingrandimento)
+      await pag.mouse.move(Math.round(W / 4), Math.round(H / 2));
+      await pag.mouse.down();
+      const mov = await pag.evaluate(() => document.querySelector('.joystick .arte').getBoundingClientRect().width);
+      await pag.mouse.up();
+      if (Math.abs(mov - t.l) > 1) errori.push(`il joystick d'attacco (${Math.round(t.l)} punti) non è grande come quello di movimento (${Math.round(mov)})`);
       nota += ', attacco tocco e mira sì';
     }
   }

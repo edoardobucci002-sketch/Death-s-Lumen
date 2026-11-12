@@ -1,7 +1,8 @@
 /*
  * Attacco a tasto (gioco a stanze, passo 3 della fetta): l'arma iniziale si usa a mano, non colpisce più da sola.
- * Sul telefono un tasto tondo in basso a destra, stile Brawl Stars: un tocco colpisce il nemico più vicino (finché non
- * ci sono nemici, dove guarda il personaggio); trascinando compare la mira a terra e lasciando il dito il colpo parte
+ * Sul telefono un joystick d'attacco fisso in basso a destra, stile Brawl Stars (stessi disegni e stessa grandezza del
+ * joystick di movimento, regolabile): un tocco colpisce il nemico più vicino (finché non ci sono nemici, dove guarda il
+ * personaggio); trascinando il pomello segue il pollice, compare la mira a terra e lasciando il dito il colpo parte
  * in quella direzione. Su computer: clic sinistro verso il puntatore, J verso il nemico più vicino.
  * Il colpo della Lanterna è un arco di luce davanti al personaggio (lo stesso effetto del survivor). I numeri sono in
  * ATTACCO (src/data/stanze.ts). La richiesta di colpo aspetta la fine della ricarica: si può premere un attimo prima.
@@ -9,9 +10,35 @@
 import Phaser from 'phaser';
 import { ATTACCO } from '../data/stanze';
 import { TOCCO_MINIMO } from '../data/hud';
-import { misura, posa, type MisureHud } from './arte';
+import { arte, immagine, ingr, misura, posa, type MisureHud } from './arte';
 import { PROFONDITA, type Effetti } from './effetti';
 import { suona } from './audio';
+
+const CHIAVE_GRANDEZZA = 'dl-grandezza-tasti'; // impostazione del giocatore, salvata sul dispositivo (0 = come il movimento)
+
+/** La grandezza dei tasti scelta dal giocatore (0 = come il joystick di movimento). */
+let scelta: number | null = null; // l'ultima scelta in questa sessione (vale anche se il dispositivo non può salvarla)
+
+export function grandezzaTasti(): number {
+  if (scelta !== null) return scelta;
+  try {
+    const n = Number(localStorage.getItem(CHIAVE_GRANDEZZA));
+    return Number.isInteger(n) && n >= ATTACCO.tasto.minimo && n <= ATTACCO.tasto.massimo ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Salva la grandezza dei tasti, dentro i limiti di ATTACCO.tasto. */
+export function impostaGrandezzaTasti(n: number): void {
+  const v = Math.min(ATTACCO.tasto.massimo, Math.max(ATTACCO.tasto.minimo, Math.round(n)));
+  scelta = v;
+  try {
+    localStorage.setItem(CHIAVE_GRANDEZZA, String(v));
+  } catch {
+    /* niente memoria: vale finché la pagina resta aperta */
+  }
+}
 
 export class AttaccoATasto {
   attesa = 0; // secondi prima del prossimo colpo
@@ -30,7 +57,10 @@ export class AttaccoATasto {
   private mDX = 1;
   private mDY = 0;
   private ricaricaVista = false;
+  private corsa = 0; // pixel di gioco di cui il pomello si sposta al massimo (fino al bordo della base)
+  private px = 1; // punti dello schermo per pixel di gioco
   private readonly tasto: HTMLButtonElement;
+  private readonly pomello: HTMLImageElement;
   private readonly grafica: Phaser.GameObjects.Graphics;
 
   constructor(
@@ -47,7 +77,8 @@ export class AttaccoATasto {
     this.tasto.type = 'button';
     this.tasto.className = 'stanze-attacco';
     this.tasto.setAttribute('aria-label', 'Attacca');
-    this.tasto.append(this.disegnoTasto());
+    this.pomello = immagine('Joystick_Pomello');
+    this.tasto.append(immagine('Joystick_Base'), this.pomello);
     this.tasto.addEventListener('pointerdown', this.appoggia);
     contenitore.append(this.tasto);
     window.addEventListener('pointermove', this.muovi);
@@ -122,13 +153,27 @@ export class AttaccoATasto {
     }
   }
 
+  /** L'ingrandimento del joystick d'attacco: quello scelto dal giocatore nella pausa, se no quello del joystick di movimento. */
+  static ingrandimento(m: MisureHud): number {
+    return grandezzaTasti() || ingr('joystick', m);
+  }
+
   /** In basso a destra, dentro il bordo sicuro; l'area di tocco arriva almeno a TOCCO_MINIMO punti. */
   disponi(m: MisureHud, bordo: { b: number; d: number }): void {
-    const { raggio, ingrandimento: z, margine } = ATTACCO.tasto, lato = raggio * 2 + 2;
-    posa(this.tasto, m.W - bordo.d - margine - lato * z, m.H - bordo.b - margine - lato * z, m);
-    misura(this.tasto, lato, lato, z, m);
-    misura(this.tasto.firstElementChild as HTMLElement, lato, lato, z, m);
-    this.tasto.style.setProperty('--margine-tocco', `${Math.max(4, Math.ceil((TOCCO_MINIMO - lato * z * m.px) / 2))}px`);
+    const b = arte('Joystick_Base'), p = arte('Joystick_Pomello');
+    if (!b || !p) return;
+    const z = AttaccoATasto.ingrandimento(m), margine = ATTACCO.tasto.margine;
+    (this.tasto.firstElementChild as HTMLImageElement).src = b.url;
+    this.pomello.src = p.url;
+    posa(this.tasto, m.W - bordo.d - margine - b.w * z, m.H - bordo.b - margine - b.h * z, m);
+    misura(this.tasto, b.w, b.h, z, m);
+    misura(this.tasto.firstElementChild as HTMLElement, b.w, b.h, z, m);
+    misura(this.pomello, p.w, p.h, z, m);
+    this.pomello.style.left = `${Math.floor(((b.w - p.w) * z) / 2) * m.px}px`;
+    this.pomello.style.top = `${Math.floor(((b.h - p.h) * z) / 2) * m.px}px`;
+    this.corsa = ((b.w - p.w) / 2) * z;
+    this.px = m.px;
+    this.tasto.style.setProperty('--margine-tocco', `${Math.max(4, Math.ceil((TOCCO_MINIMO - Math.min(b.w, b.h) * z * m.px) / 2))}px`);
   }
 
   /** Lascia il dito (pausa, telefono da ruotare): nessun colpo parte. */
@@ -136,6 +181,7 @@ export class AttaccoATasto {
     this.dito = null;
     this.mirando = false;
     this.richiesta = false;
+    this.pomello.style.transform = '';
   }
 
   distruggi(): void {
@@ -144,31 +190,6 @@ export class AttaccoATasto {
     window.removeEventListener('pointercancel', this.annulla);
     document.removeEventListener('pointerdown', this.clic);
     this.tasto.remove(); // la grafica della mira la toglie la scena quando si chiude
-  }
-
-  /** Il tasto disegnato dal codice (segnaposto): un disco scuro con l'anello del colore del personaggio e un arco di luce. */
-  private disegnoTasto(): HTMLCanvasElement {
-    const r = ATTACCO.tasto.raggio, lato = r * 2 + 2, c = document.createElement('canvas');
-    c.width = c.height = lato;
-    c.className = 'stanze-scritta';
-    const g = c.getContext('2d')!;
-    const accento = getComputedStyle(document.documentElement).getPropertyValue('--accento').trim() || ATTACCO.mira.colore;
-    const centro = lato / 2;
-    for (let y = 0; y < lato; y++) {
-      for (let x = 0; x < lato; x++) {
-        const d = Math.hypot(x + 0.5 - centro, y + 0.5 - centro);
-        if (d > r + 0.5) continue;
-        g.fillStyle = d > r - 1.5 ? '#000000' : d > r - 4 ? accento : '#1c1611';
-        g.fillRect(x, y, 1, 1);
-      }
-    }
-    // arco di luce stilizzato: un quarto di cerchio spesso 2 pixel
-    g.fillStyle = '#efe3c8';
-    for (let a = -50; a <= 50; a += 4) {
-      const t = Phaser.Math.DegToRad(a), rr = r * 0.5;
-      g.fillRect(Math.round(centro - rr * 0.4 + Math.cos(t) * rr), Math.round(centro + Math.sin(t) * rr) - 1, 2, 2);
-    }
-    return c;
   }
 
   private appoggia = (e: PointerEvent): void => {
@@ -190,11 +211,15 @@ export class AttaccoATasto {
       this.mDX = dx / l;
       this.mDY = dy / l;
     }
+    // il pomello segue il pollice fino al bordo della base, a pixel di gioco interi (come il joystick di movimento)
+    const k = l > 1 ? 1 / l : 1;
+    this.pomello.style.transform = `translate(${Math.round(dx * k * this.corsa) * this.px}px, ${Math.round(dy * k * this.corsa) * this.px}px)`;
   };
 
   private solleva = (e: PointerEvent): void => {
     if (e.pointerId !== this.dito) return;
     this.dito = null;
+    this.pomello.style.transform = '';
     if (this.fermo()) return;
     if (this.mirando) this.verso(this.mDX, this.mDY);
     else this.automatico();

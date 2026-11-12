@@ -821,7 +821,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Arco', 'raggio {} px, ampiezza {}°', AT.raggio, AT.ampiezza],
     ['Danno', '{}', AT.danno],
     ['Posa del colpo', '{} s, slancio {} px', AT.posa, AT.slancio],
-    ['Tasto d\'attacco', 'raggio {} pixel disegnati, ingrandito {} volte, {} px dal bordo sicuro', AT.tasto.raggio, AT.tasto.ingrandimento, AT.tasto.margine],
+    ['Joystick d\'attacco', 'nella pausa da × {} a × {}; {} px dal bordo sicuro', AT.tasto.minimo, AT.tasto.massimo, AT.tasto.margine],
     ['Trascinamento', '{} punti per la mira piena, zona morta {}%', AT.trascina.raggio, pct(AT.trascina.zonaMorta)],
   ];
   stessiNomi('Attacco', ta, RIGHE_ATTACCO.map((r) => r[0]));

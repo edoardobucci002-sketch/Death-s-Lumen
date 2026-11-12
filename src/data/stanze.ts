@@ -49,8 +49,10 @@ export const ATTACCO = {
   danno: 18, // conta dal passo 4, quando arrivano i nemici
   posa: 0.15, // secondi in cui il personaggio resta girato verso il colpo (segnaposto dell'animazione attack)
   slancio: 3, // pixel di cui il personaggio si sporge verso il colpo durante la posa (segnaposto)
-  // tasto d'attacco sul telefono, in basso a destra (stile Brawl Stars): disegnato dal codice finché non c'è quello di Edoardo
-  tasto: { raggio: 22, ingrandimento: 2, margine: 14 }, // raggio in pixel disegnati; margine dal bordo sicuro, in pixel di gioco
+  // joystick d'attacco sul telefono, fisso in basso a destra (stile Brawl Stars, decisione di Edoardo del 12/11): gli stessi
+  // disegni del joystick di movimento (Joystick_Base e Joystick_Pomello), di partenza grande come lui. Il giocatore lo
+  // ingrandisce o rimpicciolisce dalla pausa («Grandezza dei tasti»), a passi interi (pixel perfect: niente ingrandimenti a metà)
+  tasto: { minimo: 1, massimo: 4, margine: 14 }, // ingrandimenti ammessi; margine dal bordo sicuro, in pixel di gioco
   trascina: { raggio: 52, zonaMorta: 0.3 }, // punti dello schermo: sotto la zona morta il tocco è un tocco (mira automatica)
   mira: { colore: '#e3913a', spessore: 2 }, // la mira a terra mentre si trascina
 } as const;

@@ -389,3 +389,6 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .stanze-attacco.ricarica { filter: brightness(0.55); }
 /* su computer si attacca con il mouse e con J: il tasto serve solo ai telefoni e ai tablet */
 @media (pointer: fine) { #interfaccia .stanze-attacco { display: none; } }
+/* pausa del gioco a stanze: impostazione «Grandezza dei tasti» (− valore +) */
+.stanze-impostazione { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.stanze-riga { display: flex; align-items: center; gap: 16px; }

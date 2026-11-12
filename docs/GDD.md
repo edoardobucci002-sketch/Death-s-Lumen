@@ -739,7 +739,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 - **Linea dei joystick**: una linea invisibile al centro esatto dello schermo divide i joystick (decisione di Edoardo del 12/11). Il joystick di movimento nasce solo se il dito si appoggia a sinistra della linea, e la sua base resta tutta tra il bordo sicuro dello schermo e la linea; a destra il dito non muove il personaggio (sarà il joystick d'attacco). LAB → Stanze → «Linea al centro» la mostra.
 - **Luce e buio**: gli stessi del survivor (sezione 11, «Mondo, luce e comandi»), con il tremolio della fiamma.
 - **Orientamento**: in orizzontale su ogni dispositivo. Su un telefono o un tablet in verticale il gioco si ferma e compare «Ruota il telefono».
-- **Pausa provvisoria**: pulsante provvisorio piccolo in alto a destra (14 pixel disegnati dal codice, ingranditi 2 volte; l'area di tocco arriva comunque a 44 punti), P o Esc, Indietro, e quando l'app va in secondo piano; il gioco dietro si oscura a retino; «Riprendi» e «Menu» (*da rivedere*: la pausa vera del gioco a stanze si progetta più avanti). M accende e spegne i suoni.
+- **Pausa provvisoria**: pulsante provvisorio piccolo in alto a destra (14 pixel disegnati dal codice, ingranditi 2 volte; l'area di tocco arriva comunque a 44 punti), P o Esc, Indietro, e quando l'app va in secondo piano; il gioco dietro si oscura a retino; «Riprendi», l'impostazione **«Grandezza dei tasti»** (− e +: ingrandisce o rimpicciolisce il joystick d'attacco a passi interi, salvata sul dispositivo; impostazione del giocatore, decisione di Edoardo del 12/11) e «Menu» (*da rivedere*: la pausa vera del gioco a stanze si progetta più avanti). M accende e spegne i suoni.
 
 | Valore della stanza | Numero | Note |
 | --- | --- | --- |
@@ -752,7 +752,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 
 **L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`). Il Lampionaio usa la Lanterna a mano: il colpo è l'arco di luce del survivor, davanti a lui nella direzione scelta. Per ora non ferisce nessuno: i nemici arrivano al passo 4.
 
-- **Telefono** (stile Brawl Stars): tasto tondo in basso a destra, nella metà destra dello schermo. Un tocco breve colpisce il nemico più vicino; finché non ci sono nemici, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando il tasto compare a terra la mira (il contorno dell'arco, nel colore del personaggio) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro del tasto prima di lasciare, il colpo torna automatico. Il tasto è disegnato dal codice (segnaposto) e si spegne durante la ricarica.
+- **Telefono** (stile Brawl Stars, decisione di Edoardo del 12/11): un joystick d'attacco fisso in basso a destra, nella metà destra dello schermo, con gli stessi disegni del joystick di movimento (Joystick_Base e Joystick_Pomello) e di partenza la stessa grandezza. Un tocco breve colpisce il nemico più vicino; finché non ci sono nemici, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando, il pomello segue il pollice fino al bordo della base, a terra compare la mira (il contorno dell'arco, nel colore del personaggio) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro prima di lasciare, il colpo torna automatico. Durante la ricarica il joystick si scurisce.
 - **Computer**: clic sinistro verso il puntatore, J verso il nemico più vicino; il mouse non fa comparire il joystick (si cammina con WASD e le frecce) e il tasto tondo non si vede.
 - Un colpo chiesto durante la ricarica parte appena la ricarica finisce. Durante il colpo il Lampionaio si gira verso il colpo e si sporge di qualche pixel (segnaposto dell'animazione `attack`, che il gioco usa da sola quando Edoardo la disegna).
 
@@ -762,7 +762,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Arco | raggio 136 px, ampiezza 132° | come la Lanterna al livello 1 del survivor (*da rivedere*) |
 | Danno | 18 | conta dal passo 4 (*da rivedere*) |
 | Posa del colpo | 0,15 s, slancio 3 px | segnaposto dell'animazione `attack` |
-| Tasto d'attacco | raggio 22 pixel disegnati, ingrandito 2 volte, 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
+| Joystick d'attacco | grande come il joystick di movimento; nella pausa da × 1 a × 4; 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
 | Trascinamento | 52 punti per la mira piena, zona morta 30% | sotto la zona morta il tocco è automatico |
 
 ## 12. Da fare e da decidere
