@@ -360,6 +360,7 @@ export class Gioco extends Phaser.Scene {
     if (this.bot && parametri.has('cercaurne')) this.bot.urne = this.rompibili;
     if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(Number(parametri.get('seme')) || SEME_PREDEFINITO);
     this.sim = this.bot ? new Simulazione() : null;
+    this.orda.misuraMorte = this.sim ? (i) => this.sim!.morto(this.orda, i, this.secondi) : null;
     // ?amuleto=martire: la notte parte con quell'amuleto già trovato e acceso, che occupa i suoi grani (per misurarlo con il bot)
     const imposto = AMULETI.find((a) => a.id === parametri.get('amuleto'));
     if (imposto) {

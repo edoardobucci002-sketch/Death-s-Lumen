@@ -40,6 +40,8 @@ const MAX_BRANCHI = 4; // orde in campo insieme
 export const [LUCE, SACRO, OMBRA, TERRA] = [1, 2, 3, 4];
 /** Reazioni, come le restituisce marca (0 = nessuna). */
 export const [ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO] = [1, 2, 3, 4];
+/** Storia di un nemico, per la simulazione: ha avuto almeno uno stato / ha subito almeno una reazione. */
+export const STORIA_STATO = 1, STORIA_REAZIONE = 2;
 
 interface AspettoNemico {
   ingrandimento: number;
@@ -115,6 +117,11 @@ export class Orda {
   dannoMaledizione = 0;
   marcato = false; // l'ultima marca() ha lasciato lo stato (per la simulazione)
   dannoMaledizioneInterrata = 0;
+  // per la simulazione (solo misure, non cambiano la notte): secondo in cui è nato e storia degli stati (STORIA_STATO, STORIA_REAZIONE)
+  readonly natoA = new Float32Array(CAPIENZA);
+  readonly storia = new Uint8Array(CAPIENZA);
+  /** Con ?bot: chiamata per ogni nemico che muore, prima che lasci il suo posto. */
+  misuraMorte: ((i: number) => void) | null = null;
   private fianco = new Float32Array(CAPIENZA); // accerchia: di quanto gira intorno al giocatore (radianti, ±)
   // orde: a quale orda appartiene (0 = nessuna) e il suo posto nella formazione rispetto al centro
   private branco = new Uint8Array(CAPIENZA);
@@ -151,7 +158,7 @@ export class Orda {
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
   private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.tettoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
-    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo, this.moltInterrato];
+    this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo, this.moltInterrato, this.natoA];
 
   constructor(
     scena: Phaser.Scene,
@@ -392,6 +399,7 @@ export class Orda {
     if (aff === TERRA && this.pausaSepolto[i] > 0 && !(forza && r)) return 0;
     const resiste = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1;
     if (r) {
+      this.storia[i] |= STORIA_STATO | STORIA_REAZIONE;
       // lo stato consumato insieme alla Terra (con gli Stati certi decide l'effetto in più dell'Interramento)
       const consumato = aff !== TERRA ? aff : abb ? LUCE : cons ? SACRO : OMBRA;
       // Devozione: la reazione si moltiplica per il grado (e i Riti) dello stato che il nemico aveva già
@@ -432,6 +440,7 @@ export class Orda {
     }
     this.ultimoStato[i] = aff;
     this.marcato = true;
+    this.storia[i] |= STORIA_STATO;
     return 0;
   }
 
@@ -564,6 +573,7 @@ export class Orda {
     for (let i = this.numero - 1; i >= 0; i--) {
       if (this.salute[i] > 0) continue;
       const categoria = this.tipo[i] === ID_MIETITORE ? 'seth' : this.elite[i] ? 'elite' : 'comune';
+      this.misuraMorte?.(i);
       muore(this.x[i], this.y[i] - this.raggio[i], this.anime[i], categoria);
       this.togli(i);
     }
@@ -730,6 +740,8 @@ export class Orda {
     this.tipo[i] = t;
     if (t === ID_BRUTO) this.bruti++;
     this.id[i] = this.prossimoId++;
+    this.natoA[i] = secondi;
+    this.storia[i] = 0;
     this.segno[i] = 0;
     this.raggio[i] = tipo.raggio;
     const oltre = Math.max(0, m - DIFFICOLTA.saluteDopo);
@@ -865,6 +877,7 @@ export class Orda {
     this.interraTipo[i] = this.interraTipo[u];
     this.nellAlone[i] = this.nellAlone[u];
     this.id[i] = this.id[u];
+    this.storia[i] = this.storia[u];
     this.segno[i] = this.segno[u];
     this.versoSinistra[i] = this.versoSinistra[u];
     this.sprite[i] = this.sprite[u];

@@ -1,7 +1,8 @@
 // Simulazione di bilanciamento: il bot gioca la notte intera con ogni personaggio, su più semi,
 // nel gioco vero (build in dist/) dentro un browser invisibile con lo schermo del Galaxy S25 di Edoardo (misurato il 5/11).
 // Stampa a che minuto muore, il livello minuto per minuto, quanto fa male il Mietitore, quanti pani e calamite
-// raccoglie e quanta salute recupera, e controlla gli obiettivi di CLAUDE.md. Risultati completi in prove/sim.json.
+// raccoglie e quanta salute recupera, quanti nemici muoiono senza stati né reazioni e quanto vivono (confronto per il pivot),
+// e controlla gli obiettivi di CLAUDE.md. Risultati completi in prove/sim.json.
 // Un giocatore umano va più forte del bot (prova di Edoardo del 3/11: livello 60 al minuto 8, il bot 40)
 // e arriverà la meta progressione: con la Cappella vuota il bot deve vincere al massimo VITTORIE_MASSIME delle notti.
 // Uso: npm run sim            (3 partite per personaggio)
@@ -220,6 +221,33 @@ if (notti.length) {
   console.log(`«Pane e vino» preso da solo (la scelta non si apre): ${notti.reduce((a, r) => a + (r.paneDaSolo ?? 0), 0)} volte, in ${pane.length}/${notti.length} notti`);
   const pozze = notti.filter((r) => r.pozzeCuranti);
   if (pozze.length) console.log(`Acquasantiera, pozze che curano: in ${pozze.length} notti, in media ${media(pozze.map((r) => r.pozzeCuranti)).toFixed(1)} a notte, ${Math.round(media(pozze.map((r) => r.curaPozze ?? 0)))} salute ridata a notte`);
+}
+
+// ——— confronto per il pivot: reazioni e stati sui nemici morti, tempo di vita per fase ———
+const conMorti = risultati.filter((r) => r.mortiPerCategoria);
+if (conMorti.length) {
+  const CATEGORIE = [['tutti', 'tutti'], ['bruti', 'bruti'], ['elite', 'élite'], ['seth', 'Seth']];
+  const FASI = ['0-5', '5-10', '10-15'];
+  const pct = (a, b) => (b ? `${Math.round((a * 100) / b)}%` : '–');
+  // tempo di vita: istogrammi in decimi di secondo, sommati tra le notti → minimo, mediana, 90° percentile
+  const vita = (rr, f) => {
+    const h = new Map();
+    for (const r of rr) for (const [d, n] of Object.entries(r.vitaPerFase[f])) h.set(Number(d), (h.get(Number(d)) ?? 0) + n);
+    const chiavi = [...h.keys()].sort((x, y) => x - y), tot = [...h.values()].reduce((x, y) => x + y, 0);
+    if (!tot) return null;
+    const quantile = (q) => { let c = 0; for (const k of chiavi) { c += h.get(k); if (c >= q * tot) return k / 10; } return chiavi.at(-1) / 10; };
+    return { n: tot, min: chiavi[0] / 10, mediana: quantile(0.5), p90: quantile(0.9) };
+  };
+  const s1 = (x) => x.toFixed(1).replace('.', ',');
+  console.log('\nConfronto per il pivot (nemici morti; tempo di vita in secondi, fase = minuto della morte)');
+  for (const pg of [...scelti, 'tutti']) {
+    const rr = conMorti.filter((r) => pg === 'tutti' || r.pg === pg);
+    if (!rr.length) continue;
+    const somma = (c, k) => rr.reduce((a, r) => a + r.mortiPerCategoria[c][k], 0);
+    const senzaReaz = CATEGORIE.map(([c, nome]) => `${nome} ${pct(somma(c, 'senzaReazione'), somma(c, 'morti'))} (${somma(c, 'morti')})`).join(', ');
+    console.log(`  ${pg}: morti senza reazione ${senzaReaz}; morti senza stato ${pct(somma('tutti', 'senzaStato'), somma('tutti', 'morti'))}`);
+    console.log('     vita (min / mediana / 90°): ' + FASI.map((f) => { const v = vita(rr, f); return `${f} ${v ? `${s1(v.min)} / ${s1(v.mediana)} / ${s1(v.p90)}` : '–'}`; }).join('; '));
+  }
 }
 
 console.log('\nObiettivi (CLAUDE.md, «Verifica»)');
