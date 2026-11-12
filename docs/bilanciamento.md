@@ -42,6 +42,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 12/11 — Riordino di `armi.ts` (nessun numero cambia)
+
+Le armi sono divise in cinque file a strati (vedi [roadmap.md](roadmap.md), «Gioco a stanze», passo 1). **Controllo:** `npm run sim -- 3 tutti`, Cappella vuota e completa, semi 1001–1003, prima e dopo il riordino: 24 notti abbinate per personaggio e seme, 24.871 campi confrontati, **0 differenze**. Le notti finiscono in un ordine diverso nel file `prove/sim.json` perché girano in parallelo: il confronto va fatto per personaggio e seme, non per posizione.
+
 ### 12/11 — Prova «pochi e forti» (interruttori del LAB, spenti di partenza; la notte normale non cambia)
 
 Proposta di Edoardo per il pivot, solo da misurare: **a** `pochi=1` (nemici massimi in campo e comparse al secondo ÷ 3, salute e Lumen dei nemici comuni × 3; orde, élite e Seth come sempre; `POCHI_E_FORTI`), **b** `schermo=1` (le armi non colpiscono, non lasciano stati e non mirano fuori dal campo visibile), **c** entrambi. Nel LAB: scheda Eventi, «Pochi e forti» e «Armi solo nello schermo».
