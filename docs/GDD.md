@@ -728,6 +728,26 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Anime a terra | Lumen V2 ingranditi × 2 | |
 | Effetti pixelfx (Pozza ed Eclissi di serie; Sepoltura spenta) | Sepoltura (spenta di serie, si rifà dopo il rework del combattimento): 8 gruppi di 4 mani (104×81 px, 3,2 s) solo lungo il bordo dell'area, i piedi entro 40 px dal bordo, centro vuoto, nessun alone, partenze sfalsate lungo i 4,5 s; Pozza dell'Acqua santa: 5 misure (raggio 89, 107, 129, 155, 186 px), si usa la più vicina all'area vera e si carica solo quella (da 1,3 a 5,8 MB di memoria video; prima 18,9 MB per tutte); Eclissi: 1,1 s a 12 fotogrammi al secondo, colori originali, larga quanto il cerchio di oggi (0,9 MB di memoria video) | dalla libreria pixelfx (MIT), a retino, a grandezza naturale, 12 fotogrammi al secondo; nessun foglio di sprite oltre 2048 px per lato (`npm run asset` manda a capo i fotogrammi); Pozza ed Eclissi si spengono per i confronti da LAB → Eventi → «Effetti pixelfx», la Sepoltura si accende da «Sepoltura pixelfx». Cambiano solo il disegno, non aree, danni e tempi (`PIXELFX`, *da rivedere*) |
 
+## Gioco a stanze (pivot, in costruzione: `src/data/stanze.ts`)
+
+Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: passo 2 della fetta verticale.
+
+- **La stanza**: un pavimento rettangolare a lastre di pietra, chiuso da muri: in alto una facciata a mattoni (vista di fronte), ai lati e in basso un bordo di pietra scura. Pavimento e muri sono segnaposto disegnati dal codice (`src/sistema/stanza.ts`).
+- **Il Lampionaio** (l'unico personaggio della fetta) cammina con il joystick o con WASD e le frecce, alla sua velocità di sempre (245 px/s + 10%). I muri lo fermano: i suoi piedi restano dentro il pavimento, a qualche pixel dai bordi; il corpo si disegna davanti alla facciata del muro in alto.
+- **Telecamera**: tiene il Lampionaio sempre al centro, come nel survivor; vicino ai muri, oltre il muro si vede il fondo scuro (*da rivedere*).
+- **Luce e buio**: gli stessi del survivor (sezione 11, «Mondo, luce e comandi»), con il tremolio della fiamma.
+- **Orientamento**: in orizzontale su ogni dispositivo. Su un telefono o un tablet in verticale il gioco si ferma e compare «Ruota il telefono».
+- **Pausa provvisoria**: pulsante in alto a destra, P o Esc, Indietro, e quando l'app va in secondo piano; il gioco dietro si oscura a retino; «Riprendi» e «Menu» (*da rivedere*: la pausa vera del gioco a stanze si progetta più avanti). M accende e spegne i suoni.
+
+| Valore della stanza | Numero | Note |
+| --- | --- | --- |
+| Pavimento | 1600 × 1000 px | più largo dello schermo del telefono in orizzontale (*da rivedere*) |
+| Muri | in alto 96 px, ai lati 32 px, in basso 32 px | in alto la facciata, vista di fronte |
+| Bordi per i piedi | ai lati 18 px, in alto 10 px, in basso 6 px | quanto i piedi si avvicinano ai muri (*da rivedere*) |
+| Lastre del pavimento | 64 px | |
+| Mattoni della facciata | 32 × 16 px | sfalsati di mezzo mattone a ogni riga |
+| Ombra del muro | 10 px | fascia scura sul pavimento ai piedi della facciata |
+
 ## 12. Da fare e da decidere
 
 Il piano di lavoro, le idee non ancora decise (altri scenari, suoni e musica, lingua, stile dei nemici, torce nel cimitero) e il redesign sono in [roadmap.md](roadmap.md).
