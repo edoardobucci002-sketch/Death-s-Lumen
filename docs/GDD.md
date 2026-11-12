@@ -733,20 +733,37 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: passo 2 della fetta verticale.
 
 - **La stanza**: un pavimento rettangolare a lastre di pietra, chiuso da muri: in alto una facciata a mattoni (vista di fronte), ai lati e in basso un bordo di pietra scura. Pavimento e muri sono segnaposto disegnati dal codice (`src/sistema/stanza.ts`).
+- **Grandezza**: 13 × 7 lastre, come le stanze di The Binding of Isaac (scelta di Edoardo del 12/11): la stanza intera sta più o meno in uno schermo.
 - **Il Lampionaio** (l'unico personaggio della fetta) cammina con il joystick o con WASD e le frecce, alla sua velocità di sempre (245 px/s + 10%). I muri lo fermano: i suoi piedi restano dentro il pavimento, a qualche pixel dai bordi; il corpo si disegna davanti alla facciata del muro in alto.
-- **Telecamera**: tiene il Lampionaio sempre al centro, come nel survivor; vicino ai muri, oltre il muro si vede il fondo scuro (*da rivedere*).
+- **Telecamera**: tiene il Lampionaio sempre al centro, come nel survivor (confermato da Edoardo il 12/11); vicino ai muri, oltre il muro si vede il fondo scuro.
+- **Linea dei joystick**: una linea invisibile al centro esatto dello schermo divide i joystick (decisione di Edoardo del 12/11). Il joystick di movimento nasce solo se il dito si appoggia a sinistra della linea, e la sua base resta tutta tra il bordo sicuro dello schermo e la linea; a destra il dito non muove il personaggio (sarà il joystick d'attacco). LAB → Stanze → «Linea al centro» la mostra.
 - **Luce e buio**: gli stessi del survivor (sezione 11, «Mondo, luce e comandi»), con il tremolio della fiamma.
 - **Orientamento**: in orizzontale su ogni dispositivo. Su un telefono o un tablet in verticale il gioco si ferma e compare «Ruota il telefono».
-- **Pausa provvisoria**: pulsante in alto a destra, P o Esc, Indietro, e quando l'app va in secondo piano; il gioco dietro si oscura a retino; «Riprendi» e «Menu» (*da rivedere*: la pausa vera del gioco a stanze si progetta più avanti). M accende e spegne i suoni.
+- **Pausa provvisoria**: pulsante provvisorio piccolo in alto a destra (14 pixel disegnati dal codice, ingranditi 2 volte; l'area di tocco arriva comunque a 44 punti), P o Esc, Indietro, e quando l'app va in secondo piano; il gioco dietro si oscura a retino; «Riprendi» e «Menu» (*da rivedere*: la pausa vera del gioco a stanze si progetta più avanti). M accende e spegne i suoni.
 
 | Valore della stanza | Numero | Note |
 | --- | --- | --- |
-| Pavimento | 1600 × 1000 px | più largo dello schermo del telefono in orizzontale (*da rivedere*) |
+| Pavimento | 832 × 448 px | 13 × 7 lastre, alla Isaac (*da rivedere* le misure) |
 | Muri | in alto 96 px, ai lati 32 px, in basso 32 px | in alto la facciata, vista di fronte |
 | Bordi per i piedi | ai lati 18 px, in alto 10 px, in basso 6 px | quanto i piedi si avvicinano ai muri (*da rivedere*) |
 | Lastre del pavimento | 64 px | |
 | Mattoni della facciata | 32 × 16 px | sfalsati di mezzo mattone a ogni riga |
 | Ombra del muro | 10 px | fascia scura sul pavimento ai piedi della facciata |
+
+**L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`). Il Lampionaio usa la Lanterna a mano: il colpo è l'arco di luce del survivor, davanti a lui nella direzione scelta. Per ora non ferisce nessuno: i nemici arrivano al passo 4.
+
+- **Telefono** (stile Brawl Stars): tasto tondo in basso a destra, nella metà destra dello schermo. Un tocco breve colpisce il nemico più vicino; finché non ci sono nemici, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando il tasto compare a terra la mira (il contorno dell'arco, nel colore del personaggio) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro del tasto prima di lasciare, il colpo torna automatico. Il tasto è disegnato dal codice (segnaposto) e si spegne durante la ricarica.
+- **Computer**: clic sinistro verso il puntatore, J verso il nemico più vicino; il mouse non fa comparire il joystick (si cammina con WASD e le frecce) e il tasto tondo non si vede.
+- Un colpo chiesto durante la ricarica parte appena la ricarica finisce. Durante il colpo il Lampionaio si gira verso il colpo e si sporge di qualche pixel (segnaposto dell'animazione `attack`, che il gioco usa da sola quando Edoardo la disegna).
+
+| Valore dell'attacco | Numero | Note |
+| --- | --- | --- |
+| Ricarica | 0,45 s | la Lanterna automatica del survivor: 0,8 s (*da rivedere*) |
+| Arco | raggio 136 px, ampiezza 132° | come la Lanterna al livello 1 del survivor (*da rivedere*) |
+| Danno | 18 | conta dal passo 4 (*da rivedere*) |
+| Posa del colpo | 0,15 s, slancio 3 px | segnaposto dell'animazione `attack` |
+| Tasto d'attacco | raggio 22 pixel disegnati, ingrandito 2 volte, 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
+| Trascinamento | 52 punti per la mira piena, zona morta 30% | sotto la zona morta il tocco è automatico |
 
 ## 12. Da fare e da decidere
 
