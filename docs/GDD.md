@@ -2,6 +2,8 @@
 
 Il gioco **com'è oggi**: contenuti, regole e numeri attuali, gli stessi di `src/data/` (il codice è la fonte di verità). Qui non c'è la storia dei numeri: i ritocchi e le simulazioni sono in [bilanciamento.md](bilanciamento.md), le scelte con data in [decisioni.md](decisioni.md), cosa resta da fare in [roadmap.md](roadmap.md), gli asset da disegnare in [asset_da_creare.md](asset_da_creare.md). Il punto di partenza era la v0 («Lumen dei Morti», ottobre 2026). Le voci segnate *da rivedere* sono valori proposti da Claude e non ancora confermati da Edoardo.
 
+> **Il gioco sta cambiando genere (12/11/2026).** Questo documento descrive il **survivor-like che c'è oggi nel codice** (congelato anche nel tag `survivor-v1`). Il gioco a stanze, alla Hades, è progettato in [proposte/pivot-hades.md](proposte/pivot-hades.md) e nasce accanto al survivor sul ramo `prova`: entra in questo documento un pezzo alla volta, quando quel pezzo esiste nel codice. Le sezioni del survivor si tolgono quando il suo codice viene tolto (dopo l'approvazione della fetta verticale).
+
 Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i tempi in secondi.
 
 **Scala del mondo.** Gli sprite in gioco di Edoardo (V5) sono alti circa 80 px (nella v0 erano 34): ogni distanza e velocità della v0 è stata moltiplicata per 2,35. I valori di questo documento sono già convertiti.
