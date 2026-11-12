@@ -59,6 +59,7 @@ L'ordine **dopo i Patti** è una proposta di Claude, da confermare con Edoardo (
 4. **Devozione e notti diverse**: 8 livelli di Devozione per personaggio; notti che si sbloccano (nebbia, luna piena, notte dei morti), ognuna con un Seth dalle mosse diverse. Dettagli in [proposte/meta-progressione.md](proposte/meta-progressione.md).
 5. **Cero della fiaschetta e questline** con il Ceraiolo (ampolla incrinata → riparata → si riempie battendo Seth). Oggi la fiaschetta c'è dalla prima notte con 3 sorsi. Quando la fiaschetta diventerà uno sblocco, rilanciare la simulazione.
 6. **Veggente e Sguattera**: i due personaggi giocabili previsti. Da decidere con Edoardo: la loro affinità (vedi [lore.md](lore.md), *Aperto*), arma iniziale, abilità, ritratto e sprite, come si sbloccano.
+   - **Primo passo, prima di tutto il resto: il riordino di `src/sistema/armi.ts`, da fare insieme a Edoardo** (Claude glielo ricorda quando si arriva a questa tappa). Oggi è un solo «arsenale» di 1.730 righe con tutte le 15 armi: si divide per famiglie (colpi vicini, proiettili, zone a terra) a gioco identico, verificato con il bot (stesso seme, stessa notte).
 7. **Redesign dell'intero gioco** (da collocare nell'ordine con Edoardo): HUD, personaggi, animazioni (`attack`, `special`, `hurt`, `death`), effetti, mosse di Seth, hub, nemici V1 alla scala nuova, scheda del personaggio (con statistiche vere), cornici dei ritratti e Pannello scheda.
 8. **Pubblicazione** (senza data):
    - **Google Play: lo apre Edoardo.** 25 dollari una tantum e verifica dell'identità. Per i nuovi account personali servono almeno 12 tester per 14 giorni di fila in prova chiusa prima della pubblicazione. Test interno: aggiornamenti senza Blocco automatico e rapporto automatico pre-lancio. Firebase Test Lab è escluso: chiude il 30/09/2027.
@@ -138,7 +139,6 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Rompibili: percentuali, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
 | Chiazze: olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s; armi di fuoco: Candela e Fuoco fatuo | GDD 8g |
 | Frammenti: 3 per un reliquiario, contatore fisso nell'HUD sì o no | GDD 8g |
-| Riordino di `src/sistema/armi.ts` (1.730 righe, tutte le 15 armi in un solo «arsenale»): dividerlo per famiglie (colpi vicini, proiettili, zone a terra) a gioco identico, verificato con il bot (stesso seme, stessa notte). Proposta di Claude del 12/11; da decidere quando, per esempio prima delle armi della Veggente e della Sguattera | `src/sistema/armi.ts`; decisioni 12/11 |
 | Cera dei nemici: resta uguale per ora | GDD 8g |
 | Luce: sfumatura 1,5, buio 88%, raggio 36% del lato corto, alone caldo | GDD 11, `src/data/mondo.ts` |
 | Fasce del telefono, solo i valori: tutte le misure di `FASCE`, `PAUSA_PICCOLA`, `JOYSTICK_PICCOLO`, `SEGNALE_PECCATO` in `src/data/hud.ts` | GDD §11; decisioni 5/11 |
