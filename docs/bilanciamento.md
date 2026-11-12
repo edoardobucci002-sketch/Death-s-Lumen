@@ -40,6 +40,85 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 12/11 — Prova «pochi e forti» (interruttori del LAB, spenti di partenza; la notte normale non cambia)
+
+Proposta di Edoardo per il pivot, solo da misurare: **a** `pochi=1` (nemici massimi in campo e comparse al secondo ÷ 3, salute e Lumen dei nemici comuni × 3; orde, élite e Seth come sempre; `POCHI_E_FORTI`), **b** `schermo=1` (le armi non colpiscono, non lasciano stati e non mirano fuori dal campo visibile), **c** entrambi. Nel LAB: scheda Eventi, «Pochi e forti» e «Armi solo nello schermo».
+
+**Misure nuove.** Alle misure del «Confronto per il pivot» si aggiungono: **vita visibile** (dalla prima entrata nel campo visibile alla morte; chi muore senza esserci mai entrato conta 0 s), **uccisi fuori schermo** (il nemico muore fuori dal campo visibile, cioè lo schermo senza le fasce dell'HUD) e **chi li uccide** (l'arma, la reazione o la maledizione che toglie l'ultima salute).
+
+**Controllo.** `npm run sim -- 3 tutti`, Cappella vuota e completa, semi 1001–1003, build di 3c77f2b contro quella con le misure e gli interruttori spenti: 24 notti, 6246 campi confrontati, **0 differenze**. Le notti normali da 12 ridanno anche le vittorie dell'11/11 (32/48 e 40/48).
+
+**Notte normale: chi uccide fuori schermo** (96 notti). Muore fuori dal campo visibile il **46% dei nemici a Cappella vuota e il 42% a completa**. Parte dei morti fuori schermo, e tra parentesi quanti dei nemici uccisi da quell'arma muoiono fuori schermo:
+
+- vuota: Acqua santa 39,5% (49%), Campana 23,7% (48%), Esorcismo 9,6% (56%), abilità speciali 4,9% (36%), Sampietrini 4,5% (57%), Fuoco fatuo 3,8% (51%), Bastone 2,7%, Candela 2,7%, Lama di luce 2,6%, Eclissi 2,2%, Turibolo 2,0%, Falce 0,9%, Lanterna 0,6% (15%), maledizione 0,3%, Pala 0% (0%);
+- completa: Acqua santa 34,6% (49%), Campana 16,7% (43%), Lapide 7,8% (44%), Eclissi 7,4% (42%), abilità 5,7% (34%), Esorcismo 4,0%, Sampietrini 4,0%, Bastone 3,4%, Rosario spezzato 3,0%, Fuoco fatuo 2,9%, Candela 2,9%, Turibolo 2,5%, Lama di luce 2,1%, Falce 1,6% (21%), Corvo 0,7% (18%), maledizione 0,3%, Lanterna 0,2% (6%), Velo funebre 0,1%, Pala 0% (1%).
+
+**Simulazione** (`npm run sim -- 12 tutti`, più `pochi=1`, `schermo=1` o tutti e due; Cappella vuota e completa, semi 1001–1012; 48 notti per riga, incertezza di circa ±12 punti sulle vittorie). Vita in secondi su tutta la notte; reazioni a notte nell'ordine Eclissi, Rivelazione, Esorcismo, Interramento.
+
+| Cappella | Prova | Vittorie (L, B, Ba, S) | Morti senza reazione | Morti senza stato | Vita dalla comparsa: mediana / 90° | Vita visibile: mediana / 90° | Uccisi fuori schermo | Reazioni a notte (Ecl, Riv, Eso, Int) | Uccisi a notte |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| vuota | normale | 32/48 (5, 6, 11, 10) | 69% | 11% | 0,8 / 3,0 | 0,2 / 1,9 | 46% | 773, 4378, 4521, 3542 | 37 148 |
+| vuota | a · pochi | 24/48 (6, 6, 5, 7) | 33% | 2% | 2,1 / 7,2 | 1,3 / 5,2 | 31% | 671, 1986, 2009, 1686 | 6896 |
+| vuota | b · schermo | 16/48 (2, 5, 5, 4) | 64% | 12% | 1,6 / 5,5 | 0,9 / 3,9 | 0% | 652, 1990, 3515, 1820 | 18 892 |
+| vuota | **c · entrambi** | 18/48 (5, 3, 2, 8) | **30%** | 3% | 3,0 / 10,8 | **2,2** / 8,1 | **0%** | 578, 1286, 1810, 818 | 4583 |
+| completa | normale | 40/48 (9, 10, 10, 11) | 57% | 13% | 0,8 / 3,3 | 0,3 / 2,2 | 42% | 3126, 10 354, 1719, 3499 | 39 702 |
+| completa | a · pochi | 41/48 (10, 9, 11, 11) | 32% | 5% | 1,7 / 6,2 | 1,0 / 4,6 | 29% | 2167, 3021, 1710, 1442 | 9674 |
+| completa | b · schermo | 35/48 (10, 9, 9, 7) | 65% | 16% | 1,7 / 5,9 | 1,0 / 4,2 | 0% | 1548, 3384, 2240, 2177 | 23 832 |
+| completa | **c · entrambi** | 36/48 (10, 6, 9, 11) | **33%** | 5% | 2,5 / 9,7 | **1,7** / 7,4 | **0%** | 1686, 1514, 1608, 1239 | 6948 |
+
+Per personaggio (12 notti per riga):
+
+| Cappella | Prova | Personaggio | Vittorie | Morti senza reazione | Morti senza stato | Vita dalla comparsa: mediana / 90° | Vita visibile: mediana / 90° | Uccisi fuori schermo |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| vuota | normale | Lampionaio | 5/12 | 62% | 8% | 0,9 / 3,4 | 0,3 / 2,3 | 41% |
+| vuota | normale | Becchino | 6/12 | 69% | 9% | 0,9 / 3,1 | 0,3 / 2,0 | 44% |
+| vuota | normale | Badessa | 11/12 | 75% | 10% | 0,8 / 3,1 | 0,1 / 1,9 | 54% |
+| vuota | normale | Strega | 10/12 | 66% | 13% | 0,7 / 2,6 | 0,2 / 1,6 | 43% |
+| vuota | a · pochi | Lampionaio | 6/12 | 31% | 2% | 2,7 / 8,3 | 1,8 / 6,1 | 26% |
+| vuota | a · pochi | Becchino | 6/12 | 32% | 3% | 2,1 / 7,9 | 1,2 / 5,8 | 36% |
+| vuota | a · pochi | Badessa | 5/12 | 45% | 1% | 2,2 / 7,6 | 1,3 / 5,3 | 37% |
+| vuota | a · pochi | Strega | 7/12 | 28% | 3% | 1,7 / 5,7 | 1,0 / 4,2 | 27% |
+| vuota | b · schermo | Lampionaio | 2/12 | 62% | 11% | 2,0 / 6,8 | 1,2 / 5,0 | 0% |
+| vuota | b · schermo | Becchino | 5/12 | 59% | 14% | 2,0 / 6,8 | 1,3 / 5,1 | 0% |
+| vuota | b · schermo | Badessa | 5/12 | 75% | 11% | 1,5 / 5,1 | 0,9 / 3,4 | 0% |
+| vuota | b · schermo | Strega | 4/12 | 56% | 13% | 1,2 / 4,2 | 0,7 / 2,9 | 0% |
+| vuota | c · entrambi | Lampionaio | 5/12 | 26% | 3% | 3,2 / 10,9 | 2,3 / 8,2 | 0% |
+| vuota | c · entrambi | Becchino | 3/12 | 30% | 4% | 3,3 / 12,1 | 2,4 / 9,3 | 0% |
+| vuota | c · entrambi | Badessa | 2/12 | 37% | 1% | 3,1 / 12,0 | 2,4 / 8,9 | 0% |
+| vuota | c · entrambi | Strega | 8/12 | 29% | 3% | 2,6 / 9,3 | 1,8 / 7,0 | 1% |
+| completa | normale | Lampionaio | 9/12 | 62% | 12% | 1,1 / 4,2 | 0,5 / 3,0 | 35% |
+| completa | normale | Becchino | 10/12 | 60% | 14% | 1,1 / 4,0 | 0,4 / 2,8 | 38% |
+| completa | normale | Badessa | 10/12 | 55% | 10% | 0,8 / 3,0 | 0,2 / 2,0 | 48% |
+| completa | normale | Strega | 11/12 | 54% | 14% | 0,6 / 2,4 | 0,1 / 1,6 | 43% |
+| completa | a · pochi | Lampionaio | 10/12 | 30% | 6% | 2,2 / 7,8 | 1,4 / 6,0 | 20% |
+| completa | a · pochi | Becchino | 9/12 | 36% | 5% | 2,3 / 8,3 | 1,4 / 6,1 | 27% |
+| completa | a · pochi | Badessa | 11/12 | 34% | 3% | 1,8 / 6,6 | 1,0 / 4,6 | 37% |
+| completa | a · pochi | Strega | 11/12 | 31% | 5% | 1,2 / 3,9 | 0,6 / 2,8 | 30% |
+| completa | b · schermo | Lampionaio | 10/12 | 62% | 15% | 1,8 / 6,1 | 1,0 / 4,3 | 0% |
+| completa | b · schermo | Becchino | 9/12 | 64% | 17% | 2,2 / 7,7 | 1,4 / 6,0 | 0% |
+| completa | b · schermo | Badessa | 9/12 | 69% | 13% | 1,6 / 5,4 | 0,9 / 3,8 | 0% |
+| completa | b · schermo | Strega | 7/12 | 63% | 20% | 1,4 / 4,8 | 0,8 / 3,4 | 0% |
+| completa | c · entrambi | Lampionaio | 10/12 | 26% | 5% | 2,8 / 10,7 | 1,9 / 7,9 | 0% |
+| completa | c · entrambi | Becchino | 6/12 | 33% | 6% | 3,5 / 12,9 | 2,6 / 10,0 | 0% |
+| completa | c · entrambi | Badessa | 9/12 | 38% | 5% | 2,6 / 9,8 | 1,8 / 7,3 | 0% |
+| completa | c · entrambi | Strega | 11/12 | 35% | 6% | 1,9 / 6,9 | 1,2 / 5,1 | 1% |
+
+- **Soglie richieste** (vita visibile mediana almeno 3 s, meno del 30% di morti senza reazione, meno del 5% di uccisi fuori schermo): **nessuna versione le raggiunge tutte e tre.** La più vicina è **c**: fuori schermo 0%, morti senza reazione 30% a Cappella vuota (proprio sulla soglia) e 33% a completa, ma vita visibile mediana 2,2 s e 1,7 s. Nessun personaggio arriva a 3 s in nessuna prova: il più alto è il Becchino in c a Cappella completa, con 2,6 s. A Cappella vuota, in c, il Lampionaio e la Strega stanno sotto il 30% di morti senza reazione (26% e 29%); il Becchino è al 30%.
+- **a da sola** dimezza i morti senza reazione (69% → 33%, 57% → 32%) e moltiplica per 5–6 la vita visibile, ma un terzo dei nemici muore ancora fuori schermo (31% e 29%). Le vittorie cambiano poco (vuota 32 → 24, completa 40 → 41).
+- **b da sola** porta a zero gli uccisi fuori schermo e raddoppia la vita, ma i morti senza reazione restano come oggi (64%, 65%) ed è la più dura: a Cappella vuota 16 vittorie su 48 (il Lampionaio 2 su 12).
+- **c** è la più lenta: 4–7 mila nemici uccisi a notte invece di 37–40 mila. A Cappella vuota le vittorie scendono da 32 a 18 su 48 (Badessa da 11 a 2, Becchino da 6 a 3); a Cappella completa da 40 a 36.
+- **Vincoli** (il primo boss è il primo vero ostacolo; nessuno muore sempre prima del 5; Lampionaio a Cappella vuota prima del 5 al massimo in 3 notti su 12). Normale e c: reggono. **a, Cappella vuota**: la Strega muore 1 volta prima del primo boss e 0 contro di lui (vincolo non rispettato). **b, Cappella completa**: la Strega 1 prima e 0 contro (non rispettato). **b, Cappella vuota**: il Lampionaio muore prima del 5 in 3 notti su 12 (al limite). Con una notte sola su 12 la differenza può essere caso. Nessuno muore sempre prima del 5.
+- Il bot non è stato cambiato: con pochi nemici più resistenti sceglie e si muove come con la folla.
+
+**Prova prestazioni** (dal menu, LAB → Schermo, 60 s al minuto 14; Chromium sul Mac M1 con la grafica del Mac e lo schermo del S25, non un telefono). La prova riempie sempre il campo fino a 400 nemici, anche con «pochi e forti»: misura il caso peggiore, non la notte della prova c (dove i nemici in campo sono un terzo).
+
+| Prova | In campo in media | Media | Fotogrammi saltati | Secondi sotto 55 | Blocchi sopra 100 ms |
+| --- | --- | --- | --- | --- | --- |
+| interruttori spenti | 299 | 60,0 fps | 0 | 0% | 0 |
+| c (pochi e schermo) | 296 | 60,0 fps | 1 | 0% | 0 |
+
+Il controllo «fuori schermo» su ogni colpo e su ogni scelta del bersaglio non pesa sul Mac. Va misurato sul S25 con la Prova prestazioni dell'APK di prova.
+
 ### 12/11 — Confronto per il pivot (solo misure, nessun numero di gioco cambia)
 
 Dato di partenza per la fetta verticale del ramo `hades`. Tre misure nuove della simulazione, contate su ogni nemico ucciso (non su quelli ancora vivi alla fine della notte o alla morte del personaggio):

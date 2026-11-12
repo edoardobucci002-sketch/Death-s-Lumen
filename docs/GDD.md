@@ -709,6 +709,8 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 | Lampo quando sei colpito | 0,1 s | bianco pieno |
 | Dalla morte alla schermata di fine | 0,9 s | il personaggio lampeggia e sparisce |
 
+**Prova «pochi e forti» (12/11, solo per confrontare).** Due interruttori del Laboratorio (scheda Eventi, spenti di partenza; per il bot `?pochi=1` e `?schermo=1`). «Pochi e forti»: nemici massimi in campo e comparse al secondo divisi per 3, salute e Lumen dei nemici comuni × 3; orde, élite e Seth come sempre (`POCHI_E_FORTI`). «Armi solo nello schermo»: le armi non colpiscono, non lasciano stati e non mirano ai nemici fuori dal campo visibile (lo schermo senza le fasce dell'HUD). Spenti, la notte è quella di sempre. Risultati in [bilanciamento.md](bilanciamento.md), 12/11.
+
 ### Impatto dei colpi (`src/data/effetti.ts`)
 
 | Valore | Numero | Note |
