@@ -138,6 +138,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Rompibili: percentuali, gocce, raggi, luce della lanterna, oggetti che non tornano nella notte | GDD 8g, `src/data/rompibili.ts` |
 | Chiazze: olio 12 s, fuoco 5 s, rallentamento 40%, 14 danni ogni 0,4 s; armi di fuoco: Candela e Fuoco fatuo | GDD 8g |
 | Frammenti: 3 per un reliquiario, contatore fisso nell'HUD sì o no | GDD 8g |
+| Riordino di `src/sistema/armi.ts` (1.730 righe, tutte le 15 armi in un solo «arsenale»): dividerlo per famiglie (colpi vicini, proiettili, zone a terra) a gioco identico, verificato con il bot (stesso seme, stessa notte). Proposta di Claude del 12/11; da decidere quando, per esempio prima delle armi della Veggente e della Sguattera | `src/sistema/armi.ts`; decisioni 12/11 |
 | Cera dei nemici: resta uguale per ora | GDD 8g |
 | Luce: sfumatura 1,5, buio 88%, raggio 36% del lato corto, alone caldo | GDD 11, `src/data/mondo.ts` |
 | Fasce del telefono, solo i valori: tutte le misure di `FASCE`, `PAUSA_PICCOLA`, `JOYSTICK_PICCOLO`, `SEGNALE_PECCATO` in `src/data/hud.ts` | GDD §11; decisioni 5/11 |
