@@ -1,6 +1,7 @@
 /*
  * Comandi del Laboratorio per il gioco a stanze (scheda «Stanze» in laboratorio.ts). Si chiamano con stanze.lab.…
- * Passo 2 della fetta: fermare e riprendere, portare il Lampionaio al centro o contro un muro per provare i bordi.
+ * Passo 2 della fetta: fermare e riprendere, portare il Lampionaio al centro o contro un muro per provare i bordi,
+ * mostrare la linea invisibile che divide i joystick.
  */
 import { STANZA } from '../data/stanze';
 import { areaCamminabile } from './stanza';
@@ -20,6 +21,15 @@ export class LabStanze {
     this.s.pausaLab = si;
     if (si) this.s.anims.pauseAll();
     else if (!this.s.fermo()) this.s.anims.resumeAll();
+  }
+
+  /** Mostra o nasconde la linea invisibile al centro dello schermo che divide i joystick. */
+  linea(si: boolean): void {
+    this.s.lineaJoystick.hidden = !si;
+  }
+
+  lineaVisibile(): boolean {
+    return !this.s.lineaJoystick.hidden;
   }
 
   /** Porta il Lampionaio in un punto della stanza: al centro, contro un muro o nell'angolo in alto a sinistra. */

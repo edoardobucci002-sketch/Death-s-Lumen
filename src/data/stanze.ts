@@ -6,8 +6,10 @@
 
 /** La stanza: il pavimento dove si cammina e i muri intorno. */
 export const STANZA = {
-  larghezza: 1600, // pavimento (da rivedere): più largo dello schermo del telefono in orizzontale, la telecamera segue
-  altezza: 1000,
+  // pavimento: 13 × 7 lastre da 64 px, come le stanze di The Binding of Isaac (scelta di Edoardo del 12/11, misure da rivedere):
+  // la stanza intera sta più o meno in uno schermo
+  larghezza: 832,
+  altezza: 448,
   muroAlto: 96, // la facciata del muro in alto, vista di fronte
   muroLati: 32, // lo spessore dei muri a sinistra e a destra
   muroBasso: 32,
@@ -19,6 +21,7 @@ export const STANZA = {
   piastrella: 64, // lato di una lastra del pavimento
   mattone: { l: 32, a: 16 }, // mattoni della facciata
   seme: 1031, // disegno del pavimento e tremolio della fiamma (caso separato dalla logica)
+  pausa: { lato: 14, ingrandimento: 2 }, // pulsante della pausa provvisorio: 14 pixel disegnati, ingranditi 2 volte (da rivedere)
   colori: {
     fondo: '#0d0b09', // fuori dalla stanza
     pavimento: '#2a2119',

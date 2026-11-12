@@ -1036,6 +1036,30 @@ for (const [nome, disp] of [
     const ripresa = await stato();
     if (ripresa.pausa || ripresa.pannello) errori.push('«Riprendi» non chiude la pausa');
     nota = `muro a destra a x ${destra.x}, in alto a y ${alto.y}, pausa sì`;
+    // linea invisibile al centro: a destra il dito non muove il Lampionaio; vicino alla linea la base del joystick non la supera
+    if (nome !== 'stanze-desktop') {
+      const W = disp.viewport.width, H = disp.viewport.height;
+      await pag.evaluate(() => window.__dl.scene.getScene('Stanze').lab.vai('centro'));
+      const fermo = await stato();
+      await pag.mouse.move(Math.round(W * 0.75), Math.round(H / 2));
+      await pag.mouse.down();
+      await pag.mouse.move(Math.round(W * 0.75) + 80, Math.round(H / 2), { steps: 5 });
+      await pag.waitForTimeout(500);
+      await pag.mouse.up();
+      const dopoDestra = await stato();
+      if (dopoDestra.x !== fermo.x || dopoDestra.y !== fermo.y) errori.push('un dito nella metà destra muove il Lampionaio');
+      await pag.mouse.move(Math.round(W / 2) - 4, Math.round(H / 2));
+      await pag.mouse.down();
+      await pag.waitForTimeout(100);
+      const base = await pag.evaluate(() => {
+        const j = document.querySelector('.joystick'), b = j.firstElementChild.getBoundingClientRect();
+        return { visibile: !j.hidden, destra: b.right, sinistra: b.left };
+      });
+      await pag.mouse.up();
+      if (!base.visibile) errori.push('vicino alla linea il joystick non compare');
+      else if (base.destra > W / 2 + 1) errori.push(`la base del joystick supera la linea (bordo destro a ${Math.round(base.destra)}, linea a ${W / 2})`);
+      nota += ', linea dei joystick sì';
+    }
   }
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);

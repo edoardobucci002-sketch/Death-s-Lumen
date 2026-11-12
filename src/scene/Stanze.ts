@@ -3,13 +3,14 @@
  * Passo 2 della fetta verticale: una stanza chiusa da muri, il Lampionaio che cammina con il joystick o con WASD,
  * la telecamera che lo tiene al centro, luce e buio come nel survivor.
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
- * Pausa con il pulsante in alto a destra, P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
+ * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
  * Riprendi e Menu). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?stanze (salta il menu; solo sul link di prova, in sviluppo e nelle prove automatiche).
  */
 import Phaser from 'phaser';
 import { voce } from '../sistema/asset';
-import { arte, bordiHud, immagine, ingr, misura, misureHud, posa, retino } from '../sistema/arte';
+import { bordiHud, misura, misureHud, posa, retino } from '../sistema/arte';
+import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
@@ -55,6 +56,7 @@ export class Stanze extends Phaser.Scene {
   private tastoPausa!: HTMLButtonElement;
   private pannelloPausa!: HTMLElement;
   private avvisoRuota!: HTMLElement;
+  lineaJoystick!: HTMLElement; // la linea invisibile al centro: il LAB la può mostrare
 
   constructor() {
     super('Stanze');
@@ -89,7 +91,7 @@ export class Stanze extends Phaser.Scene {
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
-    this.comandi = new Comandi(interfaccia);
+    this.comandi = new Comandi(interfaccia, { metaSinistra: true });
     this.creaInterfaccia(interfaccia);
     this.controllaVerso();
 
@@ -214,7 +216,7 @@ export class Stanze extends Phaser.Scene {
     this.tastoPausa.type = 'button';
     this.tastoPausa.className = 'hud-pausa-tasto stanze-tasto-pausa';
     this.tastoPausa.setAttribute('aria-label', 'Pausa');
-    this.tastoPausa.append(immagine('Pulsante_Pausa'));
+    this.tastoPausa.append(this.iconaPausa());
     this.tastoPausa.addEventListener('click', () => this.apriPausa());
     this.pannelloPausa = document.createElement('div');
     this.pannelloPausa.className = 'stanze-pausa';
@@ -227,9 +229,28 @@ export class Stanze extends Phaser.Scene {
     this.avvisoRuota.className = 'stanze-ruota';
     this.avvisoRuota.hidden = true;
     this.avvisoRuota.append(this.scrittaPixel('Ruota il telefono', 'stanze-titolo'));
-    this.radice.append(this.tastoPausa, this.pannelloPausa, this.avvisoRuota);
+    this.lineaJoystick = document.createElement('div');
+    this.lineaJoystick.className = 'stanze-linea';
+    this.lineaJoystick.hidden = true;
+    this.radice.append(this.lineaJoystick, this.tastoPausa, this.pannelloPausa, this.avvisoRuota);
     interfaccia.append(this.radice);
     this.disponi();
+  }
+
+  /** Il pulsante della pausa provvisorio, disegnato dal codice: un quadratino scuro con due barre (segnaposto). */
+  private iconaPausa(): HTMLCanvasElement {
+    const l = STANZA.pausa.lato, c = document.createElement('canvas');
+    c.width = c.height = l;
+    c.className = 'stanze-scritta';
+    const g = c.getContext('2d')!;
+    const r = (x: number, y: number, w: number, h: number, colore: string): void => { g.fillStyle = colore; g.fillRect(x, y, w, h); };
+    r(0, 0, l, l, '#000000');
+    r(1, 1, l - 2, l - 2, '#2a2119');
+    r(1, 1, l - 2, 1, '#4a3c31');
+    const barra = Math.max(2, Math.round(l / 6)), alta = l - 6;
+    r(Math.round(l / 2) - barra - 1, 3, barra, alta, '#efe3c8');
+    r(Math.round(l / 2) + 1, 3, barra, alta, '#efe3c8');
+    return c;
   }
 
   private tastoScritta(testo: string, azione: () => void): HTMLButtonElement {
@@ -253,14 +274,13 @@ export class Stanze extends Phaser.Scene {
   /** Misure e posizioni dell'interfaccia: dipendono dallo schermo. */
   private disponi(): void {
     if (!this.radice) return;
-    const m = misureHud(), b = bordiHud(m), zp = ingr('pausa', m), ap = arte('Pulsante_Pausa');
+    const m = misureHud(), b = bordiHud(m), { lato, ingrandimento: z } = STANZA.pausa;
     this.pannelloPausa.style.backgroundSize = `${4 * m.px}px ${4 * m.px}px`;
-    if (ap) {
-      (this.tastoPausa.firstElementChild as HTMLImageElement).src = ap.url;
-      posa(this.tastoPausa, m.W - b.d - ap.w * zp, b.a, m);
-      misura(this.tastoPausa, ap.w, ap.h, zp, m);
-      misura(this.tastoPausa.firstElementChild as HTMLElement, ap.w, ap.h, zp, m);
-    }
+    // pulsante piccolo, ma l'area di tocco arriva comunque a TOCCO_MINIMO punti (regola dei 44 punti)
+    posa(this.tastoPausa, m.W - b.d - lato * z, b.a, m);
+    misura(this.tastoPausa, lato, lato, z, m);
+    misura(this.tastoPausa.firstElementChild as HTMLElement, lato, lato, z, m);
+    this.tastoPausa.style.setProperty('--margine-tocco', `${Math.max(4, Math.ceil((TOCCO_MINIMO - lato * z * m.px) / 2))}px`);
     for (const c of this.radice.querySelectorAll<HTMLCanvasElement>('.stanze-scritta')) {
       const k = c.classList.contains('stanze-titolo') ? 4 : 3;
       misura(c, Number(c.dataset.l), Number(c.dataset.a), k, m);

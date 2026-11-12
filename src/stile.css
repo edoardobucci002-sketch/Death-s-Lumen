@@ -381,3 +381,5 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .stanze-pausa[hidden], .stanze-ruota[hidden] { display: none; }
 .stanze-tasto { min-width: 44px; min-height: 52px; padding: 10px 24px; background: var(--pannello); border: 2px solid var(--accento); cursor: pointer; }
 .menu-testata .menu-stanze { margin-top: 10px; min-height: 44px; padding: 6px 14px; font-size: 16px; }
+.stanze-linea { position: fixed; top: 0; bottom: 0; left: 50%; width: 0; border-left: 2px dashed #a57ae0; pointer-events: none; z-index: 1; }
+.stanze-linea[hidden] { display: none; }

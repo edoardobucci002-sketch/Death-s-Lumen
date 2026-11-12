@@ -3,6 +3,9 @@
  * (o dove si preme il mouse). La logica legge dx e dy: una direzione lunga da 0 a 1.
  * Base e pomello sono quelli disegnati da Edoardo (Joystick_Base, Joystick_Pomello), messi a pixel di gioco interi.
  * La sensibilità resta in punti dello schermo (JOYSTICK.raggio); il pomello disegnato si sposta fino al bordo della base.
+ * Con metaSinistra (gioco a stanze, decisione di Edoardo del 12/11) una linea invisibile al centro dello schermo divide i
+ * joystick: quello di movimento nasce solo nella metà sinistra e la sua base resta tutta tra il bordo sicuro e la linea;
+ * la metà destra è per il joystick d'attacco.
  */
 import { JOYSTICK_PICCOLO } from '../data/hud';
 import { JOYSTICK } from '../data/mondo';
@@ -31,7 +34,10 @@ export class Comandi {
   private chiaveBase = 'Joystick_Base'; // sul telefono in verticale: la base piccola
   private chiavePomello = 'Joystick_Pomello';
 
-  constructor(contenitore: HTMLElement) {
+  private readonly metaSinistra: boolean;
+
+  constructor(contenitore: HTMLElement, opzioni: { metaSinistra?: boolean } = {}) {
+    this.metaSinistra = opzioni.metaSinistra ?? false;
     this.base = document.createElement('div');
     this.base.className = 'joystick';
     this.base.hidden = true;
@@ -100,11 +106,13 @@ export class Comandi {
 
   private appoggia = (e: PointerEvent): void => {
     if (this.dito !== null || (e.target as Element).closest('button, .hud-pausa, .rivelazione, .stanze-pausa, .stanze-ruota')) return; // nella pausa il dito scorre le pagine, non cammina
+    if (this.metaSinistra && e.clientX >= innerWidth / 2) return; // la metà destra è del joystick d'attacco
     this.dito = e.pointerId;
     this.ox = e.clientX;
     this.oy = e.clientY;
     this.jx = this.jy = 0;
     this.misure();
+    if (this.metaSinistra) this.dentroMetaSinistra();
     // il centro della base va su un pixel di gioco intero
     const px = this.m.px;
     this.base.style.transform = `translate(${Math.round(this.ox / px) * px}px, ${Math.round(this.oy / px) * px}px)`;
@@ -129,6 +137,16 @@ export class Comandi {
     const corsa = b && p ? ((b.w - p.w) / 2) * z : 0, px = this.m.px;
     this.pomello.style.transform = `translate(${Math.round(x * corsa) * px}px, ${Math.round(y * corsa) * px}px)`;
   };
+
+  /** La base resta tutta nella metà sinistra: dentro il bordo sicuro dello schermo e prima della linea al centro. */
+  private dentroMetaSinistra(): void {
+    const b = arte(this.chiaveBase), m = this.m;
+    if (!b) return;
+    const r = (b.w * ingr('joystick', m) * m.px) / 2;
+    const tieni = (v: number, da: number, a: number): number => (a < da ? (da + a) / 2 : Math.min(Math.max(v, da), a));
+    this.ox = tieni(this.ox, m.safe.s * m.px + r, innerWidth / 2 - r);
+    this.oy = tieni(this.oy, m.safe.a * m.px + r, innerHeight - m.safe.b * m.px - r);
+  }
 
   /** Misure della base e del pomello per questo telefono (centrati sul punto del dito). */
   private misure(): void {

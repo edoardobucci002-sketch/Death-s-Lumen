@@ -278,6 +278,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Prova i muri: porta il Lampionaio'),
       riga(vai('centro', 'Al centro'), vai('alto', 'Al muro in alto'), vai('basso', 'Al muro in basso'), vai('sinistra', 'Al muro a sinistra'), vai('destra', 'Al muro a destra'), vai('angolo', "Nell'angolo")),
       el('p', 'lab-nota', 'Poi chiudi il LAB e spingi contro il muro: il Lampionaio deve fermarsi. Le misure della stanza sono in Numeri → stanze (dopo averle cambiate premi Ricomincia).'),
+      titolo('Joystick'),
+      riga(tasto(st.lab.lineaVisibile() ? 'Linea al centro: visibile' : 'Linea al centro: invisibile', () => { st.lab.linea(!st.lab.lineaVisibile()); ridisegna(); }, st.lab.lineaVisibile() ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Il joystick di movimento nasce solo a sinistra della linea e la sua base non la supera; a destra della linea il dito non muove il Lampionaio (sarà il joystick d\'attacco).'),
       titolo('Esci'),
       riga(tasto('Torna al menu', () => { gioco.scene.stop('Stanze'); gioco.scene.start('Menu'); setTimeout(ridisegna, 300); })),
     ];
