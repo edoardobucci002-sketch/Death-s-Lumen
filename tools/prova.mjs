@@ -517,13 +517,13 @@ for (const [nome, indirizzo, prova] of eventi) {
   await pag.goto(`${url}?pg=lampionaio&sicura=35`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(300);
-  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.labProvaPrestazioni(); s.scene.start('Menu'); });
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.lab.provaPrestazioni(); s.scene.start('Menu'); });
   await pag.waitForFunction(() => window.__dl.scene.isActive('Menu'), null, { timeout: 5000 }).catch(() => errori.push('il menu non arriva'));
   await pag.evaluate(() => window.__dl.scene.getScene('Menu').scene.start('Gioco', { pg: 'lampionaio' }));
   await pag.waitForFunction(() => window.__dl.scene.isActive('Gioco') && window.__dl.scene.getScene('Gioco').secondi < 30, null, { timeout: 5000 }).catch(() => errori.push('la partita nuova non parte'));
   const dopo = await pag.evaluate(() => new Promise((ok) => {
     const s = window.__dl.scene.getScene('Gioco');
-    s.labMinuto(14.9);
+    s.lab.minuto(14.9);
     s.esperienza = 1;
     setTimeout(() => ok({ esperienza: s.esperienza, secondi: s.secondi, immortale: s.immortale, automatico: s.automatico, livello: s.livello, fori: s.foriBuio }), 300);
   }));
@@ -578,7 +578,7 @@ for (const [nome, indirizzo, prova] of eventi) {
 }
 
 // pausa durante la scelta dei doni e dei reliquiari: si apre sopra e chiudendola si ritrova la stessa scelta
-for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono', 'labSceltaDono', 360, 780, 3, 35], ['reliquiario', 'labReliquiario', 360, 780, 3, 35], ['reliquiario su iPhone SE', 'labReliquiario', 375, 667, 2, 20], ['reliquiario su iPhone 13', 'labReliquiario', 390, 844, 3, 47], ['reliquiario su Android piccolo', 'labReliquiario', 360, 780, 2, 28]]) {
+for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono', 'sceltaDono', 360, 780, 3, 35], ['reliquiario', 'reliquiario', 360, 780, 3, 35], ['reliquiario su iPhone SE', 'reliquiario', 375, 667, 2, 20], ['reliquiario su iPhone 13', 'reliquiario', 390, 844, 3, 47], ['reliquiario su Android piccolo', 'reliquiario', 360, 780, 2, 28]]) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor, isMobile: true, hasTouch: true });
   const pag = await ctx.newPage();
   const errori = [];
@@ -586,7 +586,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   await pag.goto(`${url}?pg=lampionaio&sicura=${sicura}`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(300);
-  await pag.evaluate((m) => { const g = window.__dl.scene.getScene('Gioco'); g.labRosario(true); g[m](); }, metodo); // senza Rosario il reliquiario non offre scelte
+  await pag.evaluate((m) => { const g = window.__dl.scene.getScene('Gioco'); g.lab.rosario(true); g.lab[m](); }, metodo); // senza Rosario il reliquiario non offre scelte
   await pag.waitForSelector('.doni:not([hidden])', { timeout: 2000 }).catch(() => errori.push('la scelta non si apre'));
   const carte = () => pag.evaluate(() => document.querySelector('.doni').innerText);
   const prime = await carte();
@@ -634,7 +634,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
     await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
     await pag.waitForTimeout(300);
     const pulsante = await pag.evaluate(() => document.querySelector('.hud-pausa-tasto').getBoundingClientRect().toJSON());
-    await pag.evaluate(() => window.__dl.scene.getScene('Gioco').labPausaPiena());
+    await pag.evaluate(() => window.__dl.scene.getScene('Gioco').lab.pausaPiena());
     await pag.waitForTimeout(150);
     for (const scheda of ['build', 'rosario', 'stati', 'opzioni']) {
       await pag.evaluate((s) => document.querySelector(`[data-scheda="${s}"]`).click(), scheda);
@@ -719,14 +719,14 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   if ((await scheda()) !== 'stati') errori.push('non riapre sull\'ultima scheda usata');
   await pag.click('[data-azione="riprendi"]');
   // Peccato: si apre sul Rosario
-  await gioco('(s) => s.labPausaPeccato()');
+  await gioco('(s) => s.lab.pausaPeccato()');
   await pag.waitForTimeout(100);
   if ((await scheda()) !== 'rosario') errori.push('in Peccato non si apre sul Rosario');
   if (!(await pag.$('.pausa-segno'))) errori.push('manca il segno del Peccato sulla scheda');
   await pag.click('[data-azione="riprendi"]');
-  await gioco('(s) => { for (const a of [...s.amuletiPosseduti]) s.labAmuleto(a, false); }');
+  await gioco('(s) => { for (const a of [...s.amuletiPosseduti]) s.lab.amuleto(a, false); }');
   // sopra il reliquiario: si apre sul Rosario, spegnere un amuleto aggiorna le carte, stesse carte e stesso caso
-  await gioco('(s) => { s.labAmuleto("specchioRotto", true); s.labAmuleto("sangueFreddo", false); s.labPausaSopra(true); }');
+  await gioco('(s) => { s.lab.amuleto("specchioRotto", true); s.lab.amuleto("sangueFreddo", false); s.lab.pausaSopra(true); }');
   await pag.waitForTimeout(150);
   if ((await scheda()) !== 'rosario') errori.push('sopra il reliquiario non si apre sul Rosario');
   if (!(await pag.$eval('[data-azione="riprendi"]', (e) => e.getAttribute('aria-label')?.includes('Torna')))) errori.push('sopra una scelta il pulsante non dice «Torna alla scelta»');
@@ -749,13 +749,13 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   await gioco('(s) => s.doni.scegliPrima()');
   await pag.waitForTimeout(100);
   // la scoperta di un'unione resta nel salvataggio; prima di averla vista non si legge
-  await gioco('(s) => s.labPausa("build")');
+  await gioco('(s) => s.lab.pausa("build")');
   await pag.waitForTimeout(100);
   if (await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText.includes('Lanterna 1'))) errori.push('un\'unione non scoperta si vede');
   // arma e dono insieme non bastano; ai livelli giusti parte l'animazione, la partita si ferma e poi riparte
   await gioco('(s) => { s.riprendi(); s.passivi.stoppinoLungo = 1; s.dopoPassivo(); s.aggiornaBuild(); }');
   if (await gioco('(s) => s.unioniScoperte.size')) errori.push('l\'unione si scopre prima dei livelli giusti');
-  await gioco('(s) => { s.labArma(s.arsenale.possedute[0].arma, 6); s.passivi.stoppinoLungo = 3; s.dopoPassivo(); s.aggiornaBuild(); }');
+  await gioco('(s) => { s.lab.arma(s.arsenale.possedute[0].arma, 6); s.passivi.stoppinoLungo = 3; s.dopoPassivo(); s.aggiornaBuild(); }');
   await pag.waitForTimeout(80);
   if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('l\'animazione della scoperta non parte');
   const t0 = await gioco('(s) => s.secondi');
@@ -774,17 +774,17 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   if (await pag.$('.rivelazione:not([hidden])')) errori.push('il tocco non chiude l\'animazione');
   if ((await gioco('(s) => s.secondi')) === t0) errori.push('la partita non riparte dopo l\'animazione');
   // Spazio chiude l'Unione e non usa l'abilità
-  await gioco('(s) => s.labScoperta()');
+  await gioco('(s) => s.lab.scoperta()');
   await pag.waitForTimeout(1600);
   await pag.keyboard.press('Space');
   await pag.waitForTimeout(150);
   if (await pag.$('.rivelazione:not([hidden])')) errori.push('Spazio non chiude l\'Unione');
   // la pausa salta l'animazione
-  await gioco('(s) => s.labScoperta()');
+  await gioco('(s) => s.lab.scoperta()');
   await gioco('(s) => s.indietro()');
   await pag.waitForTimeout(80);
   if (!(await aperta()) || (await pag.$('.rivelazione:not([hidden])'))) errori.push('la pausa non salta l\'animazione');
-  await gioco('(s) => s.labPausa("build")');
+  await gioco('(s) => s.lab.pausa("build")');
   await pag.waitForTimeout(100);
   const salvate = await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).unioniScoperte);
   if (!salvate?.includes('faroDeiMorti')) errori.push(`unione scoperta non salvata: ${salvate}`);
@@ -792,15 +792,15 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   // l'effetto si svela solo dopo aver unito: prima nome e ricetta; unita, resta in Stati per sempre
   const riga = { testoBuild: await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText) };
   if (riga.testoBuild.includes('L\'arco diventa')) errori.push('l\'effetto dell\'unione si legge prima di averla unita');
-  const stati = await gioco(`(s) => { s.labPausa('stati'); return document.querySelector('.pausa-pagina').innerText; }`);
+  const stati = await gioco(`(s) => { s.lab.pausa('stati'); return document.querySelector('.pausa-pagina').innerText; }`);
   if (stati.toLowerCase().includes('faro dei morti')) errori.push('l\'unione è in Stati prima di essere stata unita');
-  await gioco(`(s) => { s.riprendi(); s.scoperteDiProva = false; s.segnaUnita('faroDeiMorti'); s.labPausa('stati'); }`);
+  await gioco(`(s) => { s.riprendi(); s.scoperteDiProva = false; s.segnaUnita('faroDeiMorti'); s.lab.pausa('stati'); }`);
   await pag.waitForTimeout(80);
   const unita = await pag.evaluate(() => [...document.querySelectorAll('.pausa-unita')].map((e) => e.innerText).join());
   if (!unita.includes('Lanterna 6 + Stoppino lungo 3') || !unita.includes('L\'arco')) errori.push(`in Stati manca l'unione fatta: ${unita}`);
   if (!(await pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio')).unioniUnite?.includes('faroDeiMorti')))) errori.push('l\'unione fatta non resta nel salvataggio');
   // i numeri della striscia e le statistiche sono quelli veri
-  const testa = await gioco('(s) => { s.uccisi = 7; s.frammenti = 2; s.labPausa("build"); return document.querySelector(".pausa-testa").innerText; }');
+  const testa = await gioco('(s) => { s.uccisi = 7; s.frammenti = 2; s.lab.pausa("build"); return document.querySelector(".pausa-testa").innerText; }');
   if (!testa.includes('Uccisi 7') || !testa.includes('Frammenti 2 di 3')) errori.push(`striscia: ${testa}`);
   const statistiche = await pag.evaluate(() => [...document.querySelectorAll('.pausa-statistica')].map((e) => e.innerText.replace('\n', ' ')));
   if (statistiche.length < 13 || statistiche.some((t) => /undefined|NaN/.test(t))) errori.push(`statistiche: ${statistiche}`);
@@ -816,7 +816,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   await pag.mouse.down();
   await pag.mouse.move(160, 400, { steps: 3 });
   await pag.waitForTimeout(60);
-  await gioco('(s) => s.labPausa("build")'); // come il secondo dito o l'app in secondo piano: il primo dito resta giù
+  await gioco('(s) => s.lab.pausa("build")'); // come il secondo dito o l'app in secondo piano: il primo dito resta giù
   await pag.waitForTimeout(60);
   await pag.mouse.move(100, 400, { steps: 2 });
   await gioco('(s) => s.riprendi()');
@@ -825,7 +825,7 @@ for (const [nome, metodo, width, height, deviceScaleFactor, sicura] of [['dono',
   if (!fermo) errori.push('alla ripresa resta del movimento');
   await pag.mouse.up();
   // prima partita: niente Rosario e niente Unioni
-  await gioco('(s) => s.labPausaPrima()');
+  await gioco('(s) => s.lab.pausaPrima()');
   await pag.waitForTimeout(100);
   if (await pag.$('[data-scheda="rosario"]')) errori.push('la scheda Rosario si vede prima dello sblocco');
   if (await pag.evaluate(() => document.querySelector('.pausa-pagina').innerText.toLowerCase().includes('scoperte'))) errori.push('le Unioni si vedono prima dello sblocco');
@@ -854,7 +854,7 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await pag.goto(`${url}?pg=lampionaio&automatico`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Gioco'), null, { timeout: 15000 }).catch(() => errori.push('la scena Gioco non parte'));
   await pag.waitForTimeout(300);
-  await pag.evaluate(() => window.__dl.scene.getScene('Gioco').labPausaPiena());
+  await pag.evaluate(() => window.__dl.scene.getScene('Gioco').lab.pausaPiena());
   await pag.waitForTimeout(150);
   const d = await pag.evaluate(() => {
     const r = (q) => document.querySelector(q).getBoundingClientRect().toJSON();
@@ -888,14 +888,14 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await pag.waitForTimeout(200);
   const gioco = (f) => pag.evaluate(`(${f})(window.__dl.scene.getScene('Gioco'))`);
   const numero = () => pag.evaluate(() => { const e = document.querySelector('.mosaico'); return e && !e.hidden ? e.querySelector('.mosaico-numero').textContent : ''; });
-  await gioco('(s) => { s.labImmortale(true); s.labMosaico(); }');
+  await gioco('(s) => { s.lab.immortale(true); s.lab.mosaico(); }');
   if (await numero() !== '1/3') errori.push('il primo frammento non mostra 1/3');
   if (await pag.evaluate(() => getComputedStyle(document.querySelector('.mosaico')).pointerEvents) !== 'none') errori.push('il mosaico prende i tocchi');
   await pag.waitForTimeout(600);
   await pag.screenshot({ path: 'prove/mosaico-1.png' });
   await pag.waitForTimeout(2000);
   if (await numero()) errori.push('il mosaico non sparisce da solo');
-  await gioco('(s) => { s.labMosaico(); s.labMosaico(); }');
+  await gioco('(s) => { s.lab.mosaico(); s.lab.mosaico(); }');
   if (await numero() !== '3/3') errori.push('il terzo frammento non mostra 3/3');
   if (await gioco('(s) => s.frammenti')) errori.push('il conto dei frammenti non riparte');
   await pag.waitForTimeout(800);
@@ -908,8 +908,8 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await gioco('(s) => { s.bagliore = 0.01; }');
   await pag.waitForTimeout(150);
   if (await gioco('(s) => s.bagliore > 0')) errori.push('il Bagliore non finisce');
-  await gioco('(s) => s.labMosaico()');
-  await gioco('(s) => s.labPausa("build")');
+  await gioco('(s) => s.lab.mosaico()');
+  await gioco('(s) => s.lab.pausa("build")');
   if (await numero()) errori.push('il mosaico resta sopra la pausa');
   await gioco('(s) => s.riprendi()');
   const rottiFuori = await gioco(`(s) => { const r = s.rompibili, conta = () => Array.from(r.stato, (_, i) => r.intero(i)).filter(Boolean).length;
@@ -948,9 +948,9 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.passivi.stoppinoLungo = 1; s.aggiornaBuild(); });
   if ((await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta nomina l\'unione con il dono al primo livello');
   // arma al livello dell'unione (6) ma dono non al massimo: non ancora
-  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.labArma(s.arsenale.possedute[0].arma, 6); s.passivi.stoppinoLungo = 1; s.aggiornaBuild(); });
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.lab.arma(s.arsenale.possedute[0].arma, 6); s.passivi.stoppinoLungo = 1; s.aggiornaBuild(); });
   if (await pag.evaluate(() => window.__dl.scene.getScene('Gioco').unioniPronte().length)) errori.push('l\'unione è pronta con il dono sotto il massimo');
-  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.passivi.stoppinoLungo = s.labMassimoDono('stoppinoLungo'); s.aggiornaBuild(); });
+  await pag.evaluate(() => { const s = window.__dl.scene.getScene('Gioco'); s.passivi.stoppinoLungo = s.lab.massimoDono('stoppinoLungo'); s.aggiornaBuild(); });
   if (!(await pag.evaluate(() => window.__dl.scene.getScene('Gioco').unioniPronte().length))) errori.push('l\'unione non è pronta con l\'arma al 6 e il dono al massimo');
   if (!(await cartaLanterna()).includes('Faro dei morti')) errori.push('la carta non nomina l\'unione scoperta');
   // l'impresa «Sconfiggi Seth», con qualsiasi personaggio

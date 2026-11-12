@@ -22,14 +22,13 @@ import { fasce, ingr, misureHud } from '../sistema/arte';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { preparaSegnapostoFasce } from '../sistema/segnaposto-fasce';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
-import { BARRA_SALUTE, LUCE, PRESTAZIONI, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
+import { BARRA_SALUTE, LUCE, PIEDI_SEGNAPOSTO, SEME_PREDEFINITO } from '../data/mondo';
 import { COMBATTIMENTO, COMPARSA, DIFFICOLTA, ELITE, MIETITORE, NEMICI, ORDE, type FormaOrda } from '../data/nemici';
-import { EFFETTI, PIXELFX } from '../data/effetti';
-import { pozzaCaricata } from '../sistema/al-volo';
-import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, MAX_ARMI, type Arma } from '../data/armi';
+import { EFFETTI } from '../data/effetti';
+import { ARMI_COMUNI, ARMI_INIZIALI, COLPI, type Arma } from '../data/armi';
 import { ABILITA } from '../data/abilita';
 import { animeDono, effettoDono, PASSIVI, RICARICA_MINIMA, ricaricaDono, type IdDono } from '../data/doni';
-import { ANIME, animePerLivello, CARTE } from '../data/progressione';
+import { animePerLivello, CARTE } from '../data/progressione';
 import { ALBA, DROP } from '../data/oggetti';
 import { BOT } from '../data/bot';
 import { NUMERI_VOTI, VOTI } from '../data/voti';
@@ -70,6 +69,7 @@ import { Rompibili } from '../sistema/rompibili';
 import { Chiazze } from '../sistema/chiazze';
 import { FRAMMENTI, ROMPIBILI } from '../data/rompibili';
 import { creaTerreno } from '../sistema/terreno';
+import { LabPartita } from '../sistema/lab-partita';
 import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 
 const PASSO = 1 / 60;
@@ -109,17 +109,17 @@ export class Gioco extends Phaser.Scene {
   passivi = {} as Record<IdDono, number>;
   giocatore!: Phaser.GameObjects.Sprite;
   speciale!: Speciale;
-  private tacche!: GraziaTacche; // Grazia a tacche: sfiorare i nemici riempie le tacche
+  tacche!: GraziaTacche; // Grazia a tacche: sfiorare i nemici riempie le tacche
   private secondiGrazia = 0; // secondi passati in Grazia in questa notte (pausa, fine e simulazione)
   private paneDaSolo = 0; // volte in cui «Pane e vino» si è preso da solo (la scelta non si è aperta)
-  private livelliDaScegliere = 0;
-  private anime!: Anime;
-  private oggetti!: Oggetti;
+  livelliDaScegliere = 0;
+  anime!: Anime;
+  oggetti!: Oggetti;
   private minacce!: Minacce;
-  private rompibili: Rompibili | null = null; // nelle simulazioni non ci sono: il bot non li cerca
-  private chiazze: Chiazze | null = null;
+  rompibili: Rompibili | null = null; // nelle simulazioni non ci sono: il bot non li cerca
+  chiazze: Chiazze | null = null;
   private frammenti = 0; // frammenti di vetro raccolti verso il prossimo reliquiario
-  private urneRotte = 0; // in questa notte: serve a tarare la probabilità dei frammenti
+  urneRotte = 0; // in questa notte: serve a tarare la probabilità dei frammenti
   private frammentiCaduti = 0; // quanti ne sono usciti dalle urne in questa notte
   private mosaiciAperti = false; // i frammenti escono solo dopo la prima alba
   private bagliore = 0; // secondi di Bagliore rimasti
@@ -138,55 +138,55 @@ export class Gioco extends Phaser.Scene {
   private armatura = 0; // parte di danno in meno (0,15 = −15%)
   private moltAnime = 1; // Calamita: anime in più
   private invulnerabile = 0; // secondi rimasti
-  private attesaFine = 0;
-  private immortale = false;
-  private automatico = false;
+  attesaFine = 0;
+  immortale = false;
+  automatico = false;
   private bot: Bot | null = null; // con ?bot gioca lui
   private sim: Simulazione | null = null;
   private fiaschetta!: Fiaschetta;
   private grazia = 0; // secondi di Grazia rimasti
   private graziaDa = 0; // secondi dall'inizio della Grazia in corso (Sudario)
   private sudarioTiene = false; // il Sudario sta tenendo la Grazia
-  private meta!: BonusMeta; // ceri accesi della Cappella
+  meta!: BonusMeta; // ceri accesi della Cappella
   private candelaUsata = false; // Seconda candela
   private eliteUccise = 0;
   private uccisi = 0; // nemici uccisi in questa veglia
   private ceraRaccolta = 0; // gocce di Cera raccolte in questa veglia
   private schivateNotte = 0; // schivate perfette in questa veglia (imprese)
   private secondiNubi = 0; // secondi passati dentro le nubi in questa veglia (imprese)
-  private oggettiSbloccati = new Set<string>();
+  oggettiSbloccati = new Set<string>();
   private senza = new Set<string>();
   private armiPerAffinita = new Uint8Array(5); // indice LUCE…TERRA (Devozione)
   private riti = new Uint8Array(5); // Riti presi per affinità (indice LUCE…TERRA)
   private livelliSenzaCarte = 0; // livelli in cui non restava nulla da potenziare: ogni RITI.ogni si apre la scelta dei Riti // ?senza=…: armi e doni tolti dalle carte (simulazioni)
   private sethSconfitti = 0;
   // Rosario: amuleti trovati nei reliquiari e quali sono accesi (si spengono dalla pausa)
-  private amuletiPosseduti: IdAmuleto[] = [];
-  private amuletiAccesi = new Set<IdAmuleto>();
-  private rosarioSbloccato = false;
-  private unioniSbloccate = false;
-  private unioniScoperte = new Set<IdUnione>(); // arma e dono sono stati insieme, anche nelle notti passate
-  private unioniUnite = new Set<IdUnione>(); // fatte almeno una volta: restano per sempre nella scheda Stati
-  private scoperteDiProva = false; // il Laboratorio ha forzato le unioni: non si salvano
+  amuletiPosseduti: IdAmuleto[] = [];
+  amuletiAccesi = new Set<IdAmuleto>();
+  rosarioSbloccato = false;
+  unioniSbloccate = false;
+  unioniScoperte = new Set<IdUnione>(); // arma e dono sono stati insieme, anche nelle notti passate
+  unioniUnite = new Set<IdUnione>(); // fatte almeno una volta: restano per sempre nella scheda Stati
+  scoperteDiProva = false; // il Laboratorio ha forzato le unioni: non si salvano
   private sangueFreddoAttivo = false;
   private reliquiariInAttesa = 0; // reliquiari raccolti mentre era già aperta una scelta
-  private pausaLab = false; // il Laboratorio tiene fermo il gioco
-  private inMoto = false;
+  pausaLab = false; // il Laboratorio tiene fermo il gioco
+  inMoto = false;
   private versoSinistra = false;
   private chiaveSprite = '';
   // eventi della notte
-  private prossimaElite = 0;
-  private prossimaOrda = 0; // indice in ORDE.copione
-  private ordaAnnunciata = false;
+  prossimaElite = 0;
+  prossimaOrda = 0; // indice in ORDE.copione
+  ordaAnnunciata = false;
   private angoloOrda = 0;
   private prossimoPane = 0; // secondi: prima di allora non cade altro pane
   private prossimaCalamita = 0;
-  private mietitoriArrivati = 0;
+  mietitoriArrivati = 0;
   private terreno!: Phaser.GameObjects.TileSprite;
-  private fineFinta = 0; // Prova prestazioni: la notte non va oltre questi secondi
-  private foriBuio = true; // solo il Laboratorio li spegne
-  private campoL = 0; // pixel di gioco del campo: sul telefono in verticale è meno dello schermo
-  private campoA = 0;
+  fineFinta = 0; // Prova prestazioni: la notte non va oltre questi secondi
+  foriBuio = true; // solo il Laboratorio li spegne
+  campoL = 0; // pixel di gioco del campo: sul telefono in verticale è meno dello schermo
+  campoA = 0;
   private buio!: Phaser.GameObjects.Image;
   private saluteRett!: Phaser.GameObjects.Graphics; // il rettangolo rosso, ridisegnato solo quando la salute cambia
   private saluteNumeri!: Phaser.GameObjects.BitmapText;
@@ -197,11 +197,14 @@ export class Gioco extends Phaser.Scene {
   private zSalute = 1;
   private misureBuio = { w: 0, h: 0 };
   private comandi!: Comandi;
-  private hud!: Hud;
-  private caso!: Caso;
+  hud!: Hud;
+  caso!: Caso;
   private accumulo = 0;
   private attesaTremolio = 0;
   private fiamma = 1;
+
+  /** Comandi del Laboratorio (sistema/lab-partita.ts): partita.lab.minuto(5)… */
+  readonly lab = new LabPartita(this);
 
   constructor() {
     super('Gioco');
@@ -420,7 +423,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Il gioco è fermo: pausa o scelta del dono. */
-  private fermo(): boolean {
+  fermo(): boolean {
     return this.pausa || this.doni.aperta || this.pausaLab || this.rivelazione.attiva;
   }
 
@@ -549,7 +552,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Il preavviso di un'orda: la scritta e il bordo del campo da cui arriva (tutti per l'anello). */
-  private annunciaOrda(forma: FormaOrda, angolo: number): void {
+  annunciaOrda(forma: FormaOrda, angolo: number): void {
     const testi: Record<FormaOrda, [string, string]> = { muro: ["Un'orda", 'marcia verso di te'], cuneo: ["Un'orda a cuneo", 'punta verso di te'], tenaglia: ['Due orde', 'ti stringono'], anello: ['Lo sciame', 'ti circonda'] };
     this.hud.avviso(...testi[forma]);
     const c = Math.cos(angolo), sn = Math.sin(angolo), orizzontale = Math.abs(c) * this.campoA > Math.abs(sn) * this.campoL;
@@ -559,7 +562,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Fa nascere l'orda del minuto, di un solo tipo, nella sua forma. */
-  private lanciaOrda(forma: FormaOrda, tipo: number, minuto: number, angolo: number, mezzaL: number, mezzaA: number): void {
+  lanciaOrda(forma: FormaOrda, tipo: number, minuto: number, angolo: number, mezzaL: number, mezzaA: number): void {
     const campo = Math.min(DIFFICOLTA.tetto, DIFFICOLTA.massimiBase + DIFFICOLTA.massimiPerMinuto * minuto);
     const quanti = Math.max(ORDE.minimo, Math.min(ORDE.massimo, Math.round(campo * ORDE.parteDelCampo))), s = this.secondi;
     if (forma === 'anello') this.orda.sciame(s, tipo, quanti, this.x, this.y, mezzaL, mezzaA);
@@ -567,14 +570,6 @@ export class Gioco extends Phaser.Scene {
       this.orda.orda(s, tipo, Math.ceil(quanti / 2), angolo, this.x, this.y, mezzaL, mezzaA);
       this.orda.orda(s, tipo, Math.floor(quanti / 2), angolo + Math.PI, this.x, this.y, mezzaL, mezzaA);
     } else this.orda.orda(s, tipo, quanti, angolo, this.x, this.y, mezzaL, mezzaA, forma === 'cuneo');
-  }
-
-  /** Laboratorio: un'orda della forma scelta, subito, con la scritta e il bordo. */
-  labOrda(forma: FormaOrda): void {
-    const minuto = Math.max(1, Math.floor(this.secondi / 60)), angolo = this.caso.numero() * Math.PI * 2;
-    const tipo = forma === 'anello' ? 'fantasma' : 'scheletro';
-    this.annunciaOrda(forma, angolo);
-    this.lanciaOrda(forma, NEMICI.findIndex((t) => t.id === tipo), minuto, angolo, this.campoL / 2, this.campoA / 2);
   }
 
   /** Eventi della notte (GDD, sezione 1): élite, sciami, Mietitore, alba. */
@@ -614,7 +609,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Tacche che servono per la Grazia: 8, con la Danza macabra 4. */
-  private tacchePerGrazia(): number {
+  tacchePerGrazia(): number {
     return this.ha('danzaMacabra') ? AM.danzaMacabra.tacche : GRAZIA.tacche.massimo;
   }
 
@@ -627,7 +622,7 @@ export class Gioco extends Phaser.Scene {
    * Grazia (più danno, più velocità) per «durata» secondi: 3 dalla schivata perfetta su Seth, 2 dalle tacche
    * (1,5 con la Danza macabra). Una Grazia nuova non accorcia quella in corso.
    */
-  private iniziaGrazia(durata: number = GRAZIA.durata): void {
+  iniziaGrazia(durata: number = GRAZIA.durata): void {
     const giaAttiva = this.grazia > 0;
     if (!giaAttiva) this.graziaDa = 0;
     this.grazia = Math.max(this.grazia, durata);
@@ -649,7 +644,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Il mosaico è completo: parte il Bagliore. */
-  private iniziaBagliore(): void {
+  iniziaBagliore(): void {
     this.bagliore = BAGLIORE.durata;
     this.dopoPassivo();
     suona('alba');
@@ -681,300 +676,7 @@ export class Gioco extends Phaser.Scene {
   // ——— Laboratorio (solo link di prova e sviluppo: sistema/laboratorio.ts) ———
   // Comandi per andare subito a qualsiasi punto della partita e vedere una cosa sola, senza rigiocare tutto.
 
-  /** Per il pannello: a che punto è la partita. */
-  labStato(): { secondi: number; livello: number; salute: number; saluteMassima: number; immortale: boolean; fermo: boolean; nemici: number; rosario: boolean; pg: string; urne: number } {
-    return {
-      urne: this.urneRotte, secondi: this.secondi, livello: this.livello, salute: this.salute, saluteMassima: this.saluteMassima, immortale: this.immortale,
-      fermo: this.pausaLab, nemici: this.orda.numero, rosario: this.rosarioSbloccato, pg: this.pg.id,
-    };
-  }
-
-  labFerma(on: boolean): void {
-    this.pausaLab = on;
-    if (on) this.anims.pauseAll();
-    else if (!this.fermo()) this.anims.resumeAll();
-  }
-
-  labImmortale(on: boolean): void {
-    this.immortale = on;
-  }
-
-  /** Interruttore «Stati certi» (src/data/stati.ts, STATI_CERTI): vale subito e resta per le notti dopo, finché la pagina non si ricarica. */
-  labStatiCerti(on: boolean): void {
-    INTERRUTTORI.statiCerti = on;
-    this.aggiornaDevozione();
-  }
-
-  /** Porta la notte al minuto m: gli eventi già passati non si ripetono, gli altri partono al loro turno. */
-  labMinuto(m: number): void {
-    this.secondi = Math.max(0, m) * 60;
-    this.prossimaElite = Math.max(ELITE.primo, Math.ceil(this.secondi / ELITE.ogni) * ELITE.ogni);
-    this.prossimaOrda = Math.max(0, ORDE.copione.findIndex((o) => o.minuto * 60 >= this.secondi));
-    if (ORDE.copione.every((o) => o.minuto * 60 < this.secondi)) this.prossimaOrda = ORDE.copione.length;
-    this.ordaAnnunciata = false;
-    this.mietitoriArrivati = MIETITORE.minuti.filter((q) => q * 60 < this.secondi).length;
-  }
-
-  /** Livello n, con le armi e i doni che hai. */
-  labLivello(n: number): void {
-    this.livello = Math.max(1, Math.floor(n));
-    this.esperienza = 0;
-  }
-
-  /** Un livello in più con la sua scelta di doni. */
-  labSceltaDono(): void {
-    this.livelliDaScegliere++;
-    this.livello++;
-    this.apriDoni();
-  }
-
-  labReliquiario(): void {
-    this.apriReliquiario();
-  }
-
-  /** Porta l'arma al livello l (la aggiunge se non c'è); non si scende, per togliere si riavvia. */
-  labArma(arma: Arma, l: number): void {
-    if (!this.arsenale.livello(arma)) this.arsenale.aggiungi(arma);
-    while (this.arsenale.livello(arma) < Math.min(l, CARTE.livelloMassimo)) this.arsenale.potenzia(arma);
-    this.aggiornaBuild();
-  }
-
-  labDono(id: IdDono, l: number): void {
-    this.passivi[id] = Math.max(0, l);
-    this.dopoPassivo();
-    this.aggiornaBuild();
-  }
-
-  labAmuleto(id: IdAmuleto, on: boolean): void {
-    if (on && !this.amuletiPosseduti.includes(id)) this.amuletiPosseduti.push(id);
-    if (!on) this.amuletiPosseduti = this.amuletiPosseduti.filter((x) => x !== id);
-    if (on) this.amuletiAccesi.add(id);
-    else this.amuletiAccesi.delete(id);
-    this.dopoPassivo();
-    this.aggiornaBuild();
-  }
-
-  labAmuletiSnapshot(): { posseduti: IdAmuleto[]; accesi: IdAmuleto[] } {
-    return { posseduti: [...this.amuletiPosseduti], accesi: [...this.amuletiAccesi] };
-  }
-
-  labLivelli(): { armi: { arma: Arma; livello: number }[]; doni: Record<IdDono, number> } {
-    return { armi: this.arsenale.possedute.map((p) => ({ arma: p.arma, livello: p.livello })), doni: { ...this.passivi } };
-  }
-
-  /** Prova prestazioni: la scena più pesante, senza poter morire né arrivare all'alba; i doni si scelgono da soli. */
-  labProvaPrestazioni(): void {
-    const P = PRESTAZIONI;
-    this.labImmortale(true);
-    this.automatico = true;
-    this.labMinuto(P.minuto);
-    this.fineFinta = P.secondiFine;
-    this.labLivello(P.livello);
-    for (const a of ARMI_COMUNI.slice(0, MAX_ARMI - 1)) this.labArma(a, P.livelloArmi);
-    this.rompibili?.piazzaFissa(ROMPIBILI.tipi.findIndex((t) => t.luce > 0), this.x + P.lanterna.dx, this.y + P.lanterna.dy);
-    this.labProvaRiempi();
-  }
-
-  /** Prova prestazioni: la stessa ricostruzione che avviene quando un dono allarga la luce. */
-  labRicostruisciBuio(): void {
-    this.ridimensiona();
-  }
-
-  labProvaRiempi(): void {
-    this.orda.riempi(PRESTAZIONI.nemici, this.secondi, this.x, this.y, this.campoL / 2, this.campoA / 2);
-  }
-
-  /** Diagnosi dei fotogrammi: spegne i fori di lanterne e fuochi nel buio, per misurarne il costo sul telefono. */
-  labForiBuio(accesi: boolean): void {
-    this.foriBuio = accesi;
-  }
-
-  /** Accende o spegne a mano il segnale del Peccato sul bordo del campo, per vederlo senza comporre un Rosario. */
-  labPeccato(acceso: boolean): void {
-    this.hud.provaPeccato(acceso);
-  }
-
-  /** Mostra un avviso nel cartiglio, per provarne posto e durata. */
-  labAvviso(testo: string, sotto: string): void {
-    this.hud.avviso(testo, sotto);
-  }
-
-  labRosario(on: boolean): void {
-    this.rosarioSbloccato = on;
-  }
-
-  labEvento(nome: 'elite' | 'seth1' | 'seth2' | 'orda' | 'sciame' | 'pane' | 'calamita' | 'reliquiarioATerra' | 'reliquiarioLontano' | 'cera' | 'anime' | 'cura' | 'grazia' | 'eliminaNemici' | 'riempi' | 'vittoria' | 'morte'): void {
-    const mezzaL = this.campoL / 2, mezzaA = this.campoA / 2, s = this.secondi;
-    switch (nome) {
-      case 'elite': this.orda.nasciElite(s, this.x, this.y, mezzaL, mezzaA); break;
-      case 'seth1': this.orda.nasciMietitore(s, 0, this.x, this.y, mezzaL, mezzaA); break;
-      case 'seth2': this.orda.nasciMietitore(s, 1, this.x, this.y, mezzaL, mezzaA); break;
-      case 'orda': this.labOrda('muro'); break;
-      case 'sciame': this.labOrda('anello'); break;
-      case 'pane': this.oggetti.aggiungi(PANE, this.x + 40, this.y - 40); break;
-      case 'calamita': this.oggetti.aggiungi(CALAMITA, this.x - 40, this.y - 40); break;
-      case 'reliquiarioATerra': this.oggetti.aggiungi(RELIQUIARIO, this.x, this.y - 70); break;
-      case 'reliquiarioLontano': this.oggetti.aggiungi(RELIQUIARIO, this.x + 200, this.y - this.campoA); break;
-      case 'cera': for (let k = 0; k < 10; k++) this.oggetti.aggiungi(CERA_GOCCIA, this.x - 60 + k * 14, this.y + 40); break;
-      case 'anime': this.anime.aggiungi(this.x + 60, this.y, 50, this.x, this.y); break;
-      case 'cura': this.salute = this.saluteMassima; break;
-      case 'grazia': this.iniziaGrazia(); break;
-      case 'eliminaNemici': for (let i = 0; i < this.orda.numero; i++) this.orda.salute[i] = 0; break;
-      case 'riempi': this.orda.riempi(400, s, this.x, this.y, mezzaL, mezzaA); break;
-      case 'vittoria':
-        this.finito = true;
-        this.inMoto = false;
-        this.mostraFine(true);
-        break;
-      case 'morte':
-        this.salute = 0;
-        this.morto = this.finito = true;
-        this.attesaFine = COMBATTIMENTO.attesaFine;
-        this.inMoto = false;
-        break;
-    }
-  }
-
-  /** Grazia a tacche: «riempi» lascia le tacche a una dallo scatto (al prossimo sfioro parte la Grazia), «svuota» le azzera. */
-  labTacche(riempi: boolean): void {
-    this.tacche.imposta(riempi ? this.tacchePerGrazia() - 1 : 0);
-  }
-
-  /** Acquasantiera: una pozza che cura sotto i piedi del personaggio (come quando il sorso trova la fiaschetta piena). */
-  /** LAB: accende o spegne Pozza ed Eclissi pixelfx (accese di serie). Solo disegno. */
-  labPixelfx(on: boolean): void {
-    INTERRUTTORI.pixelfx = on;
-  }
-
-  /** Prova pixelfx: mostra Sepoltura, Pozza (con il raggio dato) o Eclissi accanto al personaggio, senza ferire. */
-  labVediEffetto(cosa: 'sepoltura' | 'pozza' | 'eclissi', raggio = 0): void {
-    const y = this.y - COLPI.corpo;
-    if (cosa === 'sepoltura') this.arsenale.labVediEffetto(cosa, this.x, this.y);
-    else this.arsenale.labVediEffetto(cosa, this.x + (cosa === 'eclissi' ? 140 : 0), cosa === 'eclissi' ? y : y + 120, raggio);
-  }
-
-  /** Raggio di unione delle lacrime di Lumen (ANIME.accorpa), da provare in partita. Vale finché non ricarichi la pagina. */
-  labUnioneLacrime(px: number): void {
-    (ANIME as { accorpa: number }).accorpa = px;
-  }
-
-  /** LAB: accende o spegne la Sepoltura pixelfx (spenta di serie). Solo disegno. */
-  labSepolturaPixelfx(on: boolean): void {
-    INTERRUTTORI.sepolturaPixelfx = on;
-  }
-
-  /** Prova prestazioni «con effetti»: al secondo s della misura fa partire Sepoltura, Pozza grande ed Eclissi (PRESTAZIONI.effetti). */
-  labProvaEffetti(s: number): void {
-    const E = PRESTAZIONI.effetti, y = this.y - COLPI.corpo;
-    if (s % E.sepolturaOgni === 0) this.arsenale.labVediEffetto('sepoltura', this.x, this.y);
-    // la Pozza usa la misura già in memoria (quella dell'Acqua santa in mano): con due misure diverse a turno
-    // si caricava e scaricava un foglio ogni 2 s, cosa che nel gioco non succede
-    const caricata = pozzaCaricata(), raggio = caricata ? Number(caricata.slice(PIXELFX.pozza.prefisso.length)) : E.raggioPozza;
-    if (s % E.pozzaOgni === 0) this.arsenale.labVediEffetto('pozza', this.x, y + E.distanza, raggio);
-    for (let k = 0; k < E.eclissiAlSecondo; k++) {
-      const a = s + (k * Math.PI * 2) / E.eclissiAlSecondo;
-      this.arsenale.labVediEffetto('eclissi', this.x + Math.cos(a) * E.distanza, y + Math.sin(a) * E.distanza * 0.5);
-    }
-  }
-
-  labPozzaCurativa(): void {
-    this.arsenale.labPozzaCurativa(this.x, this.y - COLPI.corpo);
-  }
-
-  /** Lascia lo stato dell'affinità (luce, sacro, ombra, terra) ai nemici vicini: due stati diversi fanno la reazione. */
-  labStatoVicini(aff: 'luce' | 'sacro' | 'ombra' | 'terra'): void {
-    this.arsenale.abbaglia(this.x, this.y - COLPI.corpo, 260, { luce: LUCE_AFF, sacro: SACRO_AFF, ombra: OMBRA_AFF, terra: TERRA_AFF }[aff]);
-  }
-
-  /** Sblocca (o ripristina) armi e doni nuovi in questa partita, così escono subito nella scelta. */
-  labOggetti(on: boolean): void {
-    this.oggettiSbloccati = new Set(on ? SBLOCCHI_OGGETTI.map((o) => o.id) : this.meta.oggetti);
-  }
-
-  /** Laboratorio: urna, giara e lanterna accanto al personaggio (a sinistra, così non si rompono subito). */
-  labRompibili(): void {
-    ROMPIBILI.tipi.forEach((_, n) => this.rompibili?.piazza(n, this.x - 90 - n * 70, this.y + 10));
-  }
-
-  labRompiVicino(): void {
-    this.rompibili?.rompiVicino(this.x, this.y);
-  }
-
-  labChiazza(): void {
-    this.chiazze?.aggiungi(this.x + 130, this.y);
-  }
-
-  labAccendiChiazze(): void {
-    this.chiazze?.accendiTutte();
-  }
-
-  /** Come raccogliere un frammento: accende il pezzo dopo del mosaico. */
-  labMosaico(): void {
-    this.frammento();
-  }
-
-  labBagliore(): void {
-    this.iniziaBagliore();
-  }
-
-  labFrammento(): void {
-    this.lasciaFrammento(this.x + 60, this.y - 60);
-  }
-
-  /** Apre la pausa sulla scheda indicata; se è già aperta la richiude prima. */
-  labPausa(scheda?: SchedaPausa): void {
-    this.riprendi();
-    this.apriPausa(scheda);
-  }
-
-  /** Il caso pieno: 6 armi, 6 doni, tutti gli amuleti e le unioni in tutti gli stati. Non tocca il salvataggio. */
-  labPausaPiena(scheda: SchedaPausa = 'build'): void {
-    this.scoperteDiProva = true;
-    const mia = UNIONI.find((u) => u.arma === this.pg.armaIniziale)!;
-    [mia, ...UNIONI.filter((u) => u !== mia).slice(0, MAX_ARMI - 1)].forEach((u, i) => this.labUnione(u.id, i % 3 === 0));
-    this.rosarioSbloccato = true;
-    for (const a of AMULETI) this.labAmuleto(a.id, true);
-    for (const u of UNIONI) this.unioniScoperte.add(u.id);
-    this.labPausa(scheda);
-  }
-
-  /** Peccato: amuleti accesi oltre i grani; la pausa si apre da sola sul Rosario. */
-  labPausaPeccato(): void {
-    this.rosarioSbloccato = true;
-    for (const a of AMULETI.slice(0, 3)) this.labAmuleto(a.id, true);
-    this.labPausa();
-  }
-
-  /** La prima partita: niente Rosario né Unioni. */
-  labPausaPrima(): void {
-    for (const id of [...this.amuletiPosseduti]) this.labAmuleto(id, false);
-    this.rosarioSbloccato = this.unioniSbloccate = false;
-    this.unioniScoperte.clear();
-    this.unioniUnite.clear();
-    this.labPausa();
-  }
-
-  /** La pausa sopra una scelta di doni o di reliquiario. */
-  labPausaSopra(reliquiario: boolean): void {
-    this.riprendi();
-    if (reliquiario) {
-      this.rosarioSbloccato = true;
-      this.labReliquiario();
-    } else this.labSceltaDono();
-    this.apriPausa();
-  }
-
-  /** Dimentica le unioni scoperte, per riprovare la scoperta da capo. */
-  labDimenticaUnioni(): void {
-    this.unioniScoperte.clear();
-    this.unioniUnite.clear();
-    const s = carica();
-    s.unioniScoperte = [];
-    s.unioniUnite = [];
-    salva(s);
-  }
-
-  private armaDi(id: Arma['id']): Arma | undefined {
+  armaDi(id: Arma['id']): Arma | undefined {
     return this.arsenale.possedute.find((p) => p.arma.id === id)?.arma;
   }
 
@@ -985,30 +687,6 @@ export class Gioco extends Phaser.Scene {
       const a = this.armaDi(u.arma);
       return a && this.arsenale.livello(a) >= LIVELLO_ARMA_UNIONE && !this.arsenale.unita(a) && this.passivi[u.dono] >= livelloDonoUnione(u.dono);
     });
-  }
-
-  /** Il livello massimo del dono id (per le prove). */
-  labMassimoDono(id: IdDono): number {
-    return PASSIVI.find((q) => q.id === id)!.massimo;
-  }
-
-  /** Porta arma e dono ai livelli giusti: con unisci li unisce subito, altrimenti aspetta il reliquiario. */
-  labUnione(id: IdUnione, unisci: boolean): void {
-    const u = UNIONI.find((x) => x.id === id)!;
-    this.unioniSbloccate = this.scoperteDiProva = true;
-    this.unioniScoperte.add(u.id); // qui non si vuole l'animazione: la mostra LAB → Schermate
-    const arma = this.armaDi(u.arma) ?? ARMI_COMUNI.find((a) => a.id === u.arma) ?? Object.values(ARMI_INIZIALI).find((a) => a.id === u.arma)!;
-    this.labArma(arma, Math.max(this.arsenale.livello(arma), LIVELLO_ARMA_UNIONE));
-    this.labDono(u.dono, Math.max(this.passivi[u.dono], livelloDonoUnione(u.dono)));
-    if (unisci) {
-      this.arsenale.unisci(arma);
-      this.segnaUnita(id);
-      this.aggiornaBuild();
-    }
-  }
-
-  labStatoUnioni(): { sbloccate: boolean; unite: IdUnione[] } {
-    return { sbloccate: this.unioniSbloccate, unite: UNIONI.filter((u) => { const a = this.armaDi(u.arma); return a && this.arsenale.unita(a); }).map((u) => u.id) };
   }
 
   /** Può uscire nella scelta: tutto ciò che non è in SBLOCCHI_OGGETTI, o quello che è stato sbloccato. */
@@ -1050,7 +728,7 @@ export class Gioco extends Phaser.Scene {
   };
 
   /** Dopo un dono passivo: statistiche, salute in più del Cuore di cera, alone più ampio con lo Stoppino lungo. */
-  private dopoPassivo(): void {
+  dopoPassivo(): void {
     const prima = this.saluteMassima;
     this.ricalcola();
     const dono = (id: IdDono): number => effettoDono(PASSIVI.find((q) => q.id === id)!, this.passivi[id]);
@@ -1129,7 +807,7 @@ export class Gioco extends Phaser.Scene {
    * Reliquiario: se il Rosario è sbloccato e c'è ancora un amuleto da trovare, scegli tra due amuleti e il
    * potenziamento; altrimenti (o se scegli il potenziamento) vale il potenziamento di prima.
    */
-  private apriReliquiario(): void {
+  apriReliquiario(): void {
     const liberi = this.rosarioSbloccato ? AMULETI.filter((a) => !this.amuletiPosseduti.includes(a.id)) : [];
     const pronte = this.unioniPronte();
     if (!liberi.length && !pronte.length) {
@@ -1211,7 +889,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Ferma il gioco e mostra le carte; dopo la scelta, se ci sono altri livelli da scegliere, le rimostra. */
-  private apriDoni(): void {
+  apriDoni(): void {
     if (this.doni.aperta) return; // un reliquiario è già aperto: i livelli aspettano
     // l'unica carta possibile sarebbe «Pane e vino»: la scelta non si apre, il pane si prende da solo (una volta per livello);
     // ma ogni RITI.ogni di questi livelli si apre la scelta dei Riti (con gli Stati certi)
@@ -1255,7 +933,7 @@ export class Gioco extends Phaser.Scene {
    * La scelta dei Riti (src/data/stati.ts, RITI): una carta per ogni affinità delle armi che hai, al massimo RITI.carte
    * (a caso se sono di più). Il Rito scelto rende più forte lo stato di quella affinità e le reazioni che lo consumano.
    */
-  private apriRiti(): void {
+  apriRiti(): void {
     const tutte = [...new Set(this.arsenale.possedute.map((p) => AFFINITA_ARMI[p.arma.id]))];
     const carte: Dono[] = [];
     while (carte.length < RITI.carte && tutte.length) {
@@ -1291,14 +969,7 @@ export class Gioco extends Phaser.Scene {
     return k;
   }
 
-  /** Laboratorio: apre subito la scelta dei Riti (come se non restasse nulla da potenziare, al terzo livello). */
-  labRiti(): void {
-    this.livelliDaScegliere++;
-    this.livello++;
-    this.apriRiti();
-  }
-
-  private apriPausa(scheda?: SchedaPausa): void {
+  apriPausa(scheda?: SchedaPausa): void {
     if (this.finito || this.pausa) return;
     this.rivelazione.salta();
     this.mosaico.nascondi();
@@ -1309,7 +980,7 @@ export class Gioco extends Phaser.Scene {
     this.hud.mostraPausa(this.datiPausa(), typeof scheda === 'string' ? scheda : undefined);
   }
 
-  private riprendi(): void {
+  riprendi(): void {
     if (!this.pausa) return;
     this.pausa = false;
     this.doni.sospesa = false;
@@ -1317,7 +988,7 @@ export class Gioco extends Phaser.Scene {
     if (!this.doni.aperta) this.anims.resumeAll();
   }
 
-  private mostraFine(vittoria: boolean): void {
+  mostraFine(vittoria: boolean): void {
     const veglia = this.contaCera(vittoria);
     if (this.sim) {
       this.sim.fine({
@@ -1439,14 +1110,14 @@ export class Gioco extends Phaser.Scene {
     return voci;
   }
 
-  private aggiornaBuild(): void {
+  aggiornaBuild(): void {
     this.aggiornaDevozione();
     this.hud.build(this.build());
     this.scopriUnioni();
   }
 
   /** Devozione: armi per affinità (le abilità non contano: il loro stato prende il grado della sua affinità) e Riti, all'orda. */
-  private aggiornaDevozione(): void {
+  aggiornaDevozione(): void {
     const n = this.armiPerAffinita;
     n.fill(0);
     for (const p of this.arsenale.possedute) n[CODICE_AFF[AFFINITA_ARMI[p.arma.id]]]++;
@@ -1465,7 +1136,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** L'animazione della scoperta: ferma la partita finché dura. */
-  private mostraScoperta(u: Unione): void {
+  mostraScoperta(u: Unione): void {
     this.anims.pauseAll();
     this.comandi.lascia();
     this.doni.sospesa = true; // sotto può esserci una scelta: i tasti non devono sceglierla
@@ -1473,11 +1144,6 @@ export class Gioco extends Phaser.Scene {
     vibra('media');
     const armi = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
     this.rivelazione.mostra({ nome: u.nome, ricetta: this.ricettaUnione(u), arma: armi.find((a) => a.id === u.arma)!.icona, dono: PASSIVI.find((q) => q.id === u.dono)!.icona, unione: iconaUnione(u.id) });
-  }
-
-  /** Dal Laboratorio: rivede l'animazione, senza toccare scoperte né salvataggio. */
-  labScoperta(): void {
-    this.mostraScoperta(UNIONI.find((u) => u.arma === this.pg.armaIniziale) ?? UNIONI[0]);
   }
 
   /** Scoperte e unite restano sul dispositivo; le prove con il Laboratorio e il bot non contano. */
@@ -1490,7 +1156,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** L'arma si è unita: da ora l'unione è nella scheda Stati, per sempre. */
-  private segnaUnita(id: IdUnione): void {
+  segnaUnita(id: IdUnione): void {
     this.unioniScoperte.add(id);
     this.unioniUnite.add(id);
     this.salvaUnioni();
@@ -1732,7 +1398,7 @@ export class Gioco extends Phaser.Scene {
     this.cameras.main.setViewport(0, f.alta, this.campoL, this.campoA);
   }
 
-  private ridimensiona(): void {
+  ridimensiona(): void {
     this.scalaSalute();
     this.misuraCampo();
     this.terreno.setSize(this.campoL, this.campoA);
@@ -1741,7 +1407,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** Frammento di vetro: accende un pezzo del mosaico; al terzo il mosaico intero si illumina e parte il Bagliore. */
-  private frammento(): void {
+  frammento(): void {
     const servono = FRAMMENTI.perReliquiario, n = ++this.frammenti;
     this.mosaico.mostra(n, servono);
     if (n < servono) {
@@ -1754,7 +1420,7 @@ export class Gioco extends Phaser.Scene {
   }
 
   /** L'urna fortunata: esce un frammento, con un anello di luce, una scossa e il suono del vetro. */
-  private lasciaFrammento(x: number, y: number): void {
+  lasciaFrammento(x: number, y: number): void {
     this.frammentiCaduti++;
     this.oggetti.aggiungi(FRAMMENTO, x, y);
     this.effetti.reazione(x, y - ROMPIBILI.centro, FRAMMENTI.anello, FRAMMENTI.coloreAnello, FRAMMENTI.bordoAnello, FRAMMENTI.durataAnello);

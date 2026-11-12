@@ -104,7 +104,7 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
   gioco.scene.getScenes(true).forEach((s) => s.scene.stop());
   gioco.scene.start('Gioco', { pg: PRESTAZIONI.personaggio });
   await aspetta(() => creata && gioco.scene.isActive('Gioco'));
-  partita.labProvaPrestazioni();
+  partita.lab.provaPrestazioni();
   await misuraDisegni(gioco, PRESTAZIONI.avvio);
   let interrotta = false, secondo = 0, contati = 0, conte = 0; // nemici in campo, contati una volta al secondo
   const visibilita = (): void => { if (document.hidden) interrotta = true; };
@@ -113,16 +113,16 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     const s = Math.floor(t);
     if (s === secondo) return;
     secondo = s;
-    contati += partita.labStato().nemici;
+    contati += partita.lab.stato().nemici;
     conte++;
-    partita.labProvaRiempi(); // i nemici restano quanti devono essere: le armi ne uccidono di continuo
-    if (INTERRUTTORI.provaConEffetti) partita.labProvaEffetti(s); // Sepoltura, Pozza grande ed Eclissi a ripetizione
+    partita.lab.provaRiempi(); // i nemici restano quanti devono essere: le armi ne uccidono di continuo
+    if (INTERRUTTORI.provaConEffetti) partita.lab.provaEffetti(s); // Sepoltura, Pozza grande ed Eclissi a ripetizione
     avviso.textContent = `Prova prestazioni: non toccare niente · ${PRESTAZIONI.secondi - s} s`;
   });
   document.removeEventListener('visibilitychange', visibilita);
   // misura a parte: la ricostruzione del buio che avviene quando un dono allarga la luce, compreso il disegno che la mostra
   const inizioBuio = performance.now();
-  partita.labRicostruisciBuio();
+  partita.lab.ricostruisciBuio();
   await misuraDisegni(gioco, 0);
   const buio = performance.now() - inizioBuio;
   avviso.remove();
@@ -152,7 +152,7 @@ export async function avviaProvaPrestazioni(gioco: Phaser.Game): Promise<void> {
     `Schermo: circa ${hz} Hz, ${Math.round(innerWidth * devicePixelRatio)}×${Math.round(innerHeight * devicePixelRatio)}`,
     `Minuto ${PRESTAZIONI.minuto}, ${PRESTAZIONI.nemici} nemici, lanterna in vista, ${PRESTAZIONI.secondi} s`,
     `Effetti a ripetizione: ${INTERRUTTORI.provaConEffetti ? `sì; Pozza ed Eclissi ${INTERRUTTORI.pixelfx ? 'pixelfx' : 'di sempre'}, Sepoltura ${INTERRUTTORI.sepolturaPixelfx ? 'pixelfx' : 'di sempre'}` : 'no'}`,
-    `In campo durante la misura: ${Math.round(contati / Math.max(1, conte))} nemici in media, minuto ${Math.floor(partita.labStato().secondi / 60)}`,
+    `In campo durante la misura: ${Math.round(contati / Math.max(1, conte))} nemici in media, minuto ${Math.floor(partita.lab.stato().secondi / 60)}`,
     `Media: ${((tempi.length * 1000) / totale).toFixed(1)} fps`,
     `Fotogrammi saltati: ${saltati}`,
     `Secondi sotto ${PRESTAZIONI.secondoLento} fps: ${((lenti * 100) / Math.max(1, secondi)).toFixed(1)}%`,

@@ -186,6 +186,7 @@ Regole del registro (4 novembre 2026, scelte di Edoardo):
 | 2026-11-11 | **Chiusa la prova pixelfx.** Pozza dell'Acqua santa ed Eclissi pixelfx sono gli effetti di serie (l'interruttore del LAB resta per i confronti); Eclissi a 12 fotogrammi al secondo, tolti il selettore e il foglio da 24. La Sepoltura pixelfx resta nei file ma è spenta (interruttore a parte nel LAB): si rifà dopo il rework del combattimento. I ritmi della Prova prestazioni «Con effetti» non cambiano. | Edoardo, 11/11. |
 | 2026-11-11 | **Tetti degli stati**: il Consacrato rallenta al massimo del 60% (era 80%) e il Maledetto toglie al massimo il 5% della salute massima al secondo; le riduzioni per élite, Seth e Mietitore si applicano dopo il tetto. Nella pausa (Stati) uno stato al tetto dice «(al massimo)». Valori da rivedere. | Edoardo, 11/11: con Devozione e Riti gli stati crescevano senza fine e a fine notte svuotavano il campo da soli. |
 | 2026-11-11 | **Nessun comando di difficoltà per ora**: la notte si rende più dura nella sessione dei nemici. | Edoardo, 11/11. |
+| 2026-11-12 | **I comandi del Laboratorio escono da `Gioco.ts`** e vanno in `src/sistema/lab-partita.ts` (si chiamano `partita.lab.minuto(5)`…); il gioco non cambia. Il riordino di `armi.ts` aspetta, in «Da confermare». | Edoardo, 12/11: `Gioco.ts` era arrivato a 1.800 righe, quasi un quarto erano comandi di prova. |
 
 ## Riferimenti della v0 e dei link
 

@@ -12,6 +12,7 @@
  */
 import type Phaser from 'phaser';
 import type { Gioco } from '../scene/Gioco';
+import type { LabPartita } from './lab-partita';
 import type { Menu } from '../scene/Menu';
 import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
 import { PASSIVI } from '../data/doni';
@@ -205,7 +206,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       return b;
     }));
     const p = partita();
-    const s = p?.labStato();
+    const s = p?.lab.stato();
     stato.textContent = s ? `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · urne ${s.urne} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS` : 'Laboratorio · non sei in partita';
     corpo.replaceChildren(...({ partita: schedaPartita, eventi: schedaEventi, oggetti: schedaOggetti, numeri: schedaNumeri, schermate: schedaSchermate, schermo: schedaSchermo, salvataggio: schedaSalvataggio })[scheda]());
   };
@@ -213,7 +214,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     pannello.hidden = !aperto;
     apri.hidden = aperto;
     // finché il pannello è aperto, la partita sta ferma (si può riprendere dalla scheda Partita)
-    if (aperto) { partita()?.labFerma(true); ridisegna(); } else partita()?.labFerma(false);
+    if (aperto) { partita()?.lab.ferma(true); ridisegna(); } else partita()?.lab.ferma(false);
   };
   apri.addEventListener('click', () => mostra(true));
   const fai = (f: (p: Gioco) => void): (() => void) => () => {
@@ -232,22 +233,22 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   function schedaPartita(): HTMLElement[] {
     const p = partita();
     if (!p) return [el('p', 'lab-nota', 'Non sei in una partita. Scegli un personaggio per iniziarne una subito:'), riga(...PERSONAGGI.map((q) => tasto(q.nome, () => { gioco.scene.start('Gioco', { pg: q.id }); setTimeout(ridisegna, 600); })))];
-    const s = p.labStato();
+    const s = p.lab.stato();
     const min = numero(Math.floor(s.secondi / 60), 0, 15), liv = numero(s.livello, 1, 200);
     return [
       titolo('Tempo'),
-      riga(...[1, 3, 5, 8, 10, 12, 14].map((m) => tasto(`${m}'`, fai((x) => x.labMinuto(m))))),
-      riga('Minuto', min, tasto('Vai', fai((x) => x.labMinuto(Number(min.value) || 0)))),
+      riga(...[1, 3, 5, 8, 10, 12, 14].map((m) => tasto(`${m}'`, fai((x) => x.lab.minuto(m))))),
+      riga('Minuto', min, tasto('Vai', fai((x) => x.lab.minuto(Number(min.value) || 0)))),
       titolo('Livello'),
-      riga('Livello', liv, tasto('Vai', fai((x) => x.labLivello(Number(liv.value) || 1))), tasto('+1 con scelta', scegli((x) => x.labSceltaDono()))),
+      riga('Livello', liv, tasto('Vai', fai((x) => x.lab.livello(Number(liv.value) || 1))), tasto('+1 con scelta', scegli((x) => x.lab.sceltaDono()))),
       titolo('Stato'),
       riga(
-        tasto(s.fermo ? 'Gioco fermo: riprendi' : 'Gioco in corso: ferma', () => { p.labFerma(!s.fermo); ridisegna(); }, s.fermo ? 'acceso' : ''),
-        tasto(s.immortale ? 'Immortale: sì' : 'Immortale: no', fai((x) => x.labImmortale(!s.immortale)), s.immortale ? 'acceso' : ''),
-        tasto('Cura piena', fai((x) => x.labEvento('cura'))),
+        tasto(s.fermo ? 'Gioco fermo: riprendi' : 'Gioco in corso: ferma', () => { p.lab.ferma(!s.fermo); ridisegna(); }, s.fermo ? 'acceso' : ''),
+        tasto(s.immortale ? 'Immortale: sì' : 'Immortale: no', fai((x) => x.lab.immortale(!s.immortale)), s.immortale ? 'acceso' : ''),
+        tasto('Cura piena', fai((x) => x.lab.evento('cura'))),
       ),
       titolo('Nemici'),
-      riga(el('span', 'lab-stato', `In campo: ${s.nemici}`), tasto('Elimina tutti', fai((x) => x.labEvento('eliminaNemici')), 'rosso'), tasto('Riempi 400', fai((x) => x.labEvento('riempi')))),
+      riga(el('span', 'lab-stato', `In campo: ${s.nemici}`), tasto('Elimina tutti', fai((x) => x.lab.evento('eliminaNemici')), 'rosso'), tasto('Riempi 400', fai((x) => x.lab.evento('riempi')))),
       titolo('Personaggio (riparte la partita)'),
       riga(...PERSONAGGI.map((q) => tasto(q.nome, () => { gioco.scene.start('Gioco', { pg: q.id }); setTimeout(ridisegna, 600); }, q.id === s.pg ? 'acceso' : ''))),
     ];
@@ -256,50 +257,50 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   // ——— Eventi ———
   function schedaEventi(): HTMLElement[] {
     if (!partita()) return [el('p', 'lab-nota', 'Serve una partita: vai su Partita.')];
-    const e = (nome: Parameters<Gioco['labEvento']>[0], testo: string, classe = ''): HTMLElement => tasto(testo, fai((x) => x.labEvento(nome)), classe);
+    const e = (nome: Parameters<LabPartita['evento']>[0], testo: string, classe = ''): HTMLElement => tasto(testo, fai((x) => x.lab.evento(nome)), classe);
     return [
       titolo('Nemici'),
       riga(e('elite', 'Élite'), e('seth1', 'Seth (1ª volta)'), e('seth2', 'Seth (2ª volta)'), e('orda', 'Orda a muro'), e('sciame', 'Sciame ad anello')),
-      riga(tasto('Orda a cuneo', fai((x) => x.labOrda('cuneo'))), tasto('Tenaglia', fai((x) => x.labOrda('tenaglia')))),
+      riga(tasto('Orda a cuneo', fai((x) => x.lab.orda('cuneo'))), tasto('Tenaglia', fai((x) => x.lab.orda('tenaglia')))),
       titolo('Drop a terra'),
       riga(e('pane', 'Pane'), e('calamita', 'Calamita'), e('reliquiarioATerra', 'Reliquiario'), e('reliquiarioLontano', 'Reliquiario fuori vista'), e('cera', '10 gocce di Cera'), e('anime', 'Anima grande')),
       titolo('Rompibili (prova)'),
-      riga(tasto('Urna, giara e lanterna qui accanto', fai((x) => x.labRompibili())), tasto('Rompi il più vicino', fai((x) => x.labRompiVicino()))),
-      riga(tasto("Chiazza d'olio", fai((x) => x.labChiazza())), tasto('Accendi le chiazze', fai((x) => x.labAccendiChiazze())), tasto('Frammento a terra', fai((x) => x.labFrammento())), tasto('Mosaico: pezzo dopo', fai((x) => x.labMosaico())), tasto('Bagliore', fai((x) => x.labBagliore()))),
+      riga(tasto('Urna, giara e lanterna qui accanto', fai((x) => x.lab.rompibili())), tasto('Rompi il più vicino', fai((x) => x.lab.rompiVicino()))),
+      riga(tasto("Chiazza d'olio", fai((x) => x.lab.chiazza())), tasto('Accendi le chiazze', fai((x) => x.lab.accendiChiazze())), tasto('Frammento a terra', fai((x) => x.lab.frammento())), tasto('Mosaico: pezzo dopo', fai((x) => x.lab.mosaico())), tasto('Bagliore', fai((x) => x.lab.bagliore()))),
       el('p', 'lab-nota', 'Lascia il gioco in corso (scheda Partita) per vederli rompersi. I numeri sono in Numeri → rompibili.'),
       titolo('Avvisi nel cartiglio'),
-      riga(tasto('Seth', fai((x) => x.labAvviso('Seth', 'il Rinnovato è venuto per te'))), tasto('Sciame', fai((x) => x.labAvviso('Lo sciame', 'ti circonda'))), tasto('Due orde', fai((x) => x.labAvviso('Due orde', 'ti stringono'))), tasto('Reliquiario', fai((x) => x.labAvviso('Reliquiario', 'Lanterna, Candela, Falce')))),
+      riga(tasto('Seth', fai((x) => x.lab.avviso('Seth', 'il Rinnovato è venuto per te'))), tasto('Sciame', fai((x) => x.lab.avviso('Lo sciame', 'ti circonda'))), tasto('Due orde', fai((x) => x.lab.avviso('Due orde', 'ti stringono'))), tasto('Reliquiario', fai((x) => x.lab.avviso('Reliquiario', 'Lanterna, Candela, Falce')))),
       titolo('Scelte'),
-      riga(tasto('Scelta del dono', scegli((x) => x.labSceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.labReliquiario())), tasto(partita()!.labStato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.labRosario(!x.labStato().rosario)), partita()!.labStato().rosario ? 'acceso' : '')),
-      riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.labOggetti(true))), tasto('Scelta dei Riti', scegli((x) => x.labRiti()))),
+      riga(tasto('Scelta del dono', scegli((x) => x.lab.sceltaDono())), tasto('Apri un reliquiario', scegli((x) => x.lab.reliquiario())), tasto(partita()!.lab.stato().rosario ? 'Rosario sbloccato' : 'Sblocca il Rosario', fai((x) => x.lab.rosario(!x.lab.stato().rosario)), partita()!.lab.stato().rosario ? 'acceso' : '')),
+      riga(tasto('Armi e doni nuovi in questa partita', fai((x) => x.lab.oggetti(true))), tasto('Scelta dei Riti', scegli((x) => x.lab.riti()))),
       el('p', 'lab-nota', 'I Riti: una carta per ogni affinità delle tue armi (al massimo 3). Nel gioco si aprono ogni 3 livelli quando non resta nulla da potenziare. Quanti Riti hai: Pausa → Stati. Numeri in Numeri → stati → RITI.'),
       titolo('Grazia a tacche'),
       riga(
         tasto(INTERRUTTORI.taccheScintilla ? 'Scintilla: sì' : 'Scintilla: no', fai(() => { INTERRUTTORI.taccheScintilla = !INTERRUTTORI.taccheScintilla; }), INTERRUTTORI.taccheScintilla ? 'acceso' : ''),
         tasto(INTERRUTTORI.taccheSuono ? 'Suono: sì' : 'Suono: no', fai(() => { INTERRUTTORI.taccheSuono = !INTERRUTTORI.taccheSuono; }), INTERRUTTORI.taccheSuono ? 'acceso' : ''),
       ),
-      riga(tasto('Riempi tacche', fai((x) => x.labTacche(true))), tasto('Svuota tacche', fai((x) => x.labTacche(false)))),
+      riga(tasto('Riempi tacche', fai((x) => x.lab.tacche(true))), tasto('Svuota tacche', fai((x) => x.lab.tacche(false)))),
       el('p', 'lab-nota', 'Sfiora i nemici senza toccarli: ogni nemico dà una tacca (non più di una ogni 2 s). «Riempi» le lascia a una dallo scatto: al prossimo sfioro parte la Grazia. Tacche, distanza e calo: Numeri → sopravvivenza → GRAZIA.tacche.'),
       titolo('Lacrime di Lumen: raggio di unione'),
-      riga(...([28, 40, 56, 72] as const).map((r) => tasto(`${r} px`, fai((x) => x.labUnioneLacrime(r)), progressione.ANIME.accorpa === r ? 'acceso piccolo' : 'piccolo'))),
+      riga(...([28, 40, 56, 72] as const).map((r) => tasto(`${r} px`, fai((x) => x.lab.unioneLacrime(r)), progressione.ANIME.accorpa === r ? 'acceso piccolo' : 'piccolo'))),
       el('p', 'lab-nota', 'Una lacrima che cade entro questa distanza da una ferma si unisce a lei: il valore si somma e la lacrima cambia dimensione e colore. Più grande = meno lacrime sul campo. Vale subito, per le lacrime che cadono da adesso, finché non ricarichi la pagina. Di serie 56 px (era 28; confermato da Edoardo, 11/11).'),
       titolo('Effetti pixelfx (vecchio contro nuovo)'),
-      riga(tasto(INTERRUTTORI.pixelfx ? 'Effetti pixelfx: sì' : 'Effetti pixelfx: no', fai((x) => x.labPixelfx(!INTERRUTTORI.pixelfx)), INTERRUTTORI.pixelfx ? 'acceso' : ''),
-        tasto(INTERRUTTORI.sepolturaPixelfx ? 'Sepoltura pixelfx: sì' : 'Sepoltura pixelfx: no', fai((x) => x.labSepolturaPixelfx(!INTERRUTTORI.sepolturaPixelfx)), INTERRUTTORI.sepolturaPixelfx ? 'acceso' : '')),
-      riga(tasto('Sepoltura qui', fai((x) => x.labVediEffetto('sepoltura'))), tasto('Eclissi qui', fai((x) => x.labVediEffetto('eclissi')))),
-      riga(...PIXELFX.pozza.raggi.map((r) => tasto(`Pozza ${r}`, fai((x) => x.labVediEffetto('pozza', r)), 'piccolo'))),
+      riga(tasto(INTERRUTTORI.pixelfx ? 'Effetti pixelfx: sì' : 'Effetti pixelfx: no', fai((x) => x.lab.pixelfx(!INTERRUTTORI.pixelfx)), INTERRUTTORI.pixelfx ? 'acceso' : ''),
+        tasto(INTERRUTTORI.sepolturaPixelfx ? 'Sepoltura pixelfx: sì' : 'Sepoltura pixelfx: no', fai((x) => x.lab.sepolturaPixelfx(!INTERRUTTORI.sepolturaPixelfx)), INTERRUTTORI.sepolturaPixelfx ? 'acceso' : '')),
+      riga(tasto('Sepoltura qui', fai((x) => x.lab.vediEffetto('sepoltura'))), tasto('Eclissi qui', fai((x) => x.lab.vediEffetto('eclissi')))),
+      riga(...PIXELFX.pozza.raggi.map((r) => tasto(`Pozza ${r}`, fai((x) => x.lab.vediEffetto('pozza', r)), 'piccolo'))),
       el('p', 'lab-nota', 'Di serie Pozza dell\'Acqua santa ed Eclissi (12 fotogrammi al secondo) usano gli sprite presi da pixelfx (a retino, a grandezza naturale); spento, quelli di sempre. La Sepoltura pixelfx è spenta di serie: si rifà dopo il rework del combattimento. Cambia solo il disegno: aree, danni e tempi restano uguali. I tasti mostrano l\'effetto accanto a te senza ferire nessuno: premili con l\'interruttore acceso e spento per confrontarli. La Pozza sceglie la misura più vicina all\'area vera. Vale finché non ricarichi la pagina. Numeri in Numeri → effetti → PIXELFX.'),
       titolo('Acquasantiera'),
-      riga(tasto('Pozza che cura qui', fai((x) => x.labPozzaCurativa()))),
+      riga(tasto('Pozza che cura qui', fai((x) => x.lab.pozzaCurativa()))),
       el('p', 'lab-nota', 'La pozza che nasce quando il sorso trova la fiaschetta piena: 4 s, cura il 3% della salute massima al secondo. Ferisciti (Immortale) e mettiti dentro.'),
       titolo('Stati a caso (vecchi, per confrontare)'),
-      riga(tasto(!INTERRUTTORI.statiCerti ? 'Stati a caso (vecchi): sì' : 'Stati a caso (vecchi): no', fai((x) => x.labStatiCerti(!INTERRUTTORI.statiCerti)), !INTERRUTTORI.statiCerti ? 'acceso' : '')),
+      riga(tasto(!INTERRUTTORI.statiCerti ? 'Stati a caso (vecchi): sì' : 'Stati a caso (vecchi): no', fai((x) => x.lab.statiCerti(!INTERRUTTORI.statiCerti)), !INTERRUTTORI.statiCerti ? 'acceso' : '')),
       el('p', 'lab-nota', 'Spento (di partenza) vale la regola del gioco: ogni colpo lascia lo stato, le zone e le abilità al massimo una volta al secondo sullo stesso nemico, dopo una reazione 3 s di quiete. Acceso torna la regola di prima: lo stato solo nel 10% dei colpi (5% per zone e abilità), reazioni con i numeri vecchi. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → stati → STATI_CERTI.'),
       titolo('Stati sui nemici vicini (due diversi = reazione)'),
-      riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.labStatoVicini(a))))),
+      riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto({ luce: 'Abbagliato', sacro: 'Consacrato', ombra: 'Maledetto', terra: 'Sepolto' }[a], fai((x) => x.lab.statoVicini(a))))),
       el('p', 'lab-nota', 'Per vederli lascia il gioco in corso (scheda Partita) e premi uno stato, poi un altro.'),
       titolo('Segnali sul bordo del campo'),
-      riga(tasto('Peccato: accendi', fai((x) => x.labPeccato(true))), tasto('Peccato: spegni', fai((x) => x.labPeccato(false)))),
+      riga(tasto('Peccato: accendi', fai((x) => x.lab.peccato(true))), tasto('Peccato: spegni', fai((x) => x.lab.peccato(false)))),
       titolo('Altro'),
       riga(e('grazia', 'Grazia'), e('vittoria', "Alba: vittoria", ''), e('morte', 'Morte', 'rosso')),
     ];
@@ -309,23 +310,23 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   function schedaOggetti(): HTMLElement[] {
     const p = partita();
     if (!p) return [el('p', 'lab-nota', 'Serve una partita: vai su Partita.')];
-    const liv = p.labLivelli();
+    const liv = p.lab.livelli();
     const livelloArma = (a: (typeof ARMI_COMUNI)[number]): number => liv.armi.find((x) => x.arma === a)?.livello ?? 0;
     const tutteLeArme = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
-    const am = p.labAmuletiSnapshot();
-    const unite = p.labStatoUnioni().unite;
+    const am = p.lab.amuletiSnapshot();
+    const unite = p.lab.statoUnioni().unite;
     return [
       titolo('Lanterna e Pala verso dove cammini (vecchio, per confrontare)'),
       riga(tasto(!INTERRUTTORI.mira ? 'Lanterna e Pala verso dove cammini: sì' : 'Lanterna e Pala verso dove cammini: no', fai(() => { INTERRUTTORI.mira = !INTERRUTTORI.mira; }), !INTERRUTTORI.mira ? 'acceso' : '')),
       el('p', 'lab-nota', 'Spento (di partenza) vale la regola del gioco: l\'arco della Lanterna si gira verso il nemico più vicino entro la luce (260 px) e l\'impatto della Pala cade sul nemico più vicino entro 150 px; senza nemici vicini colpiscono verso dove cammini. Acceso colpiscono sempre verso dove cammini, come prima. Vale subito e anche per le partite dopo, finché non ricarichi la pagina. Numeri in Numeri → armi → MIRA.'),
       titolo('Armi (si sale di livello; per toglierle riavvia la partita)'),
-      ...tutteLeArme.map((a) => riga(el('b', '', `${a.nome} · ${livelloArma(a) || '—'}`), tasto('+1', fai((x) => x.labArma(a, livelloArma(a) + 1)), 'piccolo'), tasto('Liv. 8', fai((x) => x.labArma(a, 8)), 'piccolo'))),
+      ...tutteLeArme.map((a) => riga(el('b', '', `${a.nome} · ${livelloArma(a) || '—'}`), tasto('+1', fai((x) => x.lab.arma(a, livelloArma(a) + 1)), 'piccolo'), tasto('Liv. 8', fai((x) => x.lab.arma(a, 8)), 'piccolo'))),
       titolo('Doni passivi'),
-      ...PASSIVI.map((q) => riga(el('b', '', `${q.nome} · ${liv.doni[q.id] || '—'}`), tasto('−1', fai((x) => x.labDono(q.id, (liv.doni[q.id] || 0) - 1)), 'piccolo'), tasto('+1', fai((x) => x.labDono(q.id, (liv.doni[q.id] || 0) + 1)), 'piccolo'), tasto('Max', fai((x) => x.labDono(q.id, q.massimo)), 'piccolo'))),
+      ...PASSIVI.map((q) => riga(el('b', '', `${q.nome} · ${liv.doni[q.id] || '—'}`), tasto('−1', fai((x) => x.lab.dono(q.id, (liv.doni[q.id] || 0) - 1)), 'piccolo'), tasto('+1', fai((x) => x.lab.dono(q.id, (liv.doni[q.id] || 0) + 1)), 'piccolo'), tasto('Max', fai((x) => x.lab.dono(q.id, q.massimo)), 'piccolo'))),
       titolo('Amuleti del Rosario'),
-      ...AMULETI.map((a) => riga(el('b', '', `${a.nome} (${a.grani})`), tasto(am.posseduti.includes(a.id) ? 'Presente' : 'Aggiungi', fai((x) => x.labAmuleto(a.id, !am.posseduti.includes(a.id))), am.posseduti.includes(a.id) ? 'acceso piccolo' : 'piccolo'))),
+      ...AMULETI.map((a) => riga(el('b', '', `${a.nome} (${a.grani})`), tasto(am.posseduti.includes(a.id) ? 'Presente' : 'Aggiungi', fai((x) => x.lab.amuleto(a.id, !am.posseduti.includes(a.id))), am.posseduti.includes(a.id) ? 'acceso piccolo' : 'piccolo'))),
       titolo(`Unioni (Prepara: arma al ${LIVELLO_ARMA_UNIONE} e dono al massimo, poi apri un reliquiario)`),
-      ...UNIONI.map((u) => riga(el('b', '', u.nome), tasto('Prepara', fai((x) => x.labUnione(u.id, false)), 'piccolo'), tasto(unite.includes(u.id) ? 'Unita' : 'Unisci', fai((x) => x.labUnione(u.id, true)), unite.includes(u.id) ? 'acceso piccolo' : 'piccolo'))),
+      ...UNIONI.map((u) => riga(el('b', '', u.nome), tasto('Prepara', fai((x) => x.lab.unione(u.id, false)), 'piccolo'), tasto(unite.includes(u.id) ? 'Unita' : 'Unisci', fai((x) => x.lab.unione(u.id, true)), unite.includes(u.id) ? 'acceso piccolo' : 'piccolo'))),
     ];
   }
 
@@ -379,7 +380,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
           void navigator.clipboard?.writeText(copia.value).catch(() => {});
         }),
         tasto('Azzera tutto', () => { for (const [v] of modifiche()) v.padre[v.chiave] = v.originale; scriviSalvati({}); disegna(); }, 'rosso'),
-        tasto('Riavvia la partita', () => { const p = partita(); if (p) { mostra(false); gioco.scene.start('Gioco', { pg: p.labStato().pg }); } }),
+        tasto('Riavvia la partita', () => { const p = partita(); if (p) { mostra(false); gioco.scene.start('Gioco', { pg: p.lab.stato().pg }); } }),
       ),
       copia,
       elenco,
@@ -402,26 +403,26 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       ),
       titolo(p ? 'In partita' : 'In partita (serve una partita)'),
       riga(
-        vai('Pausa', () => p?.labPausa()),
-        vai('Scelta del dono', () => p?.labSceltaDono()),
-        vai('Reliquiario', () => p?.labReliquiario()),
-        vai("Scoperta di un'Unione", () => p?.labScoperta()),
-        vai("Fine: l'alba", () => p?.labEvento('vittoria')),
-        vai('Fine: sconfitta', () => p?.labEvento('morte')),
+        vai('Pausa', () => p?.lab.pausa()),
+        vai('Scelta del dono', () => p?.lab.sceltaDono()),
+        vai('Reliquiario', () => p?.lab.reliquiario()),
+        vai("Scoperta di un'Unione", () => p?.lab.scoperta()),
+        vai("Fine: l'alba", () => p?.lab.evento('vittoria')),
+        vai('Fine: sconfitta', () => p?.lab.evento('morte')),
       ),
       titolo(p ? 'Pausa' : 'Pausa (serve una partita)'),
       riga(
-        vai('Build', () => p?.labPausa('build')),
-        vai('Rosario', () => p?.labPausa('rosario')),
-        vai('Stati', () => p?.labPausa('stati')),
-        vai('Opzioni', () => p?.labPausa('opzioni')),
+        vai('Build', () => p?.lab.pausa('build')),
+        vai('Rosario', () => p?.lab.pausa('rosario')),
+        vai('Stati', () => p?.lab.pausa('stati')),
+        vai('Opzioni', () => p?.lab.pausa('opzioni')),
       ),
       riga(
-        vai('Caso pieno', () => p?.labPausaPiena()),
-        vai('Peccato', () => p?.labPausaPeccato()),
-        vai('Prima partita', () => p?.labPausaPrima()),
-        vai('Sopra i doni', () => p?.labPausaSopra(false)),
-        vai('Sopra il reliquiario', () => p?.labPausaSopra(true)),
+        vai('Caso pieno', () => p?.lab.pausaPiena()),
+        vai('Peccato', () => p?.lab.pausaPeccato()),
+        vai('Prima partita', () => p?.lab.pausaPrima()),
+        vai('Sopra i doni', () => p?.lab.pausaSopra(false)),
+        vai('Sopra il reliquiario', () => p?.lab.pausaSopra(true)),
       ),
       el('p', 'lab-nota', 'Il pannello si chiude da solo per mostrarti la schermata. Riaprilo con LAB. Le ultime prove cambiano la partita in corso.'),
     ];
@@ -455,7 +456,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(tasto(contatoreAcceso() ? 'Contatore: acceso' : 'Contatore: spento', () => { accendiContatore(gioco, !contatoreAcceso()); ridisegna(); }, contatoreAcceso() ? 'acceso' : '')),
       el('p', 'lab-nota', 'Resta acceso in tutte le schermate, anche nella selezione: media e peggiore dell\'ultimo secondo. Le prove qui sotto servono a capire cosa pesa sul telefono.'),
       riga(
-        tasto(foriSpenti ? 'Fori nel buio: spenti' : 'Fori nel buio: accesi', () => { foriSpenti = !foriSpenti; partita()?.labForiBuio(!foriSpenti); ridisegna(); }, foriSpenti ? 'acceso' : ''),
+        tasto(foriSpenti ? 'Fori nel buio: spenti' : 'Fori nel buio: accesi', () => { foriSpenti = !foriSpenti; partita()?.lab.foriBuio(!foriSpenti); ridisegna(); }, foriSpenti ? 'acceso' : ''),
       ),
       titolo('Misure'),
       el('p', 'lab-nota', 'Quello che il telefono dichiara adesso. Tienilo in verticale e, nell\'app o nel link in Home, senza barre visibili.'),
@@ -496,7 +497,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Sblocca armi e doni nuovi', () => { const x = carica(); x.oggetti = SBLOCCHI_OGGETTI.map((o) => o.id); salva(x); ridisegna(); }),
         tasto('Sblocca le Unioni', () => { const x = carica(); x.unioni = true; salva(x); ridisegna(); }),
         tasto('Vinci una veglia', () => { const x = carica(); x.vittorie++; salva(x); ridisegna(); }),
-        tasto('Dimentica le Unioni scoperte e unite', () => { const x = carica(); x.unioniScoperte = []; x.unioniUnite = []; salva(x); partita()?.labDimenticaUnioni(); ridisegna(); }),
+        tasto('Dimentica le Unioni scoperte e unite', () => { const x = carica(); x.unioniScoperte = []; x.unioniUnite = []; salva(x); partita()?.lab.dimenticaUnioni(); ridisegna(); }),
         tasto('Seconda candela', () => { const x = carica(); x.secondaCandela = true; x.secondaCandelaSpenta = false; salva(x); ridisegna(); }),
       ),
       titolo('Ceri votivi'),
@@ -514,7 +515,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   setInterval(() => {
     if (pannello.hidden) return;
     const p = partita();
-    const s = p?.labStato();
+    const s = p?.lab.stato();
     if (s) stato.textContent = `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · urne ${s.urne} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS`;
   }, 500);
 }

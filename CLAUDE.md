@@ -127,7 +127,7 @@ Il gioco esiste in **due versioni sole**, una per ramo, ognuna con il suo link:
 
 Edoardo è l'unico sviluppatore: non può rigiocare tutta la notte per vedere una cosa sola. Sul link `/prova/` (e in `npm run dev`, mai su `main`) c'è il **Laboratorio**: il pulsante «LAB» sul bordo sinistro apre un pannello (`src/sistema/laboratorio.ts`) con schede per partita (minuto, livello, immortale, nemici), eventi (élite, Seth, orde, drop, stati), oggetti (armi, doni, amuleti), numeri (ogni numero di `src/data/` si cambia al volo; «Copia le modifiche per Claude»), schermate e salvataggio.
 
-**Regola per ogni nuova funzione**: aggiungi i comandi nel Laboratorio (metodi `lab…` in `Gioco.ts`, scheda in `laboratorio.ts`) così Edoardo la raggiunge subito. Ogni consegna dice «apri LAB → scheda X → tocca Y per vedere Z». Le funzioni nuove nascono con il loro punto di accesso nel Laboratorio, non solo nelle schermate.
+**Regola per ogni nuova funzione**: aggiungi i comandi nel Laboratorio (metodi in `src/sistema/lab-partita.ts`, che si chiamano con `partita.lab.…`; scheda in `laboratorio.ts`) così Edoardo la raggiunge subito. Ogni consegna dice «apri LAB → scheda X → tocca Y per vedere Z». Le funzioni nuove nascono con il loro punto di accesso nel Laboratorio, non solo nelle schermate.
 
 ## Revisioni con gli artifact
 
