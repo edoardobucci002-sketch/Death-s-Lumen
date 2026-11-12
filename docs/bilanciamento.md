@@ -40,6 +40,38 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 12/11 — Confronto per il pivot (solo misure, nessun numero di gioco cambia)
+
+Dato di partenza per la fetta verticale del ramo `hades`. Tre misure nuove della simulazione, contate su ogni nemico ucciso (non su quelli ancora vivi alla fine della notte o alla morte del personaggio):
+
+- **morti senza reazione**: il nemico non ha mai subito una reazione (Eclissi, Rivelazione, Esorcismo, Interramento) in tutta la sua vita; per tutti i nemici, e a parte per bruti (i bruti élite contano tra le élite), élite e Seth;
+- **morti senza stato**: il nemico è morto senza aver mai avuto uno stato (Abbagliato, Consacrato, Maledetto, Sepolto);
+- **tempo di vita**: dalla comparsa (appena fuori dallo schermo) alla morte, in secondi; minimo, mediana e 90° percentile, per fase della notte. Il nemico conta nella fase in cui **muore** (minuti 0–5, 5–10, 10–15).
+
+**Controllo.** `npm run sim -- 3 tutti`, Cappella vuota e completa, semi 1001–1003, build di f352417 contro quella con le misure: 24 notti, 6246 campi confrontati, **0 differenze**. Anche le simulazioni da 12 notti ridanno le notti della voce dell'11/11 (vittorie 32/48 e 40/48, uguali personaggio per personaggio).
+
+**Simulazione** (`npm run sim -- 12 tutti`, Cappella vuota e completa, semi 1001–1012, Stati certi accesi come da regola; 48 notti per condizione, l'incertezza è di circa ±12 punti). Tra parentesi i nemici uccisi in 12 notti.
+
+| Cappella | Personaggio | Vittorie | Morti senza reazione: tutti | bruti | élite | Seth | Morti senza stato | Vita 0–5: min / mediana / 90° (s) | Vita 5–10 | Vita 10–15 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| vuota | Lampionaio | 5/12 | 62% (295 764) | 3% (23 390) | 11% (127) | 0% (12) | 8% | 0,0 / 1,5 / 6,0 | 0,0 / 0,8 / 2,6 | 0,0 / 0,9 / 3,3 |
+| vuota | Becchino | 6/12 | 69% (396 160) | 8% (30 350) | 21% (154) | 0% (16) | 9% | 0,0 / 1,3 / 4,4 | 0,0 / 0,8 / 2,4 | 0,0 / 0,8 / 3,4 |
+| vuota | Badessa | 11/12 | 75% (530 113) | 18% (42 351) | 19% (186) | 0% (23) | 10% | 0,0 / 1,2 / 3,3 | 0,0 / 0,7 / 2,2 | 0,0 / 0,8 / 4,1 |
+| vuota | Strega | 10/12 | 66% (561 085) | 5% (46 919) | 14% (179) | 0% (22) | 13% | 0,0 / 0,9 / 3,2 | 0,0 / 0,6 / 1,8 | 0,0 / 0,8 / 3,3 |
+| **vuota** | **tutti** | **32/48** | **69%** (1 783 122) | **9%** (143 010) | **16%** (646) | **0%** (73) | **11%** | 0,0 / 1,2 / 3,9 | 0,0 / 0,7 / 2,2 | 0,0 / 0,8 / 3,6 |
+| completa | Lampionaio | 9/12 | 62% (374 871) | 10% (36 451) | 18% (174) | 0% (20) | 12% | 0,0 / 1,6 / 5,8 | 0,0 / 0,9 / 3,7 | 0,0 / 1,1 / 4,1 |
+| completa | Becchino | 10/12 | 60% (394 971) | 7% (37 197) | 22% (172) | 0% (21) | 14% | 0,0 / 1,4 / 4,8 | 0,0 / 0,9 / 3,1 | 0,0 / 1,2 / 4,7 |
+| completa | Badessa | 10/12 | 55% (532 691) | 7% (45 063) | 17% (183) | 0% (22) | 10% | 0,0 / 1,0 / 2,8 | 0,0 / 0,6 / 2,3 | 0,0 / 0,9 / 4,2 |
+| completa | Strega | 11/12 | 54% (603 145) | 6% (61 715) | 20% (184) | 0% (23) | 14% | 0,0 / 0,9 / 3,3 | 0,0 / 0,5 / 1,9 | 0,0 / 0,7 / 2,7 |
+| **completa** | **tutti** | **40/48** | **57%** (1 905 678) | **7%** (180 426) | **19%** (713) | **0%** (86) | **13%** | 0,0 / 1,1 / 3,9 | 0,0 / 0,7 / 2,6 | 0,0 / 0,9 / 3,8 |
+
+- **La maggior parte dei nemici muore senza reazioni**: 69% a Cappella vuota, 57% a completa. Le reazioni toccano quasi tutti i nemici grossi (bruti 91–93%, élite 81–84%, ogni Seth) e circa un nemico piccolo su tre.
+- **Quasi nessuno muore senza stati** (11–13%): gli stati arrivano a quasi tutti, le reazioni no. Tra bruti, élite e Seth i morti senza stato sono quasi zero (vuota: 1 bruto e 1 élite in 48 notti; completa: 357 bruti e 15 élite).
+- **I nemici vivono pochissimo**: mediana tra 0,5 e 1,6 s, 90° percentile sotto i 6 s in ogni fase; nei minuti 5–10 la vita è la più corta (mediana 0,7 s). In una notte intera muoiono circa 45–50 mila nemici, con un centinaio in campo alla volta.
+- **Il minimo è sempre 0,0 s**: muore nel passo stesso in cui compare il 2–4% dei nemici; **entro mezzo secondo dalla comparsa ne muore il 20–35%** (vuota: 21% nei minuti 0–5, 32% nei 5–10, 30% nei 10–15; completa: 22%, 35%, 26%), cioè quando sono ancora appena fuori dallo schermo.
+- Il tempo di vita parte dalla comparsa, non da quando il nemico entra nello schermo; i nemici ancora vivi a fine notte non sono contati. Dettagli per notte in `prove/sim.json` (`mortiPerCategoria`, `vitaPerFase` in decimi di secondo).
+- Vincoli: reggono (stesse notti dell'11/11). Il tag `survivor-v1` non è stato creato: lo decide Edoardo.
+
 ### 11/11 — Ritocchi alle build e quattro Unioni nuove (decisioni di Edoardo)
 
 Voce 1: Incensiere dell'ultima ora, nubi che rallentano almeno del 50%, in tutto non più del 60%; Falce di Seth, maledetti sotto il 30% (normali sempre 15%); Corvo, a ogni beccata le anime a terra entro 150 px dal nemico beccato (prima 1–4 anime lontane; il livello 3 rimasto vuoto dà +4 danno, 33 → 37, e il livello 6 sale di +7 invece di +11: segnaposto di Claude); Lama di luce, i suoi colpi ignorano la quiete. Il Candelabro funebre non cambia (la scia lasciava già Abbagliato). Voce 2: Lapide inchiodata (3 s a terra, seppellisce chi la tocca entro 36 px), Rosario dei vespri (1 ripartenza per lancio), Stormo del lutto, Sudario (fino a 6 s). Tutti i valori *da rivedere*. Simulazione dopo le due voci, stesse colonne della voce 3 e dei tetti (`npm run sim -- 12 tutti`, Cappella vuota e completa, semi 1001–1012).
