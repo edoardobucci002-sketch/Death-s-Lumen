@@ -2,6 +2,7 @@
  * Stanze: il gioco a stanze (pivot del 12/11), accanto al survivor e raggiungibile solo dal link di prova.
  * Passo 2 della fetta verticale: una stanza chiusa da muri, il Lampionaio che cammina con il joystick o con WASD,
  * la telecamera che lo tiene al centro, luce e buio come nel survivor.
+ * Passo 3: l'attacco a tasto con la Lanterna (src/sistema/attacco.ts): tasto in basso a destra sul telefono, clic e J su computer.
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
  * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
  * Riprendi e Menu). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
@@ -14,10 +15,12 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { STANZA } from '../data/stanze';
+import { ATTACCO, STANZA } from '../data/stanze';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
-import { PROFONDITA } from '../sistema/effetti';
+import { Effetti, PROFONDITA } from '../sistema/effetti';
+import { AttaccoATasto } from '../sistema/attacco';
+import { COLPI } from '../data/armi';
 import { audioAttivo, impostaAudio } from '../sistema/audio';
 import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 import { areaCamminabile, creaStanza } from '../sistema/stanza';
@@ -57,6 +60,11 @@ export class Stanze extends Phaser.Scene {
   private pannelloPausa!: HTMLElement;
   private avvisoRuota!: HTMLElement;
   lineaJoystick!: HTMLElement; // la linea invisibile al centro: il LAB la può mostrare
+  attacco!: AttaccoATasto;
+  private effetti!: Effetti;
+  private guardaX = 1; // dove guarda il personaggio (l'ultima direzione in cui ha camminato), lunga 1
+  private guardaY = 0;
+  private readonly puntoCorpo = { x: 0, y: 0 }; // riusato: niente allocazioni nel ciclo di gioco
 
   constructor() {
     super('Stanze');
@@ -70,6 +78,8 @@ export class Stanze extends Phaser.Scene {
     // la scena si riusa: tutto si azzera qui
     this.pausa = this.pausaLab = this.ruota = this.versoSinistra = this.inMoto = false;
     this.accumulo = this.attesaTremolio = 0;
+    this.guardaX = 1;
+    this.guardaY = 0;
     this.fiamma = 1;
     this.casoLuce = new Caso(STANZA.seme);
     this.velocita = BASE.velocita * (1 + this.pg.velocita);
@@ -88,11 +98,17 @@ export class Stanze extends Phaser.Scene {
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     this.alone = this.add.image(0, 0, CHIAVI_ALONE[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD);
+    this.effetti = new Effetti(this);
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
-    this.comandi = new Comandi(interfaccia, { metaSinistra: true });
+    this.comandi = new Comandi(interfaccia, { metaSinistra: true, mouseAttacca: true });
     this.creaInterfaccia(interfaccia);
+    this.attacco = new AttaccoATasto(this, this.radice, this.effetti, () => this.fermo(), (cx, cy) => {
+      const px = misureHud().px, cam = this.cameras.main;
+      return { x: cam.scrollX + cx / px, y: cam.scrollY + cy / px };
+    }, () => this.corpo());
+    this.disponi();
     this.controllaVerso();
 
     this.scale.on('resize', this.ridimensiona, this);
@@ -105,6 +121,7 @@ export class Stanze extends Phaser.Scene {
       this.game.events.off('sfondo', this.apriPausa, this);
       window.removeEventListener('keydown', this.tasto);
       this.comandi.distruggi();
+      this.attacco.distruggi();
       this.radice.remove();
     });
     this.disegna();
@@ -121,7 +138,15 @@ export class Stanze extends Phaser.Scene {
       this.passo(PASSO);
       this.accumulo -= PASSO_MS;
     }
+    this.effetti.aggiorna(delta / 1000, this.x, this.y - COLPI.corpo);
     this.disegna();
+  }
+
+  /** Il centro del corpo del personaggio, da cui partono i colpi (sempre lo stesso oggetto). */
+  private corpo(): { x: number; y: number } {
+    this.puntoCorpo.x = this.x;
+    this.puntoCorpo.y = this.y - COLPI.corpo;
+    return this.puntoCorpo;
   }
 
   /** Il gioco è fermo: pausa, Laboratorio aperto o telefono da ruotare. */
@@ -139,6 +164,7 @@ export class Stanze extends Phaser.Scene {
     if (this.pausa) return;
     this.pausa = true;
     this.comandi.lascia();
+    this.attacco.lascia();
     this.anims.pauseAll();
     this.pannelloPausa.hidden = false;
   }
@@ -161,10 +187,16 @@ export class Stanze extends Phaser.Scene {
     this.inMoto = dx !== 0 || dy !== 0;
     if (dx < 0) this.versoSinistra = true;
     else if (dx > 0) this.versoSinistra = false;
+    if (this.inMoto) {
+      const l = Math.hypot(dx, dy);
+      this.guardaX = dx / l;
+      this.guardaY = dy / l;
+    }
     // i muri: i piedi restano dentro l'area camminabile
     const a = areaCamminabile();
     this.x = Phaser.Math.Clamp(this.x + dx * this.velocita * dt, a.x0, a.x1);
     this.y = Phaser.Math.Clamp(this.y + dy * this.velocita * dt, a.y0, a.y1);
+    this.attacco.aggiorna(dt, this.guardaX, this.guardaY);
   }
 
   /**
@@ -176,8 +208,11 @@ export class Stanze extends Phaser.Scene {
     const px = Math.round(this.x), py = Math.round(this.y);
     const cam = this.cameras.main;
     cam.setScroll(px - Math.floor(w / 2), py - Math.floor(h / 2));
-    this.giocatore.setPosition(px, py).setFlipX(this.versoSinistra);
-    this.anima(this.inMoto && !this.fermo() ? 'walk' : 'idle');
+    // durante il colpo il personaggio guarda dove colpisce e si sporge un poco (segnaposto dell'animazione attack)
+    const colpo = this.attacco.posa > 0, sl = colpo ? ATTACCO.slancio : 0;
+    this.giocatore.setPosition(px + Math.round(this.attacco.dx * sl), py + Math.round(this.attacco.dy * sl)).setFlipX(colpo ? this.attacco.dx < 0 : this.versoSinistra);
+    this.anima(colpo ? 'attack' : this.inMoto && !this.fermo() ? 'walk' : 'idle');
+    this.attacco.disegna();
     const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
     const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);
     this.buio.setTexture(CHIAVI_BUIO[this.fiamma]).setPosition(bx, by);
@@ -204,6 +239,7 @@ export class Stanze extends Phaser.Scene {
     this.avvisoRuota.hidden = !verticale;
     if (verticale) {
       this.comandi.lascia();
+      this.attacco?.lascia();
       this.anims.pauseAll();
     } else if (!this.fermo()) this.anims.resumeAll();
   }
@@ -275,6 +311,7 @@ export class Stanze extends Phaser.Scene {
   private disponi(): void {
     if (!this.radice) return;
     const m = misureHud(), b = bordiHud(m), { lato, ingrandimento: z } = STANZA.pausa;
+    this.attacco?.disponi(m, b);
     this.pannelloPausa.style.backgroundSize = `${4 * m.px}px ${4 * m.px}px`;
     // pulsante piccolo, ma l'area di tocco arriva comunque a TOCCO_MINIMO punti (regola dei 44 punti)
     posa(this.tastoPausa, m.W - b.d - lato * z, b.a, m);
@@ -291,6 +328,8 @@ export class Stanze extends Phaser.Scene {
     if (e.code === 'KeyP' || e.code === 'Escape') {
       if (this.pausa) this.riprendi();
       else this.apriPausa();
+    } else if (e.code === 'KeyJ') {
+      if (!this.fermo()) this.attacco.automatico();
     } else if (e.code === 'KeyM') {
       impostaAudio(!audioAttivo());
     } else {

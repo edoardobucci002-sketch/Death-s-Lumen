@@ -36,3 +36,21 @@ export const STANZA = {
     ombra: '#130f0b',
   },
 } as const;
+
+/**
+ * Passo 3 della fetta: l'attacco a tasto con l'arma iniziale (la Lanterna del Lampionaio).
+ * Raggio, ampiezza e danno partono da quelli della Lanterna al livello 1 del survivor; la ricarica è più svelta,
+ * perché ora si attacca a mano. Tutti i valori sono da rivedere: con i 5 livelli del pivot i numeri si ridistribuiscono.
+ */
+export const ATTACCO = {
+  ricarica: 0.45, // secondi tra due colpi (la Lanterna automatica del survivor: 0,8)
+  raggio: 136, // quanto arriva l'arco di luce, dal corpo del personaggio
+  ampiezza: 132, // gradi dell'arco
+  danno: 18, // conta dal passo 4, quando arrivano i nemici
+  posa: 0.15, // secondi in cui il personaggio resta girato verso il colpo (segnaposto dell'animazione attack)
+  slancio: 3, // pixel di cui il personaggio si sporge verso il colpo durante la posa (segnaposto)
+  // tasto d'attacco sul telefono, in basso a destra (stile Brawl Stars): disegnato dal codice finché non c'è quello di Edoardo
+  tasto: { raggio: 22, ingrandimento: 2, margine: 14 }, // raggio in pixel disegnati; margine dal bordo sicuro, in pixel di gioco
+  trascina: { raggio: 52, zonaMorta: 0.3 }, // punti dello schermo: sotto la zona morta il tocco è un tocco (mira automatica)
+  mira: { colore: '#e3913a', spessore: 2 }, // la mira a terra mentre si trascina
+} as const;

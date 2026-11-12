@@ -15,7 +15,7 @@ import type { Gioco } from '../scene/Gioco';
 import type { LabPartita } from './lab-partita';
 import type { Menu } from '../scene/Menu';
 import type { Stanze } from '../scene/Stanze';
-import type { PuntoStanza } from './lab-stanze';
+import type { DirezioneColpo, PuntoStanza } from './lab-stanze';
 import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
 import { PASSIVI } from '../data/doni';
 import { AMULETI } from '../data/rosario';
@@ -278,6 +278,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Prova i muri: porta il Lampionaio'),
       riga(vai('centro', 'Al centro'), vai('alto', 'Al muro in alto'), vai('basso', 'Al muro in basso'), vai('sinistra', 'Al muro a sinistra'), vai('destra', 'Al muro a destra'), vai('angolo', "Nell'angolo")),
       el('p', 'lab-nota', 'Poi chiudi il LAB e spingi contro il muro: il Lampionaio deve fermarsi. Le misure della stanza sono in Numeri → stanze (dopo averle cambiate premi Ricomincia).'),
+      titolo('Attacco (Lanterna a tasto)'),
+      riga(el('span', 'lab-stato', `Colpi partiti: ${s.colpi}`), ...(['sinistra', 'destra', 'su', 'giu', 'auto'] as DirezioneColpo[]).map((d) => tasto(d === 'auto' ? 'Automatico' : `Verso ${d === 'giu' ? 'giù' : d}`, () => { st.lab.attacca(d); mostra(false); }))),
+      el('p', 'lab-nota', 'Il colpo parte appena chiudi il LAB. Sul telefono: tocco breve sul tasto in basso a destra = colpo automatico (oggi dove guarda il Lampionaio: i nemici arrivano al passo 4); trascina il tasto per mirare e lascia per colpire. Su computer: clic sinistro verso il puntatore, J automatico. Ricarica, raggio e ampiezza in Numeri → stanze → ATTACCO.'),
       titolo('Joystick'),
       riga(tasto(st.lab.lineaVisibile() ? 'Linea al centro: visibile' : 'Linea al centro: invisibile', () => { st.lab.linea(!st.lab.lineaVisibile()); ridisegna(); }, st.lab.lineaVisibile() ? 'acceso' : '')),
       el('p', 'lab-nota', 'Il joystick di movimento nasce solo a sinistra della linea e la sua base non la supera; a destra della linea il dito non muove il Lampionaio (sarà il joystick d\'attacco).'),

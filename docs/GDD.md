@@ -750,6 +750,21 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Mattoni della facciata | 32 × 16 px | sfalsati di mezzo mattone a ogni riga |
 | Ombra del muro | 10 px | fascia scura sul pavimento ai piedi della facciata |
 
+**L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`). Il Lampionaio usa la Lanterna a mano: il colpo è l'arco di luce del survivor, davanti a lui nella direzione scelta. Per ora non ferisce nessuno: i nemici arrivano al passo 4.
+
+- **Telefono** (stile Brawl Stars): tasto tondo in basso a destra, nella metà destra dello schermo. Un tocco breve colpisce il nemico più vicino; finché non ci sono nemici, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando il tasto compare a terra la mira (il contorno dell'arco, nel colore del personaggio) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro del tasto prima di lasciare, il colpo torna automatico. Il tasto è disegnato dal codice (segnaposto) e si spegne durante la ricarica.
+- **Computer**: clic sinistro verso il puntatore, J verso il nemico più vicino; il mouse non fa comparire il joystick (si cammina con WASD e le frecce) e il tasto tondo non si vede.
+- Un colpo chiesto durante la ricarica parte appena la ricarica finisce. Durante il colpo il Lampionaio si gira verso il colpo e si sporge di qualche pixel (segnaposto dell'animazione `attack`, che il gioco usa da sola quando Edoardo la disegna).
+
+| Valore dell'attacco | Numero | Note |
+| --- | --- | --- |
+| Ricarica | 0,45 s | la Lanterna automatica del survivor: 0,8 s (*da rivedere*) |
+| Arco | raggio 136 px, ampiezza 132° | come la Lanterna al livello 1 del survivor (*da rivedere*) |
+| Danno | 18 | conta dal passo 4 (*da rivedere*) |
+| Posa del colpo | 0,15 s, slancio 3 px | segnaposto dell'animazione `attack` |
+| Tasto d'attacco | raggio 22 pixel disegnati, ingrandito 2 volte, 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
+| Trascinamento | 52 punti per la mira piena, zona morta 30% | sotto la zona morta il tocco è automatico |
+
 ## 12. Da fare e da decidere
 
 Il piano di lavoro, le idee non ancora decise (altri scenari, suoni e musica, lingua, stile dei nemici, torce nel cimitero) e il redesign sono in [roadmap.md](roadmap.md).

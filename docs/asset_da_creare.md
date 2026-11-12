@@ -8,11 +8,11 @@ Per la fetta verticale **non serve disegnare niente in anticipo**: ogni pezzo na
 
 | Asset | Dove serve | Stato / segnaposto |
 | --- | --- | --- |
-| **Lampionaio: animazione `attack`** (nello sprite in gioco, come tag Aseprite; poi `hurt` e `death`) | attacco a tasto della Lanterna (passo 3 della fetta) | segnaposto dal codice; misure da fissare al passo 3 |
+| **Lampionaio: animazione `attack`** (nello sprite in gioco, come tag Aseprite; poi `hurt` e `death`) | attacco a tasto della Lanterna | oggi il personaggio si gira verso il colpo e si sporge di 3 px per 0,15 s; quando nel file c'è il tag `attack` il gioco lo usa da solo. Il colpo dura 0,15 s e parte ogni 0,45 s al massimo: l'animazione deve stare in quel tempo (o si rivede la posa). Stessa tela dello sprite in gioco, guarda a destra |
 | **Il Ricaduto** (`walk`, `attack` = il graffio con le braccia alzate come avviso, `death`, e il ritorno in vita) e **il Cantore** (`walk`, `attack` = il canto che fa da avviso, `death`, più il grumo di Lumen spento) | passo 4 della fetta | segnaposto dal codice; misure da fissare al passo 4 |
 | **La stanza**: pavimento, muri, porte | passi 2 e 6 della fetta | pavimento e muri: segnaposto dal codice (`src/sistema/stanza.ts`), misure in `src/data/stanze.ts` e nel GDD: lastre da 64 px, facciata del muro in alto alta 96 px a mattoni da 32 × 16, muri ai lati e in basso spessi 32 px, pavimento 13 × 7 lastre, 832 × 448 (alla Isaac; *da rivedere*). Le porte al passo 6 |
 | **Simboli delle porte**: una per affinità (Luce, Sacro, Ombra, Terra) e una per il dono | porte che mostrano la ricompensa (passo 6) | segnaposto dal codice |
-| **Tasto d'attacco** e la disposizione dei tasti in orizzontale | HUD del telefono in orizzontale (passo 3) | segnaposto dal codice; misure dopo la prova sul S25 |
+| **Tasto d'attacco** (tondo, in basso a destra) e il **pulsante della pausa** in alto a destra | HUD del telefono in orizzontale | segnaposto dal codice: tasto d'attacco tondo di 46 pixel disegnati (raggio 22) ingrandito 2 volte, con una versione spenta per la ricarica (oggi il codice lo scurisce); pausa di 14 × 14 ingrandita 2 volte. Misure da confermare dopo la prova sul S25 |
 | **Icona del Calice riverso** (`ICONE/Calice_riverso/Icona_Calice_riverso_V1.aseprite`, 24×24) | il dono che oggi si chiama Lacrima di lumen (+1 sorso), con il nome nuovo deciso il 12/11 | oggi c'è `Icona_Lacrima_di_lumen`; il file vecchio non si tocca, il nome nel codice cambia quando il nome nuovo entra nel gioco |
 
 ## Survivor

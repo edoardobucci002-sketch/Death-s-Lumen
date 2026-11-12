@@ -813,6 +813,19 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   ];
   stessiNomi('Stanza', t, RIGHE_STANZA.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_STANZA) conRiga(t, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+
+  const ta = tabella('| Valore dell\'attacco | Numero |');
+  const AT = SZ.ATTACCO;
+  const RIGHE_ATTACCO = [
+    ['Ricarica', '{} s', AT.ricarica],
+    ['Arco', 'raggio {} px, ampiezza {}°', AT.raggio, AT.ampiezza],
+    ['Danno', '{}', AT.danno],
+    ['Posa del colpo', '{} s, slancio {} px', AT.posa, AT.slancio],
+    ['Tasto d\'attacco', 'raggio {} pixel disegnati, ingrandito {} volte, {} px dal bordo sicuro', AT.tasto.raggio, AT.tasto.ingrandimento, AT.tasto.margine],
+    ['Trascinamento', '{} punti per la mira piena, zona morta {}%', AT.trascina.raggio, pct(AT.trascina.zonaMorta)],
+  ];
+  stessiNomi('Attacco', ta, RIGHE_ATTACCO.map((r) => r[0]));
+  for (const [nome, modello, ...attesi] of RIGHE_ATTACCO) conRiga(ta, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 }
 
 fs.rmSync(tmp, { recursive: true, force: true });

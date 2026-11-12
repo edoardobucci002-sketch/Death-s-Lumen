@@ -1060,6 +1060,51 @@ for (const [nome, disp] of [
       else if (base.destra > W / 2 + 1) errori.push(`la base del joystick supera la linea (bordo destro a ${Math.round(base.destra)}, linea a ${W / 2})`);
       nota += ', linea dei joystick sì';
     }
+    // attacco a tasto (passo 3): su computer J e clic verso il puntatore; sul telefono tocco breve e trascinamento del tasto
+    const colpo = () => pag.evaluate(() => { const a = window.__dl.scene.getScene('Stanze').attacco; return { colpi: a.colpi, dx: a.dx }; });
+    await pag.evaluate(() => window.__dl.scene.getScene('Stanze').lab.vai('centro'));
+    const c0 = await colpo();
+    const W = disp.viewport.width, H = disp.viewport.height;
+    if (nome === 'stanze-desktop') {
+      await pag.keyboard.press('KeyJ');
+      const arco = await pag.waitForFunction(() => window.__dl.scene.getScene('Stanze').effetti.archi.some((a) => a.visible), null, { timeout: 300, polling: 10 }).then(() => true).catch(() => false);
+      if (!arco) errori.push('dopo il colpo l\'arco di luce non compare');
+      await pag.waitForTimeout(550);
+      const cJ = await colpo();
+      if (cJ.colpi !== c0.colpi + 1) errori.push('J non fa partire il colpo');
+      await pag.mouse.click(Math.round(W * 0.15), Math.round(H / 2));
+      await pag.waitForTimeout(100);
+      await pag.screenshot({ path: `prove/${nome}-colpo.png` });
+      await pag.waitForTimeout(450);
+      const cC = await colpo();
+      if (cC.colpi !== cJ.colpi + 1 || cC.dx >= 0) errori.push(`il clic a sinistra non colpisce a sinistra (colpi ${cC.colpi}, dx ${cC.dx})`);
+      if (await pag.evaluate(() => getComputedStyle(document.querySelector('.stanze-attacco')).display !== 'none')) errori.push('su computer il tasto d\'attacco si vede');
+      nota += ', attacco J e clic sì';
+    } else {
+      if (await pag.evaluate(() => getComputedStyle(document.querySelector('.stanze-attacco')).display === 'none')) errori.push('sul telefono il tasto d\'attacco non si vede');
+      const t = await pag.evaluate(() => { const r = document.querySelector('.stanze-attacco').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, l: r.width }; });
+      const fermo = await stato();
+      await pag.mouse.move(t.x, t.y);
+      await pag.mouse.down();
+      await pag.mouse.up();
+      await pag.waitForTimeout(550);
+      const cT = await colpo();
+      const dopoT = await stato();
+      if (cT.colpi !== c0.colpi + 1) errori.push('il tocco sul tasto d\'attacco non fa partire il colpo');
+      if (dopoT.x !== fermo.x || dopoT.y !== fermo.y) errori.push('il tocco sul tasto d\'attacco muove il Lampionaio');
+      await pag.mouse.move(t.x, t.y);
+      await pag.mouse.down();
+      await pag.mouse.move(t.x - 60, t.y, { steps: 5 });
+      await pag.waitForTimeout(150);
+      await pag.screenshot({ path: `prove/${nome}-mira.png` });
+      await pag.mouse.up();
+      await pag.waitForTimeout(100);
+      const cM = await colpo();
+      if (cM.colpi !== cT.colpi + 1 || cM.dx >= 0) errori.push(`trascinando a sinistra il colpo non va a sinistra (colpi ${cM.colpi}, dx ${cM.dx})`);
+      const larghezzaPunti = t.l;
+      if (larghezzaPunti < 44) errori.push(`il tasto d'attacco è largo ${Math.round(larghezzaPunti)} punti (almeno 44)`);
+      nota += ', attacco tocco e mira sì';
+    }
   }
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);

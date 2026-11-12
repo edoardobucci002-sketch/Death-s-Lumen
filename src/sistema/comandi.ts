@@ -5,7 +5,7 @@
  * La sensibilità resta in punti dello schermo (JOYSTICK.raggio); il pomello disegnato si sposta fino al bordo della base.
  * Con metaSinistra (gioco a stanze, decisione di Edoardo del 12/11) una linea invisibile al centro dello schermo divide i
  * joystick: quello di movimento nasce solo nella metà sinistra e la sua base resta tutta tra il bordo sicuro e la linea;
- * la metà destra è per il joystick d'attacco.
+ * la metà destra è per il joystick d'attacco. Con mouseAttacca, su computer il mouse non fa comparire il joystick (attacca).
  */
 import { JOYSTICK_PICCOLO } from '../data/hud';
 import { JOYSTICK } from '../data/mondo';
@@ -35,9 +35,11 @@ export class Comandi {
   private chiavePomello = 'Joystick_Pomello';
 
   private readonly metaSinistra: boolean;
+  private readonly mouseAttacca: boolean;
 
-  constructor(contenitore: HTMLElement, opzioni: { metaSinistra?: boolean } = {}) {
+  constructor(contenitore: HTMLElement, opzioni: { metaSinistra?: boolean; mouseAttacca?: boolean } = {}) {
     this.metaSinistra = opzioni.metaSinistra ?? false;
+    this.mouseAttacca = opzioni.mouseAttacca ?? false;
     this.base = document.createElement('div');
     this.base.className = 'joystick';
     this.base.hidden = true;
@@ -107,6 +109,7 @@ export class Comandi {
   private appoggia = (e: PointerEvent): void => {
     if (this.dito !== null || (e.target as Element).closest('button, .hud-pausa, .rivelazione, .stanze-pausa, .stanze-ruota')) return; // nella pausa il dito scorre le pagine, non cammina
     if (this.metaSinistra && e.clientX >= innerWidth / 2) return; // la metà destra è del joystick d'attacco
+    if (this.mouseAttacca && e.pointerType === 'mouse' && matchMedia('(pointer: fine)').matches) return; // su computer il mouse attacca, si cammina con la tastiera
     this.dito = e.pointerId;
     this.ox = e.clientX;
     this.oy = e.clientY;
