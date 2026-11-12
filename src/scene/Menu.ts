@@ -4,6 +4,7 @@
  * È tutto HTML sopra il gioco; frecce o tasti ← → per cambiare, Invio o «Inizia la veglia» per partire.
  * Meta progressione: i personaggi bloccati mostrano come si sbloccano (un'impresa o la Cera);
  * il pulsante della Cappella apre i ceri votivi e il codice di salvataggio (sistema/cappella.ts).
+ * Sul link di prova il pulsante «Stanze (prova)» apre il gioco a stanze (scena Stanze, pivot del 12/11).
  */
 import Phaser from 'phaser';
 import { VOTI } from '../data/voti';
@@ -18,6 +19,7 @@ import { tempo } from '../sistema/hud';
 import { Cappella } from '../sistema/cappella';
 import { carica, salva, type Salvataggio } from '../sistema/salvataggio';
 import { SBLOCCHI } from '../data/meta';
+import { STANZE_DISPONIBILI } from './Stanze';
 
 const BARRE = ['Vitalità', 'Danno', 'Velocità', 'Raggio', 'Controllo'];
 
@@ -42,6 +44,7 @@ export class Menu extends Phaser.Scene {
         ${FIRMA ? `<span class="firma">${FIRMA}</span>` : ''}
         <h1>Death's Lumen</h1>
         <p>Sopravvivi alla veglia, fino all'alba.</p>
+        ${STANZE_DISPONIBILI ? '<button type="button" class="menu-stanze">Stanze (prova)</button>' : ''}
       </header>
       <nav class="menu-nomi">${PERSONAGGI.map((p, n) => `<button type="button" data-n="${n}" style="--colore:${p.colore}">${p.nome}</button>`).join('')}</nav>
       <div class="menu-scorri">
@@ -59,6 +62,7 @@ export class Menu extends Phaser.Scene {
       if (b.dataset.n) this.mostra(Number(b.dataset.n));
       else if (b.dataset.passo) this.mostra((this.scelto + Number(b.dataset.passo) + PERSONAGGI.length) % PERSONAGGI.length);
       else if (b.classList.contains('menu-inizia')) this.inizia();
+      else if (b.classList.contains('menu-stanze')) this.scene.start('Stanze');
       else if (b.classList.contains('menu-cappella')) this.apriCappella();
       else if ('sblocca' in b.dataset) this.sblocca();
     });

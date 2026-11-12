@@ -44,6 +44,7 @@ const D = (nome) => richiedi('./' + nome + '.js');
 const A = D('armi'), N = D('nemici'), AB = D('abilita'), P = D('personaggi'), DO = D('doni'), M = D('meta');
 const R = D('rosario'), U = D('unioni'), ST = D('stati'), PR = D('progressione'), SO = D('sopravvivenza');
 const OG = D('oggetti'), W = D('mondo'), E = D('effetti'), H = D('hud'), PX = D('pixel');
+const SZ = D('stanze'); // gioco a stanze (pivot del 12/11)
 
 const gdd = fs.readFileSync(path.join(radice, 'docs/GDD.md'), 'utf8');
 const righeGdd = gdd.split('\n');
@@ -796,6 +797,23 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
 // - Numeri del danno: cifre 3×5, sono la forma del disegno;
 // - misure dei disegni citate nel testo (fiala 45×74, simboli 11×11) e scala 2,35 con i valori della v0, che sono storia;
 // - «Barre su 6»: è scritto solo nella scheda.
+
+// --- 12. Gioco a stanze (pivot del 12/11) ------------------------------------------------------
+
+{
+  const t = tabella('| Valore della stanza | Numero |');
+  const S = SZ.STANZA;
+  const RIGHE_STANZA = [
+    ['Pavimento', '{} × {} px', S.larghezza, S.altezza],
+    ['Muri', 'in alto {} px, ai lati {} px, in basso {} px', S.muroAlto, S.muroLati, S.muroBasso],
+    ['Bordi per i piedi', 'ai lati {} px, in alto {} px, in basso {} px', S.margineLati, S.margineAlto, S.margineBasso],
+    ['Lastre del pavimento', '{} px', S.piastrella],
+    ['Mattoni della facciata', '{} × {} px', S.mattone.l, S.mattone.a],
+    ['Ombra del muro', '{} px', S.ombraMuro],
+  ];
+  stessiNomi('Stanza', t, RIGHE_STANZA.map((r) => r[0]));
+  for (const [nome, modello, ...attesi] of RIGHE_STANZA) conRiga(t, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+}
 
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`Controlli fatti: ${controlli}`);

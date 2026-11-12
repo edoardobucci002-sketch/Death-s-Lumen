@@ -14,6 +14,8 @@ import type Phaser from 'phaser';
 import type { Gioco } from '../scene/Gioco';
 import type { LabPartita } from './lab-partita';
 import type { Menu } from '../scene/Menu';
+import type { Stanze } from '../scene/Stanze';
+import type { PuntoStanza } from './lab-stanze';
 import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
 import { PASSIVI } from '../data/doni';
 import { AMULETI } from '../data/rosario';
@@ -42,10 +44,11 @@ import * as rompibili from '../data/rompibili';
 import * as rosario from '../data/rosario';
 import * as sopravvivenza from '../data/sopravvivenza';
 import * as stati from '../data/stati';
+import * as stanze from '../data/stanze';
 import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stati, unioni };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -169,8 +172,8 @@ const STILE = `
 .lab-cerca { width: 100%; min-height: 44px; padding: 6px 10px; border: 1px solid #7a54a4; border-radius: 6px; background: #100a16; color: #fff; font: inherit; user-select: text; }
 `;
 
-type Scheda = 'partita' | 'eventi' | 'oggetti' | 'numeri' | 'schermate' | 'schermo' | 'salvataggio';
-const SCHEDE: [Scheda, string][] = [['partita', 'Partita'], ['eventi', 'Eventi'], ['oggetti', 'Oggetti'], ['numeri', 'Numeri'], ['schermate', 'Schermate'], ['schermo', 'Schermo'], ['salvataggio', 'Salvataggio']];
+type Scheda = 'partita' | 'stanze' | 'eventi' | 'oggetti' | 'numeri' | 'schermate' | 'schermo' | 'salvataggio';
+const SCHEDE: [Scheda, string][] = [['partita', 'Partita'], ['stanze', 'Stanze'], ['eventi', 'Eventi'], ['oggetti', 'Oggetti'], ['numeri', 'Numeri'], ['schermate', 'Schermate'], ['schermo', 'Schermo'], ['salvataggio', 'Salvataggio']];
 
 export function avviaLaboratorio(gioco: Phaser.Game): void {
   applicaSalvati();
@@ -196,6 +199,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   let foriSpenti = false; // prove sui fotogrammi: durano finché non si ricarica
   const partita = (): Gioco | null => (gioco.scene.isActive('Gioco') ? (gioco.scene.getScene('Gioco') as Gioco) : null);
   const menu = (): Menu | null => (gioco.scene.isActive('Menu') ? (gioco.scene.getScene('Menu') as Menu) : null);
+  const stanza = (): Stanze | null => (gioco.scene.isActive('Stanze') ? (gioco.scene.getScene('Stanze') as Stanze) : null);
   const ridisegna = (): void => {
     schede.replaceChildren(...SCHEDE.map(([id, nome]) => {
       const b = el('button', 'lab-scheda', nome);
@@ -207,14 +211,15 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     }));
     const p = partita();
     const s = p?.lab.stato();
-    stato.textContent = s ? `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · urne ${s.urne} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS` : 'Laboratorio · non sei in partita';
-    corpo.replaceChildren(...({ partita: schedaPartita, eventi: schedaEventi, oggetti: schedaOggetti, numeri: schedaNumeri, schermate: schedaSchermate, schermo: schedaSchermo, salvataggio: schedaSalvataggio })[scheda]());
+    const st = stanza()?.lab.stato();
+    stato.textContent = st ? `Laboratorio · stanza · ${st.x}, ${st.y}` : s ? `Laboratorio · ${s.pg} · ${Math.floor(s.secondi / 60)}:${String(Math.floor(s.secondi % 60)).padStart(2, '0')} · liv. ${s.livello} · urne ${s.urne} · ${Math.round(s.salute)}/${Math.round(s.saluteMassima)} PS` : 'Laboratorio · non sei in partita';
+    corpo.replaceChildren(...({ partita: schedaPartita, stanze: schedaStanze, eventi: schedaEventi, oggetti: schedaOggetti, numeri: schedaNumeri, schermate: schedaSchermate, schermo: schedaSchermo, salvataggio: schedaSalvataggio })[scheda]());
   };
   const mostra = (aperto: boolean): void => {
     pannello.hidden = !aperto;
     apri.hidden = aperto;
     // finché il pannello è aperto, la partita sta ferma (si può riprendere dalla scheda Partita)
-    if (aperto) { partita()?.lab.ferma(true); ridisegna(); } else partita()?.lab.ferma(false);
+    if (aperto) { partita()?.lab.ferma(true); stanza()?.lab.ferma(true); ridisegna(); } else { partita()?.lab.ferma(false); stanza()?.lab.ferma(false); }
   };
   apri.addEventListener('click', () => mostra(true));
   const fai = (f: (p: Gioco) => void): (() => void) => () => {
@@ -251,6 +256,30 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(el('span', 'lab-stato', `In campo: ${s.nemici}`), tasto('Elimina tutti', fai((x) => x.lab.evento('eliminaNemici')), 'rosso'), tasto('Riempi 400', fai((x) => x.lab.evento('riempi')))),
       titolo('Personaggio (riparte la partita)'),
       riga(...PERSONAGGI.map((q) => tasto(q.nome, () => { gioco.scene.start('Gioco', { pg: q.id }); setTimeout(ridisegna, 600); }, q.id === s.pg ? 'acceso' : ''))),
+    ];
+  }
+
+  // ——— Stanze (gioco a stanze, pivot del 12/11) ———
+  function schedaStanze(): HTMLElement[] {
+    const entra = (): void => { for (const k of ['Gioco', 'Menu']) if (gioco.scene.isActive(k)) gioco.scene.stop(k); gioco.scene.start('Stanze'); setTimeout(ridisegna, 600); };
+    const st = stanza();
+    if (!st) {
+      return [
+        el('p', 'lab-nota', 'Il gioco a stanze, passo 2 della fetta: una stanza chiusa da muri, il Lampionaio che cammina, luce e buio. In orizzontale: sul telefono in verticale chiede di ruotarlo.'),
+        riga(tasto('Entra nella stanza', entra, 'acceso')),
+      ];
+    }
+    const s = st.lab.stato();
+    const vai = (dove: PuntoStanza, testo: string): HTMLElement => tasto(testo, () => { st.lab.vai(dove); ridisegna(); });
+    return [
+      titolo('Stanza'),
+      riga(el('span', 'lab-stato', `Pavimento ${s.larghezza} × ${s.altezza} px · Lampionaio in ${s.x}, ${s.y}`)),
+      riga(tasto(s.fermo ? 'Stanza ferma: riprendi' : 'Stanza in corso: ferma', () => { st.lab.ferma(!s.fermo); ridisegna(); }, s.fermo ? 'acceso' : ''), tasto('Ricomincia (ridisegna con i numeri nuovi)', entra)),
+      titolo('Prova i muri: porta il Lampionaio'),
+      riga(vai('centro', 'Al centro'), vai('alto', 'Al muro in alto'), vai('basso', 'Al muro in basso'), vai('sinistra', 'Al muro a sinistra'), vai('destra', 'Al muro a destra'), vai('angolo', "Nell'angolo")),
+      el('p', 'lab-nota', 'Poi chiudi il LAB e spingi contro il muro: il Lampionaio deve fermarsi. Le misure della stanza sono in Numeri → stanze (dopo averle cambiate premi Ricomincia).'),
+      titolo('Esci'),
+      riga(tasto('Torna al menu', () => { gioco.scene.stop('Stanze'); gioco.scene.start('Menu'); setTimeout(ridisegna, 300); })),
     ];
   }
 

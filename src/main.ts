@@ -7,6 +7,7 @@ import Phaser from 'phaser';
 import { Avvio } from './scene/Avvio';
 import { Gioco } from './scene/Gioco';
 import { Menu } from './scene/Menu';
+import { Stanze } from './scene/Stanze';
 import { preparaAudio } from './sistema/audio';
 import { calcolaMisure } from './sistema/pixel';
 import { avviaAggiornamenti } from './sistema/aggiornamenti';
@@ -14,6 +15,13 @@ import { avviaIndietro } from './sistema/indietro';
 import { avviaMobile, nativo, schermoAcceso } from './sistema/mobile';
 
 const m = calcolaMisure();
+
+/** Tasto Indietro: in partita (survivor o gioco a stanze) apre la pausa; fuori dalla partita lo gestisce il sistema. */
+function indietro(): boolean {
+  if (gioco.scene.isActive('Gioco')) return (gioco.scene.getScene('Gioco') as Gioco).indietro();
+  if (gioco.scene.isActive('Stanze')) return (gioco.scene.getScene('Stanze') as Stanze).indietro();
+  return false;
+}
 
 const gioco = new Phaser.Game({
   type: Phaser.AUTO,
@@ -28,7 +36,7 @@ const gioco = new Phaser.Game({
   fps: { target: 60, forceSetTimeOut: false },
   // i comandi li gestisce src/sistema/comandi.ts, non Phaser
   input: { keyboard: false, mouse: false, touch: false, gamepad: false },
-  scene: [Avvio, Menu, Gioco],
+  scene: [Avvio, Menu, Gioco, Stanze],
 });
 gioco.registry.set('scala', m.scala);
 
@@ -59,9 +67,9 @@ avviaMobile({
 preparaAudio();
   },
   // in partita: pausa, riprendi o torna al menu; dal menu chiude l'app
-  indietro: () => (gioco.scene.isActive('Gioco') ? (gioco.scene.getScene('Gioco') as Gioco).indietro() : false),
+  indietro: () => indietro(),
 });
-if (!nativo) avviaIndietro(() => (gioco.scene.isActive('Gioco') ? (gioco.scene.getScene('Gioco') as Gioco).indietro() : false));
+if (!nativo) avviaIndietro(() => indietro());
 schermoAcceso(true);
 preparaAudio();
 
@@ -84,7 +92,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD && !nativo) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
   // quando arriva una versione nuova del gioco, ricarica la pagina una volta per mostrarla;
   // sul link di prova lo decide aggiornamenti.ts, che aspetta la fine della partita
-  if (import.meta.env.VITE_CANALE === 'prova') avviaAggiornamenti(() => gioco.scene.isActive('Gioco'));
+  if (import.meta.env.VITE_CANALE === 'prova') avviaAggiornamenti(() => gioco.scene.isActive('Gioco') || gioco.scene.isActive('Stanze'));
   else if (navigator.serviceWorker.controller) {
     let ricaricato = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {

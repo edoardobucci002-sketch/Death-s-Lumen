@@ -1,7 +1,7 @@
 /*
  * Avvio: carica l'elenco degli asset e tutti gli sprite esportati da Aseprite (più gli elementi dell'HUD),
  * poi crea le animazioni dai tag (idle, walk, attack, special, hurt, death), prepara l'arte dell'HUD e apre il menu
- * (o direttamente la partita, se l'indirizzo sceglie già il personaggio con ?pg=).
+ * (o direttamente la partita, se l'indirizzo sceglie già il personaggio con ?pg=, o il gioco a stanze con ?stanze).
  */
 import Phaser from 'phaser';
 import { preparaArte } from '../sistema/arte';
@@ -10,6 +10,7 @@ import { creaIconeOggetti, creaIconeUnioni } from '../sistema/segnaposto-oggetti
 import { caricaScritte } from '../sistema/scritte';
 import type { ElencoAsset } from '../sistema/asset';
 import { caricataAlVolo } from '../sistema/al-volo';
+import { STANZE_DISPONIBILI } from './Stanze';
 
 export class Avvio extends Phaser.Scene {
   constructor() {
@@ -60,6 +61,8 @@ export class Avvio extends Phaser.Scene {
     creaIconeOggetti();
     creaIconeUnioni();
     // le scritte a pixel si disegnano su tela: prima serve il carattere caricato
-    void caricaScritte().then(() => this.scene.start(new URLSearchParams(location.search).has('pg') ? 'Gioco' : 'Menu'));
+    // ?pg= salta il menu e apre la notte; ?stanze apre il gioco a stanze (solo dove è disponibile)
+    const parametri = new URLSearchParams(location.search);
+    void caricaScritte().then(() => this.scene.start(parametri.has('stanze') && STANZE_DISPONIBILI ? 'Stanze' : parametri.has('pg') ? 'Gioco' : 'Menu'));
   }
 }

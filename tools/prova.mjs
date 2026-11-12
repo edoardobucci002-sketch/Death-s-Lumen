@@ -1,5 +1,5 @@
 // Prova automatica: apre la build su desktop, iPhone (verticale e orizzontale) e Android,
-// prova menu, camminata, 400 nemici, armi e abilità, pausa, élite, sciami, Mietitore, alba e morte, controlla che non ci siano errori e salva gli screenshot in prove/.
+// prova menu, camminata, 400 nemici, gioco a stanze (orizzontale, muri, pausa), armi e abilità, pausa, élite, sciami, Mietitore, alba e morte, controlla che non ci siano errori e salva gli screenshot in prove/.
 // La prima volta serve: npx playwright install chromium
 import { chromium, devices } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -963,6 +963,82 @@ for (const [nome, viewport] of [['computer', { width: 1280, height: 800 }], ['ta
   if (!dopo.b) errori.push('sconfiggere Seth (anche perdendo la veglia) non sblocca le Unioni');
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} Unioni: si svelano giocando, arma al 6 e dono al massimo, si sbloccano sconfiggendo Seth${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  await ctx.close();
+}
+
+// Gioco a stanze (pivot del 12/11, passo 2 della fetta): in orizzontale su computer e telefoni; in verticale chiede di ruotare.
+// Il Lampionaio cammina, i muri lo fermano (i piedi arrivano al bordo dell'area camminabile e non oltre), la pausa si apre e si chiude.
+for (const [nome, disp] of [
+  ['stanze-desktop', { viewport: { width: 1280, height: 800 } }],
+  ['stanze-iphone-orizzontale', { ...devices['iPhone 13'], viewport: { width: 844, height: 390 } }],
+  ['stanze-android-orizzontale', { ...devices['Pixel 7'], viewport: { width: 915, height: 412 } }],
+  ['stanze-iphone-verticale', devices['iPhone 13']],
+]) {
+  const ctx = await browser.newContext(disp);
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  pag.on('console', (m) => (m.type() === 'error' || m.text().includes('has no frame')) && errori.push(m.text()));
+  await pag.goto(`${url}?stanze`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
+  await pag.waitForTimeout(500);
+  const stato = () => pag.evaluate(() => {
+    const s = window.__dl.scene.getScene('Stanze');
+    return { x: Math.round(s.x), y: Math.round(s.y), ruota: s.ruota, pausa: s.pausa, avviso: !document.querySelector('.stanze-ruota').hidden, pannello: !document.querySelector('.stanze-pausa').hidden };
+  });
+  let nota = '';
+  if (nome.endsWith('verticale')) {
+    const s = await stato();
+    if (!s.ruota || !s.avviso) errori.push('in verticale non chiede di ruotare il telefono');
+    await pag.screenshot({ path: `prove/${nome}.png` });
+    nota = 'chiede di ruotare';
+  } else {
+    // spinge a destra (e poi in alto) più a lungo di quanto serve per arrivare al muro
+    const spingi = async (tasto, dx, dy, ms) => {
+      if (nome === 'stanze-desktop') {
+        await pag.keyboard.down(tasto);
+        await pag.waitForTimeout(ms);
+        await pag.keyboard.up(tasto);
+      } else {
+        const cx = Math.round(disp.viewport.width / 3), cy = Math.round(disp.viewport.height / 2);
+        await pag.mouse.move(cx, cy);
+        await pag.mouse.down();
+        await pag.mouse.move(cx + dx, cy + dy, { steps: 5 });
+        await pag.waitForTimeout(ms);
+        await pag.mouse.up();
+      }
+    };
+    // i bordi veri dell'area camminabile, letti dal gioco (il LAB porta il Lampionaio contro i muri), poi di nuovo al centro
+    const a = await pag.evaluate(() => {
+      const l = window.__dl.scene.getScene('Stanze').lab;
+      l.vai('destra'); const x1 = l.stato().x; l.vai('alto'); const y0 = l.stato().y; l.vai('centro');
+      return { x1, y0 };
+    });
+    const prima = await stato();
+    if (prima.ruota) errori.push('in orizzontale chiede di ruotare');
+    await spingi('KeyD', 80, 0, 4500);
+    const destra = await stato();
+    await spingi('KeyW', 0, -80, 3500);
+    const alto = await stato();
+    await pag.screenshot({ path: `prove/${nome}.png` });
+    if (destra.x !== a.x1) errori.push(`a destra si ferma a x ${destra.x}, non al muro (${a.x1})`);
+    if (destra.y !== prima.y) errori.push(`spingendo a destra la y cambia (${prima.y} → ${destra.y})`);
+    if (alto.y !== a.y0) errori.push(`in alto si ferma a y ${alto.y}, non al muro (${a.y0})`);
+    // pausa: P (o il pulsante sul telefono) la apre, P o «Riprendi» la chiude
+    if (nome === 'stanze-desktop') await pag.keyboard.press('KeyP');
+    else await pag.click('.stanze-tasto-pausa').catch(() => errori.push('pulsante della pausa non toccabile'));
+    await pag.waitForTimeout(150);
+    const inPausa = await stato();
+    if (!inPausa.pausa || !inPausa.pannello) errori.push('la pausa non si apre');
+    await pag.screenshot({ path: `prove/${nome}-pausa.png` });
+    await pag.click('.stanze-pausa .stanze-tasto').catch(() => errori.push('«Riprendi» non toccabile'));
+    await pag.waitForTimeout(150);
+    const ripresa = await stato();
+    if (ripresa.pausa || ripresa.pannello) errori.push('«Riprendi» non chiude la pausa');
+    nota = `muro a destra a x ${destra.x}, in alto a y ${alto.y}, pausa sì`;
+  }
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

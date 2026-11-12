@@ -57,7 +57,7 @@ DEATH'S LUMEN/
                                    asset_da_creare.md, proposte/ (archivio)
     src/
       main.ts                      avvio di Phaser in pixel perfect e collegamento al telefono
-      scene/                       le scene di Phaser: Avvio, Menu (schede), Gioco
+      scene/                       le scene di Phaser: Avvio, Menu (schede), Gioco (il survivor), Stanze (il gioco a stanze, solo sul link di prova)
       sistema/                     pixel perfect, mobile, HUD, scheda dei doni, Cappella, Laboratorio, bot…
       data/                        TUTTI i numeri di bilanciamento (personaggi, armi, nemici, meta…)
       caratteri/tiny5/             il carattere a pixel delle scritte
