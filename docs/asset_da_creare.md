@@ -9,7 +9,7 @@ Per la fetta verticale **non serve disegnare niente in anticipo**: ogni pezzo na
 | Asset | Dove serve | Stato / segnaposto |
 | --- | --- | --- |
 | **Lampionaio: animazione `attack`** (nello sprite in gioco, come tag Aseprite; poi `hurt` e `death`) | attacco a tasto della Lanterna (passo 3 della fetta) | segnaposto dal codice; misure da fissare al passo 3 |
-| **Due nemici della fetta, con l'animazione d'attacco e il suo avviso** | passo 4 della fetta | quali nemici si sceglie con Edoardo; fino ad allora segnaposto dal codice |
+| **Il Ricaduto** (`walk`, `attack` = il graffio con le braccia alzate come avviso, `death`, e il ritorno in vita) e **il Cantore** (`walk`, `attack` = il canto che fa da avviso, `death`, più il grumo di Lumen spento) | passo 4 della fetta | segnaposto dal codice; misure da fissare al passo 4 |
 | **La stanza**: pavimento, muri, porte | passi 2 e 6 della fetta | segnaposto dal codice; tela e misure al passo 2 |
 | **Simboli delle porte**: una per affinità (Luce, Sacro, Ombra, Terra) e una per il dono | porte che mostrano la ricompensa (passo 6) | segnaposto dal codice |
 | **Tasto d'attacco** e la disposizione dei tasti in orizzontale | HUD del telefono in orizzontale (passo 3) | segnaposto dal codice; misure dopo la prova sul S25 |
