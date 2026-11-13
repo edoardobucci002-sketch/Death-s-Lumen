@@ -82,6 +82,7 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 - Meta: Ceri a budget, Pegno, Cera per Mondo completato.
 - **Stanze collegate tra loro, come in The Binding of Isaac** (nota di Edoardo del 13/11: «il passaggio fra le stanze andrà sicuramente aggiustato»): oggi ogni porta porta avanti e non si torna indietro. Da progettare insieme; con le stanze collegate **le porte vanno riviste** (nota di Edoardo del 13/11 sera).
 - Ciò che resta, ripensato per le stanze (decisione di Edoardo del 12/11): Grazia, oggetti rompibili, Patti, Mosaici e Vetrate, Legame (gli 8 livelli per personaggio), salvataggio della partita in corso.
+- **Danno a intervallo** (decisione di Edoardo del 13/11): ogni arma ha un danno minimo e massimo, ogni colpo tira a caso tra i due (con il generatore con seme), le carte aggiungono intervalli o percentuali, le carte mostrano «Danno 14–22». Da progettare in una sessione sua, prima del bilanciamento del gioco a stanze.
 - Calice riverso: il nome nuovo del dono «Lacrima di lumen» entra nel codice, con la sua icona.
 - Veggente e Sguattera; la pubblicazione.
 - **Glossario del gioco** (richiesta di Edoardo del 13/11 notte, come l'«oracle text» di Magic): stesse parole e stesse forme per le stesse cose in carte, pausa, LAB e GDD (per esempio «ricarica», «area», «ferisce», «danno», gli stati), raccolte in un elenco unico da cui le spiegazioni si generano. Da progettare in una sessione dedicata.
