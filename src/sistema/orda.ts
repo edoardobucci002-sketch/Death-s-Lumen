@@ -183,10 +183,16 @@ export class Orda {
     private minacce: Minacce,
   ) {
     this.aspetto = TIPI.map((t) => {
-      // i piedi sono la riga più bassa usata in tutti i fotogrammi (negli sprite V0 non è il bordo della tela)
-      const dati = scena.cache.json.get(t.sprite) as { frames: { spriteSourceSize: { y: number; h: number }; sourceSize: { h: number } }[] };
-      const fondo = Math.max(...dati.frames.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h));
-      const cima = Math.min(...dati.frames.map((f) => f.spriteSourceSize.y));
+      // i piedi sono la riga più bassa usata nei fotogrammi della camminata (negli sprite V0 non è il bordo della tela);
+      // si misura solo la camminata, perché attacco e morte (forcone alzato, corpo a terra) cambiano cima e fondo
+      const dati = scena.cache.json.get(t.sprite) as {
+        frames: { spriteSourceSize: { y: number; h: number }; sourceSize: { h: number } }[];
+        meta?: { frameTags?: { name: string; from: number; to: number }[] };
+      };
+      const cammina = dati.meta?.frameTags?.find((g) => g.name === 'walk');
+      const misurati = cammina ? dati.frames.slice(cammina.from, cammina.to + 1) : dati.frames;
+      const fondo = Math.max(...misurati.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h));
+      const cima = Math.min(...misurati.map((f) => f.spriteSourceSize.y));
       const ing = ingrandimento(scena, t.sprite);
       return { ingrandimento: ing, piedi: fondo / dati.frames[0].sourceSize.h, testa: (fondo - cima) * ing };
     });

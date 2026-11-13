@@ -112,12 +112,12 @@ export const GRAZIA_STANZA = {
 
 /**
  * I due nemici della fetta (decisi da Edoardo il 12/11). Distanze in pixel di gioco, misurate tra i piedi.
- * Sprite segnaposto: lo Zombi e il Fantasma del survivor, finché Edoardo non disegna Ricaduto e Cantore.
+ * Sprite: Ricaduto e Cantore V1 del 13/11, bozze fatte con PixelLab dai disegni del restyle (prima: Zombi e Fantasma del survivor).
  */
 export const NEMICI_STANZA = {
   // nemico base: cammina dritto e lento verso di te; vicino si ferma, prepara il graffio (avviso) e graffia davanti a sé
   ricaduto: {
-    sprite: 'Zombi',
+    sprite: 'Ricaduto', // V1 del 13/11 da PixelLab (walk, attack, death); il gioco usa walk
     salute: 40, // 3 colpi della Lanterna, 2 in Grazia
     velocita: 60, // il Lampionaio: 270
     raggio: 16, // il corpo, per i colpi della Lanterna e per non sovrapporsi
@@ -133,7 +133,7 @@ export const NEMICI_STANZA = {
   // (l'avviso), poi lancia un grumo di Lumen spento che ti cerca (dal 13/11 sera, decisione di Edoardo): per «ricerca» secondi
   // gira verso di te di al massimo «virata» gradi al secondo, poi va dritto; contro il muro, o su di te, scoppia in una pozza di cera
   cantore: {
-    sprite: 'Fantasma',
+    sprite: 'Cantore', // V1 del 13/11 da PixelLab (walk, attack); il gioco usa walk
     salute: 20, // 2 colpi della Lanterna, 1 in Grazia
     velocita: 75,
     raggio: 15,

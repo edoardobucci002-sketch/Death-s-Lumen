@@ -107,6 +107,17 @@
       "tag": []
     },
     {
+      "chiave": "Cantore",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Cantore.png",
+      "dati": "assets/nemici/Cantore.json",
+      "versioneFile": 1,
+      "tag": [
+        "walk",
+        "attack"
+      ]
+    },
+    {
       "chiave": "Cerchio_di_luce",
       "categoria": "effetti",
       "immagine": "assets/effetti/Cerchio_di_luce.png",
@@ -608,6 +619,18 @@
       "dati": "assets/oggetti/Reliquiario.json",
       "versioneFile": 0,
       "tag": []
+    },
+    {
+      "chiave": "Ricaduto",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Ricaduto.png",
+      "dati": "assets/nemici/Ricaduto.json",
+      "versioneFile": 1,
+      "tag": [
+        "walk",
+        "attack",
+        "death"
+      ]
     },
     {
       "chiave": "Rito_proibito",
