@@ -145,6 +145,17 @@ export class Arsenale extends ArsenaleVicine {
     else this.zona(ACQUA_SANTA.effetto, x, y, raggio, 0, ACQUA_SANTA.livelli[0].durata, ACQUA_SANTA.intervallo, 0, 0, 0, false, true, POZZA, SACRO);
   }
 
+  /**
+   * Gioco a stanze: un colpo dato da fuori dall'arsenale (la Lanterna a mano, il Cerchio di luce) sul nemico j, verso
+   * (dx, dy): danno con i bonus (doni, Grazia), lo stato dell'affinità aff, le reazioni, il numero del danno. fonte: FONTI.
+   */
+  colpoDaFuori(j: number, danno: number, dx: number, dy: number, aff: number, fonte: number): void {
+    const prima = this.fonte;
+    this.fonte = fonte;
+    this.ferisci(j, danno, 0, dx, dy, aff);
+    this.fonte = prima;
+  }
+
   /** Disegna ciò che si muove; gli effetti istantanei restano dove sono nati. Posizioni arrotondate al pixel. */
   disegna(): void {
     for (let i = 0; i < this.zone; i++) this.zSprite[i].setPosition(Math.round(this.zX[i]), Math.round(this.zY[i]));

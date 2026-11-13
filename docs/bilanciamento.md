@@ -42,6 +42,15 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 (sera) — Passo 6: tre stanze, porte e carte (numeri di Claude, *da rivedere*; il survivor non cambia)
+
+- **Cerchio di luce**: ferisce ogni **0,3 s** invece di 0,25 (decisione di Edoardo), così la Quiete dei nemici (0,3 s) non gli toglie colpi: circa 20 di danno al secondo per nemico invece di 12.
+- **Ondate per stanza**: 3 Ricaduti e 1 Cantore; poi 3+1 e 3+2; poi 4+2 e 5+3. La seconda ondata arriva quando della prima restano al massimo 2 nemici. Totale della fetta: 26 nemici.
+- **Build**: al massimo 3 Echi e 6 doni. Gli Echi tengono i numeri e gli 8 livelli del survivor; la Lanterna a mano sale con i numeri della Lanterna del survivor (ricarica in proporzione da 0,45 s).
+- **Survivor identico**: Ricaduto e Cantore sono entrati nella Orda in fondo all'elenco dei tipi. Il bot ha giocato le stesse 8 notti (2 per personaggio, Cappella completa) prima e dopo: 8.199 campi, 0 differenze.
+
+Il bot non sa giocare a stanze: nessuna simulazione della fetta. `npm run prova` attraversa le tre stanze su computer, iPhone e Android in orizzontale.
+
 ### 13/11 (pomeriggio) — Ritocchi di Edoardo dopo la prova del passo 5
 
 - **Quiete**: Lampionaio da 0,6 a **0,5 s**, nemici da 0,2 a **0,3 s** (decisione di Edoardo). Effetto collaterale: il Cerchio di luce prova a ferire ogni 0,25 s, quindi ora prende ogni nemico ogni 0,5 s (il suo danno si dimezza, da 24 a 12 al secondo).

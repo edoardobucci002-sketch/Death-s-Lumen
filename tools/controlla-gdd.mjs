@@ -844,7 +844,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Grumo', 'velocità {} px/s, raggio {} px, danno {}', CA.grumo.velocita, CA.grumo.raggio, CA.grumo.danno],
     ['Spinta', '{} px', NS.spinta],
     ['Impatto', 'fermo {} s; schiacciamento {} s; scintille {}, battuto {}', SZ.IMPATTO.fermo, SZ.IMPATTO.schiaccia.durata, SZ.IMPATTO.scintille.colpo, SZ.IMPATTO.scintille.battuto],
-    ['Ondata', '{} Ricaduti e {} Cantori, a più di {} px; segno {} s; prima dopo {} s, poi {} s', OD.ricaduti, OD.cantori, OD.distanzaMinima, OD.comparsa, OD.attesaPrima, OD.attesaNuova],
+    ['Ondata', '{} Ricaduti e {} Cantori, a più di {} px; segno {} s; prima dopo {} s', OD.ricaduti, OD.cantori, OD.distanzaMinima, OD.comparsa, OD.attesaPrima],
   ];
   stessiNomi('Nemici', tn, RIGHE_NEMICI.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_NEMICI) conRiga(tn, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
@@ -852,11 +852,26 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const tb = tabella('| Valore dell\'abilità | Numero |');
   const AB = SZ.ABILITA_STANZA;
   const RIGHE_ABILITA = [
-    ['Carica', '{} colpi a segno', AB.colpi],
+    ['Carica', '{} colpi a segno; il cerchio ferisce ogni {} s', AB.colpi, AB.ritmo],
     ['Pulsante', '{} pixel disegnati, {} px dal joystick d\'attacco; area di tocco {} punti più larga', AB.tasto.lato, AB.tasto.distanza, AB.tasto.margine],
   ];
   stessiNomi('Abilità', tb, RIGHE_ABILITA.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_ABILITA) conRiga(tb, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+
+  const tp = tabella('| Valore del percorso | Numero |');
+  const PE = SZ.PERCORSO, O = PE.ondate;
+  const RIGHE_PERCORSO = [
+    ['Stanze', '{}', O.length],
+    ['Ondate', 'stanza 1: {} Ricaduti e {} Cantore; stanza 2: {} e {}, poi {} e {}; stanza 3: {} e {}, poi {} e {}',
+      O[0][0].ricaduti, O[0][0].cantori, O[1][0].ricaduti, O[1][0].cantori, O[1][1].ricaduti, O[1][1].cantori, O[2][0].ricaduti, O[2][0].cantori, O[2][1].ricaduti, O[2][1].cantori],
+    ['Carte', '3, dopo {} s', PE.attesaCarte],
+    ['Build', 'al massimo {} Echi e {} doni', PE.echi, PE.doni],
+    ['Porte', 'da {} a {}, larghe {} px', PE.porte.minimo, PE.porte.massimo, SZ.PORTE.larghezza],
+    ['Passaggio', '{} s', PE.passaggio],
+  ];
+  stessiNomi('Percorso', tp, RIGHE_PERCORSO.map((r) => r[0]));
+  for (const [nome, modello, ...attesi] of RIGHE_PERCORSO) conRiga(tp, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+  conRiga(tp, 'Ondate', (r) => inTesto(r.Note, 'Ondate (quando)', 'la seconda quando ne restano {}', PE.restanti));
 }
 
 fs.rmSync(tmp, { recursive: true, force: true });

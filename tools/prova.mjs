@@ -1217,6 +1217,35 @@ for (const [nome, disp] of [
       if (di.morto || di.salute !== di.saluteMassima) errori.push('«Ricomincia» non rifà la stanza');
     }
     nota += `, nemici sì (graffio, schivate ${s3.schivate}, battuti, rinascita, caduta), abilità e rallentatore sì`;
+    // passo 6: tre stanze. Ripulita la stanza arrivano le carte (nella prima 3 Echi); scelta una carta si aprono le porte;
+    // attraversata una porta si entra nella stanza dopo; finita la terza, «Fetta completata»
+    await L('immortale', true);
+    const giro = [];
+    for (let n = 1; n <= 3; n++) {
+      await L('ripulisci');
+      if (!(await quando('l.stato().carteAperte', '', 3000))) { errori.push(`stanza ${n}: le carte non arrivano`); break; }
+      if (n === 1) await pag.screenshot({ path: `prove/${nome}-carte.png` });
+      if (nome === 'stanze-desktop') await pag.keyboard.press('Digit1');
+      else await pag.click('.doni-carta').catch(() => errori.push('la carta non è toccabile'));
+      await pag.waitForTimeout(200);
+      const dopo = await st();
+      if (dopo.carteAperte) { errori.push(`stanza ${n}: la carta scelta non chiude le carte`); break; }
+      if (n === 1 && dopo.echi.length !== 1) errori.push(`nella prima stanza la carta non dà un Eco (${dopo.echi.join(', ')})`);
+      giro.push(`${dopo.stanza}: ${dopo.echi.join('+') || '-'}`);
+      if (n === 3) {
+        if (!dopo.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('dopo la terza stanza non compare «Fetta completata»');
+        await pag.screenshot({ path: `prove/${nome}-fetta.png` });
+        break;
+      }
+      if (dopo.fase !== 'porte' || dopo.porte.length < 2) { errori.push(`stanza ${n}: le porte non si aprono (${dopo.fase}, ${dopo.porte.length})`); break; }
+      if (n === 1) {
+        await pag.waitForTimeout(1500); // l'Eco spara da solo
+        await pag.screenshot({ path: `prove/${nome}-porte.png` });
+      }
+      await L('attraversa', 0);
+      if (!(await quando(`l.stato().stanza === ${n + 1} && l.stato().fase === 'lotta'`, '', 2000))) { errori.push(`la porta non porta alla stanza ${n + 1}`); break; }
+    }
+    nota += `, percorso ${giro.join(' › ')}`;
   }
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);

@@ -3,9 +3,11 @@
  * Passo 2 della fetta: fermare e riprendere, portare il Lampionaio al centro o contro un muro per provare i bordi,
  * mostrare la linea invisibile che divide i joystick. Passo 3: chiedere un colpo della Lanterna.
  * Passo 4: far comparire nemici, ondate, immortale, cura, Grazia, rinascita del Ricaduto, spostare il Lampionaio.
- * Passo 5: caricare e usare il Cerchio di luce.
+ * Passo 5: caricare e usare il Cerchio di luce. Passo 6: ripulire la stanza, attraversare una porta, aggiungere un Eco.
  */
 import { ABILITA_STANZA, STANZA } from '../data/stanze';
+import { ARMI_COMUNI } from '../data/armi';
+import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { areaCamminabile } from './stanza';
 import { STATO, type TipoStanza } from './nemici-stanza';
 import type { Stanze } from '../scene/Stanze';
@@ -22,6 +24,7 @@ export class LabStanze {
     salute: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
     quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
+    stanza: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
   } {
     const s = this.s, n = s.nemici;
     return {
@@ -30,7 +33,36 @@ export class LabStanze {
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
       quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto,
+      stanza: s.percorso.stanza, fase: s.percorso.fase, ricompensa: s.percorso.ricompensa, porte: s.porte.muri.map((m, k) => `${m}: ${s.porte.ricompense[k]}`),
+      echi: s.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`), lanterna: s.percorso.livelloLanterna,
+      doni: Object.entries(s.percorso.passivi).filter(([, l]) => l > 0).map(([id, l]) => `${id} ${l}`), carteAperte: s.doni.aperta, finita: s.finita,
     };
+  }
+
+  /** La stanza è ripulita subito: via i nemici, e dopo un attimo le carte (le ondate automatiche si riaccendono). */
+  ripulisci(): void {
+    this.s.ondateAutomatiche = true;
+    this.s.nemici.svuota();
+    this.s.percorso.ripulisci();
+  }
+
+  /** Porta il Lampionaio contro la porta k (aperta): passa alla stanza dopo. */
+  attraversa(k: number): void {
+    if (k >= this.s.porte.muri.length) return;
+    const p = this.s.porte.davanti(k);
+    this.s.x = p.x;
+    this.s.y = p.y;
+  }
+
+  /** Un Eco nuovo dell'affinità aff (il primo che non si ha), se c'è posto. */
+  eco(aff: IdAffinita): void {
+    const a = ARMI_COMUNI.find((x) => AFFINITA_ARMI[x.id] === aff && !this.s.arsenale.livello(x));
+    if (a && this.s.arsenale.possedute.length < 3) this.s.arsenale.aggiungi(a);
+  }
+
+  /** Sceglie la prima carta (prove automatiche). */
+  primaCarta(): void {
+    this.s.doni.scegliPrima();
   }
 
   /** Accende o spegne il fermo d'impatto (per confrontare). */

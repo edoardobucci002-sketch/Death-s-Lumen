@@ -41,6 +41,7 @@ export class Doni {
   private carte: Dono[] = [];
   affinitaVoto: IdAffinita | null = null; // Voto: le armi nuove di questa affinità pesano di più tra le carte
   private scegli: ((d: Dono) => void) | null = null;
+  private titolo: string | null = null; // titolo scelto da chi apre (gioco a stanze); null = quello di sempre
 
   constructor(
     contenitore: HTMLElement,
@@ -98,6 +99,7 @@ export class Doni {
 
   /** La scelta dei Riti: una carta per affinità, niente rimescolate. */
   mostraRiti(carte: Dono[], scegli: (d: Dono) => void): void {
+    this.titolo = null;
     this.scegli = scegli;
     this.carte = carte;
     this.radice.hidden = false;
@@ -112,18 +114,20 @@ export class Doni {
 
   /** Mostra le carte; quando il giocatore sceglie, chiama scegli(dono). */
   mostra(scegli: (d: Dono) => void): void {
+    this.titolo = null;
     this.diRiti = false;
     this.scegli = scegli;
     this.radice.hidden = false;
     this.estrai();
   }
 
-  /** Il reliquiario: le carte sono già scelte (amuleti e potenziamento), niente rimescolate. */
-  mostraReliquiario(carte: Dono[], scegli: (d: Dono) => void): void {
+  /** Il reliquiario: le carte sono già scelte (amuleti e potenziamento), niente rimescolate. Titolo: per il gioco a stanze. */
+  mostraReliquiario(carte: Dono[], scegli: (d: Dono) => void, titolo?: string): void {
     this.diRiti = false;
     this.scegli = scegli;
     this.carte = carte;
     this.radice.hidden = false;
+    this.titolo = titolo ?? null;
     this.disegnaCarte(false);
   }
 
@@ -202,7 +206,7 @@ export class Doni {
     this.conRimescola = conRimescola;
     this.rimescola.hidden = !conRimescola;
     (this.radice.querySelector('.doni-rimaste') as HTMLElement).hidden = !conRimescola;
-    scritta(this.radice.querySelector('h2')!, conRimescola ? 'Un nuovo dono' : this.diRiti ? 'I Riti' : 'Un reliquiario');
+    scritta(this.radice.querySelector('h2')!, this.titolo ?? (conRimescola ? 'Un nuovo dono' : this.diRiti ? 'I Riti' : 'Un reliquiario'));
     this.elenco.replaceChildren(...this.carte.map((d, n) => this.carta(d, n)));
     // «Rimescola (2)» non stava nella targhetta: quante ne restano lo dice la riga sotto
     scritta(this.rimescola.lastElementChild!, 'Rimescola');

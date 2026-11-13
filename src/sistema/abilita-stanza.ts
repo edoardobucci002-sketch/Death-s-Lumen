@@ -13,7 +13,7 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { arte, immagine, ingr, misura, posa, type MisureHud } from './arte';
 import { PROFONDITA } from './effetti';
 import { raggioDisegnato } from './asset';
-import { FONTE, type NemiciStanza } from './nemici-stanza';
+import type { NemiciStanza } from './nemici-stanza';
 import { suona } from './audio';
 import { vibra } from './mobile';
 
@@ -101,8 +101,8 @@ export class AbilitaStanza {
     nemici.cerchioR = this.attiva > 0 ? A.raggio : 0;
     nemici.cerchioLento = A.rallenta;
     if ((this.ritmo -= dt) <= 0 && this.attiva > 0) {
-      this.ritmo += A.intervallo;
-      nemici.colpisciCerchio(x, y, A.raggio, danno, FONTE.abilita);
+      this.ritmo += ABILITA_STANZA.ritmo;
+      nemici.colpisciCerchio(x, y, A.raggio, danno);
     }
   }
 

@@ -375,6 +375,8 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .stanze > * { pointer-events: auto; }
 .stanze-scritta { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 /* la pausa oscura il gioco a retino (immagine messa dal codice, come la pausa del survivor); l'avviso di rotazione lo copre tutto */
+.stanze-passaggio { position: fixed; inset: 0; z-index: 5; background-repeat: repeat; image-rendering: pixelated; pointer-events: none; }
+.stanze-passaggio[hidden] { display: none; }
 .stanze-pausa, .stanze-ruota { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; z-index: 6; touch-action: none; }
 .stanze-pausa { background-repeat: repeat; image-rendering: pixelated; }
 .stanze-ruota { background: var(--sfondo); }

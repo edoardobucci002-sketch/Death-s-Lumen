@@ -7,6 +7,10 @@
  * e «Sei caduto» con Ricomincia e Menu. Dal 13/11: Quiete (tempo senza danni dopo un colpo), attimo al rallentatore della
  * Grazia, joystick disegnati dal codice (src/sistema/joystick-stanze.ts). Passo 5: il Cerchio di luce caricato colpendo
  * (src/sistema/abilita-stanza.ts), con il pulsante accanto al joystick d'attacco o Spazio.
+ * Passo 6: tre stanze (src/sistema/percorso.ts) collegate da porte (src/sistema/porte.ts): a stanza ripulita le 3 carte
+ * (le strisce del survivor, src/sistema/doni.ts), poi si aprono 2 o 3 porte con la ricompensa mostrata; ci si passa a
+ * retino. Gli Echi sono le armi automatiche del survivor (Arsenale), con i nemici nella sua Orda. Dopo la terza stanza:
+ * «Fetta completata».
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
  * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
  * Riprendi e Menu). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
@@ -19,7 +23,15 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, STANZA } from '../data/stanze';
+import { ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, PERCORSO, STANZA } from '../data/stanze';
+import { Arsenale, type Bonus } from '../sistema/armi';
+import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
+import { FONTE } from '../sistema/nemici-stanza';
+import { Percorso } from '../sistema/percorso';
+import { Porte } from '../sistema/porte';
+import { Doni } from '../sistema/doni';
+import { LANTERNA } from '../data/armi';
+import { PASSIVI, RICARICA_MINIMA, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
 import { Impatto } from '../sistema/impatto';
 import { ABILITA } from '../data/abilita';
 import { AbilitaStanza } from '../sistema/abilita-stanza';
@@ -41,6 +53,7 @@ import { LabStanze } from '../sistema/lab-stanze';
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
 const RITARDO_MASSIMO_MS = 250; // dopo un blocco lungo non recupera all'infinito
+const DONO = Object.fromEntries(PASSIVI.map((q) => [q.id, q])) as Record<IdDono, Passivo>;
 
 /** Il gioco a stanze si raggiunge solo dal link di prova, in sviluppo e nelle prove automatiche. */
 export const STANZE_DISPONIBILI = import.meta.env.VITE_CANALE === 'prova' || import.meta.env.DEV || navigator.webdriver === true;
@@ -97,12 +110,24 @@ export class Stanze extends Phaser.Scene {
   private impatto!: Impatto;
   private lampoFerita = 0;
   private attesaFine = 0;
-  private attesaOndata = 0;
   private orologio = 0;
   private scrittaVita = 0;
   private scrittaGrazia!: Phaser.GameObjects.Image;
   private barra!: BarraSalute;
   private pannelloFine!: HTMLElement;
+  // passo 6: build (Echi e doni), percorso, porte, carte, passaggio tra le stanze
+  arsenale!: Arsenale;
+  percorso!: Percorso;
+  porte!: Porte;
+  doni!: Doni;
+  private readonly bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
+  private dannoLanterna: number = ATTACCO.danno;
+  private rigenerazione = 0; // salute al secondo (Erbe amare)
+  private scudo = 0; // parte di danno tolta (Scudo di ferro)
+  private passaggio = 0; // secondi di passaggio a retino rimasti (0 = nessuno)
+  private portaScelta = -1;
+  private velaPassaggio!: HTMLElement;
+  finita = false; // la fetta è completata
 
   constructor() {
     super('Stanze');
@@ -131,9 +156,12 @@ export class Stanze extends Phaser.Scene {
     Object.assign(this.statGrazia, { durata: G.durata, danno: G.danno, velocita: G.velocita, finestra: G.finestra, sfioro: G.sfioro });
     this.anims.globalTimeScale = 1;
     this.schivatePerfette = this.ferite = this.ondate = 0;
-    this.attesaOndata = ONDATA.attesaPrima;
+    this.passaggio = 0;
+    this.portaScelta = -1;
+    this.finita = false;
+    // si entra dalla porta in basso
     this.x = Math.round(STANZA.larghezza / 2);
-    this.y = Math.round(STANZA.altezza / 2);
+    this.y = Math.round(areaCamminabile().y1);
     this.cameras.main.setBackgroundColor(STANZA.colori.fondo);
 
     creaStanza(this);
@@ -150,6 +178,14 @@ export class Stanze extends Phaser.Scene {
     this.effetti = new Effetti(this);
     this.impatto = new Impatto(this);
     this.nemici = new NemiciStanza(this, new Caso(ONDATA.seme), this.effetti, this.impatto);
+    Object.assign(this.bonus, { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 });
+    this.arsenale = new Arsenale(this, this.nemici.orda, new Caso(ONDATA.seme + 2), this.bonus, this.effetti);
+    // la Lanterna a mano e il Cerchio di luce feriscono attraverso l'arsenale: bonus, stato di Luce, reazioni, numeri
+    this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce, fonte === FONTE.lanterna ? F.lanterna : F.abilita);
+    this.percorso = new Percorso(this.arsenale);
+    this.percorso.entra(1, 'echi');
+    this.porte = new Porte(this);
+    this.porte.togli();
     this.barra = new BarraSalute(this, this.salute);
     const scritta = 'stanze-scritta-grazia';
     if (!this.textures.exists(scritta)) this.textures.addCanvas(scritta, tela('Grazia', '#86c5e8', '#000000'));
@@ -169,6 +205,12 @@ export class Stanze extends Phaser.Scene {
       return { x: cam.scrollX + cx / px, y: cam.scrollY + cy / px };
     }, () => this.corpo(), (verso) => this.mira(verso), (angolo) => this.colpisci(angolo));
     this.abilita = new AbilitaStanza(this, this.radice, this.pg.colore, () => this.fermo());
+    // le carte: le strisce del survivor, con le carte decise dal percorso
+    const nessuno = new Set<never>();
+    this.doni = new Doni(this.radice, this.arsenale, LANTERNA, this.percorso.passivi, new Caso(ONDATA.seme + 3),
+      () => ({ usati: 0, totale: 0, unioni: false, scoperte: nessuno, metaRaccolta: 0 }), () => {}, () => true);
+    this.radice.querySelector<HTMLElement>('.doni-aiuto')?.setAttribute('hidden', '');
+    this.ricalcola();
     this.disponi();
     this.controllaVerso();
 
@@ -186,6 +228,7 @@ export class Stanze extends Phaser.Scene {
       this.comandi.distruggi();
       this.attacco.distruggi();
       this.abilita.distruggi();
+      this.doni.distruggi();
       this.anims.globalTimeScale = 1;
       this.radice.remove();
     });
@@ -198,6 +241,8 @@ export class Stanze extends Phaser.Scene {
       this.attesaFine -= delta / 1000;
       if (this.attesaFine <= 0) this.mostraFine();
     }
+    // il passaggio a retino tra due stanze: a metà si cambia stanza
+    if (this.passaggio > 0 && !this.pausa && !this.pausaLab && !this.ruota) this.avanzaPassaggio(delta / 1000);
     if (this.fermo()) {
       this.accumulo = 0;
       this.disegna(0);
@@ -235,7 +280,7 @@ export class Stanze extends Phaser.Scene {
 
   /** Il colpo della Lanterna è partito: ferisce i nemici dentro l'arco (in Grazia fa più male). */
   private colpisci(angolo: number): void {
-    const presi = this.nemici.colpisci(this.x, this.y, angolo, ATTACCO.raggio, ATTACCO.ampiezza, ATTACCO.danno * this.bonusGrazia());
+    const presi = this.nemici.colpisci(this.x, this.y, angolo, this.attacco.raggio, this.attacco.ampiezza, this.dannoLanterna);
     this.abilita.colpo(presi); // l'abilità si carica solo così
     if (presi > 0) {
       // impatto: un attimo fermo anche il Lampionaio, lo schermo trema appena, un colpo sordo
@@ -245,9 +290,32 @@ export class Stanze extends Phaser.Scene {
     }
   }
 
-  /** Il moltiplicatore del danno: in Grazia più alto. */
-  private bonusGrazia(): number {
-    return 1 + (this.grazia > 0 ? this.statGrazia.danno : 0);
+  /**
+   * Statistiche dalla build: doni (solo quelli che nelle stanze funzionano), livello della Lanterna e Grazia. Si chiama a
+   * ogni passo (senza creare niente): la Grazia cambia il danno di tutte le armi.
+   */
+  private ricalcola(): void {
+    const p = this.percorso.passivi, per = (id: IdDono): number => effettoDono(DONO[id], p[id]);
+    const b = this.bonus, area = per('stoppinoLungo');
+    b.danno = per('saleNero') + (this.grazia > 0 ? this.statGrazia.danno : 0);
+    b.ricarica = Math.max(RICARICA_MINIMA, ricaricaDono(DONO.clessidra, p.clessidra));
+    b.area = area;
+    b.quantita = per('specchio');
+    b.durata = per('ceraVotiva');
+    b.critico = per('chiodoDiBara');
+    const massima = BASE.salute + this.pg.salute + per('cuoreDiCera');
+    if (massima > this.saluteMassima) this.salute += massima - this.saluteMassima; // più salute massima: la salute sale
+    this.saluteMassima = massima;
+    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena'));
+    this.rigenerazione = per('erbeAmare');
+    this.scudo = per('scudoDiFerro');
+    this.statGrazia.finestra = GRAZIA_STANZA.finestra + per('campanellaDArgento');
+    // la Lanterna a mano: i numeri del suo livello nel survivor, con la ricarica del gioco a stanze in proporzione
+    const L = LANTERNA.livelli, liv = L[Math.min(L.length, this.percorso.livelloLanterna) - 1];
+    this.dannoLanterna = ATTACCO.danno + liv.danno - L[0].danno;
+    this.attacco.ricarica = ATTACCO.ricarica * (liv.ricarica / L[0].ricarica) * b.ricarica;
+    this.attacco.raggio = ATTACCO.raggio * (liv.raggio / L[0].raggio) * (1 + area);
+    this.attacco.ampiezza = ATTACCO.ampiezza * (liv.ampiezza / L[0].ampiezza);
   }
 
   /** Il Lampionaio subisce un colpo (se non è in Quiete): lampo, scossa, vibrazione; poi la Quiete; a zero salute cade. */
@@ -261,7 +329,7 @@ export class Stanze extends Phaser.Scene {
     suona('danno');
     vibra('media');
     if (this.immortale) return;
-    this.salute = Math.max(0, this.salute - danno);
+    this.salute = Math.max(0, this.salute - danno * (1 - this.scudo));
     if (this.salute <= 0) {
       this.morto = true;
       this.attesaFine = C.attesaFine;
@@ -290,9 +358,9 @@ export class Stanze extends Phaser.Scene {
     return this.puntoCorpo;
   }
 
-  /** Il gioco è fermo: pausa, Laboratorio aperto, telefono da ruotare o Lampionaio caduto. */
+  /** Il gioco è fermo: pausa, Laboratorio aperto, telefono da ruotare, Lampionaio caduto, carte aperte, passaggio, fine. */
   fermo(): boolean {
-    return this.pausa || this.pausaLab || this.ruota || this.morto;
+    return this.pausa || this.pausaLab || this.ruota || this.morto || this.doni?.aperta || this.passaggio > 0 || this.finita;
   }
 
   /** Tasto Indietro: apre la pausa e basta (dentro la pausa non fa niente: si riprende solo dal pulsante); dalla fine torna al menu. */
@@ -303,8 +371,9 @@ export class Stanze extends Phaser.Scene {
   }
 
   apriPausa(): void {
-    if (this.pausa || this.morto) return;
+    if (this.pausa || this.morto || this.finita) return;
     this.pausa = true;
+    this.doni.sospesa = true;
     this.comandi.lascia();
     this.attacco.lascia();
     this.anims.pauseAll();
@@ -313,6 +382,7 @@ export class Stanze extends Phaser.Scene {
 
   riprendi(): void {
     this.pausa = false;
+    this.doni.sospesa = false;
     this.pannelloPausa.hidden = true;
     if (!this.fermo()) this.anims.resumeAll();
   }
@@ -329,6 +399,8 @@ export class Stanze extends Phaser.Scene {
     if (this.inQuiete > 0) this.inQuiete -= dt;
     if (this.lampoFerita > 0) this.lampoFerita -= dt;
     if (this.scrittaVita > 0) this.scrittaVita -= dt;
+    this.ricalcola();
+    if (this.rigenerazione > 0) this.salute = Math.min(this.saluteMassima, this.salute + this.rigenerazione * dt);
     this.comandi.aggiorna();
     const dx = this.comandi.dx, dy = this.comandi.dy;
     // durante il fermo d'impatto il Lampionaio non avanza (il resto della stanza sì)
@@ -350,25 +422,115 @@ export class Stanze extends Phaser.Scene {
     this.attacco.aggiorna(dt, this.guardaX, this.guardaY);
     // l'abilità (il cerchio segue il Lampionaio e rallenta chi c'è dentro), poi i nemici: il colpo più forte che arriva
     // in questo passo e le schivate perfette (finestra e sfioro vengono dalla Grazia del Lampionaio)
-    this.abilita.aggiorna(dt, this.x, this.y, this.nemici, ABILITA.cerchioDiLuce.danno * this.bonusGrazia());
+    this.abilita.aggiorna(dt, this.x, this.y, this.nemici, ABILITA.cerchioDiLuce.danno);
     this.nemici.finestra = this.statGrazia.finestra;
     this.nemici.sfioro = this.statGrazia.sfioro;
-    const danno = this.nemici.aggiorna(dt, this.x, this.y);
+    const mezzaL = this.scale.width / 2, mezzaA = this.scale.height / 2;
+    this.arsenale.aggiorna(dt, this.x, this.y, this.guardaX, this.guardaY, mezzaL, mezzaA);
+    const danno = this.nemici.aggiorna(dt, this.x, this.y, mezzaL, mezzaA);
     if (danno > 0) this.ferisci(danno);
     if (this.nemici.schivate > 0) {
       this.schivatePerfette += this.nemici.schivate;
       this.nemici.schivate = 0;
       if (!this.morto) this.iniziaGrazia();
     }
-    // ondate provvisorie (passo 4): a stanza ripulita, dopo un attimo, ne arriva un'altra
-    if (this.ondateAutomatiche && !this.morto && this.nemici.vivi() === 0 && (this.attesaOndata -= dt) <= 0) this.nuovaOndata();
+    if (this.morto) return;
+    // il percorso: ondate della stanza, carte a stanza ripulita (con «ondate automatiche» spente nel LAB resta fermo)
+    if (this.ondateAutomatiche && this.percorso.aggiorna(dt, this.nemici, this.x, this.y)) this.apriCarte();
+    // le porte aperte: camminandoci contro si passa alla stanza dopo
+    if (this.percorso.fase === 'porte') {
+      const k = this.porte.attraversata(this.x, this.y);
+      if (k >= 0) this.attraversa(k);
+    }
   }
 
-  /** Un'ondata di nemici, lontano dal Lampionaio. */
+  /** Un'ondata di nemici, lontano dal Lampionaio (LAB). */
   nuovaOndata(): void {
     this.nemici.ondata(this.x, this.y);
     this.ondate++;
-    this.attesaOndata = ONDATA.attesaNuova;
+  }
+
+  /** Stanza ripulita: le 3 carte. Scelta la carta, si aprono le porte (o la fetta è finita). */
+  apriCarte(): void {
+    this.percorso.fase = 'carte';
+    const carte = this.percorso.carte();
+    this.comandi.lascia();
+    this.attacco.lascia();
+    if (!carte.length) {
+      this.dopoCarta(null);
+      return;
+    }
+    suona('livello');
+    this.doni.mostraReliquiario(carte, (d) => this.dopoCarta(d), 'Un nuovo dono');
+  }
+
+  private dopoCarta(d: Parameters<Percorso['scegli']>[0] | null): void {
+    if (d) this.percorso.scegli(d);
+    else this.percorso.fase = this.percorso.ultima ? 'fine' : 'porte';
+    this.ricalcola();
+    if (this.percorso.fase === 'fine') {
+      this.mostraFineFetta();
+      return;
+    }
+    const p = this.percorso.porte();
+    this.porte.imposta(p.muri, p.ricompense);
+    this.porte.apri();
+    suona('campana');
+  }
+
+  /** Il Lampionaio entra nella porta k: passaggio a retino, a metà si cambia stanza. */
+  attraversa(k: number): void {
+    if (this.passaggio > 0 || this.percorso.fase !== 'porte') return;
+    this.portaScelta = k;
+    this.passaggio = PERCORSO.passaggio;
+    this.comandi.lascia();
+    this.attacco.lascia();
+  }
+
+  private avanzaPassaggio(dt: number): void {
+    const prima = this.passaggio, meta = PERCORSO.passaggio / 2;
+    this.passaggio = Math.max(0, this.passaggio - dt);
+    if (prima > meta && this.passaggio <= meta) this.nuovaStanza();
+    // il retino si infittisce fino al nero, poi si dirada (16 = tutto nero)
+    const t = this.passaggio > meta ? 1 - (this.passaggio - meta) / meta : this.passaggio / meta;
+    const livello = Math.round(16 * Phaser.Math.Clamp(t, 0, 1));
+    this.velaPassaggio.hidden = this.passaggio <= 0 || livello <= 0;
+    if (!this.velaPassaggio.hidden && this.velaPassaggio.dataset.livello !== String(livello)) {
+      this.velaPassaggio.dataset.livello = String(livello);
+      this.velaPassaggio.style.backgroundImage = `url(${retino(livello)})`;
+    }
+  }
+
+  /** La stanza dopo: vuota, con le carte che pescano dalla porta scelta; il Lampionaio entra dal basso. */
+  private nuovaStanza(): void {
+    const ricompensa = this.porte.ricompense[this.portaScelta] ?? 'dono';
+    this.nemici.svuota();
+    this.percorso.entra(this.percorso.stanza + 1, ricompensa);
+    this.porte.togli();
+    this.x = Math.round(STANZA.larghezza / 2);
+    this.y = Math.round(areaCamminabile().y1);
+    this.guardaX = 0;
+    this.guardaY = -1;
+  }
+
+  /** «Fetta completata»: nemici battuti, schivate perfette, la build presa; Ricomincia e Menu. */
+  private mostraFineFetta(): void {
+    this.finita = true;
+    this.comandi.lascia();
+    this.attacco.lascia();
+    this.tastoPausa.hidden = true;
+    const p = this.percorso, righe: string[] = [`${this.nemici.uccisi} nemici battuti`, `${this.schivatePerfette} schivate perfette`, `Lanterna ${p.livelloLanterna}`];
+    for (const e of this.arsenale.possedute) righe.push(`${e.arma.nome} ${e.livello}`);
+    for (const id of PERCORSO.doniAttivi) if (p.passivi[id]) righe.push(`${DONO[id].nome} ${p.passivi[id]}`);
+    this.pannelloFine.replaceChildren(
+      this.scrittaPixel('Fetta completata', 'stanze-titolo'),
+      ...righe.map((t) => this.scrittaPixel(t, 'stanze-etichetta')),
+      this.tastoScritta('Ricomincia', () => this.scene.restart()),
+      this.tastoScritta('Menu', () => this.scene.start('Menu')),
+    );
+    this.pannelloFine.hidden = false;
+    suona('alba');
+    this.disponi();
   }
 
   /**
@@ -394,7 +556,8 @@ export class Stanze extends Phaser.Scene {
     else this.giocatore.clearTint();
     this.scrittaGrazia.setPosition(px, py - C.scritta.sopra).setVisible(this.scrittaVita > 0);
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto);
-    this.nemici.disegna();
+    this.nemici.disegna(cam, px, py);
+    this.arsenale.disegna();
     this.abilita.disegna(px, py - COLPI.corpo);
     this.impatto.disegna(dt);
     this.attacco.disegna();
@@ -464,6 +627,9 @@ export class Stanze extends Phaser.Scene {
     this.avvisoRuota.className = 'stanze-ruota';
     this.avvisoRuota.hidden = true;
     this.avvisoRuota.append(this.scrittaPixel('Ruota il telefono', 'stanze-titolo'));
+    this.velaPassaggio = document.createElement('div');
+    this.velaPassaggio.className = 'stanze-passaggio';
+    this.velaPassaggio.hidden = true;
     this.pannelloFine = document.createElement('div');
     this.pannelloFine.className = 'stanze-pausa stanze-fine';
     this.pannelloFine.hidden = true;
@@ -471,7 +637,7 @@ export class Stanze extends Phaser.Scene {
     this.lineaJoystick = document.createElement('div');
     this.lineaJoystick.className = 'stanze-linea';
     this.lineaJoystick.hidden = true;
-    this.radice.append(this.lineaJoystick, this.tastoPausa, this.pannelloPausa, this.pannelloFine, this.avvisoRuota);
+    this.radice.append(this.lineaJoystick, this.tastoPausa, this.velaPassaggio, this.pannelloPausa, this.pannelloFine, this.avvisoRuota);
     interfaccia.append(this.radice);
     this.disponi();
   }
@@ -516,7 +682,7 @@ export class Stanze extends Phaser.Scene {
     const m = misureHud(), b = bordiHud(m), { lato, ingrandimento: z } = STANZA.pausa;
     this.attacco?.disponi(m, b);
     if (this.attacco) this.abilita?.disponi(m, this.attacco.riquadro);
-    this.pannelloPausa.style.backgroundSize = this.pannelloFine.style.backgroundSize = `${4 * m.px}px ${4 * m.px}px`;
+    this.pannelloPausa.style.backgroundSize = this.pannelloFine.style.backgroundSize = this.velaPassaggio.style.backgroundSize = `${4 * m.px}px ${4 * m.px}px`;
     this.barra?.scala(ingr('salute', m));
     // pulsante piccolo, ma l'area di tocco arriva comunque a TOCCO_MINIMO punti (regola dei 44 punti)
     posa(this.tastoPausa, m.W - b.d - lato * z, b.a, m);

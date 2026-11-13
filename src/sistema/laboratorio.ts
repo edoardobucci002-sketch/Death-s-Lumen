@@ -276,8 +276,17 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     return [
       titolo('Stanza'),
       riga(el('span', 'lab-stato', `Pavimento ${s.larghezza} × ${s.altezza} px · Lampionaio in ${s.x}, ${s.y}`)),
+      titolo('Percorso (tre stanze)'),
+      riga(el('span', 'lab-stato', `Stanza ${s.stanza} di 3 · carte da: ${s.ricompensa} · fase: ${s.fase}${s.porte.length ? ` · porte: ${s.porte.join(', ')}` : ''}`)),
+      riga(el('span', 'lab-stato', `Build: Lanterna ${s.lanterna}${s.echi.length ? ', ' + s.echi.join(', ') : ''}${s.doni.length ? ' · doni: ' + s.doni.join(', ') : ''}`)),
+      riga(
+        tasto('Ripulisci la stanza', () => { st.lab.ripulisci(); mostra(false); }),
+        ...[0, 1, 2].map((k) => tasto(`Attraversa la porta ${k + 1}`, () => { st.lab.attraversa(k); mostra(false); })),
+      ),
+      riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto(`Eco di ${a}`, f(() => st.lab.eco(a))))),
+      el('p', 'lab-nota', '«Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 3 carte. Scelta la carta si aprono le porte, con sopra il simbolo della ricompensa: «Attraversa la porta» ti porta contro una di loro. Nella prima stanza le carte sono 3 Echi; poi pescano dalla porta scelta. Dopo la terza stanza: «Fetta completata». Numeri in Numeri → stanze → PERCORSO e PORTE.'),
       titolo('Nemici'),
-      riga(el('span', 'lab-stato', `In campo: ${s.nemici} · battuti: ${s.uccisi} · rinati: ${s.rinascite} · ondate: ${s.ondate}`)),
+      riga(el('span', 'lab-stato', `In campo: ${s.nemici} · battuti: ${s.uccisi} · rinati: ${s.rinascite}`)),
       riga(
         tasto('Ricaduto vicino', f(() => st.lab.nemico('ricaduto', 140))),
         tasto('Cantore vicino', f(() => st.lab.nemico('cantore', 230))),
@@ -285,10 +294,10 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Togli tutti', f(() => st.lab.svuota()), 'rosso'),
       ),
       riga(
-        tasto(s.ondateAutomatiche ? 'Ondate automatiche: sì' : 'Ondate automatiche: no', f(() => st.lab.ondateAutomatiche(!s.ondateAutomatiche)), s.ondateAutomatiche ? 'acceso' : ''),
+        tasto(s.ondateAutomatiche ? 'Stanza in corso (ondate e carte): sì' : 'Stanza in corso (ondate e carte): no', f(() => st.lab.ondateAutomatiche(!s.ondateAutomatiche)), s.ondateAutomatiche ? 'acceso' : ''),
         tasto(`Rinascita del Ricaduto: ${rin}`, f(() => st.lab.rinascita(s.rinascita === null ? true : s.rinascita ? false : null)), s.rinascita !== null ? 'acceso' : ''),
       ),
-      el('p', 'lab-nota', 'Spegni le ondate automatiche e togli tutti per provare un nemico alla volta. Il Ricaduto si ferma vicino a te, a terra si riempie lo spicchio rosso (l\'avviso) e poi graffia; il Cantore resta lontano, a terra compare una linea fino al muro e poi lancia il grumo. Esci dallo spicchio all\'ultimo istante o fatti sfiorare dal grumo: parte la Grazia. Ogni Ricaduto battuto resta a terra 1,5 s e non si può colpire; «Rinascita: sempre» lo fa rialzare sempre (una volta sola), «mai» lo fa sparire sempre. Numeri in Numeri → stanze → NEMICI_STANZA e ONDATA.'),
+      el('p', 'lab-nota', 'Spegni «Stanza in corso» e togli tutti per provare un nemico alla volta (niente ondate e niente carte). Il Ricaduto si ferma vicino a te, a terra si riempie lo spicchio rosso (l\'avviso) e poi graffia; il Cantore resta lontano, a terra compare una linea fino al muro e poi lancia il grumo. Esci dallo spicchio all\'ultimo istante o fatti sfiorare dal grumo: parte la Grazia. Ogni Ricaduto battuto resta a terra 1,5 s e non si può colpire; «Rinascita: sempre» lo fa rialzare sempre (una volta sola), «mai» lo fa sparire sempre. Numeri in Numeri → stanze → NEMICI_STANZA e ONDATA.'),
       titolo('Lampionaio'),
       riga(el('span', 'lab-stato', `Salute ${s.salute}/${s.saluteMassima} · Quiete ${s.quiete} s · colpi subiti ${s.ferite} · schivate perfette ${s.schivate}${s.grazia > 0 ? ` · Grazia ancora ${s.grazia.toFixed(1)} s` : ''}`)),
       riga(

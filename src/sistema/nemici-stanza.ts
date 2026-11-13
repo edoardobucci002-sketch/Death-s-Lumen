@@ -1,69 +1,65 @@
 /*
- * Nemici del gioco a stanze (passo 4 della fetta): il Ricaduto e il Cantore, e i grumi di Lumen spento del Cantore.
- * Ogni attacco ha un avviso a terra (lo spicchio del graffio che si riempie, la linea del canto) e lascia spazio alla
- * schivata perfetta, che dà la Grazia: uscire dallo spicchio all'ultimo istante, farsi sfiorare da un grumo.
- * Quiete: dopo un colpo, per un attimo la stessa arma («fonte») non ferisce più quel nemico; le altre sì.
+ * Nemici del gioco a stanze: il Ricaduto e il Cantore, e i grumi di Lumen spento del Cantore.
+ * I nemici vivono nella Orda del survivor (src/sistema/orda.ts), così gli Echi, gli stati e le reazioni li toccano come
+ * nel survivor; qui c'è il loro «cervello»: comparsa, camminata, avviso, attacco, a terra. Ogni attacco ha un avviso a terra
+ * (lo spicchio rosso del graffio che si riempie, la linea arancione del canto) e lascia spazio alla schivata perfetta, che
+ * dà la Grazia: uscire dallo spicchio all'ultimo istante, farsi sfiorare da un grumo.
+ * Quiete: dopo un colpo, per un attimo la stessa arma a mano (Lanterna, Cerchio di luce) non ferisce più quel nemico.
  * Il Ricaduto battuto resta sempre a terra un attimo, intoccabile; poi a volte si rialza (una volta sola).
  * Impatto della Lanterna: il nemico colpito si ferma un attimo (fermo d'impatto), si schiaccia e sprizza scintille.
+ * Chi è sepolto, interrato o fermato da uno stato non fa niente, nemmeno l'avviso: il suo attacco aspetta.
  * Tutto in array preparati all'inizio (niente allocazioni nel ciclo di gioco); la logica è separata dal disegno.
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
- * Con al massimo ONDATA.massimo nemici, le spinte tra nemici si calcolano a coppie: la griglia spaziale non serve.
  */
 import Phaser from 'phaser';
 import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, ONDATA, STANZA } from '../data/stanze';
-import type { Impatto } from './impatto';
 import { PROFONDITA, type Effetti } from './effetti';
-import { ingrandimento } from './asset';
 import { areaCamminabile } from './stanza';
 import type { Caso } from './caso';
+import type { Impatto } from './impatto';
 import { suona } from './audio';
+import { CAPIENZA, ID_CANTORE, ID_RICADUTO, Orda } from './orda';
+import { Minacce } from './minacce';
 
 export const TIPI_STANZA = ['ricaduto', 'cantore'] as const;
 export type TipoStanza = (typeof TIPI_STANZA)[number];
 
 /** Cosa sta facendo un nemico. */
-export const STATO = { comparsa: 0, cammina: 1, avviso: 2, recupero: 3, aTerra: 4 } as const;
+export const STATO = { cammina: 1, avviso: 2, recupero: 3, aTerra: 4 } as const;
 
-const N = ONDATA.massimo;
-/** Le armi che feriscono i nemici, ognuna con la sua Quiete: la Lanterna, il Cerchio di luce (gli Echi arrivano dopo). */
+/** Le armi a mano, ognuna con la sua Quiete. */
 export const FONTE = { lanterna: 0, abilita: 1 } as const;
-const FONTI = 4;
-const FERITO = { no: 0, inPiedi: 1, battuto: 2 } as const;
+
+const MAX_COMPARSE = ONDATA.massimo;
 const MAX_GRUMI = 16;
 const R = NEMICI_STANZA.ricaduto;
 const C = NEMICI_STANZA.cantore;
-const RICADUTO = 0;
-const CANTORE = 1;
 const colore = (h: string): number => parseInt(h.slice(1), 16);
 
-interface Aspetto {
-  ingrandimento: number;
-  piedi: number; // origine verticale dello sprite (la riga dei piedi)
-}
-
 export class NemiciStanza {
-  numero = 0;
-  readonly tipo = new Uint8Array(N);
-  readonly x = new Float32Array(N);
-  readonly y = new Float32Array(N);
-  readonly salute = new Float32Array(N);
-  readonly saluteMassima = new Float32Array(N);
-  readonly stato = new Uint8Array(N);
-  readonly tempo = new Float32Array(N); // secondi alla fine dello stato (comparsa, avviso, recupero, a terra)
-  readonly dirX = new Float32Array(N); // direzione dell'attacco, decisa all'inizio dell'avviso
-  readonly dirY = new Float32Array(N);
-  private ricarica = new Float32Array(N); // Cantore: secondi prima di poter cantare
-  private rinato = new Uint8Array(N); // Ricaduto: è già tornato in vita una volta
-  private dentro = new Float32Array(N); // secondi al graffio l'ultima volta che il personaggio era nello spicchio
-  private lampo = new Float32Array(N);
-  private quiete = new Float32Array(N * FONTI); // secondi di Quiete rimasti, per nemico e per arma
-  private fermo = new Float32Array(N); // fermo d'impatto: il nemico non fa niente
-  private schiaccia = new Float32Array(N); // secondi di schiacciamento rimasti (solo disegno)
-  /** LAB: il fermo d'impatto acceso o spento. */
-  fermoImpatto = true;
-  private colpo = new Float32Array(N); // il graffio appena scattato, da disegnare pieno per un attimo
-  private versoSinistra = new Uint8Array(N);
-  private sprite: Phaser.GameObjects.Sprite[] = [];
+  /** La Orda che tiene i nemici: la usano anche le armi automatiche. */
+  readonly orda: Orda;
+  // dati propri del gioco a stanze, uno per posto della Orda: seguono i nemici quando cambiano posto (registraCampi)
+  readonly stato = new Uint8Array(CAPIENZA);
+  readonly tempo = new Float32Array(CAPIENZA); // secondi alla fine dello stato (avviso, recupero, a terra)
+  readonly dirX = new Float32Array(CAPIENZA); // direzione dell'attacco, decisa all'inizio dell'avviso
+  readonly dirY = new Float32Array(CAPIENZA);
+  private ricarica = new Float32Array(CAPIENZA); // Cantore: secondi prima di poter cantare
+  private rinato = new Uint8Array(CAPIENZA); // Ricaduto: è già tornato in vita una volta
+  private dentro = new Float32Array(CAPIENZA); // secondi al graffio l'ultima volta che il personaggio era nello spicchio
+  private colpo = new Float32Array(CAPIENZA); // il graffio appena scattato, da disegnare pieno per un attimo
+  private quieteLanterna = new Float32Array(CAPIENZA);
+  private quieteAbilita = new Float32Array(CAPIENZA);
+  private fermo = new Float32Array(CAPIENZA); // fermo d'impatto: il nemico non fa niente
+  private schiaccia = new Float32Array(CAPIENZA); // secondi di schiacciamento rimasti (solo disegno)
+  private verso = new Uint8Array(CAPIENZA); // 1 = guarda a sinistra
+  private fermi = new Uint8Array(CAPIENZA); // fermo per uno stato (lo scrive la Orda)
+  // comparse: il segno a terra dove sta per arrivare un nemico (non è ancora nella Orda: le armi non lo toccano)
+  comparse = 0;
+  private cTipo = new Uint8Array(MAX_COMPARSE);
+  private cX = new Float32Array(MAX_COMPARSE);
+  private cY = new Float32Array(MAX_COMPARSE);
+  private cTempo = new Float32Array(MAX_COMPARSE);
   grumi = 0;
   readonly gX = new Float32Array(MAX_GRUMI);
   readonly gY = new Float32Array(MAX_GRUMI);
@@ -71,15 +67,16 @@ export class NemiciStanza {
   private gVY = new Float32Array(MAX_GRUMI);
   private gSfiorato = new Uint8Array(MAX_GRUMI);
   private gSprite: Phaser.GameObjects.Image[] = [];
-  private aspetto: Aspetto[];
-  private terra: Phaser.GameObjects.Graphics; // avvisi a terra (sotto i nemici)
-  private sopra: Phaser.GameObjects.Graphics; // barre della salute e segno della rinascita
+  private terra: Phaser.GameObjects.Graphics; // avvisi e comparse a terra (sotto i nemici)
+  private sopra: Phaser.GameObjects.Graphics; // barre della salute
   private orologio = 0;
   schivate = 0; // schivate perfette da quando la scena le ha lette (le rimette a 0)
-  uccisi = 0; // nemici morti per davvero (per il LAB e le prove)
+  uccisi = 0; // nemici battuti per davvero (per il LAB e le prove)
   rinascite = 0; // Ricaduti tornati in vita
   /** LAB: forza la rinascita del Ricaduto (null = la probabilità normale). */
   rinascitaForzata: boolean | null = null;
+  /** LAB: il fermo d'impatto acceso o spento. */
+  fermoImpatto = true;
   /** Il raggio del corpo del personaggio, per i colpi dei nemici. */
   readonly corpo: number = COMBATTIMENTO_STANZA.raggio;
   /** Schivata perfetta: li imposta la scena dalla Grazia del personaggio (le carte potranno migliorarli). */
@@ -90,27 +87,25 @@ export class NemiciStanza {
   cerchioY = 0;
   cerchioR = 0;
   cerchioLento = 0;
+  /** Il colpo di un'arma a mano sul nemico j: lo dà l'arsenale (danno con i bonus, stato, reazioni, numero). */
+  colpoArma: (j: number, danno: number, dx: number, dy: number, fonte: number) => void = () => {};
 
   constructor(
-    private readonly scena: Phaser.Scene,
+    scena: Phaser.Scene,
     private readonly caso: Caso,
     private readonly effetti: Effetti,
     private readonly impatto: Impatto,
   ) {
-    this.aspetto = TIPI_STANZA.map((t) => {
-      const chiave = NEMICI_STANZA[t].sprite;
-      const dati = scena.cache.json.get(chiave) as { frames: { spriteSourceSize: { y: number; h: number }; sourceSize: { h: number } }[] };
-      const fondo = Math.max(...dati.frames.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h));
-      return { ingrandimento: ingrandimento(scena, chiave), piedi: fondo / dati.frames[0].sourceSize.h };
-    });
-    for (let i = 0; i < N; i++) this.sprite.push(scena.add.sprite(0, 0, R.sprite).setVisible(false));
+    this.orda = new Orda(scena, caso, new Minacce(scena));
+    this.orda.registraCampi(this.stato, this.tempo, this.dirX, this.dirY, this.ricarica, this.rinato, this.dentro, this.colpo,
+      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso);
     // il grumo: un tondo pieno di Lumen spento con il bordo scuro, disegnato una volta
     const r = C.grumo.raggio, chiave = 'stanze-grumo';
     if (!scena.textures.exists(chiave)) {
       const g = scena.add.graphics();
       g.fillStyle(colore(NEMICI_STANZA.colori.grumoBordo)).fillCircle(r + 1, r + 1, r + 1);
       g.fillStyle(colore(NEMICI_STANZA.colori.grumo)).fillCircle(r + 1, r + 1, r);
-      g.fillStyle(colore(NEMICI_STANZA.colori.linea)).fillRect(r - 2, r - 3, 3, 2);
+      g.fillStyle(0x9fb8c8).fillRect(r - 2, r - 3, 3, 2);
       g.generateTexture(chiave, 2 * r + 2, 2 * r + 2);
       g.destroy();
     }
@@ -119,28 +114,48 @@ export class NemiciStanza {
     this.sopra = scena.add.graphics().setDepth(PROFONDITA.sopra - 1);
   }
 
+  /** Nemici in campo (nella Orda). */
+  get numero(): number {
+    return this.orda.numero;
+  }
+
+  get x(): Float32Array {
+    return this.orda.x;
+  }
+
+  get y(): Float32Array {
+    return this.orda.y;
+  }
+
   /** Un nemico nuovo in (x, y); con comparsa > 0 prima compare il segno a terra e il nemico arriva dopo. */
   aggiungi(t: TipoStanza, x: number, y: number, comparsa: number = ONDATA.comparsa): boolean {
-    if (this.numero >= N) return false;
-    const i = this.numero++, d = NEMICI_STANZA[t], a = areaCamminabile();
-    this.tipo[i] = t === 'ricaduto' ? RICADUTO : CANTORE;
-    this.x[i] = Phaser.Math.Clamp(x, a.x0, a.x1);
-    this.y[i] = Phaser.Math.Clamp(y, a.y0, a.y1);
-    this.salute[i] = this.saluteMassima[i] = d.salute;
-    this.stato[i] = comparsa > 0 ? STATO.comparsa : STATO.cammina;
-    this.tempo[i] = comparsa;
-    this.ricarica[i] = C.primoCanto;
-    this.rinato[i] = 0;
-    this.lampo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = 0;
-    this.quiete.fill(0, i * FONTI, i * FONTI + FONTI);
-    this.dirX[i] = 1;
-    this.dirY[i] = 0;
-    this.dentro[i] = Infinity;
+    if (this.vivi() >= ONDATA.massimo) return false;
+    const a = areaCamminabile(), px = Phaser.Math.Clamp(x, a.x0, a.x1), py = Phaser.Math.Clamp(y, a.y0, a.y1);
+    const k = t === 'ricaduto' ? 0 : 1;
+    if (comparsa > 0) {
+      const c = this.comparse++;
+      this.cTipo[c] = k;
+      this.cX[c] = px;
+      this.cY[c] = py;
+      this.cTempo[c] = comparsa;
+    } else this.nasce(k, px, py);
     return true;
   }
 
-  /** Un'ondata: ricaduti e cantori in punti a caso della stanza, lontani almeno ONDATA.distanzaMinima da (px, py). */
-  ondata(px: number, py: number): void {
+  /** Il nemico entra davvero nella Orda. */
+  private nasce(k: number, x: number, y: number): void {
+    const i = this.orda.nasciStanza(k === 0 ? ID_RICADUTO : ID_CANTORE, x, y, k === 0 ? R.salute : C.salute);
+    this.stato[i] = STATO.cammina;
+    this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
+    this.ricarica[i] = C.primoCanto;
+    this.rinato[i] = this.verso[i] = 0;
+    this.dirX[i] = 1;
+    this.dirY[i] = 0;
+    this.dentro[i] = Infinity;
+  }
+
+  /** Un'ondata: «ricaduti» e «cantori» in punti a caso della stanza, lontani almeno ONDATA.distanzaMinima da (px, py). */
+  ondata(px: number, py: number, ricaduti: number = ONDATA.ricaduti, cantori: number = ONDATA.cantori): void {
     const a = areaCamminabile();
     const metti = (t: TipoStanza): void => {
       let x = 0, y = 0;
@@ -151,64 +166,80 @@ export class NemiciStanza {
       }
       this.aggiungi(t, x, y);
     };
-    for (let k = 0; k < ONDATA.ricaduti; k++) metti('ricaduto');
-    for (let k = 0; k < ONDATA.cantori; k++) metti('cantore');
+    for (let k = 0; k < ricaduti; k++) metti('ricaduto');
+    for (let k = 0; k < cantori; k++) metti('cantore');
   }
 
-  /** Nemici ancora da battere (anche quelli che stanno comparendo o che sono a terra in attesa di rialzarsi). */
+  /** Nemici ancora da battere: in campo (anche a terra in attesa di rialzarsi) e in arrivo. */
   vivi(): number {
-    return this.numero;
+    return this.orda.numero + this.comparse;
   }
 
   svuota(): void {
-    this.numero = 0;
+    while (this.orda.numero > 0) this.orda.togliStanza(this.orda.numero - 1);
+    this.comparse = 0;
     this.grumi = 0;
   }
 
   /**
-   * Un passo di logica. (px, py): i piedi del personaggio. Restituisce il danno più forte che lo raggiunge in questo
-   * passo (la scena decide se lo subisce: invulnerabilità, immortale). Conta le schivate perfette in «schivate».
+   * Un passo di logica. (px, py): i piedi del personaggio; mezzaL e mezzaA metà del campo visibile. Restituisce il danno
+   * più forte che lo raggiunge in questo passo (la scena decide se lo subisce). Conta le schivate perfette in «schivate».
    */
-  aggiorna(dt: number, px: number, py: number): number {
+  aggiorna(dt: number, px: number, py: number, mezzaL: number, mezzaA: number): number {
     this.orologio += dt;
+    for (let c = this.comparse - 1; c >= 0; c--) {
+      if ((this.cTempo[c] -= dt) > 0) continue;
+      this.nasce(this.cTipo[c], this.cX[c], this.cY[c]);
+      const u = --this.comparse;
+      this.cTipo[c] = this.cTipo[u];
+      this.cX[c] = this.cX[u];
+      this.cY[c] = this.cY[u];
+      this.cTempo[c] = this.cTempo[u];
+    }
+    const o = this.orda;
+    o.aggiornaStanza(dt, px, py, mezzaL, mezzaA, this.fermi);
     let danno = 0;
-    const a = areaCamminabile();
-    for (let i = this.numero - 1; i >= 0; i--) {
-      if (this.lampo[i] > 0) this.lampo[i] -= dt;
-      for (let f = i * FONTI; f < i * FONTI + FONTI; f++) if (this.quiete[f] > 0) this.quiete[f] -= dt;
-      if (this.schiaccia[i] > 0) this.schiaccia[i] -= dt;
-      if (this.fermo[i] > 0) {
-        this.fermo[i] -= dt; // fermo d'impatto: niente passi, niente avviso che scorre
-        continue;
-      }
+    for (let i = o.numero - 1; i >= 0; i--) {
       if (this.colpo[i] > 0) this.colpo[i] -= dt;
-      const st = this.stato[i];
-      const dx = px - this.x[i], dy = py - this.y[i], d = Math.hypot(dx, dy) || 1;
-      if (st === STATO.comparsa) {
-        if ((this.tempo[i] -= dt) <= 0) this.stato[i] = STATO.cammina;
+      if (this.quieteLanterna[i] > 0) this.quieteLanterna[i] -= dt;
+      if (this.quieteAbilita[i] > 0) this.quieteAbilita[i] -= dt;
+      if (this.schiaccia[i] > 0) this.schiaccia[i] -= dt;
+      const ricaduto = o.tipo[i] === ID_RICADUTO;
+      // salute finita (Lanterna, Echi, maledizione, reazioni): il Ricaduto va a terra, il Cantore sparisce
+      if (o.salute[i] <= 0 && this.stato[i] !== STATO.aTerra) {
+        if (ricaduto) this.aTerra(i);
+        else this.sparisce(i);
         continue;
       }
-      if (st === STATO.aTerra) {
-        // a terra: allo scadere si tira la rinascita (nessun segno prima); se non esce, sparisce
+      if (this.stato[i] === STATO.aTerra) {
+        // allo scadere si tira la rinascita (nessun segno prima); se non esce, sparisce
         if ((this.tempo[i] -= dt) <= 0) {
           if (!this.rinato[i] && (this.rinascitaForzata ?? this.caso.numero() < R.rinascita.probabilita)) {
             this.rinato[i] = 1;
             this.stato[i] = STATO.cammina;
-            this.salute[i] = this.saluteMassima[i] * R.rinascita.salute;
+            o.salute[i] = o.saluteMassima[i] * R.rinascita.salute;
             this.rinascite++;
             suona('danno');
           } else this.sparisce(i);
         }
         continue;
       }
-      // dentro il Cerchio di luce si cammina più lenti
-      const passo = dt * (this.cerchioR > 0 && (this.x[i] - this.cerchioX) ** 2 + (this.y[i] - this.cerchioY) ** 2 <= this.cerchioR ** 2 ? 1 - this.cerchioLento : 1);
+      if (this.fermo[i] > 0) {
+        this.fermo[i] -= dt; // fermo d'impatto: niente passi, niente avviso che scorre
+        continue;
+      }
+      if (this.fermi[i]) continue; // sepolto, interrato o fermato: anche l'attacco aspetta
+      // dentro il Cerchio di luce, rallentamenti e Consacrato: si cammina più lenti
+      const dentroCerchio = this.cerchioR > 0 && (o.x[i] - this.cerchioX) ** 2 + (o.y[i] - this.cerchioY) ** 2 <= this.cerchioR ** 2;
+      const passo = dt * o.fattoreVelocita(i, false) * (dentroCerchio ? 1 - this.cerchioLento : 1);
+      const dx = px - o.x[i], dy = py - o.y[i], d = Math.hypot(dx, dy) || 1;
+      const st = this.stato[i];
       if (st === STATO.recupero) {
         if ((this.tempo[i] -= dt) <= 0) this.stato[i] = STATO.cammina;
       } else if (st === STATO.avviso) {
         const prima = this.tempo[i];
         this.tempo[i] -= dt;
-        if (this.tipo[i] === RICADUTO) {
+        if (ricaduto) {
           const dentro = this.nelGraffio(i, px, py);
           if (dentro) this.dentro[i] = prima;
           if (this.tempo[i] <= 0) {
@@ -219,12 +250,12 @@ export class NemiciStanza {
             this.tempo[i] = R.recupero;
           }
         } else if (this.tempo[i] <= 0) {
-          this.lancia(this.x[i] + this.dirX[i] * C.raggio, this.y[i] + this.dirY[i] * C.raggio, this.dirX[i], this.dirY[i]);
+          this.lancia(o.x[i] + this.dirX[i] * C.raggio, o.y[i] + this.dirY[i] * C.raggio, this.dirX[i], this.dirY[i]);
           this.stato[i] = STATO.recupero;
           this.tempo[i] = C.recupero;
           this.ricarica[i] = C.ricarica;
         }
-      } else if (this.tipo[i] === RICADUTO) {
+      } else if (ricaduto) {
         // cammina dritto verso il personaggio; vicino si ferma e prepara il graffio
         if (d <= R.portata) this.iniziaAvviso(i, dx / d, dy / d, R.avviso);
         else this.muovi(i, (dx / d) * R.velocita * passo, (dy / d) * R.velocita * passo);
@@ -235,29 +266,20 @@ export class NemiciStanza {
         else if (d < C.distanza.minima) this.muovi(i, (-dx / d) * C.velocita * passo, (-dy / d) * C.velocita * passo);
         else if (d > C.distanza.massima) this.muovi(i, (dx / d) * C.velocita * passo, (dy / d) * C.velocita * passo);
       }
-      if (this.stato[i] === STATO.cammina && Math.abs(dx) > 1) this.versoSinistra[i] = dx < 0 ? 1 : 0;
+      if (this.stato[i] === STATO.cammina && Math.abs(dx) > 1) this.verso[i] = dx < 0 ? 1 : 0;
     }
-    // i nemici non si sovrappongono tra loro (a coppie: sono pochi)
-    for (let i = 0; i < this.numero; i++) {
-      if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
-      for (let j = i + 1; j < this.numero; j++) {
-        if (this.stato[j] === STATO.comparsa || this.stato[j] === STATO.aTerra) continue;
-        const ri = NEMICI_STANZA[TIPI_STANZA[this.tipo[i]]].raggio, rj = NEMICI_STANZA[TIPI_STANZA[this.tipo[j]]].raggio;
-        const dx = this.x[j] - this.x[i], dy = this.y[j] - this.y[i], d = Math.hypot(dx, dy), min = ri + rj;
-        if (d >= min || d === 0) continue;
-        const k = (min - d) / (2 * d);
-        this.x[i] = Phaser.Math.Clamp(this.x[i] - dx * k, a.x0, a.x1);
-        this.y[i] = Phaser.Math.Clamp(this.y[i] - dy * k, a.y0, a.y1);
-        this.x[j] = Phaser.Math.Clamp(this.x[j] + dx * k, a.x0, a.x1);
-        this.y[j] = Phaser.Math.Clamp(this.y[j] + dy * k, a.y0, a.y1);
-      }
+    // i muri: dopo spinte e separazione della Orda, tutti dentro il pavimento
+    const a = areaCamminabile();
+    for (let i = 0; i < o.numero; i++) {
+      o.x[i] = Phaser.Math.Clamp(o.x[i], a.x0, a.x1);
+      o.y[i] = Phaser.Math.Clamp(o.y[i], a.y0, a.y1);
     }
     return Math.max(danno, this.aggiornaGrumi(dt, px, py));
   }
 
   /** Il personaggio in (px, py) è dentro lo spicchio del graffio del Ricaduto i? */
   private nelGraffio(i: number, px: number, py: number): boolean {
-    const dx = px - this.x[i], dy = py - this.y[i], d = Math.hypot(dx, dy), r = R.graffio.raggio + this.corpo;
+    const dx = px - this.orda.x[i], dy = py - this.orda.y[i], d = Math.hypot(dx, dy), r = R.graffio.raggio + this.corpo;
     if (d >= r) return false;
     if (d <= this.corpo) return true; // addosso: preso comunque
     const coseno = (dx * this.dirX[i] + dy * this.dirY[i]) / d;
@@ -271,13 +293,31 @@ export class NemiciStanza {
     this.dirX[i] = dx;
     this.dirY[i] = dy;
     this.dentro[i] = Infinity;
-    if (Math.abs(dx) > 0.01) this.versoSinistra[i] = dx < 0 ? 1 : 0;
+    if (Math.abs(dx) > 0.01) this.verso[i] = dx < 0 ? 1 : 0;
   }
 
   private muovi(i: number, dx: number, dy: number): void {
-    const a = areaCamminabile();
-    this.x[i] = Phaser.Math.Clamp(this.x[i] + dx, a.x0, a.x1);
-    this.y[i] = Phaser.Math.Clamp(this.y[i] + dy, a.y0, a.y1);
+    this.orda.x[i] += dx;
+    this.orda.y[i] += dy;
+  }
+
+  /** Il Ricaduto battuto resta a terra, steso e scuro, intoccabile (salute a zero: le armi lo ignorano). */
+  private aTerra(i: number): void {
+    const o = this.orda;
+    this.stato[i] = STATO.aTerra;
+    this.tempo[i] = R.rinascita.attesa;
+    o.salute[i] = 0;
+    this.fermo[i] = 0;
+    this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, 0, -1, IMPATTO.scintille.battuto);
+  }
+
+  /** Battuto per davvero: scintille, uno scoppio e via. */
+  private sparisce(i: number): void {
+    const o = this.orda;
+    this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, 0, -1, IMPATTO.scintille.battuto);
+    this.effetti.scoppio(o.x[i], o.y[i] - o.altezza(i) / 2);
+    this.uccisi++;
+    o.togliStanza(i);
   }
 
   private lancia(x: number, y: number, dx: number, dy: number): void {
@@ -329,110 +369,59 @@ export class NemiciStanza {
     this.gSfiorato[k] = this.gSfiorato[u];
   }
 
+  /** Si può colpire: in campo, con la salute, non a terra. */
+  private colpibile(i: number): boolean {
+    return this.orda.salute[i] > 0 && this.stato[i] !== STATO.aTerra;
+  }
+
   /**
-   * Il colpo della Lanterna: un arco di raggio «raggio» e «ampiezza» gradi da (ox, oy) verso «angolo».
-   * Ferisce ogni nemico dentro, se non è in Quiete per la Lanterna (a terra non si colpisce). Restituisce quanti nemici ha preso.
+   * Il colpo della Lanterna: un arco di raggio «raggio» e «ampiezza» gradi da (ox, oy) verso «angolo». Ferisce ogni nemico
+   * dentro che non è in Quiete per la Lanterna, con l'impatto se resta in piedi. Restituisce quanti nemici ha preso.
    */
   colpisci(ox: number, oy: number, angolo: number, raggio: number, ampiezza: number, danno: number): number {
+    const o = this.orda, mezza = Phaser.Math.DegToRad(ampiezza / 2);
     let presi = 0;
-    const mezza = Phaser.Math.DegToRad(ampiezza / 2);
-    for (let i = this.numero - 1; i >= 0; i--) {
-      if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
-      const rn = NEMICI_STANZA[TIPI_STANZA[this.tipo[i]]].raggio;
-      const dx = this.x[i] - ox, dy = this.y[i] - oy, d = Math.hypot(dx, dy);
+    for (let i = 0; i < o.numero; i++) {
+      if (!this.colpibile(i) || this.quieteLanterna[i] > 0) continue;
+      const rn = o.raggio[i], dx = o.x[i] - ox, dy = o.y[i] - oy, d = Math.hypot(dx, dy);
       if (d > raggio + rn) continue;
       if (d > rn && Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(dy, dx) - angolo)) > mezza + Math.asin(Math.min(1, rn / d))) continue;
-      const esito = this.ferisci(i, danno, FONTE.lanterna);
-      if (esito === FERITO.no) continue;
+      const sx = d > 0 ? dx / d : Math.cos(angolo), sy = d > 0 ? dy / d : Math.sin(angolo);
+      this.quieteLanterna[i] = NEMICI_STANZA.quiete;
+      this.colpoArma(i, danno, sx, sy, FONTE.lanterna);
       presi++;
+      if (o.salute[i] <= 0) continue; // battuto: le scintille grandi le fa il passo dopo
       // ancora in piedi: impatto (fermo, schiacciamento, scintille verso dove va il colpo) e spinta, tranne durante l'avviso
-      if (esito !== FERITO.inPiedi) continue; // battuto: le scintille grandi le fa muore()
       if (this.fermoImpatto) this.fermo[i] = IMPATTO.fermo;
       this.schiaccia[i] = IMPATTO.schiaccia.durata;
-      const sx = d > 0 ? dx / d : Math.cos(angolo), sy = d > 0 ? dy / d : Math.sin(angolo);
-      this.impatto.scintille(this.x[i], this.y[i] - this.testa(i) / 2, sx, sy, IMPATTO.scintille.colpo);
-      if (this.stato[i] !== STATO.avviso && d > 0) this.muovi(i, sx * NEMICI_STANZA.spinta, sy * NEMICI_STANZA.spinta);
+      this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, sx, sy, IMPATTO.scintille.colpo);
+      if (this.stato[i] !== STATO.avviso) this.muovi(i, sx * NEMICI_STANZA.spinta, sy * NEMICI_STANZA.spinta);
     }
     return presi;
   }
 
-  /** Ferisce ogni nemico entro r da (x, y) con l'arma «fonte» (il Cerchio di luce). Restituisce quanti ne ha presi. */
-  colpisciCerchio(x: number, y: number, r: number, danno: number, fonte: number): number {
+  /** Il Cerchio di luce: ferisce ogni nemico entro r da (x, y) che non è in Quiete per l'abilità. */
+  colpisciCerchio(x: number, y: number, r: number, danno: number): number {
+    const o = this.orda;
     let presi = 0;
-    for (let i = this.numero - 1; i >= 0; i--) {
-      if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
-      const rn = NEMICI_STANZA[TIPI_STANZA[this.tipo[i]]].raggio;
-      if ((this.x[i] - x) ** 2 + (this.y[i] - y) ** 2 > (r + rn) ** 2) continue;
-      if (this.ferisci(i, danno, fonte) !== FERITO.no) presi++;
+    for (let i = 0; i < o.numero; i++) {
+      if (!this.colpibile(i) || this.quieteAbilita[i] > 0) continue;
+      const dx = o.x[i] - x, dy = o.y[i] - y, d = Math.hypot(dx, dy);
+      if (d > r + o.raggio[i]) continue;
+      this.quieteAbilita[i] = NEMICI_STANZA.quiete;
+      this.colpoArma(i, danno, d > 0 ? dx / d : 0, d > 0 ? dy / d : 0, FONTE.abilita);
+      presi++;
     }
     return presi;
   }
 
-  /**
-   * Un colpo dell'arma «fonte» sul nemico i: niente se è in Quiete per quell'arma. Dice com'è andata: non ferito, ferito
-   * e ancora in piedi, oppure battuto (attenzione: un nemico battuto può essere già tolto, e al posto i c'è un altro).
-   */
-  private ferisci(i: number, danno: number, fonte: number): number {
-    const q = i * FONTI + fonte;
-    if (this.quiete[q] > 0) return FERITO.no;
-    this.quiete[q] = NEMICI_STANZA.quiete;
-    this.salute[i] -= danno;
-    this.lampo[i] = NEMICI_STANZA.lampo;
-    this.effetti.numero(this.x[i], this.y[i] - this.testa(i), danno, false);
-    if (this.salute[i] > 0) return FERITO.inPiedi;
-    this.muore(i);
-    return FERITO.battuto;
-  }
-
-  /** Un nemico finisce la salute: il Ricaduto resta a terra (poi forse si rialza); il Cantore sparisce. */
-  private muore(i: number): void {
-    if (this.tipo[i] === RICADUTO) {
-      this.stato[i] = STATO.aTerra;
-      this.tempo[i] = R.rinascita.attesa;
-      this.salute[i] = 0;
-      this.lampo[i] = 0;
-      this.impatto.scintille(this.x[i], this.y[i] - this.testa(i) / 2, 0, -1, IMPATTO.scintille.battuto);
-      return;
-    }
-    this.sparisce(i);
-  }
-
-  /** Battuto per davvero: uno scoppio e via. */
-  private sparisce(i: number): void {
-    this.impatto.scintille(this.x[i], this.y[i] - this.testa(i) / 2, 0, -1, IMPATTO.scintille.battuto);
-    this.effetti.scoppio(this.x[i], this.y[i] - this.testa(i) / 2);
-    this.uccisi++;
-    this.togli(i);
-  }
-
-  private togli(i: number): void {
-    const u = --this.numero;
-    this.tipo[i] = this.tipo[u];
-    this.x[i] = this.x[u];
-    this.y[i] = this.y[u];
-    this.salute[i] = this.salute[u];
-    this.saluteMassima[i] = this.saluteMassima[u];
-    this.stato[i] = this.stato[u];
-    this.tempo[i] = this.tempo[u];
-    this.dirX[i] = this.dirX[u];
-    this.dirY[i] = this.dirY[u];
-    this.ricarica[i] = this.ricarica[u];
-    this.rinato[i] = this.rinato[u];
-    this.dentro[i] = this.dentro[u];
-    this.lampo[i] = this.lampo[u];
-    this.quiete.copyWithin(i * FONTI, u * FONTI, u * FONTI + FONTI);
-    this.fermo[i] = this.fermo[u];
-    this.schiaccia[i] = this.schiaccia[u];
-    this.colpo[i] = this.colpo[u];
-    this.versoSinistra[i] = this.versoSinistra[u];
-  }
-
-  /** Il nemico più vicino a (x, y) entro «massimo» px, escluso chi sta comparendo o è a terra; -1 se non c'è. */
+  /** Il nemico più vicino a (x, y) entro «massimo» px, escluso chi è a terra; -1 se non c'è. */
   vicino(x: number, y: number, massimo: number): number {
+    const o = this.orda;
     let migliore = -1, d2min = massimo * massimo;
-    for (let i = 0; i < this.numero; i++) {
-      if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
-      const d2 = (this.x[i] - x) ** 2 + (this.y[i] - y) ** 2;
+    for (let i = 0; i < o.numero; i++) {
+      if (!this.colpibile(i)) continue;
+      const d2 = (o.x[i] - x) ** 2 + (o.y[i] - y) ** 2;
       if (d2 <= d2min) {
         d2min = d2;
         migliore = i;
@@ -441,59 +430,47 @@ export class NemiciStanza {
     return migliore;
   }
 
-  /** Altezza dello sprite dai piedi alla testa, in pixel di gioco. */
-  private testa(i: number): number {
-    return this.sprite[i].displayHeight * this.aspetto[this.tipo[i]].piedi;
-  }
-
-  /** Disegno: sprite, avvisi a terra, grumi, barre della salute dei feriti e segno della rinascita. */
-  disegna(): void {
-    const t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra;
-    for (let i = 0; i < this.numero; i++) {
-      const sp = this.sprite[i], tipo = TIPI_STANZA[this.tipo[i]], a = this.aspetto[this.tipo[i]], st = this.stato[i];
-      const x = Math.round(this.x[i]), y = Math.round(this.y[i]);
-      if (st === STATO.comparsa) {
-        // il segno a terra dove sta per comparire: un anello che si stringe
-        const r = Math.max(4, Math.round(6 + 14 * (this.tempo[i] / ONDATA.comparsa)));
-        t.lineStyle(2, colore(col.bordo), 1).strokeEllipse(x, y, 2 * r, r);
-        t.fillStyle(colore(col.comparsa)).fillEllipse(x, y, r, Math.max(2, Math.round(r / 2)));
-        sp.setVisible(false);
-        continue;
-      }
-      const chiave = NEMICI_STANZA[tipo].sprite;
-      const anim = `${chiave}:walk`;
-      if (sp.texture.key !== chiave) sp.setTexture(chiave);
+  /** Disegno: sprite (dalla Orda, poi ritoccati), avvisi a terra, comparse, grumi, barre della salute dei feriti. */
+  disegna(cam: Phaser.Cameras.Scene2D.Camera, gx: number, gy: number): void {
+    const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra;
+    o.disegna(cam, 64, gx, gy);
+    for (let i = 0; i < o.numero; i++) {
+      const sp = o.spriteDi(i), st = this.stato[i], x = Math.round(o.x[i]), y = Math.round(o.y[i]);
       // schiacciamento: largo e basso subito dopo il colpo, poi torna come prima
-      const k = Math.max(0, this.schiaccia[i]) / IMPATTO.schiaccia.durata, S = IMPATTO.schiaccia;
-      sp.setOrigin(0.5, a.piedi).setScale(a.ingrandimento * (1 + (S.largo - 1) * k), a.ingrandimento * (1 + (S.basso - 1) * k)).setVisible(true).setDepth(PROFONDITA.aTerra + 10 + y);
-      const fermo = st !== STATO.cammina || this.fermo[i] > 0;
-      if (this.scena.anims.exists(anim)) {
-        sp.play(anim, true);
-        if (fermo) sp.anims.pause();
+      const k = Math.max(0, this.schiaccia[i]) / IMPATTO.schiaccia.durata, S = IMPATTO.schiaccia, ing = o.ingrandimentoDi(i);
+      sp.setScale(ing * (1 + (S.largo - 1) * k), ing * (1 + (S.basso - 1) * k)).setDepth(PROFONDITA.aTerra + 10 + y);
+      if (sp.anims.currentAnim) {
+        if (st !== STATO.cammina || this.fermo[i] > 0 || this.fermi[i]) sp.anims.pause();
         else sp.anims.resume();
       }
       let ox = 0, oy = 0;
-      if (st === STATO.avviso) {
+      if (st === STATO.avviso && !this.fermi[i]) {
         // l'avviso: il nemico trema e si solleva un poco (segnaposto dell'animazione «attack»)
         ox = Math.floor(this.orologio * 30) % 2 === 0 ? -1 : 1;
         oy = -2;
       }
-      sp.setPosition(x + ox, y + oy).setFlipX(this.versoSinistra[i] === 1);
-      sp.setAngle(st === STATO.aTerra ? (this.versoSinistra[i] ? 90 : -90) : 0);
-      if (this.lampo[i] > 0) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-      else if (st === STATO.aTerra) sp.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
-      else if (st === STATO.avviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(col.bordo)).setTintMode(Phaser.TintModes.ADD);
+      sp.setPosition(x + ox, y + oy).setFlipX(this.verso[i] === 1);
+      sp.setAngle(st === STATO.aTerra ? (this.verso[i] ? 90 : -90) : 0);
+      if (st === STATO.aTerra) sp.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
+      else if (o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+      else if (st === STATO.avviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(o.tipo[i] === ID_RICADUTO ? col.bordo : col.linea)).setTintMode(Phaser.TintModes.ADD);
       else sp.clearTint();
       if (st === STATO.avviso || this.colpo[i] > 0) this.disegnaAvviso(t, i, x, y);
-      if (st !== STATO.aTerra && this.salute[i] < this.saluteMassima[i]) {
-        const z = a.ingrandimento, L = B.larghezza * z, H = B.altezza * z, bx = x - Math.floor(L / 2), by = y + B.distanza;
-        const pieno = Math.round((B.larghezza - 2) * Math.max(0, this.salute[i] / this.saluteMassima[i])) * z;
+      if (st !== STATO.aTerra && o.salute[i] < o.saluteMassima[i]) {
+        const L = B.larghezza * 2, H = B.altezza * 2, bx = x - Math.floor(L / 2), by = y + B.distanza;
+        const pieno = Math.round((B.larghezza - 2) * Math.max(0, o.salute[i] / o.saluteMassima[i])) * 2;
         s.fillStyle(0x120606).fillRect(bx, by, L, H);
-        s.fillStyle(0x3a0c10).fillRect(bx + z, by + z, L - 2 * z, H - 2 * z);
-        s.fillStyle(0xc0262d).fillRect(bx + z, by + z, pieno, H - 2 * z);
+        s.fillStyle(0x3a0c10).fillRect(bx + 2, by + 2, L - 4, H - 4);
+        s.fillStyle(0xc0262d).fillRect(bx + 2, by + 2, pieno, H - 4);
       }
     }
-    for (let i = this.numero; i < N; i++) this.sprite[i].setVisible(false);
+    // il segno a terra dove sta per comparire un nemico: un anello che si stringe
+    for (let c = 0; c < this.comparse; c++) {
+      const x = Math.round(this.cX[c]), y = Math.round(this.cY[c]);
+      const r = Math.max(4, Math.round(6 + 14 * (this.cTempo[c] / ONDATA.comparsa)));
+      t.lineStyle(2, colore(col.bordo), 1).strokeEllipse(x, y, 2 * r, r);
+      t.fillStyle(colore(col.comparsa)).fillEllipse(x, y, r, Math.max(2, Math.round(r / 2)));
+    }
     for (let k = 0; k < this.grumi; k++) {
       const x = Math.round(this.gX[k]), y = Math.round(this.gY[k]);
       t.fillStyle(0x000000).fillEllipse(x, y, 2 * C.grumo.raggio, C.grumo.raggio); // ombra a terra
@@ -505,7 +482,7 @@ export class NemiciStanza {
   /** Avviso a terra: lo spicchio del graffio che si riempie, o la linea del canto fino al muro. */
   private disegnaAvviso(g: Phaser.GameObjects.Graphics, i: number, x: number, y: number): void {
     const col = NEMICI_STANZA.colori, a = Math.atan2(this.dirY[i], this.dirX[i]);
-    if (this.tipo[i] === RICADUTO) {
+    if (this.orda.tipo[i] === ID_RICADUTO) {
       const mezza = Phaser.Math.DegToRad(R.graffio.ampiezza / 2), r = R.graffio.raggio;
       const pieno = this.colpo[i] > 0 ? 1 : 1 - Math.max(0, this.tempo[i]) / R.avviso;
       g.fillStyle(colore(this.colpo[i] > 0 ? col.graffio : col.avviso));

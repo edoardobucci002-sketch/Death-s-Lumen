@@ -21,6 +21,10 @@ export class AttaccoATasto {
   dx = 1; // direzione dell'ultimo colpo, lunga 1
   dy = 0;
   colpi = 0; // colpi partiti (per il LAB e le prove)
+  // il colpo di adesso: livello della Lanterna, Clessidra e Stoppino lungo li cambiano (la scena li aggiorna)
+  ricarica: number = ATTACCO.ricarica;
+  raggio: number = ATTACCO.raggio;
+  ampiezza: number = ATTACCO.ampiezza;
   private richiesta = false;
   private rAuto = false;
   private rDX = 0;
@@ -98,12 +102,12 @@ export class AttaccoATasto {
       this.dx = gx;
       this.dy = gy;
     }
-    this.attesa = ATTACCO.ricarica;
+    this.attesa = this.ricarica;
     this.posa = ATTACCO.posa;
     this.colpi++;
     const c = this.corpo();
     const angolo = Math.atan2(this.dy, this.dx);
-    this.effetti.arco(c.x, c.y, angolo, ATTACCO.raggio, ATTACCO.ampiezza);
+    this.effetti.arco(c.x, c.y, angolo, Math.round(this.raggio), this.ampiezza);
     suona('colpo');
     this.colpito(angolo);
   }
@@ -121,8 +125,8 @@ export class AttaccoATasto {
     const g = this.grafica;
     g.clear();
     if (this.dito !== null && this.mirando) {
-      const c = this.corpo(), a = Math.atan2(this.mDY, this.mDX), mezza = Phaser.Math.DegToRad(ATTACCO.ampiezza / 2);
-      const cx = Math.round(c.x), cy = Math.round(c.y), r = ATTACCO.raggio;
+      const c = this.corpo(), a = Math.atan2(this.mDY, this.mDX), mezza = Phaser.Math.DegToRad(this.ampiezza / 2);
+      const cx = Math.round(c.x), cy = Math.round(c.y), r = Math.round(this.raggio);
       g.lineStyle(ATTACCO.mira.spessore, Phaser.Display.Color.HexStringToColor(ATTACCO.mira.colore).color, 1);
       g.beginPath();
       g.moveTo(cx, cy);

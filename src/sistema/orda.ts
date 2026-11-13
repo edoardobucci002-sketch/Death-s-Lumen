@@ -9,6 +9,9 @@
  * Gli stati lasciati dalle armi (abbagliato, consacrato, maledetto, sepolto) cambiano danno e movimento;
  * due stati diversi fanno una reazione (marca restituisce quale: la esegue Arsenale, che può ferire e lanciare).
  * I nemici vivono in array preparati all'inizio (pool): durante la partita non si crea niente di nuovo.
+ * Gioco a stanze (13/11): la stessa Orda tiene anche Ricaduto e Cantore, due tipi in fondo all'elenco (TIPI) che il
+ * survivor non fa mai nascere. Nelle stanze non si usa aggiorna(): nasciStanza, aggiornaStanza e togliStanza danno solo
+ * la parte comune (stati, reazioni, spinte, griglia, separazione); il movimento e gli attacchi li decide nemici-stanza.ts.
  */
 import Phaser from 'phaser';
 import { ingrandimento } from './asset';
@@ -22,7 +25,14 @@ import { NUMERI_VOTI } from '../data/voti';
 import { INTERRUTTORI } from './interruttori';
 import { Simboli } from './simboli';
 import { COLPI } from '../data/armi';
+import { TIPI_ORDA_STANZE } from '../data/stanze';
 
+/** Tutti i tipi che l'Orda sa disegnare e muovere: quelli del survivor e, in fondo, quelli del gioco a stanze. */
+interface TipoOrda { id: string; sprite: string; raggio: number; attraversa: boolean; pesante: boolean; danno: number; comportamento: string }
+const TIPI: readonly TipoOrda[] = [...NEMICI, ...TIPI_ORDA_STANZE];
+/** Gli indici dei tipi del gioco a stanze. */
+export const ID_RICADUTO = TIPI.findIndex((t) => t.id === 'ricaduto');
+export const ID_CANTORE = TIPI.findIndex((t) => t.id === 'cantore');
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici, alle orde e alla chiamata dei morti. */
 const ID_BRUTO = NEMICI.findIndex((t) => t.id === 'bruto');
 export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + 2 * ORDE.massimo + MIETITORE.chiamata.quanti + 20;
@@ -30,7 +40,7 @@ export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + 2 * ORDE.massimo + MIE
 export type CategoriaNemico = 'comune' | 'elite' | 'seth';
 const ID_MIETITORE = NEMICI.findIndex((t) => t.id === 'mietitore');
 const ID_CHIAMATA = NEMICI.findIndex((t) => t.id === MIETITORE.chiamata.tipo);
-const COMPORTAMENTO = NEMICI.map((t) => ['diretto', 'accerchia', 'intercetta', 'zigzag'].indexOf(t.comportamento));
+const COMPORTAMENTO = TIPI.map((t) => ['diretto', 'accerchia', 'intercetta', 'zigzag'].indexOf(t.comportamento));
 const [DIRETTO, ACCERCHIA, INTERCETTA, ZIGZAG] = [0, 1, 2, 3];
 // mosse del Mietitore
 const MOSSE = ['scatto', 'falciata', 'falci', 'chiamata'] as const;
@@ -158,6 +168,7 @@ export class Orda {
   private daFare = 0; // comparse accumulate (frazioni di nemico)
   private bruti = 0; // bruti in campo, per non superarne il massimo
   private prossimoId = 1;
+  private campiExtra: (Float32Array | Uint8Array)[] = []; // array di chi usa l'Orda da fuori (gioco a stanze): seguono i nemici
   // usati dentro la separazione, per non creare funzioni nel ciclo di gioco
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
@@ -171,7 +182,7 @@ export class Orda {
     private caso: Caso,
     private minacce: Minacce,
   ) {
-    this.aspetto = NEMICI.map((t) => {
+    this.aspetto = TIPI.map((t) => {
       // i piedi sono la riga più bassa usata in tutti i fotogrammi (negli sprite V0 non è il bordo della tela)
       const dati = scena.cache.json.get(t.sprite) as { frames: { spriteSourceSize: { y: number; h: number }; sourceSize: { h: number } }[] };
       const fondo = Math.max(...dati.frames.map((f) => f.spriteSourceSize.y + f.spriteSourceSize.h));
@@ -300,7 +311,7 @@ export class Orda {
     for (let i = 0; i < this.numero; i++) this.griglia.inserisci(i, this.x[i], this.y[i]);
     // separazione: ognuno si allontana dai vicini che lo toccano (i fantasmi attraversano tutti)
     for (let i = 0; i < this.numero; i++) {
-      if (NEMICI[this.tipo[i]].attraversa) continue;
+      if (TIPI[this.tipo[i]].attraversa) continue;
       this.corrente = i;
       this.griglia.vicini(this.x[i], this.y[i], this.spingi);
     }
@@ -344,7 +355,7 @@ export class Orda {
       this.pausaLampo[i] = COLPI.lampoNemicoPausa;
     }
     if (respinta && this.tipo[i] !== ID_MIETITORE) {
-      const r = respinta * (NEMICI[this.tipo[i]].pesante || this.elite[i] || this.branco[i] || this.anello[i] ? COLPI.respintaPesanti : 1);
+      const r = respinta * (TIPI[this.tipo[i]].pesante || this.elite[i] || this.branco[i] || this.anello[i] ? COLPI.respintaPesanti : 1);
       this.respintaX[i] = dx * r;
       this.respintaY[i] = dy * r;
     }
@@ -594,7 +605,7 @@ export class Orda {
     const dy = ty - this.y[i];
     const d = Math.hypot(dx, dy);
     if (d < 1) return;
-    const f = this.tipo[i] === ID_MIETITORE ? MIETITORE.attrazione : NEMICI[this.tipo[i]].pesante || this.elite[i] ? ATTRAZIONE_PESANTI : 1;
+    const f = this.tipo[i] === ID_MIETITORE ? MIETITORE.attrazione : TIPI[this.tipo[i]].pesante || this.elite[i] ? ATTRAZIONE_PESANTI : 1;
     const p = Math.min(d, passo * f);
     this.x[i] += (dx / d) * p;
     this.y[i] += (dy / d) * p;
@@ -719,7 +730,7 @@ export class Orda {
       s.setVisible(visibile);
       if (!visibile) continue;
       s.setPosition(x, y).setDepth(y).setFlipX(this.versoSinistra[i] === 1);
-      const pesante = this.elite[i] === 1 || this.tipo[i] === ID_MIETITORE || NEMICI[this.tipo[i]].pesante;
+      const pesante = this.elite[i] === 1 || this.tipo[i] === ID_MIETITORE || TIPI[this.tipo[i]].pesante;
       if (this.lampo[i] > 0 && pesante) {
         // bruti, élite e Seth colpiti si schiariscono e basta: la sagoma resta visibile
         s.setTint(chiaro).setTintMode(Phaser.TintModes.ADD);
@@ -888,7 +899,111 @@ export class Orda {
     }
   }
 
-  /** Toglie il nemico i spostando l'ultimo al suo posto (con il suo sprite). */
+  // ——— Gioco a stanze ———
+
+  /** Array lunghi CAPIENZA che devono seguire i nemici quando cambiano posto (i dati propri del gioco a stanze). */
+  registraCampi(...array: (Float32Array | Uint8Array)[]): void {
+    this.campiExtra.push(...array);
+  }
+
+  /** Fa nascere un nemico del tipo t nel punto (x, y), con salute e danno del suo tipo (niente difficoltà del survivor). */
+  nasciStanza(t: number, x: number, y: number, salute: number): number {
+    const i = this.numero++;
+    const tipo = TIPI[t];
+    this.tipo[i] = t;
+    this.id[i] = this.prossimoId++;
+    this.natoA[i] = this.tempo;
+    this.entratoA[i] = -1;
+    this.storia[i] = this.uccisore[i] = this.segno[i] = 0;
+    this.raggio[i] = tipo.raggio;
+    this.salute[i] = this.saluteMassima[i] = salute;
+    this.anime[i] = 0;
+    this.elite[i] = this.anello[i] = 0;
+    this.fase[i] = this.mossa[i] = this.volta[i] = this.branco[i] = this.daOrda[i] = 0;
+    this.fianco[i] = 0;
+    this.danno[i] = tipo.danno;
+    this.velocita[i] = 0;
+    this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.tettoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
+    this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
+    this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
+    this.quiete[i] = this.pausaSfioro[i] = 0;
+    for (const r of this.ritmo) r[i] = 0;
+    this.moltInterrato[i] = 1;
+    this.x[i] = x;
+    this.y[i] = y;
+    this.versoSinistra[i] = 0;
+    const a = this.aspetto[t], s = this.sprite[i];
+    s.setTexture(tipo.sprite).setOrigin(0.5, a.piedi).setScale(a.ingrandimento).setActive(true).clearTint().setAngle(0);
+    const anim = s.scene.anims.get(`${tipo.sprite}:walk`);
+    if (anim) s.play({ key: anim.key, startFrame: 0 });
+    return i;
+  }
+
+  /**
+   * Un passo della parte comune nel gioco a stanze: tempi, stati (la maledizione toglie salute), spinte, griglia e
+   * separazione. (gx, gy) il personaggio, mezzaL e mezzaA metà del campo visibile. In fermi[i] scrive 1 se il nemico è
+   * fermo per uno stato (sepolto, interrato, fermato). Chi ha la salute a zero non si muove e non spinge.
+   */
+  aggiornaStanza(dt: number, gx: number, gy: number, mezzaL: number, mezzaA: number, fermi: Uint8Array): void {
+    this.gx = gx;
+    this.gy = gy;
+    this.vistaL = mezzaL;
+    this.vistaA = mezzaA;
+    this.tempo += dt;
+    const frena = Math.exp(-COLPI.attrito * dt);
+    for (let i = 0; i < this.numero; i++) {
+      if (this.lentoPer[i] > 0) this.lentoPer[i] -= dt;
+      if (this.tettoPer[i] > 0) this.tettoPer[i] -= dt;
+      if (this.lampo[i] > 0) this.lampo[i] -= dt;
+      if (this.pausaLampo[i] > 0) this.pausaLampo[i] -= dt;
+      if (this.pausaFalce[i] > 0) this.pausaFalce[i] -= dt;
+      if (this.pausaNube[i] > 0) this.pausaNube[i] -= dt;
+      if (this.pausaPozza[i] > 0) this.pausaPozza[i] -= dt;
+      fermi[i] = this.aggiornaStati(i, dt) ? 1 : 0;
+      this.x[i] += this.respintaX[i] * dt;
+      this.y[i] += this.respintaY[i] * dt;
+      this.respintaX[i] *= frena;
+      this.respintaY[i] *= frena;
+    }
+    this.griglia.svuota();
+    for (let i = 0; i < this.numero; i++) this.griglia.inserisci(i, this.x[i], this.y[i]);
+    for (let i = 0; i < this.numero; i++) {
+      if (TIPI[this.tipo[i]].attraversa || this.salute[i] <= 0) continue;
+      this.corrente = i;
+      this.griglia.vicini(this.x[i], this.y[i], this.spingi);
+    }
+  }
+
+  /** Quanto si muove il nemico i rispetto alla sua velocità piena: rallentamenti e Consacrato (0 = fermo). */
+  fattoreVelocita(i: number, fermo: boolean): number {
+    if (fermo) return 0;
+    let f = this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1;
+    if (this.sConsacrato[i] > 0) f *= 1 - this.forza(SACRO);
+    if (this.tettoPer[i] > 0) f = Math.max(f, 1 - DEVOZIONE.lentoMassimo);
+    return f;
+  }
+
+  /** Il nemico i è stato colpito da poco (lampo bianco). */
+  inLampo(i: number): boolean {
+    return this.lampo[i] > 0;
+  }
+
+  /** L'ingrandimento dello sprite del nemico i (come alla nascita). */
+  ingrandimentoDi(i: number): number {
+    return this.aspetto[this.tipo[i]].ingrandimento;
+  }
+
+  /** Lo sprite del nemico i (il gioco a stanze lo ritocca dopo disegna(): avvisi, schiacciamento, a terra). */
+  spriteDi(i: number): Phaser.GameObjects.Sprite {
+    return this.sprite[i];
+  }
+
+  /** Toglie il nemico i dal campo (gioco a stanze: battuto per davvero, o la stanza si svuota). */
+  togliStanza(i: number): void {
+    this.togli(i);
+  }
+
+  /** Toglie dal campo il nemico i spostando l'ultimo al suo posto (con il suo sprite). */
   private togli(i: number): void {
     if (this.tipo[i] === ID_BRUTO) this.bruti--;
     const u = --this.numero;
@@ -897,6 +1012,7 @@ export class Orda {
     s.setVisible(false).setActive(false);
     if (i === u) return;
     for (const a of this.campi) a[i] = a[u];
+    for (const a of this.campiExtra) a[i] = a[u];
     this.tipo[i] = this.tipo[u];
     this.elite[i] = this.elite[u];
     this.anello[i] = this.anello[u];
@@ -959,7 +1075,7 @@ export class Orda {
 
   private separa(j: number): void {
     const i = this.corrente;
-    if (j === i || NEMICI[this.tipo[j]].attraversa) return;
+    if (j === i || TIPI[this.tipo[j]].attraversa) return;
     const dx = this.x[i] - this.x[j];
     const dy = this.y[i] - this.y[j];
     const minima = (this.raggio[i] + this.raggio[j]) * SEPARAZIONE.tolleranza;

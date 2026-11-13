@@ -161,8 +161,8 @@ export const NEMICI_STANZA = {
 } as const;
 
 /**
- * Ondate del passo 4 (provvisorie: al passo 6 arrivano le tre stanze con le porte). All'inizio e ogni volta che la
- * stanza è ripulita compare un'ondata, così si gioca anche senza LAB.
+ * Come arrivano i nemici: dove e con quale segno. Le ondate di ogni stanza sono in PERCORSO; «ricaduti» e «cantori» qui
+ * sono l'ondata del pulsante «Ondata» del LAB.
  */
 export const ONDATA = {
   ricaduti: 3,
@@ -170,7 +170,6 @@ export const ONDATA = {
   distanzaMinima: 240, // dal personaggio: nessuno compare addosso a te
   comparsa: 0.7, // secondi in cui il segno a terra avvisa dove compare un nemico
   attesaPrima: 0.8, // secondi dall'ingresso nella stanza alla prima ondata
-  attesaNuova: 2.5, // secondi tra la stanza ripulita e l'ondata seguente
   massimo: 16, // nemici in campo al massimo (anche dal LAB)
   seme: 4242,
 } as const;
@@ -183,6 +182,7 @@ export const ONDATA = {
 export const ABILITA_STANZA = {
   // piena dopo 8 colpi della Lanterna a segno; un colpo conta 1 anche se prende più nemici (decisione di Edoardo del 13/11)
   colpi: 8,
+  ritmo: 0.3, // secondi tra due colpi del Cerchio di luce: non più corto della Quiete dei nemici (nel survivor 0,25)
   // il pulsante, a sinistra del joystick d'attacco: diametro e distanza dal joystick in pixel disegnati; margine: quanto
   // l'area di tocco esce dal disegno, in punti dello schermo
   tasto: { lato: 36, distanza: 14, margine: 10 },
@@ -197,4 +197,45 @@ export const IMPATTO = {
   schiaccia: { durata: 0.1, largo: 1.25, basso: 0.75 }, // il nemico colpito si allarga e si abbassa, poi torna
   scintille: { colpo: 6, battuto: 12, velocita: 140, durata: 0.22, lato: 2, colori: ['#fff1b8', '#ffd36a', '#e3913a'] },
   scossa: { forza: 1, durata: 0.06 }, // pixel e secondi, solo quando si prende qualcuno
+} as const;
+
+/**
+ * Ricaduto e Cantore come li vede la Orda del survivor (src/sistema/orda.ts), che li tiene in fondo al suo elenco di tipi:
+ * così le armi automatiche (gli Echi), gli stati e le reazioni funzionano anche su di loro. Il loro modo di muoversi e
+ * di attaccare resta in NEMICI_STANZA e in src/sistema/nemici-stanza.ts.
+ */
+export const TIPI_ORDA_STANZE = [
+  { id: 'ricaduto', sprite: NEMICI_STANZA.ricaduto.sprite, raggio: NEMICI_STANZA.ricaduto.raggio, danno: NEMICI_STANZA.ricaduto.graffio.danno, attraversa: false, pesante: false, comportamento: 'stanze' },
+  { id: 'cantore', sprite: NEMICI_STANZA.cantore.sprite, raggio: NEMICI_STANZA.cantore.raggio, danno: NEMICI_STANZA.cantore.grumo.danno, attraversa: false, pesante: false, comportamento: 'stanze' },
+] as const;
+
+/**
+ * Passo 6 della fetta: tre stanze collegate da porte (decisioni di Edoardo del 13/11). Nella prima stanza le 3 carte sono
+ * 3 Echi di affinità diverse; poi la porta scelta decide da dove pescano: una porta d'affinità dà Echi nuovi e livelli degli
+ * Echi di quell'affinità (dalla Luce anche livelli della Lanterna), la porta del dono dà doni. Le porte (2 o 3) stanno su
+ * muri diversi (in alto, a sinistra, a destra); si entra sempre dalla porta in basso. Finita la terza stanza: «Fetta
+ * completata». Numeri di Claude, da rivedere.
+ */
+export const PERCORSO = {
+  // le ondate di ogni stanza: la seconda arriva quando della prima ne restano al massimo «restanti»
+  ondate: [
+    [{ ricaduti: 3, cantori: 1 }],
+    [{ ricaduti: 3, cantori: 1 }, { ricaduti: 3, cantori: 2 }],
+    [{ ricaduti: 4, cantori: 2 }, { ricaduti: 5, cantori: 3 }],
+  ],
+  restanti: 2,
+  attesaCarte: 0.8, // secondi tra la stanza ripulita e le carte
+  porte: { minimo: 2, massimo: 3 },
+  echi: 3, // Echi al massimo nella build (più la Lanterna)
+  doni: 6, // doni diversi al massimo
+  // i doni che nelle stanze fanno davvero qualcosa (decisione di Edoardo del 13/11): mancano Calamita e Lacrima di lumen
+  doniAttivi: ['cuoreDiCera', 'saleNero', 'clessidra', 'stoppinoLungo', 'aliDiFalena', 'erbeAmare', 'scudoDiFerro', 'specchio', 'ceraVotiva', 'chiodoDiBara', 'campanellaDArgento'],
+  passaggio: 0.25, // secondi del passaggio a retino tra una stanza e l'altra (metà per scurire, metà per schiarire)
+} as const;
+
+/** Le porte: un'apertura nel muro, chiusa da sbarre finché la stanza non è ripulita e la carta scelta. */
+export const PORTE = {
+  larghezza: 64, // in alto: quanto è larga l'apertura; ai lati e in basso: quanto è alta
+  simbolo: 2, // ingrandimento del simbolo della ricompensa sopra la porta
+  colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a' },
 } as const;
