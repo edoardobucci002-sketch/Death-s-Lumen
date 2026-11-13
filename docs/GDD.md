@@ -730,7 +730,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 
 ## Gioco a stanze (pivot, in costruzione: `src/data/stanze.ts`)
 
-Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: passo 5 della fetta verticale (stanza, attacco a tasto, nemici con avviso, Grazia, abilità caricata colpendo).
+Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: la fetta verticale fino al passo 6 (tre stanze con porte e carte, attacco a tasto, nemici con avviso, Grazia, abilità caricata colpendo, Echi).
 
 - **La stanza**: un pavimento rettangolare a lastre di pietra, chiuso da muri: in alto una facciata a mattoni (vista di fronte), ai lati e in basso un bordo di pietra scura. Pavimento e muri sono segnaposto disegnati dal codice (`src/sistema/stanza.ts`).
 - **Grandezza**: 13 × 7 lastre, come le stanze di The Binding of Isaac (scelta di Edoardo del 12/11): la stanza intera sta più o meno in uno schermo.
@@ -777,7 +777,8 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 - I nemici non si sovrappongono tra loro. Ferito, un nemico mostra sotto i piedi una barra della salute piccola.
 - **Grazia** (`GRAZIA_STANZA`; partita da quella del survivor, si sviluppa per conto suo: decisione di Edoardo del 13/11): la schivata perfetta è uscire dallo spicchio del graffio quando mancano al massimo 0,25 s, oppure farsi passare un grumo vicino, entro 30 px oltre il contatto, senza farsi toccare. Nell'istante della schivata il gioco va **al rallentatore**: parte al 60% della velocità e torna normale in 0,35 s con una curva morbida. La logica avanza comunque 60 volte al secondo, a passi più corti, così non va a scatti. Poi 3 s di Grazia: +30% danno (anche del Cerchio di luce) e +15% velocità, il Lampionaio si illumina a lampi e sopra la testa compare «Grazia». Una Grazia nuova non accorcia quella in corso. Durata, finestra, sfioro e bonus sono statistiche del Lampionaio che le carte del passo 6 potranno migliorare. Le tacche del survivor non ci sono.
 - **Impatto dei colpi della Lanterna** (`IMPATTO`, `src/sistema/impatto.ts`, decisione di Edoardo del 13/11): quando un colpo prende un nemico, il Lampionaio e i nemici colpiti si fermano per 0,05 s (il **fermo d'impatto**: gli altri nemici e i grumi continuano; dal LAB si spegne); il nemico si schiaccia (più largo del 25% e più basso del 25%, poi torna in 0,1 s); dal punto colpito schizzano 6 scintille nella direzione del colpo, 12 verso l'alto quando lo batti; lo schermo trema di 1 pixel e c'è un suono sordo diverso dal colpo a vuoto.
-- **Ondate provvisorie** (fino alle tre stanze del passo 6): 0,8 s dopo l'ingresso compaiono 3 Ricaduti e 2 Cantori, in punti a caso a più di 240 px dal Lampionaio. Dove sta per comparire un nemico, per 0,7 s a terra c'è un anello che si stringe. A stanza ripulita, dopo 2,5 s, arriva un'altra ondata. Al massimo 16 nemici in campo.
+- **Come arrivano**: in punti a caso a più di 240 px dal Lampionaio; dove sta per comparire un nemico, per 0,7 s a terra c'è un anello che si stringe (in quel momento le armi non lo toccano). Al massimo 16 nemici in campo. Quanti e quando, stanza per stanza, lo decide il percorso (qui sotto).
+- **Nella Orda del survivor** (decisione di Edoardo del 13/11): Ricaduto e Cantore vivono nello stesso contenitore dei nemici del survivor, in fondo al suo elenco di tipi (il survivor non li fa mai nascere: 8 notti del bot identiche prima e dopo). Così gli Echi, gli stati e le reazioni li toccano come nel survivor. Chi è sepolto, interrato o fermato non fa niente, nemmeno l'avviso: il suo attacco aspetta. La Lanterna a mano e il Cerchio di luce lasciano lo stato di Luce (Abbagliato).
 - **Caduta**: a salute zero il Lampionaio resta steso e scuro; dopo 0,9 s compare «Sei caduto» con i nemici battuti, «Ricomincia» (la stanza da capo) e «Menu». Il tasto Indietro, da lì, torna al menu.
 
 | Valore dei nemici | Numero | Note |
@@ -794,17 +795,35 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Grumo | velocità 140 px/s, raggio 9 px, danno 12 | |
 | Spinta | 10 px | non durante l'avviso |
 | Impatto | fermo 0,05 s; schiacciamento 0,1 s; scintille 6, battuto 12 | scossa di 1 px |
-| Ondata | 3 Ricaduti e 2 Cantori, a più di 240 px; segno 0,7 s; prima dopo 0,8 s, poi 2,5 s | provvisoria |
+| Ondata | 3 Ricaduti e 2 Cantori, a più di 240 px; segno 0,7 s; prima dopo 0,8 s | quella del pulsante «Ondata» del LAB |
 
 **L'abilità caricata colpendo** (passo 5, `ABILITA_STANZA` in `src/data/stanze.ts`, `src/sistema/abilita-stanza.ts`). Il Cerchio di luce del Lampionaio si carica **solo** con i colpi della Lanterna a segno (decisione del 12/11): piena dopo 8 colpi, e un colpo conta 1 anche se prende più nemici (decisione di Edoardo del 13/11). Mentre il cerchio è acceso non si carica.
 
 - **Il pulsante**: un tondo scuro con l'icona del Cerchio di luce, a sinistra del joystick d'attacco, trasparente come lui, con un'area di tocco che esce di 10 punti dal disegno. L'anello ha 8 tacche che si accendono in senso orario nel colore del personaggio, una per colpo; piena, l'anello diventa chiaro, l'icona si accende e il telefono vibra. Toccata scarica, trema e fa un tonfo (il tocco è arrivato). Su computer si vede lo stesso, e si usa con Spazio.
-- **L'effetto** è quello del survivor (`ABILITA.cerchioDiLuce`): un cerchio di 216 px che segue il Lampionaio per 5 s, ferisce chi c'è dentro di 6 ogni 0,25 s (+30% in Grazia) e lo fa camminare il 55% più lento. Ferisce con la sua Quiete, separata da quella della Lanterna.
+- **L'effetto** è quello del survivor (`ABILITA.cerchioDiLuce`): un cerchio di 216 px che segue il Lampionaio per 5 s, ferisce chi c'è dentro di 6 ogni 0,3 s (non più spesso della Quiete dei nemici; nel survivor 0,25 s; +30% in Grazia) e lo fa camminare il 55% più lento. Ferisce con la sua Quiete, separata da quella della Lanterna.
 
 | Valore dell'abilità | Numero | Note |
 | --- | --- | --- |
-| Carica | 8 colpi a segno | un colpo conta 1, solo con la Lanterna |
+| Carica | 8 colpi a segno; il cerchio ferisce ogni 0,3 s | un colpo conta 1, solo con la Lanterna |
 | Pulsante | 36 pixel disegnati, 14 px dal joystick d'attacco; area di tocco 10 punti più larga | ingrandito come i joystick |
+
+**Tre stanze, porte e carte** (passo 6, decisioni di Edoardo del 13/11; `PERCORSO` e `PORTE` in `src/data/stanze.ts`, `src/sistema/percorso.ts`, `src/sistema/porte.ts`). Numeri di Claude, *da rivedere*.
+
+- **Il percorso**: si entra sempre dalla porta in basso, che resta chiusa. Ogni stanza ha le sue ondate; la seconda arriva quando della prima restano al massimo 2 nemici. Ripulita la stanza, dopo 0,8 s arrivano **le 3 carte**: le strisce del survivor, con il titolo «Un nuovo dono»; si sceglie toccando una striscia o con 1-2-3. Mentre le carte sono aperte il gioco è fermo.
+- **Da dove pescano le carte**: nella prima stanza sono 3 Echi nuovi di 3 affinità diverse. Poi decide la porta scelta. Una **porta d'affinità** (Luce, Sacro, Ombra, Terra) dà Echi nuovi di quell'affinità (finché se ne hanno meno di 3) e livelli degli Echi di quell'affinità che si hanno; dalla Luce anche livelli della Lanterna. La **porta del dono** dà doni nuovi (fino a 6) e livelli dei doni che si hanno, solo tra quelli che nelle stanze funzionano: Cuore di cera, Sale nero, Clessidra, Stoppino lungo, Ali di falena, Erbe amare, Scudo di ferro, Specchio, Cera votiva, Chiodo di bara, Campanella d'argento (decisione di Edoardo del 13/11; restano fuori Calamita e Lacrima di lumen). Se una porta d'affinità non ha più niente da dare, le carte sono doni.
+- **Gli Echi** sono le armi automatiche del survivor, con i loro numeri e i loro 8 livelli; sparano da sole come nel survivor. **La Lanterna a mano** sale di livello con i numeri del survivor (danno, raggio, ampiezza), e la sua ricarica scende nella stessa proporzione partendo da 0,45 s. Sulla carta della Lanterna si leggono ancora i numeri della Lanterna automatica del survivor (*da rivedere*). Doni: Clessidra accorcia anche la ricarica della Lanterna, Stoppino lungo allarga anche il suo arco, Campanella d'argento allunga la finestra della schivata perfetta (+0,1 s per livello), Erbe amare fanno tornare la salute, Scudo di ferro toglie parte del danno subito.
+- **Le porte**: scelta la carta se ne aprono 2 o 3, su muri diversi (in alto, a sinistra, a destra), ognuna con una ricompensa diversa. Sopra ogni porta c'è il simbolo della ricompensa: il simbolo dello stato dell'affinità (Abbagliato, Consacrato, Maledetto, Sepolto) o un rombo dorato per il dono. Chiusa la porta ha le sbarre, aperta ha la cornice arancione; porte e simboli si vedono anche nel buio. Ci si entra camminandoci contro.
+- **Il passaggio**: il buio si infittisce a retino fino al nero, si cambia stanza e il retino si dirada (0,25 s in tutto).
+- **Fine della fetta**: dopo la carta della terza stanza compare «Fetta completata», con i nemici battuti, le schivate perfette e la build (Lanterna, Echi e doni con il loro livello), «Ricomincia» e «Menu».
+
+| Valore del percorso | Numero | Note |
+| --- | --- | --- |
+| Stanze | 3 | |
+| Ondate | stanza 1: 3 Ricaduti e 1 Cantore; stanza 2: 3 e 1, poi 3 e 2; stanza 3: 4 e 2, poi 5 e 3 | la seconda quando ne restano 2 |
+| Carte | 3, dopo 0,8 s | |
+| Build | al massimo 3 Echi e 6 doni | più la Lanterna |
+| Porte | da 2 a 3, larghe 64 px | su muri diversi |
+| Passaggio | 0,25 s | a retino |
 
 ## 12. Da fare e da decidere
 
