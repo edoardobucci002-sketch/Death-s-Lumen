@@ -21,7 +21,7 @@ export class LabStanze {
     x: number; y: number; larghezza: number; altezza: number; fermo: boolean; colpi: number;
     salute: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
-    quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number;
+    quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
   } {
     const s = this.s, n = s.nemici;
     return {
@@ -29,8 +29,13 @@ export class LabStanze {
       salute: Math.round(s.salute), saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
-      quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.serve, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva),
+      quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto,
     };
+  }
+
+  /** Accende o spegne il fermo d'impatto (per confrontare). */
+  fermoImpatto(si: boolean): void {
+    this.s.nemici.fermoImpatto = si;
   }
 
   /** Carica dell'abilità piena (o vuota). */

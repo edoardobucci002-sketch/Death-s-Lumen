@@ -4,12 +4,14 @@
  * schivata perfetta, che dà la Grazia: uscire dallo spicchio all'ultimo istante, farsi sfiorare da un grumo.
  * Quiete: dopo un colpo, per un attimo la stessa arma («fonte») non ferisce più quel nemico; le altre sì.
  * Il Ricaduto battuto resta sempre a terra un attimo, intoccabile; poi a volte si rialza (una volta sola).
+ * Impatto della Lanterna: il nemico colpito si ferma un attimo (fermo d'impatto), si schiaccia e sprizza scintille.
  * Tutto in array preparati all'inizio (niente allocazioni nel ciclo di gioco); la logica è separata dal disegno.
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
  * Con al massimo ONDATA.massimo nemici, le spinte tra nemici si calcolano a coppie: la griglia spaziale non serve.
  */
 import Phaser from 'phaser';
-import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, NEMICI_STANZA, ONDATA, STANZA } from '../data/stanze';
+import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, ONDATA, STANZA } from '../data/stanze';
+import type { Impatto } from './impatto';
 import { PROFONDITA, type Effetti } from './effetti';
 import { ingrandimento } from './asset';
 import { areaCamminabile } from './stanza';
@@ -26,6 +28,7 @@ const N = ONDATA.massimo;
 /** Le armi che feriscono i nemici, ognuna con la sua Quiete: la Lanterna, il Cerchio di luce (gli Echi arrivano dopo). */
 export const FONTE = { lanterna: 0, abilita: 1 } as const;
 const FONTI = 4;
+const FERITO = { no: 0, inPiedi: 1, battuto: 2 } as const;
 const MAX_GRUMI = 16;
 const R = NEMICI_STANZA.ricaduto;
 const C = NEMICI_STANZA.cantore;
@@ -54,6 +57,10 @@ export class NemiciStanza {
   private dentro = new Float32Array(N); // secondi al graffio l'ultima volta che il personaggio era nello spicchio
   private lampo = new Float32Array(N);
   private quiete = new Float32Array(N * FONTI); // secondi di Quiete rimasti, per nemico e per arma
+  private fermo = new Float32Array(N); // fermo d'impatto: il nemico non fa niente
+  private schiaccia = new Float32Array(N); // secondi di schiacciamento rimasti (solo disegno)
+  /** LAB: il fermo d'impatto acceso o spento. */
+  fermoImpatto = true;
   private colpo = new Float32Array(N); // il graffio appena scattato, da disegnare pieno per un attimo
   private versoSinistra = new Uint8Array(N);
   private sprite: Phaser.GameObjects.Sprite[] = [];
@@ -88,6 +95,7 @@ export class NemiciStanza {
     private readonly scena: Phaser.Scene,
     private readonly caso: Caso,
     private readonly effetti: Effetti,
+    private readonly impatto: Impatto,
   ) {
     this.aspetto = TIPI_STANZA.map((t) => {
       const chiave = NEMICI_STANZA[t].sprite;
@@ -123,7 +131,7 @@ export class NemiciStanza {
     this.tempo[i] = comparsa;
     this.ricarica[i] = C.primoCanto;
     this.rinato[i] = 0;
-    this.lampo[i] = this.colpo[i] = 0;
+    this.lampo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = 0;
     this.quiete.fill(0, i * FONTI, i * FONTI + FONTI);
     this.dirX[i] = 1;
     this.dirY[i] = 0;
@@ -168,6 +176,11 @@ export class NemiciStanza {
     for (let i = this.numero - 1; i >= 0; i--) {
       if (this.lampo[i] > 0) this.lampo[i] -= dt;
       for (let f = i * FONTI; f < i * FONTI + FONTI; f++) if (this.quiete[f] > 0) this.quiete[f] -= dt;
+      if (this.schiaccia[i] > 0) this.schiaccia[i] -= dt;
+      if (this.fermo[i] > 0) {
+        this.fermo[i] -= dt; // fermo d'impatto: niente passi, niente avviso che scorre
+        continue;
+      }
       if (this.colpo[i] > 0) this.colpo[i] -= dt;
       const st = this.stato[i];
       const dx = px - this.x[i], dy = py - this.y[i], d = Math.hypot(dx, dy) || 1;
@@ -329,11 +342,17 @@ export class NemiciStanza {
       const dx = this.x[i] - ox, dy = this.y[i] - oy, d = Math.hypot(dx, dy);
       if (d > raggio + rn) continue;
       if (d > rn && Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(dy, dx) - angolo)) > mezza + Math.asin(Math.min(1, rn / d))) continue;
-      if (!this.ferisci(i, danno, FONTE.lanterna)) continue;
+      const esito = this.ferisci(i, danno, FONTE.lanterna);
+      if (esito === FERITO.no) continue;
       presi++;
-      if (this.stato[i] !== STATO.avviso && d > 0 && this.stato[i] !== STATO.aTerra) this.muovi(i, (dx / d) * NEMICI_STANZA.spinta, (dy / d) * NEMICI_STANZA.spinta);
+      // ancora in piedi: impatto (fermo, schiacciamento, scintille verso dove va il colpo) e spinta, tranne durante l'avviso
+      if (esito !== FERITO.inPiedi) continue; // battuto: le scintille grandi le fa muore()
+      if (this.fermoImpatto) this.fermo[i] = IMPATTO.fermo;
+      this.schiaccia[i] = IMPATTO.schiaccia.durata;
+      const sx = d > 0 ? dx / d : Math.cos(angolo), sy = d > 0 ? dy / d : Math.sin(angolo);
+      this.impatto.scintille(this.x[i], this.y[i] - this.testa(i) / 2, sx, sy, IMPATTO.scintille.colpo);
+      if (this.stato[i] !== STATO.avviso && d > 0) this.muovi(i, sx * NEMICI_STANZA.spinta, sy * NEMICI_STANZA.spinta);
     }
-    if (presi) suona('colpo');
     return presi;
   }
 
@@ -344,21 +363,25 @@ export class NemiciStanza {
       if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
       const rn = NEMICI_STANZA[TIPI_STANZA[this.tipo[i]]].raggio;
       if ((this.x[i] - x) ** 2 + (this.y[i] - y) ** 2 > (r + rn) ** 2) continue;
-      if (this.ferisci(i, danno, fonte)) presi++;
+      if (this.ferisci(i, danno, fonte) !== FERITO.no) presi++;
     }
     return presi;
   }
 
-  /** Un colpo dell'arma «fonte» sul nemico i: niente se è in Quiete per quell'arma. Restituisce true se l'ha ferito. */
-  private ferisci(i: number, danno: number, fonte: number): boolean {
+  /**
+   * Un colpo dell'arma «fonte» sul nemico i: niente se è in Quiete per quell'arma. Dice com'è andata: non ferito, ferito
+   * e ancora in piedi, oppure battuto (attenzione: un nemico battuto può essere già tolto, e al posto i c'è un altro).
+   */
+  private ferisci(i: number, danno: number, fonte: number): number {
     const q = i * FONTI + fonte;
-    if (this.quiete[q] > 0) return false;
+    if (this.quiete[q] > 0) return FERITO.no;
     this.quiete[q] = NEMICI_STANZA.quiete;
     this.salute[i] -= danno;
     this.lampo[i] = NEMICI_STANZA.lampo;
     this.effetti.numero(this.x[i], this.y[i] - this.testa(i), danno, false);
-    if (this.salute[i] <= 0) this.muore(i);
-    return true;
+    if (this.salute[i] > 0) return FERITO.inPiedi;
+    this.muore(i);
+    return FERITO.battuto;
   }
 
   /** Un nemico finisce la salute: il Ricaduto resta a terra (poi forse si rialza); il Cantore sparisce. */
@@ -368,6 +391,7 @@ export class NemiciStanza {
       this.tempo[i] = R.rinascita.attesa;
       this.salute[i] = 0;
       this.lampo[i] = 0;
+      this.impatto.scintille(this.x[i], this.y[i] - this.testa(i) / 2, 0, -1, IMPATTO.scintille.battuto);
       return;
     }
     this.sparisce(i);
@@ -375,6 +399,7 @@ export class NemiciStanza {
 
   /** Battuto per davvero: uno scoppio e via. */
   private sparisce(i: number): void {
+    this.impatto.scintille(this.x[i], this.y[i] - this.testa(i) / 2, 0, -1, IMPATTO.scintille.battuto);
     this.effetti.scoppio(this.x[i], this.y[i] - this.testa(i) / 2);
     this.uccisi++;
     this.togli(i);
@@ -396,6 +421,8 @@ export class NemiciStanza {
     this.dentro[i] = this.dentro[u];
     this.lampo[i] = this.lampo[u];
     this.quiete.copyWithin(i * FONTI, u * FONTI, u * FONTI + FONTI);
+    this.fermo[i] = this.fermo[u];
+    this.schiaccia[i] = this.schiaccia[u];
     this.colpo[i] = this.colpo[u];
     this.versoSinistra[i] = this.versoSinistra[u];
   }
@@ -436,8 +463,10 @@ export class NemiciStanza {
       const chiave = NEMICI_STANZA[tipo].sprite;
       const anim = `${chiave}:walk`;
       if (sp.texture.key !== chiave) sp.setTexture(chiave);
-      sp.setOrigin(0.5, a.piedi).setScale(a.ingrandimento).setVisible(true).setDepth(PROFONDITA.aTerra + 10 + y);
-      const fermo = st !== STATO.cammina;
+      // schiacciamento: largo e basso subito dopo il colpo, poi torna come prima
+      const k = Math.max(0, this.schiaccia[i]) / IMPATTO.schiaccia.durata, S = IMPATTO.schiaccia;
+      sp.setOrigin(0.5, a.piedi).setScale(a.ingrandimento * (1 + (S.largo - 1) * k), a.ingrandimento * (1 + (S.basso - 1) * k)).setVisible(true).setDepth(PROFONDITA.aTerra + 10 + y);
+      const fermo = st !== STATO.cammina || this.fermo[i] > 0;
       if (this.scena.anims.exists(anim)) {
         sp.play(anim, true);
         if (fermo) sp.anims.pause();

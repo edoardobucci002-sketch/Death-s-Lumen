@@ -771,20 +771,21 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 **I nemici e la Grazia** (passo 4, `NEMICI_STANZA`, `ONDATA`, `COMBATTIMENTO_STANZA` e `GRAZIA_STANZA` in `src/data/stanze.ts`; `src/sistema/nemici-stanza.ts`). Tutti i numeri sono proposte di Claude, *da rivedere*.
 
 - **Il Lampionaio si può ferire**: 100 di salute. La salute non si rigenera da sola: lo farà con oggetti o poteri che lo permettono, da inventare (decisione di Edoardo del 13/11). La barra della salute è quella del survivor, sotto i piedi. Colpito, si illumina di bianco, lo schermo trema un poco e il telefono vibra. Toccare un nemico non fa male: fa male solo un attacco con il suo avviso (confermato da Edoardo il 13/11).
-- **Quiete** (decisione di Edoardo del 13/11): dopo un colpo, per un attimo non si prendono altri danni. Il Lampionaio resta in Quiete 0,6 s (lampeggia); è una sua statistica, che le carte potranno migliorare. I nemici restano in Quiete 0,2 s, ma **ogni arma ha la sua**: la Lanterna non ferisce di nuovo lo stesso nemico per 0,2 s, il Cerchio di luce sì (e viceversa). È la stessa parola della Quiete delle reazioni (un nemico non reagisce di nuovo per 3 s), scelta di Edoardo.
+- **Quiete** (decisione di Edoardo del 13/11): dopo un colpo, per un attimo non si prendono altri danni. Il Lampionaio resta in Quiete 0,5 s (lampeggia); è una sua statistica, che le carte potranno migliorare. I nemici restano in Quiete 0,3 s, ma **ogni arma ha la sua**: la Lanterna non ferisce di nuovo lo stesso nemico per 0,3 s, il Cerchio di luce sì (e viceversa). Il Cerchio di luce prova a ferire ogni 0,25 s, quindi con la Quiete prende ogni nemico ogni 0,5 s. È la stessa parola della Quiete delle reazioni (un nemico non reagisce di nuovo per 3 s), scelta di Edoardo.
 - **Il Ricaduto** (segnaposto: lo Zombi del survivor) cammina dritto e lento verso il Lampionaio. A 56 px si ferma e comincia l'**avviso**: trema, lampeggia di rosso e a terra compare uno spicchio rosso davanti a lui che si riempie. La direzione è decisa all'inizio dell'avviso. Allo scadere graffia tutto lo spicchio, poi resta fermo un attimo. Battuto, resta sempre a terra 1,5 s, steso e scuro, senza segni e senza poter essere colpito (decisione di Edoardo del 13/11); poi, 1 volta su 10, si rialza con metà della salute, se no sparisce. Si rialza una volta sola.
 - **Il Cantore** (segnaposto: il Fantasma del survivor) resta tra 200 e 250 px dal Lampionaio: si allontana se ti avvicini, si avvicina se ti allontani. Quando ha ricaricato e sei entro 360 px si ferma, e a terra compare una **linea arancione** verso di te fino al muro (l'avviso; gli avvisi a distanza sono arancioni, quelli corpo a corpo rossi: decisione di Edoardo del 13/11): lampeggia, resta accesa nell'ultimo terzo, e davanti a lui il grumo cresce. Poi lancia un grumo di Lumen spento lento e dritto, che non insegue e sparisce contro il muro.
 - I nemici non si sovrappongono tra loro. Ferito, un nemico mostra sotto i piedi una barra della salute piccola.
-- **Grazia** (`GRAZIA_STANZA`; partita da quella del survivor, si sviluppa per conto suo: decisione di Edoardo del 13/11): la schivata perfetta è uscire dallo spicchio del graffio quando mancano al massimo 0,25 s, oppure farsi passare un grumo vicino, entro 30 px oltre il contatto, senza farsi toccare. Nell'istante della schivata il gioco va **al rallentatore** (al 30% per 0,3 s): si sente che è riuscita. Poi 3 s di Grazia: +30% danno (anche del Cerchio di luce) e +15% velocità, il Lampionaio si illumina a lampi e sopra la testa compare «Grazia». Una Grazia nuova non accorcia quella in corso. Durata, finestra, sfioro e bonus sono statistiche del Lampionaio che le carte del passo 6 potranno migliorare. Le tacche del survivor non ci sono.
+- **Grazia** (`GRAZIA_STANZA`; partita da quella del survivor, si sviluppa per conto suo: decisione di Edoardo del 13/11): la schivata perfetta è uscire dallo spicchio del graffio quando mancano al massimo 0,25 s, oppure farsi passare un grumo vicino, entro 30 px oltre il contatto, senza farsi toccare. Nell'istante della schivata il gioco va **al rallentatore**: parte al 60% della velocità e torna normale in 0,35 s con una curva morbida. La logica avanza comunque 60 volte al secondo, a passi più corti, così non va a scatti. Poi 3 s di Grazia: +30% danno (anche del Cerchio di luce) e +15% velocità, il Lampionaio si illumina a lampi e sopra la testa compare «Grazia». Una Grazia nuova non accorcia quella in corso. Durata, finestra, sfioro e bonus sono statistiche del Lampionaio che le carte del passo 6 potranno migliorare. Le tacche del survivor non ci sono.
+- **Impatto dei colpi della Lanterna** (`IMPATTO`, `src/sistema/impatto.ts`, decisione di Edoardo del 13/11): quando un colpo prende un nemico, il Lampionaio e i nemici colpiti si fermano per 0,05 s (il **fermo d'impatto**: gli altri nemici e i grumi continuano; dal LAB si spegne); il nemico si schiaccia (più largo del 25% e più basso del 25%, poi torna in 0,1 s); dal punto colpito schizzano 6 scintille nella direzione del colpo, 12 verso l'alto quando lo batti; lo schermo trema di 1 pixel e c'è un suono sordo diverso dal colpo a vuoto.
 - **Ondate provvisorie** (fino alle tre stanze del passo 6): 0,8 s dopo l'ingresso compaiono 3 Ricaduti e 2 Cantori, in punti a caso a più di 240 px dal Lampionaio. Dove sta per comparire un nemico, per 0,7 s a terra c'è un anello che si stringe. A stanza ripulita, dopo 2,5 s, arriva un'altra ondata. Al massimo 16 nemici in campo.
 - **Caduta**: a salute zero il Lampionaio resta steso e scuro; dopo 0,9 s compare «Sei caduto» con i nemici battuti, «Ricomincia» (la stanza da capo) e «Menu». Il tasto Indietro, da lì, torna al menu.
 
 | Valore dei nemici | Numero | Note |
 | --- | --- | --- |
-| Lampionaio colpito | corpo 14 px, Quiete 0,6 s | |
-| Quiete dei nemici | 0,2 s, per ogni arma | |
+| Lampionaio colpito | corpo 14 px, Quiete 0,5 s | |
+| Quiete dei nemici | 0,3 s, per ogni arma | |
 | Grazia | finestra 0,25 s, sfioro 30 px; 3 s, +30% danno, +15% velocità | |
-| Rallentatore | al 30% per 0,3 s | all'inizio della Grazia |
+| Rallentatore | dal 60% in 0,35 s | all'inizio della Grazia, torna normale con una curva morbida |
 | Ricaduto | salute 40, velocità 60 px/s, corpo 16 px | 3 colpi della Lanterna, 2 in Grazia |
 | Graffio | avviso 0,5 s da 56 px; spicchio di 72 px e 110°; danno 15; fermo 0,7 s dopo | |
 | Rinascita | 10%, dopo 1,5 s a terra, con il 50% della salute | una volta sola |
@@ -792,17 +793,18 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Avviso del canto | 0,8 s entro 360 px; primo canto dopo 1,2 s; ricarica 2,4 s | |
 | Grumo | velocità 140 px/s, raggio 9 px, danno 12 | |
 | Spinta | 10 px | non durante l'avviso |
+| Impatto | fermo 0,05 s; schiacciamento 0,1 s; scintille 6, battuto 12 | scossa di 1 px |
 | Ondata | 3 Ricaduti e 2 Cantori, a più di 240 px; segno 0,7 s; prima dopo 0,8 s, poi 2,5 s | provvisoria |
 
-**L'abilità caricata colpendo** (passo 5, `ABILITA_STANZA` in `src/data/stanze.ts`, `src/sistema/abilita-stanza.ts`). Il Cerchio di luce del Lampionaio si carica **solo** quando un colpo della Lanterna prende un nemico (decisione del 12/11): 10 per nemico, al massimo 20 per colpo, piena a 100 (*da rivedere*). Mentre il cerchio è acceso non si carica.
+**L'abilità caricata colpendo** (passo 5, `ABILITA_STANZA` in `src/data/stanze.ts`, `src/sistema/abilita-stanza.ts`). Il Cerchio di luce del Lampionaio si carica **solo** con i colpi della Lanterna a segno (decisione del 12/11): piena dopo 8 colpi, e un colpo conta 1 anche se prende più nemici (decisione di Edoardo del 13/11). Mentre il cerchio è acceso non si carica.
 
-- **Il pulsante**: un tondo scuro con l'icona del Cerchio di luce, a sinistra del joystick d'attacco, trasparente come lui. Un anello nel colore del personaggio si riempie in senso orario, pixel per pixel; piena, l'anello diventa chiaro, l'icona si accende e il telefono vibra. Su computer si vede lo stesso, e si usa con Spazio.
+- **Il pulsante**: un tondo scuro con l'icona del Cerchio di luce, a sinistra del joystick d'attacco, trasparente come lui, con un'area di tocco che esce di 10 punti dal disegno. L'anello ha 8 tacche che si accendono in senso orario nel colore del personaggio, una per colpo; piena, l'anello diventa chiaro, l'icona si accende e il telefono vibra. Toccata scarica, trema e fa un tonfo (il tocco è arrivato). Su computer si vede lo stesso, e si usa con Spazio.
 - **L'effetto** è quello del survivor (`ABILITA.cerchioDiLuce`): un cerchio di 216 px che segue il Lampionaio per 5 s, ferisce chi c'è dentro di 6 ogni 0,25 s (+30% in Grazia) e lo fa camminare il 55% più lento. Ferisce con la sua Quiete, separata da quella della Lanterna.
 
 | Valore dell'abilità | Numero | Note |
 | --- | --- | --- |
-| Carica | piena a 100; 10 per nemico, al massimo 20 per colpo | solo con la Lanterna (*da rivedere*) |
-| Pulsante | 36 pixel disegnati, 6 px dal joystick d'attacco | ingrandito come i joystick |
+| Carica | 8 colpi a segno | un colpo conta 1, solo con la Lanterna |
+| Pulsante | 36 pixel disegnati, 14 px dal joystick d'attacco; area di tocco 10 punti più larga | ingrandito come i joystick |
 
 ## 12. Da fare e da decidere
 

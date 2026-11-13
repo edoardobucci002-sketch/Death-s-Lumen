@@ -19,7 +19,8 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, JOYSTICK_STANZE, ONDATA, STANZA } from '../data/stanze';
+import { ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, STANZA } from '../data/stanze';
+import { Impatto } from '../sistema/impatto';
 import { ABILITA } from '../data/abilita';
 import { AbilitaStanza } from '../sistema/abilita-stanza';
 import { ARTE_JOYSTICK, preparaJoystickStanze } from '../sistema/joystick-stanze';
@@ -92,6 +93,8 @@ export class Stanze extends Phaser.Scene {
   readonly statGrazia = { durata: 0, danno: 0, velocita: 0, finestra: 0, sfioro: 0 };
   private inQuiete = 0; // secondi di Quiete rimasti
   private rallentatore = 0; // secondi veri di rallentatore rimasti
+  private fermoColpo = 0; // fermo d'impatto del Lampionaio: secondi in cui non si muove
+  private impatto!: Impatto;
   private lampoFerita = 0;
   private attesaFine = 0;
   private attesaOndata = 0;
@@ -121,6 +124,7 @@ export class Stanze extends Phaser.Scene {
     this.saluteMassima = this.salute = BASE.salute + this.pg.salute; // nel gioco a stanze niente rigenerazione (da rivedere)
     this.morto = this.immortale = false;
     this.ondateAutomatiche = true;
+    this.fermoColpo = 0;
     this.grazia = this.inQuiete = this.rallentatore = this.lampoFerita = this.attesaFine = this.orologio = this.scrittaVita = 0;
     this.quiete = COMBATTIMENTO_STANZA.quiete;
     const G = GRAZIA_STANZA;
@@ -144,7 +148,8 @@ export class Stanze extends Phaser.Scene {
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     this.alone = this.add.image(0, 0, CHIAVI_ALONE[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD);
     this.effetti = new Effetti(this);
-    this.nemici = new NemiciStanza(this, new Caso(ONDATA.seme), this.effetti);
+    this.impatto = new Impatto(this);
+    this.nemici = new NemiciStanza(this, new Caso(ONDATA.seme), this.effetti, this.impatto);
     this.barra = new BarraSalute(this, this.salute);
     const scritta = 'stanze-scritta-grazia';
     if (!this.textures.exists(scritta)) this.textures.addCanvas(scritta, tela('Grazia', '#86c5e8', '#000000'));
@@ -198,17 +203,19 @@ export class Stanze extends Phaser.Scene {
       this.disegna(0);
       return;
     }
-    // l'attimo al rallentatore della Grazia: il gioco (logica, effetti, animazioni) va più piano per qualche decimo di secondo vero
+    // l'attimo al rallentatore della Grazia: parte al 60% e torna normale con una curva morbida. La logica avanza sempre
+    // 60 volte al secondo vero, ma a passi più corti: così tutto si muove a ogni fotogramma e non va a scatti
     let scala = 1;
     if (this.rallentatore > 0) {
       this.rallentatore -= delta / 1000;
-      scala = this.rallentatore > 0 ? GRAZIA_STANZA.rallentatore.scala : 1;
+      const R = GRAZIA_STANZA.rallentatore, t = Phaser.Math.Clamp(1 - this.rallentatore / R.durata, 0, 1);
+      scala = R.scala + (1 - R.scala) * t * t * (3 - 2 * t);
     }
     this.anims.globalTimeScale = scala;
     const tempo = delta * scala;
-    this.accumulo = Math.min(this.accumulo + tempo, RITARDO_MASSIMO_MS);
+    this.accumulo = Math.min(this.accumulo + delta, RITARDO_MASSIMO_MS);
     while (this.accumulo >= PASSO_MS) {
-      this.passo(PASSO);
+      this.passo(PASSO * scala);
       this.accumulo -= PASSO_MS;
     }
     this.effetti.aggiorna(tempo / 1000, this.x, this.y - COLPI.corpo);
@@ -230,6 +237,12 @@ export class Stanze extends Phaser.Scene {
   private colpisci(angolo: number): void {
     const presi = this.nemici.colpisci(this.x, this.y, angolo, ATTACCO.raggio, ATTACCO.ampiezza, ATTACCO.danno * this.bonusGrazia());
     this.abilita.colpo(presi); // l'abilità si carica solo così
+    if (presi > 0) {
+      // impatto: un attimo fermo anche il Lampionaio, lo schermo trema appena, un colpo sordo
+      if (this.nemici.fermoImpatto) this.fermoColpo = IMPATTO.fermo;
+      this.effetti.scuoti(IMPATTO.scossa.forza, IMPATTO.scossa.durata);
+      suona('impatto');
+    }
   }
 
   /** Il moltiplicatore del danno: in Grazia più alto. */
@@ -318,7 +331,10 @@ export class Stanze extends Phaser.Scene {
     if (this.scrittaVita > 0) this.scrittaVita -= dt;
     this.comandi.aggiorna();
     const dx = this.comandi.dx, dy = this.comandi.dy;
-    const passo = this.velocita * (1 + (this.grazia > 0 ? this.statGrazia.velocita : 0)) * dt;
+    // durante il fermo d'impatto il Lampionaio non avanza (il resto della stanza sì)
+    const fermoColpo = this.fermoColpo > 0;
+    if (fermoColpo) this.fermoColpo -= dt;
+    const passo = fermoColpo ? 0 : this.velocita * (1 + (this.grazia > 0 ? this.statGrazia.velocita : 0)) * dt;
     this.inMoto = dx !== 0 || dy !== 0;
     if (dx < 0) this.versoSinistra = true;
     else if (dx > 0) this.versoSinistra = false;
@@ -380,6 +396,7 @@ export class Stanze extends Phaser.Scene {
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto);
     this.nemici.disegna();
     this.abilita.disegna(px, py - COLPI.corpo);
+    this.impatto.disegna(dt);
     this.attacco.disegna();
     const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
     const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);

@@ -80,7 +80,7 @@ export const COMBATTIMENTO_STANZA = {
   raggio: 14, // il corpo del personaggio per i colpi dei nemici, attorno ai piedi
   // Quiete (decisione di Edoardo del 13/11): secondi senza danni dopo un colpo; una statistica del personaggio che le carte
   // potranno migliorare (il personaggio lampeggia)
-  quiete: 0.6,
+  quiete: 0.5, // deciso da Edoardo il 13/11
   lampo: 0.1, // secondi in cui il personaggio si illumina di bianco quando è colpito
   lampeggio: 12, // lampeggi al secondo durante l'invulnerabilità
   attesaFine: 0.9, // secondi tra la morte e la scritta «Sei caduto»
@@ -100,7 +100,9 @@ export const GRAZIA_STANZA = {
   durata: 3,
   danno: 0.3, // +30%
   velocita: 0.15, // +15%
-  rallentatore: { scala: 0.3, durata: 0.3 }, // il gioco va al 30% della velocità per 0,3 s veri
+  // rallentatore fluido (13/11): parte al 60% della velocità e torna normale in 0,35 s veri, con una curva morbida;
+  // la logica avanza comunque 60 volte al secondo, a passi più corti, così non va a scatti
+  rallentatore: { scala: 0.6, durata: 0.35 },
   alone: 0x707070, // colore aggiunto al personaggio, a lampi
   lampi: 10, // lampi al secondo
 } as const;
@@ -140,9 +142,9 @@ export const NEMICI_STANZA = {
     grumo: { velocita: 140, raggio: 9, danno: 12, altezza: 20 }, // altezza: quanto sopra il terreno si disegna
   },
   spinta: 10, // pixel di cui un colpo della Lanterna sposta un nemico (non durante l'avviso)
-  // Quiete dei nemici (decisione di Edoardo del 13/11): dopo un colpo, per questi secondi la stessa arma non lo ferisce più;
-  // le altre armi sì. Più corta del ritmo delle armi più svelte (il Cerchio di luce ferisce ogni 0,25 s)
-  quiete: 0.2,
+  // Quiete dei nemici (decisione di Edoardo del 13/11, 0,3 s): dopo un colpo, per questi secondi la stessa arma non lo ferisce
+  // più; le altre armi sì. Il Cerchio di luce, che prova a ferire ogni 0,25 s, prende così ogni nemico ogni 0,5 s
+  quiete: 0.3,
   lampo: 0.1, // secondi in cui un nemico colpito si illumina di bianco
   // barra della salute dei nemici, solo quando sono feriti (pixel disegnati, sotto i piedi)
   barra: { larghezza: 20, altezza: 3, distanza: 4 },
@@ -179,9 +181,20 @@ export const ONDATA = {
  * (decisione del 12/11). Valori proposti da Claude, da rivedere.
  */
 export const ABILITA_STANZA = {
-  serve: 100, // carica piena
-  perNemico: 10, // carica per ogni nemico preso da un colpo della Lanterna
-  massimoPerColpo: 20, // un colpo che prende tanti nemici dà al massimo questo
-  // il pulsante, accanto al joystick d'attacco (sopra e a sinistra): diametro in pixel disegnati, distanza dal joystick
-  tasto: { lato: 36, distanza: 6 },
+  // piena dopo 8 colpi della Lanterna a segno; un colpo conta 1 anche se prende più nemici (decisione di Edoardo del 13/11)
+  colpi: 8,
+  // il pulsante, a sinistra del joystick d'attacco: diametro e distanza dal joystick in pixel disegnati; margine: quanto
+  // l'area di tocco esce dal disegno, in punti dello schermo
+  tasto: { lato: 36, distanza: 14, margine: 10 },
+} as const;
+
+/**
+ * Impatto dei colpi della Lanterna (decisione di Edoardo del 13/11): fermo d'impatto, schiacciamento, scintille, scossa e
+ * suono. Valori proposti da Claude, da rivedere. Il fermo si spegne dal LAB per confrontare.
+ */
+export const IMPATTO = {
+  fermo: 0.05, // secondi in cui il Lampionaio e i nemici colpiti si fermano (gli altri continuano)
+  schiaccia: { durata: 0.1, largo: 1.25, basso: 0.75 }, // il nemico colpito si allarga e si abbassa, poi torna
+  scintille: { colpo: 6, battuto: 12, velocita: 140, durata: 0.22, lato: 2, colori: ['#fff1b8', '#ffd36a', '#e3913a'] },
+  scossa: { forza: 1, durata: 0.06 }, // pixel e secondi, solo quando si prende qualcuno
 } as const;

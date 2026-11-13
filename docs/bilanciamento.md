@@ -42,6 +42,14 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 (pomeriggio) — Ritocchi di Edoardo dopo la prova del passo 5
+
+- **Quiete**: Lampionaio da 0,6 a **0,5 s**, nemici da 0,2 a **0,3 s** (decisione di Edoardo). Effetto collaterale: il Cerchio di luce prova a ferire ogni 0,25 s, quindi ora prende ogni nemico ogni 0,5 s (il suo danno si dimezza, da 24 a 12 al secondo).
+- **Carica dell'abilità**: da «10 per nemico, piena a 100» a **8 colpi a segno**, un colpo conta 1 (decisione di Edoardo).
+- **Rallentatore**: da «30% per 0,3 s» (a scatti) a **dal 60% in 0,35 s** con curva morbida e logica a passi più corti (scelta di Edoardo: rifarlo fluido).
+- **Pulsante dell'abilità**: distanza dal joystick d'attacco da 6 a 14 pixel disegnati, area di tocco 10 punti più larga (richiesta di Edoardo: a volte il tocco non partiva).
+- **Impatto** (nuovo, numeri di Claude *da rivedere*): fermo 0,05 s, schiacciamento 0,1 s, scintille 6 e 12, scossa 1 px.
+
 ### 13/11 — Gioco a stanze: Quiete, rallentatore e abilità (proposte di Claude, *da rivedere*; il survivor non cambia)
 
 - **Quiete del Lampionaio 0,6 s** (prima «invulnerabilità», stesso valore). **Quiete dei nemici 0,2 s per arma**: più corta del ritmo del Cerchio di luce (0,25 s) e della ricarica della Lanterna (0,45 s), quindi oggi non toglie danni; conterà con gli Echi.

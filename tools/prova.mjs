@@ -1182,7 +1182,7 @@ for (const [nome, disp] of [
     await L('attacca', 'su'); // a vuoto: non carica
     await pag.waitForTimeout(500);
     const a1 = await st();
-    if (a1.carica !== 10) errori.push(`l'abilità non si carica solo colpendo (carica ${a1.carica}, attesa 10)`);
+    if (a1.carica !== 1) errori.push(`l'abilità non si carica solo colpendo (carica ${a1.carica} colpi, attesi 1)`);
     await L('caricaAbilita', true);
     if (nome === 'stanze-desktop') await pag.keyboard.press('Space');
     else await pag.click('.stanze-abilita').catch(() => errori.push('il pulsante dell\'abilità non è toccabile'));

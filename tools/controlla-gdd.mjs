@@ -835,7 +835,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Lampionaio colpito', 'corpo {} px, Quiete {} s', CB.raggio, CB.quiete],
     ['Quiete dei nemici', '{} s, per ogni arma', NS.quiete],
     ['Grazia', 'finestra {} s, sfioro {} px; {} s, +{}% danno, +{}% velocità', GS.finestra, GS.sfioro, GS.durata, pct(GS.danno), pct(GS.velocita)],
-    ['Rallentatore', 'al {}% per {} s', pct(GS.rallentatore.scala), GS.rallentatore.durata],
+    ['Rallentatore', 'dal {}% in {} s', pct(GS.rallentatore.scala), GS.rallentatore.durata],
     ['Ricaduto', 'salute {}, velocità {} px/s, corpo {} px', RI.salute, RI.velocita, RI.raggio],
     ['Graffio', 'avviso {} s da {} px; spicchio di {} px e {}°; danno {}; fermo {} s dopo', RI.avviso, RI.portata, RI.graffio.raggio, RI.graffio.ampiezza, RI.graffio.danno, RI.recupero],
     ['Rinascita', '{}%, dopo {} s a terra, con il {}% della salute', pct(RI.rinascita.probabilita), RI.rinascita.attesa, pct(RI.rinascita.salute)],
@@ -843,6 +843,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Avviso del canto', '{} s entro {} px; primo canto dopo {} s; ricarica {} s', CA.avviso, CA.portata, CA.primoCanto, CA.ricarica],
     ['Grumo', 'velocità {} px/s, raggio {} px, danno {}', CA.grumo.velocita, CA.grumo.raggio, CA.grumo.danno],
     ['Spinta', '{} px', NS.spinta],
+    ['Impatto', 'fermo {} s; schiacciamento {} s; scintille {}, battuto {}', SZ.IMPATTO.fermo, SZ.IMPATTO.schiaccia.durata, SZ.IMPATTO.scintille.colpo, SZ.IMPATTO.scintille.battuto],
     ['Ondata', '{} Ricaduti e {} Cantori, a più di {} px; segno {} s; prima dopo {} s, poi {} s', OD.ricaduti, OD.cantori, OD.distanzaMinima, OD.comparsa, OD.attesaPrima, OD.attesaNuova],
   ];
   stessiNomi('Nemici', tn, RIGHE_NEMICI.map((r) => r[0]));
@@ -851,8 +852,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const tb = tabella('| Valore dell\'abilità | Numero |');
   const AB = SZ.ABILITA_STANZA;
   const RIGHE_ABILITA = [
-    ['Carica', 'piena a {}; {} per nemico, al massimo {} per colpo', AB.serve, AB.perNemico, AB.massimoPerColpo],
-    ['Pulsante', '{} pixel disegnati, {} px dal joystick d\'attacco', AB.tasto.lato, AB.tasto.distanza],
+    ['Carica', '{} colpi a segno', AB.colpi],
+    ['Pulsante', '{} pixel disegnati, {} px dal joystick d\'attacco; area di tocco {} punti più larga', AB.tasto.lato, AB.tasto.distanza, AB.tasto.margine],
   ];
   stessiNomi('Abilità', tb, RIGHE_ABILITA.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_ABILITA) conRiga(tb, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
