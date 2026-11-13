@@ -2,9 +2,11 @@
  * Comandi del Laboratorio per il gioco a stanze (scheda «Stanze» in laboratorio.ts). Si chiamano con stanze.lab.…
  * Passo 2 della fetta: fermare e riprendere, portare il Lampionaio al centro o contro un muro per provare i bordi,
  * mostrare la linea invisibile che divide i joystick. Passo 3: chiedere un colpo della Lanterna.
+ * Passo 4: far comparire nemici, ondate, immortale, cura, Grazia, rinascita del Ricaduto, spostare il Lampionaio.
  */
 import { STANZA } from '../data/stanze';
 import { areaCamminabile } from './stanza';
+import { STATO, type TipoStanza } from './nemici-stanza';
 import type { Stanze } from '../scene/Stanze';
 
 export type DirezioneColpo = 'destra' | 'sinistra' | 'su' | 'giu' | 'auto';
@@ -14,8 +16,91 @@ export type PuntoStanza = 'centro' | 'alto' | 'basso' | 'sinistra' | 'destra' | 
 export class LabStanze {
   constructor(private readonly s: Stanze) {}
 
-  stato(): { x: number; y: number; larghezza: number; altezza: number; fermo: boolean; colpi: number } {
-    return { x: Math.round(this.s.x), y: Math.round(this.s.y), larghezza: STANZA.larghezza, altezza: STANZA.altezza, fermo: this.s.pausaLab, colpi: this.s.attacco.colpi };
+  stato(): {
+    x: number; y: number; larghezza: number; altezza: number; fermo: boolean; colpi: number;
+    salute: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
+    nemici: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
+  } {
+    const s = this.s, n = s.nemici;
+    return {
+      x: Math.round(s.x), y: Math.round(s.y), larghezza: STANZA.larghezza, altezza: STANZA.altezza, fermo: s.pausaLab, colpi: s.attacco.colpi,
+      salute: Math.round(s.salute), saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
+      grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
+      nemici: n.vivi(), uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
+    };
+  }
+
+  /** Fa comparire un nemico a «distanza» px dal Lampionaio, verso il centro della stanza (subito, senza il segno a terra se «subito»). */
+  nemico(tipo: TipoStanza, distanza: number, subito = false): void {
+    const s = this.s, cx = STANZA.larghezza / 2, cy = STANZA.altezza / 2;
+    let dx = cx - s.x, dy = cy - s.y;
+    const l = Math.hypot(dx, dy);
+    if (l < 1) { dx = 1; dy = 0; } else { dx /= l; dy /= l; }
+    s.nemici.aggiungi(tipo, s.x + dx * distanza, s.y + dy * distanza, subito ? 0 : undefined);
+  }
+
+  /** Un nemico in un punto preciso (per le prove). */
+  nemicoIn(tipo: TipoStanza, x: number, y: number): void {
+    this.s.nemici.aggiungi(tipo, x, y, 0);
+  }
+
+  ondata(): void {
+    this.s.nuovaOndata();
+  }
+
+  /** Toglie tutti i nemici e i grumi (non contano come battuti). */
+  svuota(): void {
+    this.s.nemici.svuota();
+  }
+
+  /** Accende o spegne le ondate automatiche: spente, la stanza resta vuota finché non si chiama un nemico. */
+  ondateAutomatiche(si: boolean): void {
+    this.s.ondateAutomatiche = si;
+  }
+
+  immortale(si: boolean): void {
+    this.s.immortale = si;
+  }
+
+  cura(): void {
+    this.s.salute = this.s.saluteMassima;
+  }
+
+  /** Porta la salute a n (per provare la caduta). */
+  salute(n: number): void {
+    this.s.salute = Math.max(1, Math.min(this.s.saluteMassima, n));
+  }
+
+  grazia(): void {
+    this.s.iniziaGrazia();
+  }
+
+  /** Rinascita del Ricaduto: true = sempre, false = mai, null = la probabilità normale. */
+  rinascita(v: boolean | null): void {
+    this.s.nemici.rinascitaForzata = v;
+  }
+
+  /** Sposta il Lampionaio di (dx, dy) pixel, dentro i muri (per le prove della schivata). */
+  sposta(dx: number, dy: number): void {
+    const a = areaCamminabile();
+    this.s.x = Math.min(a.x1, Math.max(a.x0, this.s.x + dx));
+    this.s.y = Math.min(a.y1, Math.max(a.y0, this.s.y + dy));
+  }
+
+  /** Secondi al prossimo attacco di un nemico in avviso (Infinity se nessuno sta preparando un attacco). */
+  prossimoAttacco(): number {
+    const n = this.s.nemici;
+    let t = Infinity;
+    for (let i = 0; i < n.numero; i++) if (n.stato[i] === STATO.avviso) t = Math.min(t, n.tempo[i]);
+    return t;
+  }
+
+  /** Quanti nemici sono a terra in attesa di rialzarsi. */
+  aTerra(): number {
+    const n = this.s.nemici;
+    let k = 0;
+    for (let i = 0; i < n.numero; i++) if (n.stato[i] === STATO.aTerra) k++;
+    return k;
   }
 
   /** Il pannello del Laboratorio tiene ferma la stanza finché è aperto. */

@@ -265,22 +265,45 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const st = stanza();
     if (!st) {
       return [
-        el('p', 'lab-nota', 'Il gioco a stanze, passo 2 della fetta: una stanza chiusa da muri, il Lampionaio che cammina, luce e buio. In orizzontale: sul telefono in verticale chiede di ruotarlo.'),
+        el('p', 'lab-nota', 'Il gioco a stanze, fetta verticale fino al passo 4: una stanza chiusa da muri, il Lampionaio con la Lanterna a tasto, Ricaduti e Cantori a ondate, la Grazia dalla schivata perfetta. In orizzontale: sul telefono in verticale chiede di ruotarlo.'),
         riga(tasto('Entra nella stanza', entra, 'acceso')),
       ];
     }
     const s = st.lab.stato();
     const vai = (dove: PuntoStanza, testo: string): HTMLElement => tasto(testo, () => { st.lab.vai(dove); ridisegna(); });
+    const f = (azione: () => void): (() => void) => () => { azione(); ridisegna(); };
+    const rin = s.rinascita === true ? 'sempre' : s.rinascita === false ? 'mai' : 'normale (10%)';
     return [
       titolo('Stanza'),
       riga(el('span', 'lab-stato', `Pavimento ${s.larghezza} × ${s.altezza} px · Lampionaio in ${s.x}, ${s.y}`)),
+      titolo('Nemici'),
+      riga(el('span', 'lab-stato', `In campo: ${s.nemici} · battuti: ${s.uccisi} · rinati: ${s.rinascite} · ondate: ${s.ondate}`)),
+      riga(
+        tasto('Ricaduto vicino', f(() => st.lab.nemico('ricaduto', 140))),
+        tasto('Cantore vicino', f(() => st.lab.nemico('cantore', 230))),
+        tasto('Ondata', f(() => st.lab.ondata())),
+        tasto('Togli tutti', f(() => st.lab.svuota()), 'rosso'),
+      ),
+      riga(
+        tasto(s.ondateAutomatiche ? 'Ondate automatiche: sì' : 'Ondate automatiche: no', f(() => st.lab.ondateAutomatiche(!s.ondateAutomatiche)), s.ondateAutomatiche ? 'acceso' : ''),
+        tasto(`Rinascita del Ricaduto: ${rin}`, f(() => st.lab.rinascita(s.rinascita === null ? true : s.rinascita ? false : null)), s.rinascita !== null ? 'acceso' : ''),
+      ),
+      el('p', 'lab-nota', 'Spegni le ondate automatiche e togli tutti per provare un nemico alla volta. Il Ricaduto si ferma vicino a te, a terra si riempie lo spicchio rosso (l\'avviso) e poi graffia; il Cantore resta lontano, a terra compare una linea fino al muro e poi lancia il grumo. Esci dallo spicchio all\'ultimo istante o fatti sfiorare dal grumo: parte la Grazia. «Rinascita: sempre» fa rialzare ogni Ricaduto battuto (una volta sola; un colpo mentre è a terra lo finisce). Numeri in Numeri → stanze → NEMICI_STANZA e ONDATA.'),
+      titolo('Lampionaio'),
+      riga(el('span', 'lab-stato', `Salute ${s.salute}/${s.saluteMassima} · colpi subiti ${s.ferite} · schivate perfette ${s.schivate}${s.grazia > 0 ? ` · Grazia ancora ${s.grazia.toFixed(1)} s` : ''}`)),
+      riga(
+        tasto(s.immortale ? 'Immortale: sì' : 'Immortale: no', f(() => st.lab.immortale(!s.immortale)), s.immortale ? 'acceso' : ''),
+        tasto('Cura piena', f(() => st.lab.cura())),
+        tasto('Salute a 1', f(() => st.lab.salute(1))),
+        tasto('Grazia adesso', () => { st.lab.grazia(); mostra(false); }),
+      ),
       riga(tasto(s.fermo ? 'Stanza ferma: riprendi' : 'Stanza in corso: ferma', () => { st.lab.ferma(!s.fermo); ridisegna(); }, s.fermo ? 'acceso' : ''), tasto('Ricomincia (ridisegna con i numeri nuovi)', entra)),
       titolo('Prova i muri: porta il Lampionaio'),
       riga(vai('centro', 'Al centro'), vai('alto', 'Al muro in alto'), vai('basso', 'Al muro in basso'), vai('sinistra', 'Al muro a sinistra'), vai('destra', 'Al muro a destra'), vai('angolo', "Nell'angolo")),
       el('p', 'lab-nota', 'Poi chiudi il LAB e spingi contro il muro: il Lampionaio deve fermarsi. Le misure della stanza sono in Numeri → stanze (dopo averle cambiate premi Ricomincia).'),
       titolo('Attacco (Lanterna a tasto)'),
       riga(el('span', 'lab-stato', `Colpi partiti: ${s.colpi}`), ...(['sinistra', 'destra', 'su', 'giu', 'auto'] as DirezioneColpo[]).map((d) => tasto(d === 'auto' ? 'Automatico' : `Verso ${d === 'giu' ? 'giù' : d}`, () => { st.lab.attacca(d); mostra(false); }))),
-      el('p', 'lab-nota', 'Il colpo parte appena chiudi il LAB. Sul telefono: tocco breve sul tasto in basso a destra = colpo automatico (oggi dove guarda il Lampionaio: i nemici arrivano al passo 4); trascina il tasto per mirare e lascia per colpire. Su computer: clic sinistro verso il puntatore, J automatico. Ricarica, raggio e ampiezza in Numeri → stanze → ATTACCO.'),
+      el('p', 'lab-nota', 'Il colpo parte appena chiudi il LAB. Sul telefono: tocco breve sul tasto in basso a destra = colpo verso il nemico più vicino (se non ce n\'è a portata, dove guarda il Lampionaio); trascina il tasto per mirare e lascia per colpire. Su computer: clic sinistro verso il puntatore, J automatico. Ricarica, raggio e ampiezza in Numeri → stanze → ATTACCO.'),
       titolo('Joystick'),
       riga(tasto(st.lab.lineaVisibile() ? 'Linea al centro: visibile' : 'Linea al centro: invisibile', () => { st.lab.linea(!st.lab.lineaVisibile()); ridisegna(); }, st.lab.lineaVisibile() ? 'acceso' : '')),
       el('p', 'lab-nota', 'Il joystick di movimento nasce solo a sinistra della linea e la sua base non la supera; a destra della linea il dito non muove il Lampionaio (sarà il joystick d\'attacco).'),

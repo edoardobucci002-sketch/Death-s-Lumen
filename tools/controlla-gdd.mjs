@@ -820,12 +820,29 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Ricarica', '{} s', AT.ricarica],
     ['Arco', 'raggio {} px, ampiezza {}°', AT.raggio, AT.ampiezza],
     ['Danno', '{}', AT.danno],
+    ['Mira automatica', 'entro {} px', AT.miraMassima],
     ['Posa del colpo', '{} s, slancio {} px', AT.posa, AT.slancio],
     ['Joystick d\'attacco', 'nella pausa da × {} a × {}; {} px dal bordo sicuro', AT.tasto.minimo, AT.tasto.massimo, AT.tasto.margine],
     ['Trascinamento', '{} punti per la mira piena, zona morta {}%', AT.trascina.raggio, pct(AT.trascina.zonaMorta)],
   ];
   stessiNomi('Attacco', ta, RIGHE_ATTACCO.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_ATTACCO) conRiga(ta, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+
+  const tn = tabella('| Valore dei nemici | Numero |');
+  const NS = SZ.NEMICI_STANZA, RI = NS.ricaduto, CA = NS.cantore, CB = SZ.COMBATTIMENTO_STANZA, OD = SZ.ONDATA;
+  const RIGHE_NEMICI = [
+    ['Lampionaio colpito', 'corpo {} px, invulnerabile {} s', CB.raggio, CB.invulnerabilita],
+    ['Ricaduto', 'salute {}, velocità {} px/s, corpo {} px', RI.salute, RI.velocita, RI.raggio],
+    ['Graffio', 'avviso {} s da {} px; spicchio di {} px e {}°; danno {}; fermo {} s dopo', RI.avviso, RI.portata, RI.graffio.raggio, RI.graffio.ampiezza, RI.graffio.danno, RI.recupero],
+    ['Rinascita', '{}%, dopo {} s a terra, con il {}% della salute', pct(RI.rinascita.probabilita), RI.rinascita.attesa, pct(RI.rinascita.salute)],
+    ['Cantore', 'salute {}, velocità {} px/s, corpo {} px, tra {} e {} px', CA.salute, CA.velocita, CA.raggio, CA.distanza.minima, CA.distanza.massima],
+    ['Avviso del canto', '{} s entro {} px; primo canto dopo {} s; ricarica {} s', CA.avviso, CA.portata, CA.primoCanto, CA.ricarica],
+    ['Grumo', 'velocità {} px/s, raggio {} px, danno {}', CA.grumo.velocita, CA.grumo.raggio, CA.grumo.danno],
+    ['Spinta', '{} px', NS.spinta],
+    ['Ondata', '{} Ricaduti e {} Cantori, a più di {} px; segno {} s; prima dopo {} s, poi {} s', OD.ricaduti, OD.cantori, OD.distanzaMinima, OD.comparsa, OD.attesaPrima, OD.attesaNuova],
+  ];
+  stessiNomi('Nemici', tn, RIGHE_NEMICI.map((r) => r[0]));
+  for (const [nome, modello, ...attesi] of RIGHE_NEMICI) conRiga(tn, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 }
 
 fs.rmSync(tmp, { recursive: true, force: true });

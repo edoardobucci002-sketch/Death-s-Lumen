@@ -981,6 +981,8 @@ for (const [nome, disp] of [
   pag.on('console', (m) => (m.type() === 'error' || m.text().includes('has no frame')) && errori.push(m.text()));
   await pag.goto(`${url}?stanze`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
+  // muri, pausa e attacco si provano nella stanza vuota; i nemici hanno la loro prova in fondo
+  await pag.evaluate(() => { const l = window.__dl.scene.getScene('Stanze').lab; l.ondateAutomatiche(false); l.svuota(); });
   await pag.waitForTimeout(500);
   const stato = () => pag.evaluate(() => {
     const s = window.__dl.scene.getScene('Stanze');
@@ -1123,6 +1125,81 @@ for (const [nome, disp] of [
       if (Math.abs(mov - t.l) > 1) errori.push(`il joystick d'attacco (${Math.round(t.l)} punti) non è grande come quello di movimento (${Math.round(mov)})`);
       nota += ', attacco tocco e mira sì';
     }
+    // passo 4: i nemici. Ricaduto: avviso, poi graffio; schivata perfetta del graffio e del grumo (Grazia); nemico battuto;
+    // rinascita; caduta del Lampionaio e «Ricomincia»
+    const L = (f, ...a) => pag.evaluate(([f, a]) => window.__dl.scene.getScene('Stanze').lab[f](...a), [f, a]);
+    const st = () => L('stato');
+    // aspetta dentro la pagina, fotogramma per fotogramma, che cond() sia vera, poi fa azione() (niente ritardi di Playwright)
+    const quando = (cond, azione, ms) => pag.evaluate(([cond, azione, ms]) => new Promise((ok) => {
+      const l = window.__dl.scene.getScene('Stanze').lab, fine = performance.now() + ms;
+      const f = () => { if (new Function('l', `return ${cond}`)(l)) { new Function('l', azione)(l); ok(true); } else if (performance.now() > fine) ok(false); else requestAnimationFrame(f); };
+      f();
+    }), [cond, azione, ms]);
+    await L('vai', 'centro');
+    await L('cura');
+    const s0 = await st();
+    await L('nemico', 'ricaduto', 40, true);
+    if (!(await quando('l.prossimoAttacco() < Infinity', '', 1000))) errori.push('il Ricaduto vicino non prepara il graffio');
+    await pag.screenshot({ path: `prove/${nome}-nemici.png` });
+    await pag.waitForTimeout(700);
+    const s1 = await st();
+    if (s1.ferite !== s0.ferite + 1 || s1.salute >= s1.saluteMassima) errori.push(`stando fermi il graffio non ferisce (colpi subiti ${s0.ferite} → ${s1.ferite}, salute ${s1.salute})`);
+    // schivata del graffio: il Lampionaio esce dallo spicchio quando mancano meno di 0,2 s
+    await L('svuota');
+    await L('cura');
+    await pag.waitForTimeout(700); // finisce l'invulnerabilità
+    await L('nemico', 'ricaduto', 40, true);
+    if (!(await quando('l.prossimoAttacco() <= 0.2', 'l.sposta(-110, 0)', 1500))) errori.push('il secondo Ricaduto non prepara il graffio');
+    await pag.waitForTimeout(450);
+    const s2 = await st();
+    if (s2.schivate !== s1.schivate + 1 || !(s2.grazia > 0)) errori.push(`uscire dallo spicchio all'ultimo non dà la Grazia (schivate ${s2.schivate}, Grazia ${s2.grazia})`);
+    if (s2.ferite !== s1.ferite) errori.push('uscito dallo spicchio, il graffio ferisce lo stesso');
+    // schivata del grumo: un Cantore a destra; appena il grumo parte il Lampionaio si sposta di lato, il grumo lo sfiora
+    await L('svuota');
+    await L('vai', 'centro');
+    const c = await st();
+    await L('nemicoIn', 'cantore', c.x + 230, c.y);
+    if (!(await quando('window.__dl.scene.getScene("Stanze").nemici.grumi > 0', 'l.sposta(0, 34)', 4000))) errori.push('il Cantore non lancia il grumo');
+    await pag.waitForTimeout(1900);
+    const s3 = await st();
+    if (s3.schivate !== s2.schivate + 1) errori.push(`il grumo che sfiora non dà la Grazia (schivate ${s2.schivate} → ${s3.schivate})`);
+    if (s3.ferite !== s2.ferite) errori.push('il grumo ferisce anche se è passato di lato');
+    // nemico battuto: un Ricaduto senza rinascita cade con 3 colpi automatici; con la rinascita resta a terra e si rialza
+    await L('svuota');
+    await quando('l.stato().grazia <= 0', '', 4000); // senza Grazia: il conto dei colpi è quello normale
+    await L('immortale', true);
+    await L('rinascita', false);
+    await L('vai', 'centro');
+    await L('nemico', 'ricaduto', 60, true);
+    for (let k = 0; k < 3; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
+    const s4 = await st();
+    if (s4.uccisi !== s3.uccisi + 1 || s4.nemici !== 0) errori.push(`3 colpi della Lanterna non battono il Ricaduto (battuti ${s4.uccisi}, in campo ${s4.nemici})`);
+    await L('rinascita', true);
+    await L('nemico', 'ricaduto', 60, true);
+    for (let k = 0; k < 3; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
+    const giu = await L('aTerra');
+    await pag.waitForTimeout(1500);
+    const s5 = await st();
+    if (giu !== 1 || s5.rinascite !== 1 || s5.nemici !== 1) errori.push(`il Ricaduto non torna in vita (a terra ${giu}, rinati ${s5.rinascite}, in campo ${s5.nemici})`);
+    // caduta: salute a 1, un graffio, «Sei caduto», poi «Ricomincia» rifà la stanza con la salute piena
+    await L('svuota');
+    await L('immortale', false);
+    await L('rinascita', null);
+    await pag.waitForTimeout(700);
+    await L('salute', 1);
+    await L('nemico', 'ricaduto', 40, true);
+    await pag.waitForTimeout(700 + 900 + 300);
+    const caduto = await st();
+    const fine = await pag.evaluate(() => !document.querySelector('.stanze-fine').hidden);
+    if (!caduto.morto || !fine) errori.push(`con la salute a 1 il graffio non fa cadere il Lampionaio (caduto ${caduto.morto}, scritta ${fine})`);
+    else {
+      await pag.screenshot({ path: `prove/${nome}-caduto.png` });
+      await pag.click('.stanze-fine .stanze-tasto').catch(() => errori.push('«Ricomincia» non toccabile'));
+      await pag.waitForTimeout(400);
+      const di = await st();
+      if (di.morto || di.salute !== di.saluteMassima) errori.push('«Ricomincia» non rifà la stanza');
+    }
+    nota += `, nemici sì (graffio, schivate ${s3.schivate}, battuti, rinascita, caduta)`;
   }
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);

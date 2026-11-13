@@ -1,9 +1,9 @@
 /*
  * Attacco a tasto (gioco a stanze, passo 3 della fetta): l'arma iniziale si usa a mano, non colpisce più da sola.
  * Sul telefono un joystick d'attacco fisso in basso a destra, stile Brawl Stars (stessi disegni e stessa grandezza del
- * joystick di movimento, regolabile): un tocco colpisce il nemico più vicino (finché non ci sono nemici, dove guarda il
+ * joystick di movimento, regolabile): un tocco colpisce il nemico più vicino (se non ce n'è a portata, dove guarda il
  * personaggio); trascinando il pomello segue il pollice, compare la mira a terra e lasciando il dito il colpo parte
- * in quella direzione. Su computer: clic sinistro verso il puntatore, J verso il nemico più vicino.
+ * in quella direzione. Su computer: clic sinistro verso il puntatore, J verso il nemico più vicino (entro ATTACCO.miraMassima).
  * Il colpo della Lanterna è un arco di luce davanti al personaggio (lo stesso effetto del survivor). I numeri sono in
  * ATTACCO (src/data/stanze.ts). La richiesta di colpo aspetta la fine della ricarica: si può premere un attimo prima.
  */
@@ -62,6 +62,7 @@ export class AttaccoATasto {
   private readonly tasto: HTMLButtonElement;
   private readonly pomello: HTMLImageElement;
   private readonly grafica: Phaser.GameObjects.Graphics;
+  private readonly verso_ = { x: 0, y: 0 }; // riusato: niente allocazioni nel ciclo di gioco
 
   constructor(
     scena: Phaser.Scene,
@@ -72,6 +73,10 @@ export class AttaccoATasto {
     private readonly nelMondo: (clientX: number, clientY: number) => { x: number; y: number },
     /** Il centro del corpo del personaggio, da cui parte il colpo. */
     private readonly corpo: () => { x: number; y: number },
+    /** Punta «verso» (lunga 1) al nemico più vicino; false se non ce n'è a portata. */
+    private readonly bersaglio: (verso: { x: number; y: number }) => boolean,
+    /** Il colpo è partito in direzione «angolo» (radianti): chi lo riceve ferisce i nemici dentro l'arco. */
+    private readonly colpito: (angolo: number) => void,
   ) {
     this.tasto = document.createElement('button');
     this.tasto.type = 'button';
@@ -110,7 +115,7 @@ export class AttaccoATasto {
     if (this.posa > 0) this.posa -= dt;
     if (!this.richiesta || this.attesa > 0) return;
     this.richiesta = false;
-    // nemico più vicino: arriva con i nemici (passo 4); per ora il colpo va dove guarda il personaggio
+    // automatico: verso il nemico più vicino; se non ce n'è, dove guarda il personaggio
     if (!this.rAuto) {
       this.dx = this.rDX;
       this.dy = this.rDY;
@@ -122,13 +127,18 @@ export class AttaccoATasto {
     this.posa = ATTACCO.posa;
     this.colpi++;
     const c = this.corpo();
-    this.effetti.arco(c.x, c.y, Math.atan2(this.dy, this.dx), ATTACCO.raggio, ATTACCO.ampiezza);
+    const angolo = Math.atan2(this.dy, this.dx);
+    this.effetti.arco(c.x, c.y, angolo, ATTACCO.raggio, ATTACCO.ampiezza);
     suona('colpo');
+    this.colpito(angolo);
   }
 
-  /** Punta dx, dy verso il nemico più vicino; false se non ce n'è (oggi: sempre, i nemici arrivano al passo 4). */
+  /** Punta dx, dy verso il nemico più vicino; false se non ce n'è a portata. */
   private miraVicino(): boolean {
-    return false;
+    if (!this.bersaglio(this.verso_)) return false;
+    this.dx = this.verso_.x;
+    this.dy = this.verso_.y;
+    return true;
   }
 
   /** La mira a terra mentre si trascina e il tasto spento durante la ricarica. */
