@@ -1,5 +1,6 @@
 /*
- * Nemici del gioco a stanze: il Ricaduto e il Cantore, e i grumi di Lumen spento del Cantore.
+ * Nemici del gioco a stanze: il Ricaduto e il Cantore, e i grumi di Lumen spento del Cantore, che ti cercano per un attimo
+ * e contro il muro scoppiano in una pozza di cera che ferisce chi ci passa sopra.
  * I nemici vivono nella Orda del survivor (src/sistema/orda.ts), così gli Echi, gli stati e le reazioni li toccano come
  * nel survivor; qui c'è il loro «cervello»: comparsa, camminata, avviso, attacco, a terra. Ogni attacco ha un avviso a terra
  * (lo spicchio rosso del graffio che si riempie, la linea arancione del canto) e lascia spazio alla schivata perfetta, che
@@ -33,6 +34,8 @@ export const FONTE = { lanterna: 0, abilita: 1 } as const;
 
 const MAX_COMPARSE = ONDATA.massimo;
 const MAX_GRUMI = 16;
+const MAX_POZZE = 16;
+const P = NEMICI_STANZA.pozza;
 const R = NEMICI_STANZA.ricaduto;
 const C = NEMICI_STANZA.cantore;
 const colore = (h: string): number => parseInt(h.slice(1), 16);
@@ -68,6 +71,12 @@ export class NemiciStanza {
   private gVX = new Float32Array(MAX_GRUMI);
   private gVY = new Float32Array(MAX_GRUMI);
   private gSfiorato = new Uint8Array(MAX_GRUMI);
+  private gVita = new Float32Array(MAX_GRUMI); // secondi da quando è partito (cerca solo all'inizio)
+  // pozze di cera a terra: dove, e quanti secondi restano
+  pozze = 0;
+  readonly pX = new Float32Array(MAX_POZZE);
+  readonly pY = new Float32Array(MAX_POZZE);
+  private pTempo = new Float32Array(MAX_POZZE);
   private gSprite: Phaser.GameObjects.Image[] = [];
   private terra: Phaser.GameObjects.Graphics; // avvisi e comparse a terra (sotto i nemici)
   private sopra: Phaser.GameObjects.Graphics; // barre della salute
@@ -181,6 +190,7 @@ export class NemiciStanza {
     while (this.orda.numero > 0) this.orda.togliStanza(this.orda.numero - 1);
     this.comparse = 0;
     this.grumi = 0;
+    this.pozze = 0;
   }
 
   /**
@@ -332,18 +342,33 @@ export class NemiciStanza {
     this.gVX[k] = dx * C.grumo.velocita;
     this.gVY[k] = dy * C.grumo.velocita;
     this.gSfiorato[k] = 0;
+    this.gVita[k] = 0;
   }
 
-  /** I grumi volano dritti; contro il muro si fermano (spariscono con uno sbuffo). */
+  /**
+   * I grumi ti cercano per C.grumo.ricerca secondi, girando di al massimo C.grumo.virata gradi al secondo (così una
+   * curva stretta li semina), poi vanno dritti; contro il muro scoppiano in una pozza di cera. Le pozze feriscono chi ci sta
+   * sopra (il danno segue la Quiete del personaggio) e negli ultimi istanti si restringono.
+   */
   private aggiornaGrumi(dt: number, px: number, py: number): number {
     let danno = 0;
     const r = C.grumo.raggio + this.corpo, vicino = r + this.sfioro;
+    const giro = Phaser.Math.DegToRad(C.grumo.virata) * dt;
     for (let k = this.grumi - 1; k >= 0; k--) {
+      this.gVita[k] += dt;
+      if (this.gVita[k] <= C.grumo.ricerca) {
+        const ora = Math.atan2(this.gVY[k], this.gVX[k]), voluto = Math.atan2(py - this.gY[k], px - this.gX[k]);
+        const nuovo = ora + Phaser.Math.Clamp(Phaser.Math.Angle.Wrap(voluto - ora), -giro, giro);
+        this.gVX[k] = Math.cos(nuovo) * C.grumo.velocita;
+        this.gVY[k] = Math.sin(nuovo) * C.grumo.velocita;
+      }
       this.gX[k] += this.gVX[k] * dt;
       this.gY[k] += this.gVY[k] * dt;
       const x = this.gX[k], y = this.gY[k];
       if (x < 0 || x > STANZA.larghezza || y < 0 || y > STANZA.altezza) {
-        this.effetti.scoppio(Phaser.Math.Clamp(x, 0, STANZA.larghezza), Phaser.Math.Clamp(y, 0, STANZA.altezza) - C.grumo.altezza);
+        const cx = Phaser.Math.Clamp(x, 0, STANZA.larghezza), cy = Phaser.Math.Clamp(y, 0, STANZA.altezza);
+        this.effetti.scoppio(cx, cy - C.grumo.altezza);
+        this.pozza(Phaser.Math.Clamp(cx, P.raggio, STANZA.larghezza - P.raggio), Phaser.Math.Clamp(cy, P.raggio / 2, STANZA.altezza - P.raggio / 2));
         this.togliGrumo(k);
         continue;
       }
@@ -354,13 +379,46 @@ export class NemiciStanza {
         this.togliGrumo(k);
         continue;
       }
+      // 0 = non ancora vicino, 1 = ti sta sfiorando, 2 = schivata già contata (un grumo che ti cerca può ripassarti vicino)
+      if (this.gSfiorato[k] === 2) continue;
       if (d2 < vicino * vicino) this.gSfiorato[k] = 1;
       else if (this.gSfiorato[k] === 1) {
         this.gSfiorato[k] = 2; // ti è passato vicino senza toccarti: schivata perfetta, una volta sola
         this.schivate++;
       }
     }
+    for (let k = this.pozze - 1; k >= 0; k--) {
+      this.pTempo[k] -= dt;
+      if (this.pTempo[k] <= 0) {
+        this.togliPozza(k);
+        continue;
+      }
+      // la pozza è un'ellisse a terra (larga il doppio di quanto è alta); i piedi del personaggio con il suo corpo
+      const rp = this.raggioPozza(k) + this.corpo, ex = (px - this.pX[k]) / rp, ey = (py - this.pY[k]) / (rp / 2);
+      if (ex * ex + ey * ey < 1) danno = Math.max(danno, P.danno);
+    }
     return danno;
+  }
+
+  /** Una pozza di cera a terra in (x, y) (anche dal LAB). Se sono troppe, la più vecchia lascia il posto. */
+  pozza(x: number, y: number): void {
+    if (this.pozze >= MAX_POZZE) this.togliPozza(0);
+    const k = this.pozze++;
+    this.pX[k] = x;
+    this.pY[k] = y;
+    this.pTempo[k] = P.durata;
+  }
+
+  /** Raggio di adesso: pieno, poi negli ultimi P.svanisce secondi si restringe fino a sparire. */
+  private raggioPozza(k: number): number {
+    return P.raggio * Math.min(1, this.pTempo[k] / P.svanisce);
+  }
+
+  private togliPozza(k: number): void {
+    const u = --this.pozze;
+    this.pX[k] = this.pX[u];
+    this.pY[k] = this.pY[u];
+    this.pTempo[k] = this.pTempo[u];
   }
 
   private togliGrumo(k: number): void {
@@ -370,6 +428,7 @@ export class NemiciStanza {
     this.gVX[k] = this.gVX[u];
     this.gVY[k] = this.gVY[u];
     this.gSfiorato[k] = this.gSfiorato[u];
+    this.gVita[k] = this.gVita[u];
   }
 
   /** Si può colpire: in campo, con la salute, non a terra. */
@@ -474,6 +533,14 @@ export class NemiciStanza {
       const r = Math.max(4, Math.round(6 + 14 * (this.cTempo[c] / ONDATA.comparsa)));
       t.lineStyle(2, colore(col.bordo), 1).strokeEllipse(x, y, 2 * r, r);
       t.fillStyle(colore(col.comparsa)).fillEllipse(x, y, r, Math.max(2, Math.round(r / 2)));
+    }
+    // le pozze di cera: un'ellisse con il bordo scuro e un riflesso, a pixel interi
+    for (let k = 0; k < this.pozze; k++) {
+      const x = Math.round(this.pX[k]), y = Math.round(this.pY[k]), r = Math.round(this.raggioPozza(k));
+      if (r < 2) continue;
+      t.fillStyle(colore(col.pozzaBordo)).fillEllipse(x, y, 2 * r + 4, r + 4);
+      t.fillStyle(colore(col.pozza)).fillEllipse(x, y, 2 * r, r);
+      t.fillStyle(colore(col.pozzaLuce)).fillEllipse(x - Math.round(r / 3), y - Math.round(r / 6), Math.round(r / 2), Math.max(2, Math.round(r / 5)));
     }
     for (let k = 0; k < this.grumi; k++) {
       const x = Math.round(this.gX[k]), y = Math.round(this.gY[k]);

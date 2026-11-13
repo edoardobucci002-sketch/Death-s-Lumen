@@ -22,7 +22,7 @@ export class LabStanze {
   stato(): {
     x: number; y: number; larghezza: number; altezza: number; fermo: boolean; colpi: number;
     salute: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
-    nemici: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
+    nemici: number; pozze: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
     quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
     stanza: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
   } {
@@ -31,7 +31,7 @@ export class LabStanze {
       x: Math.round(s.x), y: Math.round(s.y), larghezza: STANZA.larghezza, altezza: STANZA.altezza, fermo: s.pausaLab, colpi: s.attacco.colpi,
       salute: Math.round(s.salute), saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
-      nemici: n.vivi(), uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
+      nemici: n.vivi(), pozze: n.pozze, uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
       quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto,
       stanza: s.percorso.stanza, fase: s.percorso.fase, ricompensa: s.percorso.ricompensa, porte: s.porte.muri.map((m, k) => `${m}: ${s.porte.ricompense[k]}`),
       echi: s.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`), lanterna: s.percorso.livelloLanterna,
@@ -96,6 +96,11 @@ export class LabStanze {
 
   ondata(): void {
     this.s.nuovaOndata();
+  }
+
+  /** Una pozza di cera a terra, a «distanza» px a destra del Lampionaio (0 = sotto i piedi). */
+  pozza(distanza = 70): void {
+    this.s.nemici.pozza(this.s.x + distanza, this.s.y);
   }
 
   /** Toglie tutti i nemici e i grumi (non contano come battuti). */

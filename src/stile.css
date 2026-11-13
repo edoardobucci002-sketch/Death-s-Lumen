@@ -122,10 +122,10 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .doni-comparsa { position: absolute; z-index: 2; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; }
 /* gioco a stanze: le carte verticali compaiono a pop, prima minuscole poi alla loro grandezza (tempi in PERCORSO.carte) */
 @keyframes doni-pop { from { transform: scale(0.08); } 70% { transform: scale(1.08); } to { transform: none; } }
-.doni.verticali .doni-carta { text-align: center; transform-origin: 50% 50%; }
+.doni.verticali .doni-carta { transform-origin: 50% 50%; }
 .doni.verticali .doni-tag { justify-content: center; }
-.doni.verticali .doni-dati { flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.25em; } /* numeri a destra (Edoardo, 13/11 sera) */
-.doni.verticali .doni-riga { text-align: center; }
+.doni.verticali .doni-dati { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.25em; } /* numeri e spiegazione a sinistra (Edoardo, 13/11 sera) */
+.doni.verticali .doni-riga { text-align: left; }
 .doni-carta:focus-visible { outline: none; }
 .doni-scelta { visibility: hidden; }
 .doni-carta:hover .doni-scelta, .doni-carta:focus-visible .doni-scelta { visibility: visible; }

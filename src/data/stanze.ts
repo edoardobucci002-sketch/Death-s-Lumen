@@ -124,10 +124,11 @@ export const NEMICI_STANZA = {
     recupero: 0.7, // secondi fermo dopo il graffio
     // battuto, resta sempre a terra «attesa» secondi, senza segni e senza poter essere colpito; poi con questa probabilità
     // si rialza con questa parte della salute (una volta sola), se no sparisce (decisione di Edoardo del 13/11)
-    rinascita: { probabilita: 0.1, attesa: 1.5, salute: 0.5 },
+    rinascita: { probabilita: 0.2, attesa: 1.5, salute: 0.5 }, // 2 su 10 dal 13/11 sera (Edoardo; era 1 su 10)
   },
   // colpisce da lontano: resta a distanza e si allontana se ti avvicini; si ferma, a terra compare una linea verso di te
-  // (l'avviso), poi lancia un grumo di Lumen spento lento e dritto, che non insegue e si ferma contro i muri
+  // (l'avviso), poi lancia un grumo di Lumen spento che ti cerca (dal 13/11 sera, decisione di Edoardo): per «ricerca» secondi
+  // gira verso di te di al massimo «virata» gradi al secondo, poi va dritto; contro il muro scoppia in una pozza di cera
   cantore: {
     sprite: 'Fantasma',
     salute: 20, // 2 colpi della Lanterna, 1 in Grazia
@@ -139,8 +140,11 @@ export const NEMICI_STANZA = {
     avviso: 0.8,
     ricarica: 2.4, // secondi tra la fine di un canto e l'inizio del successivo
     recupero: 0.3,
-    grumo: { velocita: 210, raggio: 9, danno: 12, altezza: 20 }, // altezza: quanto sopra il terreno si disegna; velocità 210 dal 13/11 sera (era 140, Edoardo: «lentissimo»; da rivedere)
+    grumo: { velocita: 210, raggio: 9, danno: 12, altezza: 20, ricerca: 1.4, virata: 100 }, // altezza: quanto sopra il terreno si disegna; velocità 210 dal 13/11 sera (era 140, Edoardo: «lentissimo»; da rivedere)
   },
+  // la pozza di cera dove il grumo scoppia contro il muro (decisione di Edoardo del 13/11 sera: resta 2 s e fa danno a chi ci
+  // passa sopra; raggio e danno di Claude, da rivedere). Il danno segue la Quiete del Lampionaio: al massimo uno ogni 0,5 s
+  pozza: { durata: 2, raggio: 26, danno: 6, svanisce: 0.3 }, // svanisce: negli ultimi secondi si restringe fino a sparire
   spinta: 10, // pixel di cui un colpo della Lanterna sposta un nemico (non durante l'avviso)
   // Quiete dei nemici (decisione di Edoardo del 13/11, 0,3 s): dopo un colpo, per questi secondi la stessa arma non lo ferisce
   // più; le altre armi sì. Il Cerchio di luce, che prova a ferire ogni 0,25 s, prende così ogni nemico ogni 0,5 s
@@ -158,6 +162,9 @@ export const NEMICI_STANZA = {
     linea: '#f0a030', // la linea a terra del Cantore
     grumo: '#6d7f8c', // il grumo di Lumen spento
     grumoBordo: '#2a3238',
+    pozza: '#d9b25a', // la pozza di cera a terra
+    pozzaBordo: '#7a5420',
+    pozzaLuce: '#f2d98a',
     comparsa: '#3a2f27', // il segno a terra dove sta per comparire un nemico
   },
 } as const;
@@ -231,7 +238,7 @@ export const PERCORSO = {
   ],
   intervallo: 8, // 8 dal 13/11 sera (Edoardo: quasi ogni ondata finiva entro i 10 s)
   restanti: 0,
-  attesaCarte: 1, // secondi tra la stanza ripulita e le carte (decisione di Edoardo del 13/11)
+  attesaCarte: 0.5, // secondi tra la stanza ripulita e le carte (decisione di Edoardo del 13/11 sera; era 1)
   // le carte (verticali, in fila: CARTA_STANZA in src/data/hud.ts) compaiono a pop, prima minuscole poi alla loro grandezza,
   // una dopo l'altra (richiesta di Edoardo del 13/11 sera; tempi di Claude, da rivedere): «pop» secondi a carta, a «scatti»
   // passi; quando ogni carta è grande, sopra di lei scoppia un effetto pixelfx (collect-burst in oro), a «fps» fotogrammi al secondo

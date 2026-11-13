@@ -42,6 +42,15 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 (notte) — Seconda prova di Edoardo: grumo che cerca, pozza di cera, rinascita
+
+- **Grumo del Cantore**: ora ti cerca per **1,4 s**, girando al massimo di **100° al secondo**, poi va dritto (decisione di Edoardo: «a ricerca, ma non impossibile da schivare»; numeri di Claude, *da rivedere*). Con 210 px/s il raggio di virata è di circa 120 px: un passo di lato di 44 px quando il grumo è a 50 px lo fa passare a circa 28 px (il contatto è a 23, la schivata perfetta fino a 53); a 70 px dal grumo lo stesso passo non basta più (passa a 16 px e colpisce). Chi cammina perpendicolare lo semina sempre (270 contro 210 px/s).
+- **Pozza di cera** (nuova): dove il grumo scoppia contro il muro, **2 s** (Edoardo), raggio 26 px, **6 di danno** a chi ci passa sopra, al massimo uno ogni 0,5 s per la Quiete (Claude, *da rivedere*).
+- **Rinascita del Ricaduto**: 10% › **20%**, sempre con metà della salute (Edoardo).
+- **Carte**: arrivano **0,5 s** dopo la stanza ripulita (era 1 s; Edoardo).
+
+Il bot non sa giocare a stanze: nessuna simulazione. `orda.ts` e le armi non sono cambiati.
+
 ### 13/11 (notte) — Correzioni dopo la prova di Edoardo sul S25 («il gioco risulta ancora molto semplice»)
 
 - **Tempo tra le ondate**: 10 › **8 s** (Edoardo: quasi ogni ondata finiva entro i 10 s).

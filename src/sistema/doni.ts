@@ -400,9 +400,9 @@ export class Doni {
       }
       for (const s of el.querySelectorAll<HTMLElement>('.doni-simbolo')) misura(s, 11, 11, Math.max(1, zz - 1), m);
       scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, kTitoli, m, TESTI.cartaTitolo, '#000');
-      scriviIn(el.querySelector('.doni-tag') as HTMLElement, ri.tag, zz, TESTI.strisciaTag, m);
-      scriviIn(el.querySelector('.doni-dati') as HTMLElement, ri.dati, zz, TESTI.strisciaDato, m);
-      scriviIn(el.querySelector('.doni-righe') as HTMLElement, ri.righe, zz, TESTI.strisciaRiga, m);
+      scriviIn(el.querySelector('.doni-tag') as HTMLElement, ri.tag, zz, S.testi.tag, m);
+      scriviIn(el.querySelector('.doni-dati') as HTMLElement, ri.dati, zz, S.testi.dato, m);
+      scriviIn(el.querySelector('.doni-righe') as HTMLElement, ri.righe, zz, S.testi.riga, m);
       const t = el.querySelector('.doni-tasto') as HTMLElement;
       posa(t, 6 * zz, 5 * zz, m);
       t.style.fontSize = `${TESTI.strisciaTag * zz * px}px`;

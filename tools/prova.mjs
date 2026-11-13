@@ -1143,16 +1143,29 @@ for (const [nome, disp] of [
     const s2 = await st();
     if (s2.schivate !== s1.schivate + 1 || !(s2.grazia > 0)) errori.push(`uscire dallo spicchio all'ultimo non dà la Grazia (schivate ${s2.schivate}, Grazia ${s2.grazia})`);
     if (s2.ferite !== s1.ferite) errori.push('uscito dallo spicchio, il graffio ferisce lo stesso');
-    // schivata del grumo: un Cantore a destra; appena il grumo parte il Lampionaio si sposta di lato, il grumo lo sfiora
+    // schivata del grumo: un Cantore a destra; il grumo ti cerca, ma se all'ultimo (a 50 px) il Lampionaio fa un passo di
+    // lato, il grumo non fa in tempo a girare e lo sfiora
     await L('svuota');
     await L('vai', 'centro');
     const c = await st();
     await L('nemicoIn', 'cantore', c.x + 230, c.y);
-    if (!(await quando('window.__dl.scene.getScene("Stanze").nemici.grumi > 0', 'l.sposta(0, 34)', 4000))) errori.push('il Cantore non lancia il grumo');
+    const vicinoGrumo = '(() => { const s = window.__dl.scene.getScene("Stanze"), n = s.nemici; return n.grumi > 0 && Math.hypot(n.gX[0] - s.x, n.gY[0] - s.y) < 50; })()';
+    if (!(await quando(vicinoGrumo, 'l.sposta(0, 44)', 4000))) errori.push('il Cantore non lancia il grumo');
     await pag.waitForTimeout(1900);
     const s3 = await st();
     if (s3.schivate !== s2.schivate + 1) errori.push(`il grumo che sfiora non dà la Grazia (schivate ${s2.schivate} → ${s3.schivate})`);
     if (s3.ferite !== s2.ferite) errori.push('il grumo ferisce anche se è passato di lato');
+    // il grumo che non ti prende scoppia contro il muro in una pozza di cera; la pozza sotto i piedi ferisce e dopo 2 s sparisce
+    if (!(await quando('l.stato().pozze > 0', '', 3000))) errori.push('il grumo contro il muro non lascia la pozza di cera');
+    await L('svuota');
+    await L('cura');
+    await pag.waitForTimeout(600); // finisce la Quiete
+    const p0 = await st();
+    await L('pozza', 0);
+    await pag.waitForTimeout(300);
+    const p1 = await st();
+    if (p1.ferite !== p0.ferite + 1) errori.push(`la pozza di cera sotto i piedi non ferisce (colpi subiti ${p0.ferite} → ${p1.ferite})`);
+    if (!(await quando('l.stato().pozze === 0', '', 2500))) errori.push('la pozza di cera non sparisce dopo 2 s');
     // nemico battuto: un Ricaduto cade con 3 colpi automatici e resta a terra; senza rinascita poi sparisce, con la rinascita si rialza
     await L('svuota');
     await quando('l.stato().grazia <= 0', '', 4000); // senza Grazia: il conto dei colpi è quello normale
@@ -1216,7 +1229,7 @@ for (const [nome, disp] of [
       const di = await st();
       if (di.morto || di.salute !== di.saluteMassima) errori.push('«Ricomincia» non rifà la stanza');
     }
-    nota += `, nemici sì (graffio, schivate ${s3.schivate}, battuti, rinascita, caduta), abilità e rallentatore sì`;
+    nota += `, nemici sì (graffio, schivate ${s3.schivate}, pozza, battuti, rinascita, caduta), abilità e rallentatore sì`;
     // passo 6: tre stanze. Ripulita la stanza arrivano le carte (nella prima 3 Echi); scelta una carta si aprono le porte;
     // attraversata una porta si entra nella stanza dopo; finita la terza, «Fetta completata»
     await L('immortale', true);

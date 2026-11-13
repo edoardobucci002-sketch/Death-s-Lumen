@@ -291,13 +291,14 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Ricaduto vicino', f(() => st.lab.nemico('ricaduto', 140))),
         tasto('Cantore vicino', f(() => st.lab.nemico('cantore', 230))),
         tasto('Ondata', f(() => st.lab.ondata())),
+        tasto('Pozza di cera', f(() => st.lab.pozza())),
         tasto('Togli tutti', f(() => st.lab.svuota()), 'rosso'),
       ),
       riga(
         tasto(s.ondateAutomatiche ? 'Stanza in corso (ondate e carte): sì' : 'Stanza in corso (ondate e carte): no', f(() => st.lab.ondateAutomatiche(!s.ondateAutomatiche)), s.ondateAutomatiche ? 'acceso' : ''),
         tasto(`Rinascita del Ricaduto: ${rin}`, f(() => st.lab.rinascita(s.rinascita === null ? true : s.rinascita ? false : null)), s.rinascita !== null ? 'acceso' : ''),
       ),
-      el('p', 'lab-nota', 'Spegni «Stanza in corso» e togli tutti per provare un nemico alla volta (niente ondate e niente carte). Il Ricaduto si ferma vicino a te, a terra si riempie lo spicchio rosso (l\'avviso) e poi graffia; il Cantore resta lontano, a terra compare una linea fino al muro e poi lancia il grumo. Esci dallo spicchio all\'ultimo istante o fatti sfiorare dal grumo: parte la Grazia. Ogni Ricaduto battuto resta a terra 1,5 s e non si può colpire; «Rinascita: sempre» lo fa rialzare sempre (una volta sola), «mai» lo fa sparire sempre. Numeri in Numeri → stanze → NEMICI_STANZA e ONDATA.'),
+      el('p', 'lab-nota', 'Spegni «Stanza in corso» e togli tutti per provare un nemico alla volta (niente ondate e niente carte). Il Ricaduto si ferma vicino a te, a terra si riempie lo spicchio rosso (l\'avviso) e poi graffia; il Cantore resta lontano, a terra compare una linea fino al muro e poi lancia il grumo, che ti cerca per un attimo (una curva stretta lo semina) e contro il muro scoppia in una pozza di cera: per 2 s ferisce chi ci passa sopra («Pozza di cera» ne fa una qui accanto). Esci dallo spicchio all\'ultimo istante o fatti sfiorare dal grumo: parte la Grazia. Ogni Ricaduto battuto resta a terra 1,5 s e non si può colpire; «Rinascita: sempre» lo fa rialzare sempre (una volta sola), «mai» lo fa sparire sempre. Numeri in Numeri → stanze → NEMICI_STANZA e ONDATA.'),
       titolo('Lampionaio'),
       riga(el('span', 'lab-stato', `Salute ${s.salute}/${s.saluteMassima} · Quiete ${s.quiete} s · colpi subiti ${s.ferite} · schivate perfette ${s.schivate}${s.grazia > 0 ? ` · Grazia ancora ${s.grazia.toFixed(1)} s` : ''}`)),
       riga(

@@ -260,9 +260,12 @@ export const CARTA_STANZA = {
     icona: { x: 37, y: 8, l: 56, a: 56 }, // il pozzetto: l'icona da 24 dentro, ingrandita 2 volte
     titolo: { x: 6, y: 70, l: 118, a: 12 },
     tag: { x: 6, y: 84, l: 118, a: 10 },
-    dati: { x: 8, y: 100, l: 114, a: 42 },
-    righe: { x: 8, y: 146, l: 114, a: 48 },
+    dati: { x: 10, y: 96, l: 112, a: 36 },
+    righe: { x: 10, y: 136, l: 112, a: 58 },
   },
+  // grandezza delle scritte, più grandi di quelle delle strisce (13, 8 e 7,5): richiesta di Edoardo del 13/11 sera, da rivedere.
+  // Se una spiegazione non ci sta, scende da sola di mezzo punto alla volta
+  testi: { dato: 16, tag: 9, riga: 9.5 },
 };
 
 /** Caselle di armi e doni in partita: piccole, alla Vampire Survivors (la cornice grande sta nel pannello della pausa). */
