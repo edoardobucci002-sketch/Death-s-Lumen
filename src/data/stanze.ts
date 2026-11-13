@@ -139,13 +139,15 @@ export const NEMICI_STANZA = {
     avviso: 0.8,
     ricarica: 2.4, // secondi tra la fine di un canto e l'inizio del successivo
     recupero: 0.3,
-    grumo: { velocita: 140, raggio: 9, danno: 12, altezza: 20 }, // altezza: quanto sopra il terreno si disegna
+    grumo: { velocita: 210, raggio: 9, danno: 12, altezza: 20 }, // altezza: quanto sopra il terreno si disegna; velocità 210 dal 13/11 sera (era 140, Edoardo: «lentissimo»; da rivedere)
   },
   spinta: 10, // pixel di cui un colpo della Lanterna sposta un nemico (non durante l'avviso)
   // Quiete dei nemici (decisione di Edoardo del 13/11, 0,3 s): dopo un colpo, per questi secondi la stessa arma non lo ferisce
   // più; le altre armi sì. Il Cerchio di luce, che prova a ferire ogni 0,25 s, prende così ogni nemico ogni 0,5 s
   quiete: 0.3,
-  lampo: 0.12, // secondi in cui un nemico colpito dalla Lanterna resta bianco (il lampo del survivor dura 0,033 s: qui si vede di più)
+  // secondi in cui un nemico colpito dalla Lanterna resta bianco (il lampo del survivor dura 0,033 s: qui si vede di più);
+  // 0,16 dal 13/11 sera (Edoardo: «li alzerei leggermente»; valore di Claude, da rivedere)
+  lampo: 0.16,
   // barra della salute dei nemici, solo quando sono feriti (pixel disegnati, sotto i piedi)
   barra: { larghezza: 20, altezza: 3, distanza: 4 },
   colori: {
@@ -193,7 +195,9 @@ export const ABILITA_STANZA = {
  * suono. Valori proposti da Claude, da rivedere. Il fermo si spegne dal LAB per confrontare.
  */
 export const IMPATTO = {
-  fermo: 0.05, // secondi in cui il Lampionaio e i nemici colpiti si fermano (gli altri continuano)
+  // secondi in cui il Lampionaio e i nemici colpiti si fermano (gli altri continuano): 4 fotogrammi dal 13/11 sera (erano 3;
+  // Edoardo: «li alzerei leggermente»; valore di Claude, da rivedere)
+  fermo: 0.067,
   schiaccia: { durata: 0.1, largo: 1.25, basso: 0.75 }, // il nemico colpito si allarga e si abbassa, poi torna
   scintille: { colpo: 6, battuto: 12, velocita: 140, durata: 0.22, lato: 2, colori: ['#fff1b8', '#ffd36a', '#e3913a'] },
   scossa: { forza: 1, durata: 0.06 }, // pixel e secondi, solo quando si prende qualcuno
@@ -225,12 +229,13 @@ export const PERCORSO = {
     [{ ricaduti: 3, cantori: 1 }, { ricaduti: 3, cantori: 2 }, { ricaduti: 4, cantori: 2 }],
     [{ ricaduti: 4, cantori: 2 }, { ricaduti: 4, cantori: 2 }, { ricaduti: 5, cantori: 3 }],
   ],
-  intervallo: 10,
+  intervallo: 8, // 8 dal 13/11 sera (Edoardo: quasi ogni ondata finiva entro i 10 s)
   restanti: 0,
   attesaCarte: 1, // secondi tra la stanza ripulita e le carte (decisione di Edoardo del 13/11)
-  // le carte salgono dal basso, una dopo l'altra, e stanno in fila una accanto all'altra (lo schermo è in orizzontale)
-  // quando ogni carta arriva, sopra di lei scoppia un effetto pixelfx (collect-burst in oro), a «fps» fotogrammi al secondo
-  carte: { salita: 0.35, sfasamento: 0.08, effetto: 'Pixelfx_Comparsa_carta', fps: 12 },
+  // le carte (verticali, in fila: CARTA_STANZA in src/data/hud.ts) compaiono a pop, prima minuscole poi alla loro grandezza,
+  // una dopo l'altra (richiesta di Edoardo del 13/11 sera; tempi di Claude, da rivedere): «pop» secondi a carta, a «scatti»
+  // passi; quando ogni carta è grande, sopra di lei scoppia un effetto pixelfx (collect-burst in oro), a «fps» fotogrammi al secondo
+  carte: { pop: 0.24, scatti: 6, sfasamento: 0.1, effetto: 'Pixelfx_Comparsa_carta', fps: 12 },
   porte: { minimo: 2, massimo: 3 },
   echi: 3, // Echi al massimo nella build (più la Lanterna)
   doni: 6, // doni diversi al massimo

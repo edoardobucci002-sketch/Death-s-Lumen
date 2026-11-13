@@ -6,20 +6,20 @@
  * Lo stesso schermo serve ai reliquiari (mostraReliquiario): tre amuleti del Rosario e il potenziamento, senza Rimescola.
  * Le scelte sono strisce orizzontali una sotto l'altra (Striscia_Dono, e Striscia_Dono_Scelta sotto il dito o il cursore):
  * icona, nome, numeri che cambiano e spiegazione, a colpo d'occhio (src/sistema/scheda.ts). Se non ci stanno, scendono di un ingrandimento intero.
- * Nel gioco a stanze (fila impostata dalla scena) le strisce stanno una accanto all'altra, perché lo schermo è in
- * orizzontale, e salgono dal basso una dopo l'altra quando la scelta si apre.
+ * Nel gioco a stanze (verticali impostato dalla scena) le carte sono verticali (Carta_Stanza) e stanno una accanto
+ * all'altra, perché lo schermo è in orizzontale: compaiono a pop, una dopo l'altra, quando la scelta si apre.
  */
 import type { Caso } from './caso';
 import type { Arsenale } from './armi';
-import { adattaZoom, arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa, retino, scriviIn } from './arte';
-import { INTERNI, STRISCIA, TESTI } from '../data/hud';
+import { adattaZoom, arte, bordiHud, fasce, immagine, ingr, misura, misureHud, posa, retino, scriviIn, type MisureHud } from './arte';
+import { CARTA_STANZA, INTERNI, STRISCIA, TESTI } from '../data/hud';
 import { scalaScritta, scritta, scriviNel } from './scritte';
 import { CARTE } from '../data/progressione';
 import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import type { Amuleto } from '../data/rosario';
 import type { IdUnione, Unione } from '../data/unioni';
-import { creaStrisce, schedaDono, type Riga } from './scheda';
+import { creaCarteStanza, creaStrisce, schedaDono, type Riga } from './scheda';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { NUMERI_VOTI } from '../data/voti';
 
@@ -44,8 +44,10 @@ export class Doni {
   affinitaVoto: IdAffinita | null = null; // Voto: le armi nuove di questa affinità pesano di più tra le carte
   private scegli: ((d: Dono) => void) | null = null;
   private titolo: string | null = null; // titolo scelto da chi apre (gioco a stanze); null = quello di sempre
-  /** Gioco a stanze: strisce in fila e la loro salita dal basso (secondi); null = una sotto l'altra, come nel survivor. */
-  fila: { salita: number; sfasamento: number } | null = null;
+  /** Gioco a stanze: carte verticali in fila e la loro comparsa a pop (secondi); null = strisce una sotto l'altra, come nel survivor. */
+  verticali: { pop: number; scatti: number; sfasamento: number } | null = null;
+  /** Gioco a stanze: i numeri che un'arma ha davvero lì (vedi Contesto.numeriArma in scheda.ts). */
+  numeriArma: ((arma: Arma, livello: number) => Record<string, number> | null) | undefined;
   /** L'ingrandimento delle strisce dopo l'ultima disposizione (per gli effetti sopra le carte). */
   zoomCarte = 1;
 
@@ -60,6 +62,7 @@ export class Doni {
     private disponibile: (id: string) => boolean, // armi e doni nuovi: solo se sbloccati nella Cappella
   ) {
     creaStrisce();
+    creaCarteStanza();
     this.radice = document.createElement('div');
     this.radice.className = 'doni';
     this.radice.hidden = true;
@@ -214,11 +217,12 @@ export class Doni {
     (this.radice.querySelector('.doni-rimaste') as HTMLElement).hidden = !conRimescola;
     scritta(this.radice.querySelector('h2')!, this.titolo ?? (conRimescola ? 'Un nuovo dono' : this.diRiti ? 'I Riti' : 'Un reliquiario'));
     this.elenco.replaceChildren(...this.carte.map((d, n) => this.carta(d, n)));
-    if (this.fila) {
-      // salgono dal basso una dopo l'altra (l'animazione è in stile.css; qui solo i tempi)
-      const f = this.fila;
+    this.radice.classList.toggle('verticali', !!this.verticali);
+    if (this.verticali) {
+      // compaiono a pop una dopo l'altra (l'animazione è in stile.css; qui solo i tempi)
+      const f = this.verticali;
       [...this.elenco.children].forEach((el, n) => {
-        (el as HTMLElement).style.animation = `doni-sale ${f.salita}s steps(8, end) ${n * f.sfasamento}s both`;
+        (el as HTMLElement).style.animation = `doni-pop ${f.pop}s steps(${f.scatti}, end) ${n * f.sfasamento}s both`;
       });
     }
     // «Rimescola (2)» non stava nella targhetta: quante ne restano lo dice la riga sotto
@@ -232,7 +236,7 @@ export class Doni {
 
   private carta(d: Dono, n: number): HTMLElement {
     const r = this.rosario();
-    const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni, scoperte: r.scoperte, metaRaccolta: r.metaRaccolta });
+    const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni, scoperte: r.scoperte, metaRaccolta: r.metaRaccolta, numeriArma: this.numeriArma });
     const b = document.createElement('button');
     b.type = 'button';
     b.className = `doni-carta ${sc.categoria}`;
@@ -252,7 +256,8 @@ export class Doni {
     }
     const righe = pezzo('span', 'doni-righe');
     righe.append(...sc.righe.map((x) => this.riga(x)));
-    b.append(immagine('Striscia_Dono', 'doni-fondo'), immagine('Striscia_Dono_Scelta', 'doni-scelta'));
+    const fondo = this.verticali ? 'Carta_Stanza' : 'Striscia_Dono';
+    b.append(immagine(fondo, 'doni-fondo'), immagine(`${fondo}_Scelta`, 'doni-scelta'));
     if (sc.icona && arte(sc.icona)) b.append(immagine(sc.icona, 'doni-icona'));
     else b.append(pezzo('span', 'doni-segno', '+'));
     b.append(titolo, pezzo('span', 'doni-tag', sc.tag), dati, righe, pezzo('span', 'doni-tasto', String(n + 1)));
@@ -275,6 +280,10 @@ export class Doni {
 
   /** Titolo, strisce una sotto l'altra e Rimescola, in pixel di gioco interi. */
   private disponi(): void {
+    if (this.verticali) {
+      this.disponiVerticali();
+      return;
+    }
     const m = misureHud(), b = bordiHud(m), px = m.px;
     const c = arte('Striscia_Dono'), r = arte('Pulsante_Scuro'), alto = arte('Pulsante_Acceso');
     if (!c || !r || !alto) return;
@@ -287,32 +296,17 @@ export class Doni {
     const alta = sotto - sopra, larga = m.W - b.s - b.d;
     const sottoCarte = this.rimescola.hidden ? 0 : 8 + riga * zt + rimaste;
     const totale = (k: number): number => titolo + n * c.h * k + (n - 1) * STRISCIA.spazio * k + sottoCarte;
-    // in fila (gioco a stanze): larghe quanto tutte le strisce affiancate, alte quanto una
-    const largaFila = (k: number): number => n * c.w * k + (n - 1) * STRISCIA.spazio * 2 * k;
-    const altaFila = (k: number): number => titolo + c.h * k + sottoCarte;
-    const zz = this.fila
-      ? adattaZoom(STRISCIA.ingrandimentoMassimo * m.raddoppio, (k) => largaFila(k) <= larga && altaFila(k) <= alta)
-      : adattaZoom(STRISCIA.ingrandimentoMassimo * m.raddoppio, (k) => c.w * k <= larga && totale(k) <= alta);
+    const zz = adattaZoom(STRISCIA.ingrandimentoMassimo * m.raddoppio, (k) => c.w * k <= larga && totale(k) <= alta);
     this.zoomCarte = zz;
-    const x0 = Math.round(m.W / 2 - (this.fila ? largaFila(zz) : c.w * zz) / 2);
-    let y = sopra + Math.max(0, Math.round((alta - (this.fila ? altaFila(zz) : totale(zz))) / 2));
-    const h2 = this.radice.querySelector('h2') as HTMLElement;
-    posa(h2, 0, y, m);
-    Object.assign(h2.style, { width: `${m.W * px}px`, fontSize: `${22 * m.raddoppio * px}px`, lineHeight: `${titolo * px}px` });
-    scriviNel(h2, { x: 0, y: 0, l: m.W, a: titolo }, 1, 4 * m.raddoppio, m, 22 * m.raddoppio, '#000');
-    posa(h2, 0, y, m);
-    // il «?» apre la legenda: almeno 44 punti di lato, in alto a destra delle strisce
-    const aiuto = this.radice.querySelector('.doni-aiuto') as HTMLElement, lato = Math.ceil(44 / px);
-    posa(aiuto, Math.min(m.W - b.d - lato, x0 + (this.fila ? largaFila(zz) : c.w * zz) - lato), y + titolo - lato - 2, m);
-    misura(aiuto, lato, lato, 1, m);
-    aiuto.style.fontSize = `${28 * px}px`;
+    const x0 = Math.round(m.W / 2 - (c.w * zz) / 2);
+    let y = sopra + Math.max(0, Math.round((alta - totale(zz)) / 2));
+    this.disponiTitolo(y, titolo, x0 + c.w * zz, m);
     y += titolo;
     const ri = STRISCIA.interni;
     // i nomi di tutte le strisce alla stessa grandezza: quella del nome più lungo
     const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
     carte.forEach((el, i) => {
-      if (this.fila) posa(el, x0 + i * (c.w + STRISCIA.spazio * 2) * zz, y, m);
-      else posa(el, x0, y + i * (c.h + STRISCIA.spazio) * zz, m);
+      posa(el, x0, y + i * (c.h + STRISCIA.spazio) * zz, m);
       misura(el, c.w, c.h, zz, m);
       for (const im of el.querySelectorAll<HTMLElement>('.doni-fondo, .doni-scelta')) misura(im, c.w, c.h, zz, m);
       const se = el.querySelector<HTMLElement>('.doni-segno');
@@ -335,8 +329,29 @@ export class Doni {
       posa(t, (ri.icona.x + 2) * zz, (ri.icona.y + 1) * zz, m);
       t.style.fontSize = `${TESTI.strisciaTag * zz * px}px`;
     });
+    this.disponiRimescola(y + n * (c.h + STRISCIA.spazio) * zz - STRISCIA.spazio * zz + 8, m);
+  }
+
+  /** Il titolo sopra le carte e il «?» della legenda, che finisce a destra in xFine. */
+  private disponiTitolo(y: number, titolo: number, xFine: number, m: MisureHud): void {
+    const px = m.px, b = bordiHud(m);
+    const h2 = this.radice.querySelector('h2') as HTMLElement;
+    posa(h2, 0, y, m);
+    Object.assign(h2.style, { width: `${m.W * px}px`, fontSize: `${22 * m.raddoppio * px}px`, lineHeight: `${titolo * px}px` });
+    scriviNel(h2, { x: 0, y: 0, l: m.W, a: titolo }, 1, 4 * m.raddoppio, m, 22 * m.raddoppio, '#000');
+    posa(h2, 0, y, m);
+    // il «?» apre la legenda: almeno 44 punti di lato, in alto a destra delle carte
+    const aiuto = this.radice.querySelector('.doni-aiuto') as HTMLElement, lato = Math.ceil(44 / px);
+    posa(aiuto, Math.min(m.W - b.d - lato, xFine - lato), y + titolo - lato - 2, m);
+    misura(aiuto, lato, lato, 1, m);
+    aiuto.style.fontSize = `${28 * px}px`;
+  }
+
+  /** Rimescola e la riga «ancora N» sotto le carte, dall'altezza y. */
+  private disponiRimescola(y: number, m: MisureHud): void {
     if (this.rimescola.hidden) return;
-    y += n * (c.h + STRISCIA.spazio) * zz - STRISCIA.spazio * zz + 8;
+    const r = arte('Pulsante_Scuro')!, alto = arte('Pulsante_Acceso')!;
+    const zt = ingr('pulsanti', m), riga = Math.max(r.h, alto.h), px = m.px;
     posa(this.rimescola, Math.round(m.W / 2 - (r.w * zt) / 2), y, m);
     misura(this.rimescola, r.w, riga, zt, m);
     const im = this.rimescola.firstElementChild as HTMLElement, su = Math.round(((riga - r.h) * zt) / 2);
@@ -345,6 +360,54 @@ export class Doni {
     const rt = INTERNI.Pulsante_Scuro.testo;
     scriviNel(this.rimescola.lastElementChild as HTMLElement, { ...rt, y: rt.y + Math.round((riga - r.h) / 2) }, zt, 3, m, TESTI.pulsante, '#000');
     scriviNel(this.radice.querySelector('.doni-rimaste') as HTMLElement, { x: 0, y: y + riga * zt + 2, l: m.W, a: 12 }, 1, 2 * m.raddoppio, m, TESTI.cartaTasto, '#000');
+  }
+
+  /** Gioco a stanze: titolo e carte verticali una accanto all'altra, al centro dello schermo, in pixel di gioco interi. */
+  private disponiVerticali(): void {
+    const m = misureHud(), b = bordiHud(m), px = m.px;
+    const c = arte('Carta_Stanza'), r = arte('Pulsante_Scuro'), alto = arte('Pulsante_Acceso');
+    if (!c || !r || !alto) return;
+    this.radice.style.backgroundSize = `${4 * px}px ${4 * px}px`;
+    const zt = ingr('pulsanti', m), titolo = 32 * m.raddoppio, rimaste = 14 * m.raddoppio;
+    const sottoCarte = this.rimescola.hidden ? 0 : 8 + Math.max(r.h, alto.h) * zt + rimaste;
+    const carte = [...this.elenco.children] as HTMLElement[], n = carte.length, S = CARTA_STANZA;
+    const alta = m.H - b.a - b.b, larga = m.W - b.s - b.d;
+    const largaFila = (k: number): number => n * c.w * k + (n - 1) * S.spazio * k;
+    const altaFila = (k: number): number => titolo + c.h * k + sottoCarte;
+    const zz = adattaZoom(S.ingrandimentoMassimo * m.raddoppio, (k) => largaFila(k) <= larga && altaFila(k) <= alta);
+    this.zoomCarte = zz;
+    const x0 = Math.round(m.W / 2 - largaFila(zz) / 2);
+    let y = b.a + Math.max(0, Math.round((alta - altaFila(zz)) / 2));
+    this.disponiTitolo(y, titolo, x0 + largaFila(zz), m);
+    y += titolo;
+    const ri = S.interni;
+    const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
+    carte.forEach((el, i) => {
+      posa(el, x0 + i * (c.w + S.spazio) * zz, y, m);
+      misura(el, c.w, c.h, zz, m);
+      for (const im of el.querySelectorAll<HTMLElement>('.doni-fondo, .doni-scelta')) misura(im, c.w, c.h, zz, m);
+      const se = el.querySelector<HTMLElement>('.doni-segno');
+      if (se) {
+        posa(se, ri.icona.x * zz, ri.icona.y * zz, m);
+        misura(se, ri.icona.l, ri.icona.a, zz, m);
+        se.style.fontSize = `${TESTI.strisciaDato * 3 * zz * px}px`;
+      }
+      // l'icona da 24 pixel ingrandita 2 volte, al centro del pozzetto
+      const ic = el.querySelector<HTMLElement>('.doni-icona');
+      if (ic) {
+        posa(ic, (ri.icona.x + ri.icona.l / 2 - 24) * zz, (ri.icona.y + ri.icona.a / 2 - 24) * zz, m);
+        misura(ic, 48, 48, zz, m);
+      }
+      for (const s of el.querySelectorAll<HTMLElement>('.doni-simbolo')) misura(s, 11, 11, Math.max(1, zz - 1), m);
+      scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, kTitoli, m, TESTI.cartaTitolo, '#000');
+      scriviIn(el.querySelector('.doni-tag') as HTMLElement, ri.tag, zz, TESTI.strisciaTag, m);
+      scriviIn(el.querySelector('.doni-dati') as HTMLElement, ri.dati, zz, TESTI.strisciaDato, m);
+      scriviIn(el.querySelector('.doni-righe') as HTMLElement, ri.righe, zz, TESTI.strisciaRiga, m);
+      const t = el.querySelector('.doni-tasto') as HTMLElement;
+      posa(t, 6 * zz, 5 * zz, m);
+      t.style.fontSize = `${TESTI.strisciaTag * zz * px}px`;
+    });
+    this.disponiRimescola(y + c.h * zz + 8, m);
   }
 
   private chiudi(d: Dono): void {

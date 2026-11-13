@@ -843,7 +843,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Avviso del canto', '{} s entro {} px; primo canto dopo {} s; ricarica {} s', CA.avviso, CA.portata, CA.primoCanto, CA.ricarica],
     ['Grumo', 'velocità {} px/s, raggio {} px, danno {}', CA.grumo.velocita, CA.grumo.raggio, CA.grumo.danno],
     ['Spinta', '{} px', NS.spinta],
-    ['Impatto', 'fermo {} s; schiacciamento {} s; scintille {}, battuto {}', SZ.IMPATTO.fermo, SZ.IMPATTO.schiaccia.durata, SZ.IMPATTO.scintille.colpo, SZ.IMPATTO.scintille.battuto],
+    ['Impatto', 'bianco {} s; fermo {} s ({} fotogrammi); schiacciamento {} s; scintille {}, battuto {}', NS.lampo, SZ.IMPATTO.fermo, Math.round(SZ.IMPATTO.fermo * 60), SZ.IMPATTO.schiaccia.durata, SZ.IMPATTO.scintille.colpo, SZ.IMPATTO.scintille.battuto],
     ['Ondata', '{} Ricaduti e {} Cantori, a più di {} px; segno {} s; prima dopo {} s', OD.ricaduti, OD.cantori, OD.distanzaMinima, OD.comparsa, OD.attesaPrima],
   ];
   stessiNomi('Nemici', tn, RIGHE_NEMICI.map((r) => r[0]));
@@ -864,7 +864,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Stanze', '{}', O.length],
     ['Ondate', 'stanza 1: {} Ricaduti e {} Cantore, poi {} e {}; stanza 2: {} e {}, poi {} e {}, poi {} e {}; stanza 3: {} e {}, poi {} e {}, poi {} e {}',
       ...O.flat().flatMap((o) => [o.ricaduti, o.cantori])],
-    ['Carte', '3, dopo {} s; salgono in {} s, {} s l\'una dall\'altra', PE.attesaCarte, PE.carte.salita, PE.carte.sfasamento],
+    ['Carte', '3, dopo {} s; verticali {} × {}; pop in {} s a {} scatti, {} s l\'una dall\'altra', PE.attesaCarte, H.CARTA_STANZA.l, H.CARTA_STANZA.a, PE.carte.pop, PE.carte.scatti, PE.carte.sfasamento],
     ['Build', 'al massimo {} Echi e {} doni', PE.echi, PE.doni],
     ['Porte', 'da {} a {}, larghe {} px', PE.porte.minimo, PE.porte.massimo, SZ.PORTE.larghezza],
     ['Passaggio', '{} s', PE.passaggio],

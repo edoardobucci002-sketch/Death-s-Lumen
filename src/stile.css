@@ -120,7 +120,12 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .doni-carta { position: absolute; text-align: left; }
 /* gioco a stanze: le strisce salgono dal basso (tempi in PERCORSO.carte, a scatti come la pixel art) */
 .doni-comparsa { position: absolute; z-index: 2; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; }
-@keyframes doni-sale { from { transform: translateY(100vh); } to { transform: none; } }
+/* gioco a stanze: le carte verticali compaiono a pop, prima minuscole poi alla loro grandezza (tempi in PERCORSO.carte) */
+@keyframes doni-pop { from { transform: scale(0.08); } 70% { transform: scale(1.08); } to { transform: none; } }
+.doni.verticali .doni-carta { text-align: center; transform-origin: 50% 50%; }
+.doni.verticali .doni-tag { justify-content: center; }
+.doni.verticali .doni-dati { flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.25em; } /* numeri a destra (Edoardo, 13/11 sera) */
+.doni.verticali .doni-riga { text-align: center; }
 .doni-carta:focus-visible { outline: none; }
 .doni-scelta { visibility: hidden; }
 .doni-carta:hover .doni-scelta, .doni-carta:focus-visible .doni-scelta { visibility: visible; }
@@ -395,6 +400,8 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 /* i comandi del gioco a stanze sono un po' trasparenti (decisione di Edoardo del 13/11; misura in JOYSTICK_STANZE.opacita) */
 #interfaccia .stanze-attacco, #interfaccia .stanze-abilita, .joystick.joystick-stanze { opacity: var(--opacita-comandi, 0.7); }
 /* abilità del gioco a stanze (src/sistema/abilita-stanza.ts): accanto al joystick d'attacco; piena, l'icona si accende */
+/* mentre le carte sono aperte joystick d'attacco e abilità non coprono le carte */
+#interfaccia .stanze.con-carte .stanze-attacco, #interfaccia .stanze.con-carte .stanze-abilita { visibility: hidden; }
 #interfaccia .stanze-abilita { position: fixed; padding: 0; border: 0; background: none; cursor: pointer; touch-action: none; z-index: 4; }
 .stanze-abilita::after { content: ''; position: absolute; inset: calc(var(--margine-tocco, 4px) * -1); }
 .stanze-abilita .stanze-abilita-icona { filter: grayscale(1) brightness(0.6); }

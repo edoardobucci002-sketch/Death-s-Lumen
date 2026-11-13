@@ -248,6 +248,23 @@ export const STRISCIA = {
   },
 };
 
+/**
+ * Gioco a stanze: la carta verticale (richiesta di Edoardo del 13/11 sera: in orizzontale c'è più altezza, le strisce del
+ * survivor sprecavano lo schermo). Misure in pixel disegnati, proposta di Claude da rivedere: 130 × 200 ingrandita 2 volte
+ * sta tre volte in fila sul Galaxy S25 in orizzontale. Finché Edoardo non disegna Carta_Stanza, la disegna il codice.
+ */
+export const CARTA_STANZA = {
+  l: 130, a: 200,
+  spazio: 8, ingrandimentoMassimo: 4,
+  interni: {
+    icona: { x: 37, y: 8, l: 56, a: 56 }, // il pozzetto: l'icona da 24 dentro, ingrandita 2 volte
+    titolo: { x: 6, y: 70, l: 118, a: 12 },
+    tag: { x: 6, y: 84, l: 118, a: 10 },
+    dati: { x: 8, y: 100, l: 114, a: 42 },
+    righe: { x: 8, y: 146, l: 114, a: 48 },
+  },
+};
+
 /** Caselle di armi e doni in partita: piccole, alla Vampire Survivors (la cornice grande sta nel pannello della pausa). */
 export const CASELLA = { lato: 28, bordo: 1, spazio: 2 }; // icona da 24 al centro
 

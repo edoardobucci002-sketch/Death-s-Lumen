@@ -1,7 +1,8 @@
 /*
  * Che cosa dice una striscia della scelta dei doni: dai dati veri ricava nome, numeri che cambiano
  * e righe di spiegazione (stato che lascia l'arma, reazione con le armi che hai, vantaggio e rovescio).
- * Qui c'è anche la striscia provvisoria, disegnata dal codice finché Edoardo non esporta Striscia_Dono.
+ * Qui c'è anche la striscia provvisoria, disegnata dal codice finché Edoardo non esporta Striscia_Dono, e la carta verticale
+ * del gioco a stanze (Carta_Stanza), anche lei provvisoria.
  */
 import type { Arma } from '../data/armi';
 import { AFFINITA_ARMI, RITI } from '../data/stati';
@@ -10,7 +11,7 @@ import { ROSARIO } from '../data/rosario';
 import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import { CAMPI_ARMA, chiaro, DATI_DONI, gradoDevozione, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
-import { STRISCIA } from '../data/hud';
+import { CARTA_STANZA, STRISCIA } from '../data/hud';
 import { INTERRUTTORI } from './interruttori';
 import { arte, registraArte } from './arte';
 import { iconaAmuleto } from './amuleti';
@@ -34,6 +35,8 @@ export interface Contesto {
   unioni: boolean; // le unioni sono sbloccate
   scoperte: ReadonlySet<IdUnione>; // solo queste si nominano: le altre si svelano giocando
   metaRaccolta: number; // cero della raccolta della Cappella: la raccolta si scrive in pixel veri
+  // gioco a stanze: i numeri che un'arma ha davvero lì (la Lanterna a mano ricarica più svelta); null = quelli del survivor
+  numeriArma?: (arma: Arma, livello: number) => Record<string, number> | null;
 }
 
 /** Un'arma o un dono visti nella pausa: la casella e il riquadro di dettaglio. */
@@ -73,8 +76,9 @@ export function voceDono(q: Passivo, livello: number, metaRaccolta = 0): VoceDet
 const tagLivello = (l: number, massimo: number, nuovo: string): string => (l === 1 ? nuovo : `Liv ${l - 1} › ${l === massimo ? 'MAX' : l}`);
 
 function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
-  const ora = arma.livelli[l - 1] as unknown as Record<string, number | boolean | string>;
-  const prima = l > 1 ? arma.livelli[l - 2] as unknown as Record<string, number | boolean | string> : null;
+  const livello = (k: number): Record<string, number | boolean | string> => ({ ...arma.livelli[k - 1], ...c.numeriArma?.(arma, k) });
+  const ora = livello(l);
+  const prima = l > 1 ? livello(l - 1) : null;
   const dati: Dato[] = [];
   let novita = l === 1; // un'abilità nuova (non un numero) si racconta a parole
   for (const k of Object.keys(ora)) {
@@ -176,6 +180,31 @@ export function creaStrisce(): void {
     piena('#0b0807', w.x, w.y, w.l, w.a);
     piena(bordo, w.x, w.y, w.l, 1);
     piena(bordo, w.x, w.y + w.a - 1, w.l, 1);
+    registraArte(chiave, t);
+  }
+}
+
+/** La carta verticale provvisoria del gioco a stanze (normale e sotto il dito), a pixel interi, con il pozzetto per l'icona. */
+export function creaCarteStanza(): void {
+  const { l, a, interni } = CARTA_STANZA;
+  for (const [chiave, bordo, fondo] of [['Carta_Stanza', '#8a6a3a', '#1a1410'], ['Carta_Stanza_Scelta', '#f2cf6a', '#2c2116']] as const) {
+    if (arte(chiave)) continue;
+    const t = document.createElement('canvas');
+    t.width = l;
+    t.height = a;
+    const g = t.getContext('2d')!;
+    const piena = (c: string, x: number, y: number, w: number, h: number): void => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+    piena('#0b0807', 1, 0, l - 2, a);
+    piena('#0b0807', 0, 1, l, a - 2);
+    piena(bordo, 2, 1, l - 4, a - 2);
+    piena(bordo, 1, 2, l - 2, a - 4);
+    piena(fondo, 2, 2, l - 4, a - 4);
+    const w = interni.icona;
+    piena(bordo, w.x - 1, w.y - 1, w.l + 2, w.a + 2);
+    piena('#0b0807', w.x, w.y, w.l, w.a);
+    // una riga sottile tra il nome e i numeri
+    const d = interni.dati;
+    piena(bordo, d.x + 10, d.y - 4, d.l - 20, 1);
     registraArte(chiave, t);
   }
 }

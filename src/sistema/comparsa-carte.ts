@@ -1,5 +1,5 @@
 /*
- * Comparsa delle carte (gioco a stanze, richiesta di Edoardo del 13/11): quando ogni striscia finisce di salire, sopra di
+ * Comparsa delle carte (gioco a stanze, richiesta di Edoardo del 13/11): quando ogni carta finisce il suo pop, sopra di
  * lei scoppia l'effetto pixelfx «collect-burst» ricolorato in oro (Pixelfx_Comparsa_carta, fatto con
  * tools/pixelfx/costruisci.mjs): un lampo con la croce di luce, due anelli e scintille che restano sospese e si spengono,
  * centrato sull'icona della carta.
@@ -8,7 +8,7 @@
  */
 import type Phaser from 'phaser';
 import { PERCORSO } from '../data/stanze';
-import { STRISCIA } from '../data/hud';
+import { CARTA_STANZA } from '../data/hud';
 import type { MisureHud } from './arte';
 import { suona } from './audio';
 
@@ -34,13 +34,13 @@ export class ComparsaCarte {
     }
   }
 
-  /** Su ogni carta (in ordine) l'effetto parte quando la sua salita finisce; z: l'ingrandimento delle strisce. */
+  /** Su ogni carta (in ordine) l'effetto parte quando il suo pop finisce; z: l'ingrandimento delle carte. */
   suCarte(carte: HTMLElement[], z: number, m: MisureHud): void {
     this.ferma();
     if (!this.fotogrammi.length) return;
     const C = PERCORSO.carte;
     carte.forEach((carta, i) => {
-      const t = window.setTimeout(() => this.scoppia(carta, z, m), (C.salita + i * C.sfasamento) * 1000);
+      const t = window.setTimeout(() => this.scoppia(carta, z, m), (C.pop + i * C.sfasamento) * 1000);
       this.attese.push(t);
     });
   }
@@ -59,7 +59,7 @@ export class ComparsaCarte {
     tela.height = this.h;
     tela.className = 'doni-comparsa';
     // centrato sul riquadro dell'icona: sembra che a comparire sia l'oggetto della carta
-    const ic = STRISCIA.interni.icona, cx = (ic.x + ic.l / 2) * z, cy = (ic.y + ic.a / 2) * z;
+    const ic = CARTA_STANZA.interni.icona, cx = (ic.x + ic.l / 2) * z, cy = (ic.y + ic.a / 2) * z;
     Object.assign(tela.style, {
       width: `${this.w * z * m.px}px`, height: `${this.h * z * m.px}px`,
       left: `${Math.round(cx - (this.w * z) / 2) * m.px}px`, top: `${Math.round(cy - (this.h * z) / 2) * m.px}px`,

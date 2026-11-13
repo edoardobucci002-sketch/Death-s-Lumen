@@ -207,12 +207,18 @@ export class Stanze extends Phaser.Scene {
       return { x: cam.scrollX + cx / px, y: cam.scrollY + cy / px };
     }, () => this.corpo(), (verso) => this.mira(verso), (angolo) => this.colpisci(angolo));
     this.abilita = new AbilitaStanza(this, this.radice, this.pg.colore, () => this.fermo());
-    // le carte: le strisce del survivor, con le carte decise dal percorso
+    // le carte: verticali (Carta_Stanza), con le carte decise dal percorso e la spiegazione del survivor
     const nessuno = new Set<never>();
     this.doni = new Doni(this.radice, this.arsenale, LANTERNA, this.percorso.passivi, new Caso(ONDATA.seme + 3),
       () => ({ usati: 0, totale: 0, unioni: false, scoperte: nessuno, metaRaccolta: 0 }), () => {}, () => true);
     this.radice.querySelector<HTMLElement>('.doni-aiuto')?.setAttribute('hidden', '');
-    this.doni.fila = PERCORSO.carte; // in fila, perché lo schermo è in orizzontale, e salgono dal basso
+    this.doni.verticali = PERCORSO.carte; // in fila, perché lo schermo è in orizzontale, e compaiono a pop
+    // la carta della Lanterna dice la ricarica della Lanterna a mano, non quella automatica del survivor
+    this.doni.numeriArma = (arma, livello) => {
+      if (arma !== LANTERNA) return null;
+      const L = LANTERNA.livelli, liv = L[Math.min(L.length, livello) - 1];
+      return { ricarica: Math.round(ATTACCO.ricarica * (liv.ricarica / L[0].ricarica) * 100) / 100 };
+    };
     this.comparsa = new ComparsaCarte(this);
     this.ricalcola();
     this.disponi();
@@ -458,6 +464,7 @@ export class Stanze extends Phaser.Scene {
   /** Stanza ripulita: le 3 carte. Scelta la carta, si aprono le porte (o la fetta è finita). */
   apriCarte(): void {
     this.percorso.fase = 'carte';
+    this.radice.classList.add('con-carte');
     const carte = this.percorso.carte();
     this.comandi.lascia();
     this.attacco.lascia();
@@ -472,6 +479,7 @@ export class Stanze extends Phaser.Scene {
 
   private dopoCarta(d: Parameters<Percorso['scegli']>[0] | null): void {
     this.comparsa.ferma();
+    this.radice.classList.remove('con-carte');
     if (d) this.percorso.scegli(d);
     else this.percorso.fase = this.percorso.ultima ? 'fine' : 'porte';
     this.ricalcola();
