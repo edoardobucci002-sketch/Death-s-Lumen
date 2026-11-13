@@ -730,7 +730,7 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 
 ## Gioco a stanze (pivot, in costruzione: `src/data/stanze.ts`)
 
-Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: passo 2 della fetta verticale.
+Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: passo 4 della fetta verticale (stanza, attacco a tasto, nemici con avviso, Grazia).
 
 - **La stanza**: un pavimento rettangolare a lastre di pietra, chiuso da muri: in alto una facciata a mattoni (vista di fronte), ai lati e in basso un bordo di pietra scura. Pavimento e muri sono segnaposto disegnati dal codice (`src/sistema/stanza.ts`).
 - **Grandezza**: 13 × 7 lastre, come le stanze di The Binding of Isaac (scelta di Edoardo del 12/11): la stanza intera sta più o meno in uno schermo.
@@ -750,9 +750,9 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Mattoni della facciata | 32 × 16 px | sfalsati di mezzo mattone a ogni riga |
 | Ombra del muro | 10 px | fascia scura sul pavimento ai piedi della facciata |
 
-**L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`). Il Lampionaio usa la Lanterna a mano: il colpo è l'arco di luce del survivor, davanti a lui nella direzione scelta. Per ora non ferisce nessuno: i nemici arrivano al passo 4.
+**L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`). Il Lampionaio usa la Lanterna a mano: il colpo è l'arco di luce del survivor, davanti a lui nella direzione scelta, e ferisce ogni nemico dentro l'arco (distanze misurate tra i piedi), con un lampo bianco, il numero del danno e una piccola spinta.
 
-- **Telefono** (stile Brawl Stars, decisione di Edoardo del 12/11): un joystick d'attacco fisso in basso a destra, nella metà destra dello schermo, con gli stessi disegni del joystick di movimento (Joystick_Base e Joystick_Pomello) e di partenza la stessa grandezza. Un tocco breve colpisce il nemico più vicino; finché non ci sono nemici, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando, il pomello segue il pollice fino al bordo della base, a terra compare la mira (il contorno dell'arco, nel colore del personaggio) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro prima di lasciare, il colpo torna automatico. Durante la ricarica il joystick si scurisce.
+- **Telefono** (stile Brawl Stars, decisione di Edoardo del 12/11): un joystick d'attacco fisso in basso a destra, nella metà destra dello schermo, con gli stessi disegni del joystick di movimento (Joystick_Base e Joystick_Pomello) e di partenza la stessa grandezza. Un tocco breve colpisce il nemico più vicino entro 320 px; se non ce n'è, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando, il pomello segue il pollice fino al bordo della base, a terra compare la mira (il contorno dell'arco, nel colore del personaggio) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro prima di lasciare, il colpo torna automatico. Durante la ricarica il joystick si scurisce.
 - **Computer**: clic sinistro verso il puntatore, J verso il nemico più vicino; il mouse non fa comparire il joystick (si cammina con WASD e le frecce) e il tasto tondo non si vede.
 - Un colpo chiesto durante la ricarica parte appena la ricarica finisce. Durante il colpo il Lampionaio si gira verso il colpo e si sporge di qualche pixel (segnaposto dell'animazione `attack`, che il gioco usa da sola quando Edoardo la disegna).
 
@@ -760,10 +760,33 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | --- | --- | --- |
 | Ricarica | 0,45 s | la Lanterna automatica del survivor: 0,8 s (*da rivedere*) |
 | Arco | raggio 136 px, ampiezza 132° | come la Lanterna al livello 1 del survivor (*da rivedere*) |
-| Danno | 18 | conta dal passo 4 (*da rivedere*) |
+| Danno | 18 | +30% in Grazia (*da rivedere*) |
+| Mira automatica | entro 320 px | tocco breve e J (*da rivedere*) |
 | Posa del colpo | 0,15 s, slancio 3 px | segnaposto dell'animazione `attack` |
 | Joystick d'attacco | grande come il joystick di movimento; nella pausa da × 1 a × 4; 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
 | Trascinamento | 52 punti per la mira piena, zona morta 30% | sotto la zona morta il tocco è automatico |
+
+**I nemici e la Grazia** (passo 4, `NEMICI_STANZA`, `ONDATA` e `COMBATTIMENTO_STANZA` in `src/data/stanze.ts`; `src/sistema/nemici-stanza.ts`). Tutti i numeri sono proposte di Claude, *da rivedere*.
+
+- **Il Lampionaio si può ferire**: 100 di salute, nessuna rigenerazione nel gioco a stanze (*da rivedere*). La barra della salute è quella del survivor, sotto i piedi. Colpito, si illumina di bianco, lo schermo trema un poco, il telefono vibra, e per 0,6 s non subisce altri colpi (lampeggia). Toccare un nemico non fa male: fa male solo un attacco con il suo avviso.
+- **Il Ricaduto** (segnaposto: lo Zombi del survivor) cammina dritto e lento verso il Lampionaio. A 56 px si ferma e comincia l'**avviso**: trema, lampeggia di rosso e a terra compare uno spicchio rosso davanti a lui che si riempie. La direzione è decisa all'inizio dell'avviso. Allo scadere graffia tutto lo spicchio, poi resta fermo un attimo. Battuto, ha il 10% di probabilità di restare a terra 1,5 s, scuro e con una fiammella rossa che pulsa sopra, e di rialzarsi con metà della salute; succede una volta sola, e un colpo mentre è a terra lo finisce.
+- **Il Cantore** (segnaposto: il Fantasma del survivor) resta tra 200 e 250 px dal Lampionaio: si allontana se ti avvicini, si avvicina se ti allontani. Quando ha ricaricato e sei entro 360 px si ferma, e a terra compare una **linea** verso di te fino al muro (l'avviso): lampeggia, resta accesa nell'ultimo terzo, e davanti a lui il grumo cresce. Poi lancia un grumo di Lumen spento lento e dritto, che non insegue e sparisce contro il muro.
+- I nemici non si sovrappongono tra loro. Ferito, un nemico mostra sotto i piedi una barra della salute piccola.
+- **Grazia** (le regole del survivor, `GRAZIA` in `src/data/sopravvivenza.ts`): la schivata perfetta è uscire dallo spicchio del graffio quando mancano al massimo 0,25 s, oppure farsi passare un grumo vicino, entro 30 px oltre il contatto, senza farsi toccare. Dà 3 s di Grazia: +30% danno e +15% velocità, il Lampionaio si illumina a lampi e sopra la testa compare «Grazia». Una Grazia nuova non accorcia quella in corso. Le tacche del survivor non ci sono.
+- **Ondate provvisorie** (fino alle tre stanze del passo 6): 0,8 s dopo l'ingresso compaiono 3 Ricaduti e 2 Cantori, in punti a caso a più di 240 px dal Lampionaio. Dove sta per comparire un nemico, per 0,7 s a terra c'è un anello che si stringe. A stanza ripulita, dopo 2,5 s, arriva un'altra ondata. Al massimo 16 nemici in campo.
+- **Caduta**: a salute zero il Lampionaio resta steso e scuro; dopo 0,9 s compare «Sei caduto» con i nemici battuti, «Ricomincia» (la stanza da capo) e «Menu». Il tasto Indietro, da lì, torna al menu.
+
+| Valore dei nemici | Numero | Note |
+| --- | --- | --- |
+| Lampionaio colpito | corpo 14 px, invulnerabile 0,6 s | |
+| Ricaduto | salute 40, velocità 60 px/s, corpo 16 px | 3 colpi della Lanterna, 2 in Grazia |
+| Graffio | avviso 0,5 s da 56 px; spicchio di 72 px e 110°; danno 15; fermo 0,7 s dopo | |
+| Rinascita | 10%, dopo 1,5 s a terra, con il 50% della salute | una volta sola |
+| Cantore | salute 20, velocità 75 px/s, corpo 15 px, tra 200 e 250 px | 2 colpi, 1 in Grazia |
+| Avviso del canto | 0,8 s entro 360 px; primo canto dopo 1,2 s; ricarica 2,4 s | |
+| Grumo | velocità 140 px/s, raggio 9 px, danno 12 | |
+| Spinta | 10 px | non durante l'avviso |
+| Ondata | 3 Ricaduti e 2 Cantori, a più di 240 px; segno 0,7 s; prima dopo 0,8 s, poi 2,5 s | provvisoria |
 
 ## 12. Da fare e da decidere
 

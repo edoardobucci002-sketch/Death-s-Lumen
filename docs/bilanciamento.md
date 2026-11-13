@@ -42,6 +42,17 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 — Gioco a stanze, passo 4: i primi numeri dei nemici (proposte di Claude, *da rivedere*; il survivor non cambia)
+
+Numeri nuovi, nessun ritocco: sono in `NEMICI_STANZA`, `ONDATA` e `COMBATTIMENTO_STANZA` (`src/data/stanze.ts`) e nel GDD, tabella «Valore dei nemici». Il criterio usato:
+
+- **Colpi per battere un nemico**: il Ricaduto con 40 di salute cade con 3 colpi della Lanterna (18), 2 in Grazia (+30%); il Cantore con 20 cade con 2, 1 in Grazia. Così la Grazia si sente subito.
+- **Avvisi**: graffio 0,5 s e canto 0,8 s (i numeri proposti il 12/11). Dal graffio si esce camminando circa 30 px: al passo del Lampionaio (270 px/s) bastano 0,1 s, quindi l'avviso lascia tempo per la schivata perfetta (finestra 0,25 s).
+- **Danni**: graffio 15, grumo 12 su 100 di salute: circa 7 colpi presi per cadere. Nessuna rigenerazione nel gioco a stanze.
+- **Velocità**: Ricaduto 60 px/s e Cantore 75 px/s, molto più lenti del Lampionaio (270): si raggiungono e si seminano.
+
+Il bot non sa ancora giocare a stanze: nessuna simulazione. `npm run prova` controlla che il graffio ferisca, che le due schivate perfette diano la Grazia, che 3 colpi battano il Ricaduto, la rinascita e la caduta.
+
 ### 12/11 — Riordino di `armi.ts` (nessun numero cambia)
 
 Le armi sono divise in cinque file a strati (vedi [roadmap.md](roadmap.md), «Gioco a stanze», passo 1). **Controllo:** `npm run sim -- 3 tutti`, Cappella vuota e completa, semi 1001–1003, prima e dopo il riordino: 24 notti abbinate per personaggio e seme, 24.871 campi confrontati, **0 differenze**. Le notti finiscono in un ordine diverso nel file `prove/sim.json` perché girano in parallelo: il confronto va fatto per personaggio e seme, non per posizione.
