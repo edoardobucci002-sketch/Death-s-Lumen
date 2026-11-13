@@ -145,7 +145,7 @@ export const NEMICI_STANZA = {
   // Quiete dei nemici (decisione di Edoardo del 13/11, 0,3 s): dopo un colpo, per questi secondi la stessa arma non lo ferisce
   // più; le altre armi sì. Il Cerchio di luce, che prova a ferire ogni 0,25 s, prende così ogni nemico ogni 0,5 s
   quiete: 0.3,
-  lampo: 0.1, // secondi in cui un nemico colpito si illumina di bianco
+  lampo: 0.12, // secondi in cui un nemico colpito dalla Lanterna resta bianco (il lampo del survivor dura 0,033 s: qui si vede di più)
   // barra della salute dei nemici, solo quando sono feriti (pixel disegnati, sotto i piedi)
   barra: { larghezza: 20, altezza: 3, distanza: 4 },
   colori: {
@@ -170,7 +170,7 @@ export const ONDATA = {
   distanzaMinima: 240, // dal personaggio: nessuno compare addosso a te
   comparsa: 0.7, // secondi in cui il segno a terra avvisa dove compare un nemico
   attesaPrima: 0.8, // secondi dall'ingresso nella stanza alla prima ondata
-  massimo: 16, // nemici in campo al massimo (anche dal LAB)
+  massimo: 24, // nemici in campo al massimo (anche dal LAB): con le ondate a tempo si possono sommare
   seme: 4242,
 } as const;
 
@@ -217,14 +217,20 @@ export const TIPI_ORDA_STANZE = [
  * completata». Numeri di Claude, da rivedere.
  */
 export const PERCORSO = {
-  // le ondate di ogni stanza: la seconda arriva quando della prima ne restano al massimo «restanti»
+  // le ondate di ogni stanza (decisione di Edoardo del 13/11: più ondate; la prima stanza 3+1 e 3+1, le altre di Claude,
+  // da rivedere). L'ondata dopo arriva quando sono passati «intervallo» secondi dalla precedente, anche se ci sono ancora
+  // nemici; se prima restano al massimo «restanti» nemici, arriva subito
   ondate: [
-    [{ ricaduti: 3, cantori: 1 }],
-    [{ ricaduti: 3, cantori: 1 }, { ricaduti: 3, cantori: 2 }],
-    [{ ricaduti: 4, cantori: 2 }, { ricaduti: 5, cantori: 3 }],
+    [{ ricaduti: 3, cantori: 1 }, { ricaduti: 3, cantori: 1 }],
+    [{ ricaduti: 3, cantori: 1 }, { ricaduti: 3, cantori: 2 }, { ricaduti: 4, cantori: 2 }],
+    [{ ricaduti: 4, cantori: 2 }, { ricaduti: 4, cantori: 2 }, { ricaduti: 5, cantori: 3 }],
   ],
-  restanti: 2,
-  attesaCarte: 0.8, // secondi tra la stanza ripulita e le carte
+  intervallo: 10,
+  restanti: 0,
+  attesaCarte: 1, // secondi tra la stanza ripulita e le carte (decisione di Edoardo del 13/11)
+  // le carte salgono dal basso, una dopo l'altra, e stanno in fila una accanto all'altra (lo schermo è in orizzontale)
+  // quando ogni carta arriva, sopra di lei scoppia un effetto pixelfx (collect-burst in oro), a «fps» fotogrammi al secondo
+  carte: { salita: 0.35, sfasamento: 0.08, effetto: 'Pixelfx_Comparsa_carta', fps: 12 },
   porte: { minimo: 2, massimo: 3 },
   echi: 3, // Echi al massimo nella build (più la Lanterna)
   doni: 6, // doni diversi al massimo

@@ -1,6 +1,6 @@
 /*
  * Percorso della fetta (passo 6): tre stanze una dopo l'altra. In ogni stanza arrivano le sue ondate (PERCORSO.ondate:
- * la seconda quando della prima ne restano pochi); a stanza ripulita, dopo un attimo, le 3 carte. La prima stanza offre
+ * la successiva dopo PERCORSO.intervallo secondi, o subito se la stanza si svuota prima); a stanza ripulita, dopo un attimo, le 3 carte. La prima stanza offre
  * 3 Echi di affinità diverse; poi la porta scelta decide da dove pescano: una porta d'affinità dà Echi nuovi e livelli
  * degli Echi di quell'affinità (dalla Luce anche livelli della Lanterna), la porta del dono dà doni (solo quelli che nelle
  * stanze funzionano). Scelta la carta si aprono le porte; dopo la terza stanza la fetta è finita.
@@ -54,10 +54,13 @@ export class Percorso {
     const ondate = PERCORSO.ondate[this.stanza - 1];
     if (this.fase === 'lotta') {
       if (this.ondata < ondate.length) {
+        // la prima dopo un attimo; le altre a tempo, o subito se la stanza è (quasi) vuota
         const prima = this.ondata === 0;
-        if (prima ? (this.attesa -= dt) <= 0 : nemici.vivi() <= PERCORSO.restanti) {
+        this.attesa -= dt;
+        if (this.attesa <= 0 || (!prima && nemici.vivi() <= PERCORSO.restanti)) {
           const o = ondate[this.ondata++];
           nemici.ondata(px, py, o.ricaduti, o.cantori);
+          this.attesa = PERCORSO.intervallo;
         }
       } else if (nemici.vivi() === 0) {
         this.fase = 'attesa';

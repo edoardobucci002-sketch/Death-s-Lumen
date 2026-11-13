@@ -150,4 +150,13 @@ for (const [nome, fps] of [['Eclissi', FPS]]) {
   console.log(`  centro della sfera di ${nome}: ${r.perno[0]}, ${Math.round(r.perno[1] - 54 * scala)}`);
   totale += salva(nome, r, r.frames.map(() => passo), RAGGIO);
 }
+// 4) Comparsa delle carte (gioco a stanze, richiesta di Edoardo del 13/11): pickups/collect-burst, il lampo con la croce
+//    di luce, gli anelli e le scintille che restano sospese, ricolorato con la tavolozza dorata «holy» della libreria
+{
+  const fx = await loadEffect('pickups/collect-burst', join(PFX, 'src/fx'));
+  const holy = ['#2a1c08', '#5a3e10', '#9a6c18', '#d8a428', '#ffd84a', '#fff09a', '#fffbe6', '#ffffff'];
+  const x = rendi(fx, { fps: FPS, opzioni: { palette: holy } });
+  const r = rifila(x.frames, x.w, x.h, x.perno);
+  totale += salva('Comparsa_carta', r, r.frames.map(() => Math.round(1000 / FPS)));
+}
 console.log(`totale memoria video ≈ ${totale.toFixed(1)} MB`);

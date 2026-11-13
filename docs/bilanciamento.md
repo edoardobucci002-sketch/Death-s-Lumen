@@ -42,6 +42,15 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 (sera) — La fetta era troppo facile: ondate a tempo (decisione di Edoardo dopo due partite)
+
+- **Ondate**: da una o due per stanza (la seconda quando della prima ne restavano 2) a **2, 3 e 3 ondate** che arrivano ogni **10 s** anche con la stanza ancora piena, o subito se si svuota. Prima stanza 3+1 e 3+1 (Edoardo); le altre (Claude, *da rivedere*): 3+1, 3+2, 4+2; poi 4+2, 4+2, 5+3. Nemici nella fetta: da 26 a 46. Al massimo in campo: da 16 a 24.
+- **Carte** dopo 1 s (era 0,8).
+- **Fermo d'impatto**: resta 0,05 s (3 fotogrammi). La durata di Hades non è pubblicata da nessuna parte che si possa citare; le guide sul «game feel» indicano 2–4 fotogrammi per i colpi leggeri e 12–20 per i colpi forti dei capi.
+- **Bianco al colpo**: 0,12 s sui nemici colpiti dalla Lanterna (nel survivor il lampo dura 0,033 s, una volta ogni 0,3 s).
+
+Il bot non sa giocare a stanze: nessuna simulazione.
+
 ### 13/11 (sera) — Passo 6: tre stanze, porte e carte (numeri di Claude, *da rivedere*; il survivor non cambia)
 
 - **Cerchio di luce**: ferisce ogni **0,3 s** invece di 0,25 (decisione di Edoardo), così la Quiete dei nemici (0,3 s) non gli toglie colpi: circa 20 di danno al secondo per nemico invece di 12.

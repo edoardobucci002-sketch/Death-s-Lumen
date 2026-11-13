@@ -6,7 +6,8 @@
  * dà la Grazia: uscire dallo spicchio all'ultimo istante, farsi sfiorare da un grumo.
  * Quiete: dopo un colpo, per un attimo la stessa arma a mano (Lanterna, Cerchio di luce) non ferisce più quel nemico.
  * Il Ricaduto battuto resta sempre a terra un attimo, intoccabile; poi a volte si rialza (una volta sola).
- * Impatto della Lanterna: il nemico colpito si ferma un attimo (fermo d'impatto), si schiaccia e sprizza scintille.
+ * Impatto della Lanterna: il nemico colpito diventa bianco, si ferma un attimo (fermo d'impatto), si schiaccia e sprizza
+ * scintille (il bianco è quello del survivor, ma dura NEMICI_STANZA.lampo: abbastanza da vederlo).
  * Chi è sepolto, interrato o fermato da uno stato non fa niente, nemmeno l'avviso: il suo attacco aspetta.
  * Tutto in array preparati all'inizio (niente allocazioni nel ciclo di gioco); la logica è separata dal disegno.
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
@@ -52,6 +53,7 @@ export class NemiciStanza {
   private quieteAbilita = new Float32Array(CAPIENZA);
   private fermo = new Float32Array(CAPIENZA); // fermo d'impatto: il nemico non fa niente
   private schiaccia = new Float32Array(CAPIENZA); // secondi di schiacciamento rimasti (solo disegno)
+  private bianco = new Float32Array(CAPIENZA); // secondi in cui resta bianco dopo un colpo della Lanterna
   private verso = new Uint8Array(CAPIENZA); // 1 = guarda a sinistra
   private fermi = new Uint8Array(CAPIENZA); // fermo per uno stato (lo scrive la Orda)
   // comparse: il segno a terra dove sta per arrivare un nemico (non è ancora nella Orda: le armi non lo toccano)
@@ -98,7 +100,7 @@ export class NemiciStanza {
   ) {
     this.orda = new Orda(scena, caso, new Minacce(scena));
     this.orda.registraCampi(this.stato, this.tempo, this.dirX, this.dirY, this.ricarica, this.rinato, this.dentro, this.colpo,
-      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso);
+      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco);
     // il grumo: un tondo pieno di Lumen spento con il bordo scuro, disegnato una volta
     const r = C.grumo.raggio, chiave = 'stanze-grumo';
     if (!scena.textures.exists(chiave)) {
@@ -146,7 +148,7 @@ export class NemiciStanza {
   private nasce(k: number, x: number, y: number): void {
     const i = this.orda.nasciStanza(k === 0 ? ID_RICADUTO : ID_CANTORE, x, y, k === 0 ? R.salute : C.salute);
     this.stato[i] = STATO.cammina;
-    this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
+    this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.bianco[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
     this.ricarica[i] = C.primoCanto;
     this.rinato[i] = this.verso[i] = 0;
     this.dirX[i] = 1;
@@ -204,6 +206,7 @@ export class NemiciStanza {
       if (this.quieteLanterna[i] > 0) this.quieteLanterna[i] -= dt;
       if (this.quieteAbilita[i] > 0) this.quieteAbilita[i] -= dt;
       if (this.schiaccia[i] > 0) this.schiaccia[i] -= dt;
+      if (this.bianco[i] > 0) this.bianco[i] -= dt;
       const ricaduto = o.tipo[i] === ID_RICADUTO;
       // salute finita (Lanterna, Echi, maledizione, reazioni): il Ricaduto va a terra, il Cantore sparisce
       if (o.salute[i] <= 0 && this.stato[i] !== STATO.aTerra) {
@@ -394,6 +397,7 @@ export class NemiciStanza {
       // ancora in piedi: impatto (fermo, schiacciamento, scintille verso dove va il colpo) e spinta, tranne durante l'avviso
       if (this.fermoImpatto) this.fermo[i] = IMPATTO.fermo;
       this.schiaccia[i] = IMPATTO.schiaccia.durata;
+      this.bianco[i] = NEMICI_STANZA.lampo;
       this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, sx, sy, IMPATTO.scintille.colpo);
       if (this.stato[i] !== STATO.avviso) this.muovi(i, sx * NEMICI_STANZA.spinta, sy * NEMICI_STANZA.spinta);
     }
@@ -452,7 +456,7 @@ export class NemiciStanza {
       sp.setPosition(x + ox, y + oy).setFlipX(this.verso[i] === 1);
       sp.setAngle(st === STATO.aTerra ? (this.verso[i] ? 90 : -90) : 0);
       if (st === STATO.aTerra) sp.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
-      else if (o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+      else if (this.bianco[i] > 0 || o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
       else if (st === STATO.avviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(o.tipo[i] === ID_RICADUTO ? col.bordo : col.linea)).setTintMode(Phaser.TintModes.ADD);
       else sp.clearTint();
       if (st === STATO.avviso || this.colpo[i] > 0) this.disegnaAvviso(t, i, x, y);

@@ -118,6 +118,9 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 #interfaccia > .doni { position: fixed; inset: 0; z-index: 3; background-repeat: repeat; image-rendering: pixelated; }
 .doni h2 { margin: 0; text-align: center; font-family: var(--f-titolo); font-weight: 400; color: var(--accento); text-shadow: 0 2px 0 #000; }
 .doni-carta { position: absolute; text-align: left; }
+/* gioco a stanze: le strisce salgono dal basso (tempi in PERCORSO.carte, a scatti come la pixel art) */
+.doni-comparsa { position: absolute; z-index: 2; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+@keyframes doni-sale { from { transform: translateY(100vh); } to { transform: none; } }
 .doni-carta:focus-visible { outline: none; }
 .doni-scelta { visibility: hidden; }
 .doni-carta:hover .doni-scelta, .doni-carta:focus-visible .doni-scelta { visibility: visible; }

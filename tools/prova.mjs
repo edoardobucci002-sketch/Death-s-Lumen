@@ -1224,7 +1224,11 @@ for (const [nome, disp] of [
     for (let n = 1; n <= 3; n++) {
       await L('ripulisci');
       if (!(await quando('l.stato().carteAperte', '', 3000))) { errori.push(`stanza ${n}: le carte non arrivano`); break; }
-      if (n === 1) await pag.screenshot({ path: `prove/${nome}-carte.png` });
+      if (n === 1) {
+        await pag.waitForTimeout(520); // le carte salgono, poi sopra ognuna scoppia l'effetto di comparsa
+        if (!(await pag.evaluate(() => document.querySelectorAll('.doni-comparsa').length))) errori.push('sopra le carte non compare l\'effetto di comparsa');
+        await pag.screenshot({ path: `prove/${nome}-carte.png` });
+      }
       if (nome === 'stanze-desktop') await pag.keyboard.press('Digit1');
       else await pag.click('.doni-carta').catch(() => errori.push('la carta non è toccabile'));
       await pag.waitForTimeout(200);

@@ -862,16 +862,17 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const PE = SZ.PERCORSO, O = PE.ondate;
   const RIGHE_PERCORSO = [
     ['Stanze', '{}', O.length],
-    ['Ondate', 'stanza 1: {} Ricaduti e {} Cantore; stanza 2: {} e {}, poi {} e {}; stanza 3: {} e {}, poi {} e {}',
-      O[0][0].ricaduti, O[0][0].cantori, O[1][0].ricaduti, O[1][0].cantori, O[1][1].ricaduti, O[1][1].cantori, O[2][0].ricaduti, O[2][0].cantori, O[2][1].ricaduti, O[2][1].cantori],
-    ['Carte', '3, dopo {} s', PE.attesaCarte],
+    ['Ondate', 'stanza 1: {} Ricaduti e {} Cantore, poi {} e {}; stanza 2: {} e {}, poi {} e {}, poi {} e {}; stanza 3: {} e {}, poi {} e {}, poi {} e {}',
+      ...O.flat().flatMap((o) => [o.ricaduti, o.cantori])],
+    ['Carte', '3, dopo {} s; salgono in {} s, {} s l\'una dall\'altra', PE.attesaCarte, PE.carte.salita, PE.carte.sfasamento],
     ['Build', 'al massimo {} Echi e {} doni', PE.echi, PE.doni],
     ['Porte', 'da {} a {}, larghe {} px', PE.porte.minimo, PE.porte.massimo, SZ.PORTE.larghezza],
     ['Passaggio', '{} s', PE.passaggio],
   ];
   stessiNomi('Percorso', tp, RIGHE_PERCORSO.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_PERCORSO) conRiga(tp, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
-  conRiga(tp, 'Ondate', (r) => inTesto(r.Note, 'Ondate (quando)', 'la seconda quando ne restano {}', PE.restanti));
+  conRiga(tp, 'Ondate', (r) => inTesto(r.Note, 'Ondate (quando)', 'ogni {} s, o subito se la stanza si svuota', PE.intervallo));
+  conRiga(tp, 'Carte', (r) => inTesto(r.Note, 'Carte (effetto)', 'effetto di comparsa a {} fotogrammi al secondo', PE.carte.fps));
 }
 
 fs.rmSync(tmp, { recursive: true, force: true });

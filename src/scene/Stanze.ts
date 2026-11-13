@@ -30,6 +30,7 @@ import { FONTE } from '../sistema/nemici-stanza';
 import { Percorso } from '../sistema/percorso';
 import { Porte } from '../sistema/porte';
 import { Doni } from '../sistema/doni';
+import { ComparsaCarte } from '../sistema/comparsa-carte';
 import { LANTERNA } from '../data/armi';
 import { PASSIVI, RICARICA_MINIMA, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
 import { Impatto } from '../sistema/impatto';
@@ -120,6 +121,7 @@ export class Stanze extends Phaser.Scene {
   percorso!: Percorso;
   porte!: Porte;
   doni!: Doni;
+  private comparsa!: ComparsaCarte;
   private readonly bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
   private dannoLanterna: number = ATTACCO.danno;
   private rigenerazione = 0; // salute al secondo (Erbe amare)
@@ -210,6 +212,8 @@ export class Stanze extends Phaser.Scene {
     this.doni = new Doni(this.radice, this.arsenale, LANTERNA, this.percorso.passivi, new Caso(ONDATA.seme + 3),
       () => ({ usati: 0, totale: 0, unioni: false, scoperte: nessuno, metaRaccolta: 0 }), () => {}, () => true);
     this.radice.querySelector<HTMLElement>('.doni-aiuto')?.setAttribute('hidden', '');
+    this.doni.fila = PERCORSO.carte; // in fila, perché lo schermo è in orizzontale, e salgono dal basso
+    this.comparsa = new ComparsaCarte(this);
     this.ricalcola();
     this.disponi();
     this.controllaVerso();
@@ -229,6 +233,7 @@ export class Stanze extends Phaser.Scene {
       this.attacco.distruggi();
       this.abilita.distruggi();
       this.doni.distruggi();
+      this.comparsa.ferma();
       this.anims.globalTimeScale = 1;
       this.radice.remove();
     });
@@ -462,9 +467,11 @@ export class Stanze extends Phaser.Scene {
     }
     suona('livello');
     this.doni.mostraReliquiario(carte, (d) => this.dopoCarta(d), 'Un nuovo dono');
+    this.comparsa.suCarte([...this.radice.querySelectorAll<HTMLElement>('.doni-carta')], this.doni.zoomCarte, misureHud());
   }
 
   private dopoCarta(d: Parameters<Percorso['scegli']>[0] | null): void {
+    this.comparsa.ferma();
     if (d) this.percorso.scegli(d);
     else this.percorso.fase = this.percorso.ultima ? 'fine' : 'porte';
     this.ricalcola();
