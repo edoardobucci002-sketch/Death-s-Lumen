@@ -42,6 +42,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 (sera) — Il colpo della Lanterna diventa la mossa intera (decisione di Edoardo; il survivor non cambia)
+- Con lo sprite V6 la posa del colpo dura quanto l'animazione `attack` (0,385 s, prima 0,15 s) e **il danno arriva 0,155 s dopo il tocco**, quando l'asta cala (`ATTACCO.anticipo`, nuovo, *da rivedere*). La ricarica resta 0,45 s dal tocco: i colpi al secondo non cambiano, cambia il momento in cui feriscono.
+- Perché: Edoardo vuole vedere la mossa intera, e un danno al tocco sarebbe arrivato prima che l'asta si muovesse. Effetto atteso: la fetta un po' più difficile (bisogna anticipare il colpo). Il bot non gioca a stanze: niente simulazione.
+
 ### 13/11 (notte, tardi) — Terza prova di Edoardo: pozza più grande e grumo più aggressivo
 
 - **Grumo**: virata 100 › **125° al secondo** (Edoardo: «leggermente più aggressivo»). Calcolo: un passo di lato di 48 px quando il grumo è a 45 px lo fa passare a circa 28 px (contatto a 23); di 44 px a 50 px non basta più (passa a 22,7 px). La schivata all'ultimo resta possibile ma va fatta più tardi e più decisa.
