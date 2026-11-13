@@ -730,16 +730,17 @@ Si rompono se il personaggio arriva a 34 px o se li colpisce un'arma: archi, imp
 
 ## Gioco a stanze (pivot, in costruzione: `src/data/stanze.ts`)
 
-Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: passo 4 della fetta verticale (stanza, attacco a tasto, nemici con avviso, Grazia).
+Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di prova** (e in sviluppo): pulsante «Stanze (prova)» del menu, LAB → Stanze → «Entra nella stanza», oppure `?stanze` nell'indirizzo. Il progetto completo è in [proposte/pivot-hades.md](proposte/pivot-hades.md); qui c'è solo ciò che esiste già nel codice. Oggi: passo 5 della fetta verticale (stanza, attacco a tasto, nemici con avviso, Grazia, abilità caricata colpendo).
 
 - **La stanza**: un pavimento rettangolare a lastre di pietra, chiuso da muri: in alto una facciata a mattoni (vista di fronte), ai lati e in basso un bordo di pietra scura. Pavimento e muri sono segnaposto disegnati dal codice (`src/sistema/stanza.ts`).
 - **Grandezza**: 13 × 7 lastre, come le stanze di The Binding of Isaac (scelta di Edoardo del 12/11): la stanza intera sta più o meno in uno schermo.
 - **Il Lampionaio** (l'unico personaggio della fetta) cammina con il joystick o con WASD e le frecce, alla sua velocità di sempre (245 px/s + 10%). I muri lo fermano: i suoi piedi restano dentro il pavimento, a qualche pixel dai bordi; il corpo si disegna davanti alla facciata del muro in alto.
 - **Telecamera**: tiene il Lampionaio sempre al centro, come nel survivor (confermato da Edoardo il 12/11); vicino ai muri, oltre il muro si vede il fondo scuro.
-- **Linea dei joystick**: una linea invisibile al centro esatto dello schermo divide i joystick (decisione di Edoardo del 12/11). Il joystick di movimento nasce solo se il dito si appoggia a sinistra della linea, e la sua base resta tutta tra il bordo sicuro dello schermo e la linea; a destra il dito non muove il personaggio (sarà il joystick d'attacco). LAB → Stanze → «Linea al centro» la mostra.
+- **Linea dei joystick**: una linea invisibile al centro esatto dello schermo divide i joystick (decisione di Edoardo del 12/11). Il joystick di movimento nasce solo se il dito si appoggia a sinistra della linea, e la sua base resta tutta tra il bordo sicuro dello schermo e la linea; a destra il dito non muove il personaggio (è del joystick d'attacco). LAB → Stanze → «Linea al centro» la mostra.
+- **I joystick** (decisione di Edoardo del 13/11, `JOYSTICK_STANZE`, `src/sistema/joystick-stanze.ts`): disegnati dal codice, solo nel gioco a stanze (il survivor tiene quelli di Edoardo). Due personalità: il **movimento** è un anello sottile color crema con il contorno scuro e un pomello pieno color crema; l'**attacco** è un disco pieno nel colore del personaggio (più scuro dentro) con una fiammella come pomello. Base di 72 pixel disegnati (quella del survivor: 84), pomello di 28, ingranditi come il joystick del survivor. Sono trasparenti al 70%: una trasparenza vera, eccezione alla regola del retino solo per i comandi. La grandezza non si regola più.
 - **Luce e buio**: gli stessi del survivor (sezione 11, «Mondo, luce e comandi»), con il tremolio della fiamma.
 - **Orientamento**: in orizzontale su ogni dispositivo. Su un telefono o un tablet in verticale il gioco si ferma e compare «Ruota il telefono».
-- **Pausa provvisoria**: pulsante provvisorio piccolo in alto a destra (14 pixel disegnati dal codice, ingranditi 2 volte; l'area di tocco arriva comunque a 44 punti), P o Esc, Indietro, e quando l'app va in secondo piano; il gioco dietro si oscura a retino; «Riprendi», l'impostazione **«Grandezza dei tasti»** (− e +: ingrandisce o rimpicciolisce il joystick d'attacco a passi interi, salvata sul dispositivo; impostazione del giocatore, decisione di Edoardo del 12/11) e «Menu» (*da rivedere*: la pausa vera del gioco a stanze si progetta più avanti). M accende e spegne i suoni.
+- **Pausa provvisoria**: pulsante provvisorio piccolo in alto a destra (14 pixel disegnati dal codice, ingranditi 2 volte; l'area di tocco arriva comunque a 44 punti), P o Esc, Indietro, e quando l'app va in secondo piano; il gioco dietro si oscura a retino; «Riprendi» e «Menu» (*da rivedere*: la pausa vera del gioco a stanze si progetta più avanti). M accende e spegne i suoni.
 
 | Valore della stanza | Numero | Note |
 | --- | --- | --- |
@@ -752,7 +753,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 
 **L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`). Il Lampionaio usa la Lanterna a mano: il colpo è l'arco di luce del survivor, davanti a lui nella direzione scelta, e ferisce ogni nemico dentro l'arco (distanze misurate tra i piedi), con un lampo bianco, il numero del danno e una piccola spinta.
 
-- **Telefono** (stile Brawl Stars, decisione di Edoardo del 12/11): un joystick d'attacco fisso in basso a destra, nella metà destra dello schermo, con gli stessi disegni del joystick di movimento (Joystick_Base e Joystick_Pomello) e di partenza la stessa grandezza. Un tocco breve colpisce il nemico più vicino entro 320 px; se non ce n'è, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando, il pomello segue il pollice fino al bordo della base, a terra compare la mira (il contorno dell'arco, nel colore del personaggio) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro prima di lasciare, il colpo torna automatico. Durante la ricarica il joystick si scurisce.
+- **Telefono** (stile Brawl Stars, decisione di Edoardo del 12/11): un joystick d'attacco fisso in basso a destra, nella metà destra dello schermo, grande come il joystick di movimento. Un tocco breve colpisce il nemico più vicino entro 320 px; se non ce n'è, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando, il pomello segue il pollice fino al bordo della base, a terra compare la mira (il contorno dell'arco, color crema: l'arancione è degli avvisi a distanza) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro prima di lasciare, il colpo torna automatico. Durante la ricarica il joystick si scurisce.
 - **Computer**: clic sinistro verso il puntatore, J verso il nemico più vicino; il mouse non fa comparire il joystick (si cammina con WASD e le frecce) e il tasto tondo non si vede.
 - Un colpo chiesto durante la ricarica parte appena la ricarica finisce. Durante il colpo il Lampionaio si gira verso il colpo e si sporge di qualche pixel (segnaposto dell'animazione `attack`, che il gioco usa da sola quando Edoardo la disegna).
 
@@ -763,22 +764,27 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Danno | 18 | +30% in Grazia (*da rivedere*) |
 | Mira automatica | entro 320 px | tocco breve e J (*da rivedere*) |
 | Posa del colpo | 0,15 s, slancio 3 px | segnaposto dell'animazione `attack` |
-| Joystick d'attacco | grande come il joystick di movimento; nella pausa da × 1 a × 4; 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
+| Joystick d'attacco | grande come il joystick di movimento; 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
+| Disegno dei joystick | base 72 pixel disegnati, pomello 28, anello 3; trasparenti al 70% | movimento e attacco (*da rivedere*) |
 | Trascinamento | 52 punti per la mira piena, zona morta 30% | sotto la zona morta il tocco è automatico |
 
-**I nemici e la Grazia** (passo 4, `NEMICI_STANZA`, `ONDATA` e `COMBATTIMENTO_STANZA` in `src/data/stanze.ts`; `src/sistema/nemici-stanza.ts`). Tutti i numeri sono proposte di Claude, *da rivedere*.
+**I nemici e la Grazia** (passo 4, `NEMICI_STANZA`, `ONDATA`, `COMBATTIMENTO_STANZA` e `GRAZIA_STANZA` in `src/data/stanze.ts`; `src/sistema/nemici-stanza.ts`). Tutti i numeri sono proposte di Claude, *da rivedere*.
 
-- **Il Lampionaio si può ferire**: 100 di salute, nessuna rigenerazione nel gioco a stanze (*da rivedere*). La barra della salute è quella del survivor, sotto i piedi. Colpito, si illumina di bianco, lo schermo trema un poco, il telefono vibra, e per 0,6 s non subisce altri colpi (lampeggia). Toccare un nemico non fa male: fa male solo un attacco con il suo avviso.
-- **Il Ricaduto** (segnaposto: lo Zombi del survivor) cammina dritto e lento verso il Lampionaio. A 56 px si ferma e comincia l'**avviso**: trema, lampeggia di rosso e a terra compare uno spicchio rosso davanti a lui che si riempie. La direzione è decisa all'inizio dell'avviso. Allo scadere graffia tutto lo spicchio, poi resta fermo un attimo. Battuto, ha il 10% di probabilità di restare a terra 1,5 s, scuro e con una fiammella rossa che pulsa sopra, e di rialzarsi con metà della salute; succede una volta sola, e un colpo mentre è a terra lo finisce.
-- **Il Cantore** (segnaposto: il Fantasma del survivor) resta tra 200 e 250 px dal Lampionaio: si allontana se ti avvicini, si avvicina se ti allontani. Quando ha ricaricato e sei entro 360 px si ferma, e a terra compare una **linea** verso di te fino al muro (l'avviso): lampeggia, resta accesa nell'ultimo terzo, e davanti a lui il grumo cresce. Poi lancia un grumo di Lumen spento lento e dritto, che non insegue e sparisce contro il muro.
+- **Il Lampionaio si può ferire**: 100 di salute. La salute non si rigenera da sola: lo farà con oggetti o poteri che lo permettono, da inventare (decisione di Edoardo del 13/11). La barra della salute è quella del survivor, sotto i piedi. Colpito, si illumina di bianco, lo schermo trema un poco e il telefono vibra. Toccare un nemico non fa male: fa male solo un attacco con il suo avviso (confermato da Edoardo il 13/11).
+- **Quiete** (decisione di Edoardo del 13/11): dopo un colpo, per un attimo non si prendono altri danni. Il Lampionaio resta in Quiete 0,6 s (lampeggia); è una sua statistica, che le carte potranno migliorare. I nemici restano in Quiete 0,2 s, ma **ogni arma ha la sua**: la Lanterna non ferisce di nuovo lo stesso nemico per 0,2 s, il Cerchio di luce sì (e viceversa). È la stessa parola della Quiete delle reazioni (un nemico non reagisce di nuovo per 3 s), scelta di Edoardo.
+- **Il Ricaduto** (segnaposto: lo Zombi del survivor) cammina dritto e lento verso il Lampionaio. A 56 px si ferma e comincia l'**avviso**: trema, lampeggia di rosso e a terra compare uno spicchio rosso davanti a lui che si riempie. La direzione è decisa all'inizio dell'avviso. Allo scadere graffia tutto lo spicchio, poi resta fermo un attimo. Battuto, resta sempre a terra 1,5 s, steso e scuro, senza segni e senza poter essere colpito (decisione di Edoardo del 13/11); poi, 1 volta su 10, si rialza con metà della salute, se no sparisce. Si rialza una volta sola.
+- **Il Cantore** (segnaposto: il Fantasma del survivor) resta tra 200 e 250 px dal Lampionaio: si allontana se ti avvicini, si avvicina se ti allontani. Quando ha ricaricato e sei entro 360 px si ferma, e a terra compare una **linea arancione** verso di te fino al muro (l'avviso; gli avvisi a distanza sono arancioni, quelli corpo a corpo rossi: decisione di Edoardo del 13/11): lampeggia, resta accesa nell'ultimo terzo, e davanti a lui il grumo cresce. Poi lancia un grumo di Lumen spento lento e dritto, che non insegue e sparisce contro il muro.
 - I nemici non si sovrappongono tra loro. Ferito, un nemico mostra sotto i piedi una barra della salute piccola.
-- **Grazia** (le regole del survivor, `GRAZIA` in `src/data/sopravvivenza.ts`): la schivata perfetta è uscire dallo spicchio del graffio quando mancano al massimo 0,25 s, oppure farsi passare un grumo vicino, entro 30 px oltre il contatto, senza farsi toccare. Dà 3 s di Grazia: +30% danno e +15% velocità, il Lampionaio si illumina a lampi e sopra la testa compare «Grazia». Una Grazia nuova non accorcia quella in corso. Le tacche del survivor non ci sono.
+- **Grazia** (`GRAZIA_STANZA`; partita da quella del survivor, si sviluppa per conto suo: decisione di Edoardo del 13/11): la schivata perfetta è uscire dallo spicchio del graffio quando mancano al massimo 0,25 s, oppure farsi passare un grumo vicino, entro 30 px oltre il contatto, senza farsi toccare. Nell'istante della schivata il gioco va **al rallentatore** (al 30% per 0,3 s): si sente che è riuscita. Poi 3 s di Grazia: +30% danno (anche del Cerchio di luce) e +15% velocità, il Lampionaio si illumina a lampi e sopra la testa compare «Grazia». Una Grazia nuova non accorcia quella in corso. Durata, finestra, sfioro e bonus sono statistiche del Lampionaio che le carte del passo 6 potranno migliorare. Le tacche del survivor non ci sono.
 - **Ondate provvisorie** (fino alle tre stanze del passo 6): 0,8 s dopo l'ingresso compaiono 3 Ricaduti e 2 Cantori, in punti a caso a più di 240 px dal Lampionaio. Dove sta per comparire un nemico, per 0,7 s a terra c'è un anello che si stringe. A stanza ripulita, dopo 2,5 s, arriva un'altra ondata. Al massimo 16 nemici in campo.
 - **Caduta**: a salute zero il Lampionaio resta steso e scuro; dopo 0,9 s compare «Sei caduto» con i nemici battuti, «Ricomincia» (la stanza da capo) e «Menu». Il tasto Indietro, da lì, torna al menu.
 
 | Valore dei nemici | Numero | Note |
 | --- | --- | --- |
-| Lampionaio colpito | corpo 14 px, invulnerabile 0,6 s | |
+| Lampionaio colpito | corpo 14 px, Quiete 0,6 s | |
+| Quiete dei nemici | 0,2 s, per ogni arma | |
+| Grazia | finestra 0,25 s, sfioro 30 px; 3 s, +30% danno, +15% velocità | |
+| Rallentatore | al 30% per 0,3 s | all'inizio della Grazia |
 | Ricaduto | salute 40, velocità 60 px/s, corpo 16 px | 3 colpi della Lanterna, 2 in Grazia |
 | Graffio | avviso 0,5 s da 56 px; spicchio di 72 px e 110°; danno 15; fermo 0,7 s dopo | |
 | Rinascita | 10%, dopo 1,5 s a terra, con il 50% della salute | una volta sola |
@@ -787,6 +793,16 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Grumo | velocità 140 px/s, raggio 9 px, danno 12 | |
 | Spinta | 10 px | non durante l'avviso |
 | Ondata | 3 Ricaduti e 2 Cantori, a più di 240 px; segno 0,7 s; prima dopo 0,8 s, poi 2,5 s | provvisoria |
+
+**L'abilità caricata colpendo** (passo 5, `ABILITA_STANZA` in `src/data/stanze.ts`, `src/sistema/abilita-stanza.ts`). Il Cerchio di luce del Lampionaio si carica **solo** quando un colpo della Lanterna prende un nemico (decisione del 12/11): 10 per nemico, al massimo 20 per colpo, piena a 100 (*da rivedere*). Mentre il cerchio è acceso non si carica.
+
+- **Il pulsante**: un tondo scuro con l'icona del Cerchio di luce, a sinistra del joystick d'attacco, trasparente come lui. Un anello nel colore del personaggio si riempie in senso orario, pixel per pixel; piena, l'anello diventa chiaro, l'icona si accende e il telefono vibra. Su computer si vede lo stesso, e si usa con Spazio.
+- **L'effetto** è quello del survivor (`ABILITA.cerchioDiLuce`): un cerchio di 216 px che segue il Lampionaio per 5 s, ferisce chi c'è dentro di 6 ogni 0,25 s (+30% in Grazia) e lo fa camminare il 55% più lento. Ferisce con la sua Quiete, separata da quella della Lanterna.
+
+| Valore dell'abilità | Numero | Note |
+| --- | --- | --- |
+| Carica | piena a 100; 10 per nemico, al massimo 20 per colpo | solo con la Lanterna (*da rivedere*) |
+| Pulsante | 36 pixel disegnati, 6 px dal joystick d'attacco | ingrandito come i joystick |
 
 ## 12. Da fare e da decidere
 

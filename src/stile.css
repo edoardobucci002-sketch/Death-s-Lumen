@@ -387,8 +387,12 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 #interfaccia .stanze-attacco { position: fixed; padding: 0; border: 0; background: none; cursor: pointer; touch-action: none; z-index: 4; }
 .stanze-attacco::after { content: ''; position: absolute; inset: calc(var(--margine-tocco, 4px) * -1); }
 .stanze-attacco.ricarica { filter: brightness(0.55); }
+/* i comandi del gioco a stanze sono un po' trasparenti (decisione di Edoardo del 13/11; misura in JOYSTICK_STANZE.opacita) */
+#interfaccia .stanze-attacco, #interfaccia .stanze-abilita, .joystick.joystick-stanze { opacity: var(--opacita-comandi, 0.7); }
+/* abilità del gioco a stanze (src/sistema/abilita-stanza.ts): accanto al joystick d'attacco; piena, l'icona si accende */
+#interfaccia .stanze-abilita { position: fixed; padding: 0; border: 0; background: none; cursor: pointer; touch-action: none; z-index: 4; }
+.stanze-abilita::after { content: ''; position: absolute; inset: calc(var(--margine-tocco, 4px) * -1); }
+.stanze-abilita .stanze-abilita-icona { filter: grayscale(1) brightness(0.6); }
+.stanze-abilita.pronta .stanze-abilita-icona { filter: none; }
 /* su computer si attacca con il mouse e con J: il tasto serve solo ai telefoni e ai tablet */
 @media (pointer: fine) { #interfaccia .stanze-attacco { display: none; } }
-/* pausa del gioco a stanze: impostazione «Grandezza dei tasti» (− valore +) */
-.stanze-impostazione { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.stanze-riga { display: flex; align-items: center; gap: 16px; }

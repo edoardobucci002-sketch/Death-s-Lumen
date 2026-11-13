@@ -822,16 +822,20 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Danno', '{}', AT.danno],
     ['Mira automatica', 'entro {} px', AT.miraMassima],
     ['Posa del colpo', '{} s, slancio {} px', AT.posa, AT.slancio],
-    ['Joystick d\'attacco', 'nella pausa da × {} a × {}; {} px dal bordo sicuro', AT.tasto.minimo, AT.tasto.massimo, AT.tasto.margine],
+    ['Joystick d\'attacco', 'grande come il joystick di movimento; {} px dal bordo sicuro', AT.tasto.margine],
+    ['Disegno dei joystick', 'base {} pixel disegnati, pomello {}, anello {}; trasparenti al {}%', SZ.JOYSTICK_STANZE.base, SZ.JOYSTICK_STANZE.pomello, SZ.JOYSTICK_STANZE.anello, pct(SZ.JOYSTICK_STANZE.opacita)],
     ['Trascinamento', '{} punti per la mira piena, zona morta {}%', AT.trascina.raggio, pct(AT.trascina.zonaMorta)],
   ];
   stessiNomi('Attacco', ta, RIGHE_ATTACCO.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_ATTACCO) conRiga(ta, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 
   const tn = tabella('| Valore dei nemici | Numero |');
-  const NS = SZ.NEMICI_STANZA, RI = NS.ricaduto, CA = NS.cantore, CB = SZ.COMBATTIMENTO_STANZA, OD = SZ.ONDATA;
+  const NS = SZ.NEMICI_STANZA, RI = NS.ricaduto, CA = NS.cantore, CB = SZ.COMBATTIMENTO_STANZA, OD = SZ.ONDATA, GS = SZ.GRAZIA_STANZA;
   const RIGHE_NEMICI = [
-    ['Lampionaio colpito', 'corpo {} px, invulnerabile {} s', CB.raggio, CB.invulnerabilita],
+    ['Lampionaio colpito', 'corpo {} px, Quiete {} s', CB.raggio, CB.quiete],
+    ['Quiete dei nemici', '{} s, per ogni arma', NS.quiete],
+    ['Grazia', 'finestra {} s, sfioro {} px; {} s, +{}% danno, +{}% velocità', GS.finestra, GS.sfioro, GS.durata, pct(GS.danno), pct(GS.velocita)],
+    ['Rallentatore', 'al {}% per {} s', pct(GS.rallentatore.scala), GS.rallentatore.durata],
     ['Ricaduto', 'salute {}, velocità {} px/s, corpo {} px', RI.salute, RI.velocita, RI.raggio],
     ['Graffio', 'avviso {} s da {} px; spicchio di {} px e {}°; danno {}; fermo {} s dopo', RI.avviso, RI.portata, RI.graffio.raggio, RI.graffio.ampiezza, RI.graffio.danno, RI.recupero],
     ['Rinascita', '{}%, dopo {} s a terra, con il {}% della salute', pct(RI.rinascita.probabilita), RI.rinascita.attesa, pct(RI.rinascita.salute)],
@@ -843,6 +847,15 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   ];
   stessiNomi('Nemici', tn, RIGHE_NEMICI.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_NEMICI) conRiga(tn, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+
+  const tb = tabella('| Valore dell\'abilità | Numero |');
+  const AB = SZ.ABILITA_STANZA;
+  const RIGHE_ABILITA = [
+    ['Carica', 'piena a {}; {} per nemico, al massimo {} per colpo', AB.serve, AB.perNemico, AB.massimoPerColpo],
+    ['Pulsante', '{} pixel disegnati, {} px dal joystick d\'attacco', AB.tasto.lato, AB.tasto.distanza],
+  ];
+  stessiNomi('Abilità', tb, RIGHE_ABILITA.map((r) => r[0]));
+  for (const [nome, modello, ...attesi] of RIGHE_ABILITA) conRiga(tb, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 }
 
 fs.rmSync(tmp, { recursive: true, force: true });

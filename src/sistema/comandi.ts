@@ -6,6 +6,7 @@
  * Con metaSinistra (gioco a stanze, decisione di Edoardo del 12/11) una linea invisibile al centro dello schermo divide i
  * joystick: quello di movimento nasce solo nella metà sinistra e la sua base resta tutta tra il bordo sicuro e la linea;
  * la metà destra è per il joystick d'attacco. Con mouseAttacca, su computer il mouse non fa comparire il joystick (attacca).
+ * Con arte (gioco a stanze, 13/11) base e pomello sono altri disegni, e la classe in più li rende un po' trasparenti.
  */
 import { JOYSTICK_PICCOLO } from '../data/hud';
 import { JOYSTICK } from '../data/mondo';
@@ -37,14 +38,21 @@ export class Comandi {
   private readonly metaSinistra: boolean;
   private readonly mouseAttacca: boolean;
 
-  constructor(contenitore: HTMLElement, opzioni: { metaSinistra?: boolean; mouseAttacca?: boolean } = {}) {
+  private readonly arteFissa: { base: string; pomello: string } | null;
+
+  constructor(contenitore: HTMLElement, opzioni: { metaSinistra?: boolean; mouseAttacca?: boolean; arte?: { base: string; pomello: string }; classe?: string } = {}) {
     this.metaSinistra = opzioni.metaSinistra ?? false;
     this.mouseAttacca = opzioni.mouseAttacca ?? false;
+    this.arteFissa = opzioni.arte ?? null;
+    if (this.arteFissa) {
+      this.chiaveBase = this.arteFissa.base;
+      this.chiavePomello = this.arteFissa.pomello;
+    }
     this.base = document.createElement('div');
-    this.base.className = 'joystick';
+    this.base.className = `joystick ${opzioni.classe ?? ''}`.trim();
     this.base.hidden = true;
-    this.pomello = immagine('Joystick_Pomello', 'joystick-pomello');
-    this.base.append(immagine('Joystick_Base', 'joystick-base'), this.pomello);
+    this.pomello = immagine(this.chiavePomello, 'joystick-pomello');
+    this.base.append(immagine(this.chiaveBase, 'joystick-base'), this.pomello);
     contenitore.append(this.base);
     window.addEventListener('keydown', this.tasto);
     window.addEventListener('keyup', this.tasto);
@@ -154,8 +162,10 @@ export class Comandi {
   /** Misure della base e del pomello per questo telefono (centrati sul punto del dito). */
   private misure(): void {
     const m = (this.m = misureHud()), z = ingr('joystick', m), piccolo = fasce(m).attive;
-    this.chiaveBase = piccolo ? 'Joystick_Base_Piccola' : 'Joystick_Base';
-    this.chiavePomello = piccolo ? 'Joystick_Pomello_Piccolo' : 'Joystick_Pomello';
+    if (!this.arteFissa) {
+      this.chiaveBase = piccolo ? 'Joystick_Base_Piccola' : 'Joystick_Base';
+      this.chiavePomello = piccolo ? 'Joystick_Pomello_Piccolo' : 'Joystick_Pomello';
+    }
     const b = arte(this.chiaveBase), p = arte(this.chiavePomello);
     if (!b || !p) return;
     const base = this.base.firstElementChild as HTMLImageElement;

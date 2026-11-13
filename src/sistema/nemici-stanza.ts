@@ -2,13 +2,14 @@
  * Nemici del gioco a stanze (passo 4 della fetta): il Ricaduto e il Cantore, e i grumi di Lumen spento del Cantore.
  * Ogni attacco ha un avviso a terra (lo spicchio del graffio che si riempie, la linea del canto) e lascia spazio alla
  * schivata perfetta, che dà la Grazia: uscire dallo spicchio all'ultimo istante, farsi sfiorare da un grumo.
+ * Quiete: dopo un colpo, per un attimo la stessa arma («fonte») non ferisce più quel nemico; le altre sì.
+ * Il Ricaduto battuto resta sempre a terra un attimo, intoccabile; poi a volte si rialza (una volta sola).
  * Tutto in array preparati all'inizio (niente allocazioni nel ciclo di gioco); la logica è separata dal disegno.
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
  * Con al massimo ONDATA.massimo nemici, le spinte tra nemici si calcolano a coppie: la griglia spaziale non serve.
  */
 import Phaser from 'phaser';
-import { COMBATTIMENTO_STANZA, NEMICI_STANZA, ONDATA, STANZA } from '../data/stanze';
-import { GRAZIA } from '../data/sopravvivenza';
+import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, NEMICI_STANZA, ONDATA, STANZA } from '../data/stanze';
 import { PROFONDITA, type Effetti } from './effetti';
 import { ingrandimento } from './asset';
 import { areaCamminabile } from './stanza';
@@ -22,6 +23,9 @@ export type TipoStanza = (typeof TIPI_STANZA)[number];
 export const STATO = { comparsa: 0, cammina: 1, avviso: 2, recupero: 3, aTerra: 4 } as const;
 
 const N = ONDATA.massimo;
+/** Le armi che feriscono i nemici, ognuna con la sua Quiete: la Lanterna, il Cerchio di luce (gli Echi arrivano dopo). */
+export const FONTE = { lanterna: 0, abilita: 1 } as const;
+const FONTI = 4;
 const MAX_GRUMI = 16;
 const R = NEMICI_STANZA.ricaduto;
 const C = NEMICI_STANZA.cantore;
@@ -49,6 +53,7 @@ export class NemiciStanza {
   private rinato = new Uint8Array(N); // Ricaduto: è già tornato in vita una volta
   private dentro = new Float32Array(N); // secondi al graffio l'ultima volta che il personaggio era nello spicchio
   private lampo = new Float32Array(N);
+  private quiete = new Float32Array(N * FONTI); // secondi di Quiete rimasti, per nemico e per arma
   private colpo = new Float32Array(N); // il graffio appena scattato, da disegnare pieno per un attimo
   private versoSinistra = new Uint8Array(N);
   private sprite: Phaser.GameObjects.Sprite[] = [];
@@ -70,6 +75,14 @@ export class NemiciStanza {
   rinascitaForzata: boolean | null = null;
   /** Il raggio del corpo del personaggio, per i colpi dei nemici. */
   readonly corpo: number = COMBATTIMENTO_STANZA.raggio;
+  /** Schivata perfetta: li imposta la scena dalla Grazia del personaggio (le carte potranno migliorarli). */
+  finestra: number = GRAZIA_STANZA.finestra;
+  sfioro: number = GRAZIA_STANZA.sfioro;
+  /** Il Cerchio di luce in corso: chi ci sta dentro cammina più lento (raggio 0 = nessun cerchio). */
+  cerchioX = 0;
+  cerchioY = 0;
+  cerchioR = 0;
+  cerchioLento = 0;
 
   constructor(
     private readonly scena: Phaser.Scene,
@@ -111,6 +124,7 @@ export class NemiciStanza {
     this.ricarica[i] = C.primoCanto;
     this.rinato[i] = 0;
     this.lampo[i] = this.colpo[i] = 0;
+    this.quiete.fill(0, i * FONTI, i * FONTI + FONTI);
     this.dirX[i] = 1;
     this.dirY[i] = 0;
     this.dentro[i] = Infinity;
@@ -153,6 +167,7 @@ export class NemiciStanza {
     const a = areaCamminabile();
     for (let i = this.numero - 1; i >= 0; i--) {
       if (this.lampo[i] > 0) this.lampo[i] -= dt;
+      for (let f = i * FONTI; f < i * FONTI + FONTI; f++) if (this.quiete[f] > 0) this.quiete[f] -= dt;
       if (this.colpo[i] > 0) this.colpo[i] -= dt;
       const st = this.stato[i];
       const dx = px - this.x[i], dy = py - this.y[i], d = Math.hypot(dx, dy) || 1;
@@ -161,14 +176,20 @@ export class NemiciStanza {
         continue;
       }
       if (st === STATO.aTerra) {
+        // a terra: allo scadere si tira la rinascita (nessun segno prima); se non esce, sparisce
         if ((this.tempo[i] -= dt) <= 0) {
-          this.stato[i] = STATO.cammina;
-          this.salute[i] = this.saluteMassima[i] * R.rinascita.salute;
-          this.rinascite++;
-          suona('danno');
+          if (!this.rinato[i] && (this.rinascitaForzata ?? this.caso.numero() < R.rinascita.probabilita)) {
+            this.rinato[i] = 1;
+            this.stato[i] = STATO.cammina;
+            this.salute[i] = this.saluteMassima[i] * R.rinascita.salute;
+            this.rinascite++;
+            suona('danno');
+          } else this.sparisce(i);
         }
         continue;
       }
+      // dentro il Cerchio di luce si cammina più lenti
+      const passo = dt * (this.cerchioR > 0 && (this.x[i] - this.cerchioX) ** 2 + (this.y[i] - this.cerchioY) ** 2 <= this.cerchioR ** 2 ? 1 - this.cerchioLento : 1);
       if (st === STATO.recupero) {
         if ((this.tempo[i] -= dt) <= 0) this.stato[i] = STATO.cammina;
       } else if (st === STATO.avviso) {
@@ -180,7 +201,7 @@ export class NemiciStanza {
           if (this.tempo[i] <= 0) {
             this.colpo[i] = NEMICI_STANZA.lampo * 1.2;
             if (dentro) danno = Math.max(danno, R.graffio.danno);
-            else if (this.dentro[i] <= GRAZIA.finestra) this.schivate++; // uscito dallo spicchio all'ultimo istante
+            else if (this.dentro[i] <= this.finestra) this.schivate++; // uscito dallo spicchio all'ultimo istante
             this.stato[i] = STATO.recupero;
             this.tempo[i] = R.recupero;
           }
@@ -193,13 +214,13 @@ export class NemiciStanza {
       } else if (this.tipo[i] === RICADUTO) {
         // cammina dritto verso il personaggio; vicino si ferma e prepara il graffio
         if (d <= R.portata) this.iniziaAvviso(i, dx / d, dy / d, R.avviso);
-        else this.muovi(i, (dx / d) * R.velocita * dt, (dy / d) * R.velocita * dt);
+        else this.muovi(i, (dx / d) * R.velocita * passo, (dy / d) * R.velocita * passo);
       } else {
         // resta tra la distanza minima e la massima; quando ha ricaricato e sei a portata, canta
         this.ricarica[i] -= dt;
         if (this.ricarica[i] <= 0 && d <= C.portata) this.iniziaAvviso(i, dx / d, dy / d, C.avviso);
-        else if (d < C.distanza.minima) this.muovi(i, (-dx / d) * C.velocita * dt, (-dy / d) * C.velocita * dt);
-        else if (d > C.distanza.massima) this.muovi(i, (dx / d) * C.velocita * dt, (dy / d) * C.velocita * dt);
+        else if (d < C.distanza.minima) this.muovi(i, (-dx / d) * C.velocita * passo, (-dy / d) * C.velocita * passo);
+        else if (d > C.distanza.massima) this.muovi(i, (dx / d) * C.velocita * passo, (dy / d) * C.velocita * passo);
       }
       if (this.stato[i] === STATO.cammina && Math.abs(dx) > 1) this.versoSinistra[i] = dx < 0 ? 1 : 0;
     }
@@ -260,7 +281,7 @@ export class NemiciStanza {
   /** I grumi volano dritti; contro il muro si fermano (spariscono con uno sbuffo). */
   private aggiornaGrumi(dt: number, px: number, py: number): number {
     let danno = 0;
-    const r = C.grumo.raggio + this.corpo, vicino = r + GRAZIA.sfioro;
+    const r = C.grumo.raggio + this.corpo, vicino = r + this.sfioro;
     for (let k = this.grumi - 1; k >= 0; k--) {
       this.gX[k] += this.gVX[k] * dt;
       this.gY[k] += this.gVY[k] * dt;
@@ -297,44 +318,63 @@ export class NemiciStanza {
 
   /**
    * Il colpo della Lanterna: un arco di raggio «raggio» e «ampiezza» gradi da (ox, oy) verso «angolo».
-   * Ferisce ogni nemico dentro (un Ricaduto a terra si finisce). Restituisce quanti nemici ha preso.
+   * Ferisce ogni nemico dentro, se non è in Quiete per la Lanterna (a terra non si colpisce). Restituisce quanti nemici ha preso.
    */
   colpisci(ox: number, oy: number, angolo: number, raggio: number, ampiezza: number, danno: number): number {
     let presi = 0;
     const mezza = Phaser.Math.DegToRad(ampiezza / 2);
     for (let i = this.numero - 1; i >= 0; i--) {
-      if (this.stato[i] === STATO.comparsa) continue;
+      if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
       const rn = NEMICI_STANZA[TIPI_STANZA[this.tipo[i]]].raggio;
       const dx = this.x[i] - ox, dy = this.y[i] - oy, d = Math.hypot(dx, dy);
       if (d > raggio + rn) continue;
       if (d > rn && Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(dy, dx) - angolo)) > mezza + Math.asin(Math.min(1, rn / d))) continue;
+      if (!this.ferisci(i, danno, FONTE.lanterna)) continue;
       presi++;
-      if (this.stato[i] === STATO.aTerra) {
-        this.muore(i, false);
-        continue;
-      }
-      this.salute[i] -= danno;
-      this.lampo[i] = NEMICI_STANZA.lampo;
-      this.effetti.numero(this.x[i], this.y[i] - this.testa(i), danno, false);
-      if (this.stato[i] !== STATO.avviso && d > 0) this.muovi(i, (dx / d) * NEMICI_STANZA.spinta, (dy / d) * NEMICI_STANZA.spinta);
-      if (this.salute[i] <= 0) this.muore(i, true);
+      if (this.stato[i] !== STATO.avviso && d > 0 && this.stato[i] !== STATO.aTerra) this.muovi(i, (dx / d) * NEMICI_STANZA.spinta, (dy / d) * NEMICI_STANZA.spinta);
     }
     if (presi) suona('colpo');
     return presi;
   }
 
-  /** Un nemico finisce la salute: il Ricaduto può restare a terra e rialzarsi (una volta sola); se no sparisce. */
-  private muore(i: number, puoRinascere: boolean): void {
-    if (puoRinascere && this.tipo[i] === RICADUTO && !this.rinato[i]) {
-      const torna = this.rinascitaForzata ?? this.caso.numero() < R.rinascita.probabilita;
-      if (torna) {
-        this.rinato[i] = 1;
-        this.stato[i] = STATO.aTerra;
-        this.tempo[i] = R.rinascita.attesa;
-        this.salute[i] = 0;
-        return;
-      }
+  /** Ferisce ogni nemico entro r da (x, y) con l'arma «fonte» (il Cerchio di luce). Restituisce quanti ne ha presi. */
+  colpisciCerchio(x: number, y: number, r: number, danno: number, fonte: number): number {
+    let presi = 0;
+    for (let i = this.numero - 1; i >= 0; i--) {
+      if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
+      const rn = NEMICI_STANZA[TIPI_STANZA[this.tipo[i]]].raggio;
+      if ((this.x[i] - x) ** 2 + (this.y[i] - y) ** 2 > (r + rn) ** 2) continue;
+      if (this.ferisci(i, danno, fonte)) presi++;
     }
+    return presi;
+  }
+
+  /** Un colpo dell'arma «fonte» sul nemico i: niente se è in Quiete per quell'arma. Restituisce true se l'ha ferito. */
+  private ferisci(i: number, danno: number, fonte: number): boolean {
+    const q = i * FONTI + fonte;
+    if (this.quiete[q] > 0) return false;
+    this.quiete[q] = NEMICI_STANZA.quiete;
+    this.salute[i] -= danno;
+    this.lampo[i] = NEMICI_STANZA.lampo;
+    this.effetti.numero(this.x[i], this.y[i] - this.testa(i), danno, false);
+    if (this.salute[i] <= 0) this.muore(i);
+    return true;
+  }
+
+  /** Un nemico finisce la salute: il Ricaduto resta a terra (poi forse si rialza); il Cantore sparisce. */
+  private muore(i: number): void {
+    if (this.tipo[i] === RICADUTO) {
+      this.stato[i] = STATO.aTerra;
+      this.tempo[i] = R.rinascita.attesa;
+      this.salute[i] = 0;
+      this.lampo[i] = 0;
+      return;
+    }
+    this.sparisce(i);
+  }
+
+  /** Battuto per davvero: uno scoppio e via. */
+  private sparisce(i: number): void {
     this.effetti.scoppio(this.x[i], this.y[i] - this.testa(i) / 2);
     this.uccisi++;
     this.togli(i);
@@ -355,15 +395,16 @@ export class NemiciStanza {
     this.rinato[i] = this.rinato[u];
     this.dentro[i] = this.dentro[u];
     this.lampo[i] = this.lampo[u];
+    this.quiete.copyWithin(i * FONTI, u * FONTI, u * FONTI + FONTI);
     this.colpo[i] = this.colpo[u];
     this.versoSinistra[i] = this.versoSinistra[u];
   }
 
-  /** Il nemico più vicino a (x, y) entro «massimo» px, escluso chi sta comparendo; -1 se non c'è. */
+  /** Il nemico più vicino a (x, y) entro «massimo» px, escluso chi sta comparendo o è a terra; -1 se non c'è. */
   vicino(x: number, y: number, massimo: number): number {
     let migliore = -1, d2min = massimo * massimo;
     for (let i = 0; i < this.numero; i++) {
-      if (this.stato[i] === STATO.comparsa) continue;
+      if (this.stato[i] === STATO.comparsa || this.stato[i] === STATO.aTerra) continue;
       const d2 = (this.x[i] - x) ** 2 + (this.y[i] - y) ** 2;
       if (d2 <= d2min) {
         d2min = d2;
@@ -415,11 +456,7 @@ export class NemiciStanza {
       else if (st === STATO.avviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(col.bordo)).setTintMode(Phaser.TintModes.ADD);
       else sp.clearTint();
       if (st === STATO.avviso || this.colpo[i] > 0) this.disegnaAvviso(t, i, x, y);
-      if (st === STATO.aTerra) {
-        // il segno della rinascita: una fiammella rossa che pulsa sopra il corpo a terra
-        const l = Math.floor(this.orologio * 6) % 2 === 0 ? 3 : 2;
-        s.fillStyle(colore(col.rinascita)).fillRect(x - l, y - 18 - l, 2 * l, 2 * l);
-      } else if (this.salute[i] < this.saluteMassima[i]) {
+      if (st !== STATO.aTerra && this.salute[i] < this.saluteMassima[i]) {
         const z = a.ingrandimento, L = B.larghezza * z, H = B.altezza * z, bx = x - Math.floor(L / 2), by = y + B.distanza;
         const pieno = Math.round((B.larghezza - 2) * Math.max(0, this.salute[i] / this.saluteMassima[i])) * z;
         s.fillStyle(0x120606).fillRect(bx, by, L, H);

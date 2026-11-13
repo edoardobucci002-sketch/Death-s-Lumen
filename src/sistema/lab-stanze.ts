@@ -3,8 +3,9 @@
  * Passo 2 della fetta: fermare e riprendere, portare il Lampionaio al centro o contro un muro per provare i bordi,
  * mostrare la linea invisibile che divide i joystick. Passo 3: chiedere un colpo della Lanterna.
  * Passo 4: far comparire nemici, ondate, immortale, cura, Grazia, rinascita del Ricaduto, spostare il Lampionaio.
+ * Passo 5: caricare e usare il Cerchio di luce.
  */
-import { STANZA } from '../data/stanze';
+import { ABILITA_STANZA, STANZA } from '../data/stanze';
 import { areaCamminabile } from './stanza';
 import { STATO, type TipoStanza } from './nemici-stanza';
 import type { Stanze } from '../scene/Stanze';
@@ -20,6 +21,7 @@ export class LabStanze {
     x: number; y: number; larghezza: number; altezza: number; fermo: boolean; colpi: number;
     salute: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
+    quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number;
   } {
     const s = this.s, n = s.nemici;
     return {
@@ -27,7 +29,18 @@ export class LabStanze {
       salute: Math.round(s.salute), saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
+      quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.serve, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva),
     };
+  }
+
+  /** Carica dell'abilità piena (o vuota). */
+  caricaAbilita(piena: boolean): void {
+    this.s.abilita.imposta(piena);
+  }
+
+  /** Usa l'abilità (parte a stanza in corso). */
+  usaAbilita(): boolean {
+    return this.s.abilita.usa();
   }
 
   /** Fa comparire un nemico a «distanza» px dal Lampionaio, verso il centro della stanza (subito, senza il segno a terra se «subito»). */

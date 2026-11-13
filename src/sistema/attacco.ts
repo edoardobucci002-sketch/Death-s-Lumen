@@ -1,7 +1,7 @@
 /*
  * Attacco a tasto (gioco a stanze, passo 3 della fetta): l'arma iniziale si usa a mano, non colpisce più da sola.
- * Sul telefono un joystick d'attacco fisso in basso a destra, stile Brawl Stars (stessi disegni e stessa grandezza del
- * joystick di movimento, regolabile): un tocco colpisce il nemico più vicino (se non ce n'è a portata, dove guarda il
+ * Sul telefono un joystick d'attacco fisso in basso a destra, stile Brawl Stars (grande come il joystick di movimento,
+ * disegnato dal codice in src/sistema/joystick-stanze.ts: un disco nel colore del personaggio con una fiammella): un tocco colpisce il nemico più vicino (se non ce n'è a portata, dove guarda il
  * personaggio); trascinando il pomello segue il pollice, compare la mira a terra e lasciando il dito il colpo parte
  * in quella direzione. Su computer: clic sinistro verso il puntatore, J verso il nemico più vicino (entro ATTACCO.miraMassima).
  * Il colpo della Lanterna è un arco di luce davanti al personaggio (lo stesso effetto del survivor). I numeri sono in
@@ -13,32 +13,7 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { arte, immagine, ingr, misura, posa, type MisureHud } from './arte';
 import { PROFONDITA, type Effetti } from './effetti';
 import { suona } from './audio';
-
-const CHIAVE_GRANDEZZA = 'dl-grandezza-tasti'; // impostazione del giocatore, salvata sul dispositivo (0 = come il movimento)
-
-/** La grandezza dei tasti scelta dal giocatore (0 = come il joystick di movimento). */
-let scelta: number | null = null; // l'ultima scelta in questa sessione (vale anche se il dispositivo non può salvarla)
-
-export function grandezzaTasti(): number {
-  if (scelta !== null) return scelta;
-  try {
-    const n = Number(localStorage.getItem(CHIAVE_GRANDEZZA));
-    return Number.isInteger(n) && n >= ATTACCO.tasto.minimo && n <= ATTACCO.tasto.massimo ? n : 0;
-  } catch {
-    return 0;
-  }
-}
-
-/** Salva la grandezza dei tasti, dentro i limiti di ATTACCO.tasto. */
-export function impostaGrandezzaTasti(n: number): void {
-  const v = Math.min(ATTACCO.tasto.massimo, Math.max(ATTACCO.tasto.minimo, Math.round(n)));
-  scelta = v;
-  try {
-    localStorage.setItem(CHIAVE_GRANDEZZA, String(v));
-  } catch {
-    /* niente memoria: vale finché la pagina resta aperta */
-  }
-}
+import { ARTE_JOYSTICK } from './joystick-stanze';
 
 export class AttaccoATasto {
   attesa = 0; // secondi prima del prossimo colpo
@@ -82,8 +57,8 @@ export class AttaccoATasto {
     this.tasto.type = 'button';
     this.tasto.className = 'stanze-attacco';
     this.tasto.setAttribute('aria-label', 'Attacca');
-    this.pomello = immagine('Joystick_Pomello');
-    this.tasto.append(immagine('Joystick_Base'), this.pomello);
+    this.pomello = immagine(ARTE_JOYSTICK.attaccoPomello);
+    this.tasto.append(immagine(ARTE_JOYSTICK.attaccoBase), this.pomello);
     this.tasto.addEventListener('pointerdown', this.appoggia);
     contenitore.append(this.tasto);
     window.addEventListener('pointermove', this.muovi);
@@ -163,19 +138,20 @@ export class AttaccoATasto {
     }
   }
 
-  /** L'ingrandimento del joystick d'attacco: quello scelto dal giocatore nella pausa, se no quello del joystick di movimento. */
-  static ingrandimento(m: MisureHud): number {
-    return grandezzaTasti() || ingr('joystick', m);
-  }
+  /** Dove sta il joystick d'attacco, in pixel di gioco (anche su computer, dove non si vede): l'abilità ci si mette accanto. */
+  readonly riquadro = { x: 0, y: 0, l: 0 };
 
   /** In basso a destra, dentro il bordo sicuro; l'area di tocco arriva almeno a TOCCO_MINIMO punti. */
   disponi(m: MisureHud, bordo: { b: number; d: number }): void {
-    const b = arte('Joystick_Base'), p = arte('Joystick_Pomello');
+    const b = arte(ARTE_JOYSTICK.attaccoBase), p = arte(ARTE_JOYSTICK.attaccoPomello);
     if (!b || !p) return;
-    const z = AttaccoATasto.ingrandimento(m), margine = ATTACCO.tasto.margine;
+    const z = ingr('joystick', m), margine = ATTACCO.tasto.margine;
     (this.tasto.firstElementChild as HTMLImageElement).src = b.url;
     this.pomello.src = p.url;
-    posa(this.tasto, m.W - bordo.d - margine - b.w * z, m.H - bordo.b - margine - b.h * z, m);
+    this.riquadro.x = m.W - bordo.d - margine - b.w * z;
+    this.riquadro.y = m.H - bordo.b - margine - b.h * z;
+    this.riquadro.l = b.w * z;
+    posa(this.tasto, this.riquadro.x, this.riquadro.y, m);
     misura(this.tasto, b.w, b.h, z, m);
     misura(this.tasto.firstElementChild as HTMLElement, b.w, b.h, z, m);
     misura(this.pomello, p.w, p.h, z, m);

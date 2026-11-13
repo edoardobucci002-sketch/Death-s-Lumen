@@ -1033,17 +1033,6 @@ for (const [nome, disp] of [
     const inPausa = await stato();
     if (!inPausa.pausa || !inPausa.pannello) errori.push('la pausa non si apre');
     await pag.screenshot({ path: `prove/${nome}-pausa.png` });
-    // impostazione «Grandezza dei tasti» nella pausa: + ingrandisce il joystick d'attacco, − lo rimette com'era
-    if (nome !== 'stanze-desktop') {
-      const largo = () => pag.evaluate(() => document.querySelector('.stanze-attacco').getBoundingClientRect().width);
-      const l0 = await largo();
-      await pag.click('.stanze-impostazione .stanze-tasto:last-child').catch(() => errori.push('«+» della grandezza dei tasti non toccabile'));
-      const l1 = await largo();
-      await pag.click('.stanze-impostazione .stanze-tasto:first-child').catch(() => errori.push('«−» della grandezza dei tasti non toccabile'));
-      const l2 = await largo();
-      if (!(l1 > l0) || Math.abs(l2 - l0) > 1) errori.push(`la grandezza dei tasti non cambia (${Math.round(l0)} → ${Math.round(l1)} → ${Math.round(l2)} punti)`);
-      await pag.evaluate(() => localStorage.removeItem('dl-grandezza-tasti'));
-    }
     await pag.click('.stanze-pausa .stanze-tasto').catch(() => errori.push('«Riprendi» non toccabile'));
     await pag.waitForTimeout(150);
     const ripresa = await stato();
@@ -1164,7 +1153,7 @@ for (const [nome, disp] of [
     const s3 = await st();
     if (s3.schivate !== s2.schivate + 1) errori.push(`il grumo che sfiora non dà la Grazia (schivate ${s2.schivate} → ${s3.schivate})`);
     if (s3.ferite !== s2.ferite) errori.push('il grumo ferisce anche se è passato di lato');
-    // nemico battuto: un Ricaduto senza rinascita cade con 3 colpi automatici; con la rinascita resta a terra e si rialza
+    // nemico battuto: un Ricaduto cade con 3 colpi automatici e resta a terra; senza rinascita poi sparisce, con la rinascita si rialza
     await L('svuota');
     await quando('l.stato().grazia <= 0', '', 4000); // senza Grazia: il conto dei colpi è quello normale
     await L('immortale', true);
@@ -1172,8 +1161,10 @@ for (const [nome, disp] of [
     await L('vai', 'centro');
     await L('nemico', 'ricaduto', 60, true);
     for (let k = 0; k < 3; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
+    const aTerra = await L('aTerra');
+    await pag.waitForTimeout(1700);
     const s4 = await st();
-    if (s4.uccisi !== s3.uccisi + 1 || s4.nemici !== 0) errori.push(`3 colpi della Lanterna non battono il Ricaduto (battuti ${s4.uccisi}, in campo ${s4.nemici})`);
+    if (aTerra !== 1 || s4.uccisi !== s3.uccisi + 1 || s4.nemici !== 0) errori.push(`3 colpi della Lanterna non battono il Ricaduto (a terra ${aTerra}, battuti ${s4.uccisi}, in campo ${s4.nemici})`);
     await L('rinascita', true);
     await L('nemico', 'ricaduto', 60, true);
     for (let k = 0; k < 3; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
@@ -1181,6 +1172,32 @@ for (const [nome, disp] of [
     await pag.waitForTimeout(1500);
     const s5 = await st();
     if (giu !== 1 || s5.rinascite !== 1 || s5.nemici !== 1) errori.push(`il Ricaduto non torna in vita (a terra ${giu}, rinati ${s5.rinascite}, in campo ${s5.nemici})`);
+    // abilità (passo 5): si carica solo colpendo; piena, il pulsante (o Spazio) la fa partire
+    await L('svuota');
+    await L('caricaAbilita', false);
+    await L('vai', 'centro');
+    await L('nemico', 'ricaduto', 60, true);
+    await L('attacca', 'auto');
+    await pag.waitForTimeout(400);
+    await L('attacca', 'su'); // a vuoto: non carica
+    await pag.waitForTimeout(500);
+    const a1 = await st();
+    if (a1.carica !== 10) errori.push(`l'abilità non si carica solo colpendo (carica ${a1.carica}, attesa 10)`);
+    await L('caricaAbilita', true);
+    if (nome === 'stanze-desktop') await pag.keyboard.press('Space');
+    else await pag.click('.stanze-abilita').catch(() => errori.push('il pulsante dell\'abilità non è toccabile'));
+    await pag.waitForTimeout(300);
+    const a2 = await st();
+    if (a2.abilitaUsi !== 1 || !(a2.abilitaAttiva > 0) || a2.carica !== 0) errori.push(`l'abilità piena non parte (usi ${a2.abilitaUsi}, attiva ${a2.abilitaAttiva}, carica ${a2.carica})`);
+    await pag.screenshot({ path: `prove/${nome}-abilita.png` });
+    // attimo al rallentatore della Grazia
+    await L('svuota');
+    await L('grazia');
+    await pag.waitForTimeout(50); // un fotogramma: il rallentatore si applica in update
+    const lento = await pag.evaluate(() => window.__dl.scene.getScene('Stanze').anims.globalTimeScale);
+    await pag.waitForTimeout(600);
+    const dopo = await pag.evaluate(() => window.__dl.scene.getScene('Stanze').anims.globalTimeScale);
+    if (!(lento < 1) || dopo !== 1) errori.push(`la Grazia non fa l'attimo al rallentatore (${lento} → ${dopo})`);
     // caduta: salute a 1, un graffio, «Sei caduto», poi «Ricomincia» rifà la stanza con la salute piena
     await L('svuota');
     await L('immortale', false);
@@ -1199,7 +1216,7 @@ for (const [nome, disp] of [
       const di = await st();
       if (di.morto || di.salute !== di.saluteMassima) errori.push('«Ricomincia» non rifà la stanza');
     }
-    nota += `, nemici sì (graffio, schivate ${s3.schivate}, battuti, rinascita, caduta)`;
+    nota += `, nemici sì (graffio, schivate ${s3.schivate}, battuti, rinascita, caduta), abilità e rallentatore sì`;
   }
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);

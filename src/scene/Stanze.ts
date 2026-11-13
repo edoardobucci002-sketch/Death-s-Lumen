@@ -4,7 +4,9 @@
  * la telecamera che lo tiene al centro, luce e buio come nel survivor.
  * Passo 3: l'attacco a tasto con la Lanterna (src/sistema/attacco.ts): tasto in basso a destra sul telefono, clic e J su computer.
  * Passo 4: i nemici (src/sistema/nemici-stanza.ts) a ondate, la salute del Lampionaio, la Grazia dalla schivata perfetta
- * e «Sei caduto» con Ricomincia e Menu.
+ * e «Sei caduto» con Ricomincia e Menu. Dal 13/11: Quiete (tempo senza danni dopo un colpo), attimo al rallentatore della
+ * Grazia, joystick disegnati dal codice (src/sistema/joystick-stanze.ts). Passo 5: il Cerchio di luce caricato colpendo
+ * (src/sistema/abilita-stanza.ts), con il pulsante accanto al joystick d'attacco o Spazio.
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
  * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
  * Riprendi e Menu). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
@@ -17,15 +19,17 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { ATTACCO, COMBATTIMENTO_STANZA, ONDATA, STANZA } from '../data/stanze';
-import { GRAZIA } from '../data/sopravvivenza';
+import { ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, JOYSTICK_STANZE, ONDATA, STANZA } from '../data/stanze';
+import { ABILITA } from '../data/abilita';
+import { AbilitaStanza } from '../sistema/abilita-stanza';
+import { ARTE_JOYSTICK, preparaJoystickStanze } from '../sistema/joystick-stanze';
 import { NemiciStanza } from '../sistema/nemici-stanza';
 import { BarraSalute } from '../sistema/barra-salute';
 import { vibra } from '../sistema/mobile';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
-import { AttaccoATasto, impostaGrandezzaTasti } from '../sistema/attacco';
+import { AttaccoATasto } from '../sistema/attacco';
 import { COLPI } from '../data/armi';
 import { audioAttivo, impostaAudio, suona } from '../sistema/audio';
 import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
@@ -65,7 +69,6 @@ export class Stanze extends Phaser.Scene {
   private tastoPausa!: HTMLButtonElement;
   private pannelloPausa!: HTMLElement;
   private avvisoRuota!: HTMLElement;
-  private valoreGrandezza!: HTMLElement;
   lineaJoystick!: HTMLElement; // la linea invisibile al centro: il LAB la può mostrare
   attacco!: AttaccoATasto;
   private effetti!: Effetti;
@@ -83,7 +86,12 @@ export class Stanze extends Phaser.Scene {
   ondate = 0; // ondate comparse
   ondateAutomatiche = true; // LAB: spente, la stanza resta vuota finché non si chiama un nemico
   nemici!: NemiciStanza;
-  private invulnerabile = 0;
+  abilita!: AbilitaStanza;
+  /** Statistiche che le carte potranno migliorare (passo 6): Quiete del Lampionaio e Grazia. Si azzerano in create. */
+  quiete: number = COMBATTIMENTO_STANZA.quiete;
+  readonly statGrazia = { durata: 0, danno: 0, velocita: 0, finestra: 0, sfioro: 0 };
+  private inQuiete = 0; // secondi di Quiete rimasti
+  private rallentatore = 0; // secondi veri di rallentatore rimasti
   private lampoFerita = 0;
   private attesaFine = 0;
   private attesaOndata = 0;
@@ -113,7 +121,11 @@ export class Stanze extends Phaser.Scene {
     this.saluteMassima = this.salute = BASE.salute + this.pg.salute; // nel gioco a stanze niente rigenerazione (da rivedere)
     this.morto = this.immortale = false;
     this.ondateAutomatiche = true;
-    this.grazia = this.invulnerabile = this.lampoFerita = this.attesaFine = this.orologio = this.scrittaVita = 0;
+    this.grazia = this.inQuiete = this.rallentatore = this.lampoFerita = this.attesaFine = this.orologio = this.scrittaVita = 0;
+    this.quiete = COMBATTIMENTO_STANZA.quiete;
+    const G = GRAZIA_STANZA;
+    Object.assign(this.statGrazia, { durata: G.durata, danno: G.danno, velocita: G.velocita, finestra: G.finestra, sfioro: G.sfioro });
+    this.anims.globalTimeScale = 1;
     this.schivatePerfette = this.ferite = this.ondate = 0;
     this.attesaOndata = ONDATA.attesaPrima;
     this.x = Math.round(STANZA.larghezza / 2);
@@ -140,12 +152,18 @@ export class Stanze extends Phaser.Scene {
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
-    this.comandi = new Comandi(interfaccia, { metaSinistra: true, mouseAttacca: true });
+    preparaJoystickStanze(this.pg.colore);
+    document.documentElement.style.setProperty('--opacita-comandi', String(JOYSTICK_STANZE.opacita));
+    this.comandi = new Comandi(interfaccia, {
+      metaSinistra: true, mouseAttacca: true, classe: 'joystick-stanze',
+      arte: { base: ARTE_JOYSTICK.movimentoBase, pomello: ARTE_JOYSTICK.movimentoPomello },
+    });
     this.creaInterfaccia(interfaccia);
     this.attacco = new AttaccoATasto(this, this.radice, this.effetti, () => this.fermo(), (cx, cy) => {
       const px = misureHud().px, cam = this.cameras.main;
       return { x: cam.scrollX + cx / px, y: cam.scrollY + cy / px };
     }, () => this.corpo(), (verso) => this.mira(verso), (angolo) => this.colpisci(angolo));
+    this.abilita = new AbilitaStanza(this, this.radice, this.pg.colore, () => this.fermo());
     this.disponi();
     this.controllaVerso();
 
@@ -162,6 +180,8 @@ export class Stanze extends Phaser.Scene {
       window.removeEventListener('resize', this.ridisponi);
       this.comandi.distruggi();
       this.attacco.distruggi();
+      this.abilita.distruggi();
+      this.anims.globalTimeScale = 1;
       this.radice.remove();
     });
     this.disegna(0);
@@ -178,13 +198,21 @@ export class Stanze extends Phaser.Scene {
       this.disegna(0);
       return;
     }
-    this.accumulo = Math.min(this.accumulo + delta, RITARDO_MASSIMO_MS);
+    // l'attimo al rallentatore della Grazia: il gioco (logica, effetti, animazioni) va più piano per qualche decimo di secondo vero
+    let scala = 1;
+    if (this.rallentatore > 0) {
+      this.rallentatore -= delta / 1000;
+      scala = this.rallentatore > 0 ? GRAZIA_STANZA.rallentatore.scala : 1;
+    }
+    this.anims.globalTimeScale = scala;
+    const tempo = delta * scala;
+    this.accumulo = Math.min(this.accumulo + tempo, RITARDO_MASSIMO_MS);
     while (this.accumulo >= PASSO_MS) {
       this.passo(PASSO);
       this.accumulo -= PASSO_MS;
     }
-    this.effetti.aggiorna(delta / 1000, this.x, this.y - COLPI.corpo);
-    this.disegna(delta / 1000);
+    this.effetti.aggiorna(tempo / 1000, this.x, this.y - COLPI.corpo);
+    this.disegna(tempo / 1000);
   }
 
   /** Il tocco breve e J: verso il nemico più vicino entro ATTACCO.miraMassima (dai piedi ai piedi). */
@@ -200,16 +228,21 @@ export class Stanze extends Phaser.Scene {
 
   /** Il colpo della Lanterna è partito: ferisce i nemici dentro l'arco (in Grazia fa più male). */
   private colpisci(angolo: number): void {
-    const danno = ATTACCO.danno * (1 + (this.grazia > 0 ? GRAZIA.danno : 0));
-    this.nemici.colpisci(this.x, this.y, angolo, ATTACCO.raggio, ATTACCO.ampiezza, danno);
+    const presi = this.nemici.colpisci(this.x, this.y, angolo, ATTACCO.raggio, ATTACCO.ampiezza, ATTACCO.danno * this.bonusGrazia());
+    this.abilita.colpo(presi); // l'abilità si carica solo così
   }
 
-  /** Il Lampionaio subisce un colpo (se non è invulnerabile): lampo, scossa, vibrazione; a zero salute cade. */
+  /** Il moltiplicatore del danno: in Grazia più alto. */
+  private bonusGrazia(): number {
+    return 1 + (this.grazia > 0 ? this.statGrazia.danno : 0);
+  }
+
+  /** Il Lampionaio subisce un colpo (se non è in Quiete): lampo, scossa, vibrazione; poi la Quiete; a zero salute cade. */
   private ferisci(danno: number): void {
-    if (this.invulnerabile > 0 || this.morto) return;
+    if (this.inQuiete > 0 || this.morto) return;
     const C = COMBATTIMENTO_STANZA;
     this.ferite++;
-    this.invulnerabile = C.invulnerabilita;
+    this.inQuiete = this.quiete;
     this.lampoFerita = C.lampo;
     this.effetti.scuoti(C.scossa.forza, C.scossa.durata);
     suona('danno');
@@ -230,7 +263,8 @@ export class Stanze extends Phaser.Scene {
 
   /** Schivata perfetta: parte la Grazia (più danno e più velocità per qualche secondo; una nuova non accorcia quella in corso). */
   iniziaGrazia(): void {
-    this.grazia = Math.max(this.grazia, GRAZIA.durata);
+    this.grazia = Math.max(this.grazia, this.statGrazia.durata);
+    this.rallentatore = GRAZIA_STANZA.rallentatore.durata; // un attimo al rallentatore: si sente che è riuscita
     this.scrittaVita = COMBATTIMENTO_STANZA.scritta.durata;
     suona('speciale');
     vibra('leggera');
@@ -279,12 +313,12 @@ export class Stanze extends Phaser.Scene {
     }
     this.orologio += dt;
     if (this.grazia > 0) this.grazia -= dt;
-    if (this.invulnerabile > 0) this.invulnerabile -= dt;
+    if (this.inQuiete > 0) this.inQuiete -= dt;
     if (this.lampoFerita > 0) this.lampoFerita -= dt;
     if (this.scrittaVita > 0) this.scrittaVita -= dt;
     this.comandi.aggiorna();
     const dx = this.comandi.dx, dy = this.comandi.dy;
-    const passo = this.velocita * (1 + (this.grazia > 0 ? GRAZIA.velocita : 0)) * dt;
+    const passo = this.velocita * (1 + (this.grazia > 0 ? this.statGrazia.velocita : 0)) * dt;
     this.inMoto = dx !== 0 || dy !== 0;
     if (dx < 0) this.versoSinistra = true;
     else if (dx > 0) this.versoSinistra = false;
@@ -298,7 +332,11 @@ export class Stanze extends Phaser.Scene {
     this.x = Phaser.Math.Clamp(this.x + dx * passo, a.x0, a.x1);
     this.y = Phaser.Math.Clamp(this.y + dy * passo, a.y0, a.y1);
     this.attacco.aggiorna(dt, this.guardaX, this.guardaY);
-    // i nemici: il colpo più forte che arriva in questo passo, e le schivate perfette
+    // l'abilità (il cerchio segue il Lampionaio e rallenta chi c'è dentro), poi i nemici: il colpo più forte che arriva
+    // in questo passo e le schivate perfette (finestra e sfioro vengono dalla Grazia del Lampionaio)
+    this.abilita.aggiorna(dt, this.x, this.y, this.nemici, ABILITA.cerchioDiLuce.danno * this.bonusGrazia());
+    this.nemici.finestra = this.statGrazia.finestra;
+    this.nemici.sfioro = this.statGrazia.sfioro;
     const danno = this.nemici.aggiorna(dt, this.x, this.y);
     if (danno > 0) this.ferisci(danno);
     if (this.nemici.schivate > 0) {
@@ -330,17 +368,18 @@ export class Stanze extends Phaser.Scene {
     const colpo = this.attacco.posa > 0, sl = colpo ? ATTACCO.slancio : 0;
     this.giocatore.setPosition(px + Math.round(this.attacco.dx * sl), py + Math.round(this.attacco.dy * sl)).setFlipX(colpo ? this.attacco.dx < 0 : this.versoSinistra);
     this.anima(this.morto ? 'idle' : colpo ? 'attack' : this.inMoto && !this.fermo() ? 'walk' : 'idle');
-    // ferito: lampo bianco, poi lampeggia finché è invulnerabile; in Grazia si illumina a lampi; caduto: steso e scuro
+    // ferito: lampo bianco, poi lampeggia finché è in Quiete; in Grazia si illumina a lampi; caduto: steso e scuro
     const C = COMBATTIMENTO_STANZA;
     this.giocatore.setAngle(this.morto ? (this.versoSinistra ? 90 : -90) : 0);
-    this.giocatore.setVisible(this.morto || this.invulnerabile <= 0 || Math.floor(this.orologio * C.lampeggio) % 2 === 0);
+    this.giocatore.setVisible(this.morto || this.inQuiete <= 0 || Math.floor(this.orologio * C.lampeggio) % 2 === 0);
     if (this.morto) this.giocatore.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
     else if (this.lampoFerita > 0) this.giocatore.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-    else if (this.grazia > 0 && Math.floor(this.orologio * GRAZIA.lampi) % 2 === 0) this.giocatore.setTint(GRAZIA.alone).setTintMode(Phaser.TintModes.ADD);
+    else if (this.grazia > 0 && Math.floor(this.orologio * GRAZIA_STANZA.lampi) % 2 === 0) this.giocatore.setTint(GRAZIA_STANZA.alone).setTintMode(Phaser.TintModes.ADD);
     else this.giocatore.clearTint();
     this.scrittaGrazia.setPosition(px, py - C.scritta.sopra).setVisible(this.scrittaVita > 0);
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto);
     this.nemici.disegna();
+    this.abilita.disegna(px, py - COLPI.corpo);
     this.attacco.disegna();
     const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
     const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);
@@ -403,19 +442,7 @@ export class Stanze extends Phaser.Scene {
     this.pannelloPausa.style.backgroundImage = `url(${retino(12)})`;
     const riprendi = this.tastoScritta('Riprendi', () => this.riprendi());
     const menu = this.tastoScritta('Menu', () => this.scene.start('Menu'));
-    // impostazione del giocatore: grandezza dei tasti (oggi il joystick d'attacco), salvata sul dispositivo
-    this.valoreGrandezza = document.createElement('span');
-    const grandezza = document.createElement('div');
-    grandezza.className = 'stanze-impostazione';
-    const cambia = (passo: number): void => {
-      impostaGrandezzaTasti(AttaccoATasto.ingrandimento(misureHud()) + passo);
-      this.disponi();
-    };
-    const riga = document.createElement('div');
-    riga.className = 'stanze-riga';
-    riga.append(this.tastoScritta('-', () => cambia(-1)), this.valoreGrandezza, this.tastoScritta('+', () => cambia(1)));
-    grandezza.append(this.scrittaPixel('Grandezza dei tasti', 'stanze-etichetta'), riga);
-    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), riprendi, grandezza, menu);
+    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), riprendi, menu);
     this.avvisoRuota = document.createElement('div');
     this.avvisoRuota.className = 'stanze-ruota';
     this.avvisoRuota.hidden = true;
@@ -471,13 +498,7 @@ export class Stanze extends Phaser.Scene {
     if (!this.radice) return;
     const m = misureHud(), b = bordiHud(m), { lato, ingrandimento: z } = STANZA.pausa;
     this.attacco?.disponi(m, b);
-    if (this.attacco) {
-      const testo = `× ${AttaccoATasto.ingrandimento(m)}`;
-      if (this.valoreGrandezza.dataset.testo !== testo) {
-        this.valoreGrandezza.dataset.testo = testo;
-        this.valoreGrandezza.replaceChildren(this.scrittaPixel(testo, ''));
-      }
-    }
+    if (this.attacco) this.abilita?.disponi(m, this.attacco.riquadro);
     this.pannelloPausa.style.backgroundSize = this.pannelloFine.style.backgroundSize = `${4 * m.px}px ${4 * m.px}px`;
     this.barra?.scala(ingr('salute', m));
     // pulsante piccolo, ma l'area di tocco arriva comunque a TOCCO_MINIMO punti (regola dei 44 punti)
@@ -500,6 +521,8 @@ export class Stanze extends Phaser.Scene {
       else this.apriPausa();
     } else if (e.code === 'KeyJ') {
       if (!this.fermo()) this.attacco.automatico();
+    } else if (e.code === 'Space') {
+      this.abilita.usa();
     } else if (e.code === 'KeyM') {
       impostaAudio(!audioAttivo());
     } else {

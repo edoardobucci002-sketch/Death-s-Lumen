@@ -265,7 +265,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const st = stanza();
     if (!st) {
       return [
-        el('p', 'lab-nota', 'Il gioco a stanze, fetta verticale fino al passo 4: una stanza chiusa da muri, il Lampionaio con la Lanterna a tasto, Ricaduti e Cantori a ondate, la Grazia dalla schivata perfetta. In orizzontale: sul telefono in verticale chiede di ruotarlo.'),
+        el('p', 'lab-nota', 'Il gioco a stanze, fetta verticale fino al passo 5 (abilità caricata colpendo): una stanza chiusa da muri, il Lampionaio con la Lanterna a tasto, Ricaduti e Cantori a ondate, la Grazia dalla schivata perfetta. In orizzontale: sul telefono in verticale chiede di ruotarlo.'),
         riga(tasto('Entra nella stanza', entra, 'acceso')),
       ];
     }
@@ -288,15 +288,24 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto(s.ondateAutomatiche ? 'Ondate automatiche: sì' : 'Ondate automatiche: no', f(() => st.lab.ondateAutomatiche(!s.ondateAutomatiche)), s.ondateAutomatiche ? 'acceso' : ''),
         tasto(`Rinascita del Ricaduto: ${rin}`, f(() => st.lab.rinascita(s.rinascita === null ? true : s.rinascita ? false : null)), s.rinascita !== null ? 'acceso' : ''),
       ),
-      el('p', 'lab-nota', 'Spegni le ondate automatiche e togli tutti per provare un nemico alla volta. Il Ricaduto si ferma vicino a te, a terra si riempie lo spicchio rosso (l\'avviso) e poi graffia; il Cantore resta lontano, a terra compare una linea fino al muro e poi lancia il grumo. Esci dallo spicchio all\'ultimo istante o fatti sfiorare dal grumo: parte la Grazia. «Rinascita: sempre» fa rialzare ogni Ricaduto battuto (una volta sola; un colpo mentre è a terra lo finisce). Numeri in Numeri → stanze → NEMICI_STANZA e ONDATA.'),
+      el('p', 'lab-nota', 'Spegni le ondate automatiche e togli tutti per provare un nemico alla volta. Il Ricaduto si ferma vicino a te, a terra si riempie lo spicchio rosso (l\'avviso) e poi graffia; il Cantore resta lontano, a terra compare una linea fino al muro e poi lancia il grumo. Esci dallo spicchio all\'ultimo istante o fatti sfiorare dal grumo: parte la Grazia. Ogni Ricaduto battuto resta a terra 1,5 s e non si può colpire; «Rinascita: sempre» lo fa rialzare sempre (una volta sola), «mai» lo fa sparire sempre. Numeri in Numeri → stanze → NEMICI_STANZA e ONDATA.'),
       titolo('Lampionaio'),
-      riga(el('span', 'lab-stato', `Salute ${s.salute}/${s.saluteMassima} · colpi subiti ${s.ferite} · schivate perfette ${s.schivate}${s.grazia > 0 ? ` · Grazia ancora ${s.grazia.toFixed(1)} s` : ''}`)),
+      riga(el('span', 'lab-stato', `Salute ${s.salute}/${s.saluteMassima} · Quiete ${s.quiete} s · colpi subiti ${s.ferite} · schivate perfette ${s.schivate}${s.grazia > 0 ? ` · Grazia ancora ${s.grazia.toFixed(1)} s` : ''}`)),
       riga(
         tasto(s.immortale ? 'Immortale: sì' : 'Immortale: no', f(() => st.lab.immortale(!s.immortale)), s.immortale ? 'acceso' : ''),
         tasto('Cura piena', f(() => st.lab.cura())),
         tasto('Salute a 1', f(() => st.lab.salute(1))),
         tasto('Grazia adesso', () => { st.lab.grazia(); mostra(false); }),
       ),
+      el('p', 'lab-nota', '«Grazia adesso» fa partire anche l\'attimo al rallentatore. Quiete e Grazia sono in Numeri → stanze → COMBATTIMENTO_STANZA e GRAZIA_STANZA.'),
+      titolo('Abilità (Cerchio di luce)'),
+      riga(el('span', 'lab-stato', `Carica ${Math.round(s.carica)}/${s.caricaPiena} · usata ${s.abilitaUsi} volte${s.abilitaAttiva > 0 ? ` · attiva ancora ${s.abilitaAttiva.toFixed(1)} s` : ''}`)),
+      riga(
+        tasto('Carica piena', f(() => st.lab.caricaAbilita(true))),
+        tasto('Carica vuota', f(() => st.lab.caricaAbilita(false))),
+        tasto('Usa adesso', () => { st.lab.caricaAbilita(true); mostra(false); st.lab.usaAbilita(); }),
+      ),
+      el('p', 'lab-nota', 'Si carica solo quando la Lanterna prende un nemico (10 per nemico, al massimo 20 a colpo, piena a 100). Piena, l\'icona si accende: tocca il pulsante accanto al joystick d\'attacco o premi Spazio. Numeri in Numeri → stanze → ABILITA_STANZA; raggio, danno e durata in Numeri → abilita.'),
       riga(tasto(s.fermo ? 'Stanza ferma: riprendi' : 'Stanza in corso: ferma', () => { st.lab.ferma(!s.fermo); ridisegna(); }, s.fermo ? 'acceso' : ''), tasto('Ricomincia (ridisegna con i numeri nuovi)', entra)),
       titolo('Prova i muri: porta il Lampionaio'),
       riga(vai('centro', 'Al centro'), vai('alto', 'Al muro in alto'), vai('basso', 'Al muro in basso'), vai('sinistra', 'Al muro a sinistra'), vai('destra', 'Al muro a destra'), vai('angolo', "Nell'angolo")),
