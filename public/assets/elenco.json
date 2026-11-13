@@ -380,10 +380,13 @@
       "categoria": "personaggi",
       "immagine": "assets/personaggi/Il_Lampionaio_ingame.png",
       "dati": "assets/personaggi/Il_Lampionaio_ingame.json",
-      "versioneFile": 5,
+      "versioneFile": 6,
       "tag": [
         "idle",
-        "walk"
+        "walk",
+        "attack",
+        "hurt",
+        "death"
       ]
     },
     {
