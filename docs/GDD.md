@@ -6,7 +6,7 @@ Il gioco **com'è oggi**: contenuti, regole e numeri attuali, gli stessi di `src
 
 Unità: le distanze sono in pixel di gioco, le velocità in pixel al secondo, i tempi in secondi.
 
-**Scala del mondo.** Gli sprite in gioco di Edoardo (V5) sono alti circa 80 px (nella v0 erano 34): ogni distanza e velocità della v0 è stata moltiplicata per 2,35. I valori di questo documento sono già convertiti.
+**Scala del mondo.** Gli sprite in gioco di Edoardo (V5) sono alti circa 80 px (nella v0 erano 34; il Lampionaio V6 del restyle ha il corpo alto circa 75 px e con l'asta arriva a 110, su una tela di 196 × 132): ogni distanza e velocità della v0 è stata moltiplicata per 2,35. I valori di questo documento sono già convertiti.
 
 ## 1. Il gioco in breve
 
@@ -755,7 +755,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 
 - **Telefono** (stile Brawl Stars, decisione di Edoardo del 12/11): un joystick d'attacco fisso in basso a destra, nella metà destra dello schermo, grande come il joystick di movimento. Un tocco breve colpisce il nemico più vicino entro 320 px; se non ce n'è, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando, il pomello segue il pollice fino al bordo della base, a terra compare la mira (il contorno dell'arco, color crema: l'arancione è degli avvisi a distanza) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro prima di lasciare, il colpo torna automatico. Durante la ricarica il joystick si scurisce.
 - **Computer**: clic sinistro verso il puntatore, J verso il nemico più vicino; il mouse non fa comparire il joystick (si cammina con WASD e le frecce) e il tasto tondo non si vede.
-- Un colpo chiesto durante la ricarica parte appena la ricarica finisce. Durante il colpo il Lampionaio si gira verso il colpo e si sporge di qualche pixel (segnaposto dell'animazione `attack`, che il gioco usa da sola quando Edoardo la disegna).
+- Un colpo chiesto durante la ricarica parte appena la ricarica finisce. Durante il colpo il Lampionaio si gira verso il colpo, si sporge di qualche pixel e fa l'animazione `attack` (dal V6 del 13/11: 5 fotogrammi, l'asta che spazza un arco di luce, tutti dentro gli 0,15 s del colpo; *da rivedere*). Lo sprite V6 ha anche `hurt` e `death`, che il gioco non usa ancora.
 
 | Valore dell'attacco | Numero | Note |
 | --- | --- | --- |
