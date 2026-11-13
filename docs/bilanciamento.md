@@ -42,6 +42,15 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 — Gioco a stanze: Quiete, rallentatore e abilità (proposte di Claude, *da rivedere*; il survivor non cambia)
+
+- **Quiete del Lampionaio 0,6 s** (prima «invulnerabilità», stesso valore). **Quiete dei nemici 0,2 s per arma**: più corta del ritmo del Cerchio di luce (0,25 s) e della ricarica della Lanterna (0,45 s), quindi oggi non toglie danni; conterà con gli Echi.
+- **Rallentatore della Grazia**: al 30% per 0,3 s veri, abbastanza da sentirlo senza rompere il ritmo.
+- **Abilità**: piena a 100, 10 per ogni nemico preso dalla Lanterna, al massimo 20 per colpo. Un Ricaduto (3 colpi) dà 30: il Cerchio di luce torna circa ogni 3–4 nemici battuti. Effetto del survivor senza cambi (216 px, 6 ogni 0,25 s per 5 s, −55% velocità).
+- **Ricaduto**: la rinascita resta 10%, ma il tiro si fa dopo 1,5 s a terra, per tutti.
+
+Nessuna simulazione: il bot non sa giocare a stanze. `npm run prova` passa.
+
 ### 13/11 — Gioco a stanze, passo 4: i primi numeri dei nemici (proposte di Claude, *da rivedere*; il survivor non cambia)
 
 Numeri nuovi, nessun ritocco: sono in `NEMICI_STANZA`, `ONDATA` e `COMBATTIMENTO_STANZA` (`src/data/stanze.ts`) e nel GDD, tabella «Valore dei nemici». Il criterio usato:
