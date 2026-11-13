@@ -4,6 +4,7 @@
  * mostrare la linea invisibile che divide i joystick. Passo 3: chiedere un colpo della Lanterna.
  * Passo 4: far comparire nemici, ondate, immortale, cura, Grazia, rinascita del Ricaduto, spostare il Lampionaio.
  * Passo 5: caricare e usare il Cerchio di luce. Passo 6: ripulire la stanza, attraversare una porta, aggiungere un Eco.
+ * Restyle del 13/11: ferire o far cadere il Lampionaio per vedere le animazioni hurt e death.
  */
 import { ABILITA_STANZA, STANZA } from '../data/stanze';
 import { ARMI_COMUNI } from '../data/armi';
@@ -128,6 +129,17 @@ export class LabStanze {
 
   grazia(): void {
     this.s.iniziaGrazia();
+  }
+
+  /** Un colpo da 10 al Lampionaio, anche in Quiete: si vede l'animazione hurt (non uccide: lascia almeno 1 di salute). */
+  ferita(): void {
+    this.s.ferisci(Math.min(10, Math.max(0, this.s.salute - 1)), true);
+  }
+
+  /** Il Lampionaio cade adesso (anche se è immortale): si vede l'animazione death, poi «Sei caduto». */
+  cadi(): void {
+    this.s.immortale = false;
+    this.s.ferisci(this.s.salute, true);
   }
 
   /** Rinascita del Ricaduto: true = sempre, false = mai, null = la probabilità normale. */

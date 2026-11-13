@@ -64,4 +64,9 @@ export const PIXELFX = {
   sepoltura: { gruppi: 8, fascia: 40, perno: [52, 71] as const },
   // Eclissi: 1,1 s a 12 fotogrammi al secondo, il centro della sfera nera cade sul nemico che reagisce (punto del foglio)
   eclissi: { centro: [83, 89] as const },
+  // Fendente della Lanterna nel gioco a stanze (decisione di Edoardo del 13/11, al posto dell'arco sottile): un foglio per
+  // misura della Lanterna [raggio, ampiezza in gradi] (Pixelfx_Fendente_136 …); il gioco prende quello col raggio più
+  // vicino all'area vera (da rivedere: con i bonus d'area il disegno può restare un po' più piccolo dell'area).
+  // In ogni foglio «direzioni» × «fotogrammi» in fila (0°, 22,5°, 45°), «passo» secondi l'uno; si carica solo quello in uso
+  fendente: { misure: [[136, 132], [160, 132], [183, 166]] as const, prefisso: 'Pixelfx_Fendente_', direzioni: 3, fotogrammi: 6, passo: 0.04 },
 } as const;

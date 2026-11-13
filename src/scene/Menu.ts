@@ -15,6 +15,7 @@ import { voce } from '../sistema/asset';
 import { FIRMA } from '../sistema/firma';
 import { leggiRecord } from '../sistema/record';
 import { TelaAnimata } from '../sistema/ritratto';
+import { SCHEDA_SELEZIONE } from '../data/hud';
 import { tempo } from '../sistema/hud';
 import { Cappella } from '../sistema/cappella';
 import { carica, salva, type Salvataggio } from '../sistema/salvataggio';
@@ -73,8 +74,10 @@ export class Menu extends Phaser.Scene {
       this.mostra(this.scelto);
     });
     window.addEventListener('keydown', this.tasto);
+    window.addEventListener('resize', this.ridimensiona);
     this.events.once('shutdown', () => {
       window.removeEventListener('keydown', this.tasto);
+      window.removeEventListener('resize', this.ridimensiona);
       this.fermaTele();
       this.radice.remove();
       this.cappella.radice.remove();
@@ -105,6 +108,24 @@ export class Menu extends Phaser.Scene {
       new TelaAnimata(tele[1], this, p.sprite, 'idle'),
       new TelaAnimata(tele[2], this, p.sprite, 'walk'),
     ];
+    this.adattaTele();
+  }
+
+  private readonly ridimensiona = (): void => this.adattaTele();
+
+  /** Ingrandisce ritratto e sprite della scheda di un numero intero di pixel veri, fino all'altezza di SCHEDA_SELEZIONE. */
+  private adattaTele(): void {
+    const tele = this.radice.querySelectorAll<HTMLCanvasElement>('.scheda canvas');
+    if (tele.length < 3) return;
+    const S = SCHEDA_SELEZIONE;
+    const grande = matchMedia('(min-width: 700px)').matches && !matchMedia('(orientation: landscape) and (max-height: 500px)').matches;
+    const dpr = window.devicePixelRatio || 1;
+    tele.forEach((t, k) => {
+      if (!t.height) return;
+      const massima = k === 0 ? (grande ? S.ritratto.grande : S.ritratto.piccolo) : S.sprite;
+      const z = Math.max(1, Math.floor((massima * dpr) / t.height));
+      t.style.width = `${(t.width * z) / dpr}px`;
+    });
   }
 
   private scheda(p: Personaggio): string {

@@ -110,6 +110,9 @@ export class Stanze extends Phaser.Scene {
   private fermoColpo = 0; // fermo d'impatto del Lampionaio: secondi in cui non si muove
   private impatto!: Impatto;
   private lampoFerita = 0;
+  private feritaAnim = 0; // secondi dell'animazione hurt rimasti (0 se lo sprite non ce l'ha)
+  private colpiVisti = 0;
+  private durataMossa = 0; // secondi dell'animazione attack (0 se lo sprite non ce l'ha) // per far ripartire l'animazione attack a ogni colpo nuovo
   private attesaFine = 0;
   private orologio = 0;
   private scrittaVita = 0;
@@ -152,7 +155,7 @@ export class Stanze extends Phaser.Scene {
     this.morto = this.immortale = false;
     this.ondateAutomatiche = true;
     this.fermoColpo = 0;
-    this.grazia = this.inQuiete = this.rallentatore = this.lampoFerita = this.attesaFine = this.orologio = this.scrittaVita = 0;
+    this.grazia = this.inQuiete = this.rallentatore = this.lampoFerita = this.feritaAnim = this.attesaFine = this.orologio = this.scrittaVita = 0;
     this.quiete = COMBATTIMENTO_STANZA.quiete;
     const G = GRAZIA_STANZA;
     Object.assign(this.statGrazia, { durata: G.durata, danno: G.danno, velocita: G.velocita, finestra: G.finestra, sfioro: G.sfioro });
@@ -174,6 +177,7 @@ export class Stanze extends Phaser.Scene {
       this.giocatore.setOrigin(0.5, 1);
     }
     this.anima('idle');
+    this.durataMossa = this.durataAnim('attack');
     this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
     this.buio = this.add.image(0, 0, CHIAVI_BUIO[1]).setOrigin(0).setScrollFactor(0).setDepth(PROFONDITA.buio);
     this.alone = this.add.image(0, 0, CHIAVI_ALONE[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD);
@@ -221,6 +225,7 @@ export class Stanze extends Phaser.Scene {
     };
     this.comparsa = new ComparsaCarte(this);
     this.ricalcola();
+    this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza);
     this.disponi();
     this.controllaVerso();
 
@@ -327,15 +332,20 @@ export class Stanze extends Phaser.Scene {
     this.attacco.ricarica = ATTACCO.ricarica * (liv.ricarica / L[0].ricarica) * b.ricarica;
     this.attacco.raggio = ATTACCO.raggio * (liv.raggio / L[0].raggio) * (1 + area);
     this.attacco.ampiezza = ATTACCO.ampiezza * (liv.ampiezza / L[0].ampiezza);
+    // la mossa dura quanto l'animazione attack, se lo sprite ce l'ha; il colpo ferisce quando l'asta cala
+    const mossa = this.durataMossa;
+    this.attacco.durataPosa = mossa > 0 ? mossa : ATTACCO.posa;
+    this.attacco.anticipo = mossa > 0 ? Math.min(ATTACCO.anticipo, mossa) : 0;
   }
 
-  /** Il Lampionaio subisce un colpo (se non è in Quiete): lampo, scossa, vibrazione; poi la Quiete; a zero salute cade. */
-  private ferisci(danno: number): void {
-    if (this.inQuiete > 0 || this.morto) return;
+  /** Il Lampionaio subisce un colpo (se non è in Quiete, o sempre con «forza»): lampo, scossa, vibrazione; poi la Quiete; a zero salute cade. */
+  ferisci(danno: number, forza = false): void {
+    if ((this.inQuiete > 0 && !forza) || this.morto) return;
     const C = COMBATTIMENTO_STANZA;
     this.ferite++;
     this.inQuiete = this.quiete;
     this.lampoFerita = C.lampo;
+    this.feritaAnim = this.durataAnim('hurt');
     this.effetti.scuoti(C.scossa.forza, C.scossa.durata);
     suona('danno');
     vibra('media');
@@ -409,6 +419,7 @@ export class Stanze extends Phaser.Scene {
     if (this.grazia > 0) this.grazia -= dt;
     if (this.inQuiete > 0) this.inQuiete -= dt;
     if (this.lampoFerita > 0) this.lampoFerita -= dt;
+    if (this.feritaAnim > 0) this.feritaAnim -= dt;
     if (this.scrittaVita > 0) this.scrittaVita -= dt;
     this.ricalcola();
     if (this.rigenerazione > 0) this.salute = Math.min(this.saluteMassima, this.salute + this.rigenerazione * dt);
@@ -483,6 +494,7 @@ export class Stanze extends Phaser.Scene {
     if (d) this.percorso.scegli(d);
     else this.percorso.fase = this.percorso.ultima ? 'fine' : 'porte';
     this.ricalcola();
+    this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza); // la carta può aver cambiato la Lanterna
     if (this.percorso.fase === 'fine') {
       this.mostraFineFetta();
       return;
@@ -560,12 +572,18 @@ export class Stanze extends Phaser.Scene {
     // durante il colpo il personaggio guarda dove colpisce e si sporge un poco (segnaposto dell'animazione attack)
     const colpo = this.attacco.posa > 0, sl = colpo ? ATTACCO.slancio : 0;
     this.giocatore.setPosition(px + Math.round(this.attacco.dx * sl), py + Math.round(this.attacco.dy * sl)).setFlipX(colpo ? this.attacco.dx < 0 : this.versoSinistra);
-    this.anima(this.morto ? 'idle' : colpo ? 'attack' : this.inMoto && !this.fermo() ? 'walk' : 'idle');
-    // ferito: lampo bianco, poi lampeggia finché è in Quiete; in Grazia si illumina a lampi; caduto: steso e scuro
+    // caduto: l'animazione death una volta sola; ferito: hurt, che interrompe anche il colpo
+    const cade = this.morto && this.haAnim('death');
+    const nuovo = this.attacco.colpi !== this.colpiVisti;
+    this.colpiVisti = this.attacco.colpi;
+    const tag = this.morto ? (cade ? 'death' : 'idle') : this.feritaAnim > 0 ? 'hurt' : colpo ? 'attack' : this.inMoto && !this.fermo() ? 'walk' : 'idle';
+    this.anima(tag, tag === 'attack' && nuovo);
+    // ferito: lampo bianco, poi lampeggia finché è in Quiete; in Grazia si illumina a lampi; caduto senza death: steso e scuro
     const C = COMBATTIMENTO_STANZA;
-    this.giocatore.setAngle(this.morto ? (this.versoSinistra ? 90 : -90) : 0);
+    this.giocatore.setAngle(this.morto && !cade ? (this.versoSinistra ? 90 : -90) : 0);
     this.giocatore.setVisible(this.morto || this.inQuiete <= 0 || Math.floor(this.orologio * C.lampeggio) % 2 === 0);
-    if (this.morto) this.giocatore.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
+    if (this.morto && !cade) this.giocatore.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
+    else if (this.morto) this.giocatore.clearTint();
     else if (this.lampoFerita > 0) this.giocatore.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     else if (this.grazia > 0 && Math.floor(this.orologio * GRAZIA_STANZA.lampi) % 2 === 0) this.giocatore.setTint(GRAZIA_STANZA.alone).setTintMode(Phaser.TintModes.ADD);
     else this.giocatore.clearTint();
@@ -582,10 +600,28 @@ export class Stanze extends Phaser.Scene {
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
   }
 
-  /** Avvia un'animazione; se lo sprite non ha quel tag, resta su idle. */
-  private anima(tag: string): void {
-    const chiave = `${this.chiaveSprite}:${tag}`;
-    this.giocatore.play(this.anims.exists(chiave) ? chiave : `${this.chiaveSprite}:idle`, true);
+  /** Avvia un'animazione; se lo sprite non ha quel tag, resta su idle. death e attack si giocano una volta sola. */
+  private anima(tag: string, daCapo = false): void {
+    const chiave = this.haAnim(tag) ? `${this.chiaveSprite}:${tag}` : `${this.chiaveSprite}:idle`;
+    const una = tag === 'death' || tag === 'attack';
+    const a = this.giocatore.anims;
+    // già in corso, oppure finita e ferma sull'ultimo fotogramma (death, attack): non si ricomincia
+    if (!daCapo && a.currentAnim?.key === chiave && (a.isPlaying || una)) return;
+    this.giocatore.play({ key: chiave, repeat: una ? 0 : -1 });
+  }
+
+  /** Lo sprite del personaggio ha il tag di Aseprite «tag»? */
+  private haAnim(tag: string): boolean {
+    return this.anims.exists(`${this.chiaveSprite}:${tag}`);
+  }
+
+  /** Quanto dura un'animazione del personaggio, in secondi (0 se lo sprite non ha quel tag). */
+  durataAnim(tag: string): number {
+    const a = this.anims.get(`${this.chiaveSprite}:${tag}`);
+    if (!a) return 0;
+    let ms = 0;
+    for (const f of a.frames) ms += f.duration;
+    return ms / 1000;
   }
 
   /** «Sei caduto»: quanti nemici sono stati battuti, Ricomincia (la stessa stanza da capo) e Menu. */

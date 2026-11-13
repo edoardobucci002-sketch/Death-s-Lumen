@@ -40,6 +40,13 @@ export const INGRANDIMENTO: Record<string, number> = {
  */
 export const PUNTI_MINIMI_PER_PIXEL = 0.6;
 /**
+ * Scheda della selezione: altezza massima, in punti, del ritratto e dei due sprite in gioco. Ognuno si ingrandisce
+ * del numero intero di pixel veri dello schermo che ci sta (src/scene/Menu.ts): così i ritratti con tele diverse
+ * (224×288 dei V3, 260×387 del Lampionaio V4) restano pixel perfect. «grande» vale su schermi larghi almeno 700 punti,
+ * tranne il telefono in orizzontale.
+ */
+export const SCHEDA_SELEZIONE = { ritratto: { piccolo: 288, grande: 576 }, sprite: 96 };
+/**
  * L'HUD della partita (barre, caselle, abilità, pausa, avvisi) deve restare leggibile con il dito e l'occhio:
  * su un telefono in verticale un pixel di gioco è ~0,67 punti e le barre risultavano minuscole.
  * Questi gruppi raddoppiano finché un pixel di gioco è sotto questa soglia (computer e tablet non cambiano).

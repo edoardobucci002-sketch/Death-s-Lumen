@@ -370,7 +370,7 @@
       "categoria": "personaggi",
       "immagine": "assets/personaggi/Il_Lampionaio.png",
       "dati": "assets/personaggi/Il_Lampionaio.json",
-      "versioneFile": 3,
+      "versioneFile": 4,
       "tag": [
         "idle"
       ]
@@ -526,6 +526,30 @@
       "categoria": "effetti",
       "immagine": "assets/effetti/Pixelfx_Eclissi.png",
       "dati": "assets/effetti/Pixelfx_Eclissi.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Fendente_136",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Fendente_136.png",
+      "dati": "assets/effetti/Pixelfx_Fendente_136.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Fendente_160",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Fendente_160.png",
+      "dati": "assets/effetti/Pixelfx_Fendente_160.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Fendente_183",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Fendente_183.png",
+      "dati": "assets/effetti/Pixelfx_Fendente_183.json",
       "versioneFile": 0,
       "tag": []
     },

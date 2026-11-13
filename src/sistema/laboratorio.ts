@@ -306,9 +306,11 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Cura piena', f(() => st.lab.cura())),
         tasto('Salute a 1', f(() => st.lab.salute(1))),
         tasto('Grazia adesso', () => { st.lab.grazia(); mostra(false); }),
+        tasto('Ferito', () => { st.lab.ferita(); mostra(false); }),
+        tasto('Cade', () => { st.lab.cadi(); mostra(false); }),
         tasto(s.fermoImpatto ? 'Fermo d\'impatto: sì' : 'Fermo d\'impatto: no', f(() => st.lab.fermoImpatto(!s.fermoImpatto)), s.fermoImpatto ? 'acceso' : ''),
       ),
-      el('p', 'lab-nota', '«Grazia adesso» fa partire anche l\'attimo al rallentatore. Il fermo d\'impatto ferma per un attimo il Lampionaio e il nemico colpito: spegnilo per sentire la differenza (vale finché non esci dalla stanza; numeri in Numeri → stanze → IMPATTO). Quiete e Grazia sono in Numeri → stanze → COMBATTIMENTO_STANZA e GRAZIA_STANZA.'),
+      el('p', 'lab-nota', '«Ferito» e «Cade» chiudono il pannello e mostrano le animazioni hurt e death (Ferito toglie 10 di salute ma non uccide). «Grazia adesso» fa partire anche l\'attimo al rallentatore. Il fermo d\'impatto ferma per un attimo il Lampionaio e il nemico colpito: spegnilo per sentire la differenza (vale finché non esci dalla stanza; numeri in Numeri → stanze → IMPATTO). Quiete e Grazia sono in Numeri → stanze → COMBATTIMENTO_STANZA e GRAZIA_STANZA.'),
       titolo('Abilità (Cerchio di luce)'),
       riga(el('span', 'lab-stato', `Carica ${s.carica}/${s.caricaPiena} colpi · usata ${s.abilitaUsi} volte${s.abilitaAttiva > 0 ? ` · attiva ancora ${s.abilitaAttiva.toFixed(1)} s` : ''}`)),
       riga(

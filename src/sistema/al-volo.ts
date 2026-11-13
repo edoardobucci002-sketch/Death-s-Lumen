@@ -1,7 +1,7 @@
 /*
- * Sprite caricati al volo: le Pozze pixelfx (una per raggio) non si caricano all'avvio. Si carica solo la misura
- * che serve adesso; quando arriva, la scena sposta su di lei le pozze in campo e la misura vecchia si scarica
- * (immagine, dati e animazione), così in memoria video c'è sempre un foglio solo.
+ * Sprite caricati al volo: le Pozze pixelfx (una per raggio) e i Fendenti della Lanterna (uno per misura) non si
+ * caricano all'avvio. Si carica solo la misura che serve adesso; quando arriva, la scena sposta su di lei gli effetti
+ * in campo e la misura vecchia si scarica (immagine, dati e animazione), così in memoria video c'è un foglio per famiglia.
  */
 import type Phaser from 'phaser';
 import { PIXELFX } from '../data/effetti';
@@ -10,11 +10,14 @@ interface Voce { chiave: string; immagine: string; dati: string }
 
 /** Le chiavi che Avvio.ts non deve caricare all'inizio. */
 export function caricataAlVolo(chiave: string): boolean {
-  return chiave.startsWith(PIXELFX.pozza.prefisso);
+  return chiave.startsWith(PIXELFX.pozza.prefisso) || chiave.startsWith(PIXELFX.fendente.prefisso);
 }
 
+interface Stato { caricata: string; inArrivo: string }
 
-const stato = { caricata: '', inArrivo: '' };
+
+const stato: Stato = { caricata: '', inArrivo: '' };
+const statoFendente: Stato = { caricata: '', inArrivo: '' };
 
 /** La misura caricata adesso ('' se nessuna). */
 export function pozzaCaricata(): string {
@@ -26,6 +29,20 @@ export function pozzaCaricata(): string {
  * cambia(vecchia, nuova) per spostare le pozze in campo, poi scarica la vecchia.
  */
 export function chiediPozza(scena: Phaser.Scene, chiave: string, cambia: (vecchia: string, nuova: string) => void): void {
+  chiedi(stato, scena, chiave, cambia);
+}
+
+/** Come chiediPozza, per il Fendente della Lanterna: «cambia» nasconde i fendenti in volo della misura vecchia. */
+export function chiediFendente(scena: Phaser.Scene, chiave: string, cambia: (vecchia: string, nuova: string) => void): void {
+  chiedi(statoFendente, scena, chiave, cambia);
+}
+
+/** Il Fendente caricato adesso ('' se nessuno). */
+export function fendenteCaricato(): string {
+  return statoFendente.caricata;
+}
+
+function chiedi(stato: Stato, scena: Phaser.Scene, chiave: string, cambia: (vecchia: string, nuova: string) => void): void {
   if (stato.caricata === chiave || stato.inArrivo === chiave) return;
   if (scena.textures.exists(chiave)) {
     // già in memoria (per esempio dopo una partita nuova): basta segnarla

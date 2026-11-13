@@ -290,13 +290,14 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
   display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 12px; min-width: 0;
   padding: 14px; background: var(--pannello); border: 2px solid var(--accento);
 }
-.scheda-ritratto canvas { display: block; width: 224px; image-rendering: pixelated; }
+/* la larghezza di ritratto e sprite la decide Menu.ts (adattaTele), a ingrandimento intero */
+.scheda-ritratto canvas { display: block; image-rendering: pixelated; }
 .scheda-testi { display: grid; gap: 8px; min-width: 0; width: 100%; }
 .scheda h2 { margin: 0; font: 400 30px var(--f-titolo); color: var(--accento); }
 .scheda-motto { margin: 0; font: italic 18px var(--f-corsivo); color: var(--pergamena); }
 .scheda-bio { margin: 0; font-size: 17px; line-height: 1.35; color: var(--tenue); }
 .scheda-sprite { display: flex; gap: 10px; }
-.scheda-sprite canvas { width: 96px; image-rendering: pixelated; background: #0d0b09; border: 1px solid var(--linea); }
+.scheda-sprite canvas { image-rendering: pixelated; background: #0d0b09; border: 1px solid var(--linea); }
 .scheda-doti { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
 .scheda-doti dt { font: italic 14px var(--f-corsivo); color: var(--tenue); }
 .scheda-doti dd { margin: 2px 0 0; display: flex; align-items: center; gap: 6px; font: 400 17px var(--f-titolo); color: var(--pergamena); }
@@ -369,13 +370,11 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .cappella-messaggio { color: var(--accento) !important; }
 @media (min-width: 700px) {
   .scheda { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: start; }
-  .scheda-ritratto canvas { width: 448px; }
 }
 @media (orientation: landscape) and (max-height: 500px) {
   #interfaccia > .menu { gap: 8px; }
   .menu-testata p { display: none; }
   .scheda { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: start; }
-  .scheda-ritratto canvas { width: 224px; }
 }
 
 /* Gioco a stanze (src/scene/Stanze.ts, pivot del 12/11): pausa provvisoria e avviso di rotazione. Misure dal codice, in pixel di gioco */

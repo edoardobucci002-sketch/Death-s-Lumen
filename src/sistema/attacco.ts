@@ -4,7 +4,7 @@
  * disegnato dal codice in src/sistema/joystick-stanze.ts: un disco nel colore del personaggio con una fiammella): un tocco colpisce il nemico più vicino (se non ce n'è a portata, dove guarda il
  * personaggio); trascinando il pomello segue il pollice, compare la mira a terra e lasciando il dito il colpo parte
  * in quella direzione. Su computer: clic sinistro verso il puntatore, J verso il nemico più vicino (entro ATTACCO.miraMassima).
- * Il colpo della Lanterna è un arco di luce davanti al personaggio (lo stesso effetto del survivor). I numeri sono in
+ * Il colpo della Lanterna è un fendente di luce davanti al personaggio (pixelfx, src/sistema/effetti.ts → fendente). I numeri sono in
  * ATTACCO (src/data/stanze.ts). La richiesta di colpo aspetta la fine della ricarica: si può premere un attimo prima.
  */
 import Phaser from 'phaser';
@@ -17,7 +17,13 @@ import { ARTE_JOYSTICK } from './joystick-stanze';
 
 export class AttaccoATasto {
   attesa = 0; // secondi prima del prossimo colpo
-  posa = 0; // secondi in cui il personaggio resta girato verso il colpo
+  posa = 0; // secondi in cui il personaggio resta girato verso il colpo (la mossa attack)
+  // la mossa: quanto dura e dopo quanto l'asta cala e ferisce. La scena li prende dall'animazione attack dello sprite;
+  // senza animazione la posa è ATTACCO.posa e il colpo parte subito
+  durataPosa: number = ATTACCO.posa;
+  anticipo = 0;
+  private carica = 0; // secondi prima che il colpo chiesto ferisca (0: nessun colpo in arrivo)
+  private angolo = 0; // direzione del colpo in arrivo, in radianti
   dx = 1; // direzione dell'ultimo colpo, lunga 1
   dy = 0;
   colpi = 0; // colpi partiti (per il LAB e le prove)
@@ -92,6 +98,7 @@ export class AttaccoATasto {
   aggiorna(dt: number, gx: number, gy: number): void {
     if (this.attesa > 0) this.attesa -= dt;
     if (this.posa > 0) this.posa -= dt;
+    if (this.carica > 0 && (this.carica -= dt) <= 0) this.scocca();
     if (!this.richiesta || this.attesa > 0) return;
     this.richiesta = false;
     // automatico: verso il nemico più vicino; se non ce n'è, dove guarda il personaggio
@@ -102,14 +109,22 @@ export class AttaccoATasto {
       this.dx = gx;
       this.dy = gy;
     }
+    if (this.carica > 0) this.scocca(); // la ricarica è più corta della carica: il colpo di prima ferisce subito
     this.attesa = this.ricarica;
-    this.posa = ATTACCO.posa;
+    this.posa = this.durataPosa;
     this.colpi++;
+    this.angolo = Math.atan2(this.dy, this.dx);
+    this.carica = this.anticipo;
+    if (this.carica <= 0) this.scocca();
+  }
+
+  /** L'asta cala: il fendente di luce, il suono e i nemici feriti dentro l'arco. */
+  private scocca(): void {
+    this.carica = 0;
     const c = this.corpo();
-    const angolo = Math.atan2(this.dy, this.dx);
-    this.effetti.arco(c.x, c.y, angolo, Math.round(this.raggio), this.ampiezza);
+    this.effetti.fendente(c.x, c.y, this.angolo, Math.round(this.raggio), this.ampiezza);
     suona('colpo');
-    this.colpito(angolo);
+    this.colpito(this.angolo);
   }
 
   /** Punta dx, dy verso il nemico più vicino; false se non ce n'è a portata. */
@@ -169,6 +184,7 @@ export class AttaccoATasto {
   /** Lascia il dito (pausa, telefono da ruotare): nessun colpo parte. */
   lascia(): void {
     this.dito = null;
+    this.carica = 0;
     this.mirando = false;
     this.richiesta = false;
     this.pomello.style.transform = '';

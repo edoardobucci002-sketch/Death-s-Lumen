@@ -48,7 +48,10 @@ export const ATTACCO = {
   ampiezza: 132, // gradi dell'arco
   danno: 18,
   miraMassima: 320, // il tocco breve (e J) mira al nemico più vicino entro questa distanza; se no, dove guarda il personaggio
-  posa: 0.15, // secondi in cui il personaggio resta girato verso il colpo (segnaposto dell'animazione attack)
+  posa: 0.15, // secondi in cui il personaggio resta girato verso il colpo, solo se lo sprite non ha l'animazione attack
+  // con l'animazione attack la mossa dura quanto lei e il colpo ferisce dopo «anticipo» secondi, quando l'asta cala
+  // (decisione di Edoardo del 13/11; per il Lampionaio V6 l'inizio del 5° fotogramma; da rivedere)
+  anticipo: 0.155,
   slancio: 3, // pixel di cui il personaggio si sporge verso il colpo durante la posa (segnaposto)
   // joystick d'attacco sul telefono, fisso in basso a destra (stile Brawl Stars, decisione di Edoardo del 12/11): grande come
   // il joystick di movimento (JOYSTICK_STANZE). Niente più grandezza regolabile (decisione di Edoardo del 13/11)

@@ -1,6 +1,6 @@
 /*
  * Effetti che danno impatto ai colpi: numeri del danno che saltano fuori, scoppio quando un nemico muore,
- * arco di luce della Lanterna disegnato nitido, scossa dello schermo per i colpi pesanti,
+ * arco di luce della Lanterna disegnato nitido (nel gioco a stanze il Fendente pixelfx), scossa dello schermo per i colpi pesanti,
  * cerchi colorati delle reazioni tra stati (Eclissi, Rivelazione, Esorcismo, Interramento).
  * Tutto in pool preparati all'inizio; il caso degli effetti è separato da quello del gioco,
  * così ciò che si vede non cambia ciò che succede.
@@ -13,6 +13,7 @@ import { INTERRUTTORI } from './interruttori';
 import { INFO_REAZIONI } from '../data/spiegazioni';
 import { telaContorno } from './scritte';
 import { CARTE } from '../data/progressione';
+import { chiediFendente, fendenteCaricato } from './al-volo';
 
 /** Ordine di disegno, dal basso verso l'alto. Personaggio e nemici stanno in mezzo, ordinati per i piedi. */
 export const PROFONDITA = {
@@ -28,6 +29,7 @@ export const PROFONDITA = {
 const MAX_NUMERI = 64;
 const MAX_SCOPPI = 48;
 const MAX_ARCHI = 4;
+const MAX_FENDENTI = 4;
 const MAX_REAZIONI = 24;
 const MAX_POLVERI = 12;
 const MAX_ETICHETTE = 8;
@@ -61,6 +63,10 @@ export class Effetti {
   private arcoVita = new Float32Array(MAX_ARCHI);
   private arcoChiave: string[] = [];
   private prossimoArco = 0;
+  private fendenti: Phaser.GameObjects.Image[] = [];
+  private fendenteEta = new Float32Array(MAX_FENDENTI).fill(-1); // secondi dall'inizio; -1 spento
+  private fendenteBase = new Uint8Array(MAX_FENDENTI); // primo fotogramma della direzione nel foglio
+  private prossimoFendente = 0;
   private reazioni: Phaser.GameObjects.Image[] = [];
   private reazioneVita = new Float32Array(MAX_REAZIONI);
   private reazioneChiave: string[] = [];
@@ -129,6 +135,47 @@ export class Effetti {
       this.archi.push(scena.add.image(0, 0, '__WHITE').setDepth(PROFONDITA.aTerra + 1).setVisible(false));
       this.arcoChiave.push('');
     }
+    for (let i = 0; i < MAX_FENDENTI; i++) {
+      this.fendenti.push(scena.add.image(0, 0, '__WHITE').setOrigin(0.5).setDepth(PROFONDITA.aTerra + 1).setVisible(false));
+    }
+  }
+
+  /** Chiede il foglio del Fendente per questa misura della Lanterna (se non c'è già) e ne restituisce la chiave. */
+  preparaFendente(raggio: number, ampiezza: number): string {
+    const M = PIXELFX.fendente.misure;
+    let scelta = 0;
+    for (let k = 1; k < M.length; k++) {
+      if (Math.abs(M[k][0] - raggio) + Math.abs(M[k][1] - ampiezza) < Math.abs(M[scelta][0] - raggio) + Math.abs(M[scelta][1] - ampiezza)) scelta = k;
+    }
+    const chiave = `${PIXELFX.fendente.prefisso}${M[scelta][0]}`;
+    if (fendenteCaricato() !== chiave) chiediFendente(this.scena, chiave, this.spegniFendenti);
+    return chiave;
+  }
+
+  private readonly spegniFendenti = (): void => {
+    for (let i = 0; i < MAX_FENDENTI; i++) (this.fendenti[i].setVisible(false), (this.fendenteEta[i] = -1));
+  };
+
+  /**
+   * Fendente della Lanterna (gioco a stanze): il foglio pixelfx della misura più vicina al colpo vero, nella direzione più
+   * vicina tra 16. Nel foglio ci sono 0°, 22,5° e 45°: le altre si ottengono ribaltando e girando di 90° esatti, che non
+   * spostano i pixel. Finché il foglio della misura giusta non è arrivato si disegna l'arco di sempre.
+   */
+  fendente(x: number, y: number, angolo: number, raggio: number, ampiezza: number): void {
+    const F = PIXELFX.fendente;
+    const chiave = this.preparaFendente(raggio, ampiezza);
+    if (fendenteCaricato() !== chiave) return this.arco(x, y, angolo, raggio, ampiezza);
+    // 16 direzioni: k = 0 a destra, 4 in basso (la y scende), 8 a sinistra, 12 in alto
+    const k = ((Math.round(angolo / (Math.PI / 8)) % 16) + 16) % 16;
+    const q = k % 4;
+    let quarti = Math.floor(k / 4), dir = q, ribalta = false;
+    if (q === 3) (dir = 1), (ribalta = true), quarti++; // 67,5° = 22,5° ribaltato in verticale e girato di 90°
+    const i = this.prossimoFendente;
+    this.prossimoFendente = (i + 1) % MAX_FENDENTI;
+    this.fendenteEta[i] = 0;
+    this.fendenteBase[i] = dir * F.fotogrammi;
+    this.fendenti[i].setTexture(chiave, String(this.fendenteBase[i])).setFlipY(ribalta).setAngle((quarti % 4) * 90)
+      .setPosition(Math.round(x), Math.round(y)).setVisible(true);
   }
 
   private sulloSchermo(x: number, y: number): boolean {
@@ -405,6 +452,15 @@ export class Effetti {
       // seconda metà della vita: lo stesso arco a retino, poi sparisce
       if (this.arcoVita[i] <= 0) this.archi[i].setVisible(false);
       else if (this.arcoVita[i] < EFFETTI.arco.durata / 2) this.archi[i].setTexture(`${this.arcoChiave[i]}-1`);
+    }
+    const F = PIXELFX.fendente;
+    for (let i = 0; i < MAX_FENDENTI; i++) {
+      if (this.fendenteEta[i] < 0) continue;
+      const n = Math.floor((this.fendenteEta[i] += dt) / F.passo);
+      if (n >= F.fotogrammi) {
+        this.fendenteEta[i] = -1;
+        this.fendenti[i].setVisible(false);
+      } else this.fendenti[i].setFrame(String(this.fendenteBase[i] + n));
     }
     for (let i = 0; i < MAX_POLVERI; i++) {
       if (this.polvereVita[i] <= 0) continue;

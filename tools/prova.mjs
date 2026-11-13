@@ -1069,8 +1069,9 @@ for (const [nome, disp] of [
     const W = disp.viewport.width, H = disp.viewport.height;
     if (nome === 'stanze-desktop') {
       await pag.keyboard.press('KeyJ');
-      const arco = await pag.waitForFunction(() => window.__dl.scene.getScene('Stanze').effetti.archi.some((a) => a.visible), null, { timeout: 300, polling: 10 }).then(() => true).catch(() => false);
-      if (!arco) errori.push('dopo il colpo l\'arco di luce non compare');
+      // il colpo ferisce quando l'asta cala (ATTACCO.anticipo): il fendente pixelfx, o l'arco se il foglio non è ancora arrivato
+      const arco = await pag.waitForFunction(() => { const e = window.__dl.scene.getScene('Stanze').effetti; return e.fendenti.some((a) => a.visible) || e.archi.some((a) => a.visible); }, null, { timeout: 600, polling: 10 }).then(() => true).catch(() => false);
+      if (!arco) errori.push('dopo il colpo il fendente di luce non compare');
       await pag.waitForTimeout(550);
       const cJ = await colpo();
       if (cJ.colpi !== c0.colpi + 1) errori.push('J non fa partire il colpo');

@@ -175,4 +175,24 @@ const CERA = ['#0e1214', '#1c2428', '#2a3238', '#46545e', '#6d7f8c', '#8ea2b0', 
   const r = rifila(x.frames, x.w, x.h, x.perno);
   totale += salva('Cera_pozza', r, r.frames.map(() => Math.round(1000 / FPS)), 34);
 }
+// 6) Fendente della Lanterna (gioco a stanze, decisione di Edoardo del 13/11: al posto dell'arco sottile segnaposto).
+//    Disegnato per il gioco (tools/pixelfx/fx/lanterna), grande quanto l'area vera del colpo: un file per misura della
+//    Lanterna (raggio e ampiezza dei livelli, ATTACCO e LANTERNA). In ogni file i fotogrammi di 3 direzioni in fila
+//    (0°, 22,5°, 45°): il gioco ricava le altre 13 ribaltando e girando di 90° esatti. 6 fotogrammi da 40 ms l'uno
+for (const [raggio, amp] of [[136, 132], [160, 132], [183, 166]]) {
+  const fx = await loadEffect('lanterna/fendente', join(QUI, 'fx'));
+  const L = raggio + 10;
+  fx.meta.size = [2 * L, 2 * L];
+  fx.meta.origin = [L, L];
+  const tutti = [];
+  let geo;
+  for (const dir of [0, 22.5, 45]) {
+    const x = rendi(fx, { fps: 40, opzioni: { r: raggio, amp, dir } });
+    for (const i of [1, 2, 4, 6, 8, 10]) tutti.push(x.frames[i]);
+    geo = x;
+  }
+  // non si rifila: la tela resta quadrata intorno al centro, così le rotazioni di 90° restano esatte
+  const r = { frames: tutti, w: geo.w, h: geo.h, perno: geo.perno };
+  totale += salva(`Fendente_${raggio}`, r, r.frames.map(() => 40), raggio);
+}
 console.log(`totale memoria video ≈ ${totale.toFixed(1)} MB`);
