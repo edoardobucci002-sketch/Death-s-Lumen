@@ -42,6 +42,13 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 (notte, tardi) — Terza prova di Edoardo: pozza più grande e grumo più aggressivo
+
+- **Grumo**: virata 100 › **125° al secondo** (Edoardo: «leggermente più aggressivo»). Calcolo: un passo di lato di 48 px quando il grumo è a 45 px lo fa passare a circa 28 px (contatto a 23); di 44 px a 50 px non basta più (passa a 22,7 px). La schivata all'ultimo resta possibile ma va fatta più tardi e più decisa.
+- **Pozza di cera**: raggio 26 › **34 px** (Edoardo: «più grande»); nasce anche quando il grumo colpisce il Lampionaio (Edoardo), quindi chi resta fermo dopo il colpo prende anche la pozza.
+
+Il bot non sa giocare a stanze: nessuna simulazione.
+
 ### 13/11 (notte) — Seconda prova di Edoardo: grumo che cerca, pozza di cera, rinascita
 
 - **Grumo del Cantore**: ora ti cerca per **1,4 s**, girando al massimo di **100° al secondo**, poi va dritto (decisione di Edoardo: «a ricerca, ma non impossibile da schivare»; numeri di Claude, *da rivedere*). Con 210 px/s il raggio di virata è di circa 120 px: un passo di lato di 44 px quando il grumo è a 50 px lo fa passare a circa 28 px (il contatto è a 23, la schivata perfetta fino a 53); a 70 px dal grumo lo stesso passo non basta più (passa a 16 px e colpisce). Chi cammina perpendicolare lo semina sempre (270 contro 210 px/s).

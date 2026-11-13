@@ -1,6 +1,6 @@
 /*
  * Nemici del gioco a stanze: il Ricaduto e il Cantore, e i grumi di Lumen spento del Cantore, che ti cercano per un attimo
- * e contro il muro scoppiano in una pozza di cera che ferisce chi ci passa sopra.
+ * e contro il muro, o su di te, scoppiano in una pozza di cera che ferisce chi ci passa sopra.
  * I nemici vivono nella Orda del survivor (src/sistema/orda.ts), così gli Echi, gli stati e le reazioni li toccano come
  * nel survivor; qui c'è il loro «cervello»: comparsa, camminata, avviso, attacco, a terra. Ogni attacco ha un avviso a terra
  * (lo spicchio rosso del graffio che si riempie, la linea arancione del canto) e lascia spazio alla schivata perfetta, che
@@ -78,6 +78,8 @@ export class NemiciStanza {
   readonly pY = new Float32Array(MAX_POZZE);
   private pTempo = new Float32Array(MAX_POZZE);
   private gSprite: Phaser.GameObjects.Image[] = [];
+  private pSprite: Phaser.GameObjects.Image[] = []; // le pozze di cera (effetto pixelfx), se il foglio c'è
+  private pFotogrammi = 0;
   private terra: Phaser.GameObjects.Graphics; // avvisi e comparse a terra (sotto i nemici)
   private sopra: Phaser.GameObjects.Graphics; // barre della salute
   private orologio = 0;
@@ -120,7 +122,21 @@ export class NemiciStanza {
       g.generateTexture(chiave, 2 * r + 2, 2 * r + 2);
       g.destroy();
     }
-    for (let i = 0; i < MAX_GRUMI; i++) this.gSprite.push(scena.add.image(0, 0, chiave).setDepth(PROFONDITA.sopra - 2).setVisible(false));
+    // grumo e pozza di cera: l'effetto pixelfx se il foglio c'è, se no il tondo disegnato qui sopra e l'ellisse del codice
+    const E = NEMICI_STANZA.effetti, conFoglio = (k: string): boolean => scena.textures.exists(k);
+    const grumo = conFoglio(E.grumo) ? E.grumo : chiave;
+    for (let i = 0; i < MAX_GRUMI; i++) {
+      const im = scena.add.image(0, 0, grumo, grumo === chiave ? undefined : '0').setDepth(PROFONDITA.sopra - 2).setVisible(false);
+      if (grumo !== chiave) im.setOrigin(E.pernoGrumo[0] / im.width, E.pernoGrumo[1] / im.height);
+      this.gSprite.push(im);
+    }
+    if (conFoglio(E.pozza)) {
+      this.pFotogrammi = scena.textures.get(E.pozza).frameTotal - 1; // senza il fotogramma __BASE
+      for (let i = 0; i < MAX_POZZE; i++) {
+        const im = scena.add.image(0, 0, E.pozza, '0').setDepth(PROFONDITA.aTerra + 0.5).setVisible(false);
+        this.pSprite.push(im.setOrigin(E.pernoPozza[0] / im.width, E.pernoPozza[1] / im.height));
+      }
+    }
     this.terra = scena.add.graphics().setDepth(PROFONDITA.aTerra + 1);
     this.sopra = scena.add.graphics().setDepth(PROFONDITA.sopra - 1);
   }
@@ -347,7 +363,7 @@ export class NemiciStanza {
 
   /**
    * I grumi ti cercano per C.grumo.ricerca secondi, girando di al massimo C.grumo.virata gradi al secondo (così una
-   * curva stretta li semina), poi vanno dritti; contro il muro scoppiano in una pozza di cera. Le pozze feriscono chi ci sta
+   * curva stretta li semina), poi vanno dritti; contro il muro o su di te scoppiano in una pozza di cera. Le pozze feriscono chi ci sta
    * sopra (il danno segue la Quiete del personaggio) e negli ultimi istanti si restringono.
    */
   private aggiornaGrumi(dt: number, px: number, py: number): number {
@@ -376,6 +392,7 @@ export class NemiciStanza {
       if (d2 < r * r) {
         danno = Math.max(danno, C.grumo.danno);
         this.effetti.scoppio(x, y - C.grumo.altezza);
+        this.pozza(Phaser.Math.Clamp(x, P.raggio, STANZA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, STANZA.altezza - P.raggio / 2));
         this.togliGrumo(k);
         continue;
       }
@@ -495,7 +512,7 @@ export class NemiciStanza {
 
   /** Disegno: sprite (dalla Orda, poi ritoccati), avvisi a terra, comparse, grumi, barre della salute dei feriti. */
   disegna(cam: Phaser.Cameras.Scene2D.Camera, gx: number, gy: number): void {
-    const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra;
+    const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra, E = NEMICI_STANZA.effetti;
     o.disegna(cam, 64, gx, gy);
     for (let i = 0; i < o.numero; i++) {
       const sp = o.spriteDi(i), st = this.stato[i], x = Math.round(o.x[i]), y = Math.round(o.y[i]);
@@ -534,8 +551,20 @@ export class NemiciStanza {
       t.lineStyle(2, colore(col.bordo), 1).strokeEllipse(x, y, 2 * r, r);
       t.fillStyle(colore(col.comparsa)).fillEllipse(x, y, r, Math.max(2, Math.round(r / 2)));
     }
-    // le pozze di cera: un'ellisse con il bordo scuro e un riflesso, a pixel interi
-    for (let k = 0; k < this.pozze; k++) {
+    // le pozze di cera: l'effetto pixelfx, con il fotogramma scelto dal tempo passato (così sparisce insieme al suo danno);
+    // senza foglio, un'ellisse con il bordo scuro e un riflesso, a pixel interi
+    if (this.pSprite.length) {
+      for (let k = 0; k < MAX_POZZE; k++) {
+        const im = this.pSprite[k];
+        if (k >= this.pozze) {
+          im.setVisible(false);
+          continue;
+        }
+        const f = Math.min(this.pFotogrammi - 1, Math.floor(((P.durata - this.pTempo[k]) / P.durata) * this.pFotogrammi));
+        im.setFrame(String(f)).setPosition(Math.round(this.pX[k]), Math.round(this.pY[k])).setVisible(true);
+      }
+    }
+    for (let k = 0; k < (this.pSprite.length ? 0 : this.pozze); k++) {
       const x = Math.round(this.pX[k]), y = Math.round(this.pY[k]), r = Math.round(this.raggioPozza(k));
       if (r < 2) continue;
       t.fillStyle(colore(col.pozzaBordo)).fillEllipse(x, y, 2 * r + 4, r + 4);
@@ -545,7 +574,14 @@ export class NemiciStanza {
     for (let k = 0; k < this.grumi; k++) {
       const x = Math.round(this.gX[k]), y = Math.round(this.gY[k]);
       t.fillStyle(0x000000).fillEllipse(x, y, 2 * C.grumo.raggio, C.grumo.raggio); // ombra a terra
-      this.gSprite[k].setPosition(x, y - C.grumo.altezza).setVisible(true);
+      const sp = this.gSprite[k].setPosition(x, y - C.grumo.altezza).setVisible(true);
+      if (sp.texture.key === E.grumo) sp.setFrame(String(Math.floor(this.gVita[k] * E.fps) % (sp.texture.frameTotal - 1)));
+      // la scia: qualche goccia che resta indietro, sempre più piccola
+      const v = Math.hypot(this.gVX[k], this.gVY[k]) || 1, ux = this.gVX[k] / v, uy = this.gVY[k] / v;
+      for (let n = 1; n <= E.scia; n++) {
+        const d = C.grumo.raggio + n * 5, l = Math.max(1, 4 - n);
+        s.fillStyle(colore(n === 1 ? col.grumo : col.grumoBordo)).fillRect(Math.round(x - ux * d - l / 2), Math.round(y - C.grumo.altezza - uy * d - l / 2), l, l);
+      }
     }
     for (let k = this.grumi; k < MAX_GRUMI; k++) this.gSprite[k].setVisible(false);
   }

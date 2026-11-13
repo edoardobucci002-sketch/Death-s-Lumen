@@ -1143,14 +1143,14 @@ for (const [nome, disp] of [
     const s2 = await st();
     if (s2.schivate !== s1.schivate + 1 || !(s2.grazia > 0)) errori.push(`uscire dallo spicchio all'ultimo non dà la Grazia (schivate ${s2.schivate}, Grazia ${s2.grazia})`);
     if (s2.ferite !== s1.ferite) errori.push('uscito dallo spicchio, il graffio ferisce lo stesso');
-    // schivata del grumo: un Cantore a destra; il grumo ti cerca, ma se all'ultimo (a 50 px) il Lampionaio fa un passo di
+    // schivata del grumo: un Cantore a destra; il grumo ti cerca, ma se all'ultimo (a 45 px) il Lampionaio fa un passo di
     // lato, il grumo non fa in tempo a girare e lo sfiora
     await L('svuota');
     await L('vai', 'centro');
     const c = await st();
     await L('nemicoIn', 'cantore', c.x + 230, c.y);
-    const vicinoGrumo = '(() => { const s = window.__dl.scene.getScene("Stanze"), n = s.nemici; return n.grumi > 0 && Math.hypot(n.gX[0] - s.x, n.gY[0] - s.y) < 50; })()';
-    if (!(await quando(vicinoGrumo, 'l.sposta(0, 44)', 4000))) errori.push('il Cantore non lancia il grumo');
+    const vicinoGrumo = '(() => { const s = window.__dl.scene.getScene("Stanze"), n = s.nemici; return n.grumi > 0 && Math.hypot(n.gX[0] - s.x, n.gY[0] - s.y) < 45; })()';
+    if (!(await quando(vicinoGrumo, 'l.sposta(0, 48)', 4000))) errori.push('il Cantore non lancia il grumo');
     await pag.waitForTimeout(1900);
     const s3 = await st();
     if (s3.schivate !== s2.schivate + 1) errori.push(`il grumo che sfiora non dà la Grazia (schivate ${s2.schivate} → ${s3.schivate})`);

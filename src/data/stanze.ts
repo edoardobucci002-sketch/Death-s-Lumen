@@ -128,7 +128,7 @@ export const NEMICI_STANZA = {
   },
   // colpisce da lontano: resta a distanza e si allontana se ti avvicini; si ferma, a terra compare una linea verso di te
   // (l'avviso), poi lancia un grumo di Lumen spento che ti cerca (dal 13/11 sera, decisione di Edoardo): per «ricerca» secondi
-  // gira verso di te di al massimo «virata» gradi al secondo, poi va dritto; contro il muro scoppia in una pozza di cera
+  // gira verso di te di al massimo «virata» gradi al secondo, poi va dritto; contro il muro, o su di te, scoppia in una pozza di cera
   cantore: {
     sprite: 'Fantasma',
     salute: 20, // 2 colpi della Lanterna, 1 in Grazia
@@ -140,11 +140,14 @@ export const NEMICI_STANZA = {
     avviso: 0.8,
     ricarica: 2.4, // secondi tra la fine di un canto e l'inizio del successivo
     recupero: 0.3,
-    grumo: { velocita: 210, raggio: 9, danno: 12, altezza: 20, ricerca: 1.4, virata: 100 }, // altezza: quanto sopra il terreno si disegna; velocità 210 dal 13/11 sera (era 140, Edoardo: «lentissimo»; da rivedere)
+    grumo: { velocita: 210, raggio: 9, danno: 12, altezza: 20, ricerca: 1.4, virata: 125 }, // virata 125 dal 13/11 notte (era 100; Edoardo: «leggermente più aggressivo») // altezza: quanto sopra il terreno si disegna; velocità 210 dal 13/11 sera (era 140, Edoardo: «lentissimo»; da rivedere)
   },
-  // la pozza di cera dove il grumo scoppia contro il muro (decisione di Edoardo del 13/11 sera: resta 2 s e fa danno a chi ci
-  // passa sopra; raggio e danno di Claude, da rivedere). Il danno segue la Quiete del Lampionaio: al massimo uno ogni 0,5 s
-  pozza: { durata: 2, raggio: 26, danno: 6, svanisce: 0.3 }, // svanisce: negli ultimi secondi si restringe fino a sparire
+  // la pozza di cera dove il grumo scoppia, contro il muro o su di te (decisione di Edoardo del 13/11: resta 2 s e fa danno a chi
+  // ci passa sopra; dello stesso colore del grumo, perché è cera; raggio 34 dal 13/11 notte, era 26; raggio e danno da rivedere). Il danno segue la Quiete del Lampionaio: al massimo uno ogni 0,5 s
+  // effetti pixelfx disegnati per il gioco (tools/pixelfx/fx/cera, segnaposto Pixelfx_Cera_grumo e Pixelfx_Cera_pozza; i nomi non cominciano con «Pixelfx_Pozza_», che il gioco carica solo al bisogno): perno =
+  // il centro del grumo e della pozza nel foglio; il foglio della pozza dura quanto lei e il gioco ne sceglie il fotogramma
+  effetti: { grumo: 'Pixelfx_Cera_grumo', pernoGrumo: [14, 11], pozza: 'Pixelfx_Cera_pozza', pernoPozza: [47, 30], fps: 12, scia: 3 },
+  pozza: { durata: 2, raggio: 34, danno: 6, svanisce: 0.3 }, // svanisce: negli ultimi secondi si restringe fino a sparire
   spinta: 10, // pixel di cui un colpo della Lanterna sposta un nemico (non durante l'avviso)
   // Quiete dei nemici (decisione di Edoardo del 13/11, 0,3 s): dopo un colpo, per questi secondi la stessa arma non lo ferisce
   // più; le altre armi sì. Il Cerchio di luce, che prova a ferire ogni 0,25 s, prende così ogni nemico ogni 0,5 s
@@ -162,9 +165,9 @@ export const NEMICI_STANZA = {
     linea: '#f0a030', // la linea a terra del Cantore
     grumo: '#6d7f8c', // il grumo di Lumen spento
     grumoBordo: '#2a3238',
-    pozza: '#d9b25a', // la pozza di cera a terra
-    pozzaBordo: '#7a5420',
-    pozzaLuce: '#f2d98a',
+    pozza: '#6d7f8c', // la pozza di cera a terra: lo stesso colore del grumo (decisione di Edoardo del 13/11 notte)
+    pozzaBordo: '#2a3238',
+    pozzaLuce: '#9fb8c8',
     comparsa: '#3a2f27', // il segno a terra dove sta per comparire un nemico
   },
 } as const;

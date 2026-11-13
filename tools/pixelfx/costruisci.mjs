@@ -159,4 +159,20 @@ for (const [nome, fps] of [['Eclissi', FPS]]) {
   const r = rifila(x.frames, x.w, x.h, x.perno);
   totale += salva('Comparsa_carta', r, r.frames.map(() => Math.round(1000 / FPS)));
 }
+// 5) Cantore (gioco a stanze, richiesta di Edoardo del 13/11 notte): il grumo di cera in volo e la pozza che lascia quando
+//    scoppia, disegnati per Death's Lumen (tools/pixelfx/fx/cera) con la tavolozza del grumo, visti dall'alto. La pozza dura
+//    quanto nel gioco (NEMICI_STANZA.pozza.durata, 2 s) ed è larga quanto la sua area (raggio 34)
+const CERA = ['#0e1214', '#1c2428', '#2a3238', '#46545e', '#6d7f8c', '#8ea2b0', '#b8cad6', '#e8f0f4'];
+{
+  const fx = await loadEffect('cera/grumo', join(QUI, 'fx'));
+  const x = rendi(fx, { fps: FPS, opzioni: { palette: CERA, r: 9 } });
+  const r = rifila(x.frames, x.w, x.h, x.perno);
+  totale += salva('Cera_grumo', r, r.frames.map(() => Math.round(1000 / FPS)));
+}
+{
+  const fx = await loadEffect('cera/pozza', join(QUI, 'fx'));
+  const x = rendi(fx, { fps: FPS, opzioni: { palette: CERA, r: 34 } });
+  const r = rifila(x.frames, x.w, x.h, x.perno);
+  totale += salva('Cera_pozza', r, r.frames.map(() => Math.round(1000 / FPS)), 34);
+}
 console.log(`totale memoria video ≈ ${totale.toFixed(1)} MB`);

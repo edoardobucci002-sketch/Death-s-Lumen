@@ -498,6 +498,22 @@
       ]
     },
     {
+      "chiave": "Pixelfx_Cera_grumo",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Cera_grumo.png",
+      "dati": "assets/effetti/Pixelfx_Cera_grumo.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Cera_pozza",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Cera_pozza.png",
+      "dati": "assets/effetti/Pixelfx_Cera_pozza.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
       "chiave": "Pixelfx_Comparsa_carta",
       "categoria": "effetti",
       "immagine": "assets/effetti/Pixelfx_Comparsa_carta.png",

@@ -1,6 +1,6 @@
 # Effetti da pixelfx (prova pilota del 10/11)
 
-Gli effetti Sepoltura (mani), Pozza dell'Acqua santa (5 misure), Eclissi e Comparsa delle carte (gioco a stanze, 13/11) vengono dalla libreria
+Gli effetti Sepoltura (mani), Pozza dell'Acqua santa (5 misure), Eclissi, Comparsa delle carte (gioco a stanze, 13/11) e grumo e pozza di cera del Cantore (13/11, disegnati per il gioco in `fx/cera`) vengono dalla libreria
 [pixelfx](https://github.com/patch-gg/pixelfx) (licenza MIT), clonata in `DEATH'S LUMEN/pixelfx`, accanto a `gioco`.
 
 1. `node tools/pixelfx/costruisci.mjs`: rende i fotogrammi già a retino Bayer 4×4 (niente trasparenze) in
