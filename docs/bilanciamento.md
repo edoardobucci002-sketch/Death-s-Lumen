@@ -42,6 +42,15 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 13/11 (notte) — Correzioni dopo la prova di Edoardo sul S25 («il gioco risulta ancora molto semplice»)
+
+- **Tempo tra le ondate**: 10 › **8 s** (Edoardo: quasi ogni ondata finiva entro i 10 s).
+- **Grumo del Cantore**: 140 › **210 px/s** (Edoardo: «lentissimo», facile da schivare; il Lampionaio cammina a 270). Valore di Claude, *da rivedere*.
+- **Bianco al colpo**: 0,12 › **0,16 s**; **fermo d'impatto**: 0,05 s (3 fotogrammi) › **0,067 s (4 fotogrammi)**, per tutti i colpi. Edoardo: «li alzerei leggermente»; valori di Claude, *da rivedere*.
+- La carta della Lanterna mostra la ricarica della Lanterna a mano (0,45 s; 0,38 s dal livello 4), non quella automatica del survivor (0,8 e 0,68): solo testo, il gioco non cambia.
+
+Il bot non sa giocare a stanze: nessuna simulazione. `orda.ts` e le armi non sono cambiati.
+
 ### 13/11 (sera) — La fetta era troppo facile: ondate a tempo (decisione di Edoardo dopo due partite)
 
 - **Ondate**: da una o due per stanza (la seconda quando della prima ne restavano 2) a **2, 3 e 3 ondate** che arrivano ogni **10 s** anche con la stanza ancora piena, o subito se si svuota. Prima stanza 3+1 e 3+1 (Edoardo); le altre (Claude, *da rivedere*): 3+1, 3+2, 4+2; poi 4+2, 4+2, 5+3. Nemici nella fetta: da 26 a 46. Al massimo in campo: da 16 a 24.
