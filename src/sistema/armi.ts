@@ -25,18 +25,21 @@ export type { Bonus, Posseduta } from './armi-colpo';
 
 export class Arsenale extends ArsenaleVicine {
   aggiungi(arma: Arma): void {
-    this.possedute.push({ arma, livello: 1 });
+    const p: Posseduta = { arma, livello: 1 };
+    this.possedute.push(p);
     this.attesa.push(0.5);
+    this.segnaForbice(p);
   }
 
+  /** Il livello dell'arma (0 se non c'è). Si confronta l'id: nel gioco a stanze le armi hanno tabelle loro (data/armi-stanze.ts). */
   livello(arma: Arma): number {
-    for (const p of this.possedute) if (p.arma === arma) return p.livello;
+    for (const p of this.possedute) if (p.arma.id === arma.id) return p.livello;
     return 0;
   }
 
   /** L'arma diventa la sua versione unita. */
   unisci(arma: Arma): void {
-    for (const p of this.possedute) if (p.arma === arma) p.unita = true;
+    for (const p of this.possedute) if (p.arma.id === arma.id) p.unita = true;
     this.unite[arma.id] = true;
   }
 
@@ -45,7 +48,49 @@ export class Arsenale extends ArsenaleVicine {
   }
 
   potenzia(arma: Arma): void {
-    for (const p of this.possedute) if (p.arma === arma) p.livello++;
+    for (const p of this.possedute) {
+      if (p.arma.id !== arma.id) continue;
+      p.livello++;
+      this.segnaForbice(p);
+    }
+  }
+
+  /**
+   * Per il LAB e le prove: n colpi di prova della fonte con danno base «base», senza doni né critici (consuma il caso):
+   * il più debole, il più forte e quanti valori diversi sono usciti (arrotondati all'intero, come il numero sullo schermo).
+   */
+  campioneDanno(fonte: number, base: number, n: number): { minimo: number; massimo: number; diversi: number } {
+    const fonteDi = this.fonte, dannoDi = this.bonus.danno, criticoDi = this.bonus.critico, visti = new Set<number>();
+    this.fonte = fonte;
+    this.bonus.danno = 0;
+    this.bonus.critico = 0;
+    let minimo = Infinity, massimo = 0;
+    for (let k = 0; k < n; k++) {
+      const d = this.danno(base);
+      minimo = Math.min(minimo, d);
+      massimo = Math.max(massimo, d);
+      visti.add(Math.round(d));
+    }
+    this.fonte = fonteDi;
+    this.bonus.danno = dannoDi;
+    this.bonus.critico = criticoDi;
+    return { minimo, massimo, diversi: visti.size };
+  }
+
+  /** Ricalcola gli intervalli del danno di tutte le armi (dopo un cambio dal LAB). */
+  ricalcolaForbici(): void {
+    for (const p of this.possedute) this.segnaForbice(p);
+  }
+
+  /** Danno a intervallo (gioco a stanze): quanto il colpo più forte supera il più debole al livello di adesso. */
+  private segnaForbice(p: Posseduta): void {
+    const l = p.arma.livelli[Math.min(p.livello, p.arma.livelli.length) - 1] as { danno: number; dannoMassimo?: number };
+    this.forbice[F[p.arma.id]] = typeof l.dannoMassimo === 'number' && l.danno > 0 ? l.dannoMassimo / l.danno : 0;
+  }
+
+  /** Danno a intervallo di un colpo dato da fuori (la Lanterna a mano): minimo e massimo del suo livello. */
+  intervalloDaFuori(fonte: number, minimo: number, massimo: number): void {
+    this.forbice[fonte] = minimo > 0 ? massimo / minimo : 0;
   }
 
   /**

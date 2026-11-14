@@ -82,6 +82,12 @@ export interface Bonus {
 
 export abstract class ArsenaleColpo {
   readonly possedute: Posseduta[] = [];
+
+  /** L'arma posseduta con questo id (undefined se non c'è); senza creare niente, si chiama a ogni passo. */
+  posseduta(id: Arma['id']): Posseduta | undefined {
+    for (const p of this.possedute) if (p.arma.id === id) return p;
+    return undefined;
+  }
   dannoTotale = 0; // per il riepilogo di fine partita
   reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)
   readonly reazioniPerTipo = new Uint32Array(5); // per la simulazione: indice = ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO
@@ -89,6 +95,11 @@ export abstract class ArsenaleColpo {
   readonly statiFonti = new Float64Array(FONTI.length); // …stati lasciati da ogni fonte
   readonly reazioniFonti = new Float64Array(FONTI.length); // …reazioni fatte partire dai colpi di ogni fonte
   protected fonte = 0; // la fonte del colpo in corso
+  /**
+   * Gioco a stanze, danno a intervallo: per ogni fonte, il danno massimo diviso il minimo del livello di adesso
+   * (src/data/armi-stanze.ts). 0 = niente intervallo: il colpo varia di poco come nel survivor (COLPI.casoMinimo–casoMassimo).
+   */
+  readonly forbice = new Float32Array(FONTI.length);
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
   fiaschettaPiena = false; // la scena lo aggiorna a ogni passo: con la fiaschetta piena il sorso diventa una pozza che cura
@@ -338,7 +349,10 @@ export abstract class ArsenaleColpo {
   protected abstract vicinoGrano(j: number): void;
 
   protected danno(base: number): number {
-    const d = base * (1 + this.bonus.danno) * (COLPI.casoMinimo + this.caso.numero() * (COLPI.casoMassimo - COLPI.casoMinimo));
+    // con l'intervallo il danno base è il minimo: il colpo esce tra il minimo e il massimo del livello
+    const f = this.forbice[this.fonte];
+    const caso = f > 0 ? 1 + this.caso.numero() * (f - 1) : COLPI.casoMinimo + this.caso.numero() * (COLPI.casoMassimo - COLPI.casoMinimo);
+    const d = base * (1 + this.bonus.danno) * caso;
     this.critico = this.bonus.critico > 0 && this.casoStati.numero() < this.bonus.critico;
     return this.critico ? d * MOLTIPLICA_CRITICO : d;
   }

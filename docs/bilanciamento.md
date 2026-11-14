@@ -42,6 +42,13 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 14/11 — Le armi del gioco a stanze: 5 livelli e danno a intervallo (decisioni di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
+- Tutte le armi delle stanze (la Lanterna a mano e gli 11 Echi) hanno tabelle nuove in `src/data/armi-stanze.ts`: 5 livelli, danno minimo e massimo. Tabelle complete nel GDD («Le armi nelle stanze»). Il colpo prima variava tra il 92% e il 108% del danno; ora esce a caso tra il minimo e il massimo.
+- **Lanterna a mano**: 12–18 al livello 1 (era 18 fisso), fino a 26–38 al livello 5, che colpisce anche alle spalle; ricarica 0,45 › 0,4 s dal livello 3.
+- **Velo funebre**: 2–3 ogni 0,5 s al livello 1 (era 7: Edoardo lo trovava «fin troppo forte» già nelle prime stanze), fino a 4–6. **Acqua santa** 1–2 ogni 0,3 s (era 8). Gli altri Echi scendono più o meno a metà o a due terzi del survivor, con intervalli larghi per le armi pesanti (Lapide 30–70, era 120; Campana 14–24, era 19).
+- **Salute dei nemici**: Ricaduto 60 (era 40), Cantore 30 (era 20). Perché: Edoardo, «i nemici vanno giù facilmente». Con la Lanterna al livello 1 il Ricaduto chiede 4 o 5 colpi (prima sempre 3), il Cantore 2 o 3.
+- Il bot non gioca a stanze: niente simulazione. Controllo del survivor: 8 notti del bot (2 per personaggio, Cappella completa) prima e dopo, 8.187 campi, 0 differenze.
+
 ### 13/11 (sera) — Il colpo della Lanterna diventa la mossa intera (decisione di Edoardo; il survivor non cambia)
 - Con lo sprite V6 la posa del colpo dura quanto l'animazione `attack` (0,385 s, prima 0,15 s) e **il danno arriva 0,155 s dopo il tocco**, quando l'asta cala (`ATTACCO.anticipo`, nuovo, *da rivedere*). La ricarica resta 0,45 s dal tocco: i colpi al secondo non cambiano, cambia il momento in cui feriscono.
 - Perché: Edoardo vuole vedere la mossa intera, e un danno al tocco sarebbe arrivato prima che l'asta si muovesse. Effetto atteso: la fetta un po' più difficile (bisogna anticipare il colpo). Il bot non gioca a stanze: niente simulazione.

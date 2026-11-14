@@ -3,11 +3,12 @@
  * la successiva dopo PERCORSO.intervallo secondi, o subito se la stanza si svuota prima); a stanza ripulita, dopo un attimo, le 3 carte. La prima stanza offre
  * 3 Echi di affinità diverse; poi la porta scelta decide da dove pescano: una porta d'affinità dà Echi nuovi e livelli
  * degli Echi di quell'affinità (dalla Luce anche livelli della Lanterna), la porta del dono dà doni (solo quelli che nelle
- * stanze funzionano). Scelta la carta si aprono le porte; dopo la terza stanza la fetta è finita.
+ * stanze funzionano). Gli Echi e la Lanterna hanno i numeri del gioco a stanze (data/armi-stanze.ts: 5 livelli, danno a intervallo). Scelta la carta si aprono le porte; dopo la terza stanza la fetta è finita.
  * Le carte si estraggono con un generatore del caso con seme (riproducibili). La scena mostra le carte e le porte.
  */
 import { ONDATA, PERCORSO } from '../data/stanze';
-import { ARMI_COMUNI, LANTERNA, type Arma } from '../data/armi';
+import type { Arma } from '../data/armi';
+import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, type IdDono } from '../data/doni';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { Caso } from './caso';
@@ -102,7 +103,7 @@ export class Percorso {
   /** La carta scelta entra nella build. Poi si aprono le porte, o la fetta è finita. */
   scegli(d: Dono): void {
     if (d.tipo === 'arma') {
-      if (d.arma === LANTERNA) this.livelloLanterna = d.livello;
+      if (d.arma.id === LANTERNA_STANZE.id) this.livelloLanterna = d.livello;
       else if (d.livello === 1) this.arsenale.aggiungi(d.arma);
       else this.arsenale.potenzia(d.arma);
     } else if (d.tipo === 'passivo') {
@@ -122,7 +123,7 @@ export class Percorso {
   /** Echi dell'affinità aff che non si hanno ancora (solo se c'è posto nella build). */
   private echiNuovi(aff: IdAffinita): Arma[] {
     if (this.arsenale.possedute.length >= PERCORSO.echi) return [];
-    return ARMI_COMUNI.filter((a) => AFFINITA_ARMI[a.id] === aff && !this.arsenale.livello(a));
+    return ECHI_STANZE.filter((a) => AFFINITA_ARMI[a.id] === aff && !this.arsenale.livello(a));
   }
 
   /** Dalla porta di un'affinità: Echi nuovi, livelli degli Echi di quell'affinità, e per la Luce livelli della Lanterna. */
@@ -131,7 +132,7 @@ export class Percorso {
     for (const p of this.arsenale.possedute) {
       if (AFFINITA_ARMI[p.arma.id] === aff && p.livello < p.arma.livelli.length) d.push({ tipo: 'arma', arma: p.arma, livello: p.livello + 1 });
     }
-    if (aff === AFFINITA_ARMI.lanterna && this.livelloLanterna < LANTERNA.livelli.length) d.push({ tipo: 'arma', arma: LANTERNA, livello: this.livelloLanterna + 1 });
+    if (aff === AFFINITA_ARMI.lanterna && this.livelloLanterna < LANTERNA_STANZE.livelli.length) d.push({ tipo: 'arma', arma: LANTERNA_STANZE, livello: this.livelloLanterna + 1 });
     return d;
   }
 

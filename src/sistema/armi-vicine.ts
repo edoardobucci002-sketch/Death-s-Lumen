@@ -111,8 +111,8 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
       if (this.rtTempo[i] > 0) continue;
       const arma = this.rtArma[i];
       this.fonte = F[arma.id];
-      if (arma === PALA) this.impatto(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
-      else if (arma === CAMPANA) this.rintocco(this.rtA[i], this.rtB[i], Math.max(this.rtC[i] ? RUOLI.campanaFermo : 0, this.unite.campana ? U.campana.fermo : 0));
+      if (arma.id === 'pala') this.impatto(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
+      else if (arma.id === 'campana') this.rintocco(this.rtA[i], this.rtB[i], Math.max(this.rtC[i] ? RUOLI.campanaFermo : 0, this.unite.campana ? U.campana.fermo : 0));
       else this.fendente(Math.cos(this.rtC[i]), Math.sin(this.rtC[i]), this.rtA[i], this.rtB[i]);
       const u = --this.ritardati;
       this.rtTempo[i] = this.rtTempo[u];
@@ -126,9 +126,9 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
   // ——— Falci ———
   protected aggiornaFalci(dt: number): void {
     let n = 0;
-    const livello = this.livello(FALCE);
-    if (livello) {
-      const l = FALCE.livelli[livello - 1];
+    const falce = this.posseduta('falce');
+    if (falce) {
+      const l = (falce.arma as typeof FALCE).livelli[falce.livello - 1]; // la tabella dell'arma posseduta (survivor o stanze)
       n = Math.min(MAX_LAME, l.quantita + this.bonus.quantita);
       const r = l.raggio * (1 + this.bonus.area);
       this.angoloFalci = (this.angoloFalci + l.giri * Math.PI * 2 * dt) % (Math.PI * 2);

@@ -31,7 +31,7 @@ import { Percorso } from '../sistema/percorso';
 import { Porte } from '../sistema/porte';
 import { Doni } from '../sistema/doni';
 import { ComparsaCarte } from '../sistema/comparsa-carte';
-import { LANTERNA } from '../data/armi';
+import { LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, RICARICA_MINIMA, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
 import { Impatto } from '../sistema/impatto';
 import { ABILITA } from '../data/abilita';
@@ -126,7 +126,7 @@ export class Stanze extends Phaser.Scene {
   doni!: Doni;
   private comparsa!: ComparsaCarte;
   private readonly bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
-  private dannoLanterna: number = ATTACCO.danno;
+  private dannoLanterna: number = LANTERNA_STANZE.livelli[0].danno; // il colpo più debole del livello: il più forte va all'arsenale (forbice)
   private rigenerazione = 0; // salute al secondo (Erbe amare)
   private scudo = 0; // parte di danno tolta (Scudo di ferro)
   private passaggio = 0; // secondi di passaggio a retino rimasti (0 = nessuno)
@@ -213,16 +213,10 @@ export class Stanze extends Phaser.Scene {
     this.abilita = new AbilitaStanza(this, this.radice, this.pg.colore, () => this.fermo());
     // le carte: verticali (Carta_Stanza), con le carte decise dal percorso e la spiegazione del survivor
     const nessuno = new Set<never>();
-    this.doni = new Doni(this.radice, this.arsenale, LANTERNA, this.percorso.passivi, new Caso(ONDATA.seme + 3),
+    this.doni = new Doni(this.radice, this.arsenale, LANTERNA_STANZE, this.percorso.passivi, new Caso(ONDATA.seme + 3),
       () => ({ usati: 0, totale: 0, unioni: false, scoperte: nessuno, metaRaccolta: 0 }), () => {}, () => true);
     this.radice.querySelector<HTMLElement>('.doni-aiuto')?.setAttribute('hidden', '');
     this.doni.verticali = PERCORSO.carte; // in fila, perché lo schermo è in orizzontale, e compaiono a pop
-    // la carta della Lanterna dice la ricarica della Lanterna a mano, non quella automatica del survivor
-    this.doni.numeriArma = (arma, livello) => {
-      if (arma !== LANTERNA) return null;
-      const L = LANTERNA.livelli, liv = L[Math.min(L.length, livello) - 1];
-      return { ricarica: Math.round(ATTACCO.ricarica * (liv.ricarica / L[0].ricarica) * 100) / 100 };
-    };
     this.comparsa = new ComparsaCarte(this);
     this.ricalcola();
     this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza);
@@ -326,12 +320,15 @@ export class Stanze extends Phaser.Scene {
     this.rigenerazione = per('erbeAmare');
     this.scudo = per('scudoDiFerro');
     this.statGrazia.finestra = GRAZIA_STANZA.finestra + per('campanellaDArgento');
-    // la Lanterna a mano: i numeri del suo livello nel survivor, con la ricarica del gioco a stanze in proporzione
-    const L = LANTERNA.livelli, liv = L[Math.min(L.length, this.percorso.livelloLanterna) - 1];
-    this.dannoLanterna = ATTACCO.danno + liv.danno - L[0].danno;
-    this.attacco.ricarica = ATTACCO.ricarica * (liv.ricarica / L[0].ricarica) * b.ricarica;
-    this.attacco.raggio = ATTACCO.raggio * (liv.raggio / L[0].raggio) * (1 + area);
-    this.attacco.ampiezza = ATTACCO.ampiezza * (liv.ampiezza / L[0].ampiezza);
+    // la Lanterna a mano: i numeri del suo livello nel gioco a stanze (data/armi-stanze.ts), danno a intervallo
+    const L = LANTERNA_STANZE.livelli, liv = L[Math.min(L.length, this.percorso.livelloLanterna) - 1];
+    this.dannoLanterna = liv.danno;
+    this.arsenale.intervalloDaFuori(F.lanterna, liv.danno, liv.dannoMassimo);
+    this.arsenale.ricalcolaForbici(); // gli Echi: così anche un numero cambiato dal LAB vale subito
+    this.attacco.ricarica = liv.ricarica * b.ricarica;
+    this.attacco.raggio = liv.raggio * (1 + area);
+    this.attacco.ampiezza = liv.ampiezza;
+    this.attacco.spalle = liv.spalle;
     // la mossa dura quanto l'animazione attack, se lo sprite ce l'ha; il colpo ferisce quando l'asta cala
     const mossa = this.durataMossa;
     this.attacco.durataPosa = mossa > 0 ? mossa : ATTACCO.posa;

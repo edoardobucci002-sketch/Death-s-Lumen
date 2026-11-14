@@ -39,14 +39,10 @@ export const STANZA = {
 
 /**
  * Passo 3 della fetta: l'attacco a tasto con l'arma iniziale (la Lanterna del Lampionaio).
- * Raggio, ampiezza e danno partono da quelli della Lanterna al livello 1 del survivor; la ricarica è più svelta,
- * perché ora si attacca a mano. Tutti i valori sono da rivedere: con i 5 livelli del pivot i numeri si ridistribuiscono.
+ * Ricarica, raggio, ampiezza e danno della Lanterna livello per livello sono in src/data/armi-stanze.ts
+ * (LANTERNA_STANZE: 5 livelli, danno a intervallo, dal 14/11). Qui il resto. Tutti i valori sono da rivedere.
  */
 export const ATTACCO = {
-  ricarica: 0.45, // secondi tra due colpi (la Lanterna automatica del survivor: 0,8)
-  raggio: 136, // quanto arriva l'arco di luce, dai piedi del personaggio (si disegna all'altezza del corpo)
-  ampiezza: 132, // gradi dell'arco
-  danno: 18,
   miraMassima: 320, // il tocco breve (e J) mira al nemico più vicino entro questa distanza; se no, dove guarda il personaggio
   posa: 0.15, // secondi in cui il personaggio resta girato verso il colpo, solo se lo sprite non ha l'animazione attack
   // con l'animazione attack la mossa dura quanto lei e il colpo ferisce dopo «anticipo» secondi, quando l'asta cala
@@ -118,7 +114,7 @@ export const NEMICI_STANZA = {
   // nemico base: cammina dritto e lento verso di te; vicino si ferma, prepara il graffio (avviso) e graffia davanti a sé
   ricaduto: {
     sprite: 'Ricaduto', // V1 del 13/11 da PixelLab (walk, attack, death); il gioco usa walk
-    salute: 40, // 3 colpi della Lanterna, 2 in Grazia
+    salute: 60, // dal 14/11 (era 40; Edoardo: «vanno giù facilmente»): con la Lanterna 12–18 servono da 4 a 5 colpi, 3 o 4 in Grazia
     velocita: 60, // il Lampionaio: 270
     raggio: 16, // il corpo, per i colpi della Lanterna e per non sovrapporsi
     portata: 56, // a questa distanza si ferma e comincia l'avviso
@@ -134,7 +130,7 @@ export const NEMICI_STANZA = {
   // gira verso di te di al massimo «virata» gradi al secondo, poi va dritto; contro il muro, o su di te, scoppia in una pozza di cera
   cantore: {
     sprite: 'Cantore', // V1 del 13/11 da PixelLab (walk, attack); il gioco usa walk
-    salute: 20, // 2 colpi della Lanterna, 1 in Grazia
+    salute: 30, // dal 14/11 (era 20): con la Lanterna 12–18 servono 2 colpi, a volte 3
     velocita: 75,
     raggio: 15,
     distanza: { minima: 200, massima: 250 }, // sotto si allontana, sopra si avvicina

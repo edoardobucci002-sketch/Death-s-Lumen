@@ -5,12 +5,14 @@
  * Passo 4: far comparire nemici, ondate, immortale, cura, Grazia, rinascita del Ricaduto, spostare il Lampionaio.
  * Passo 5: caricare e usare il Cerchio di luce. Passo 6: ripulire la stanza, attraversare una porta, aggiungere un Eco.
  * Restyle del 13/11: ferire o far cadere il Lampionaio per vedere le animazioni hurt e death.
+ * Danno a intervallo (14/11): far salire di livello la Lanterna e gli Echi.
  */
-import { ABILITA_STANZA, STANZA } from '../data/stanze';
-import { ARMI_COMUNI } from '../data/armi';
+import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
+import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { areaCamminabile } from './stanza';
 import { STATO, type TipoStanza } from './nemici-stanza';
+import { F } from './armi-colpo';
 import type { Stanze } from '../scene/Stanze';
 
 export type DirezioneColpo = 'destra' | 'sinistra' | 'su' | 'giu' | 'auto';
@@ -57,8 +59,44 @@ export class LabStanze {
 
   /** Un Eco nuovo dell'affinità aff (il primo che non si ha), se c'è posto. */
   eco(aff: IdAffinita): void {
-    const a = ARMI_COMUNI.find((x) => AFFINITA_ARMI[x.id] === aff && !this.s.arsenale.livello(x));
+    const a = ECHI_STANZE.find((x) => AFFINITA_ARMI[x.id] === aff && !this.s.arsenale.livello(x));
     if (a && this.s.arsenale.possedute.length < 3) this.s.arsenale.aggiungi(a);
+  }
+
+  /** La Lanterna sale di un livello (al massimo il 5°, il potenziale). */
+  lanternaSu(): void {
+    this.s.percorso.livelloLanterna = Math.min(LANTERNA_STANZE.livelli.length, this.s.percorso.livelloLanterna + 1);
+    this.intervalloSubito();
+  }
+
+  /** L'intervallo del danno della Lanterna al livello nuovo vale subito, senza aspettare il passo dopo. */
+  private intervalloSubito(): void {
+    const L = LANTERNA_STANZE.livelli[this.s.percorso.livelloLanterna - 1];
+    this.s.arsenale.intervalloDaFuori(F.lanterna, L.danno, L.dannoMassimo);
+  }
+
+  /** Ogni Eco posseduto sale di un livello (fino al 5°). */
+  echiSu(): void {
+    for (const p of this.s.arsenale.possedute) if (p.livello < p.arma.livelli.length) this.s.arsenale.potenzia(p.arma);
+  }
+
+  /** Lanterna ed Echi tornano al livello 1 (gli Echi restano). */
+  livelliAUno(): void {
+    this.s.percorso.livelloLanterna = 1;
+    for (const p of this.s.arsenale.possedute) p.livello = 1;
+    this.s.arsenale.ricalcolaForbici();
+    this.intervalloSubito();
+  }
+
+  /** 200 colpi di prova della Lanterna al suo livello, senza doni: il più debole, il più forte, quanti diversi (per le prove). */
+  intervalloLanterna(): { minimo: number; massimo: number; diversi: number; atteso: [number, number] } {
+    const L = LANTERNA_STANZE.livelli[this.s.percorso.livelloLanterna - 1];
+    return { ...this.s.arsenale.campioneDanno(F.lanterna, L.danno, 200), atteso: [L.danno, L.dannoMassimo] };
+  }
+
+  /** Quanti colpi della Lanterna (al suo livello, senza doni né Grazia) battono di sicuro un nemico di quel tipo. */
+  colpiPerBattere(tipo: TipoStanza): number {
+    return Math.ceil(NEMICI_STANZA[tipo].salute / LANTERNA_STANZE.livelli[this.s.percorso.livelloLanterna - 1].danno);
   }
 
   /** Sceglie la prima carta (prove automatiche). */

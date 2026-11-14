@@ -51,13 +51,22 @@ export interface VoceDettaglio {
   righe: Riga[];
 }
 
+/**
+ * Un numero di un livello d'arma come si scrive su carte e pausa. Il danno a intervallo del gioco a stanze
+ * (data/armi-stanze.ts) si scrive «12–18»; se il minimo e il massimo coincidono, un numero solo.
+ */
+function scriviCampo(livello: Record<string, number | boolean | string>, k: string): string {
+  const v = livello[k] as number, massimo = livello.dannoMassimo;
+  return k === 'danno' && typeof massimo === 'number' && massimo !== v ? `${virgola(v)}–${virgola(massimo)}` : virgola(v);
+}
+
 /** Dettaglio di un'arma al suo livello; unione: quella già fatta, oppure da mostrare come traguardo con il suo stato. */
 export function voceArma(arma: Arma, livello: number, unita: boolean, unione?: { u: Unione; stato: string }): VoceDettaglio {
   const ora = arma.livelli[livello - 1] as unknown as Record<string, number | boolean | string>;
   const numeri: VoceDettaglio['numeri'] = [];
   for (const k of Object.keys(ora)) {
     const campo = CAMPI_ARMA[k], v = ora[k];
-    if (campo && typeof v === 'number') numeri.push({ nome: chiaro(campo.nome), valore: virgola(v) + (campo.unita ?? '') });
+    if (campo && typeof v === 'number') numeri.push({ nome: chiaro(campo.nome), valore: scriviCampo(ora, k) + (campo.unita ?? '') });
   }
   const info = INFO_AFFINITA[AFFINITA_ARMI[arma.id]], fatta = unita ? unioneDi(arma.id) : undefined;
   const righe: Riga[] = [
@@ -65,7 +74,7 @@ export function voceArma(arma: Arma, livello: number, unita: boolean, unione?: {
     { testo: `${info.verbo} il nemico: ${info.effetto()}`, simbolo: info.simbolo, colore: info.colore },
   ];
   if (unione && !fatta) righe.push({ testo: `Unione: ${unione.u.nome}, ${unione.stato.toLowerCase()}`, tono: 'reazione' });
-  return { chiave: arma.id, nome: fatta?.nome ?? arma.nome, icona: fatta ? iconaUnione(fatta.id) : arma.icona, livello, massimo: CARTE.livelloMassimo, unita: !!fatta, numeri, righe };
+  return { chiave: arma.id, nome: fatta?.nome ?? arma.nome, icona: fatta ? iconaUnione(fatta.id) : arma.icona, livello, massimo: arma.livelli.length, unita: !!fatta, numeri, righe };
 }
 
 /** Dettaglio di un dono al suo livello. */
@@ -87,9 +96,9 @@ function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
     if (!campo || typeof v !== 'number') continue;
     const unita = campo.unita ?? '';
     if (!prima) {
-      if (k === 'danno' || k === 'ricarica' || (k === 'quantita' && v > 1)) dati.push({ nome: campo.nome, dopo: virgola(v) + unita, tono: 'bene' });
-    } else if (prima[k] !== v) {
-      dati.push({ nome: campo.nome, prima: virgola(prima[k] as number), dopo: virgola(v) + unita, tono: 'bene' });
+      if (k === 'danno' || k === 'ricarica' || (k === 'quantita' && v > 1)) dati.push({ nome: campo.nome, dopo: scriviCampo(ora, k) + unita, tono: 'bene' });
+    } else if (scriviCampo(prima, k) !== scriviCampo(ora, k)) {
+      dati.push({ nome: campo.nome, prima: scriviCampo(prima, k), dopo: scriviCampo(ora, k) + unita, tono: 'bene' });
     }
   }
   const aff = AFFINITA_ARMI[arma.id], info = INFO_AFFINITA[aff];
@@ -112,7 +121,7 @@ function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
   if (u && (l === LIVELLO_ARMA_UNIONE || c.doni[u.dono])) {
     righe.push({ testo: `Al liv ${LIVELLO_ARMA_UNIONE}, con ${PASSIVI.find((q) => q.id === u.dono)!.nome} al liv ${livelloDonoUnione(u.dono)}: ${u.nome}`, tono: 'reazione' });
   }
-  return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, CARTE.livelloMassimo, 'Nuova arma'), dati, righe };
+  return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, arma.livelli.length, 'Nuova arma'), dati, righe };
 }
 
 /** Che cosa raccontano le strisce del dono d. */

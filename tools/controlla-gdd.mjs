@@ -45,6 +45,7 @@ const A = D('armi'), N = D('nemici'), AB = D('abilita'), P = D('personaggi'), DO
 const R = D('rosario'), U = D('unioni'), ST = D('stati'), PR = D('progressione'), SO = D('sopravvivenza');
 const OG = D('oggetti'), W = D('mondo'), E = D('effetti'), H = D('hud'), PX = D('pixel');
 const SZ = D('stanze'); // gioco a stanze (pivot del 12/11)
+const AS = D('armi-stanze'); // le armi del gioco a stanze: 5 livelli, danno a intervallo (14/11)
 
 const gdd = fs.readFileSync(path.join(radice, 'docs/GDD.md'), 'utf8');
 const righeGdd = gdd.split('\n');
@@ -814,12 +815,35 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   stessiNomi('Stanza', t, RIGHE_STANZA.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_STANZA) conRiga(t, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 
+  // le armi del gioco a stanze: tabelle «#### Stanze · <Nome>», con il danno scritto «minimo–massimo»
+  const COLONNE_STANZE = { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Raggio: 'raggio', 'Ampiezza arco (°)': 'ampiezza', Lunghezza: 'lunghezza', 'Durata (s)': 'durata', Trapassa: 'trapassa', 'Rotazione (giri/s)': 'giri', Rimbalzi: 'rimbalzi', 'Colpo alle spalle': 'spalle', 'Colpo doppio': 'doppio' };
+  for (const arma of [AS.LANTERNA_STANZE, ...AS.ECHI_STANZE]) {
+    const nome = `Stanze · ${arma.nome}`, t = tabella('#### ' + nome);
+    vero(nome, t.righe.length === arma.livelli.length, `${t.righe.length} righe nel GDD, ${arma.livelli.length} livelli nei dati`);
+    for (const col of t.colonne) {
+      if (col !== 'Lv' && col !== 'Cosa cambia' && col !== 'Danno' && !(col in COLONNE_STANZE)) diff.push(`${nome}: colonna «${col}» senza corrispondenza nello script`);
+    }
+    for (const k of Object.keys(arma.livelli[0])) {
+      if (k !== 'testo' && k !== 'danno' && k !== 'dannoMassimo' && !Object.values(COLONNE_STANZE).includes(k)) diff.push(`${nome}: il campo «${k}» non ha una colonna`);
+      else if (k in arma.livelli[0] && Object.entries(COLONNE_STANZE).some(([c, v]) => v === k && !t.colonne.includes(c))) diff.push(`${nome}: manca la colonna del campo «${k}»`);
+    }
+    t.righe.forEach((r, i) => {
+      const L = arma.livelli[i];
+      if (!L) return;
+      testoUguale(`${nome} liv. ${i + 1}: testo`, r['Cosa cambia'], L.testo);
+      const [mi, ma] = String(r.Danno).split('–').map(numero);
+      vero(`${nome} liv. ${i + 1}: Danno`, uguali(mi, L.danno) && uguali(ma, L.dannoMassimo), `GDD ${r.Danno} ≠ dati ${L.danno}–${L.dannoMassimo}`);
+      for (const [col, campo] of Object.entries(COLONNE_STANZE)) {
+        if (!t.colonne.includes(col)) continue;
+        const dato = L[campo], g = typeof dato === 'boolean' ? r[col] === 'sì' : numero(r[col]);
+        vero(`${nome} liv. ${i + 1}: ${col}`, typeof dato === 'boolean' ? g === dato : uguali(g, dato), `GDD ${r[col]} ≠ dati ${dato}`);
+      }
+    });
+  }
+
   const ta = tabella('| Valore dell\'attacco | Numero |');
   const AT = SZ.ATTACCO;
   const RIGHE_ATTACCO = [
-    ['Ricarica', '{} s', AT.ricarica],
-    ['Arco', 'raggio {} px, ampiezza {}°', AT.raggio, AT.ampiezza],
-    ['Danno', '{}', AT.danno],
     ['Mira automatica', 'entro {} px', AT.miraMassima],
     ['Posa del colpo', '{} s, slancio {} px', AT.posa, AT.slancio],
     ['Joystick d\'attacco', 'grande come il joystick di movimento; {} px dal bordo sicuro', AT.tasto.margine],

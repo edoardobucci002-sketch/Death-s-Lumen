@@ -9,6 +9,7 @@
  */
 import Phaser from 'phaser';
 import { ATTACCO } from '../data/stanze';
+import { LANTERNA_STANZE } from '../data/armi-stanze';
 import { TOCCO_MINIMO } from '../data/hud';
 import { arte, immagine, ingr, misura, posa, type MisureHud } from './arte';
 import { PROFONDITA, type Effetti } from './effetti';
@@ -28,9 +29,10 @@ export class AttaccoATasto {
   dy = 0;
   colpi = 0; // colpi partiti (per il LAB e le prove)
   // il colpo di adesso: livello della Lanterna, Clessidra e Stoppino lungo li cambiano (la scena li aggiorna)
-  ricarica: number = ATTACCO.ricarica;
-  raggio: number = ATTACCO.raggio;
-  ampiezza: number = ATTACCO.ampiezza;
+  ricarica: number = LANTERNA_STANZE.livelli[0].ricarica;
+  raggio: number = LANTERNA_STANZE.livelli[0].raggio;
+  ampiezza: number = LANTERNA_STANZE.livelli[0].ampiezza;
+  spalle = false; // il potenziale della Lanterna (livello 5): un secondo fendente alle spalle
   private richiesta = false;
   private rAuto = false;
   private rDX = 0;
@@ -125,6 +127,10 @@ export class AttaccoATasto {
     this.effetti.fendente(c.x, c.y, this.angolo, Math.round(this.raggio), this.ampiezza);
     suona('colpo');
     this.colpito(this.angolo);
+    if (this.spalle) {
+      this.effetti.fendente(c.x, c.y, this.angolo + Math.PI, Math.round(this.raggio), this.ampiezza);
+      this.colpito(this.angolo + Math.PI);
+    }
   }
 
   /** Punta dx, dy verso il nemico più vicino; false se non ce n'è a portata. */

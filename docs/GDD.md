@@ -751,7 +751,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Mattoni della facciata | 32 × 16 px | sfalsati di mezzo mattone a ogni riga |
 | Ombra del muro | 10 px | fascia scura sul pavimento ai piedi della facciata |
 
-**L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`). Il Lampionaio usa la Lanterna a mano: il colpo è un arco davanti a lui nella direzione scelta, disegnato dal **Fendente** pixelfx (una mezzaluna dorata che spazza l'arco dall'alto in basso e si sfalda a retino; un foglio per misura della Lanterna, `PIXELFX.fendente` in `src/data/effetti.ts`, 16 direzioni), e ferisce ogni nemico dentro l'arco (distanze misurate tra i piedi), con un lampo bianco, il numero del danno e una piccola spinta.
+**L'attacco a tasto** (passo 3, `ATTACCO` in `src/data/stanze.ts`, `src/sistema/attacco.ts`; ricarica, arco e danno livello per livello in «Le armi nelle stanze», qui sotto). Il Lampionaio usa la Lanterna a mano: il colpo è un arco davanti a lui nella direzione scelta, disegnato dal **Fendente** pixelfx (una mezzaluna dorata che spazza l'arco dall'alto in basso e si sfalda a retino; un foglio per misura della Lanterna, `PIXELFX.fendente` in `src/data/effetti.ts`, 16 direzioni), e ferisce ogni nemico dentro l'arco (distanze misurate tra i piedi), con un lampo bianco, il numero del danno e una piccola spinta.
 
 - **Telefono** (stile Brawl Stars, decisione di Edoardo del 12/11): un joystick d'attacco fisso in basso a destra, nella metà destra dello schermo, grande come il joystick di movimento. Un tocco breve colpisce il nemico più vicino entro 320 px; se non ce n'è, colpisce dove guarda il Lampionaio (l'ultima direzione in cui ha camminato). Trascinando, il pomello segue il pollice fino al bordo della base, a terra compare la mira (il contorno dell'arco, color crema: l'arancione è degli avvisi a distanza) e, lasciando il dito, il colpo parte in quella direzione; tornando al centro prima di lasciare, il colpo torna automatico. Durante la ricarica il joystick si scurisce.
 - **Computer**: clic sinistro verso il puntatore, J verso il nemico più vicino; il mouse non fa comparire il joystick (si cammina con WASD e le frecce) e il tasto tondo non si vede.
@@ -760,9 +760,6 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 
 | Valore dell'attacco | Numero | Note |
 | --- | --- | --- |
-| Ricarica | 0,45 s | la Lanterna automatica del survivor: 0,8 s (*da rivedere*) |
-| Arco | raggio 136 px, ampiezza 132° | come la Lanterna al livello 1 del survivor (*da rivedere*) |
-| Danno | 18 | +30% in Grazia (*da rivedere*) |
 | Mira automatica | entro 320 px | tocco breve e J (*da rivedere*) |
 | Posa del colpo | 0,15 s, slancio 3 px | segnaposto dell'animazione `attack` |
 | Joystick d'attacco | grande come il joystick di movimento; 14 px dal bordo sicuro | area di tocco di almeno 44 punti |
@@ -789,10 +786,10 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Quiete dei nemici | 0,3 s, per ogni arma | |
 | Grazia | finestra 0,25 s, sfioro 30 px; 3 s, +30% danno, +15% velocità | |
 | Rallentatore | dal 60% in 0,35 s | all'inizio della Grazia, torna normale con una curva morbida |
-| Ricaduto | salute 40, velocità 60 px/s, corpo 16 px | 3 colpi della Lanterna, 2 in Grazia |
+| Ricaduto | salute 60, velocità 60 px/s, corpo 16 px | da 4 a 5 colpi della Lanterna al livello 1, 3 o 4 in Grazia |
 | Graffio | avviso 0,5 s da 56 px; spicchio di 72 px e 110°; danno 15; fermo 0,7 s dopo | |
 | Rinascita | 20%, dopo 1,5 s a terra, con il 50% della salute | una volta sola |
-| Cantore | salute 20, velocità 75 px/s, corpo 15 px, tra 200 e 250 px | 2 colpi, 1 in Grazia |
+| Cantore | salute 30, velocità 75 px/s, corpo 15 px, tra 200 e 250 px | 2 colpi, a volte 3 |
 | Avviso del canto | 0,8 s entro 360 px; primo canto dopo 1,2 s; ricarica 2,4 s | |
 | Grumo | velocità 210 px/s, raggio 9 px, danno 12; ti cerca per 1,4 s, al massimo 125°/s | *da rivedere* |
 | Pozza di cera | 2 s, raggio 34 px, danno 6; si restringe negli ultimi 0,3 s | *da rivedere* |
@@ -814,7 +811,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 
 - **Il percorso**: si entra sempre dalla porta in basso, che resta chiusa. Ogni stanza ha le sue ondate (decisione di Edoardo del 13/11): l'ondata dopo arriva 8 s dopo la precedente (*da rivedere*), anche se ci sono ancora nemici, oppure subito se la stanza si svuota prima. Ripulita la stanza, dopo 0,5 s arrivano **le 3 carte**, con il titolo «Un nuovo dono», **verticali e in fila una accanto all'altra** (lo schermo è in orizzontale e ha altezza da usare; `CARTA_STANZA` in `src/data/hud.ts`): 130 × 200 pixel disegnati, ingrandite quanto ci stanno (× 2 sul telefono). Dall'alto: l'icona ingrandita 2 volte in un pozzetto, il nome, «Nuova arma» o il livello, una riga, i numeri e la spiegazione allineati a sinistra, con scritte più grandi di quelle delle strisce (numeri 16, livello 9, spiegazione 9,5; se una spiegazione non ci sta scende da sola). La carta è un segnaposto disegnato dal codice (*Carta_Stanza*, da disegnare). Compaiono **a pop**, prima minuscole poi alla loro grandezza, una dopo l'altra (0,24 s a 6 scatti, 0,1 s l'una dall'altra), e quando ognuna è grande, sull'icona scoppia l'effetto di comparsa (pixelfx «collect-burst» ricolorato in oro, con un piccolo suono). Si sceglie toccando una carta o con 1-2-3. Mentre le carte sono aperte il gioco è fermo e joystick d'attacco e abilità si nascondono.
 - **Da dove pescano le carte**: nella prima stanza sono 3 Echi nuovi di 3 affinità diverse. Poi decide la porta scelta. Una **porta d'affinità** (Luce, Sacro, Ombra, Terra) dà Echi nuovi di quell'affinità (finché se ne hanno meno di 3) e livelli degli Echi di quell'affinità che si hanno; dalla Luce anche livelli della Lanterna. La **porta del dono** dà doni nuovi (fino a 6) e livelli dei doni che si hanno, solo tra quelli che nelle stanze funzionano: Cuore di cera, Sale nero, Clessidra, Stoppino lungo, Ali di falena, Erbe amare, Scudo di ferro, Specchio, Cera votiva, Chiodo di bara, Campanella d'argento (decisione di Edoardo del 13/11; restano fuori Calamita e Lacrima di lumen). Se una porta d'affinità non ha più niente da dare, le carte sono doni.
-- **Gli Echi** sono le armi automatiche del survivor, con i loro numeri e i loro 8 livelli; sparano da sole come nel survivor. **La Lanterna a mano** sale di livello con i numeri del survivor (danno, raggio, ampiezza), e la sua ricarica scende nella stessa proporzione partendo da 0,45 s. Sulla carta della Lanterna la ricarica è quella della Lanterna a mano (0,45 s, poi 0,38 s dal livello 4); danno e area sono quelli del survivor, che valgono anche qui. Doni: Clessidra accorcia anche la ricarica della Lanterna, Stoppino lungo allarga anche il suo arco, Campanella d'argento allunga la finestra della schivata perfetta (+0,1 s per livello), Erbe amare fanno tornare la salute, Scudo di ferro toglie parte del danno subito.
+- **Gli Echi** sono le armi automatiche del survivor e sparano da sole come nel survivor, ma con i numeri del gioco a stanze: 5 livelli e danno a intervallo (vedi «Le armi nelle stanze», qui sotto). Anche **la Lanterna a mano** ha i suoi 5 livelli. Doni: Clessidra accorcia anche la ricarica della Lanterna, Stoppino lungo allarga anche il suo arco, Campanella d'argento allunga la finestra della schivata perfetta (+0,1 s per livello), Erbe amare fanno tornare la salute, Scudo di ferro toglie parte del danno subito.
 - **Le porte**: scelta la carta se ne aprono 2 o 3, su muri diversi (in alto, a sinistra, a destra), ognuna con una ricompensa diversa. Sopra ogni porta c'è il simbolo della ricompensa: il simbolo dello stato dell'affinità (Abbagliato, Consacrato, Maledetto, Sepolto) o un rombo dorato per il dono. Chiusa la porta ha le sbarre, aperta ha la cornice arancione; porte e simboli si vedono anche nel buio. Ci si entra camminandoci contro.
 - **Il passaggio**: il buio si infittisce a retino fino al nero, si cambia stanza e il retino si dirada (0,25 s in tutto).
 - **Fine della fetta**: dopo la carta della terza stanza compare «Fetta completata», con i nemici battuti, le schivate perfette e la build (Lanterna, Echi e doni con il loro livello), «Ricomincia» e «Menu».
@@ -827,6 +824,135 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Build | al massimo 3 Echi e 6 doni | più la Lanterna |
 | Porte | da 2 a 3, larghe 64 px | su muri diversi |
 | Passaggio | 0,25 s | a retino |
+
+**Le armi nelle stanze: 5 livelli e danno a intervallo** (decisioni di Edoardo del 13/11 e del 14/11; `src/data/armi-stanze.ts`). Il survivor resta con le sue tabelle a 8 livelli; il gioco a stanze ha tabelle sue, con gli stessi campi. Tutti i numeri sono proposte di Claude del 14/11, *da rivedere*.
+
+- **Danno a intervallo**: ogni arma ha un danno minimo e un danno massimo; ogni colpo tira a caso un numero tra i due, con il generatore con seme. Poi valgono i doni in percentuale (Sale nero, la Grazia +30%) e il colpo critico (Chiodo di bara). Le carte e la pausa scrivono «Danno 12–18»; quando un livello lo fa crescere, «Danno 12–18 › 16–24» e la spiegazione «+4–6 danno».
+- **Come crescono**: i livelli dell'arma aggiungono un intervallo al minimo e al massimo; i doni danno percentuali su tutte le armi (scelta di Edoardo del 14/11, come in Path of Exile).
+- **Il carattere di ogni arma**: le armi pesanti hanno un intervallo largo (la Lapide 30–70: a volte schiaccia un Ricaduto, a volte no; la Campana 14–24), le aure e le pozze uno stretto e piccolo, perché feriscono tante volte al secondo (Velo funebre 2–3 ogni 0,5 s, Acqua santa 1–2 ogni 0,3 s). Nel survivor il Velo faceva 7 ogni 0,5 s, e nelle prime stanze era fin troppo forte (Edoardo, 14/11).
+- **5 livelli**: il livello 5 è il **potenziale** dell'arma (proposta del pivot): sblocca quello che nel survivor dava il livello 8. La Lanterna al livello 5 colpisce anche alle spalle, con un secondo Fendente. I campi che non cambiano con il livello (velocità dei proiettili, spinta, rimbalzi del sasso…) sono quelli del survivor.
+- Le Unioni non ci sono ancora nel gioco a stanze (nel pivot: arma al livello 4).
+- LAB → Stanze → Percorso: «Lanterna +1 livello», «Echi +1 livello», «Livelli a 1»; i numeri si cambiano al volo in Numeri → armiStanze.
+
+#### Stanze · Lanterna
+
+| Lv | Ricarica (s) | Danno | Raggio | Ampiezza arco (°) | Colpo alle spalle | Cosa cambia |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 0,45 | 12–18 | 136 | 132 | no | Colpo corto, ampia gittata frontale. |
+| 2 | 0,45 | 16–24 | 136 | 132 | no | +4–6 danno. |
+| 3 | 0,4 | 16–24 | 160 | 132 | no | Raggio maggiore, colpi più frequenti. |
+| 4 | 0,4 | 21–31 | 183 | 166 | no | +5–7 danno, raggio e ampiezza maggiori. |
+| 5 | 0,4 | 26–38 | 183 | 166 | sì | +5–7 danno, colpisce anche alle spalle. |
+
+#### Stanze · Candela
+
+| Lv | Ricarica (s) | Danno | Quantità | Trapassa | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 0,95 | 6–9 | 1 | 1 | Lancia fiammelle verso il nemico più vicino. |
+| 2 | 0,95 | 6–9 | 2 | 1 | +1 fiammella. |
+| 3 | 0,95 | 8–12 | 2 | 2 | +2–3 danno, le fiammelle trapassano un nemico in più. |
+| 4 | 0,75 | 8–12 | 3 | 2 | +1 fiammella, ricarica più rapida. |
+| 5 | 0,75 | 11–16 | 4 | 3 | +1 fiammella, +3–4 danno, trapassano di più. |
+
+#### Stanze · Falce
+
+| Lv | Quantità | Danno | Raggio | Rotazione (giri/s) | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1 | 5–7 | 132 | 0,45 | Una falce spettrale ti ruota intorno. |
+| 2 | 2 | 5–7 | 132 | 0,45 | +1 falce. |
+| 3 | 2 | 7–9 | 160 | 0,45 | +2 danno, raggio più ampio. |
+| 4 | 3 | 7–9 | 160 | 0,45 | +1 falce. |
+| 5 | 4 | 9–12 | 160 | 0,59 | +1 falce, +2–3 danno, rotazione più veloce. |
+
+#### Stanze · Campana
+
+| Lv | Ricarica (s) | Danno | Raggio | Colpo doppio | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 2,6 | 14–24 | 197 | no | Rintocchi che respingono e feriscono tutto intorno. |
+| 2 | 2,6 | 19–31 | 197 | no | +5–7 danno. |
+| 3 | 2,2 | 19–31 | 240 | no | Raggio più ampio, rintocchi più frequenti. |
+| 4 | 2,2 | 25–41 | 240 | no | +6–10 danno. |
+| 5 | 1,8 | 30–50 | 240 | sì | +5–9 danno, doppio rintocco. |
+
+#### Stanze · Fuoco fatuo
+
+| Lv | Ricarica (s) | Quantità | Danno | Trapassa | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1,3 | 1 | 7–11 | 1 | Fuochi fatui che inseguono i nemici, prima élite e capi. |
+| 2 | 1,3 | 2 | 7–11 | 1 | +1 fuoco. |
+| 3 | 1,3 | 2 | 10–15 | 1 | +3–4 danno. |
+| 4 | 1 | 3 | 10–15 | 1 | +1 fuoco, ricarica più rapida. |
+| 5 | 1 | 4 | 13–20 | 3 | +1 fuoco, +3–5 danno, trapassano tre nemici. |
+
+#### Stanze · Acqua santa
+
+| Lv | Ricarica (s) | Quantità | Danno | Raggio | Durata (s) | Cosa cambia |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 2,8 | 1 | 1–2 | 89 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
+| 2 | 2,8 | 2 | 1–2 | 89 | 2,6 | +1 fiala. |
+| 3 | 2,8 | 2 | 2–3 | 108 | 2,6 | +1 danno, pozze più grandi. |
+| 4 | 2,3 | 3 | 2–3 | 108 | 3,2 | +1 fiala, ricarica più rapida, pozze più durature. |
+| 5 | 2,3 | 4 | 3–4 | 129 | 4,2 | +1 fiala, +1 danno, pozze più grandi e durature. |
+
+#### Stanze · Lama di luce
+
+| Lv | Ricarica (s) | Danno | Lunghezza | Colpo alle spalle | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1,15 | 12–20 | 259 | no | Un fendente di luce davanti a te. |
+| 2 | 1,15 | 12–20 | 259 | sì | Colpisce anche alle spalle. |
+| 3 | 1 | 16–26 | 259 | sì | +4–6 danno, ricarica più rapida. |
+| 4 | 1 | 16–26 | 329 | sì | Fendente più lungo. |
+| 5 | 0,85 | 22–34 | 329 | sì | +6–8 danno, ricarica più rapida. |
+
+#### Stanze · Lapide
+
+| Lv | Ricarica (s) | Danno | Raggio | Quantità | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 3,2 | 30–70 | 84 | 1 | Cade sul nemico con più salute in vista e lo seppellisce. |
+| 2 | 3,2 | 40–90 | 96 | 1 | +10–20 danno, impatto più largo. |
+| 3 | 2,8 | 40–90 | 96 | 1 | Cade più spesso. |
+| 4 | 2,8 | 50–110 | 96 | 2 | +1 lapide, +10–20 danno. |
+| 5 | 2,4 | 70–150 | 110 | 2 | +20–40 danno, cade più spesso, impatto più largo. |
+
+#### Stanze · Rosario spezzato
+
+| Lv | Ricarica (s) | Danno | Rimbalzi | Quantità | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1,6 | 6–10 | 4 | 1 | Un grano rimbalza tra i nemici vicini e li maledice. |
+| 2 | 1,6 | 8–13 | 4 | 1 | +2–3 danno. |
+| 3 | 1,4 | 8–13 | 5 | 1 | +1 rimbalzo, ricarica più rapida. |
+| 4 | 1,4 | 8–13 | 6 | 2 | +1 grano, +1 rimbalzo. |
+| 5 | 1,2 | 12–19 | 8 | 2 | +4–6 danno, +2 rimbalzi. |
+
+#### Stanze · Corvo
+
+| Lv | Ricarica (s) | Danno | Quantità | Cosa cambia |
+| --- | --- | --- | --- | --- |
+| 1 | 1 | 8–14 | 1 | Becca il nemico più vicino e ti riporta le anime intorno a lui. |
+| 2 | 1 | 11–18 | 1 | +3–4 danno. |
+| 3 | 0,9 | 11–18 | 2 | +1 corvo, becca più spesso. |
+| 4 | 0,9 | 14–22 | 2 | +3–4 danno. |
+| 5 | 0,75 | 14–22 | 3 | +1 corvo, becca più spesso. |
+
+#### Stanze · Velo funebre
+
+| Lv | Ricarica (s) | Danno | Raggio | Cosa cambia |
+| --- | --- | --- | --- | --- |
+| 1 | 0,5 | 2–3 | 110 | Un'aura intorno a te consacra chi entra. |
+| 2 | 0,5 | 3–4 | 110 | +1 danno. |
+| 3 | 0,5 | 3–4 | 125 | Aura più grande. |
+| 4 | 0,4 | 3–4 | 140 | Aura più grande, colpisce più spesso. |
+| 5 | 0,4 | 4–6 | 160 | +1–2 danno, aura più grande. |
+
+#### Stanze · Sampietrini
+
+| Lv | Ricarica (s) | Quantità | Rimbalzi | Danno | Cosa cambia |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1,5 | 1 | 1 | 8–14 | Lancia un sampietrino sul nemico più vicino: colpisce, rimbalza in avanti e colpisce di nuovo. |
+| 2 | 1,5 | 2 | 1 | 8–14 | +1 sampietrino. |
+| 3 | 1,35 | 2 | 1 | 11–18 | +3–4 danno, lancia più spesso. |
+| 4 | 1,35 | 2 | 2 | 11–18 | +1 rimbalzo. |
+| 5 | 1,2 | 3 | 2 | 14–22 | +1 sampietrino, +3–4 danno. |
 
 ## 12. Da fare e da decidere
 

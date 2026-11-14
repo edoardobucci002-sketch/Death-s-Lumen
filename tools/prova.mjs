@@ -1167,21 +1167,22 @@ for (const [nome, disp] of [
     const p1 = await st();
     if (p1.ferite !== p0.ferite + 1) errori.push(`la pozza di cera sotto i piedi non ferisce (colpi subiti ${p0.ferite} → ${p1.ferite})`);
     if (!(await quando('l.stato().pozze === 0', '', 2500))) errori.push('la pozza di cera non sparisce dopo 2 s');
-    // nemico battuto: un Ricaduto cade con 3 colpi automatici e resta a terra; senza rinascita poi sparisce, con la rinascita si rialza
+    // nemico battuto: un Ricaduto cade con i colpi automatici che bastano di sicuro (salute / danno minimo) e resta a terra; senza rinascita poi sparisce, con la rinascita si rialza
     await L('svuota');
     await quando('l.stato().grazia <= 0', '', 4000); // senza Grazia: il conto dei colpi è quello normale
     await L('immortale', true);
     await L('rinascita', false);
     await L('vai', 'centro');
+    const colpiRicaduto = await L('colpiPerBattere', 'ricaduto');
     await L('nemico', 'ricaduto', 60, true);
-    for (let k = 0; k < 3; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
+    for (let k = 0; k < colpiRicaduto; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
     const aTerra = await L('aTerra');
     await pag.waitForTimeout(1700);
     const s4 = await st();
-    if (aTerra !== 1 || s4.uccisi !== s3.uccisi + 1 || s4.nemici !== 0) errori.push(`3 colpi della Lanterna non battono il Ricaduto (a terra ${aTerra}, battuti ${s4.uccisi}, in campo ${s4.nemici})`);
+    if (aTerra !== 1 || s4.uccisi !== s3.uccisi + 1 || s4.nemici !== 0) errori.push(`${colpiRicaduto} colpi della Lanterna non battono il Ricaduto (a terra ${aTerra}, battuti ${s4.uccisi}, in campo ${s4.nemici})`);
     await L('rinascita', true);
     await L('nemico', 'ricaduto', 60, true);
-    for (let k = 0; k < 3; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
+    for (let k = 0; k < colpiRicaduto; k++) { await L('attacca', 'auto'); await pag.waitForTimeout(500); }
     const giu = await L('aTerra');
     await pag.waitForTimeout(1500);
     const s5 = await st();
@@ -1233,6 +1234,17 @@ for (const [nome, disp] of [
     nota += `, nemici sì (graffio, schivate ${s3.schivate}, pozza, battuti, rinascita, caduta), abilità e rallentatore sì`;
     // passo 6: tre stanze. Ripulita la stanza arrivano le carte (nella prima 3 Echi); scelta una carta si aprono le porte;
     // attraversata una porta si entra nella stanza dopo; finita la terza, «Fetta completata»
+    // danno a intervallo (14/11): i colpi della Lanterna escono tra il minimo e il massimo del livello, e non sempre uguali
+    for (const livello of [1, 5]) {
+      await L('livelliAUno');
+      for (let k = 1; k < livello; k++) await L('lanternaSu');
+      const iv = await L('intervalloLanterna');
+      const [a, b] = iv.atteso;
+      if (iv.minimo < a - 1e-6 || iv.massimo > b + 1e-6) errori.push(`Lanterna liv ${livello}: danno ${iv.minimo.toFixed(1)}–${iv.massimo.toFixed(1)} fuori da ${a}–${b}`);
+      if (iv.diversi < Math.min(4, b - a)) errori.push(`Lanterna liv ${livello}: solo ${iv.diversi} valori diversi in 200 colpi`);
+      nota += livello === 1 ? `, danno Lanterna liv 1 ${Math.round(iv.minimo)}–${Math.round(iv.massimo)}` : ` e liv 5 ${Math.round(iv.minimo)}–${Math.round(iv.massimo)}`;
+    }
+    await L('livelliAUno');
     await L('immortale', true);
     const giro = [];
     for (let n = 1; n <= 3; n++) {
