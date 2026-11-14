@@ -143,6 +143,10 @@ export const NEMICI_STANZA = {
     avviso: 0.8,
     ricarica: 2.4, // secondi tra la fine di un canto e l'inizio del successivo
     recupero: 0.3,
+    // la bocca del Cantore rispetto ai piedi (px in avanti, px in alto; lo sprite V1 guarda a destra): mentre canta il grumo
+    // cresce lì, quando sputa parte da «lancio» e scende in volo fino a grumo.altezza in «discesa» secondi (14/11, da rivedere;
+    // se cambia lo sprite vanno rimisurate)
+    bocca: { canto: [7, 87], lancio: [46, 72], discesa: 0.3 },
     grumo: { velocita: 210, raggio: 9, danno: 12, altezza: 20, ricerca: 1.4, virata: 125 }, // virata 125 dal 13/11 notte (era 100; Edoardo: «leggermente più aggressivo») // altezza: quanto sopra il terreno si disegna; velocità 210 dal 13/11 sera (era 140, Edoardo: «lentissimo»; da rivedere)
   },
   // la pozza di cera dove il grumo scoppia, contro il muro o su di te (decisione di Edoardo del 13/11: resta 2 s e fa danno a chi

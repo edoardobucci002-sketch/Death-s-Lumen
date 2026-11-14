@@ -78,6 +78,9 @@ export class NemiciStanza {
   private gVY = new Float32Array(MAX_GRUMI);
   private gSfiorato = new Uint8Array(MAX_GRUMI);
   private gVita = new Float32Array(MAX_GRUMI); // secondi da quando è partito (cerca solo all'inizio)
+  // dove si disegna appena sputato, rispetto al punto a terra: scostamento in orizzontale e altezza (la bocca del Cantore)
+  private gBX = new Float32Array(MAX_GRUMI);
+  private gBH = new Float32Array(MAX_GRUMI);
   // pozze di cera a terra: dove, e quanti secondi restano
   pozze = 0;
   readonly pX = new Float32Array(MAX_POZZE);
@@ -297,7 +300,8 @@ export class NemiciStanza {
             this.tempo[i] = R.recupero;
           }
         } else if (this.tempo[i] <= 0) {
-          this.lancia(o.x[i] + this.dirX[i] * C.raggio, o.y[i] + this.dirY[i] * C.raggio, this.dirX[i], this.dirY[i]);
+          const sx = o.x[i] + this.dirX[i] * C.raggio, lato = this.verso[i] ? -1 : 1;
+          this.lancia(sx, o.y[i] + this.dirY[i] * C.raggio, this.dirX[i], this.dirY[i], o.x[i] + lato * C.bocca.lancio[0] - sx, C.bocca.lancio[1]);
           this.stato[i] = STATO.recupero;
           this.tempo[i] = C.recupero;
           this.ricarica[i] = C.ricarica;
@@ -367,7 +371,8 @@ export class NemiciStanza {
     o.togliStanza(i);
   }
 
-  private lancia(x: number, y: number, dx: number, dy: number): void {
+  /** Un grumo parte da (x, y) a terra in direzione (dx, dy); si disegna dalla bocca (bx px di lato, bh in alto) e scende. */
+  private lancia(x: number, y: number, dx: number, dy: number, bx: number, bh: number): void {
     suona('sparo');
     if (this.grumi >= MAX_GRUMI) return;
     const k = this.grumi++;
@@ -377,6 +382,8 @@ export class NemiciStanza {
     this.gVY[k] = dy * C.grumo.velocita;
     this.gSfiorato[k] = 0;
     this.gVita[k] = 0;
+    this.gBX[k] = bx;
+    this.gBH[k] = bh;
   }
 
   /**
@@ -464,6 +471,8 @@ export class NemiciStanza {
     this.gVY[k] = this.gVY[u];
     this.gSfiorato[k] = this.gSfiorato[u];
     this.gVita[k] = this.gVita[u];
+    this.gBX[k] = this.gBX[u];
+    this.gBH[k] = this.gBH[u];
   }
 
   /** Si può colpire: in campo, con la salute, non a terra. */
@@ -574,7 +583,7 @@ export class NemiciStanza {
       else if (this.bianco[i] > 0 || o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
       else if (st === STATO.avviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(o.tipo[i] === ID_RICADUTO ? col.bordo : col.linea)).setTintMode(Phaser.TintModes.ADD);
       else sp.clearTint();
-      if (st === STATO.avviso || this.colpo[i] > 0) this.disegnaAvviso(t, i, x, y);
+      if (st === STATO.avviso || this.colpo[i] > 0) this.disegnaAvviso(t, s, i, x, y);
       if (st !== STATO.aTerra && o.salute[i] < o.saluteMassima[i]) {
         const L = B.larghezza * 2, H = B.altezza * 2, bx = x - Math.floor(L / 2), by = y + B.distanza;
         const pieno = Math.round((B.larghezza - 2) * Math.max(0, o.salute[i] / o.saluteMassima[i])) * 2;
@@ -613,20 +622,23 @@ export class NemiciStanza {
     for (let k = 0; k < this.grumi; k++) {
       const x = Math.round(this.gX[k]), y = Math.round(this.gY[k]);
       t.fillStyle(0x000000).fillEllipse(x, y, 2 * C.grumo.raggio, C.grumo.raggio); // ombra a terra
-      const sp = this.gSprite[k].setPosition(x, y - C.grumo.altezza).setVisible(true);
+      // appena sputato è alla bocca: scende in volo fino alla sua altezza (C.bocca.discesa)
+      const resta = 1 - Math.min(1, this.gVita[k] / C.bocca.discesa), e = resta * resta;
+      const gx = Math.round(x + this.gBX[k] * e), alto = Math.round(C.grumo.altezza + (this.gBH[k] - C.grumo.altezza) * e);
+      const sp = this.gSprite[k].setPosition(gx, y - alto).setVisible(true);
       if (sp.texture.key === E.grumo) sp.setFrame(String(Math.floor(this.gVita[k] * E.fps) % (sp.texture.frameTotal - 1)));
       // la scia: qualche goccia che resta indietro, sempre più piccola
       const v = Math.hypot(this.gVX[k], this.gVY[k]) || 1, ux = this.gVX[k] / v, uy = this.gVY[k] / v;
       for (let n = 1; n <= E.scia; n++) {
         const d = C.grumo.raggio + n * 5, l = Math.max(1, 4 - n);
-        s.fillStyle(colore(n === 1 ? col.grumo : col.grumoBordo)).fillRect(Math.round(x - ux * d - l / 2), Math.round(y - C.grumo.altezza - uy * d - l / 2), l, l);
+        s.fillStyle(colore(n === 1 ? col.grumo : col.grumoBordo)).fillRect(Math.round(gx - ux * d - l / 2), Math.round(y - alto - uy * d - l / 2), l, l);
       }
     }
     for (let k = this.grumi; k < MAX_GRUMI; k++) this.gSprite[k].setVisible(false);
   }
 
   /** Avviso a terra: lo spicchio del graffio che si riempie, o la linea del canto fino al muro. */
-  private disegnaAvviso(g: Phaser.GameObjects.Graphics, i: number, x: number, y: number): void {
+  private disegnaAvviso(g: Phaser.GameObjects.Graphics, sopra: Phaser.GameObjects.Graphics, i: number, x: number, y: number): void {
     const col = NEMICI_STANZA.colori, a = Math.atan2(this.dirY[i], this.dirX[i]);
     if (this.orda.tipo[i] === ID_RICADUTO) {
       const mezza = Phaser.Math.DegToRad(R.graffio.ampiezza / 2), r = R.graffio.raggio;
@@ -639,13 +651,13 @@ export class NemiciStanza {
     }
     // la linea del Cantore: dal Cantore al muro, nella direzione del grumo; lampeggia, poi resta accesa nell'ultimo terzo
     if (this.colpo[i] > 0) return;
+    // il grumo che si forma nella bocca del Cantore mentre canta (sopra lo sprite)
+    const r = Math.max(2, Math.round(C.grumo.raggio * (1 - Math.max(0, this.tempo[i]) / C.avviso)));
+    sopra.fillStyle(colore(col.grumo)).fillCircle(x + (this.verso[i] ? -1 : 1) * C.bocca.canto[0], y - C.bocca.canto[1], r);
     const acceso = this.tempo[i] <= C.avviso / 3 || Math.floor(this.orologio * 8) % 2 === 0;
     if (!acceso) return;
     const lung = this.finoAlMuro(x, y, this.dirX[i], this.dirY[i]);
     g.lineStyle(2, colore(col.linea), 1).lineBetween(x, y, Math.round(x + Math.cos(a) * lung), Math.round(y + Math.sin(a) * lung));
-    // il grumo che si forma davanti al Cantore
-    const r = Math.max(2, Math.round(C.grumo.raggio * (1 - Math.max(0, this.tempo[i]) / C.avviso)));
-    g.fillStyle(colore(col.grumo)).fillCircle(Math.round(x + this.dirX[i] * C.raggio), Math.round(y + this.dirY[i] * C.raggio) - C.grumo.altezza, r);
   }
 
   /** Distanza da (x, y) al bordo del pavimento andando in direzione (dx, dy). */

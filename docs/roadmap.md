@@ -159,6 +159,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
+| Bocca del Cantore (`NEMICI_STANZA.cantore.bocca`: [7, 87] nel canto, [46, 72] nello sputo, discesa 0,3 s), misurata sullo sprite V1 | GDD «Il Cantore» |
 | Lampionaio V6 (restyle del 13/11): durate dei fotogrammi della mossa (40, 40, 40, 35, 50, 50, 60, 70 ms) e danno a 0,155 s (`ATTACCO.anticipo`); Fendente: un foglio per misura (136, 160, 183), con i bonus d'area il disegno può restare un po' più piccolo dell'area vera | GDD «L'attacco a tasto»; `PIXELFX.fendente` |
 | Barre della salute (personaggio 41 × 9 px con 1 di bordo per lato, decisa da Edoardo il 10/11 sera; Seth alta 12 px; rosso `#c0262d`, vuoto `#3a0c10`; scorrimento 0,5 s, ambra `#d98a2b` per il danno, verde `#6fbf4a` per la cura) e grandezza del conto alla rovescia dell'abilità (16) | GDD §HUD; `src/data/mondo.ts` (`BARRA_SALUTE`), `src/data/hud.ts` (`BARRA_SETH`, `TESTI`) |
 | Stati certi, regola del gioco dal 10/11: tutti i numeri di `STATI_CERTI` (ritmo delle zone 1 s, quiete 3 s, Eclissi 10% senza tetto e ×2 del colpo su élite e Seth, Esorcismo 3 × 60%, Rivelazione +50% per difetto solo da 2 anime in su, Interramento Luce +50%, Sacro 2,5 s, Ombra ×2), i casi senza colpo, l'ordine dell'Interramento con più stati, il tetto dei cerchi (12) *(Gioco a stanze: l'Eclissi su mini-boss e Boss scende al 5% con Quiete di 6 s, decisione del 12/11.)* | GDD §8c; `src/data/stati.ts`; decisioni 10/11 |
