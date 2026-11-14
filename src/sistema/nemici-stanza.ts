@@ -7,6 +7,9 @@
  * dà la Grazia: uscire dallo spicchio all'ultimo istante, farsi sfiorare da un grumo.
  * Quiete: dopo un colpo, per un attimo la stessa arma a mano (Lanterna, Cerchio di luce) non ferisce più quel nemico.
  * Il Ricaduto battuto resta sempre a terra un attimo, intoccabile; poi a volte si rialza (una volta sola).
+ * Animazioni (dal 14/11, se lo sprite ha i tag): l'avviso è la prima metà di «attack», stirata sulla durata dell'avviso, così
+ * il colpo cade nell'istante del danno; la seconda metà scorre nel recupero. Battuto, «death»; il Ricaduto che si rialza la
+ * fa al contrario; il Cantore la fa e poi sparisce. Senza i tag: tremolio, steso e scuro, come prima.
  * Impatto della Lanterna: il nemico colpito diventa bianco, si ferma un attimo (fermo d'impatto), si schiaccia e sprizza
  * scintille (il bianco è quello del survivor, ma dura NEMICI_STANZA.lampo: abbastanza da vederlo).
  * Chi è sepolto, interrato o fermato da uno stato non fa niente, nemmeno l'avviso: il suo attacco aspetta.
@@ -58,6 +61,9 @@ export class NemiciStanza {
   private schiaccia = new Float32Array(CAPIENZA); // secondi di schiacciamento rimasti (solo disegno)
   private bianco = new Float32Array(CAPIENZA); // secondi in cui resta bianco dopo un colpo della Lanterna
   private verso = new Uint8Array(CAPIENZA); // 1 = guarda a sinistra
+  private rialza = new Float32Array(CAPIENZA); // secondi di «death» al contrario rimasti (il Ricaduto che si rialza)
+  // fotogrammi e durate (secondi) di attack e death per tipo, presi dalle animazioni dello sprite (null se mancano)
+  private readonly mosse: ({ attacco: Mossa | null; morte: Mossa | null })[] = [];
   private fermi = new Uint8Array(CAPIENZA); // fermo per uno stato (lo scrive la Orda)
   // comparse: il segno a terra dove sta per arrivare un nemico (non è ancora nella Orda: le armi non lo toccano)
   comparse = 0;
@@ -111,7 +117,8 @@ export class NemiciStanza {
   ) {
     this.orda = new Orda(scena, caso, new Minacce(scena));
     this.orda.registraCampi(this.stato, this.tempo, this.dirX, this.dirY, this.ricarica, this.rinato, this.dentro, this.colpo,
-      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco);
+      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco, this.rialza);
+    for (const sprite of [R.sprite, C.sprite]) this.mosse.push({ attacco: mossa(scena, `${sprite}:attack`), morte: mossa(scena, `${sprite}:death`) });
     // il grumo: un tondo pieno di Lumen spento con il bordo scuro, disegnato una volta
     const r = C.grumo.raggio, chiave = 'stanze-grumo';
     if (!scena.textures.exists(chiave)) {
@@ -176,6 +183,7 @@ export class NemiciStanza {
     this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.bianco[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
     this.ricarica[i] = C.primoCanto;
     this.rinato[i] = this.verso[i] = 0;
+    this.rialza[i] = 0;
     this.dirX[i] = 1;
     this.dirY[i] = 0;
     this.dentro[i] = Infinity;
@@ -229,6 +237,7 @@ export class NemiciStanza {
     let danno = 0;
     for (let i = o.numero - 1; i >= 0; i--) {
       if (this.colpo[i] > 0) this.colpo[i] -= dt;
+      if (this.rialza[i] > 0) this.rialza[i] -= dt;
       if (this.quieteLanterna[i] > 0) this.quieteLanterna[i] -= dt;
       if (this.quieteAbilita[i] > 0) this.quieteAbilita[i] -= dt;
       if (this.schiaccia[i] > 0) this.schiaccia[i] -= dt;
@@ -236,8 +245,14 @@ export class NemiciStanza {
       const ricaduto = o.tipo[i] === ID_RICADUTO;
       // salute finita (Lanterna, Echi, maledizione, reazioni): il Ricaduto va a terra, il Cantore sparisce
       if (o.salute[i] <= 0 && this.stato[i] !== STATO.aTerra) {
+        const morte = this.mosse[ricaduto ? 0 : 1].morte;
         if (ricaduto) this.aTerra(i);
-        else this.sparisce(i);
+        else if (morte) {
+          // il Cantore fa la sua animazione a terra, intoccabile, e poi sparisce (non si rialza)
+          this.aTerra(i);
+          this.rinato[i] = 1;
+          this.tempo[i] = morte.totale;
+        } else this.sparisce(i);
         continue;
       }
       if (this.stato[i] === STATO.aTerra) {
@@ -246,6 +261,9 @@ export class NemiciStanza {
           if (!this.rinato[i] && (this.rinascitaForzata ?? this.caso.numero() < R.rinascita.probabilita)) {
             this.rinato[i] = 1;
             this.stato[i] = STATO.cammina;
+            // si rialza: la morte al contrario, fermo finché non è in piedi
+            const m = this.mosse[0].morte;
+            if (m) this.fermo[i] = this.rialza[i] = m.totale - m.durate[m.durate.length - 1];
             o.salute[i] = o.saluteMassima[i] * R.rinascita.salute;
             this.rinascite++;
             suona('danno');
@@ -510,6 +528,22 @@ export class NemiciStanza {
     return migliore;
   }
 
+  /** Il fotogramma da mostrare per avviso, recupero, morte e rialzo (null: la camminata di sempre). */
+  private posa(i: number, st: number, ricaduto: boolean, M: { attacco: Mossa | null; morte: Mossa | null }): string | null {
+    const A = M.attacco, D = M.morte;
+    // a terra il tempo scende da R.rinascita.attesa (Ricaduto) o dalla durata della morte (Cantore)
+    if (st === STATO.aTerra && D) return D.a((ricaduto ? R.rinascita.attesa : D.totale) - this.tempo[i]);
+    if (this.rialza[i] > 0 && D) return D.a(this.rialza[i]); // al contrario: dal fondo verso l'inizio
+    if (!A) return null;
+    const meta = Math.floor(A.fotogrammi.length / 2);
+    if (st === STATO.avviso) {
+      const durata = ricaduto ? R.avviso : C.avviso;
+      return A.fotogrammi[Math.min(meta - 1, Math.floor((1 - this.tempo[i] / durata) * meta))];
+    }
+    if (st === STATO.recupero) return A.a(A.inizio[meta] + (ricaduto ? R.recupero : C.recupero) - this.tempo[i]);
+    return null;
+  }
+
   /** Disegno: sprite (dalla Orda, poi ritoccati), avvisi a terra, comparse, grumi, barre della salute dei feriti. */
   disegna(cam: Phaser.Cameras.Scene2D.Camera, gx: number, gy: number): void {
     const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra, E = NEMICI_STANZA.effetti;
@@ -523,15 +557,20 @@ export class NemiciStanza {
         if (st !== STATO.cammina || this.fermo[i] > 0 || this.fermi[i]) sp.anims.pause();
         else sp.anims.resume();
       }
+      const ricaduto = o.tipo[i] === ID_RICADUTO, M = this.mosse[ricaduto ? 0 : 1];
+      const posa = this.posa(i, st, ricaduto, M);
+      if (posa) sp.anims.pause(), sp.setFrame(posa);
       let ox = 0, oy = 0;
-      if (st === STATO.avviso && !this.fermi[i]) {
-        // l'avviso: il nemico trema e si solleva un poco (segnaposto dell'animazione «attack»)
+      if (st === STATO.avviso && !this.fermi[i] && !M.attacco) {
+        // l'avviso senza l'animazione «attack»: il nemico trema e si solleva un poco
         ox = Math.floor(this.orologio * 30) % 2 === 0 ? -1 : 1;
         oy = -2;
       }
+      const steso = st === STATO.aTerra && !M.morte; // senza «death»: steso di lato e scuro
       sp.setPosition(x + ox, y + oy).setFlipX(this.verso[i] === 1);
-      sp.setAngle(st === STATO.aTerra ? (this.verso[i] ? 90 : -90) : 0);
-      if (st === STATO.aTerra) sp.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
+      sp.setAngle(steso ? (this.verso[i] ? 90 : -90) : 0);
+      if (steso) sp.setTint(0x5a4a4a).setTintMode(Phaser.TintModes.MULTIPLY);
+      else if (st === STATO.aTerra) sp.clearTint();
       else if (this.bianco[i] > 0 || o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
       else if (st === STATO.avviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(o.tipo[i] === ID_RICADUTO ? col.bordo : col.linea)).setTintMode(Phaser.TintModes.ADD);
       else sp.clearTint();
@@ -618,4 +657,32 @@ export class NemiciStanza {
     else if (dy < 0) t = Math.min(t, -y / dy);
     return Number.isFinite(t) ? t : 0;
   }
+}
+
+/** Un'animazione dello sprite vista come fotogrammi con il loro inizio (secondi): si sceglie il fotogramma per tempo. */
+interface Mossa {
+  fotogrammi: string[];
+  durate: number[];
+  inizio: number[];
+  totale: number;
+  /** Il fotogramma al tempo t (secondi dall'inizio); oltre la fine resta sull'ultimo. */
+  a(t: number): string;
+}
+
+function mossa(scena: Phaser.Scene, chiave: string): Mossa | null {
+  const anim = scena.anims.get(chiave);
+  if (!anim || anim.frames.length < 2) return null;
+  const fotogrammi = anim.frames.map((f) => String(f.textureFrame));
+  const durate = anim.frames.map((f) => (f.duration || 100) / 1000);
+  const inizio: number[] = [];
+  let totale = 0;
+  for (const d of durate) inizio.push(totale), (totale += d);
+  return {
+    fotogrammi, durate, inizio, totale,
+    a(t: number): string {
+      let k = 0;
+      while (k < inizio.length - 1 && t >= inizio[k + 1]) k++;
+      return fotogrammi[k];
+    },
+  };
 }
