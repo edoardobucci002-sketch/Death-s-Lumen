@@ -5,7 +5,7 @@
  * Passo 4: far comparire nemici, ondate, immortale, cura, Grazia, rinascita del Ricaduto, spostare il Lampionaio.
  * Passo 5: caricare e usare il Cerchio di luce. Passo 6: ripulire la stanza, attraversare una porta, aggiungere un Eco.
  * Restyle del 13/11: ferire o far cadere il Lampionaio per vedere le animazioni hurt e death.
- * Danno a intervallo (14/11): far salire di livello la Lanterna e gli Echi.
+ * Danno a intervallo (14/11): far salire di livello la Lanterna e gli Echi. Bot (14/11): farlo giocare al posto tuo.
  */
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
@@ -13,6 +13,7 @@ import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { areaCamminabile } from './stanza';
 import { STATO, type TipoStanza } from './nemici-stanza';
 import { F } from './armi-colpo';
+import { BotStanze } from './bot-stanze';
 import type { Stanze } from '../scene/Stanze';
 
 export type DirezioneColpo = 'destra' | 'sinistra' | 'su' | 'giu' | 'auto';
@@ -150,6 +151,11 @@ export class LabStanze {
   /** Accende o spegne le ondate automatiche: spente, la stanza resta vuota finché non si chiama un nemico. */
   ondateAutomatiche(si: boolean): void {
     this.s.ondateAutomatiche = si;
+  }
+
+  /** Il bot gioca al posto tuo, alla velocità normale (per guardarlo); false = torni a giocare tu. */
+  bot(si: boolean): void {
+    this.s.bot = si ? new BotStanze() : null;
   }
 
   immortale(si: boolean): void {

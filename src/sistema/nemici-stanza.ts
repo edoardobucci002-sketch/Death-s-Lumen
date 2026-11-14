@@ -75,8 +75,8 @@ export class NemiciStanza {
   grumi = 0;
   readonly gX = new Float32Array(MAX_GRUMI);
   readonly gY = new Float32Array(MAX_GRUMI);
-  private gVX = new Float32Array(MAX_GRUMI);
-  private gVY = new Float32Array(MAX_GRUMI);
+  readonly gVX = new Float32Array(MAX_GRUMI); // velocità dei grumi (le legge anche il bot)
+  readonly gVY = new Float32Array(MAX_GRUMI);
   private gSfiorato = new Uint8Array(MAX_GRUMI);
   private gVita = new Float32Array(MAX_GRUMI); // secondi da quando è partito (cerca solo all'inizio)
   // dove si disegna appena sputato, rispetto al punto a terra: scostamento in orizzontale e altezza (la bocca del Cantore)
@@ -458,7 +458,7 @@ export class NemiciStanza {
   }
 
   /** Raggio di adesso: pieno, poi negli ultimi P.svanisce secondi si restringe fino a sparire. */
-  private raggioPozza(k: number): number {
+  raggioPozza(k: number): number {
     return P.raggio * Math.min(1, this.pTempo[k] / P.svanisce);
   }
 

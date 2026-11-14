@@ -789,7 +789,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Ricaduto | salute 60, velocità 60 px/s, corpo 16 px | da 4 a 5 colpi della Lanterna al livello 1, 3 o 4 in Grazia |
 | Graffio | avviso 0,5 s da 56 px; spicchio di 72 px e 110°; danno 15; fermo 0,7 s dopo | |
 | Rinascita | 20%, dopo 1,5 s a terra, con il 50% della salute | una volta sola |
-| Cantore | salute 30, velocità 75 px/s, corpo 15 px, tra 200 e 250 px | 2 colpi, a volte 3 |
+| Cantore | salute 35, velocità 75 px/s, corpo 15 px, tra 200 e 250 px | 2 o 3 colpi della Lanterna al livello 1 (salute decisa da Edoardo il 14/11) |
 | Avviso del canto | 0,8 s entro 360 px; primo canto dopo 1,2 s; ricarica 2,4 s | |
 | Grumo | velocità 210 px/s, raggio 9 px, danno 12; ti cerca per 1,4 s, al massimo 125°/s | *da rivedere* |
 | Pozza di cera | 2 s, raggio 34 px, danno 6; si restringe negli ultimi 0,3 s | *da rivedere* |

@@ -51,3 +51,27 @@ export const BOT = {
   // dello sfioramento (oltre il contatto). passo = pixel guardati avanti; peso = quanto conta; sopra = parte di salute minima
   sfioro: { passo: 18, peso: 1, sopra: 0.5, cerca: 120 },
 } as const;
+
+/**
+ * Bot del gioco a stanze (src/sistema/bot-stanze.ts, npm run sim-stanze). Gioca come una persona attenta ma non perfetta:
+ * vede gli avvisi solo dopo il suo tempo di reazione, si tiene alla distanza giusta per colpire con la Lanterna, scappa
+ * da spicchi, linee, grumi e pozze. Tutti i valori sono proposte di Claude (14/11), da rivedere con le simulazioni.
+ */
+export const BOT_STANZE = {
+  reazione: 0.25, // secondi dall'inizio di un avviso prima che il bot lo «veda» (una persona: 0,2–0,3 s)
+  avanti: 0.3, // secondi guardati avanti: valuta dove sarebbe tra tanto, camminando in ogni direzione
+  direzioni: 16,
+  distanza: 0.75, // sta a questa parte del raggio della Lanterna dal nemico più vicino
+  margine: 10, // pixel in più intorno agli spicchi, alle linee, ai grumi e alle pozze
+  muro: 48, // si tiene lontano dai muri entro tanti pixel
+  pesi: { graffio: 1000, linea: 600, grumo: 800, pozza: 300, vicino: 4, muro: 3, distanza: 1, inerzia: 0.15 },
+  // il Cerchio di luce: lo usa con almeno tanti nemici dentro il suo raggio, o con poca salute e un nemico vicino
+  nemiciPerAbilita: 3,
+  abilitaSotto: 0.4,
+  // carte: più alto = la preferisce (nel modo «esplora» sceglie a caso, per provare tutti gli Echi e tutti i livelli)
+  carte: { lanterna: 3, ecoNuovo: 2.6, livelloEco: 2.2, donoNuovo: 1.6, livelloDono: 1.4 },
+  // porte: preferisce le affinità degli Echi che ha (per farli salire), poi il dono
+  porte: { affinitaPosseduta: 2, dono: 1.5, altra: 1 },
+  msPerFotogramma: 40, // millisecondi di calcolo per ogni fotogramma del browser (simulazione veloce)
+  semeEsplora: 7919,
+} as const;

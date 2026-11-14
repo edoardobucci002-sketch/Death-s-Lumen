@@ -1,0 +1,86 @@
+// Simulazione del gioco a stanze: il bot (src/sistema/bot-stanze.ts) gioca la fetta tante volte, ognuna con un seme diverso
+// (ondate e carte diverse), e alla fine c'è un riepilogo: quante volte arriva in fondo, in che stanza muore, quanto danno
+// prende in ogni stanza, quanto conta ogni arma. Serve a provare e bilanciare i numeri (intervalli del danno, salute dei
+// nemici, ondate). Il risultato completo va in prove/sim-stanze.json.
+// Uso:
+//      npm run sim-stanze              (24 partite: metà con le carte preferite, metà con carte e porte a caso)
+//      npm run sim-stanze -- 48        (48 partite)
+//      npm run sim-stanze -- 24 esplora   (tutte con carte e porte a caso: provano tutti gli Echi)
+//      npm run sim-stanze -- 24 scelte    (tutte con le carte preferite)
+// Il bot non è perfetto: vede gli avvisi solo dopo un tempo di reazione (BOT_STANZE in src/data/bot.ts).
+import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+
+const argomenti = process.argv.slice(2);
+const partite = Number(argomenti.find((a) => /^\d+$/.test(a))) || 24;
+const modo = argomenti.includes('esplora') ? 'esplora' : argomenti.includes('scelte') ? 'scelte' : 'misto';
+const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
+const porta = Number(process.env.DL_PORTA) || 4321;
+
+const server = spawn('npx', ['vite', 'preview', '--port', String(porta), '--strictPort'], { stdio: 'ignore' });
+await new Promise((r) => setTimeout(r, 2500));
+const browser = await chromium.launch();
+const inizio = Date.now();
+
+const coda = [];
+for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: modo === 'esplora' || (modo === 'misto' && k % 2 === 1) });
+const risultati = [];
+let fatte = 0;
+
+async function gioca({ seme, esplora }) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
+  const pag = await ctx.newPage();
+  const errori = [];
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`http://localhost:${porta}/?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}`);
+  await pag.waitForFunction(() => window.__sim, null, { timeout: 5 * 60_000, polling: 500 }).catch(() => errori.push('la partita non finisce'));
+  const r = await pag.evaluate(() => window.__sim ?? null);
+  await ctx.close();
+  fatte++;
+  const esito = !r ? 'errore' : r.completata ? `fetta completata, salute ${r.salute}` : `caduto nella stanza ${r.stanza}`;
+  console.log(`  [${fatte}/${partite}] seme ${seme}${esplora ? ' (esplora)' : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
+  risultati.push({ seme, esplora, ...r, errori });
+}
+
+console.log(`Simulazione del gioco a stanze: ${partite} partite (${modo === 'misto' ? 'metà carte preferite, metà a caso' : modo === 'esplora' ? 'carte e porte a caso' : 'carte preferite'})\n`);
+await Promise.all(Array.from({ length: INSIEME }, async () => {
+  while (coda.length) await gioca(coda.shift());
+}));
+await browser.close();
+server.kill();
+
+// ——— riepilogo ———
+const media = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
+const ok = risultati.filter((r) => r.stanze);
+const fini = ok.filter((r) => r.completata);
+console.log(`\nFetta completata: ${fini.length}/${ok.length}` + (fini.length ? `, con salute media ${Math.round(media(fini.map((r) => r.salute)))} (la più bassa durante la partita: ${Math.round(media(fini.map((r) => r.saluteMinima)))} in media)` : ''));
+const stanzeTot = Math.max(...ok.map((r) => r.stanze.length), 0);
+console.log('\nPer stanza                 arrivati  caduti  secondi  danno subito  salute all\'uscita');
+for (let n = 1; n <= stanzeTot; n++) {
+  const qui = ok.map((r) => r.stanze.find((s) => s.stanza === n)).filter(Boolean);
+  const usciti = qui.filter((s) => s.saluteUscita !== null);
+  console.log(`  stanza ${n}`.padEnd(28) + String(qui.length).padStart(8) + String(qui.length - usciti.length).padStart(8) +
+    String(Math.round(media(qui.map((s) => s.secondi)))).padStart(9) + String(Math.round(media(qui.map((s) => s.dannoSubito)))).padStart(14) +
+    String(usciti.length ? Math.round(media(usciti.map((s) => s.saluteUscita))) : '–').padStart(19));
+}
+console.log(`\nA partita: ${media(ok.map((r) => r.uccisi)).toFixed(1)} nemici battuti, ${media(ok.map((r) => r.rinascite)).toFixed(1)} Ricaduti rialzati, ` +
+  `${media(ok.map((r) => r.schivate)).toFixed(1)} schivate perfette, ${media(ok.map((r) => r.colpiLanterna)).toFixed(0)} colpi della Lanterna, ${media(ok.map((r) => r.usiAbilita)).toFixed(1)} Cerchi di luce`);
+
+// quanto conta ogni arma: la sua parte del danno, nelle partite in cui c'era
+const NOMI = { lanterna: 'Lanterna', abilita: 'Cerchio di luce', candela: 'Candela', falce: 'Falce', campana: 'Campana', fuocoFatuo: 'Fuoco fatuo', acquaSanta: 'Acqua santa', lamaDiLuce: 'Lama di luce', lapide: 'Lapide', rosarioSpezzato: 'Rosario spezzato', corvo: 'Corvo', veloFunebre: 'Velo funebre', sampietrini: 'Sampietrini', eclissi: 'Eclissi', esorcismo: 'Esorcismo', interramento: 'Interramento', fuoco: 'Fuoco', martire: 'Martire' };
+const fonti = new Set(ok.flatMap((r) => Object.keys(r.danno)));
+const righe = [...fonti].map((f) => {
+  const con = ok.filter((r) => r.danno[f]);
+  const parte = con.map((r) => r.danno[f] / Object.values(r.danno).reduce((x, y) => x + y, 0));
+  return { f, partite: con.length, parte: media(parte), danno: media(con.map((r) => r.danno[f] / r.secondi)) };
+}).sort((a, b) => b.parte - a.parte);
+console.log('\nDanno per arma (nelle partite in cui c\'era)   partite  parte del danno  danno al secondo');
+for (const r of righe) console.log(`  ${(NOMI[r.f] ?? r.f).padEnd(44)}${String(r.partite).padStart(8)}${(Math.round(r.parte * 100) + '%').padStart(17)}${r.danno.toFixed(1).padStart(18)}`);
+
+const errori = risultati.filter((r) => r.errori.length || !r.stanze);
+if (errori.length) console.log(`\n${errori.length} partite con errori: ${errori.map((r) => `seme ${r.seme}: ${r.errori.join(' | ')}`).join('; ')}`);
+mkdirSync('prove', { recursive: true });
+writeFileSync('prove/sim-stanze.json', JSON.stringify(risultati, null, 1));
+console.log(`\nFatto in ${Math.round((Date.now() - inizio) / 1000)} s. Dettagli in prove/sim-stanze.json`);
+process.exit(errori.length ? 1 : 0);

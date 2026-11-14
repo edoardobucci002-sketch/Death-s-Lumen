@@ -130,7 +130,7 @@ export const NEMICI_STANZA = {
   // gira verso di te di al massimo «virata» gradi al secondo, poi va dritto; contro il muro, o su di te, scoppia in una pozza di cera
   cantore: {
     sprite: 'Cantore', // V1 del 13/11 da PixelLab (walk, attack); il gioco usa walk
-    salute: 30, // dal 14/11 (era 20): con la Lanterna 12–18 servono 2 colpi, a volte 3
+    salute: 35, // 35 dal 14/11 (Edoardo; era 20, poi 30): con la Lanterna 12–18 servono 2 o 3 colpi
     velocita: 75,
     raggio: 15,
     distanza: { minima: 200, massima: 250 }, // sotto si allontana, sopra si avvicina

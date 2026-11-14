@@ -28,9 +28,11 @@ export class Percorso {
   readonly passivi: Record<IdDono, number>;
   private ondata = 0; // ondate già arrivate in questa stanza
   private attesa = 0;
-  private readonly caso = new Caso(ONDATA.seme + 1);
+  private readonly caso: Caso;
 
-  constructor(private readonly arsenale: Arsenale) {
+  /** seme: il seme della partita (?seme= nell'indirizzo, per il bot; di solito ONDATA.seme). */
+  constructor(private readonly arsenale: Arsenale, seme: number = ONDATA.seme) {
+    this.caso = new Caso(seme + 1);
     this.passivi = Object.fromEntries(PASSIVI.map((q) => [q.id, 0])) as Record<IdDono, number>;
   }
 

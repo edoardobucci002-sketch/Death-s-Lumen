@@ -35,6 +35,9 @@ import { LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, RICARICA_MINIMA, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
 import { Impatto } from '../sistema/impatto';
 import { ABILITA } from '../data/abilita';
+import { BOT_STANZE } from '../data/bot';
+import { BotStanze } from '../sistema/bot-stanze';
+import { SimStanze } from '../sistema/sim-stanze';
 import { AbilitaStanza } from '../sistema/abilita-stanza';
 import { ARTE_JOYSTICK, preparaJoystickStanze } from '../sistema/joystick-stanze';
 import { NemiciStanza } from '../sistema/nemici-stanza';
@@ -73,6 +76,12 @@ export class Stanze extends Phaser.Scene {
   private versoSinistra = false;
   private inMoto = false;
   private accumulo = 0;
+  private seme: number = ONDATA.seme;
+  /** Il bot che gioca al posto del giocatore (null = gioca il giocatore). Con ?bot va veloce e senza disegno. */
+  bot: BotStanze | null = null;
+  private botVeloce = false;
+  /** Il resoconto della partita per le simulazioni del bot (window.__sim alla fine). */
+  sim = new SimStanze();
   private comandi!: Comandi;
   private casoLuce = new Caso(STANZA.seme); // solo per il tremolio: non tocca la logica
   private attesaTremolio = 0;
@@ -141,6 +150,14 @@ export class Stanze extends Phaser.Scene {
   create(): void {
     // nella fetta c'è solo il Lampionaio (decisione di Edoardo del 12/11)
     this.pg = PERSONAGGI[0];
+    // ?seme=N: un'altra partita (ondate, carte); ?bot: gioca il bot, veloce e senza disegno (npm run sim-stanze);
+    // ?esplora=1: il bot sceglie carte e porte a caso. Dal LAB il bot gioca invece alla velocità normale
+    const parametri = new URLSearchParams(location.search);
+    this.seme = Number(parametri.get('seme')) || ONDATA.seme;
+    this.botVeloce = parametri.has('bot');
+    this.bot = this.botVeloce ? new BotStanze() : null;
+    if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(this.seme);
+    this.sim = new SimStanze();
     document.documentElement.style.setProperty('--accento', this.pg.colore);
     this.chiaveSprite = this.textures.exists(this.pg.sprite) ? this.pg.sprite : PERSONAGGI[0].sprite;
     // la scena si riusa: tutto si azzera qui
@@ -183,12 +200,12 @@ export class Stanze extends Phaser.Scene {
     this.alone = this.add.image(0, 0, CHIAVI_ALONE[1]).setDepth(PROFONDITA.terreno + 1).setBlendMode(Phaser.BlendModes.ADD);
     this.effetti = new Effetti(this);
     this.impatto = new Impatto(this);
-    this.nemici = new NemiciStanza(this, new Caso(ONDATA.seme), this.effetti, this.impatto);
+    this.nemici = new NemiciStanza(this, new Caso(this.seme), this.effetti, this.impatto);
     Object.assign(this.bonus, { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 });
-    this.arsenale = new Arsenale(this, this.nemici.orda, new Caso(ONDATA.seme + 2), this.bonus, this.effetti);
+    this.arsenale = new Arsenale(this, this.nemici.orda, new Caso(this.seme + 2), this.bonus, this.effetti);
     // la Lanterna a mano e il Cerchio di luce feriscono attraverso l'arsenale: bonus, stato di Luce, reazioni, numeri
     this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce, fonte === FONTE.lanterna ? F.lanterna : F.abilita);
-    this.percorso = new Percorso(this.arsenale);
+    this.percorso = new Percorso(this.arsenale, this.seme);
     this.percorso.entra(1, 'echi');
     this.porte = new Porte(this);
     this.porte.togli();
@@ -213,7 +230,7 @@ export class Stanze extends Phaser.Scene {
     this.abilita = new AbilitaStanza(this, this.radice, this.pg.colore, () => this.fermo());
     // le carte: verticali (Carta_Stanza), con le carte decise dal percorso e la spiegazione del survivor
     const nessuno = new Set<never>();
-    this.doni = new Doni(this.radice, this.arsenale, LANTERNA_STANZE, this.percorso.passivi, new Caso(ONDATA.seme + 3),
+    this.doni = new Doni(this.radice, this.arsenale, LANTERNA_STANZE, this.percorso.passivi, new Caso(this.seme + 3),
       () => ({ usati: 0, totale: 0, unioni: false, scoperte: nessuno, metaRaccolta: 0 }), () => {}, () => true);
     this.radice.querySelector<HTMLElement>('.doni-aiuto')?.setAttribute('hidden', '');
     this.doni.verticali = PERCORSO.carte; // in fila, perché lo schermo è in orizzontale, e compaiono a pop
@@ -246,6 +263,12 @@ export class Stanze extends Phaser.Scene {
   }
 
   update(_t: number, delta: number): void {
+    if (this.botVeloce) {
+      // simulazione: niente disegno, la logica corre più veloce possibile fino alla fine della partita
+      const fine = performance.now() + BOT_STANZE.msPerFotogramma;
+      while (!this.morto && !this.finita && performance.now() < fine) this.passo(PASSO);
+      return;
+    }
     // dopo la morte: una breve attesa, poi «Sei caduto» (si ferma anche lei con la pausa del LAB e con il telefono da ruotare)
     if (this.morto && this.attesaFine > 0 && !this.pausaLab && !this.ruota) {
       this.attesaFine -= delta / 1000;
@@ -347,6 +370,7 @@ export class Stanze extends Phaser.Scene {
     suona('danno');
     vibra('media');
     if (this.immortale) return;
+    this.sim.ferita(Math.min(this.salute, danno * (1 - this.scudo)));
     this.salute = Math.max(0, this.salute - danno * (1 - this.scudo));
     if (this.salute <= 0) {
       this.morto = true;
@@ -357,6 +381,7 @@ export class Stanze extends Phaser.Scene {
       this.tastoPausa.hidden = true;
       suona('morte');
       vibra('forte');
+      this.chiudiSim(false);
     }
   }
 
@@ -421,7 +446,15 @@ export class Stanze extends Phaser.Scene {
     this.ricalcola();
     if (this.rigenerazione > 0) this.salute = Math.min(this.saluteMassima, this.salute + this.rigenerazione * dt);
     this.comandi.aggiorna();
-    const dx = this.comandi.dx, dy = this.comandi.dy;
+    let dx = this.comandi.dx, dy = this.comandi.dy;
+    if (this.bot && !this.morto) {
+      this.bot.guida(this.x, this.y, this.nemici, this.velocita * (1 + (this.grazia > 0 ? this.statGrazia.velocita : 0)), this.attacco.raggio,
+        COMBATTIMENTO_STANZA.raggio, this.salute / this.saluteMassima, this.abilita.pronta(), ABILITA.cerchioDiLuce.raggio);
+      dx = this.bot.dx;
+      dy = this.bot.dy;
+      if (this.bot.colpisce && this.attacco.attesa <= 0) this.attacco.automatico();
+      if (this.bot.abilita) this.abilita.usa();
+    }
     // durante il fermo d'impatto il Lampionaio non avanza (il resto della stanza sì)
     const fermoColpo = this.fermoColpo > 0;
     if (fermoColpo) this.fermoColpo -= dt;
@@ -453,13 +486,18 @@ export class Stanze extends Phaser.Scene {
       this.nemici.schivate = 0;
       if (!this.morto) this.iniziaGrazia();
     }
+    this.sim.passo(dt, this.salute);
     if (this.morto) return;
     // il percorso: ondate della stanza, carte a stanza ripulita (con «ondate automatiche» spente nel LAB resta fermo)
     if (this.ondateAutomatiche && this.percorso.aggiorna(dt, this.nemici, this.x, this.y)) this.apriCarte();
     // le porte aperte: camminandoci contro si passa alla stanza dopo
     if (this.percorso.fase === 'porte') {
-      const k = this.porte.attraversata(this.x, this.y);
-      if (k >= 0) this.attraversa(k);
+      const k = this.bot ? this.bot.scegliPorta(this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma)) : this.porte.attraversata(this.x, this.y);
+      if (k >= 0 && this.botVeloce) {
+        // simulazione: niente passaggio a retino, si cambia stanza subito
+        this.portaScelta = k;
+        this.nuovaStanza();
+      } else if (k >= 0) this.attraversa(k);
     }
   }
 
@@ -476,8 +514,15 @@ export class Stanze extends Phaser.Scene {
     const carte = this.percorso.carte();
     this.comandi.lascia();
     this.attacco.lascia();
+    this.sim.stanzaRipulita(this.percorso.stanza, this.salute);
     if (!carte.length) {
       this.dopoCarta(null);
+      return;
+    }
+    if (this.bot) {
+      const d = this.bot.scegliCarta(carte, LANTERNA_STANZE.id);
+      this.sim.carta(d);
+      this.dopoCarta(d);
       return;
     }
     suona('livello');
@@ -530,6 +575,7 @@ export class Stanze extends Phaser.Scene {
     const ricompensa = this.porte.ricompense[this.portaScelta] ?? 'dono';
     this.nemici.svuota();
     this.percorso.entra(this.percorso.stanza + 1, ricompensa);
+    this.sim.entra(this.percorso.stanza, ricompensa, this.salute);
     this.porte.togli();
     this.x = Math.round(STANZA.larghezza / 2);
     this.y = Math.round(areaCamminabile().y1);
@@ -537,9 +583,22 @@ export class Stanze extends Phaser.Scene {
     this.guardaY = -1;
   }
 
+  /** Fine della partita: il resoconto per le simulazioni (window.__sim), solo quando gioca il bot. */
+  private chiudiSim(completata: boolean): void {
+    if (!this.bot) return;
+    (window as unknown as { __sim?: unknown }).__sim = this.sim.risultato({
+      seme: this.seme, completata, stanza: this.percorso.stanza, salute: this.salute, saluteMassima: this.saluteMassima,
+      uccisi: this.nemici.uccisi, rinascite: this.nemici.rinascite, schivate: this.schivatePerfette, colpiLanterna: this.attacco.colpi,
+      usiAbilita: this.abilita.usi, livelloLanterna: this.percorso.livelloLanterna, arsenale: this.arsenale,
+      doni: PERCORSO.doniAttivi.filter((id) => this.percorso.passivi[id] > 0).map((id) => `${DONO[id].nome} ${this.percorso.passivi[id]}`),
+    });
+  }
+
   /** «Fetta completata»: nemici battuti, schivate perfette, la build presa; Ricomincia e Menu. */
   private mostraFineFetta(): void {
     this.finita = true;
+    this.chiudiSim(true);
+    if (this.botVeloce) return;
     this.comandi.lascia();
     this.attacco.lascia();
     this.tastoPausa.hidden = true;

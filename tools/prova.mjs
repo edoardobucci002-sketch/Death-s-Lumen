@@ -1282,6 +1282,28 @@ for (const [nome, disp] of [
   await ctx.close();
 }
 
+// Bot del gioco a stanze (14/11): gioca la fetta da solo, veloce e senza disegno; a parità di seme gioca la stessa partita
+{
+  const errori = [];
+  const partita = async (seme, esplora) => {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
+    const pag = await ctx.newPage();
+    pag.on('pageerror', (e) => errori.push(e.message));
+    await pag.goto(`${url}?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}`);
+    const ok = await pag.waitForFunction(() => window.__sim, null, { timeout: 120000, polling: 250 }).then(() => true, () => false);
+    if (!ok) errori.push(`seme ${seme}: la partita del bot non finisce`);
+    const r = await pag.evaluate(() => window.__sim ?? null);
+    await ctx.close();
+    return r;
+  };
+  const a = await partita(7, false), b = await partita(7, false), c = await partita(8, true);
+  if (a && b && JSON.stringify(a) !== JSON.stringify(b)) errori.push('con lo stesso seme il bot non gioca la stessa partita');
+  for (const r of [a, c]) if (r && (!r.stanze?.length || r.colpiLanterna < 1)) errori.push(`seme ${r.seme}: il bot non gioca (${r.colpiLanterna} colpi)`);
+  const descrivi = (r) => (r ? (r.completata ? `fetta completata con salute ${r.salute}` : `caduto nella stanza ${r.stanza}`) : '?');
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} bot delle stanze: seme 7 ${descrivi(a)} (uguale due volte), seme 8 con carte a caso ${descrivi(c)}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
 await browser.close();
 server.kill();
 console.log(falliti ? `\n${falliti} prove fallite` : '\nTutto a posto. Screenshot in prove/.');

@@ -42,11 +42,18 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 14/11 — Il bot gioca a stanze: prima misura (nessun numero cambia)
+- `npm run sim-stanze`: 24 partite della fetta (semi 2001–2024, metà con le carte preferite e metà con carte e porte a caso), Lanterna 12–18, Ricaduto 60, Cantore 35. Il bot vede gli avvisi dopo 0,25 s (`BOT_STANZE.reazione`, *da rivedere*).
+- **Fetta completata 21 volte su 24**, salute alla fine 37 in media; 3 cadute, tutte nella stanza 3. Per stanza: 16, 24 e 24 s; danno subito 15, 21 e 33; salute all'uscita 85, 64 e 35. A partita: 42 nemici battuti, 5,4 Ricaduti rialzati, 3,9 schivate perfette, 75 colpi della Lanterna, 4,3 Cerchi di luce.
+- **Danno per arma** (parte del danno nelle partite in cui c'era): Lanterna 63%, Lapide 22%, Cerchio di luce 20%, Corvo 14%, Lama di luce e Campana 13% (una partita sola), Rosario spezzato 10%, Candela 8%, Fuoco fatuo e Sampietrini 7%, Acqua santa e Velo funebre 4%, Falce 3%. Lettura: la Lapide pesa più degli altri Echi; Velo funebre, Acqua santa e Falce ora contano poco. Il campione è piccolo (gli Echi compaiono in 1–9 partite): per decidere servono almeno 100 partite con `esplora`.
+- Il bot prende più danni di Edoardo, che trova il gioco facile: forse reagisce più lento di lui. Da tarare (`BOT_STANZE.reazione`) confrontando le partite vere.
+
 ### 14/11 — Le armi del gioco a stanze: 5 livelli e danno a intervallo (decisioni di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
 - Tutte le armi delle stanze (la Lanterna a mano e gli 11 Echi) hanno tabelle nuove in `src/data/armi-stanze.ts`: 5 livelli, danno minimo e massimo. Tabelle complete nel GDD («Le armi nelle stanze»). Il colpo prima variava tra il 92% e il 108% del danno; ora esce a caso tra il minimo e il massimo.
 - **Lanterna a mano**: 12–18 al livello 1 (era 18 fisso), fino a 26–38 al livello 5, che colpisce anche alle spalle; ricarica 0,45 › 0,4 s dal livello 3.
 - **Velo funebre**: 2–3 ogni 0,5 s al livello 1 (era 7: Edoardo lo trovava «fin troppo forte» già nelle prime stanze), fino a 4–6. **Acqua santa** 1–2 ogni 0,3 s (era 8). Gli altri Echi scendono più o meno a metà o a due terzi del survivor, con intervalli larghi per le armi pesanti (Lapide 30–70, era 120; Campana 14–24, era 19).
 - **Salute dei nemici**: Ricaduto 60 (era 40), Cantore 30 (era 20). Perché: Edoardo, «i nemici vanno giù facilmente». Con la Lanterna al livello 1 il Ricaduto chiede 4 o 5 colpi (prima sempre 3), il Cantore 2 o 3.
+- Poi (Edoardo, 14/11): «la salute dei nemici mi sembra bilanciata, alzerei quella del Cantore a 35». Cantore 35 (era 30), Ricaduto 60 confermato.
 - Il bot non gioca a stanze: niente simulazione. Controllo del survivor: 8 notti del bot (2 per personaggio, Cappella completa) prima e dopo, 8.187 campi, 0 differenze.
 
 ### 13/11 (sera) — Il colpo della Lanterna diventa la mossa intera (decisione di Edoardo; il survivor non cambia)
