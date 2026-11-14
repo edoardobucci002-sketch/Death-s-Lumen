@@ -81,8 +81,6 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 
 **Potenziali degli Echi e Cerchio di luce** (14/11, scelte di Edoardo dal questionario): ogni Eco al livello 5 ha il suo potenziale (tabella nel GDD «Le armi nelle stanze»); il Cerchio di luce fa un colpo grande all'accensione e poi abbaglia. LAB → Stanze → Potenziali: un pulsante per Eco. `npm run prova` mette tutti gli Echi al potenziale insieme. Simulazione: `npm run sim-stanze -- 8 potenziali`.
 
-**Potenziali degli Echi e Cerchio di luce** (14/11, scelte di Edoardo dal questionario): ogni Eco al livello 5 ha il suo potenziale (tabella nel GDD «Le armi nelle stanze»); il Cerchio di luce fa un colpo grande all'accensione e poi abbaglia. LAB → Stanze → Potenziali: un pulsante per Eco. `npm run prova` mette tutti gli Echi al potenziale insieme. Simulazione: `npm run sim-stanze -- 8 potenziali`.
-
 ### Dopo la fetta (ordine da decidere con Edoardo)
 
 - Armi su 5 livelli con il potenziale del livello 5; la quarta arma della Terra; Reliquiari, Unioni al livello 4, porte d'élite.
@@ -168,7 +166,6 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
-| Potenziali degli Echi (14/11, numeri di Claude): `POTENZIALI` in `src/data/armi-stanze.ts` (figlie della Candela, anello della Falce, preda del Fuoco fatuo, cura dell'Acqua santa 1/s, Lapide 3 s e 22 px, Rosario +15%, Corvo +20% per 3 s, Velo ×2 in 1,5 s, Sampietrini 220 px), ricarica della Campana al livello 5 (2,6 s); colpo del Cerchio di luce 20–30 | GDD «Le armi nelle stanze» e «L'abilità caricata colpendo» |
 | HUD del 14/11: carta 146 × 238 al posto di 130 × 200 (tre carte più grandi sullo schermo); medaglioni delle porte di 31 px; joystick, abilità e pausa da collegare (rifatti alle misure di oggi, o le misure di oggi cambiano), barra della salute ancora da generare | `asset_da_creare.md` |
 | Bocca del Cantore (`NEMICI_STANZA.cantore.bocca`: [7, 87] nel canto, [46, 72] nello sputo, discesa 0,3 s), misurata sullo sprite V1 | GDD «Il Cantore» |
 | Potenziali degli Echi (14/11, numeri di Claude): `POTENZIALI` in `src/data/armi-stanze.ts` (figlie della Candela, anello della Falce, preda del Fuoco fatuo, cura dell'Acqua santa 1/s, Lapide 3 s e 22 px, Rosario +15%, Corvo +20% per 3 s, Velo ×2 in 1,5 s, Sampietrini 220 px), ricarica della Campana al livello 5 (2,6 s); colpo del Cerchio di luce 20–30 | GDD «Le armi nelle stanze» e «L'abilità caricata colpendo» |
