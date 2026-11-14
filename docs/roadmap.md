@@ -79,6 +79,8 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 
 **Il bot gioca a stanze** (14/11, richiesta di Edoardo): `src/sistema/bot-stanze.ts` e `npm run sim-stanze` (`tools/sim-stanze.mjs`). Guarda avvisi, grumi e pozze (con un tempo di reazione), si tiene alla distanza della Lanterna, colpisce, usa il Cerchio di luce, sceglie carte e porte (o a caso con `esplora`). LAB → Stanze → Percorso → «Fai giocare il bot» per guardarlo. `npm run prova` controlla che il bot finisca la partita e che con lo stesso seme giochi uguale. Prima misura in `bilanciamento.md`.
 
+**Potenziali degli Echi e Cerchio di luce** (14/11, scelte di Edoardo dal questionario): ogni Eco al livello 5 ha il suo potenziale (tabella nel GDD «Le armi nelle stanze»); il Cerchio di luce fa un colpo grande all'accensione e poi abbaglia. LAB → Stanze → Potenziali: un pulsante per Eco. `npm run prova` mette tutti gli Echi al potenziale insieme. Simulazione: `npm run sim-stanze -- 8 potenziali`.
+
 ### Dopo la fetta (ordine da decidere con Edoardo)
 
 - Armi su 5 livelli con il potenziale del livello 5; la quarta arma della Terra; Reliquiari, Unioni al livello 4, porte d'élite.
@@ -164,7 +166,9 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 
 | Voce | Dove è scritta |
 | --- | --- |
+| HUD del 14/11: carta 146 × 238 al posto di 130 × 200 (tre carte più grandi sullo schermo); medaglioni delle porte di 31 px; joystick, abilità e pausa da collegare (rifatti alle misure di oggi, o le misure di oggi cambiano), barra della salute ancora da generare | `asset_da_creare.md` |
 | Bocca del Cantore (`NEMICI_STANZA.cantore.bocca`: [7, 87] nel canto, [46, 72] nello sputo, discesa 0,3 s), misurata sullo sprite V1 | GDD «Il Cantore» |
+| Potenziali degli Echi (14/11, numeri di Claude): `POTENZIALI` in `src/data/armi-stanze.ts` (figlie della Candela, anello della Falce, preda del Fuoco fatuo, cura dell'Acqua santa 1/s, Lapide 3 s e 22 px, Rosario +15%, Corvo +20% per 3 s, Velo ×2 in 1,5 s, Sampietrini 220 px), ricarica della Campana al livello 5 (2,6 s); colpo del Cerchio di luce 20–30 | GDD «Le armi nelle stanze» e «L'abilità caricata colpendo» |
 | Bot del gioco a stanze (14/11, numeri di Claude): `BOT_STANZE` in `src/data/bot.ts` (reazione 0,25 s, sguardo avanti 0,3 s, distanza 75% del raggio della Lanterna, pesi del pericolo, Cerchio di luce con 3 nemici o sotto il 40% di salute, preferenze delle carte e delle porte) | `src/data/bot.ts`; `bilanciamento.md` 14/11 |
 | Armi del gioco a stanze (14/11, numeri di Claude): tutti gli intervalli e i 5 livelli di `src/data/armi-stanze.ts` (Lanterna 12–18 › 26–38, ricarica 0,4 dal livello 3; Velo funebre 2–3; Acqua santa 1–2; Lapide 30–70…), cosa sblocca il livello 5 di ogni Eco (oggi quello che dava il livello 8 del survivor), salute dei nemici confermata da Edoardo il 14/11 (Ricaduto 60, Cantore 35) | GDD «Le armi nelle stanze»; `src/data/armi-stanze.ts`, `NEMICI_STANZA` |
 | Lampionaio V6 (restyle del 13/11): durate dei fotogrammi della mossa (40, 40, 40, 35, 50, 50, 60, 70 ms) e danno a 0,155 s (`ATTACCO.anticipo`); Fendente: un foglio per misura (136, 160, 183), con i bonus d'area il disegno può restare un po' più piccolo dell'area vera | GDD «L'attacco a tasto»; `PIXELFX.fendente` |

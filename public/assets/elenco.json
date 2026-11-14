@@ -614,6 +614,46 @@
       "tag": []
     },
     {
+      "chiave": "Porta_Dono",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Porta_Dono.png",
+      "dati": "assets/effetti/Porta_Dono.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Porta_Luce",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Porta_Luce.png",
+      "dati": "assets/effetti/Porta_Luce.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Porta_Ombra",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Porta_Ombra.png",
+      "dati": "assets/effetti/Porta_Ombra.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Porta_Sacro",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Porta_Sacro.png",
+      "dati": "assets/effetti/Porta_Sacro.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Porta_Terra",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Porta_Terra.png",
+      "dati": "assets/effetti/Porta_Terra.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
       "chiave": "Reliquiario",
       "categoria": "oggetti",
       "immagine": "assets/oggetti/Reliquiario.png",

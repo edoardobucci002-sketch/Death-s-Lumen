@@ -1,6 +1,6 @@
 {
   "versione": 1,
-  "esportato": "2026-11-14T12:53:29.008Z",
+  "esportato": "2026-11-14T13:40:33.258Z",
   "asset": [
     {
       "chiave": "Barra_Esperienza_Cornice",
@@ -64,6 +64,22 @@
       "immagine": "assets/hud/Carta_Dono_Scelta.png",
       "dati": "assets/hud/Carta_Dono_Scelta.json",
       "versioneFile": 2,
+      "tag": []
+    },
+    {
+      "chiave": "Carta_Stanza",
+      "categoria": "hud",
+      "immagine": "assets/hud/Carta_Stanza.png",
+      "dati": "assets/hud/Carta_Stanza.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Carta_Stanza_Scelta",
+      "categoria": "hud",
+      "immagine": "assets/hud/Carta_Stanza_Scelta.png",
+      "dati": "assets/hud/Carta_Stanza_Scelta.json",
+      "versioneFile": 1,
       "tag": []
     },
     {

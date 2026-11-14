@@ -1,6 +1,7 @@
 /*
  * Porte del gioco a stanze (passo 6 della fetta, segnaposto dal codice): un'apertura nel muro, in alto, a sinistra o a
- * destra, con sopra il simbolo della ricompensa (il simbolo dello stato dell'affinità, o un rombo dorato per il dono).
+ * destra, con sopra il simbolo della ricompensa: il medaglione disegnato per le porte (Porta_Luce … Porta_Dono, dal 14/11),
+ * o se manca il simbolo dello stato dell'affinità o un rombo dorato per il dono.
  * Chiusa ha le sbarre; aperta (stanza ripulita e carta scelta) ha la cornice accesa e ci si entra camminandoci contro.
  * In basso c'è sempre la porta da cui si è entrati, chiusa. Numeri e colori in PORTE (src/data/stanze.ts).
  */
@@ -55,9 +56,15 @@ export class Porte {
         s.setVisible(false);
         continue;
       }
-      const r = ricompense[k], chiave = r === 'dono' ? SIMBOLO_DONO : INFO_AFFINITA[r].simbolo;
-      const p = this.centroSimbolo(muri[k]);
-      s.setTexture(this.scena.textures.exists(chiave) ? chiave : SIMBOLO_DONO).setPosition(p.x, p.y).setVisible(true);
+      const r = ricompense[k], p = this.centroSimbolo(muri[k]);
+      // il medaglione disegnato per le porte (EFFETTI/Porta_<Nome>, dal 14/11) a grandezza vera; se manca, il simbolo dello stato ingrandito
+      const medaglione = `Porta_${r === 'dono' ? 'Dono' : INFO_AFFINITA[r].nome}`;
+      if (this.scena.textures.exists(medaglione)) s.setTexture(medaglione).setScale(1);
+      else {
+        const chiave = r === 'dono' ? SIMBOLO_DONO : INFO_AFFINITA[r].simbolo;
+        s.setTexture(this.scena.textures.exists(chiave) ? chiave : SIMBOLO_DONO).setScale(PORTE.simbolo);
+      }
+      s.setPosition(p.x, p.y).setVisible(true);
     }
     this.disegna();
   }

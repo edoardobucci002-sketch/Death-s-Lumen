@@ -261,14 +261,15 @@ export const STRISCIA = {
  * sta tre volte in fila sul Galaxy S25 in orizzontale. Finché Edoardo non disegna Carta_Stanza, la disegna il codice.
  */
 export const CARTA_STANZA = {
-  l: 130, a: 200,
+  // misure della carta disegnata (HUD/Cornici/Carta_Stanza_V1, dal 14/11): le zone dei testi sono i suoi riquadri
+  l: 146, a: 238,
   spazio: 8, ingrandimentoMassimo: 4,
   interni: {
-    icona: { x: 37, y: 8, l: 56, a: 56 }, // il pozzetto: l'icona da 24 dentro, ingrandita 2 volte
-    titolo: { x: 6, y: 70, l: 118, a: 12 },
-    tag: { x: 6, y: 84, l: 118, a: 10 },
-    dati: { x: 10, y: 96, l: 112, a: 36 },
-    righe: { x: 10, y: 136, l: 112, a: 58 },
+    icona: { x: 49, y: 41, l: 48, a: 50 }, // il pozzetto: l'icona da 24 dentro, ingrandita 2 volte
+    titolo: { x: 22, y: 102, l: 102, a: 14 }, // la fascia larga sotto il pozzetto
+    tag: { x: 22, y: 122, l: 102, a: 9 }, // la fascia sottile
+    dati: { x: 16, y: 138, l: 114, a: 30 },
+    righe: { x: 16, y: 170, l: 114, a: 34 }, // sopra gli ornamenti degli angoli in basso
   },
   // grandezza delle scritte, più grandi di quelle delle strisce (13, 8 e 7,5): richiesta di Edoardo del 13/11 sera, da rivedere.
   // Se una spiegazione non ci sta, scende da sola di mezzo punto alla volta
