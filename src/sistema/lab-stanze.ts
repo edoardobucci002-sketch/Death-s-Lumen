@@ -81,6 +81,19 @@ export class LabStanze {
     for (const p of this.s.arsenale.possedute) if (p.livello < p.arma.livelli.length) this.s.arsenale.potenzia(p.arma);
   }
 
+  /** Un Eco al livello 5, il suo potenziale (se non c'è lo aggiunge, anche oltre i 3 della build). */
+  potenziale(id: string): void {
+    const a = ECHI_STANZE.find((x) => x.id === id);
+    if (!a) return;
+    if (!this.s.arsenale.livello(a)) this.s.arsenale.aggiungi(a);
+    while (this.s.arsenale.livello(a) < a.livelli.length) this.s.arsenale.potenzia(a);
+  }
+
+  /** Quanti attacchi dei nemici sono stati interrotti (Campana e Fuoco fatuo al potenziale). */
+  interrotti(): number {
+    return this.s.nemici.interrotti;
+  }
+
   /** Lanterna ed Echi tornano al livello 1 (gli Echi restano). */
   livelliAUno(): void {
     this.s.percorso.livelloLanterna = 1;

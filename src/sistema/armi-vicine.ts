@@ -9,6 +9,7 @@ import { suona } from './audio';
 import { PROFONDITA } from './effetti';
 import { EFFETTI } from '../data/effetti';
 import { CAMPANA, FALCE, LAMA_DI_LUCE, LANTERNA, PALA, type Arma } from '../data/armi';
+import { POTENZIALI } from '../data/armi-stanze';
 import { NUMERI_UNIONI as U } from '../data/unioni';
 import { ID_MIETITORE, MAX_LAME, MAX_RITARDATI, F } from './armi-colpo';
 import { ArsenaleProiettili } from './armi-proiettili';
@@ -135,10 +136,14 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
       this.cDanno = l.danno;
       this.fonte = F.falce;
       this.cr = FALCE.raggioLama * (1 + this.falceCresce);
+      // potenziale (gioco a stanze): due anelli, metà delle falci gira al contrario su un cerchio più largo
+      const due = this.potenziale[F.falce] === 1, meta = due ? Math.ceil(n / 2) : n;
       for (let k = 0; k < n; k++) {
-        const ang = this.angoloFalci + (k / n) * Math.PI * 2;
-        this.cx = this.px + Math.cos(ang) * r;
-        this.cy = this.py + Math.sin(ang) * r;
+        const fuori = k >= meta, quante = fuori ? n - meta : meta, h = fuori ? k - meta : k;
+        const ang = (fuori ? -this.angoloFalci : this.angoloFalci) + (h / quante) * Math.PI * 2;
+        const rk = fuori ? r * POTENZIALI.falce.anello : r;
+        this.cx = this.px + Math.cos(ang) * rk;
+        this.cy = this.py + Math.sin(ang) * rk;
         this.orda.griglia.vicini(this.cx, this.cy, this.visitaFalce);
         this.rompibili?.colpitoDa(this.cx, this.cy, this.cr);
         this.lame[k].setPosition(Math.round(this.cx), Math.round(this.cy)).setRotation(ang * 3).setScale(this.scalaLama * (1 + this.falceCresce)).setVisible(true);

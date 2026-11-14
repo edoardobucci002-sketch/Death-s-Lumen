@@ -769,7 +769,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 **I nemici e la Grazia** (passo 4, `NEMICI_STANZA`, `ONDATA`, `COMBATTIMENTO_STANZA` e `GRAZIA_STANZA` in `src/data/stanze.ts`; `src/sistema/nemici-stanza.ts`). Tutti i numeri sono proposte di Claude, *da rivedere*.
 
 - **Il Lampionaio si può ferire**: 100 di salute. La salute non si rigenera da sola: lo farà con oggetti o poteri che lo permettono, da inventare (decisione di Edoardo del 13/11). La barra della salute è quella del survivor, sotto i piedi. Colpito, si illumina di bianco, lo schermo trema un poco e il telefono vibra. Toccare un nemico non fa male: fa male solo un attacco con il suo avviso (confermato da Edoardo il 13/11).
-- **Quiete** (decisione di Edoardo del 13/11): dopo un colpo, per un attimo non si prendono altri danni. Il Lampionaio resta in Quiete 0,5 s (lampeggia); è una sua statistica, che le carte potranno migliorare. I nemici restano in Quiete 0,3 s, ma **ogni arma ha la sua**: la Lanterna non ferisce di nuovo lo stesso nemico per 0,3 s, il Cerchio di luce sì (e viceversa). Il Cerchio di luce prova a ferire ogni 0,25 s, quindi con la Quiete prende ogni nemico ogni 0,5 s. È la stessa parola della Quiete delle reazioni (un nemico non reagisce di nuovo per 3 s), scelta di Edoardo.
+- **Quiete** (decisione di Edoardo del 13/11): dopo un colpo, per un attimo non si prendono altri danni. Il Lampionaio resta in Quiete 0,5 s (lampeggia); è una sua statistica, che le carte potranno migliorare. I nemici restano in Quiete 0,3 s, ma **ogni arma ha la sua**: la Lanterna non ferisce di nuovo lo stesso nemico per 0,3 s, il Cerchio di luce sì (e viceversa). Il Cerchio di luce ferisce solo quando si accende, poi abbaglia ogni 0,3 s. È la stessa parola della Quiete delle reazioni (un nemico non reagisce di nuovo per 3 s), scelta di Edoardo.
 - **Il Ricaduto** (sprite V1 del 13/11 fatto con PixelLab: un contadino morto da poco, curvo, con un forcone a tre rebbi e una crepa di Lumen sul petto) cammina dritto e lento verso il Lampionaio. A 56 px si ferma e comincia l'**avviso**: alza il forcone sopra la testa a due mani (la prima metà dell'animazione `attack`, stirata sulla durata dell'avviso, così il forcone cala nell'istante del danno), lampeggia di rosso e a terra compare uno spicchio rosso davanti a lui che si riempie. La direzione è decisa all'inizio dell'avviso. Allo scadere graffia tutto lo spicchio, poi resta fermo un attimo. Battuto, fa la sua animazione `death` e resta sempre a terra 1,5 s senza poter essere colpito (decisione di Edoardo del 13/11). Se si rialzerà, lo si decide quando cade e, appena è steso, **una crepa sulla schiena pulsa di luce ambra** (animazione `special`, decisione di Edoardo del 14/11); se non pulsa, sparirà; poi, 2 volte su 10 (decisione di Edoardo del 13/11 sera), si rialza con metà della salute, se no sparisce. Si rialza una volta sola.
 - **Il Cantore** (sprite V1 del 13/11 fatto con PixelLab: un cantore dei funerali con tonaca grigio-azzurra, cappuccio e libro dei canti, la bocca accesa di Lumen) resta tra 200 e 250 px dal Lampionaio: si allontana se ti avvicini, si avvicina se ti allontani. Quando ha ricaricato e sei entro 360 px si ferma, e a terra compare una **linea arancione** verso di te fino al muro (l'avviso; gli avvisi a distanza sono arancioni, quelli corpo a corpo rossi: decisione di Edoardo del 13/11): lampeggia, resta accesa nell'ultimo terzo, e il grumo cresce nella sua bocca mentre canta. Quando lo sputa, il grumo parte dalla bocca e in 0,3 s scende in volo fino alla sua altezza (`bocca` in `NEMICI_STANZA.cantore`: [7, 87] mentre canta e [46, 72] quando sputa, px in avanti e in alto dai piedi, misurati sullo sprite V1; *da rivedere*). L'animazione dello sputo non disegna più il grumo: lo disegna solo il gioco. Poi lancia un grumo di Lumen spento che **ti cerca** (decisione di Edoardo del 13/11 sera): per 1,4 s gira verso di te, ma di al massimo 125° al secondo, poi va dritto. Così non è impossibile da schivare: chi cammina si allontana più svelto del grumo (270 contro 210 px/s), e un passo di lato quando il grumo è a circa 45 px lo fa passare oltre (la schivata perfetta). Una schivata sola per grumo. In volo il grumo è una goccia di cera grigio-azzurra che ribolle, con una scia di tre gocce (effetto pixelfx disegnato per il gioco, `Pixelfx_Cera_grumo`). Quando scoppia, contro il muro o su di te, lascia una **pozza di cera** a terra dello stesso colore: uno schizzo con una corona di gocce, poi la pozza larga 68 px (alta la metà) con riflessi e bolle; resta 2 s e alla fine si rapprende e sparisce a retino (`Pixelfx_Cera_pozza`); ferisce di 6 chi ci passa sopra (il danno segue la Quiete del Lampionaio: al massimo uno ogni 0,5 s) e negli ultimi 0,3 s la sua area si restringe. Al massimo 16 pozze insieme (*raggio, danno e ricerca da rivedere*).
 - **Animazioni dei nemici** (dal 14/11): l'avviso è la prima metà di `attack` stirata sulla sua durata, la seconda metà scorre nel recupero (il Cantore canta, poi sputa il grumo). Il Ricaduto che si rialza fa `death` al contrario, fermo finché non è in piedi. Il Cantore battuto fa `death`, intoccabile, e poi sparisce. Uno sprite senza questi tag trema nell'avviso e a terra si stende di lato e si scurisce.
@@ -800,11 +800,12 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 **L'abilità caricata colpendo** (passo 5, `ABILITA_STANZA` in `src/data/stanze.ts`, `src/sistema/abilita-stanza.ts`). Il Cerchio di luce del Lampionaio si carica **solo** con i colpi della Lanterna a segno (decisione del 12/11): piena dopo 8 colpi, e un colpo conta 1 anche se prende più nemici (decisione di Edoardo del 13/11). Mentre il cerchio è acceso non si carica.
 
 - **Il pulsante**: un tondo scuro con l'icona del Cerchio di luce, a sinistra del joystick d'attacco, trasparente come lui, con un'area di tocco che esce di 10 punti dal disegno. L'anello ha 8 tacche che si accendono in senso orario nel colore del personaggio, una per colpo; piena, l'anello diventa chiaro, l'icona si accende e il telefono vibra. Toccata scarica, trema e fa un tonfo (il tocco è arrivato). Su computer si vede lo stesso, e si usa con Spazio.
-- **L'effetto** è quello del survivor (`ABILITA.cerchioDiLuce`): un cerchio di 216 px che segue il Lampionaio per 5 s, ferisce chi c'è dentro di 6 ogni 0,3 s (non più spesso della Quiete dei nemici; nel survivor 0,25 s; +30% in Grazia) e lo fa camminare il 55% più lento. Ferisce con la sua Quiete, separata da quella della Lanterna.
+- **L'effetto** (decisione di Edoardo del 14/11): un cerchio di 216 px che segue il Lampionaio per 5 s (`ABILITA.cerchioDiLuce`). **Quando si accende ferisce una volta sola** chi c'è dentro, con un colpo grande da 20 a 30 (`ABILITA_STANZA.colpo`, danno a intervallo come le armi; +30% in Grazia); **poi abbaglia soltanto**, senza ferire, chi c'è dentro ogni 0,3 s (con il ritmo delle zone), e lo fa camminare il 55% più lento. Ha la sua Quiete, separata da quella della Lanterna.
 
 | Valore dell'abilità | Numero | Note |
 | --- | --- | --- |
-| Carica | 8 colpi a segno; il cerchio ferisce ogni 0,3 s | un colpo conta 1, solo con la Lanterna |
+| Carica | 8 colpi a segno; il cerchio abbaglia ogni 0,3 s | un colpo conta 1, solo con la Lanterna |
+| Colpo dell'accensione | 20–30 | una volta sola (*da rivedere*) |
 | Pulsante | 36 pixel disegnati, 14 px dal joystick d'attacco; area di tocco 10 punti più larga | ingrandito come i joystick |
 
 **Tre stanze, porte e carte** (passo 6, decisioni di Edoardo del 13/11; `PERCORSO` e `PORTE` in `src/data/stanze.ts`, `src/sistema/percorso.ts`, `src/sistema/porte.ts`). Numeri di Claude, *da rivedere*.
@@ -830,9 +831,23 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 - **Danno a intervallo**: ogni arma ha un danno minimo e un danno massimo; ogni colpo tira a caso un numero tra i due, con il generatore con seme. Poi valgono i doni in percentuale (Sale nero, la Grazia +30%) e il colpo critico (Chiodo di bara). Le carte e la pausa scrivono «Danno 12–18»; quando un livello lo fa crescere, «Danno 12–18 › 16–24» e la spiegazione «+4–6 danno».
 - **Come crescono**: i livelli dell'arma aggiungono un intervallo al minimo e al massimo; i doni danno percentuali su tutte le armi (scelta di Edoardo del 14/11, come in Path of Exile).
 - **Il carattere di ogni arma**: le armi pesanti hanno un intervallo largo (la Lapide 30–70: a volte schiaccia un Ricaduto, a volte no; la Campana 14–24), le aure e le pozze uno stretto e piccolo, perché feriscono tante volte al secondo (Velo funebre 2–3 ogni 0,5 s, Acqua santa 1–2 ogni 0,3 s). Nel survivor il Velo faceva 7 ogni 0,5 s, e nelle prime stanze era fin troppo forte (Edoardo, 14/11).
-- **5 livelli**: il livello 5 è il **potenziale** dell'arma (proposta del pivot): sblocca quello che nel survivor dava il livello 8. La Lanterna al livello 5 colpisce anche alle spalle, con un secondo Fendente. I campi che non cambiano con il livello (velocità dei proiettili, spinta, rimbalzi del sasso…) sono quelli del survivor.
+- **5 livelli**: il livello 5 è il **potenziale** dell'arma (proposta del pivot): un effetto nuovo, scelto da Edoardo il 14/11 tra 5 proposte per ogni Eco (`POTENZIALI` in `src/data/armi-stanze.ts`; numeri di Claude, *da rivedere*). La Lanterna al livello 5 colpisce anche alle spalle, con un secondo Fendente. I campi che non cambiano con il livello (velocità dei proiettili, spinta, rimbalzi del sasso…) sono quelli del survivor.
+
+| Eco | Potenziale (livello 5) |
+| --- | --- |
+| Candela | una fiammella che uccide si divide in 2 fiammelle, aperte a ventaglio, che inseguono il nemico più vicino per 0,9 s; le figlie non si dividono più |
+| Falce | due anelli: metà delle falci gira al contrario, su un cerchio 1,5 volte più largo |
+| Campana | il rintocco interrompe l'attacco che i nemici nel suo raggio stanno preparando (l'avviso si spegne e il nemico si riprende); in cambio suona più di rado (ricarica 2,6 s, era 1,8) e il doppio rintocco sparisce (nota di Edoardo) |
+| Fuoco fatuo | i fuochi inseguono per primi chi prepara un attacco (sembra 4 volte più vicino) e il colpo lo interrompe |
+| Acqua santa | dentro una pozza recuperi 1 di salute al secondo (le pozze non si sommano) |
+| Lama di luce | il fendente è una croce: avanti, dietro e ai due lati |
+| Lapide | la lapide resta in piedi 3 s come un muro largo 22 px: i nemici non la attraversano e i grumi ci scoppiano contro |
+| Rosario spezzato | ogni rimbalzo fa il 15% di danno in più del precedente |
+| Corvo | il nemico beccato subisce +20% di danno da tutto per 3 s |
+| Velo funebre | mentre stai fermo il velo si allarga fino al doppio in 1,5 s; camminando torna normale in 0,4 s |
+| Sampietrini | il rimbalzo va verso il nemico più vicino entro 220 px, invece che dritto |
 - Le Unioni non ci sono ancora nel gioco a stanze (nel pivot: arma al livello 4).
-- LAB → Stanze → Percorso: «Lanterna +1 livello», «Echi +1 livello», «Livelli a 1»; i numeri si cambiano al volo in Numeri → armiStanze.
+- LAB → Stanze → Percorso: «Lanterna +1 livello», «Echi +1 livello», «Livelli a 1»; LAB → Stanze → Potenziali: un pulsante per Eco lo mette nella build al livello 5; i numeri si cambiano al volo in Numeri → armiStanze.
 
 #### Stanze · Lanterna
 
@@ -852,7 +867,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 0,95 | 6–9 | 2 | 1 | +1 fiammella. |
 | 3 | 0,95 | 8–12 | 2 | 2 | +2–3 danno, le fiammelle trapassano un nemico in più. |
 | 4 | 0,75 | 8–12 | 3 | 2 | +1 fiammella, ricarica più rapida. |
-| 5 | 0,75 | 11–16 | 4 | 3 | +1 fiammella, +3–4 danno, trapassano di più. |
+| 5 | 0,75 | 11–16 | 4 | 3 | Potenziale: una fiammella che uccide si divide in 2. +1 fiammella, +3–4 danno. |
 
 #### Stanze · Falce
 
@@ -862,7 +877,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 2 | 5–7 | 132 | 0,45 | +1 falce. |
 | 3 | 2 | 7–9 | 160 | 0,45 | +2 danno, raggio più ampio. |
 | 4 | 3 | 7–9 | 160 | 0,45 | +1 falce. |
-| 5 | 4 | 9–12 | 160 | 0,59 | +1 falce, +2–3 danno, rotazione più veloce. |
+| 5 | 4 | 9–12 | 160 | 0,59 | Potenziale: metà delle falci gira al contrario, su un cerchio più largo. +1 falce, +2–3 danno. |
 
 #### Stanze · Campana
 
@@ -872,7 +887,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 2,6 | 19–31 | 197 | no | +5–7 danno. |
 | 3 | 2,2 | 19–31 | 240 | no | Raggio più ampio, rintocchi più frequenti. |
 | 4 | 2,2 | 25–41 | 240 | no | +6–10 danno. |
-| 5 | 1,8 | 30–50 | 240 | sì | +5–9 danno, doppio rintocco. |
+| 5 | 2,6 | 30–50 | 240 | no | Potenziale: il rintocco interrompe gli attacchi in preparazione, ma suona più di rado. +5–9 danno. |
 
 #### Stanze · Fuoco fatuo
 
@@ -882,7 +897,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 1,3 | 2 | 7–11 | 1 | +1 fuoco. |
 | 3 | 1,3 | 2 | 10–15 | 1 | +3–4 danno. |
 | 4 | 1 | 3 | 10–15 | 1 | +1 fuoco, ricarica più rapida. |
-| 5 | 1 | 4 | 13–20 | 3 | +1 fuoco, +3–5 danno, trapassano tre nemici. |
+| 5 | 1 | 4 | 13–20 | 1 | Potenziale: inseguono per primi chi prepara un attacco e lo interrompono. +1 fuoco, +3–5 danno. |
 
 #### Stanze · Acqua santa
 
@@ -892,7 +907,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 2,8 | 2 | 1–2 | 89 | 2,6 | +1 fiala. |
 | 3 | 2,8 | 2 | 2–3 | 108 | 2,6 | +1 danno, pozze più grandi. |
 | 4 | 2,3 | 3 | 2–3 | 108 | 3,2 | +1 fiala, ricarica più rapida, pozze più durature. |
-| 5 | 2,3 | 4 | 3–4 | 129 | 4,2 | +1 fiala, +1 danno, pozze più grandi e durature. |
+| 5 | 2,3 | 4 | 3–4 | 129 | 4,2 | Potenziale: dentro le pozze recuperi 1 di salute al secondo. +1 fiala, +1 danno. |
 
 #### Stanze · Lama di luce
 
@@ -902,7 +917,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 1,15 | 12–20 | 259 | sì | Colpisce anche alle spalle. |
 | 3 | 1 | 16–26 | 259 | sì | +4–6 danno, ricarica più rapida. |
 | 4 | 1 | 16–26 | 329 | sì | Fendente più lungo. |
-| 5 | 0,85 | 22–34 | 329 | sì | +6–8 danno, ricarica più rapida. |
+| 5 | 0,85 | 22–34 | 329 | sì | Potenziale: il fendente è una croce, avanti, dietro e ai lati. +6–8 danno. |
 
 #### Stanze · Lapide
 
@@ -912,7 +927,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 3,2 | 40–90 | 96 | 1 | +10–20 danno, impatto più largo. |
 | 3 | 2,8 | 40–90 | 96 | 1 | Cade più spesso. |
 | 4 | 2,8 | 50–110 | 96 | 2 | +1 lapide, +10–20 danno. |
-| 5 | 2,4 | 70–150 | 110 | 2 | +20–40 danno, cade più spesso, impatto più largo. |
+| 5 | 2,4 | 70–150 | 110 | 2 | Potenziale: la lapide resta in piedi 3 s e blocca nemici e grumi. +20–40 danno. |
 
 #### Stanze · Rosario spezzato
 
@@ -922,7 +937,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 1,6 | 8–13 | 4 | 1 | +2–3 danno. |
 | 3 | 1,4 | 8–13 | 5 | 1 | +1 rimbalzo, ricarica più rapida. |
 | 4 | 1,4 | 8–13 | 6 | 2 | +1 grano, +1 rimbalzo. |
-| 5 | 1,2 | 12–19 | 8 | 2 | +4–6 danno, +2 rimbalzi. |
+| 5 | 1,2 | 12–19 | 8 | 2 | Potenziale: ogni rimbalzo fa il 15% di danno in più del precedente. +4–6 danno, +2 rimbalzi. |
 
 #### Stanze · Corvo
 
@@ -932,7 +947,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 1 | 11–18 | 1 | +3–4 danno. |
 | 3 | 0,9 | 11–18 | 2 | +1 corvo, becca più spesso. |
 | 4 | 0,9 | 14–22 | 2 | +3–4 danno. |
-| 5 | 0,75 | 14–22 | 3 | +1 corvo, becca più spesso. |
+| 5 | 0,75 | 14–22 | 3 | Potenziale: il nemico beccato subisce +20% di danno per 3 s. +1 corvo. |
 
 #### Stanze · Velo funebre
 
@@ -942,7 +957,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 0,5 | 3–4 | 110 | +1 danno. |
 | 3 | 0,5 | 3–4 | 125 | Aura più grande. |
 | 4 | 0,4 | 3–4 | 140 | Aura più grande, colpisce più spesso. |
-| 5 | 0,4 | 4–6 | 160 | +1–2 danno, aura più grande. |
+| 5 | 0,4 | 4–6 | 160 | Potenziale: mentre stai fermo il velo si allarga fino al doppio. +1–2 danno. |
 
 #### Stanze · Sampietrini
 
@@ -952,7 +967,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 1,5 | 2 | 1 | 8–14 | +1 sampietrino. |
 | 3 | 1,35 | 2 | 1 | 11–18 | +3–4 danno, lancia più spesso. |
 | 4 | 1,35 | 2 | 2 | 11–18 | +1 rimbalzo. |
-| 5 | 1,2 | 3 | 2 | 14–22 | +1 sampietrino, +3–4 danno. |
+| 5 | 1,2 | 3 | 2 | 14–22 | Potenziale: il sasso rimbalza verso il nemico più vicino. +1 sampietrino, +3–4 danno. |
 
 ## 12. Da fare e da decidere
 

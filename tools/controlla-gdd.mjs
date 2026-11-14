@@ -877,7 +877,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const tb = tabella('| Valore dell\'abilità | Numero |');
   const AB = SZ.ABILITA_STANZA;
   const RIGHE_ABILITA = [
-    ['Carica', '{} colpi a segno; il cerchio ferisce ogni {} s', AB.colpi, AB.ritmo],
+    ['Carica', '{} colpi a segno; il cerchio abbaglia ogni {} s', AB.colpi, AB.ritmo],
+    ['Colpo dell\'accensione', '{}–{}', AB.colpo.danno, AB.colpo.dannoMassimo],
     ['Pulsante', '{} pixel disegnati, {} px dal joystick d\'attacco; area di tocco {} punti più larga', AB.tasto.lato, AB.tasto.distanza, AB.tasto.margine],
   ];
   stessiNomi('Abilità', tb, RIGHE_ABILITA.map((r) => r[0]));

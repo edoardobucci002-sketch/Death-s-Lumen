@@ -110,6 +110,12 @@ export class NemiciStanza {
   cerchioY = 0;
   cerchioR = 0;
   cerchioLento = 0;
+  /** Le lapidi in piedi (Lapide al potenziale): muri tondi che nemici e grumi non passano (li riempie l'arsenale). */
+  muri: { n: number; x: Float32Array; y: Float32Array; r: number } | null = null;
+  /** Attacchi interrotti (Campana e Fuoco fatuo al potenziale), per il LAB e le prove. */
+  interrotti = 0;
+  /** Lo stato di un'arma a mano sul nemico j senza ferirlo (il Cerchio di luce che abbaglia): lo dà l'arsenale. */
+  statoArma: (j: number) => void = () => {};
   /** Il colpo di un'arma a mano sul nemico j: lo dà l'arsenale (danno con i bonus, stato, reazioni, numero). */
   colpoArma: (j: number, danno: number, dx: number, dy: number, fonte: number) => void = () => {};
 
@@ -243,6 +249,7 @@ export class NemiciStanza {
     o.aggiornaStanza(dt, px, py, mezzaL, mezzaA, this.fermi);
     let danno = 0;
     for (let i = o.numero - 1; i >= 0; i--) {
+      if (o.segnoCorvo[i] > 0) o.segnoCorvo[i] -= dt;
       if (this.colpo[i] > 0) this.colpo[i] -= dt;
       if (this.rialza[i] > 0) this.rialza[i] -= dt;
       if (this.quieteLanterna[i] > 0) this.quieteLanterna[i] -= dt;
@@ -325,7 +332,16 @@ export class NemiciStanza {
     }
     // i muri: dopo spinte e separazione della Orda, tutti dentro il pavimento
     const a = areaCamminabile();
+    const m = this.muri;
     for (let i = 0; i < o.numero; i++) {
+      // le lapidi in piedi: chi ci finisce dentro viene spinto fuori, dalla parte più vicina
+      for (let k = 0; m && k < m.n; k++) {
+        const ex = o.x[i] - m.x[k], ey = o.y[i] - m.y[k], d = Math.hypot(ex, ey), r = m.r + o.raggio[i];
+        if (d >= r) continue;
+        const ux = d > 0.01 ? ex / d : 1, uy = d > 0.01 ? ey / d : 0;
+        o.x[i] = m.x[k] + ux * r;
+        o.y[i] = m.y[k] + uy * r;
+      }
       o.x[i] = Phaser.Math.Clamp(o.x[i], a.x0, a.x1);
       o.y[i] = Phaser.Math.Clamp(o.y[i], a.y0, a.y1);
     }
@@ -416,6 +432,18 @@ export class NemiciStanza {
         const cx = Phaser.Math.Clamp(x, 0, STANZA.larghezza), cy = Phaser.Math.Clamp(y, 0, STANZA.altezza);
         this.effetti.scoppio(cx, cy - C.grumo.altezza);
         this.pozza(Phaser.Math.Clamp(cx, P.raggio, STANZA.larghezza - P.raggio), Phaser.Math.Clamp(cy, P.raggio / 2, STANZA.altezza - P.raggio / 2));
+        this.togliGrumo(k);
+        continue;
+      }
+      // una lapide in piedi: il grumo ci sbatte contro e scoppia lì
+      let muro = false;
+      for (let q = 0; this.muri && q < this.muri.n; q++) {
+        const rm = this.muri.r + C.grumo.raggio;
+        if ((x - this.muri.x[q]) ** 2 + (y - this.muri.y[q]) ** 2 < rm * rm) muro = true;
+      }
+      if (muro) {
+        this.effetti.scoppio(x, y - C.grumo.altezza);
+        this.pozza(Phaser.Math.Clamp(x, P.raggio, STANZA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, STANZA.altezza - P.raggio / 2));
         this.togliGrumo(k);
         continue;
       }
@@ -526,6 +554,33 @@ export class NemiciStanza {
       presi++;
     }
     return presi;
+  }
+
+  /** Il nemico i sta preparando un attacco (avviso a terra)? */
+  inAvviso(i: number): boolean {
+    return this.stato[i] === STATO.avviso;
+  }
+
+  /** Interrompe l'attacco che il nemico i sta preparando: l'avviso si spegne e il nemico si riprende (Campana, Fuoco fatuo). */
+  interrompi(i: number): void {
+    if (this.stato[i] !== STATO.avviso) return;
+    const ricaduto = this.orda.tipo[i] === ID_RICADUTO;
+    this.stato[i] = STATO.recupero;
+    this.tempo[i] = ricaduto ? R.recupero : C.recupero;
+    if (!ricaduto) this.ricarica[i] = C.ricarica;
+    this.interrotti++;
+    this.impatto.scintille(this.orda.x[i], this.orda.y[i] - this.orda.altezza(i) / 2, 0, -1, IMPATTO.scintille.colpo);
+  }
+
+  /** Il Cerchio di luce dopo il primo colpo: abbaglia (senza ferire) chi è entro r da (x, y) e non è in Quiete per l'abilità. */
+  abbagliaCerchio(x: number, y: number, r: number): void {
+    const o = this.orda;
+    for (let i = 0; i < o.numero; i++) {
+      if (!this.colpibile(i) || this.quieteAbilita[i] > 0) continue;
+      if (Math.hypot(o.x[i] - x, o.y[i] - y) > r + o.raggio[i]) continue;
+      this.quieteAbilita[i] = NEMICI_STANZA.quiete;
+      this.statoArma(i);
+    }
   }
 
   /** Il nemico più vicino a (x, y) entro «massimo» px, escluso chi è a terra; -1 se non c'è. */

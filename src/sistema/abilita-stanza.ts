@@ -1,9 +1,10 @@
 /*
  * Abilità del gioco a stanze (passo 5 della fetta): il Cerchio di luce del Lampionaio. Si carica SOLO con i colpi
  * della Lanterna a segno: piena dopo ABILITA_STANZA.colpi colpi (un colpo conta 1 anche se prende più nemici); piena, si
- * usa con il pulsante accanto al joystick d'attacco o con Spazio. Toccata scarica, trema e fa un tonfo. Il cerchio segue il Lampionaio: ferisce chi ci sta dentro a ritmo fisso (con la sua Quiete, separata da
- * quella della Lanterna) e lo fa camminare più lento. Effetto, raggio, danno, durata e rallentamento sono quelli del
- * survivor (ABILITA.cerchioDiLuce). Il pulsante è disegnato dal codice: un tondo scuro con l'icona dell'abilità e un
+ * usa con il pulsante accanto al joystick d'attacco o con Spazio. Toccata scarica, trema e fa un tonfo. Il cerchio segue il Lampionaio:
+ * quando si accende ferisce una volta sola chi ci sta dentro, con un colpo grande (ABILITA_STANZA.colpo, decisione di Edoardo
+ * del 14/11); poi abbaglia a ritmo fisso chi ci sta dentro, senza ferire (con la sua Quiete, separata da quella della
+ * Lanterna), e lo fa camminare più lento. Effetto, raggio, durata e rallentamento sono quelli del survivor (ABILITA.cerchioDiLuce). Il pulsante è disegnato dal codice: un tondo scuro con l'icona dell'abilità e un
  * anello di tante tacche quanti sono i colpi che servono, che si accendono in senso orario nel colore del personaggio.
  */
 import Phaser from 'phaser';
@@ -24,7 +25,8 @@ export class AbilitaStanza {
   carica = 0; // colpi a segno, da 0 a ABILITA_STANZA.colpi
   usi = 0; // volte usata (per il LAB e le prove)
   attiva = 0; // secondi di cerchio rimasti
-  private ritmo = 0; // secondi al prossimo colpo del cerchio
+  private ritmo = 0; // secondi al prossimo abbaglio del cerchio
+  private primo = false; // il colpo grande dell'accensione deve ancora partire
   private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly pulsante: HTMLButtonElement;
   private readonly anello: HTMLCanvasElement;
@@ -82,7 +84,8 @@ export class AbilitaStanza {
     this.carica = 0;
     this.usi++;
     this.attiva = A.durata;
-    this.ritmo = 0; // il primo colpo parte subito
+    this.ritmo = 0; // il colpo grande parte subito
+    this.primo = true;
     this.sprite.setVisible(true).play({ key: `${A.effetto}:idle`, duration: A.durata * 1000, repeat: 0 });
     suona('speciale');
     vibra('media');
@@ -102,7 +105,9 @@ export class AbilitaStanza {
     nemici.cerchioLento = A.rallenta;
     if ((this.ritmo -= dt) <= 0 && this.attiva > 0) {
       this.ritmo += ABILITA_STANZA.ritmo;
-      nemici.colpisciCerchio(x, y, A.raggio, danno);
+      if (this.primo) nemici.colpisciCerchio(x, y, A.raggio, danno); // il colpo grande dell'accensione
+      else nemici.abbagliaCerchio(x, y, A.raggio); // poi abbaglia soltanto
+      this.primo = false;
     }
   }
 

@@ -23,7 +23,7 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, PERCORSO, STANZA } from '../data/stanze';
+import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, PERCORSO, STANZA } from '../data/stanze';
 import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
@@ -31,7 +31,7 @@ import { Percorso } from '../sistema/percorso';
 import { Porte } from '../sistema/porte';
 import { Doni } from '../sistema/doni';
 import { ComparsaCarte } from '../sistema/comparsa-carte';
-import { LANTERNA_STANZE } from '../data/armi-stanze';
+import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, RICARICA_MINIMA, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
 import { Impatto } from '../sistema/impatto';
 import { ABILITA } from '../data/abilita';
@@ -204,9 +204,20 @@ export class Stanze extends Phaser.Scene {
     Object.assign(this.bonus, { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 });
     this.arsenale = new Arsenale(this, this.nemici.orda, new Caso(this.seme + 2), this.bonus, this.effetti);
     // la Lanterna a mano e il Cerchio di luce feriscono attraverso l'arsenale: bonus, stato di Luce, reazioni, numeri
+    // potenziali degli Echi (gioco a stanze): interrompere gli attacchi, le lapidi che fanno da muro, il Cerchio che abbaglia
+    this.arsenale.interrompi = (j) => this.nemici.interrompi(j);
+    this.arsenale.inAvviso = (j) => this.nemici.inAvviso(j);
+    this.nemici.muri = this.arsenale.muri;
+    this.nemici.statoArma = (j) => this.arsenale.statoDaFuori(j, CODICE_AFFINITA.luce, F.abilita);
     this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce, fonte === FONTE.lanterna ? F.lanterna : F.abilita);
     this.percorso = new Percorso(this.arsenale, this.seme);
     this.percorso.entra(1, 'echi');
+    // ?potenziale=candela (per le simulazioni): la partita parte con quell'Eco già al livello 5
+    const eco = ECHI_STANZE.find((a) => a.id === parametri.get('potenziale'));
+    if (eco) {
+      this.arsenale.aggiungi(eco);
+      while (this.arsenale.livello(eco) < eco.livelli.length) this.arsenale.potenzia(eco);
+    }
     this.porte = new Porte(this);
     this.porte.togli();
     this.barra = new BarraSalute(this, this.salute);
@@ -348,6 +359,7 @@ export class Stanze extends Phaser.Scene {
     this.dannoLanterna = liv.danno;
     this.arsenale.intervalloDaFuori(F.lanterna, liv.danno, liv.dannoMassimo);
     this.arsenale.ricalcolaForbici(); // gli Echi: così anche un numero cambiato dal LAB vale subito
+    this.arsenale.intervalloDaFuori(F.abilita, ABILITA_STANZA.colpo.danno, ABILITA_STANZA.colpo.dannoMassimo); // il colpo del Cerchio di luce
     this.attacco.ricarica = liv.ricarica * b.ricarica;
     this.attacco.raggio = liv.raggio * (1 + area);
     this.attacco.ampiezza = liv.ampiezza;
@@ -474,11 +486,14 @@ export class Stanze extends Phaser.Scene {
     this.attacco.aggiorna(dt, this.guardaX, this.guardaY);
     // l'abilità (il cerchio segue il Lampionaio e rallenta chi c'è dentro), poi i nemici: il colpo più forte che arriva
     // in questo passo e le schivate perfette (finestra e sfioro vengono dalla Grazia del Lampionaio)
-    this.abilita.aggiorna(dt, this.x, this.y, this.nemici, ABILITA.cerchioDiLuce.danno);
+    this.abilita.aggiorna(dt, this.x, this.y, this.nemici, ABILITA_STANZA.colpo.danno);
     this.nemici.finestra = this.statGrazia.finestra;
     this.nemici.sfioro = this.statGrazia.sfioro;
     const mezzaL = this.scale.width / 2, mezzaA = this.scale.height / 2;
     this.arsenale.aggiorna(dt, this.x, this.y, this.guardaX, this.guardaY, mezzaL, mezzaA);
+    // le zone che curano (Acqua santa al potenziale): dentro una pozza si recupera salute
+    const cura = this.arsenale.cura(this.saluteMassima);
+    if (cura > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + cura * dt);
     const danno = this.nemici.aggiorna(dt, this.x, this.y, mezzaL, mezzaA);
     if (danno > 0) this.ferisci(danno);
     if (this.nemici.schivate > 0) {

@@ -22,6 +22,7 @@ import { COMPARSA, COPIONE, DIFFICOLTA, RESPIRO, ELITE, IA, MIETITORE, NEMICI, O
 import { ATTRAZIONE_PESANTI } from '../data/abilita';
 import { DEVOZIONE, REAZIONI, RITI, STATI, STATI_CERTI } from '../data/stati';
 import { NUMERI_VOTI } from '../data/voti';
+import { POTENZIALI } from '../data/armi-stanze';
 import { INTERRUTTORI } from './interruttori';
 import { Simboli } from './simboli';
 import { COLPI } from '../data/armi';
@@ -88,6 +89,7 @@ export class Orda {
   readonly pausaNube = new Float32Array(CAPIENZA); // …una nube del Turibolo
   readonly pausaPozza = new Float32Array(CAPIENZA); // …una pozza dell'Acqua santa
   readonly pausaSfioro = new Float32Array(CAPIENZA); // secondi prima che sfiorarlo dia un'altra tacca di Grazia
+  readonly segnoCorvo = new Float32Array(CAPIENZA); // gioco a stanze, Corvo al potenziale: secondi in cui subisce più danno
   // stati: secondi rimasti (0 = assente)
   private sAbbagliato = new Float32Array(CAPIENZA);
   private sConsacrato = new Float32Array(CAPIENZA);
@@ -173,7 +175,7 @@ export class Orda {
   private corrente = 0;
   private spingi = (j: number): void => this.separa(j);
   // tutti i valori decimali di un nemico, per spostarli insieme quando cambia posto
-  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.tettoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza,
+  private campi = [this.x, this.y, this.raggio, this.danno, this.salute, this.velocita, this.respintaX, this.respintaY, this.lento, this.lentoPer, this.tettoPer, this.lampo, this.pausaLampo, this.pausaFalce, this.pausaNube, this.pausaPozza, this.segnoCorvo,
     this.sAbbagliato, this.sConsacrato, this.sMaledetto, this.sSepolto, this.sInterrato, this.pausaSepolto, this.fermo, this.pausaLucciola,
     this.saluteMassima, this.faseTempo, this.scattoX, this.scattoY, this.anime, this.fianco, this.postoX, this.postoY, this.quiete, this.pausaSfioro, ...this.ritmo, this.moltInterrato, this.natoA, this.entratoA];
 
@@ -355,7 +357,7 @@ export class Orda {
   /** Colpisce il nemico i: toglie salute, lo illumina (se lampeggia e non l'ha fatto da poco) e lo spinge nella direzione (dx, dy), lunga 1. */
   colpisci(i: number, danno: number, respinta: number, dx: number, dy: number, lampeggia = true): void {
     // abbagliato e interrato subiscono di più
-    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? this.forza(LUCE) : 0) + (this.sInterrato[i] > 0 ? this.piuInterrato(i) : 0));
+    this.salute[i] -= danno * (1 + (this.sAbbagliato[i] > 0 ? this.forza(LUCE) : 0) + (this.sInterrato[i] > 0 ? this.piuInterrato(i) : 0) + (this.segnoCorvo[i] > 0 ? POTENZIALI.corvo.danno : 0));
     if (lampeggia && this.pausaLampo[i] <= 0) {
       this.lampo[i] = COLPI.lampoNemico;
       this.pausaLampo[i] = COLPI.lampoNemicoPausa;
@@ -805,7 +807,7 @@ export class Orda {
     this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.tettoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
     this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
     this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
-    this.quiete[i] = this.pausaSfioro[i] = 0;
+    this.quiete[i] = this.pausaSfioro[i] = this.segnoCorvo[i] = 0;
     for (const r of this.ritmo) r[i] = 0;
     this.moltInterrato[i] = 1;
     this.posiziona(i, gx, gy, dirX, dirY, mezzaL, mezzaA);
@@ -932,7 +934,7 @@ export class Orda {
     this.respintaX[i] = this.respintaY[i] = this.lentoPer[i] = this.tettoPer[i] = this.lampo[i] = this.pausaLampo[i] = this.pausaFalce[i] = this.pausaNube[i] = this.pausaPozza[i] = 0;
     this.sAbbagliato[i] = this.sConsacrato[i] = this.sMaledetto[i] = this.sSepolto[i] = this.sInterrato[i] = this.pausaSepolto[i] = this.fermo[i] = this.pausaLucciola[i] = 0;
     this.ultimoStato[i] = this.rivelato[i] = this.nellAlone[i] = this.interraTipo[i] = 0;
-    this.quiete[i] = this.pausaSfioro[i] = 0;
+    this.quiete[i] = this.pausaSfioro[i] = this.segnoCorvo[i] = 0;
     for (const r of this.ritmo) r[i] = 0;
     this.moltInterrato[i] = 1;
     this.x[i] = x;

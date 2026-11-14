@@ -1282,6 +1282,32 @@ for (const [nome, disp] of [
   await ctx.close();
 }
 
+// Potenziali degli Echi (14/11): tutti al livello 5 insieme, con nemici in campo, per qualche secondo; niente errori
+{
+  const errori = [];
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const pag = await ctx.newPage();
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?stanze`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
+  const L = (f, ...a) => pag.evaluate(([f, a]) => window.__dl.scene.getScene('Stanze').lab[f](...a), [f, a]);
+  await L('ondateAutomatiche', false);
+  await L('svuota');
+  for (const id of ['candela', 'falce', 'campana', 'fuocoFatuo', 'acquaSanta', 'lamaDiLuce', 'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'sampietrini']) await L('potenziale', id);
+  await L('immortale', true);
+  await L('vai', 'centro');
+  for (let k = 0; k < 3; k++) await L('ondata');
+  await pag.waitForTimeout(6000);
+  const s = await L('stato');
+  if (s.echi.length < 11 || s.echi.some((e) => !e.endsWith(' 5'))) errori.push(`gli Echi non sono tutti al livello 5 (${s.echi.join(', ')})`);
+  if (s.uccisi < 1) errori.push('con tutti gli Echi al potenziale nessun nemico cade');
+  await pag.screenshot({ path: 'prove/stanze-potenziali.png' });
+  const interrotti = await L('interrotti');
+  await ctx.close();
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} potenziali degli Echi: 11 Echi al livello 5, ${s.uccisi} nemici battuti, ${interrotti} attacchi interrotti${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
 // Bot del gioco a stanze (14/11): gioca la fetta da solo, veloce e senza disegno; a parità di seme gioca la stessa partita
 {
   const errori = [];

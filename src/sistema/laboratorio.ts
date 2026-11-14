@@ -32,6 +32,7 @@ import { INTERRUTTORI } from './interruttori';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
 import * as armiStanze from '../data/armi-stanze';
+import { ECHI_STANZE } from '../data/armi-stanze';
 import * as doni from '../data/doni';
 import * as effetti from '../data/effetti';
 import * as hud from '../data/hud';
@@ -291,6 +292,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Echi +1 livello', f(() => st.lab.echiSu())),
         tasto('Livelli a 1', f(() => st.lab.livelliAUno())),
       ),
+      titolo('Potenziali (livello 5)'),
+      riga(...ECHI_STANZE.map((a) => tasto(a.nome, f(() => st.lab.potenziale(a.id))))),
+      el('p', 'lab-nota', 'Tocca un Eco: entra nella build al livello 5, con il suo potenziale (Candela: la fiammella che uccide si divide; Falce: due anelli; Campana: interrompe gli attacchi; Fuoco fatuo: insegue chi attacca e lo interrompe; Acqua santa: le pozze curano; Lama di luce: croce; Lapide: muro di 3 s; Rosario: +15% a rimbalzo; Corvo: +20% di danno subito; Velo funebre: fermo si allarga; Sampietrini: rimbalza verso il nemico). Il Cerchio di luce ora fa un colpo grande quando si accende e poi abbaglia soltanto.'),
       el('p', 'lab-nota', '«Fai giocare il bot»: il bot muove, colpisce, usa il Cerchio di luce e sceglie carte e porte al posto tuo, alla velocità normale (le simulazioni veloci: npm run sim-stanze). Danno a intervallo: ogni colpo esce a caso tra il minimo e il massimo del livello (le carte scrivono «Danno 12–18»). Le armi delle stanze hanno 5 livelli: il 5° è il potenziale (la Lanterna colpisce anche alle spalle). Numeri in Numeri → armiStanze.'),
       el('p', 'lab-nota', '«Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 3 carte. Scelta la carta si aprono le porte, con sopra il simbolo della ricompensa: «Attraversa la porta» ti porta contro una di loro. Nella prima stanza le carte sono 3 Echi; poi pescano dalla porta scelta. Dopo la terza stanza: «Fetta completata». Numeri in Numeri → stanze → PERCORSO e PORTE.'),
       titolo('Nemici'),

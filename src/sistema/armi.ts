@@ -15,6 +15,7 @@ import { INTERRUTTORI } from './interruttori';
 import { ABILITA, type Abilita } from '../data/abilita';
 import { ACQUA_SANTA, COLPI, LAPIDE, MIRA, type Arma } from '../data/armi';
 import { NUMERI_UNIONI as U } from '../data/unioni';
+import { POTENZIALI } from '../data/armi-stanze';
 import { ROMPIBILI } from '../data/rompibili';
 import { RAGGIO_VELO } from './segnaposto-oggetti';
 import { NUBE, POZZA, CODICE_AFFINITA, ID_MIETITORE, MAX_EFFETTI, MAX_CORVI, PASSI_STORIA, SCIA, RACCOGLIE, F, type Posseduta } from './armi-colpo';
@@ -77,6 +78,16 @@ export class Arsenale extends ArsenaleVicine {
     return { minimo, massimo, diversi: visti.size };
   }
 
+  /** Campana al potenziale: interrompe gli avvisi dei nemici entro r dal personaggio (senza creare niente). */
+  private interrompiNelRaggio(r: number): void {
+    if (!this.interrompi || !this.inAvviso) return;
+    const o = this.orda;
+    for (let j = 0; j < o.numero; j++) {
+      const dx = o.x[j] - this.px, dy = o.y[j] - o.raggio[j] - this.py, rr = r + o.raggio[j];
+      if (dx * dx + dy * dy <= rr * rr && this.inAvviso(j)) this.interrompi(j);
+    }
+  }
+
   /** Ricalcola gli intervalli del danno di tutte le armi (dopo un cambio dal LAB). */
   ricalcolaForbici(): void {
     for (const p of this.possedute) this.segnaForbice(p);
@@ -84,8 +95,9 @@ export class Arsenale extends ArsenaleVicine {
 
   /** Danno a intervallo (gioco a stanze): quanto il colpo più forte supera il più debole al livello di adesso. */
   private segnaForbice(p: Posseduta): void {
-    const l = p.arma.livelli[Math.min(p.livello, p.arma.livelli.length) - 1] as { danno: number; dannoMassimo?: number };
+    const l = p.arma.livelli[Math.min(p.livello, p.arma.livelli.length) - 1] as { danno: number; dannoMassimo?: number; potenziale?: boolean };
     this.forbice[F[p.arma.id]] = typeof l.dannoMassimo === 'number' && l.danno > 0 ? l.dannoMassimo / l.danno : 0;
+    this.potenziale[F[p.arma.id]] = l.potenziale ? 1 : 0;
   }
 
   /** Danno a intervallo di un colpo dato da fuori (la Lanterna a mano): minimo e massimo del suo livello. */
@@ -98,6 +110,11 @@ export class Arsenale extends ArsenaleVicine {
    * mezzaL e mezzaA sono metà dello schermo.
    */
   aggiorna(dt: number, x: number, y: number, dx: number, dy: number, mezzaL: number, mezzaA: number): void {
+    // Velo funebre al potenziale: fermo, il velo si allarga a poco a poco; camminando torna normale
+    if (this.potenziale[F.veloFunebre]) {
+      const V = POTENZIALI.veloFunebre, fermo = Math.abs(x - this.px) < 0.01 && Math.abs(y - COLPI.corpo - this.py) < 0.01;
+      this.veloFermo = fermo ? Math.min(1, this.veloFermo + dt / V.allarga) : Math.max(0, this.veloFermo - dt / V.stringe);
+    }
     this.px = x;
     this.py = y - COLPI.corpo;
     this.dx = dx;
@@ -256,6 +273,7 @@ export class Arsenale extends ArsenaleVicine {
       case 'campana': {
         const l = a.livelli[p.livello - 1];
         this.rintocco(l.raggio * area, l.danno, this.unite.campana ? U.campana.fermo : 0);
+        if (this.potenziale[F.campana]) this.interrompiNelRaggio(l.raggio * area); // potenziale: gli avvisi si spengono
         if (l.doppio) this.ritarda(a, a.ritardoDoppio, l.raggio * area, l.danno, 1); // il secondo rintocco ferma
         return l.ricarica;
       }
@@ -263,6 +281,11 @@ export class Arsenale extends ArsenaleVicine {
         const l = a.livelli[p.livello - 1];
         // il fendente segue la direzione in cui cammini (prima solo destra o sinistra)
         this.fendente(this.dx, this.dy, l.lunghezza * area, l.danno);
+        // potenziale (gioco a stanze): il fendente è una croce, anche ai due lati
+        if (this.potenziale[F.lamaDiLuce]) {
+          this.fendente(-this.dy, this.dx, l.lunghezza * area, l.danno);
+          this.fendente(this.dy, -this.dx, l.lunghezza * area, l.danno);
+        }
         if (this.unite.lamaDiLuce) {
           const k = (this.storiaI + PASSI_STORIA - Math.min(PASSI_STORIA - 1, Math.round(U.lama.ritardo * 60))) % PASSI_STORIA;
           this.fendente(this.dx, this.dy, l.lunghezza * area, l.danno, this.storiaX[k], this.storiaY[k]);
@@ -293,7 +316,8 @@ export class Arsenale extends ArsenaleVicine {
         for (let k = 0; k < l.quantita + piu; k++) {
           const j = this.nemicoVisibile();
           if (j < 0) break;
-          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, l.danno, l.durata, a.intervallo, 0, 0, 0, false, true, POZZA, SACRO);
+          // potenziale (gioco a stanze): la pozza cura chi ci sta dentro
+          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, l.danno, l.durata, a.intervallo, 0, 0, this.potenziale[F.acquaSanta] ? POTENZIALI.acquaSanta.cura : 0, false, true, POZZA, SACRO);
         }
         return l.ricarica;
       }
@@ -376,6 +400,7 @@ export class Arsenale extends ArsenaleVicine {
           this.cvMY[k] = o.y[j] - o.raggio[j];
           this.cvMira[k] = 0.18;
           this.ferisci(j, l.danno, 0, 0, 0, LUCE);
+          if (this.potenziale[F.corvo]) o.segnoCorvo[j] = POTENZIALI.corvo.durata; // potenziale: +danno subito per un po'
           this.rompibili?.colpitoDa(this.cvMX[k], this.cvMY[k], ROMPIBILI.raggio);
           // a ogni beccata le anime a terra intorno al nemico beccato volano verso il personaggio
           this.anime?.attiraVicino(o.x[j], o.y[j], a.richiamo);
@@ -384,7 +409,7 @@ export class Arsenale extends ArsenaleVicine {
       }
       case 'veloFunebre': {
         const l = a.livelli[p.livello - 1];
-        this.raggioVelo = l.raggio * area;
+        this.raggioVelo = l.raggio * area * (1 + this.veloFermo * POTENZIALI.veloFunebre.crescita);
         this.prepara(0, this.px, this.py, this.raggioVelo, l.danno, 0);
         this.cAff = SACRO;
         this.cProb = RUOLI.veloConsacra;

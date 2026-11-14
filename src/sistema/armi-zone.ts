@@ -11,17 +11,20 @@ import { EFFETTI } from '../data/effetti';
 import { ABILITA } from '../data/abilita';
 import { ACQUA_SANTA, COLPI, LAPIDE, TURIBOLO } from '../data/armi';
 import { NUMERI_UNIONI as U } from '../data/unioni';
+import { POTENZIALI } from '../data/armi-stanze';
 import { SPRITE_SCIA } from './segnaposto-oggetti';
 import { NUBE, POZZA, chiavePozzaPixelfx, MAX_ZONE, MAX_LAPIDI, F } from './armi-colpo';
 import { ArsenaleColpo } from './armi-colpo';
 
 export abstract class ArsenaleZone extends ArsenaleColpo {
+  private lpMuro = new Uint8Array(MAX_LAPIDI); // Lapide al potenziale (gioco a stanze): resta in piedi come un muro
+
   /**
    * Salute al secondo che il personaggio riceve dalle zone che curano (Benedizione, nubi dell'Incensiere,
    * pozze dell'Acquasantiera) in cui si trova. saluteMassima serve alle pozze, che curano una parte di quella.
    */
   cura(saluteMassima: number): number {
-    let c = 0, nube = 0, pozza = 0;
+    let c = 0, nube = 0, pozza = 0, santa = 0;
     for (let i = 0; i < this.zone; i++) {
       if (!this.zCura[i] && !(this.zCuraPozza[i] > 0)) continue;
       const dx = this.px - this.zX[i];
@@ -30,10 +33,11 @@ export abstract class ArsenaleZone extends ArsenaleColpo {
       if (this.zCuraPozza[i] > 0) pozza = U.acquasantiera.curaParte * saluteMassima; // le pozze che curano non si sommano
       if (!this.zCura[i]) continue;
       if (this.zTipo[i] === NUBE) nube = this.zCura[i]; // le nubi non si sommano
+      else if (this.zTipo[i] === POZZA) santa = this.zCura[i]; // Acqua santa al potenziale (gioco a stanze): nemmeno le pozze
       else c += this.zCura[i];
     }
     this.curaPozzaOra = pozza;
-    return c + nube + pozza;
+    return c + nube + pozza + santa;
   }
 
   /** Acquasantiera con la fiaschetta piena: la pozza i cura per qualche secondo (dura almeno fino ad allora). */
@@ -84,13 +88,24 @@ export abstract class ArsenaleZone extends ArsenaleColpo {
     // Lapide inchiodata: solo le lapidi vere (non quelle da vedere della Vanga) restano e seppelliscono
     this.lpChiodo[i] = danno && this.unite.lapide ? 1 : 0;
     this.lpResta[i] = this.lpChiodo[i] ? U.lapide.resta : LAPIDE.resta;
+    // potenziale (gioco a stanze): la lapide vera resta in piedi e blocca nemici e grumi
+    this.lpMuro[i] = danno && this.potenziale[F.lapide] ? 1 : 0;
+    if (this.lpMuro[i]) this.lpResta[i] = Math.max(this.lpResta[i], POTENZIALI.lapide.resta);
     this.lpVita[i] = LAPIDE.caduta + this.lpResta[i];
     this.lpCaduta[i] = 1;
     this.lpSprite[i].setVisible(true);
   }
 
   protected aggiornaLapidi(dt: number): void {
+    const m = this.muri;
+    m.n = 0;
+    m.r = POTENZIALI.lapide.raggio;
     for (let i = this.lapidi - 1; i >= 0; i--) {
+      if (this.lpMuro[i] && !this.lpCaduta[i] && this.lpVita[i] > 0) {
+        m.x[m.n] = this.lpX[i];
+        m.y[m.n] = this.lpY[i];
+        m.n++;
+      }
       this.lpVita[i] -= dt;
       // Lapide inchiodata: a terra seppellisce chi la tocca (la pausa del Sepolto la fa marca())
       if (this.lpChiodo[i] && !this.lpCaduta[i] && this.lpVita[i] > 0) {
@@ -118,6 +133,7 @@ export abstract class ArsenaleZone extends ArsenaleColpo {
       for (const a of this.lpCampi) a[i] = a[u];
       this.lpCaduta[i] = this.lpCaduta[u];
       this.lpChiodo[i] = this.lpChiodo[u];
+      this.lpMuro[i] = this.lpMuro[u];
       this.lpSprite[i] = this.lpSprite[u];
       this.lpSprite[u] = s;
     }

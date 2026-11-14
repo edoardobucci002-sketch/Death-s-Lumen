@@ -100,6 +100,14 @@ export abstract class ArsenaleColpo {
    * (src/data/armi-stanze.ts). 0 = niente intervallo: il colpo varia di poco come nel survivor (COLPI.casoMinimo–casoMassimo).
    */
   readonly forbice = new Float32Array(FONTI.length);
+  /** Gioco a stanze: 1 = l'arma di quella fonte è al livello del suo potenziale (data/armi-stanze.ts, POTENZIALI). */
+  readonly potenziale = new Uint8Array(FONTI.length);
+  /** Gioco a stanze: interrompe l'attacco che il nemico j sta preparando (Campana e Fuoco fatuo al potenziale). */
+  interrompi: ((j: number) => void) | null = null;
+  /** Gioco a stanze: il nemico j sta preparando un attacco (il suo avviso è a terra)? */
+  inAvviso: ((j: number) => boolean) | null = null;
+  /** Gioco a stanze: le lapidi in piedi (Lapide al potenziale), muri tondi che nemici e grumi non passano. */
+  readonly muri = { n: 0, x: new Float32Array(MAX_LAPIDI), y: new Float32Array(MAX_LAPIDI), r: 0 };
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
   fiaschettaPiena = false; // la scena lo aggiorna a ogni passo: con la fiaschetta piena il sorso diventa una pozza che cura
@@ -249,6 +257,7 @@ export abstract class ArsenaleColpo {
   protected cvSprite: Phaser.GameObjects.Sprite[] = [];
   protected velo!: Phaser.GameObjects.Image;
   protected raggioVelo = 0;
+  protected veloFermo = 0; // Velo funebre al potenziale: da 0 a 1, quanto si è allargato stando fermi
 
   // falci
   protected angoloFalci = 0;
@@ -355,6 +364,21 @@ export abstract class ArsenaleColpo {
     const d = base * (1 + this.bonus.danno) * caso;
     this.critico = this.bonus.critico > 0 && this.casoStati.numero() < this.bonus.critico;
     return this.critico ? d * MOLTIPLICA_CRITICO : d;
+  }
+
+  /**
+   * Gioco a stanze: lascia lo stato dell'affinità aff sul nemico j senza ferirlo (il Cerchio di luce che abbaglia), con il
+   * ritmo delle zone; una reazione che ne nasce parte come sempre (senza colpo che la innesca).
+   */
+  statoDaFuori(j: number, aff: number, fonte: number): void {
+    const o = this.orda;
+    if (o.salute[j] <= 0 || !o.ritmoLibero(j, aff)) return;
+    const prima = this.fonte;
+    this.fonte = fonte;
+    const r = o.marca(j, aff);
+    if (r || o.marcato) o.segnaRitmo(j, aff);
+    if (r) this.accoda(r, j, 0);
+    this.fonte = prima;
   }
 
   /** Colpisce il nemico j, gli lascia lo stato dell'affinità aff e mostra il numero del danno; lampeggia = false per le zone e le aure, reazione = id della reazione a cui appartiene il colpo. */

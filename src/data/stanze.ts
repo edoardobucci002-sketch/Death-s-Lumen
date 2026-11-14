@@ -197,7 +197,9 @@ export const ONDATA = {
 export const ABILITA_STANZA = {
   // piena dopo 8 colpi della Lanterna a segno; un colpo conta 1 anche se prende più nemici (decisione di Edoardo del 13/11)
   colpi: 8,
-  ritmo: 0.3, // secondi tra due colpi del Cerchio di luce: non più corto della Quiete dei nemici (nel survivor 0,25)
+  ritmo: 0.3, // secondi tra due abbagli del Cerchio di luce: non più corto della Quiete dei nemici (nel survivor 0,25)
+  // un solo grande colpo quando si accende (decisione di Edoardo del 14/11), poi il cerchio rallenta e abbaglia soltanto
+  colpo: { danno: 20, dannoMassimo: 30 },
   // il pulsante, a sinistra del joystick d'attacco: diametro e distanza dal joystick in pixel disegnati; margine: quanto
   // l'area di tocco esce dal disegno, in punti dello schermo
   tasto: { lato: 36, distanza: 14, margine: 10 },

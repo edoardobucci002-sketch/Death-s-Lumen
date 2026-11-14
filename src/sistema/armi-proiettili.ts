@@ -8,14 +8,25 @@ import { REAZIONI, RUOLI, STATI } from '../data/stati';
 import { suona } from './audio';
 import { PROFONDITA } from './effetti';
 import { EFFETTI } from '../data/effetti';
-import { BASTONE, SAMPIETRINI, CORVO, ROSARIO_SPEZZATO } from '../data/armi';
+import { BASTONE, CANDELA, SAMPIETRINI, CORVO, ROSARIO_SPEZZATO } from '../data/armi';
+import { POTENZIALI } from '../data/armi-stanze';
 import { NUMERI_UNIONI as U } from '../data/unioni';
 import { CHIAZZE, ROMPIBILI } from '../data/rompibili';
 import { SASSO_LARGO, SPRITE_SCIA } from './segnaposto-oggetti';
 import { ESPLOSIONE, ID_MIETITORE, MAX_PROIETTILI, MAX_GRANI, MAX_SASSI, MAX_RIMBALZI, SCIA, RACCOGLIE, PROIETTILI_V0, F } from './armi-colpo';
 import { ArsenaleZone } from './armi-zone';
 
+const FIGLIA = 3; // proiettile nato da una fiammella che si è divisa (Candela al potenziale): non si divide più
+const MAX_DIVISIONI = 16; // fiammelle che si dividono in un passo, al massimo
+
 export abstract class ArsenaleProiettili extends ArsenaleZone {
+  // Candela al potenziale: le fiammelle che si dividono in questo passo (le figlie partono a fine passo, fuori dalle ricerche)
+  private divisioni = 0;
+  private dvX = new Float32Array(MAX_DIVISIONI);
+  private dvY = new Float32Array(MAX_DIVISIONI);
+  private dvA = new Float32Array(MAX_DIVISIONI);
+  private dvDanno = new Float32Array(MAX_DIVISIONI);
+
   /** Verga dei nomi: colpisce tutti i nemici maledetti sullo schermo. */
   protected colpisciMaledetti(danno: number): void {
     const o = this.orda;
@@ -89,8 +100,18 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
         this.ssResto[i]--;
         this.ssX0[i] = x;
         this.ssY0[i] = y;
-        this.ssX1[i] = x + this.ssDX[i] * S.salto;
-        this.ssY1[i] = y + this.ssDY[i] * S.salto;
+        // Sampietrini al potenziale (gioco a stanze): il rimbalzo va verso il nemico più vicino (non quello appena colpito)
+        const j = this.potenziale[F.sampietrini] ? this.vicinoA(x, y, this.ssR[i], POTENZIALI.sampietrini.cerca) : -1;
+        if (j >= 0) {
+          const ex = this.orda.x[j] - x, ey = this.orda.y[j] - y, d = Math.hypot(ex, ey) || 1;
+          this.ssDX[i] = ex / d;
+          this.ssDY[i] = ey / d;
+          this.ssX1[i] = this.orda.x[j];
+          this.ssY1[i] = this.orda.y[j];
+        } else {
+          this.ssX1[i] = x + this.ssDX[i] * S.salto;
+          this.ssY1[i] = y + this.ssDY[i] * S.salto;
+        }
         this.ssT[i] = 0;
         this.ssDurata[i] = S.voloRimbalzo;
         this.ssAlto[i] = S.altezzaRimbalzo;
@@ -104,6 +125,21 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
       this.ssSprite[i] = this.ssSprite[u];
       this.ssSprite[u] = s;
     }
+  }
+
+  /** Il nemico vivo più vicino a (x, y) tra «minimo» e «massimo» px (-1 se non c'è); senza creare niente. */
+  protected vicinoA(x: number, y: number, minimo: number, massimo: number): number {
+    const o = this.orda;
+    let migliore = -1, dm = massimo * massimo;
+    for (let j = 0; j < o.numero; j++) {
+      if (o.salute[j] <= 0) continue;
+      const d2 = (o.x[j] - x) ** 2 + (o.y[j] - y) ** 2;
+      if (d2 >= minimo * minimo && d2 < dm) {
+        dm = d2;
+        migliore = j;
+      }
+    }
+    return migliore;
   }
 
   // ——— Rosario spezzato ———
@@ -143,7 +179,10 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.grResto[i]--;
     this.grTempo[i] = ROSARIO_SPEZZATO.intervallo;
     const maledetto = o.maledetto(j); // lo stato di prima del colpo: il grano stesso può maledire
-    this.ferisci(j, this.grDanno[i], 0, 0, 0, OMBRA, RUOLI.rosarioMaledice);
+    // Rosario al potenziale (gioco a stanze): ogni rimbalzo fa più danno del precedente
+    const salti = this.grPieni[i] - this.grResto[i] - 1;
+    const crescita = this.potenziale[F.rosarioSpezzato] ? (1 + POTENZIALI.rosarioSpezzato.crescita) ** salti : 1;
+    this.ferisci(j, this.grDanno[i] * crescita, 0, 0, 0, OMBRA, RUOLI.rosarioMaledice);
     if (this.unite.rosarioSpezzato && maledetto && o.salute[j] <= 0 && this.grRipartito[i] < U.rosario.ripartenze) this.ripartiGrano(i, j);
   }
 
@@ -287,6 +326,17 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
       }
       if (this.prVita[i] <= 0 || this.prResto[i] === 0) this.togliProiettile(i);
     }
+    // Candela al potenziale: le fiammelle figlie, aperte a ventaglio, inseguono il nemico più vicino; non si dividono più
+    const C = POTENZIALI.candela;
+    for (let k = 0; k < this.divisioni; k++) {
+      this.fonte = F.candela;
+      for (let f = 0; f < C.figlie; f++) {
+        const ang = this.dvA[k] + (f - (C.figlie - 1) / 2) * C.apertura;
+        this.lancia(CANDELA.effetto, -1, CANDELA.velocita, C.vita, this.dvDanno[k], 1, CANDELA.raggio, C.sterzo, CANDELA.portata, false, ang, LUCE, this.dvX[k], this.dvY[k]);
+        if (this.proiettili) this.prUnione[this.proiettili - 1] = FIGLIA;
+      }
+    }
+    this.divisioni = 0;
   }
 
   /** Il fuoco fatuo gira a poco a poco verso il nemico più vicino a lui. */
@@ -317,7 +367,9 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     const ex = o.x[j] - this.cx;
     const ey = o.y[j] - o.raggio[j] - this.cy;
     // élite e Mietitore sembrano più vicini: il fuoco fatuo li insegue per primi
-    const d2 = (ex * ex + ey * ey) * (o.elite[j] || o.tipo[j] === ID_MIETITORE ? RUOLI.fuocoFatuoPreda : 1);
+    const d2 = (ex * ex + ey * ey) * (o.elite[j] || o.tipo[j] === ID_MIETITORE ? RUOLI.fuocoFatuoPreda : 1)
+      // Fuoco fatuo al potenziale (gioco a stanze): chi prepara un attacco sembra più vicino, lo inseguono per primi
+      * (this.fonte === F.fuocoFatuo && this.potenziale[F.fuocoFatuo] && this.inAvviso?.(j) ? POTENZIALI.fuocoFatuo.preda : 1);
     if (d2 < this.cDistanza) {
       this.cDistanza = d2;
       this.cMigliore = j;
@@ -344,7 +396,18 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.cRX = this.prOX[i];
     this.cRY = this.prOY[i];
     this.cRAperta = REAZIONI.esorcismo.vita;
+    const avviso = this.prFonte[i] === F.fuocoFatuo && this.potenziale[F.fuocoFatuo] && !!this.inAvviso?.(j);
     this.ferisci(j, this.prDanno[i], 0, this.prVX[i] / v, this.prVY[i] / v, this.prAff[i], STATI.probabilita, true, this.prReazione[i]);
+    // Fuoco fatuo al potenziale: il colpo interrompe l'attacco in preparazione
+    if (avviso && o.salute[j] > 0) this.interrompi?.(j);
+    // Candela al potenziale: una fiammella (non già nata da un'altra) che uccide si divide (le figlie partono a fine passo)
+    if (this.prFonte[i] === F.candela && this.potenziale[F.candela] && this.prUnione[i] !== FIGLIA && o.salute[j] <= 0 && this.divisioni < MAX_DIVISIONI) {
+      const k = this.divisioni++;
+      this.dvX[k] = this.cx;
+      this.dvY[k] = this.cy;
+      this.dvA[k] = Math.atan2(this.prVY[i], this.prVX[i]);
+      this.dvDanno[k] = this.prDanno[i];
+    }
     if (this.prEsplode[i]) {
       this.effetto(BASTONE.esplosione, this.cx, this.cy, 0, PROFONDITA.sopra, EFFETTI.esplosione);
       this.accoda(ESPLOSIONE, j, this.prDanno[i] * RUOLI.esplosioneBastone.danno); // ferisce anche intorno

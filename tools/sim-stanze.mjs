@@ -7,6 +7,7 @@
 //      npm run sim-stanze -- 48        (48 partite)
 //      npm run sim-stanze -- 24 esplora   (tutte con carte e porte a caso: provano tutti gli Echi)
 //      npm run sim-stanze -- 24 scelte    (tutte con le carte preferite)
+//      npm run sim-stanze -- 8 potenziali (8 partite per ogni Eco, che parte già al livello 5, il suo potenziale)
 // Il bot non è perfetto: vede gli avvisi solo dopo un tempo di reazione (BOT_STANZE in src/data/bot.ts).
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -14,7 +15,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 const argomenti = process.argv.slice(2);
 const partite = Number(argomenti.find((a) => /^\d+$/.test(a))) || 24;
-const modo = argomenti.includes('esplora') ? 'esplora' : argomenti.includes('scelte') ? 'scelte' : 'misto';
+const modo = argomenti.includes('potenziali') ? 'potenziali' : argomenti.includes('esplora') ? 'esplora' : argomenti.includes('scelte') ? 'scelte' : 'misto';
+const ECHI = ['candela', 'falce', 'campana', 'fuocoFatuo', 'acquaSanta', 'lamaDiLuce', 'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'sampietrini'];
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
 const porta = Number(process.env.DL_PORTA) || 4321;
 
@@ -24,26 +26,28 @@ const browser = await chromium.launch();
 const inizio = Date.now();
 
 const coda = [];
-for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: modo === 'esplora' || (modo === 'misto' && k % 2 === 1) });
+if (modo === 'potenziali') for (const eco of ECHI) for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: false, eco });
+else for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: modo === 'esplora' || (modo === 'misto' && k % 2 === 1) });
+const totale = coda.length;
 const risultati = [];
 let fatte = 0;
 
-async function gioca({ seme, esplora }) {
+async function gioca({ seme, esplora, eco }) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}`);
+  await pag.goto(`http://localhost:${porta}/?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}${eco ? `&potenziale=${eco}` : ''}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 5 * 60_000, polling: 500 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();
   fatte++;
   const esito = !r ? 'errore' : r.completata ? `fetta completata, salute ${r.salute}` : `caduto nella stanza ${r.stanza}`;
-  console.log(`  [${fatte}/${partite}] seme ${seme}${esplora ? ' (esplora)' : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
-  risultati.push({ seme, esplora, ...r, errori });
+  console.log(`  [${fatte}/${totale}] seme ${seme}${esplora ? ' (esplora)' : ''}${eco ? ` (${eco} al 5)` : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
+  risultati.push({ seme, esplora, eco, ...r, errori });
 }
 
-console.log(`Simulazione del gioco a stanze: ${partite} partite (${modo === 'misto' ? 'metà carte preferite, metà a caso' : modo === 'esplora' ? 'carte e porte a caso' : 'carte preferite'})\n`);
+console.log(`Simulazione del gioco a stanze: ${totale} partite (${modo === 'potenziali' ? `${partite} per ogni Eco al livello 5` : modo === 'misto' ? 'metà carte preferite, metà a caso' : modo === 'esplora' ? 'carte e porte a caso' : 'carte preferite'})\n`);
 await Promise.all(Array.from({ length: INSIEME }, async () => {
   while (coda.length) await gioca(coda.shift());
 }));
@@ -77,6 +81,17 @@ const righe = [...fonti].map((f) => {
 }).sort((a, b) => b.parte - a.parte);
 console.log('\nDanno per arma (nelle partite in cui c\'era)   partite  parte del danno  danno al secondo');
 for (const r of righe) console.log(`  ${(NOMI[r.f] ?? r.f).padEnd(44)}${String(r.partite).padStart(8)}${(Math.round(r.parte * 100) + '%').padStart(17)}${r.danno.toFixed(1).padStart(18)}`);
+
+// modo «potenziali»: per ogni Eco partito al livello 5, fette completate, salute alla fine e la sua parte del danno
+if (modo === 'potenziali') {
+  console.log('\nEco al livello 5 (dall\'inizio)       completate  salute alla fine  parte del danno  danno al secondo');
+  for (const eco of ECHI) {
+    const rr = ok.filter((r) => r.eco === eco), fatte = rr.filter((r) => r.completata);
+    const parte = media(rr.map((r) => (r.danno[eco] ?? 0) / Object.values(r.danno).reduce((x, y) => x + y, 0)));
+    console.log(`  ${(NOMI[eco] ?? eco).padEnd(36)}${`${fatte.length}/${rr.length}`.padStart(11)}${String(fatte.length ? Math.round(media(fatte.map((r) => r.salute))) : '–').padStart(18)}` +
+      `${(Math.round(parte * 100) + '%').padStart(17)}${media(rr.map((r) => (r.danno[eco] ?? 0) / r.secondi)).toFixed(1).padStart(18)}`);
+  }
+}
 
 const errori = risultati.filter((r) => r.errori.length || !r.stanze);
 if (errori.length) console.log(`\n${errori.length} partite con errori: ${errori.map((r) => `seme ${r.seme}: ${r.errori.join(' | ')}`).join('; ')}`);
