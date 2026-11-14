@@ -62,8 +62,9 @@ export class NemiciStanza {
   private bianco = new Float32Array(CAPIENZA); // secondi in cui resta bianco dopo un colpo della Lanterna
   private verso = new Uint8Array(CAPIENZA); // 1 = guarda a sinistra
   private rialza = new Float32Array(CAPIENZA); // secondi di «death» al contrario rimasti (il Ricaduto che si rialza)
+  private risorge = new Uint8Array(CAPIENZA); // 1 = il Ricaduto a terra si rialzerà (deciso quando cade: la crepa pulsa)
   // fotogrammi e durate (secondi) di attack e death per tipo, presi dalle animazioni dello sprite (null se mancano)
-  private readonly mosse: ({ attacco: Mossa | null; morte: Mossa | null })[] = [];
+  private readonly mosse: ({ attacco: Mossa | null; morte: Mossa | null; rinascita: Mossa | null })[] = [];
   private fermi = new Uint8Array(CAPIENZA); // fermo per uno stato (lo scrive la Orda)
   // comparse: il segno a terra dove sta per arrivare un nemico (non è ancora nella Orda: le armi non lo toccano)
   comparse = 0;
@@ -120,8 +121,11 @@ export class NemiciStanza {
   ) {
     this.orda = new Orda(scena, caso, new Minacce(scena));
     this.orda.registraCampi(this.stato, this.tempo, this.dirX, this.dirY, this.ricarica, this.rinato, this.dentro, this.colpo,
-      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco, this.rialza);
-    for (const sprite of [R.sprite, C.sprite]) this.mosse.push({ attacco: mossa(scena, `${sprite}:attack`), morte: mossa(scena, `${sprite}:death`) });
+      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco, this.rialza, this.risorge);
+    // «special» del Ricaduto: steso a terra con la crepa che pulsa, il segno che si rialzerà
+    for (const sprite of [R.sprite, C.sprite]) {
+      this.mosse.push({ attacco: mossa(scena, `${sprite}:attack`), morte: mossa(scena, `${sprite}:death`), rinascita: mossa(scena, `${sprite}:special`) });
+    }
     // il grumo: un tondo pieno di Lumen spento con il bordo scuro, disegnato una volta
     const r = C.grumo.raggio, chiave = 'stanze-grumo';
     if (!scena.textures.exists(chiave)) {
@@ -185,7 +189,7 @@ export class NemiciStanza {
     this.stato[i] = STATO.cammina;
     this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.bianco[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
     this.ricarica[i] = C.primoCanto;
-    this.rinato[i] = this.verso[i] = 0;
+    this.rinato[i] = this.verso[i] = this.risorge[i] = 0;
     this.rialza[i] = 0;
     this.dirX[i] = 1;
     this.dirY[i] = 0;
@@ -261,7 +265,7 @@ export class NemiciStanza {
       if (this.stato[i] === STATO.aTerra) {
         // allo scadere si tira la rinascita (nessun segno prima); se non esce, sparisce
         if ((this.tempo[i] -= dt) <= 0) {
-          if (!this.rinato[i] && (this.rinascitaForzata ?? this.caso.numero() < R.rinascita.probabilita)) {
+          if (this.risorge[i]) {
             this.rinato[i] = 1;
             this.stato[i] = STATO.cammina;
             // si rialza: la morte al contrario, fermo finché non è in piedi
@@ -357,6 +361,8 @@ export class NemiciStanza {
     const o = this.orda;
     this.stato[i] = STATO.aTerra;
     this.tempo[i] = R.rinascita.attesa;
+    // se si rialzerà si decide adesso (decisione di Edoardo del 14/11: la crepa pulsa mentre è a terra, come segno)
+    this.risorge[i] = o.tipo[i] === ID_RICADUTO && !this.rinato[i] && (this.rinascitaForzata ?? this.caso.numero() < R.rinascita.probabilita) ? 1 : 0;
     o.salute[i] = 0;
     this.fermo[i] = 0;
     this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, 0, -1, IMPATTO.scintille.battuto);
@@ -538,10 +544,15 @@ export class NemiciStanza {
   }
 
   /** Il fotogramma da mostrare per avviso, recupero, morte e rialzo (null: la camminata di sempre). */
-  private posa(i: number, st: number, ricaduto: boolean, M: { attacco: Mossa | null; morte: Mossa | null }): string | null {
-    const A = M.attacco, D = M.morte;
+  private posa(i: number, st: number, ricaduto: boolean, M: { attacco: Mossa | null; morte: Mossa | null; rinascita: Mossa | null }): string | null {
+    const A = M.attacco, D = M.morte, P = M.rinascita;
     // a terra il tempo scende da R.rinascita.attesa (Ricaduto) o dalla durata della morte (Cantore)
-    if (st === STATO.aTerra && D) return D.a((ricaduto ? R.rinascita.attesa : D.totale) - this.tempo[i]);
+    if (st === STATO.aTerra && D) {
+      const t = (ricaduto ? R.rinascita.attesa : D.totale) - this.tempo[i], steso = D.inizio[D.inizio.length - 1];
+      // si rialzerà: appena è steso la crepa comincia a pulsare
+      if (this.risorge[i] && P && t >= steso) return P.a((t - steso) % P.totale);
+      return D.a(t);
+    }
     if (this.rialza[i] > 0 && D) return D.a(this.rialza[i]); // al contrario: dal fondo verso l'inizio
     if (!A) return null;
     const meta = Math.floor(A.fotogrammi.length / 2);
