@@ -820,7 +820,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | --- | --- | --- |
 | Stanze | 3 | |
 | Ondate | stanza 1: 3 Ricaduti e 1 Cantore, poi 3 e 1; stanza 2: 3 e 1, poi 3 e 2, poi 4 e 2; stanza 3: 4 e 2, poi 4 e 2, poi 5 e 3 | ogni 8 s, o subito se la stanza si svuota |
-| Carte | 3, dopo 0,5 s; verticali 146 × 238 (la cornice disegnata del 14/11); pop in 0,24 s a 6 scatti, 0,1 s l'una dall'altra | effetto di comparsa a 12 fotogrammi al secondo |
+| Carte | 3, dopo 0,5 s; verticali 146 × 238; pop in 0,24 s a 6 scatti, 0,1 s l'una dall'altra | effetto di comparsa a 12 fotogrammi al secondo |
 | Build | al massimo 3 Echi e 6 doni | più la Lanterna |
 | Porte | da 2 a 3, larghe 64 px | su muri diversi |
 | Passaggio | 0,25 s | a retino |
