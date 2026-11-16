@@ -19,7 +19,7 @@ import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import type { Amuleto } from '../data/rosario';
 import type { IdUnione, Unione } from '../data/unioni';
-import { creaCarteStanza, creaStrisce, schedaDono, type Riga } from './scheda';
+import { cartaNove, creaCarteStanza, creaStrisce, interniCarta, schedaDono, type Riga } from './scheda';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { NUMERI_VOTI } from '../data/voti';
 
@@ -372,20 +372,30 @@ export class Doni {
     const sottoCarte = this.rimescola.hidden ? 0 : 8 + Math.max(r.h, alto.h) * zt + rimaste;
     const carte = [...this.elenco.children] as HTMLElement[], n = carte.length, S = CARTA_STANZA;
     const alta = m.H - b.a - b.b, larga = m.W - b.s - b.d;
-    const largaFila = (k: number): number => n * c.w * k + (n - 1) * S.spazio * k;
-    const altaFila = (k: number): number => titolo + c.h * k + sottoCarte;
-    const zz = adattaZoom(S.ingrandimentoMassimo * m.raddoppio, (k) => largaFila(k) <= larga && altaFila(k) <= alta);
+    // 9-slice: l'ingrandimento più grande a cui ci sta la carta più piccola, poi la carta si allarga fino a riempire lo spazio
+    const ciSta = (k: number, w: number, h: number): boolean => n * w * k + (n - 1) * S.spazio * k <= larga && titolo + h * k + sottoCarte <= alta;
+    const zz = adattaZoom(S.ingrandimentoMassimo * m.raddoppio, (k) => ciSta(k, S.minimo.l, S.minimo.a));
     this.zoomCarte = zz;
+    const cw = Math.max(S.minimo.l, Math.min(S.massimo.l, Math.floor((larga / zz - (n - 1) * S.spazio) / n)));
+    const ch = Math.max(S.minimo.a, Math.min(S.massimo.a, Math.round(cw * (S.a / S.l)), Math.floor((alta - titolo - sottoCarte) / zz)));
+    const cartaW = cw, cartaH = ch;
+    const largaFila = (k: number): number => n * cartaW * k + (n - 1) * S.spazio * k;
+    const altaFila = (k: number): number => titolo + cartaH * k + sottoCarte;
     const x0 = Math.round(m.W / 2 - largaFila(zz) / 2);
     let y = b.a + Math.max(0, Math.round((alta - altaFila(zz)) / 2));
     this.disponiTitolo(y, titolo, x0 + largaFila(zz), m);
     y += titolo;
-    const ri = S.interni;
+    const ri = interniCarta(cw, ch);
+    const fondi = { 'doni-fondo': cartaNove('Carta_Stanza', cw, ch), 'doni-scelta': cartaNove('Carta_Stanza_Scelta', cw, ch) };
     const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
     carte.forEach((el, i) => {
-      posa(el, x0 + i * (c.w + S.spazio) * zz, y, m);
-      misura(el, c.w, c.h, zz, m);
-      for (const im of el.querySelectorAll<HTMLElement>('.doni-fondo, .doni-scelta')) misura(im, c.w, c.h, zz, m);
+      posa(el, x0 + i * (cw + S.spazio) * zz, y, m);
+      misura(el, cw, ch, zz, m);
+      for (const im of el.querySelectorAll<HTMLImageElement>('.doni-fondo, .doni-scelta')) {
+        const url = fondi[im.classList.contains('doni-fondo') ? 'doni-fondo' : 'doni-scelta'];
+        if (url && im.src !== url) im.src = url;
+        misura(im, cw, ch, zz, m);
+      }
       const se = el.querySelector<HTMLElement>('.doni-segno');
       if (se) {
         posa(se, ri.icona.x * zz, ri.icona.y * zz, m);
@@ -407,7 +417,7 @@ export class Doni {
       posa(t, 6 * zz, 5 * zz, m);
       t.style.fontSize = `${TESTI.strisciaTag * zz * px}px`;
     });
-    this.disponiRimescola(y + c.h * zz + 8, m);
+    this.disponiRimescola(y + ch * zz + 8, m);
   }
 
   private chiudi(d: Dono): void {

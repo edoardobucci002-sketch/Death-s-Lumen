@@ -271,6 +271,12 @@ export const CARTA_STANZA = {
     dati: { x: 16, y: 138, l: 114, a: 30 },
     righe: { x: 16, y: 170, l: 114, a: 34 }, // sopra gli ornamenti degli angoli in basso
   },
+  // 9-slice (decisione di Edoardo del 16/11): la carta si allunga o si accorcia per riempire lo spazio. Restano fisse le colonne
+  // [0, x[0]), [x[1], x[2]) e [x[3], l) e le righe [0, alto) e le ultime «basso»; si ripetono le colonne [x[0], x[1]) e
+  // [x[2], x[3]) e, in verticale, la fascia [fascia[0], fascia[1]) (colonne e pergamena liscia, senza anelli)
+  nove: { x: [41, 44, 104, 107], alto: 136, fascia: [140, 166], basso: 42 },
+  // quanto può diventare la carta, in pixel disegnati (sotto il minimo le scritte non ci stanno più; da rivedere)
+  minimo: { l: 140, a: 214 }, massimo: { l: 210, a: 320 },
   // grandezza delle scritte, più grandi di quelle delle strisce (13, 8 e 7,5): richiesta di Edoardo del 13/11 sera, da rivedere.
   // Se una spiegazione non ci sta, scende da sola di mezzo punto alla volta
   testi: { dato: 16, tag: 9, riga: 9.5 },

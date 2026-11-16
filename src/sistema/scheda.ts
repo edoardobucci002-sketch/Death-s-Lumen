@@ -193,6 +193,61 @@ export function creaStrisce(): void {
   }
 }
 
+/** Le zone della carta del gioco a stanze, quando è larga cw e alta ch (9-slice): il centro scorre con la colonna di sinistra. */
+export function interniCarta(cw: number, ch: number): typeof CARTA_STANZA.interni {
+  const S = CARTA_STANZA, I = S.interni, extra = cw - S.l, dx = Math.floor(extra / 2);
+  const fondo = ch - (S.a - (I.righe.y + I.righe.a)); // dove finisce la spiegazione, sopra gli ornamenti in basso
+  const testo = fondo - I.dati.y, dati = Math.min(I.dati.a, Math.round(testo * 0.45)), ry = I.dati.y + dati + 2;
+  return {
+    icona: { ...I.icona, x: I.icona.x + dx },
+    titolo: { ...I.titolo, l: I.titolo.l + extra },
+    tag: { ...I.tag, l: I.tag.l + extra },
+    dati: { ...I.dati, l: I.dati.l + extra, a: dati },
+    righe: { ...I.righe, y: ry, l: I.righe.l + extra, a: Math.max(0, fondo - ry) },
+  };
+}
+
+const carteNove = new Map<string, string>();
+
+/**
+ * La carta «chiave» (Carta_Stanza o Carta_Stanza_Scelta) ricomposta a cw × ch pixel disegnati con il 9-slice: le parti fisse
+ * restano come sono, le strisce di CARTA_STANZA.nove si ripetono (a pixel interi, niente sfumature). Restituisce l'immagine.
+ */
+export function cartaNove(chiave: string, cw: number, ch: number): string {
+  const k = `${chiave}@${cw}x${ch}`, pronta = carteNove.get(k);
+  if (pronta) return pronta;
+  const a = arte(chiave);
+  if (!a) return '';
+  const S = CARTA_STANZA, N = S.nove, W = a.w, H = a.h;
+  const extra = cw - W, sx = Math.floor(extra / 2);
+  const larghe = [N.x[1] - N.x[0] + sx, N.x[3] - N.x[2] + extra - sx]; // colonne ripetute a sinistra e a destra
+  const mx: number[] = [];
+  for (let x = 0; x < N.x[0]; x++) mx.push(x);
+  for (let i = 0; i < larghe[0]; i++) mx.push(N.x[0] + (i % (N.x[1] - N.x[0])));
+  for (let x = N.x[1]; x < N.x[2]; x++) mx.push(x);
+  for (let i = 0; i < larghe[1]; i++) mx.push(N.x[2] + (i % (N.x[3] - N.x[2])));
+  for (let x = N.x[3]; x < W; x++) mx.push(x);
+  const my: number[] = [], f = N.fascia[1] - N.fascia[0];
+  for (let y = 0; y < N.alto; y++) my.push(y);
+  for (let i = 0; i < ch - N.alto - N.basso; i++) my.push(N.fascia[0] + (i % f));
+  for (let y = H - N.basso; y < H; y++) my.push(y);
+  const src = a.tela.getContext('2d')!.getImageData(0, 0, W, H).data;
+  const t = document.createElement('canvas');
+  t.width = cw;
+  t.height = ch;
+  const g = t.getContext('2d')!, out = g.createImageData(cw, ch);
+  for (let y = 0; y < ch; y++) {
+    for (let x = 0; x < cw; x++) {
+      const s = (my[y] * W + mx[x]) * 4, d = (y * cw + x) * 4;
+      out.data[d] = src[s]; out.data[d + 1] = src[s + 1]; out.data[d + 2] = src[s + 2]; out.data[d + 3] = src[s + 3];
+    }
+  }
+  g.putImageData(out, 0, 0);
+  const url = t.toDataURL();
+  carteNove.set(k, url);
+  return url;
+}
+
 /** La carta verticale provvisoria del gioco a stanze (normale e sotto il dito), a pixel interi, con il pozzetto per l'icona. */
 export function creaCarteStanza(): void {
   const { l, a, interni } = CARTA_STANZA;

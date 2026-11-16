@@ -67,7 +67,9 @@ export const JOYSTICK_STANZE = {
   pomello: 28, // diametro del pomello
   anello: 3, // spessore dell'anello del movimento
   opacita: 0.7, // trasparenza vera: un'eccezione alla regola del retino, solo per i comandi (decisione di Edoardo del 13/11)
-  colori: { crema: '#efe3c8', bordo: '#120c08', fiamma: '#fff1b8', cuore: '#ffd36a' },
+  // dal 16/11 ridisegnati da Claude sulle bozze di ChatGPT (BOZZE/HUD): anelli in luce in alto a sinistra e in ombra in basso
+  // a destra, pomello d'attacco ambra con il bordo chiaro e una fiammella a tre colori (brace, fiamma, cuore)
+  colori: { crema: '#efe3c8', bordo: '#120c08', fiamma: '#fbce4a', cuore: '#fcf3e3', brace: '#f78404' },
 } as const;
 
 /**

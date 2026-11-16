@@ -58,8 +58,11 @@ export class ComparsaCarte {
     tela.width = this.w;
     tela.height = this.h;
     tela.className = 'doni-comparsa';
-    // centrato sul riquadro dell'icona: sembra che a comparire sia l'oggetto della carta
-    const ic = CARTA_STANZA.interni.icona, cx = (ic.x + ic.l / 2) * z, cy = (ic.y + ic.a / 2) * z;
+    // centrato sul riquadro dell'icona: sembra che a comparire sia l'oggetto della carta. La carta si deforma (9-slice):
+    // il centro si legge dall'icona già posata sulla carta, se no dalle misure di partenza
+    const ic = CARTA_STANZA.interni.icona, el = carta.querySelector<HTMLElement>('.doni-icona, .doni-segno');
+    const cx = el ? (el.offsetLeft + el.offsetWidth / 2) / m.px : (ic.x + ic.l / 2) * z;
+    const cy = el ? (el.offsetTop + el.offsetHeight / 2) / m.px : (ic.y + ic.a / 2) * z;
     Object.assign(tela.style, {
       width: `${this.w * z * m.px}px`, height: `${this.h * z * m.px}px`,
       left: `${Math.round(cx - (this.w * z) / 2) * m.px}px`, top: `${Math.round(cy - (this.h * z) / 2) * m.px}px`,
