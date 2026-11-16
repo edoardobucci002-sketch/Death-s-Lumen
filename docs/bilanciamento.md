@@ -42,6 +42,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 16/11 — Urna, giara e lanterna nelle stanze (decisioni di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
+- `ROMPIBILI_STANZE` (nuovo): da 2 a 4 per stanza, a 24–56 px dal muro, ad almeno 110 px dal centro delle porte e 72 px tra loro; ingombro 12 px; gocce e frammenti volano verso il personaggio entro il 60% della raccolta di base (come nel survivor). Contenuto, frammenti, olio e luce con i numeri del survivor.
+- `npm run sim-stanze` (24 partite, semi 2001–2024): **fetta completata 19 volte su 24** (era 20), salute alla fine 45 (era 37), 5 cadute tutte nella stanza 3; differenze dentro il rumore (±12 punti). Danno subito per stanza 17, 22 e 27; A partita 42 nemici battuti, 84 colpi della Lanterna, 4,1 Cerchi di luce. Parte del danno: Lanterna 68%, Lapide 23%, Cerchio di luce 13%. Il bot non cerca i rompibili: ci sbatte contro e li rompe solo se capitano nei colpi.
+
 ### 16/11 — I potenziali misurati uno per uno (nessun numero cambia)
 - `npm run sim-stanze -- 8 potenziali`: 8 partite per ognuno degli 11 Echi, che parte già al livello 5 (semi 2001–2008, carte preferite). Fetta completata **88 su 88**, salute alla fine 70 (contro 37 delle partite normali): con un Eco al livello 5 dall'inizio la fetta è facile, quindi la misura serve a confrontare gli Echi tra loro, non a dire quanto è difficile il gioco.
 - Danno al secondo dell'Eco al livello 5 (e la sua parte del danno): **Lapide 63 (71%)**, Candela 30 (58%), Fuoco fatuo 30 (56%), Rosario spezzato 28 (53%), Lama di luce 26 (51%), Corvo 25 (53%), Sampietrini 23 (44%), Campana 21 (42%), Acqua santa 13 (30%, in più cura), Velo funebre 10 (23%), **Falce 10 (22%)**. La Lanterna fa circa 15 al secondo.
