@@ -93,7 +93,7 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 - ~~**Danno a intervallo**~~ **fatto il 14/11**: vedi il passo 7 qui sopra.
 - Calice riverso: il nome nuovo del dono «Lacrima di lumen» entra nel codice, con la sua icona.
 - Veggente e Sguattera; la pubblicazione.
-- **Glossario del gioco** (richiesta di Edoardo del 13/11 notte, come l'«oracle text» di Magic): stesse parole e stesse forme per le stesse cose in carte, pausa, LAB e GDD (per esempio «ricarica», «area», «ferisce», «danno», gli stati), raccolte in un elenco unico da cui le spiegazioni si generano. Da progettare in una sessione dedicata.
+- **Glossario del gioco** (richiesta di Edoardo del 13/11 notte, come l'«oracle text» di Magic): stesse parole e stesse forme per le stesse cose in carte, pausa, LAB e GDD (per esempio «ricarica», «area», «ferisce», «danno», gli stati), raccolte in un elenco unico da cui le spiegazioni si generano. **Le parole sono scelte** (risposte di Edoardo del 16/11, in [decisioni.md](decisioni.md)); resta da costruire l'elenco nel codice e la generazione delle righe, in una sessione dedicata.
 
 ## Tappe del survivor (sospese dal pivot del 12/11)
 

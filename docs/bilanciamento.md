@@ -42,6 +42,12 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 16/11 — I potenziali misurati uno per uno (nessun numero cambia)
+- `npm run sim-stanze -- 8 potenziali`: 8 partite per ognuno degli 11 Echi, che parte già al livello 5 (semi 2001–2008, carte preferite). Fetta completata **88 su 88**, salute alla fine 70 (contro 37 delle partite normali): con un Eco al livello 5 dall'inizio la fetta è facile, quindi la misura serve a confrontare gli Echi tra loro, non a dire quanto è difficile il gioco.
+- Danno al secondo dell'Eco al livello 5 (e la sua parte del danno): **Lapide 63 (71%)**, Candela 30 (58%), Fuoco fatuo 30 (56%), Rosario spezzato 28 (53%), Lama di luce 26 (51%), Corvo 25 (53%), Sampietrini 23 (44%), Campana 21 (42%), Acqua santa 13 (30%, in più cura), Velo funebre 10 (23%), **Falce 10 (22%)**. La Lanterna fa circa 15 al secondo.
+- Lettura: la Lapide al potenziale fa il doppio del secondo Eco; Falce e Velo funebre sono i più deboli (la Falce forse perché l'anello esterno, 1,5 volte più largo, prende pochi nemici). Salute alla fine più bassa con Lama di luce (55) e Falce (60), più alta con Fuoco fatuo (87). Con 8 partite per Eco differenze di pochi punti sono rumore. Decide Edoardo se ritoccare.
+- **Guasto corretto**: la simulazione dei potenziali si bloccava con la Falce (non era la memoria). La griglia dei nemici nasceva con gli scomparti a zero e la Falce, interrogandola prima che comparissero i nemici, girava all'infinito; ora nasce vuota (`src/sistema/griglia.ts`). Nella partita normale non capitava (la Falce arriva dopo la prima stanza); capitava con LAB → Stanze → Potenziali.
+
 ### 14/11 — I potenziali degli Echi e il Cerchio di luce (scelte di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
 - Livello 5 di ogni Eco nel gioco a stanze: il potenziale scelto da Edoardo (`POTENZIALI` in `src/data/armi-stanze.ts`; tabella nel GDD). Numeri nuovi: Candela 2 figlie aperte di 0,7 rad che inseguono per 0,9 s; Falce anello esterno ×1,5; Fuoco fatuo preda ×0,25 sulla distanza; Acqua santa cura 1/s; Lapide in piedi 3 s, larga 22 px; Rosario +15% a rimbalzo; Corvo +20% per 3 s; Velo ×2 in 1,5 s da fermo, torna in 0,4 s; Sampietrini cerca entro 220 px.
 - **Campana al livello 5**: ricarica 2,6 s (era 1,8) e niente doppio rintocco, in cambio dell'interruzione (nota di Edoardo: «a scapito di una Quiete maggiore tra un rintocco e l'altro»). **Fuoco fatuo al livello 5**: trapassa 1 nemico (erano 3), sostituito dal potenziale.
