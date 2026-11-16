@@ -54,6 +54,8 @@ export const CRIPTA = {
   // Cripta_Porte: in alto chiusa e aperta (64 × 96, al posto di un pezzo della facciata), a sinistra chiusa e aperta
   // (32 × 122, centrate sulla porta; a destra lo specchio), in basso chiusa (88 × 32)
   fotogrammiPorte: { altoChiusa: 0, altoAperta: 1, latoChiusa: 2, latoAperta: 3, bassoChiusa: 4 },
+  // arco e cancello di ogni porta (x, y, larghezza, altezza sul pezzo di sinistra), disegnati anche sopra il buio (16/11)
+  vani: { alto: [5, 30, 54, 66], lato: [0, 26, 32, 70], basso: [0, 0, 88, 32] },
 } as const;
 
 /**
@@ -285,4 +287,7 @@ export const PORTE = {
   larghezza: 64, // in alto: quanto è larga l'apertura; ai lati e in basso: quanto è alta
   simbolo: 2, // ingrandimento del simbolo della ricompensa sopra la porta
   colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a' },
+  // il medaglione vuoto (EFFETTI/Porta_Vuota, 31 × 31) con dentro il simbolo dello stato (11 × 11) in questo punto (16/11)
+  medaglione: { vuoto: 'Porta_Vuota', simbolo: { x: 10, y: 9 } },
+  vicino: 170, // più vicino di così al centro di una porta, il suo arco non si disegna sopra il buio (da rivedere)
 } as const;

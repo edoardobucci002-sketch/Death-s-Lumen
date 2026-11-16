@@ -29,10 +29,14 @@ export class Percorso {
   private ondata = 0; // ondate già arrivate in questa stanza
   private attesa = 0;
   private readonly caso: Caso;
+  private readonly seme: number;
+  /** Le porte della stanza: decise appena si entra (si vedono chiuse durante il combattimento), con un caso a parte. */
+  uscite: { muri: Muro[]; ricompense: Ricompensa[] } = { muri: [], ricompense: [] };
 
   /** seme: il seme della partita (?seme= nell'indirizzo, per il bot; di solito ONDATA.seme). */
   constructor(private readonly arsenale: Arsenale, seme: number = ONDATA.seme) {
     this.caso = new Caso(seme + 1);
+    this.seme = seme;
     this.passivi = Object.fromEntries(PASSIVI.map((q) => [q.id, 0])) as Record<IdDono, number>;
   }
 
@@ -47,6 +51,7 @@ export class Percorso {
     this.fase = 'lotta';
     this.ondata = 0;
     this.attesa = ONDATA.attesaPrima;
+    this.uscite = this.ultima ? { muri: [], ricompense: [] } : this.scegliPorte(n);
   }
 
   /**
@@ -116,9 +121,15 @@ export class Percorso {
 
   /** Le porte della prossima stanza: 2 o 3, su muri diversi, con ricompense diverse. */
   porte(): { muri: Muro[]; ricompense: Ricompensa[] } {
-    const n = this.caso.intero(PERCORSO.porte.minimo, PERCORSO.porte.massimo);
-    const muri = this.mescola([...MURI]).slice(0, n);
-    const ricompense = this.mescola<Ricompensa>([...AFFINITA, 'dono']).slice(0, n);
+    return this.uscite;
+  }
+
+  /** Quante porte, su quali muri e con quali ricompense, per la stanza n (dal 16/11 con un caso suo, non quello delle carte). */
+  private scegliPorte(n: number): { muri: Muro[]; ricompense: Ricompensa[] } {
+    const caso = new Caso((this.seme ^ Math.imul(n + 7, 0x85ebca6b)) >>> 0);
+    const quante = caso.intero(PERCORSO.porte.minimo, PERCORSO.porte.massimo);
+    const muri = this.mescola([...MURI], caso).slice(0, quante);
+    const ricompense = this.mescola<Ricompensa>([...AFFINITA, 'dono'], caso).slice(0, quante);
     return { muri, ricompense };
   }
 
@@ -151,9 +162,9 @@ export class Percorso {
   }
 
   /** Mescola un elenco con il caso del percorso (Fisher-Yates). */
-  private mescola<T>(a: T[]): T[] {
+  private mescola<T>(a: T[], caso: Caso = this.caso): T[] {
     for (let i = a.length - 1; i > 0; i--) {
-      const j = this.caso.intero(0, i);
+      const j = caso.intero(0, i);
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;

@@ -118,6 +118,22 @@ export function creaStanza(scena: Phaser.Scene, seme: number = STANZA.seme): voi
   pezzi.push(scena.add.rectangle(0, 0, s.larghezza, s.ombraMuro, Phaser.Display.Color.HexStringToColor(c.ombra).color).setOrigin(0).setDepth(PROFONDITA.terreno + 0.5));
 }
 
+/**
+ * Disegna il fotogramma n di uno sprite esportato su una tela, con l'angolo in alto a sinistra della tela originale in (x, y)
+ * (i fotogrammi ritagliati tornano al loro posto); specchiato se serve. Al massimo w × h pixel del ritaglio.
+ */
+export function disegnaFotogramma(g: CanvasRenderingContext2D, scena: Phaser.Scene, chiave: string, n: number, x: number, y: number,
+  specchio = false, w = Infinity, h = Infinity): void {
+  const f = scena.textures.getFrame(chiave, String(n));
+  const l = Math.min(f.cutWidth, w), a = Math.min(f.cutHeight, h);
+  g.save();
+  g.imageSmoothingEnabled = false;
+  g.translate(specchio ? x + l : x + f.x, y + f.y);
+  if (specchio) g.scale(-1, 1);
+  g.drawImage(f.source.image as CanvasImageSource, f.cutX, f.cutY, l, a, 0, 0, l, a);
+  g.restore();
+}
+
 /** Una variante a caso secondo i pesi (quanto spesso esce ogni fotogramma). */
 function pesca(caso: Caso, pesi: readonly number[]): number {
   let t = caso.numero() * pesi.reduce((a, b) => a + b, 0);
@@ -139,15 +155,8 @@ function componiCripta(scena: Phaser.Scene, seme: number): void {
   g.fillStyle = S.colori.fondo;
   g.fillRect(0, 0, W, H);
   // disegna il fotogramma n del file (al massimo w × h, per i pezzi che si ripetono e arrivano al bordo)
-  const pezzo = (chiave: string, n: number, x: number, y: number, specchio = false, w = Infinity, h = Infinity): void => {
-    const f = scena.textures.getFrame(chiave, String(n));
-    const l = Math.min(f.cutWidth, w), a = Math.min(f.cutHeight, h);
-    g.save();
-    g.translate(specchio ? x + l : x, y);
-    if (specchio) g.scale(-1, 1);
-    g.drawImage(f.source.image as CanvasImageSource, f.cutX, f.cutY, l, a, 0, 0, l, a);
-    g.restore();
-  };
+  const pezzo = (chiave: string, n: number, x: number, y: number, specchio = false, w = Infinity, h = Infinity): void =>
+    disegnaFotogramma(g, scena, chiave, n, x, y, specchio, w, h);
   const caso = new Caso(seme);
   const ox = S.muroLati, oy = S.muroAlto, p = S.piastrella;
   for (let r = 0; r * p < S.altezza; r++) for (let c = 0; c * p < S.larghezza; c++) pezzo(C.pavimento, pesca(caso, C.pesiPavimento), ox + c * p, oy + r * p);

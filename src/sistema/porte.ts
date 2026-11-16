@@ -5,14 +5,18 @@
  * Chiusa ha le sbarre; aperta (stanza ripulita e carta scelta) ha la cornice accesa e ci si entra camminandoci contro.
  * In basso c'è sempre la porta da cui si è entrati, chiusa. Numeri e colori in PORTE (src/data/stanze.ts).
  * Dal 16/11 le porte della cripta sono cancelli di ferro disegnati (Cripta_Porte): chiusa il cancello, aperta il cancello
- * sollevato con la luce in fondo. Stanno sotto il buio come i muri; sopra il buio restano i medaglioni. Se i file mancano
- * (o il LAB chiede la stanza dal codice), resta il vano disegnato dal codice, sopra il buio.
+ * sollevato con la luce in fondo. Si vedono chiuse già durante il combattimento (il percorso le decide all'ingresso), senza
+ * medaglione; il medaglione compare quando si aprono. Il pezzo intero sta sotto il buio come i muri; l'arco con il cancello
+ * (CRIPTA.vani) si disegna una seconda volta sopra il buio, così le porte si vedono anche lontane. La porta a destra è una
+ * copia specchiata composta qui. Se i file mancano (o il LAB chiede la stanza dal codice), resta il vano del codice.
+ * Medaglioni (16/11, richiesta di Edoardo): il medaglione vuoto (Porta_Vuota) con dentro il simbolo dello stato
+ * dell'affinità (Simbolo_Abbagliato …), a grandezza vera; il dono tiene il suo medaglione (Porta_Dono).
  */
 import Phaser from 'phaser';
 import { CRIPTA, PORTE, STANZA } from '../data/stanze';
 import { INFO_AFFINITA } from '../data/spiegazioni';
 import type { IdAffinita } from '../data/stati';
-import { areaCamminabile, criptaPronta } from './stanza';
+import { areaCamminabile, criptaPronta, disegnaFotogramma } from './stanza';
 import { PROFONDITA } from './effetti';
 
 export type Muro = 'alto' | 'sinistra' | 'destra';
@@ -28,7 +32,9 @@ export class Porte {
   aperte = false;
   private readonly grafica: Phaser.GameObjects.Graphics;
   private readonly simboli: Phaser.GameObjects.Image[] = [];
-  private readonly cancelli: Phaser.GameObjects.Image[] = []; // alto, sinistra, destra, basso
+  private readonly cancelli: Phaser.GameObjects.Image[] = []; // alto, sinistra, destra, basso: il pezzo intero, sotto il buio
+  private readonly vani: Phaser.GameObjects.Image[] = []; // gli stessi, solo arco e cancello, sopra il buio
+  private readonly accesi = [false, false, false, false]; // quali vani ci sono in questa stanza
 
   constructor(private readonly scena: Phaser.Scene) {
     this.grafica = scena.add.graphics().setDepth(PROFONDITA.anime); // sopra il buio: le porte si vedono anche lontane
@@ -46,9 +52,35 @@ export class Porte {
       g.generateTexture(SIMBOLO_DONO, 11, 11);
       g.destroy();
     }
-    // i cancelli disegnati: sopra muri e pavimento, sotto il personaggio e il buio
-    for (let k = 0; k < 4; k++) this.cancelli.push(scena.add.image(0, 0, '__MISSING').setOrigin(0).setDepth(PROFONDITA.terreno + 0.7).setVisible(false));
+    // i cancelli disegnati: il pezzo intero sopra muri e pavimento (sotto personaggio e buio), l'arco anche sopra il buio
+    for (let k = 0; k < 4; k++) {
+      this.cancelli.push(scena.add.image(0, 0, '__MISSING').setOrigin(0).setDepth(PROFONDITA.terreno + 0.7).setVisible(false));
+      this.vani.push(scena.add.image(0, 0, '__MISSING').setOrigin(0).setDepth(PROFONDITA.buio + 0.5).setVisible(false));
+    }
+    this.preparaMedaglioni();
     for (let k = 0; k < 3; k++) this.simboli.push(scena.add.image(0, 0, SIMBOLO_DONO).setDepth(PROFONDITA.anime + 0.5).setScale(PORTE.simbolo).setVisible(false));
+  }
+
+  /**
+   * Ogni fotogramma: l'arco sopra il buio si vede solo quando il personaggio (piedi in px, py) è lontano dalla porta; da
+   * vicino la porta è già nella luce della lanterna, e l'arco sopra il buio coprirebbe il personaggio.
+   */
+  luce(px: number, py: number): void {
+    const d2 = PORTE.vicino * PORTE.vicino;
+    for (let k = 0; k < this.vani.length; k++) {
+      if (!this.accesi[k]) continue;
+      const v = this.vani[k], cx = v.x + v.width / 2, cy = v.y + v.height / 2;
+      v.setVisible((cx - px) ** 2 + (cy - py) ** 2 > d2);
+    }
+  }
+
+  /** Le porte della stanza durante il combattimento: chiuse, senza medaglione. */
+  chiudi(muri: Muro[]): void {
+    this.muri = muri;
+    this.ricompense = [];
+    this.aperte = false;
+    for (const s of this.simboli) s.setVisible(false);
+    this.disegna();
   }
 
   /** Le porte della stanza: muri e ricompense (stesso ordine); chiuse finché non si chiama apri(). */
@@ -63,9 +95,12 @@ export class Porte {
         continue;
       }
       const r = ricompense[k], p = this.centroSimbolo(muri[k]);
-      // il medaglione disegnato per le porte (EFFETTI/Porta_<Nome>, dal 14/11) a grandezza vera; se manca, il simbolo dello stato ingrandito
+      // il medaglione vuoto con il simbolo dello stato (16/11), o il medaglione disegnato per le porte (EFFETTI/Porta_<Nome>,
+      // 14/11) a grandezza vera; se mancano tutti e due, il simbolo dello stato ingrandito
+      const composto = r === 'dono' ? '' : chiaveMedaglione(r);
       const medaglione = `Porta_${r === 'dono' ? 'Dono' : INFO_AFFINITA[r].nome}`;
-      if (this.scena.textures.exists(medaglione)) s.setTexture(medaglione).setScale(1);
+      if (composto && this.scena.textures.exists(composto)) s.setTexture(composto).setScale(1);
+      else if (this.scena.textures.exists(medaglione)) s.setTexture(medaglione).setScale(1);
       else {
         const chiave = r === 'dono' ? SIMBOLO_DONO : INFO_AFFINITA[r].simbolo;
         s.setTexture(this.scena.textures.exists(chiave) ? chiave : SIMBOLO_DONO).setScale(PORTE.simbolo);
@@ -122,17 +157,25 @@ export class Porte {
   private disegna(): void {
     const g = this.grafica.clear(), S = STANZA, L = PORTE.larghezza, c = PORTE.colori;
     for (const i of this.cancelli) i.setVisible(false);
+    for (const i of this.vani) i.setVisible(false);
+    this.accesi.fill(false);
     if (criptaPronta(this.scena)) {
       const F = CRIPTA.fotogrammiPorte;
-      const metti = (k: number, fotogramma: number, x: number, y: number, specchio = false): void => {
-        const i = this.cancelli[k].setTexture(CRIPTA.porte, String(fotogramma)).setFlipX(specchio).setVisible(true);
-        i.setPosition(x === -1 ? S.larghezza / 2 - i.width / 2 : x, y === -1 ? S.altezza / 2 - i.height / 2 : y);
+      // x, y: l'angolo in alto a sinistra; -1 = centrata sulla porta (in orizzontale per alto e basso, in verticale per i lati)
+      const metti = (k: number, fotogramma: number, x: number, y: number, vano: readonly number[], specchio = false): void => {
+        const [pieno, sopra] = this.pezzoPorta(fotogramma, vano, specchio);
+        const i = this.cancelli[k].setTexture(pieno).setVisible(true);
+        const px = x === -1 ? S.larghezza / 2 - Math.floor(i.width / 2) : x, py = y === -1 ? S.altezza / 2 - Math.floor(i.height / 2) : y;
+        i.setPosition(px, py);
+        this.vani[k].setTexture(sopra).setPosition(px, py).setVisible(true);
+        this.accesi[k] = true;
       };
-      metti(3, F.bassoChiusa, -1, S.altezza);
+      const V = CRIPTA.vani;
+      metti(3, F.bassoChiusa, -1, S.altezza, V.basso);
       for (const muro of this.muri) {
-        if (muro === 'alto') metti(0, this.aperte ? F.altoAperta : F.altoChiusa, -1, -S.muroAlto);
-        else if (muro === 'sinistra') metti(1, this.aperte ? F.latoAperta : F.latoChiusa, -S.muroLati, -1);
-        else metti(2, this.aperte ? F.latoAperta : F.latoChiusa, S.larghezza, -1, true);
+        if (muro === 'alto') metti(0, this.aperte ? F.altoAperta : F.altoChiusa, -1, -S.muroAlto, V.alto);
+        else if (muro === 'sinistra') metti(1, this.aperte ? F.latoAperta : F.latoChiusa, -S.muroLati, -1, V.lato);
+        else metti(2, this.aperte ? F.latoAperta : F.latoChiusa, S.larghezza, -1, V.lato, true);
       }
       return;
     }
@@ -155,4 +198,45 @@ export class Porte {
       else vano(S.larghezza, S.altezza / 2 - L / 2, S.muroLati, L, this.aperte, false);
     }
   }
+
+  /**
+   * Le due texture di un pezzo di porta: intero, e solo il vano (arco e cancello: il rettangolo «vano», misurato sul pezzo
+   * di sinistra) per sopra il buio. Specchiate se serve (la porta a destra). Si compongono una volta sola.
+   */
+  private pezzoPorta(fotogramma: number, vano: readonly number[], specchio: boolean): [string, string] {
+    const chiave = `stanze-porta-${fotogramma}${specchio ? '-specchio' : ''}`, tex = this.scena.textures;
+    if (!tex.exists(chiave)) {
+      const f = tex.getFrame(CRIPTA.porte, String(fotogramma)), w = f.cutWidth, h = f.cutHeight;
+      const [vx, vy, vl, va] = vano, x0 = specchio ? w - vx - vl : vx;
+      for (const [k, solo] of [[chiave, false], [chiave + '-vano', true]] as const) {
+        const t = tex.createCanvas(k, w, h)!, g = t.getContext();
+        disegnaFotogramma(g, this.scena, CRIPTA.porte, fotogramma, 0, 0, specchio);
+        if (solo) {
+          g.clearRect(0, 0, w, vy);
+          g.clearRect(0, vy + va, w, h);
+          g.clearRect(0, 0, x0, h);
+          g.clearRect(x0 + vl, 0, w, h);
+        }
+        t.refresh();
+      }
+    }
+    return [chiave, chiave + '-vano'];
+  }
+
+  /** I medaglioni delle affinità: il medaglione vuoto con il simbolo dello stato al centro (se ci sono i disegni). */
+  private preparaMedaglioni(): void {
+    const tex = this.scena.textures, M = PORTE.medaglione;
+    if (!tex.exists(M.vuoto)) return;
+    for (const aff of Object.keys(INFO_AFFINITA) as IdAffinita[]) {
+      const chiave = chiaveMedaglione(aff), simbolo = INFO_AFFINITA[aff].simbolo;
+      if (tex.exists(chiave) || !tex.exists(simbolo)) continue;
+      const f = tex.getFrame(M.vuoto);
+      const t = tex.createCanvas(chiave, f.realWidth, f.realHeight)!, g = t.getContext();
+      disegnaFotogramma(g, this.scena, M.vuoto, 0, 0, 0);
+      disegnaFotogramma(g, this.scena, simbolo, 0, M.simbolo.x, M.simbolo.y);
+      t.refresh();
+    }
+  }
 }
+
+const chiaveMedaglione = (aff: IdAffinita): string => `stanze-medaglione-${aff}`;

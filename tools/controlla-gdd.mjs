@@ -819,6 +819,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const RS = D('rompibili').ROMPIBILI_STANZE, tr = tabella('| Valore dei rompibili nelle stanze | Numero |');
   const RIGHE_ROMPIBILI = [
     ['Per stanza', 'da {} a {}', RS.quanti.min, RS.quanti.max],
+    ['Frammenti dopo', '{} albe vinte', RS.vittorie],
     ['Distanza dal muro', 'da {} a {} px', RS.dalMuro.min, RS.dalMuro.max],
     ['Lontano dalle porte', '{} px', RS.porte],
     ['Distanza tra due rompibili', '{} px', RS.tra],

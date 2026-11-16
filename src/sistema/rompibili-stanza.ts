@@ -1,9 +1,9 @@
 /*
- * Rompibili del gioco a stanze (decisioni di Edoardo del 16/11): urne, giare e lanterne del survivor, da 2 a 4 per stanza
+ * Rompibili del gioco a stanze (decisioni di Edoardo del 16/11): urne, giare e lanterne del survivor, da 1 a 2 per stanza
  * lungo i muri (ROMPIBILI_STANZE). Fanno da ostacolo e si rompono solo colpendoli (Lanterna a mano, Echi, Cerchio di luce).
  * Dentro c'è quello di sempre: la giara lascia gocce di Cera, che a fine fetta (o alla caduta) vanno alla Cappella; l'urna
- * a volte un frammento di vetro, e tre frammenti accendono il mosaico e il Bagliore (con le regole del survivor: dopo la
- * prima alba vinta, al massimo 3 per Veglia); la lanterna intera fa luce, rotta lascia una chiazza d'olio che rallenta e
+ * a volte un frammento di vetro, e tre frammenti accendono il mosaico e il Bagliore (con le regole del survivor, ma da subito:
+ * al massimo 3 per Veglia); la lanterna intera fa luce, rotta lascia una chiazza d'olio che rallenta e
  * che le armi di fuoco accendono. Il caso dei rompibili è separato da quello di nemici e carte.
  */
 import type Phaser from 'phaser';
@@ -60,10 +60,10 @@ export class RompibiliStanza {
     arsenale.chiazze = this.chiazze;
     this.mosaico = new Mosaico(interfaccia);
     this.caso = new Caso((seme ^ 0x5bd1e995) >>> 0);
-    this.mosaiciAperti = carica().vittorie >= FRAMMENTI.vittorie;
+    this.mosaiciAperti = carica().vittorie >= ROMPIBILI_STANZE.vittorie;
   }
 
-  /** Stanza nuova: via oggetti, gocce e chiazze, e da 2 a 4 rompibili lungo i muri, lontano dalle porte. */
+  /** Stanza nuova: via oggetti, gocce e chiazze, e da 1 a 2 rompibili lungo i muri, lontano dalle porte. */
   nuovaStanza(seme: number): void {
     this.rompibili.svuota();
     this.oggetti.svuota();

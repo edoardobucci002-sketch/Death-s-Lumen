@@ -1247,7 +1247,7 @@ for (const [nome, disp] of [
     // rompibili (16/11): da 2 a 4 per stanza, ostacoli che non si rompono al tocco; rotti, la giara lascia Cera da raccogliere
     if (nome === 'stanze-desktop') {
       const r0 = await L('rompibili');
-      if (r0.interi < 2 || r0.interi > 4) errori.push(`rompibili nella stanza: ${r0.interi} (attesi da 2 a 4)`);
+      if (r0.interi < 1 || r0.interi > 2) errori.push(`rompibili nella stanza: ${r0.interi} (attesi da 1 a 2)`);
       await L('vai', 'centro');
       await L('rompibiliAccanto');
       const accanto = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); s.x = 336; s.y = 224; return s.lab.rompibili().interi; });

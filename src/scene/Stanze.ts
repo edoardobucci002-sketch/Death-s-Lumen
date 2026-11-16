@@ -223,7 +223,7 @@ export class Stanze extends Phaser.Scene {
       while (this.arsenale.livello(eco) < eco.livelli.length) this.arsenale.potenzia(eco);
     }
     this.porte = new Porte(this);
-    this.porte.togli();
+    this.porte.chiudi(this.percorso.uscite.muri); // chiuse durante il combattimento, senza medaglione
     this.barra = new BarraSalute(this, this.salute);
     const scritta = 'stanze-scritta-grazia';
     if (!this.textures.exists(scritta)) this.textures.addCanvas(scritta, tela('Grazia', '#86c5e8', '#000000'));
@@ -616,7 +616,7 @@ export class Stanze extends Phaser.Scene {
     creaStanza(this, this.semeStanza(this.percorso.stanza)); // lastre e muri nuovi a ogni stanza
     this.rompibili.nuovaStanza(this.semeStanza(this.percorso.stanza));
     this.sim.entra(this.percorso.stanza, ricompensa, this.salute);
-    this.porte.togli();
+    this.porte.chiudi(this.percorso.uscite.muri);
     this.x = Math.round(STANZA.larghezza / 2);
     this.y = Math.round(areaCamminabile().y1);
     this.guardaX = 0;
@@ -696,6 +696,7 @@ export class Stanze extends Phaser.Scene {
     const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
     const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);
     this.rompibili.disegna(cam, this.fiamma, dt);
+    this.porte.luce(px, py);
     this.buio.setTexture(this.rompibili.buio(CHIAVI_BUIO[this.fiamma], this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam)).setPosition(bx, by);
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
   }

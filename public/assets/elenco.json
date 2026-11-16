@@ -686,6 +686,14 @@
       "tag": []
     },
     {
+      "chiave": "Porta_Vuota",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Porta_Vuota.png",
+      "dati": "assets/effetti/Porta_Vuota.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
       "chiave": "Reliquiario",
       "categoria": "oggetti",
       "immagine": "assets/oggetti/Reliquiario.png",
