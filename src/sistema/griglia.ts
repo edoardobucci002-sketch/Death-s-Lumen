@@ -14,6 +14,7 @@ export class Griglia {
     capienza: number,
   ) {
     this.seguente = new Int32Array(capienza);
+    this.svuota(); // nasce vuota: con gli zeri chi la interroga prima della prima ricostruzione girerebbe all'infinito sul nemico 0
   }
 
   svuota(): void {
