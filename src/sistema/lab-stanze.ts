@@ -92,6 +92,19 @@ export class LabStanze {
     while (this.s.arsenale.livello(a) < a.livelli.length) this.s.arsenale.potenzia(a);
   }
 
+  /** Acceca il nemico più vicino (come dopo una schivata perfetta con la Lama di luce); restituisce se ce n'era uno. */
+  accecaVicino(): boolean {
+    const n = this.s.nemici, j = n.vicino(this.s.x, this.s.y, 4000);
+    if (j < 0) return false;
+    n.accecaPerProva(j);
+    return true;
+  }
+
+  /** Quanti nemici ha accecato la Lama di luce. */
+  accecati(): number {
+    return this.s.nemici.accecati;
+  }
+
   /** Quanti attacchi dei nemici sono stati interrotti (Campana al potenziale). */
   interrotti(): number {
     return this.s.nemici.interrotti;

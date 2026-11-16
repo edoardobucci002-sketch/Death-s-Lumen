@@ -1322,9 +1322,33 @@ for (const [nome, disp] of [
   if (s.uccisi < 1) errori.push('con tutti gli Echi al potenziale nessun nemico cade');
   await pag.screenshot({ path: 'prove/stanze-potenziali.png' });
   const interrotti = await L('interrotti');
+  const accecati = await L('accecati');
   await ctx.close();
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} potenziali degli Echi: 11 Echi al livello 5, ${s.uccisi} nemici battuti, ${interrotti} attacchi interrotti${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} potenziali degli Echi: 11 Echi al livello 5, ${s.uccisi} nemici battuti, ${interrotti} attacchi interrotti, ${accecati} accecati dalla Lama${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
+// Lama di luce (16/11): accecare un nemico dal LAB lo fa contare; con la sola Lama al livello 5 i vicini si accecano insieme
+{
+  const errori = [];
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const pag = await ctx.newPage();
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?stanze`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
+  const L = (f, ...a) => pag.evaluate(([f, a]) => window.__dl.scene.getScene('Stanze').lab[f](...a), [f, a]);
+  await L('ondateAutomatiche', false);
+  await L('svuota');
+  await L('potenziale', 'lamaDiLuce');
+  await L('immortale', true);
+  await L('ondata');
+  await pag.waitForTimeout(2500); // i nemici compaiono dopo il segno a terra
+  const trovato = await L('accecaVicino');
+  const n = await L('accecati');
+  if (!trovato || n < 1) errori.push('la Lama di luce non acceca il nemico');
+  await ctx.close();
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} Lama di luce: acceca dal LAB (${n} accecati)${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
 // Bot del gioco a stanze (14/11): gioca la fetta da solo, veloce e senza disegno; a parità di seme gioca la stessa partita

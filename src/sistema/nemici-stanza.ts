@@ -58,6 +58,7 @@ export class NemiciStanza {
   private quieteLanterna = new Float32Array(CAPIENZA);
   private quieteAbilita = new Float32Array(CAPIENZA);
   private fermo = new Float32Array(CAPIENZA); // fermo d'impatto: il nemico non fa niente
+  private cieco = new Float32Array(CAPIENZA); // Lama di luce: secondi di cecità rimasti (gli attacchi sbagliano la mira)
   private schiaccia = new Float32Array(CAPIENZA); // secondi di schiacciamento rimasti (solo disegno)
   private bianco = new Float32Array(CAPIENZA); // secondi in cui resta bianco dopo un colpo della Lanterna
   private verso = new Uint8Array(CAPIENZA); // 1 = guarda a sinistra
@@ -78,6 +79,8 @@ export class NemiciStanza {
   readonly gVX = new Float32Array(MAX_GRUMI); // velocità dei grumi (le legge anche il bot)
   readonly gVY = new Float32Array(MAX_GRUMI);
   private gSfiorato = new Uint8Array(MAX_GRUMI);
+  private gCieco = new Uint8Array(MAX_GRUMI); // lanciato da un Cantore cieco: non ti cerca
+  private gOrigine = new Uint32Array(MAX_GRUMI); // l'id del Cantore che l'ha lanciato (per accecarlo se lo schivi)
   private gVita = new Float32Array(MAX_GRUMI); // secondi da quando è partito (cerca solo all'inizio)
   // dove si disegna appena sputato, rispetto al punto a terra: scostamento in orizzontale e altezza (la bocca del Cantore)
   private gBX = new Float32Array(MAX_GRUMI);
@@ -100,6 +103,10 @@ export class NemiciStanza {
   rinascitaForzata: boolean | null = null;
   /** LAB: il fermo d'impatto acceso o spento. */
   fermoImpatto = true;
+  /** Lama di luce: cecità, sviamento in gradi e raggio di diffusione (0 = niente Lama); li imposta la scena dall'arsenale. */
+  lama: { durata: number; sviamento: number; raggio: number } | null = null;
+  /** Nemici accecati dalla Lama (per il LAB e le prove). */
+  accecati = 0;
   /** Il raggio del corpo del personaggio, per i colpi dei nemici. */
   readonly corpo: number = COMBATTIMENTO_STANZA.raggio;
   /** Schivata perfetta: li imposta la scena dalla Grazia del personaggio (le carte potranno migliorarli). */
@@ -129,7 +136,7 @@ export class NemiciStanza {
   ) {
     this.orda = new Orda(scena, caso, new Minacce(scena));
     this.orda.registraCampi(this.stato, this.tempo, this.dirX, this.dirY, this.ricarica, this.rinato, this.dentro, this.colpo,
-      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco, this.rialza, this.risorge);
+      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco, this.rialza, this.risorge, this.cieco);
     // «special» del Ricaduto: steso a terra con la crepa che pulsa, il segno che si rialzerà
     for (const sprite of [R.sprite, C.sprite]) {
       this.mosse.push({ attacco: mossa(scena, `${sprite}:attack`), morte: mossa(scena, `${sprite}:death`), rinascita: mossa(scena, `${sprite}:special`) });
@@ -197,6 +204,7 @@ export class NemiciStanza {
     this.stato[i] = STATO.cammina;
     this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.bianco[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
     this.ricarica[i] = C.primoCanto;
+    this.cieco[i] = 0;
     this.rinato[i] = this.verso[i] = this.risorge[i] = 0;
     this.rialza[i] = 0;
     this.dirX[i] = 1;
@@ -258,6 +266,7 @@ export class NemiciStanza {
       if (this.quieteAbilita[i] > 0) this.quieteAbilita[i] -= dt;
       if (this.schiaccia[i] > 0) this.schiaccia[i] -= dt;
       if (this.bianco[i] > 0) this.bianco[i] -= dt;
+      if (this.cieco[i] > 0) this.cieco[i] -= dt;
       const ricaduto = o.tipo[i] === ID_RICADUTO;
       // salute finita (Lanterna, Echi, maledizione, reazioni): il Ricaduto va a terra, il Cantore sparisce
       if (o.salute[i] <= 0 && this.stato[i] !== STATO.aTerra) {
@@ -308,13 +317,16 @@ export class NemiciStanza {
           if (this.tempo[i] <= 0) {
             this.colpo[i] = NEMICI_STANZA.lampo * 1.2;
             if (dentro) danno = Math.max(danno, R.graffio.danno);
-            else if (this.dentro[i] <= this.finestra) this.schivate++; // uscito dallo spicchio all'ultimo istante
+            else if (this.dentro[i] <= this.finestra) {
+              this.schivate++; // uscito dallo spicchio all'ultimo istante
+              this.accieca(i);
+            }
             this.stato[i] = STATO.recupero;
             this.tempo[i] = R.recupero;
           }
         } else if (this.tempo[i] <= 0) {
           const sx = o.x[i] + this.dirX[i] * C.raggio, lato = this.verso[i] ? -1 : 1;
-          this.lancia(sx, o.y[i] + this.dirY[i] * C.raggio, this.dirX[i], this.dirY[i], o.x[i] + lato * C.bocca.lancio[0] - sx, C.bocca.lancio[1]);
+          this.lancia(i, sx, o.y[i] + this.dirY[i] * C.raggio, this.dirX[i], this.dirY[i], o.x[i] + lato * C.bocca.lancio[0] - sx, C.bocca.lancio[1]);
           this.stato[i] = STATO.recupero;
           this.tempo[i] = C.recupero;
           this.ricarica[i] = C.ricarica;
@@ -362,6 +374,11 @@ export class NemiciStanza {
   }
 
   private iniziaAvviso(i: number, dx: number, dy: number, durata: number): void {
+    // cieco (Lama di luce): sbaglia la mira, da una parte o dall'altra, e l'avviso a terra lo mostra
+    if (this.cieco[i] > 0 && this.lama) {
+      const a = Phaser.Math.DegToRad(this.lama.sviamento) * (this.caso.numero() < 0.5 ? -1 : 1), c = Math.cos(a), sn = Math.sin(a);
+      [dx, dy] = [dx * c - dy * sn, dx * sn + dy * c];
+    }
     this.stato[i] = STATO.avviso;
     this.tempo[i] = durata;
     this.dirX[i] = dx;
@@ -397,7 +414,7 @@ export class NemiciStanza {
   }
 
   /** Un grumo parte da (x, y) a terra in direzione (dx, dy); si disegna dalla bocca (bx px di lato, bh in alto) e scende. */
-  private lancia(x: number, y: number, dx: number, dy: number, bx: number, bh: number): void {
+  private lancia(i: number, x: number, y: number, dx: number, dy: number, bx: number, bh: number): void {
     suona('sparo');
     if (this.grumi >= MAX_GRUMI) return;
     const k = this.grumi++;
@@ -406,6 +423,8 @@ export class NemiciStanza {
     this.gVX[k] = dx * C.grumo.velocita;
     this.gVY[k] = dy * C.grumo.velocita;
     this.gSfiorato[k] = 0;
+    this.gCieco[k] = this.cieco[i] > 0 ? 1 : 0;
+    this.gOrigine[k] = this.orda.id[i];
     this.gVita[k] = 0;
     this.gBX[k] = bx;
     this.gBH[k] = bh;
@@ -422,7 +441,7 @@ export class NemiciStanza {
     const giro = Phaser.Math.DegToRad(C.grumo.virata) * dt;
     for (let k = this.grumi - 1; k >= 0; k--) {
       this.gVita[k] += dt;
-      if (this.gVita[k] <= C.grumo.ricerca) {
+      if (this.gVita[k] <= C.grumo.ricerca && !this.gCieco[k]) {
         const ora = Math.atan2(this.gVY[k], this.gVX[k]), voluto = Math.atan2(py - this.gY[k], px - this.gX[k]);
         const nuovo = ora + Phaser.Math.Clamp(Phaser.Math.Angle.Wrap(voluto - ora), -giro, giro);
         this.gVX[k] = Math.cos(nuovo) * C.grumo.velocita;
@@ -464,6 +483,7 @@ export class NemiciStanza {
       else if (this.gSfiorato[k] === 1) {
         this.gSfiorato[k] = 2; // ti è passato vicino senza toccarti: schivata perfetta, una volta sola
         this.schivate++;
+        for (let i = 0; i < this.orda.numero; i++) if (this.orda.id[i] === this.gOrigine[k]) this.accieca(i);
       }
     }
     for (let k = this.pozze - 1; k >= 0; k--) {
@@ -507,6 +527,8 @@ export class NemiciStanza {
     this.gVX[k] = this.gVX[u];
     this.gVY[k] = this.gVY[u];
     this.gSfiorato[k] = this.gSfiorato[u];
+    this.gCieco[k] = this.gCieco[u];
+    this.gOrigine[k] = this.gOrigine[u];
     this.gVita[k] = this.gVita[u];
     this.gBX[k] = this.gBX[u];
     this.gBH[k] = this.gBH[u];
@@ -562,6 +584,36 @@ export class NemiciStanza {
   /** Il nemico i sta preparando un attacco (avviso a terra)? */
   inAvviso(i: number): boolean {
     return this.stato[i] === STATO.avviso;
+  }
+
+  /**
+   * Lama di luce: il nemico i, appena schivato, resta cieco per qualche secondo (i suoi prossimi attacchi sbagliano la mira).
+   * Al potenziale la cecità passa anche ai nemici entro «raggio» px. Senza la Lama non fa niente.
+   */
+  private accieca(i: number): void {
+    const L = this.lama;
+    if (!L || !this.colpibile(i)) return;
+    const o = this.orda;
+    for (let j = 0; j < o.numero; j++) {
+      if (j !== i && !(L.raggio > 0 && this.colpibile(j) && Math.hypot(o.x[j] - o.x[i], o.y[j] - o.y[i]) <= L.raggio)) continue;
+      if (this.cieco[j] <= 0) this.accecati++;
+      this.cieco[j] = L.durata;
+      this.impatto.scintille(o.x[j], o.y[j] - o.altezza(j) / 2, 0, -1, IMPATTO.scintille.colpo);
+    }
+  }
+
+  /** LAB: acceca il nemico i (come dopo una schivata perfetta, con i numeri della Lama o di prova). */
+  accecaPerProva(i: number): void {
+    const prima = this.lama;
+    this.lama ??= { durata: 4, sviamento: 90, raggio: 0 };
+    this.accieca(i);
+    this.lama = prima ?? null;
+    if (!prima) this.cieco[i] = 4;
+  }
+
+  /** Il nemico i è cieco? (per il disegno e le prove) */
+  eCieco(i: number): boolean {
+    return this.cieco[i] > 0;
   }
 
   /** Interrompe l'attacco che il nemico i sta preparando: l'avviso si spegne e il nemico si riprende (Campana, Fuoco fatuo). */
@@ -651,6 +703,7 @@ export class NemiciStanza {
       else if (st === STATO.aTerra) sp.clearTint();
       else if (this.bianco[i] > 0 || o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
       else if (st === STATO.avviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(o.tipo[i] === ID_RICADUTO ? col.bordo : col.linea)).setTintMode(Phaser.TintModes.ADD);
+      else if (this.cieco[i] > 0) sp.setTint(0x6f6f8f).setTintMode(Phaser.TintModes.MULTIPLY); // cieco: spento e bluastro
       else sp.clearTint();
       if (st === STATO.avviso || this.colpo[i] > 0) this.disegnaAvviso(t, s, i, x, y);
       if (st !== STATO.aTerra && o.salute[i] < o.saluteMassima[i]) {

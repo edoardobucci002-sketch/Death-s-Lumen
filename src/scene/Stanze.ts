@@ -512,6 +512,7 @@ export class Stanze extends Phaser.Scene {
     // le zone che curano (Acqua santa al potenziale): dentro una pozza si recupera salute
     const cura = this.arsenale.cura(this.saluteMassima);
     if (cura > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + cura * dt);
+    this.nemici.lama = this.arsenale.lama(); // la Lama di luce accieca chi schivi
     const danno = this.nemici.aggiorna(dt, this.x, this.y, mezzaL, mezzaA);
     if (danno > 0) this.ferisci(danno);
     if (this.nemici.schivate > 0) {

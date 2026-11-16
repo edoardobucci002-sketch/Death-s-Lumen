@@ -94,14 +94,20 @@ const ACQUA_SANTA_STANZE: ConIntervallo<AcquaSanta> = {
   ],
 };
 
+/**
+ * Lama di luce rifatta (16/11, decisione di Edoardo): non colpisce più. Quando fai una schivata perfetta accieca chi hai
+ * schivato, in più della Grazia. «cecita» = secondi in cui il nemico è cieco; «sviamento» = di quanti gradi sbaglia la mira
+ * dei suoi attacchi (il graffio del Ricaduto è largo 110°: sopra i 55° da ogni lato lo manca). Danno e ricarica restano
+ * a zero e lunghi: servono solo ai tipi. Numeri di Claude, da rivedere.
+ */
 const LAMA_DI_LUCE_STANZE: ConIntervallo<LamaDiLuce> = {
   ...LAMA_DI_LUCE,
   livelli: [
-    { ricarica: 1.15, danno: 12, dannoMassimo: 20, lunghezza: 259, spalle: false, testo: 'Un fendente di luce davanti a te.' },
-    { ricarica: 1.15, danno: 12, dannoMassimo: 20, lunghezza: 259, spalle: true, testo: 'Colpisce anche alle spalle.' },
-    { ricarica: 1, danno: 16, dannoMassimo: 26, lunghezza: 259, spalle: true, testo: '+4–6 danno, ricarica più rapida.' },
-    { ricarica: 1, danno: 16, dannoMassimo: 26, lunghezza: 329, spalle: true, testo: 'Fendente più lungo.' },
-    { ricarica: 0.85, danno: 22, dannoMassimo: 34, lunghezza: 329, spalle: true, potenziale: true, testo: 'Potenziale: il fendente è una croce, avanti, dietro e ai lati. +6–8 danno.' },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 3, sviamento: 80, testo: 'Se schivi un attacco al momento giusto, chi lo ha lanciato resta cieco 3 s e sbaglia la mira.' },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 3.5, sviamento: 85, testo: '+0,5 s di cecità, mira più sbagliata.' },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 4, sviamento: 90, testo: '+0,5 s di cecità, mira più sbagliata.' },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 4.5, sviamento: 95, testo: '+0,5 s di cecità, mira più sbagliata.' },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 5, sviamento: 100, potenziale: true, testo: 'Potenziale: la cecità si estende ai nemici vicini a chi hai schivato. +0,5 s di cecità.' },
   ],
 };
 
@@ -171,7 +177,7 @@ export const POTENZIALI = {
   campana: {}, // il rintocco interrompe gli avvisi dei nemici nel suo raggio; in cambio la ricarica sale (vedi il livello 5)
   fuocoFatuo: { ritorno: 1.5, sterzo: 10, danno: 0.7 }, // trapassato il primo nemico va dritto al muro, rimbalza e torna da lui: dopo il muro vive almeno 1,5 s e gira più svelto (10); il colpo del ritorno fa il 70% del danno
   acquaSanta: { cura: 1 }, // salute al secondo dentro una pozza (le pozze non si sommano)
-  lamaDiLuce: {}, // il fendente parte anche ai due lati (avanti e dietro li ha già)
+  lamaDiLuce: { raggio: 150 }, // al potenziale la cecità passa anche ai nemici entro 150 px da chi hai schivato (da rivedere)
   lapide: { resta: 3, raggio: 22 }, // resta in piedi 3 s come un muro largo 22 px: nemici e grumi non passano
   rosarioSpezzato: { crescita: 0.15 }, // ogni rimbalzo +15% sul precedente
   corvo: { danno: 0.2, durata: 3 }, // il nemico beccato subisce +20% di danno da tutto per 3 s

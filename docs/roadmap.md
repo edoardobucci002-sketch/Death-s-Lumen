@@ -79,7 +79,7 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 
 **Il bot gioca a stanze** (14/11, richiesta di Edoardo): `src/sistema/bot-stanze.ts` e `npm run sim-stanze` (`tools/sim-stanze.mjs`). Guarda avvisi, grumi e pozze (con un tempo di reazione), si tiene alla distanza della Lanterna, colpisce, usa il Cerchio di luce, sceglie carte e porte (o a caso con `esplora`). LAB → Stanze → Percorso → «Fai giocare il bot» per guardarlo. `npm run prova` controlla che il bot finisca la partita e che con lo stesso seme giochi uguale. Prima misura in `bilanciamento.md`.
 
-**Potenziali degli Echi e Cerchio di luce** (14/11, scelte di Edoardo dal questionario): ogni Eco al livello 5 ha il suo potenziale (tabella nel GDD «Le armi nelle stanze»); il Cerchio di luce fa un colpo grande all'accensione e poi abbaglia. LAB → Stanze → Potenziali: un pulsante per Eco. `npm run prova` mette tutti gli Echi al potenziale insieme. Simulazione: `npm run sim-stanze -- 8 potenziali`. **16/11, dopo la prova di Edoardo**: Candela più debole, Falce più stretta, Lapide più lenta, Lama di luce con i quattro fendenti insieme, Fuoco fatuo rifatto (rimbalza sul muro e torna sul nemico trapassato). **16/11, seconda prova**: Fuoco fatuo un po' più debole; il grano del Rosario vola e scoppia sui nemici (effetti pixelfx). Da fare: il potenziale nuovo della Falce (ruba salute e la trasforma in salute in più, solo a salute piena: da definire con Edoardo) e il contrattacco della Lama di luce (da definire, senza renderla troppo forte).
+**Potenziali degli Echi e Cerchio di luce** (14/11, scelte di Edoardo dal questionario): ogni Eco al livello 5 ha il suo potenziale (tabella nel GDD «Le armi nelle stanze»); il Cerchio di luce fa un colpo grande all'accensione e poi abbaglia. LAB → Stanze → Potenziali: un pulsante per Eco. `npm run prova` mette tutti gli Echi al potenziale insieme. Simulazione: `npm run sim-stanze -- 8 potenziali`. **16/11, dopo la prova di Edoardo**: Candela più debole, Falce più stretta, Lapide più lenta, Lama di luce con i quattro fendenti insieme, Fuoco fatuo rifatto (rimbalza sul muro e torna sul nemico trapassato). **16/11, seconda prova**: Fuoco fatuo un po' più debole; il grano del Rosario vola e scoppia sui nemici (effetti pixelfx). Da fare: il potenziale nuovo della Falce (ruba salute e la trasforma in salute in più, solo a salute piena: da definire con Edoardo) **Lama di luce rifatta il 16/11 (scelta A)**: non colpisce più, accieca chi hai schivato (LAB → Stanze → «Acceca il nemico vicino»; numeri da rivedere).
 
 ### Dopo la fetta (ordine da decidere con Edoardo)
 
@@ -162,6 +162,7 @@ Da costruire: le **Vetrate** nella Cappella (collezione sempre visibile, con un 
 
 ## Da confermare
 
+- **Lama di luce (16/11, da rivedere)**: cecità 3–5 s, mira sbagliata 80–100°, potenziale che accieca i vicini entro 150 px (Edoardo aveva detto «solo su chi hai schivato»: il potenziale lo allarga, è una proposta di Claude).
 Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da Claude e non ancora confermati da Edoardo. Quando Edoardo ne conferma una, si toglie da qui e dall'etichetta nel testo.
 
 | Voce | Dove è scritta |

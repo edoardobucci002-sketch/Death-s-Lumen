@@ -38,6 +38,17 @@ export class Arsenale extends ArsenaleVicine {
     return 0;
   }
 
+  /** Gioco a stanze: la cecità della Lama di luce al suo livello (null se non c'è). */
+  lama(): { durata: number; sviamento: number; raggio: number } | null {
+    for (const p of this.possedute) {
+      if (p.arma.id !== 'lamaDiLuce') continue;
+      const l = (p.arma as { livelli: { cecita?: number; sviamento?: number }[] }).livelli[p.livello - 1];
+      if (!l.cecita) return null;
+      return { durata: l.cecita, sviamento: l.sviamento ?? 0, raggio: p.livello >= (p.arma as { livelli: unknown[] }).livelli.length ? POTENZIALI.lamaDiLuce.raggio : 0 };
+    }
+    return null;
+  }
+
   /** L'arma diventa la sua versione unita. */
   unisci(arma: Arma): void {
     for (const p of this.possedute) if (p.arma.id === arma.id) p.unita = true;
@@ -279,6 +290,8 @@ export class Arsenale extends ArsenaleVicine {
       }
       case 'lamaDiLuce': {
         const l = a.livelli[p.livello - 1];
+        // gioco a stanze: la Lama non colpisce, accieca chi schivi (vedi lama())
+        if (l.cecita) return l.ricarica;
         // il fendente segue la direzione in cui cammini (prima solo destra o sinistra)
         this.fendente(this.dx, this.dy, l.lunghezza * area, l.danno);
         // potenziale (gioco a stanze): il fendente è una croce, anche ai due lati

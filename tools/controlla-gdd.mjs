@@ -830,14 +830,17 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   for (const [nome, modello, ...attesi] of RIGHE_ROMPIBILI) conRiga(tr, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 
   // le armi del gioco a stanze: tabelle «#### Stanze · <Nome>», con il danno scritto «minimo–massimo»
-  const COLONNE_STANZE = { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Raggio: 'raggio', 'Ampiezza arco (°)': 'ampiezza', Lunghezza: 'lunghezza', 'Durata (s)': 'durata', Trapassa: 'trapassa', 'Rotazione (giri/s)': 'giri', Rimbalzi: 'rimbalzi', 'Colpo alle spalle': 'spalle', 'Colpo doppio': 'doppio' };
+  const COLONNE_STANZE = { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Raggio: 'raggio', 'Ampiezza arco (°)': 'ampiezza', Lunghezza: 'lunghezza', 'Durata (s)': 'durata', Trapassa: 'trapassa', 'Rotazione (giri/s)': 'giri', Rimbalzi: 'rimbalzi', 'Colpo alle spalle': 'spalle', 'Colpo doppio': 'doppio', 'Cecità (s)': 'cecita', 'Mira sbagliata (gradi)': 'sviamento' };
   for (const arma of [AS.LANTERNA_STANZE, ...AS.ECHI_STANZE]) {
     const nome = `Stanze · ${arma.nome}`, t = tabella('#### ' + nome);
+    // la Lama di luce rifatta non colpisce: danno, ricarica, lunghezza e spalle sono segnaposto per i tipi, la tabella ha solo cecità e mira
+    const cieca = arma.livelli[0].cecita != null, segnaposto = cieca ? ['danno', 'dannoMassimo', 'ricarica', 'lunghezza', 'spalle'] : [];
     vero(nome, t.righe.length === arma.livelli.length, `${t.righe.length} righe nel GDD, ${arma.livelli.length} livelli nei dati`);
     for (const col of t.colonne) {
       if (col !== 'Lv' && col !== 'Cosa cambia' && col !== 'Danno' && !(col in COLONNE_STANZE)) diff.push(`${nome}: colonna «${col}» senza corrispondenza nello script`);
     }
     for (const k of Object.keys(arma.livelli[0])) {
+      if (segnaposto.includes(k)) continue;
       if (k !== 'testo' && k !== 'danno' && k !== 'dannoMassimo' && !Object.values(COLONNE_STANZE).includes(k)) diff.push(`${nome}: il campo «${k}» non ha una colonna`);
       else if (k in arma.livelli[0] && Object.entries(COLONNE_STANZE).some(([c, v]) => v === k && !t.colonne.includes(c))) diff.push(`${nome}: manca la colonna del campo «${k}»`);
     }
@@ -845,8 +848,10 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
       const L = arma.livelli[i];
       if (!L) return;
       testoUguale(`${nome} liv. ${i + 1}: testo`, r['Cosa cambia'], L.testo);
-      const [mi, ma] = String(r.Danno).split('–').map(numero);
-      vero(`${nome} liv. ${i + 1}: Danno`, uguali(mi, L.danno) && uguali(ma, L.dannoMassimo), `GDD ${r.Danno} ≠ dati ${L.danno}–${L.dannoMassimo}`);
+      if (!cieca) {
+        const [mi, ma] = String(r.Danno).split('–').map(numero);
+        vero(`${nome} liv. ${i + 1}: Danno`, uguali(mi, L.danno) && uguali(ma, L.dannoMassimo), `GDD ${r.Danno} ≠ dati ${L.danno}–${L.dannoMassimo}`);
+      }
       for (const [col, campo] of Object.entries(COLONNE_STANZE)) {
         if (!t.colonne.includes(col)) continue;
         const dato = L[campo], g = typeof dato === 'boolean' ? r[col] === 'sì' : numero(r[col]);

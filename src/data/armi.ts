@@ -81,7 +81,8 @@ export interface LamaDiLuce extends Comune {
   altezza: number; // del fendente
   ritardoSpalle: number;
   durataEffetto: number;
-  livelli: { ricarica: number; danno: number; lunghezza: number; spalle: boolean; testo: string }[];
+  // cecita, sviamento e raggio solo nel gioco a stanze: la Lama accieca chi hai schivato (vedi data/armi-stanze.ts)
+  livelli: { ricarica: number; danno: number; lunghezza: number; spalle: boolean; cecita?: number; sviamento?: number; testo: string }[];
 }
 /** Cade sul nemico con più salute in vista. */
 export interface Lapide extends Comune {

@@ -852,7 +852,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Campana | il rintocco interrompe l'attacco che i nemici nel suo raggio stanno preparando (l'avviso si spegne e il nemico si riprende); in cambio suona più di rado (ricarica 2,6 s, era 1,8) e il doppio rintocco sparisce (nota di Edoardo) |
 | Fuoco fatuo | il primo nemico che un fuoco colpisce lo trapassa senza fermarlo: il fuoco va dritto fino al muro senza colpire nessuno, ci rimbalza una volta e torna a colpire lo stesso nemico con il 70% del danno (se è già morto, insegue il più vicino); dopo il muro vive almeno 1,5 s e gira più svelto |
 | Acqua santa | dentro una pozza recuperi 1 di salute al secondo (le pozze non si sommano) |
-| Lama di luce | il fendente è una croce: avanti, dietro e ai due lati, tutti e quattro nello stesso momento |
+| Lama di luce | la cecità passa anche ai nemici entro 150 px da chi hai schivato (da rivedere) |
 | Lapide | la lapide resta in piedi 3 s come un muro largo 22 px: i nemici non la attraversano e i grumi ci scoppiano contro |
 | Rosario spezzato | ogni rimbalzo fa il 15% di danno in più del precedente |
 | Corvo | il nemico beccato subisce +20% di danno da tutto per 3 s |
@@ -923,13 +923,15 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 
 #### Stanze · Lama di luce
 
-| Lv | Ricarica (s) | Danno | Lunghezza | Colpo alle spalle | Cosa cambia |
-| --- | --- | --- | --- | --- | --- |
-| 1 | 1,15 | 12–20 | 259 | no | Un fendente di luce davanti a te. |
-| 2 | 1,15 | 12–20 | 259 | sì | Colpisce anche alle spalle. |
-| 3 | 1 | 16–26 | 259 | sì | +4–6 danno, ricarica più rapida. |
-| 4 | 1 | 16–26 | 329 | sì | Fendente più lungo. |
-| 5 | 0,85 | 22–34 | 329 | sì | Potenziale: il fendente è una croce, avanti, dietro e ai lati. +6–8 danno. |
+Rifatta il 16/11: non colpisce più. Quando fai una schivata perfetta, chi hai schivato (il Ricaduto del graffio, il Cantore del grumo) resta **cieco**: i suoi attacchi sbagliano la mira dei gradi indicati, da una parte o dall'altra, e il grumo del Cantore cieco non ti cerca. Il nemico cieco è più scuro e bluastro. Si somma alla Grazia. (Numeri di Claude, da rivedere.)
+
+| Lv | Cecità (s) | Mira sbagliata (gradi) | Cosa cambia |
+| --- | --- | --- | --- |
+| 1 | 3 | 80 | Se schivi un attacco al momento giusto, chi lo ha lanciato resta cieco 3 s e sbaglia la mira. |
+| 2 | 3,5 | 85 | +0,5 s di cecità, mira più sbagliata. |
+| 3 | 4 | 90 | +0,5 s di cecità, mira più sbagliata. |
+| 4 | 4,5 | 95 | +0,5 s di cecità, mira più sbagliata. |
+| 5 | 5 | 100 | Potenziale: la cecità si estende ai nemici vicini a chi hai schivato. +0,5 s di cecità. |
 
 #### Stanze · Lapide
 
