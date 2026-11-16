@@ -283,6 +283,7 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.prUnione[i] = 0;
     this.prReazione[i] = 0;
     this.prResto[i] = trapassa;
+    this.prRitorno[i] = 0;
     this.prColpiti.fill(0, i * 4, i * 4 + 4);
     const v0 = PROIETTILI_V0[chiave];
     const s = this.prSprite[i];
@@ -308,9 +309,11 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     for (let i = this.proiettili - 1; i >= 0; i--) {
       this.prVita[i] -= dt;
       this.fonte = this.prFonte[i];
-      if (this.prSterzo[i]) this.sterza(i, dt);
+      if (this.prRitorno[i] === 2) this.tornaDa(i, dt);
+      else if (this.prSterzo[i] && this.prRitorno[i] === 0) this.sterza(i, dt);
       this.prX[i] += this.prVX[i] * dt;
       this.prY[i] += this.prVY[i] * dt;
+      if (this.prRitorno[i] === 1) this.rimbalzaSulMuro(i);
       if (this.prUnione[i] === RACCOGLIE) this.anime?.attiraVicino(this.prX[i], this.prY[i], U.fuochi.raggio);
       else if (scia && this.prUnione[i] === SCIA) {
         const c = U.candelabro;
@@ -361,15 +364,51 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.prVY[i] = Math.sin(nuovo) * this.prVel[i];
   }
 
+  /** Fuoco fatuo al potenziale: tocca un muro della stanza, rimbalza una volta e comincia a tornare. */
+  protected rimbalzaSulMuro(i: number): void {
+    const c = this.campo;
+    if (!c) return;
+    let tocca = false;
+    if (this.prX[i] < c.x0 || this.prX[i] > c.x1) {
+      this.prVX[i] = -this.prVX[i];
+      this.prX[i] = Math.max(c.x0, Math.min(c.x1, this.prX[i]));
+      tocca = true;
+    }
+    if (this.prY[i] < c.y0 || this.prY[i] > c.y1) {
+      this.prVY[i] = -this.prVY[i];
+      this.prY[i] = Math.max(c.y0, Math.min(c.y1, this.prY[i]));
+      tocca = true;
+    }
+    if (!tocca) return;
+    this.prRitorno[i] = 2;
+    this.prVita[i] = Math.max(this.prVita[i], POTENZIALI.fuocoFatuo.ritorno); // ha il tempo di tornare
+  }
+
+  /** Fuoco fatuo al potenziale, dopo il muro: gira verso il nemico trapassato; se non c'è più, verso il più vicino. */
+  protected tornaDa(i: number, dt: number): void {
+    const o = this.orda, j = this.prBersaglio[i];
+    if (j >= o.numero || o.id[j] !== this.prBersaglioId[i] || o.salute[j] <= 0) {
+      this.sterza(i, dt);
+      return;
+    }
+    const voluto = Math.atan2(o.y[j] - o.raggio[j] - this.prY[i], o.x[j] - this.prX[i]);
+    const attuale = Math.atan2(this.prVY[i], this.prVX[i]);
+    let diff = voluto - attuale;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    const max = POTENZIALI.fuocoFatuo.sterzo * dt;
+    const nuovo = attuale + Math.max(-max, Math.min(max, diff));
+    this.prVX[i] = Math.cos(nuovo) * this.prVel[i];
+    this.prVY[i] = Math.sin(nuovo) * this.prVel[i];
+  }
+
   protected vicino(j: number): void {
     const o = this.orda;
     if (o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
     const ex = o.x[j] - this.cx;
     const ey = o.y[j] - o.raggio[j] - this.cy;
     // élite e Mietitore sembrano più vicini: il fuoco fatuo li insegue per primi
-    const d2 = (ex * ex + ey * ey) * (o.elite[j] || o.tipo[j] === ID_MIETITORE ? RUOLI.fuocoFatuoPreda : 1)
-      // Fuoco fatuo al potenziale (gioco a stanze): chi prepara un attacco sembra più vicino, lo inseguono per primi
-      * (this.fonte === F.fuocoFatuo && this.potenziale[F.fuocoFatuo] && this.inAvviso?.(j) ? POTENZIALI.fuocoFatuo.preda : 1);
+    const d2 = (ex * ex + ey * ey) * (o.elite[j] || o.tipo[j] === ID_MIETITORE ? RUOLI.fuocoFatuoPreda : 1);
     if (d2 < this.cDistanza) {
       this.cDistanza = d2;
       this.cMigliore = j;
@@ -380,7 +419,10 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     const i = this.cProiettile;
     const o = this.orda;
     if (this.prResto[i] === 0 || o.salute[j] <= 0 || o.fuoriSchermo(j)) return;
-    for (let k = 0; k < 4; k++) if (this.prColpiti[i * 4 + k] === o.id[j]) return;
+    const ritorno = this.prRitorno[i];
+    if (ritorno === 1) return; // Fuoco fatuo al potenziale: dopo il primo nemico va dritto al muro senza colpire
+    const torna = ritorno === 2 && o.id[j] === this.prBersaglioId[i]; // di ritorno ricolpisce il nemico trapassato
+    if (!torna) for (let k = 0; k < 4; k++) if (this.prColpiti[i * 4 + k] === o.id[j]) return;
     const ex = o.x[j] - this.cx;
     const ey = o.y[j] - o.raggio[j] - this.cy;
     const r = this.prRaggio[i] + o.raggio[j];
@@ -391,22 +433,25 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
         break;
       }
     }
-    this.prResto[i]--;
+    // Fuoco fatuo al potenziale: il primo nemico lo trapassa senza fermarsi, poi va dritto al muro e torna da lui
+    const primo = this.prFonte[i] === F.fuocoFatuo && this.potenziale[F.fuocoFatuo] && ritorno === 0 && !!this.campo;
+    if (primo) {
+      this.prRitorno[i] = 1;
+      this.prBersaglio[i] = j;
+      this.prBersaglioId[i] = o.id[j];
+    } else this.prResto[i]--;
     const v = this.prVel[i] || 1;
     this.cRX = this.prOX[i];
     this.cRY = this.prOY[i];
     this.cRAperta = REAZIONI.esorcismo.vita;
-    const avviso = this.prFonte[i] === F.fuocoFatuo && this.potenziale[F.fuocoFatuo] && !!this.inAvviso?.(j);
     this.ferisci(j, this.prDanno[i], 0, this.prVX[i] / v, this.prVY[i] / v, this.prAff[i], STATI.probabilita, true, this.prReazione[i]);
-    // Fuoco fatuo al potenziale: il colpo interrompe l'attacco in preparazione
-    if (avviso && o.salute[j] > 0) this.interrompi?.(j);
     // Candela al potenziale: una fiammella (non già nata da un'altra) che uccide si divide (le figlie partono a fine passo)
     if (this.prFonte[i] === F.candela && this.potenziale[F.candela] && this.prUnione[i] !== FIGLIA && o.salute[j] <= 0 && this.divisioni < MAX_DIVISIONI) {
       const k = this.divisioni++;
       this.dvX[k] = this.cx;
       this.dvY[k] = this.cy;
       this.dvA[k] = Math.atan2(this.prVY[i], this.prVX[i]);
-      this.dvDanno[k] = this.prDanno[i];
+      this.dvDanno[k] = this.prDanno[i] * POTENZIALI.candela.danno; // le figlie fanno meno danno
     }
     if (this.prEsplode[i]) {
       this.effetto(BASTONE.esplosione, this.cx, this.cy, 0, PROFONDITA.sopra, EFFETTI.esplosione);
@@ -432,6 +477,9 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.prFonte[i] = this.prFonte[u];
     this.prFuoco[i] = this.prFuoco[u];
     this.prResto[i] = this.prResto[u];
+    this.prRitorno[i] = this.prRitorno[u];
+    this.prBersaglio[i] = this.prBersaglio[u];
+    this.prBersaglioId[i] = this.prBersaglioId[u];
     this.prUnione[i] = this.prUnione[u];
     this.prReazione[i] = this.prReazione[u];
     this.prColpiti.copyWithin(i * 4, u * 4, u * 4 + 4);

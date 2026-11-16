@@ -45,7 +45,7 @@ const CANDELA_STANZE: ConIntervallo<Candela> = {
     { ricarica: 0.95, danno: 6, dannoMassimo: 9, quantita: 2, trapassa: 1, testo: '+1 fiammella.' },
     { ricarica: 0.95, danno: 8, dannoMassimo: 12, quantita: 2, trapassa: 2, testo: '+2–3 danno, le fiammelle trapassano un nemico in più.' },
     { ricarica: 0.75, danno: 8, dannoMassimo: 12, quantita: 3, trapassa: 2, testo: '+1 fiammella, ricarica più rapida.' },
-    { ricarica: 0.75, danno: 11, dannoMassimo: 16, quantita: 4, trapassa: 3, potenziale: true, testo: 'Potenziale: una fiammella che uccide si divide in 2. +1 fiammella, +3–4 danno.' },
+    { ricarica: 0.75, danno: 11, dannoMassimo: 16, quantita: 3, trapassa: 3, potenziale: true, testo: 'Potenziale: una fiammella che uccide si divide in 2, a metà danno. +3–4 danno.' },
   ],
 };
 
@@ -56,7 +56,7 @@ const FALCE_STANZE: ConIntervallo<Falce> = {
     { quantita: 2, danno: 5, dannoMassimo: 7, raggio: 132, giri: 0.45, testo: '+1 falce.' },
     { quantita: 2, danno: 7, dannoMassimo: 9, raggio: 160, giri: 0.45, testo: '+2 danno, raggio più ampio.' },
     { quantita: 3, danno: 7, dannoMassimo: 9, raggio: 160, giri: 0.45, testo: '+1 falce.' },
-    { quantita: 4, danno: 9, dannoMassimo: 12, raggio: 160, giri: 0.59, potenziale: true, testo: 'Potenziale: metà delle falci gira al contrario, su un cerchio più largo. +1 falce, +2–3 danno.' },
+    { quantita: 4, danno: 9, dannoMassimo: 12, raggio: 132, giri: 0.59, potenziale: true, testo: 'Potenziale: metà delle falci gira al contrario, su un cerchio più largo. +1 falce, +2–3 danno.' },
   ],
 };
 
@@ -78,7 +78,7 @@ const FUOCO_FATUO_STANZE: ConIntervallo<FuocoFatuo> = {
     { ricarica: 1.3, quantita: 2, danno: 7, dannoMassimo: 11, trapassa: 1, testo: '+1 fuoco.' },
     { ricarica: 1.3, quantita: 2, danno: 10, dannoMassimo: 15, trapassa: 1, testo: '+3–4 danno.' },
     { ricarica: 1, quantita: 3, danno: 10, dannoMassimo: 15, trapassa: 1, testo: '+1 fuoco, ricarica più rapida.' },
-    { ricarica: 1, quantita: 4, danno: 13, dannoMassimo: 20, trapassa: 1, potenziale: true, testo: 'Potenziale: inseguono per primi chi prepara un attacco e lo interrompono. +1 fuoco, +3–5 danno.' },
+    { ricarica: 1, quantita: 4, danno: 13, dannoMassimo: 20, trapassa: 1, potenziale: true, testo: 'Potenziale: il primo nemico che un fuoco trapassa lo ritrova: il fuoco rimbalza sul muro e torna a colpirlo. +1 fuoco, +3–5 danno.' },
   ],
 };
 
@@ -113,7 +113,7 @@ const LAPIDE_STANZE: ConIntervallo<Lapide> = {
     { ricarica: 3.2, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: '+10–20 danno, impatto più largo.' },
     { ricarica: 2.8, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: 'Cade più spesso.' },
     { ricarica: 2.8, danno: 50, dannoMassimo: 110, raggio: 96, quantita: 2, testo: '+1 lapide, +10–20 danno.' },
-    { ricarica: 2.4, danno: 70, dannoMassimo: 150, raggio: 110, quantita: 2, potenziale: true, testo: 'Potenziale: la lapide resta in piedi 3 s e blocca nemici e grumi. +20–40 danno.' },
+    { ricarica: 3.2, danno: 70, dannoMassimo: 150, raggio: 110, quantita: 2, potenziale: true, testo: 'Potenziale: la lapide resta in piedi 3 s e blocca nemici e grumi. +20–40 danno.' },
   ],
 };
 
@@ -166,10 +166,10 @@ const SAMPIETRINI_STANZE: ConIntervallo<Sampietrini> = {
  * I potenziali del livello 5 (scelti da Edoardo il 14/11 tra 5 proposte per Eco; i numeri sono di Claude, da rivedere).
  */
 export const POTENZIALI = {
-  candela: { figlie: 2, apertura: 0.7, sterzo: 6, vita: 0.9 }, // una fiammella che uccide si divide in 2 (aperte di 0,7 rad, inseguono, vivono 0,9 s; non si dividono più)
-  falce: { anello: 1.5 }, // metà delle falci gira al contrario su un cerchio 1,5 volte più largo
+  candela: { figlie: 2, apertura: 0.7, sterzo: 6, vita: 0.9, danno: 0.5 }, // una fiammella che uccide si divide in 2 (aperte di 0,7 rad, inseguono, vivono 0,9 s, metà danno; non si dividono più)
+  falce: { anello: 1.35 }, // metà delle falci gira al contrario su un cerchio 1,35 volte più largo
   campana: {}, // il rintocco interrompe gli avvisi dei nemici nel suo raggio; in cambio la ricarica sale (vedi il livello 5)
-  fuocoFatuo: { preda: 0.25 }, // chi prepara un attacco sembra 4 volte più vicino (lo inseguono per primi); il colpo interrompe l'avviso
+  fuocoFatuo: { ritorno: 1.5, sterzo: 10 }, // trapassato il primo nemico va dritto al muro, rimbalza e torna da lui: dopo il muro vive almeno 1,5 s e gira più svelto (10)
   acquaSanta: { cura: 1 }, // salute al secondo dentro una pozza (le pozze non si sommano)
   lamaDiLuce: {}, // il fendente parte anche ai due lati (avanti e dietro li ha già)
   lapide: { resta: 3, raggio: 22 }, // resta in piedi 3 s come un muro largo 22 px: nemici e grumi non passano

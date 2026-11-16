@@ -92,7 +92,7 @@ export class LabStanze {
     while (this.s.arsenale.livello(a) < a.livelli.length) this.s.arsenale.potenzia(a);
   }
 
-  /** Quanti attacchi dei nemici sono stati interrotti (Campana e Fuoco fatuo al potenziale). */
+  /** Quanti attacchi dei nemici sono stati interrotti (Campana al potenziale). */
   interrotti(): number {
     return this.s.nemici.interrotti;
   }

@@ -210,6 +210,7 @@ export class Stanze extends Phaser.Scene {
     // potenziali degli Echi (gioco a stanze): interrompere gli attacchi, le lapidi che fanno da muro, il Cerchio che abbaglia
     this.arsenale.interrompi = (j) => this.nemici.interrompi(j);
     this.arsenale.inAvviso = (j) => this.nemici.inAvviso(j);
+    this.arsenale.campo = { x0: STANZA.muroLati, y0: STANZA.muroAlto, x1: STANZA.larghezza - STANZA.muroLati, y1: STANZA.altezza - STANZA.muroBasso };
     this.nemici.muri = this.arsenale.muri;
     this.nemici.statoArma = (j) => this.arsenale.statoDaFuori(j, CODICE_AFFINITA.luce, F.abilita);
     this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce, fonte === FONTE.lanterna ? F.lanterna : F.abilita);

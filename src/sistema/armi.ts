@@ -290,7 +290,9 @@ export class Arsenale extends ArsenaleVicine {
           const k = (this.storiaI + PASSI_STORIA - Math.min(PASSI_STORIA - 1, Math.round(U.lama.ritardo * 60))) % PASSI_STORIA;
           this.fendente(this.dx, this.dy, l.lunghezza * area, l.danno, this.storiaX[k], this.storiaY[k]);
         }
-        if (l.spalle) this.ritarda(a, a.ritardoSpalle, l.lunghezza * area, l.danno, Math.atan2(-this.dy, -this.dx));
+        // al potenziale i quattro fendenti della croce partono insieme; prima quello alle spalle arriva un attimo dopo
+        if (l.spalle && this.potenziale[F.lamaDiLuce]) this.fendente(-this.dx, -this.dy, l.lunghezza * area, l.danno);
+        else if (l.spalle) this.ritarda(a, a.ritardoSpalle, l.lunghezza * area, l.danno, Math.atan2(-this.dy, -this.dx));
         return l.ricarica;
       }
       case 'turibolo': {

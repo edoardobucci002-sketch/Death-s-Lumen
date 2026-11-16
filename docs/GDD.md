@@ -846,12 +846,12 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 
 | Eco | Potenziale (livello 5) |
 | --- | --- |
-| Candela | una fiammella che uccide si divide in 2 fiammelle, aperte a ventaglio, che inseguono il nemico più vicino per 0,9 s; le figlie non si dividono più |
-| Falce | due anelli: metà delle falci gira al contrario, su un cerchio 1,5 volte più largo |
+| Candela | una fiammella che uccide si divide in 2 fiammelle, aperte a ventaglio, che inseguono il nemico più vicino per 0,9 s e fanno metà danno; le figlie non si dividono più |
+| Falce | due anelli: metà delle falci gira al contrario, su un cerchio 1,35 volte più largo (l'anello interno al livello 5 è di 132 px, quello esterno di 178) |
 | Campana | il rintocco interrompe l'attacco che i nemici nel suo raggio stanno preparando (l'avviso si spegne e il nemico si riprende); in cambio suona più di rado (ricarica 2,6 s, era 1,8) e il doppio rintocco sparisce (nota di Edoardo) |
-| Fuoco fatuo | i fuochi inseguono per primi chi prepara un attacco (sembra 4 volte più vicino) e il colpo lo interrompe |
+| Fuoco fatuo | il primo nemico che un fuoco colpisce lo trapassa senza fermarlo: il fuoco va dritto fino al muro senza colpire nessuno, ci rimbalza una volta e torna a colpire lo stesso nemico (se è già morto, insegue il più vicino); dopo il muro vive almeno 1,5 s e gira più svelto |
 | Acqua santa | dentro una pozza recuperi 1 di salute al secondo (le pozze non si sommano) |
-| Lama di luce | il fendente è una croce: avanti, dietro e ai due lati |
+| Lama di luce | il fendente è una croce: avanti, dietro e ai due lati, tutti e quattro nello stesso momento |
 | Lapide | la lapide resta in piedi 3 s come un muro largo 22 px: i nemici non la attraversano e i grumi ci scoppiano contro |
 | Rosario spezzato | ogni rimbalzo fa il 15% di danno in più del precedente |
 | Corvo | il nemico beccato subisce +20% di danno da tutto per 3 s |
@@ -878,7 +878,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 0,95 | 6–9 | 2 | 1 | +1 fiammella. |
 | 3 | 0,95 | 8–12 | 2 | 2 | +2–3 danno, le fiammelle trapassano un nemico in più. |
 | 4 | 0,75 | 8–12 | 3 | 2 | +1 fiammella, ricarica più rapida. |
-| 5 | 0,75 | 11–16 | 4 | 3 | Potenziale: una fiammella che uccide si divide in 2. +1 fiammella, +3–4 danno. |
+| 5 | 0,75 | 11–16 | 3 | 3 | Potenziale: una fiammella che uccide si divide in 2, a metà danno. +3–4 danno. |
 
 #### Stanze · Falce
 
@@ -888,7 +888,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 2 | 5–7 | 132 | 0,45 | +1 falce. |
 | 3 | 2 | 7–9 | 160 | 0,45 | +2 danno, raggio più ampio. |
 | 4 | 3 | 7–9 | 160 | 0,45 | +1 falce. |
-| 5 | 4 | 9–12 | 160 | 0,59 | Potenziale: metà delle falci gira al contrario, su un cerchio più largo. +1 falce, +2–3 danno. |
+| 5 | 4 | 9–12 | 132 | 0,59 | Potenziale: metà delle falci gira al contrario, su un cerchio più largo. +1 falce, +2–3 danno. |
 
 #### Stanze · Campana
 
@@ -908,7 +908,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 1,3 | 2 | 7–11 | 1 | +1 fuoco. |
 | 3 | 1,3 | 2 | 10–15 | 1 | +3–4 danno. |
 | 4 | 1 | 3 | 10–15 | 1 | +1 fuoco, ricarica più rapida. |
-| 5 | 1 | 4 | 13–20 | 1 | Potenziale: inseguono per primi chi prepara un attacco e lo interrompono. +1 fuoco, +3–5 danno. |
+| 5 | 1 | 4 | 13–20 | 1 | Potenziale: il primo nemico che un fuoco trapassa lo ritrova: il fuoco rimbalza sul muro e torna a colpirlo. +1 fuoco, +3–5 danno. |
 
 #### Stanze · Acqua santa
 
@@ -938,7 +938,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 2 | 3,2 | 40–90 | 96 | 1 | +10–20 danno, impatto più largo. |
 | 3 | 2,8 | 40–90 | 96 | 1 | Cade più spesso. |
 | 4 | 2,8 | 50–110 | 96 | 2 | +1 lapide, +10–20 danno. |
-| 5 | 2,4 | 70–150 | 110 | 2 | Potenziale: la lapide resta in piedi 3 s e blocca nemici e grumi. +20–40 danno. |
+| 5 | 3,2 | 70–150 | 110 | 2 | Potenziale: la lapide resta in piedi 3 s e blocca nemici e grumi. +20–40 danno. |
 
 #### Stanze · Rosario spezzato
 

@@ -106,6 +106,8 @@ export abstract class ArsenaleColpo {
   interrompi: ((j: number) => void) | null = null;
   /** Gioco a stanze: il nemico j sta preparando un attacco (il suo avviso è a terra)? */
   inAvviso: ((j: number) => boolean) | null = null;
+  /** Gioco a stanze: il pavimento chiuso dai muri (il Fuoco fatuo al potenziale ci rimbalza). null = niente muri (survivor). */
+  campo: { x0: number; y0: number; x1: number; y1: number } | null = null;
   /** Gioco a stanze: le lapidi in piedi (Lapide al potenziale), muri tondi che nemici e grumi non passano. */
   readonly muri = { n: 0, x: new Float32Array(MAX_LAPIDI), y: new Float32Array(MAX_LAPIDI), r: 0 };
   eclissi = 0; // Eclissi in questa notte (impresa del Rosario spezzato)
@@ -191,6 +193,10 @@ export abstract class ArsenaleColpo {
   protected prResto = new Uint8Array(MAX_PROIETTILI); // nemici che può ancora trapassare
   protected prUnione = new Uint8Array(MAX_PROIETTILI); // SCIA o RACCOGLIE
   protected prColpiti = new Uint32Array(MAX_PROIETTILI * 4); // id dei nemici già colpiti (fino a 4)
+  // Fuoco fatuo al potenziale: 0 = normale, 1 = ha trapassato il primo nemico e va dritto al muro, 2 = torna da lui
+  protected prRitorno = new Uint8Array(MAX_PROIETTILI);
+  protected prBersaglio = new Int32Array(MAX_PROIETTILI); // il nemico trapassato (indice nell'orda)
+  protected prBersaglioId = new Uint32Array(MAX_PROIETTILI); // e il suo id, per riconoscerlo se l'indice cambia
   protected prSprite: Phaser.GameObjects.Sprite[] = [];
   protected raffica = 0; // dardi del bastone ancora da sparare nella raffica in corso
   protected attesaRaffica = 0;
