@@ -42,6 +42,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 16/11 — Dopo la prima prova della cripta: 1 o 2 rompibili, frammenti da subito, porte decise all'ingresso (scelte di Edoardo)
+- `ROMPIBILI_STANZE.quanti` da 1 a 2 (era da 2 a 4); `ROMPIBILI_STANZE.vittorie` 0 (nuovo: i frammenti escono da subito; nel survivor resta 1). Le porte si decidono all'ingresso con un caso loro: la sequenza delle carte non è più quella di prima a parità di seme.
+- `npm run sim-stanze` (24 partite, semi 2001–2024): **fetta completata 24 volte su 24**, salute alla fine 33. Attenzione: la misura comprende anche i ritocchi ai potenziali degli Echi di un'altra sessione, non ancora salvati quando è stata lanciata; danno subito per stanza 17, 21 e 31; Lanterna 69% del danno.
+
 ### 16/11 — Urna, giara e lanterna nelle stanze (decisioni di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
 - `ROMPIBILI_STANZE` (nuovo): da 2 a 4 per stanza, a 24–56 px dal muro, ad almeno 110 px dal centro delle porte e 72 px tra loro; ingombro 12 px; gocce e frammenti volano verso il personaggio entro il 60% della raccolta di base (come nel survivor). Contenuto, frammenti, olio e luce con i numeri del survivor.
 - `npm run sim-stanze` (24 partite, semi 2001–2024): **fetta completata 19 volte su 24** (era 20), salute alla fine 45 (era 37), 5 cadute tutte nella stanza 3; differenze dentro il rumore (±12 punti). Danno subito per stanza 17, 22 e 27; A partita 42 nemici battuti, 84 colpi della Lanterna, 4,1 Cerchi di luce. Parte del danno: Lanterna 68%, Lapide 23%, Cerchio di luce 13%. Il bot non cerca i rompibili: ci sbatte contro e li rompe solo se capitano nei colpi.
