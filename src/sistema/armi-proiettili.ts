@@ -9,7 +9,7 @@ import { suona } from './audio';
 import { PROFONDITA } from './effetti';
 import { EFFETTI } from '../data/effetti';
 import { BASTONE, CANDELA, SAMPIETRINI, CORVO, ROSARIO_SPEZZATO } from '../data/armi';
-import { POTENZIALI } from '../data/armi-stanze';
+import { POTENZIALI, ROSARIO_VOLO } from '../data/armi-stanze';
 import { NUMERI_UNIONI as U } from '../data/unioni';
 import { CHIAZZE, ROMPIBILI } from '../data/rompibili';
 import { SASSO_LARGO, SPRITE_SCIA } from './segnaposto-oggetti';
@@ -151,8 +151,31 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.grPieni[i] = this.grResto[i];
     this.grRipartito[i] = 0;
     this.grDanno[i] = danno;
+    this.grVerso[i] = -1;
+    // gioco a stanze: il grano parte da te e vola verso il primo nemico (lo colpisce quando arriva)
+    if (this.campo && this.scena.anims.exists(`${ROSARIO_VOLO.grano}:idle`)) {
+      this.grX[i] = this.px;
+      this.grY[i] = this.py;
+      this.grSprite[i].setTexture(ROSARIO_VOLO.grano, '0').setScale(1).play(`${ROSARIO_VOLO.grano}:idle`);
+      const s = this.grSprite[i];
+      s.setOrigin(ROSARIO_VOLO.pernoGrano[0] / s.width, ROSARIO_VOLO.pernoGrano[1] / s.height).setVisible(true);
+      this.voloGrano(i, j);
+      return;
+    }
     this.grSprite[i].setVisible(true);
     this.rimbalza(i, j);
+  }
+
+  /** Gioco a stanze: il grano i parte dal punto in cui è verso il nemico j. */
+  protected voloGrano(i: number, j: number): void {
+    const o = this.orda;
+    this.grDaX[i] = this.grX[i];
+    this.grDaY[i] = this.grY[i];
+    this.grVerso[i] = j;
+    this.grVersoId[i] = o.id[j];
+    this.grAX[i] = o.x[j];
+    this.grAY[i] = o.y[j] - o.raggio[j];
+    this.grTempo[i] = ROSARIO_VOLO.durata;
   }
 
   /** Rosario dei vespri: dal nemico j (appena ucciso) riparte un grano con i rimbalzi e il danno del grano i. */
@@ -162,7 +185,8 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.grColpiti.fill(0, k * MAX_RIMBALZI, (k + 1) * MAX_RIMBALZI);
     this.grResto[k] = this.grPieni[k] = this.grPieni[i];
     this.grDanno[k] = this.grDanno[i];
-    this.grRipartito[k] = ++this.grRipartito[i]; // ripartenze già usate dal lancio (U.rosario.ripartenze): niente catene senza fine
+    this.grRipartito[k] = ++this.grRipartito[i];
+    this.grVerso[k] = -1; // ripartenze già usate dal lancio (U.rosario.ripartenze): niente catene senza fine
     this.grX[k] = o.x[j];
     this.grY[k] = o.y[j] - o.raggio[j];
     this.grTempo[k] = ROSARIO_SPEZZATO.intervallo; // al prossimo rimbalzo cerca il nemico più vicino
@@ -187,8 +211,29 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
   }
 
   protected aggiornaGrani(dt: number): void {
+    const o = this.orda;
     for (let i = this.grani - 1; i >= 0; i--) {
       this.grTempo[i] -= dt;
+      const verso = this.grVerso[i];
+      if (verso >= 0) {
+        // gioco a stanze: in volo verso il nemico (se è morto o sparito, verso l'ultimo punto in cui era), con un piccolo arco
+        const vivo = verso < o.numero && o.id[verso] === this.grVersoId[i] && o.salute[verso] > 0;
+        if (vivo) {
+          this.grAX[i] = o.x[verso];
+          this.grAY[i] = o.y[verso] - o.raggio[verso];
+        }
+        const u = Math.min(1, 1 - this.grTempo[i] / ROSARIO_VOLO.durata);
+        this.grX[i] = this.grDaX[i] + (this.grAX[i] - this.grDaX[i]) * u;
+        this.grY[i] = this.grDaY[i] + (this.grAY[i] - this.grDaY[i]) * u - ROSARIO_VOLO.arco * 4 * u * (1 - u);
+        if (this.grTempo[i] > 0) continue;
+        this.grVerso[i] = -1;
+        this.fonte = F.rosarioSpezzato;
+        if (vivo) {
+          this.rimbalza(i, verso);
+          this.colpoGrano(this.grX[i], this.grY[i]);
+        }
+        this.grTempo[i] = 0;
+      }
       if (this.grTempo[i] > 0) continue;
       this.fonte = F.rosarioSpezzato;
       this.rompibili?.colpitoDa(this.grX[i], this.grY[i], ROMPIBILI.raggio);
@@ -203,7 +248,8 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
         j = this.cMigliore;
       }
       if (j >= 0) {
-        this.rimbalza(i, j);
+        if (this.campo && this.scena.anims.exists(`${ROSARIO_VOLO.grano}:idle`)) this.voloGrano(i, j); // gioco a stanze: vola
+        else this.rimbalza(i, j);
         continue;
       }
       const u = --this.grani, s = this.grSprite[i];
@@ -215,6 +261,12 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
       this.grDanno[i] = this.grDanno[u];
       this.grPieni[i] = this.grPieni[u];
       this.grRipartito[i] = this.grRipartito[u];
+      this.grVerso[i] = this.grVerso[u];
+      this.grVersoId[i] = this.grVersoId[u];
+      this.grDaX[i] = this.grDaX[u];
+      this.grDaY[i] = this.grDaY[u];
+      this.grAX[i] = this.grAX[u];
+      this.grAY[i] = this.grAY[u];
       this.grColpiti.copyWithin(i * MAX_RIMBALZI, u * MAX_RIMBALZI, (u + 1) * MAX_RIMBALZI);
       this.grSprite[i] = this.grSprite[u];
       this.grSprite[u] = s;
@@ -444,7 +496,9 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     this.cRX = this.prOX[i];
     this.cRY = this.prOY[i];
     this.cRAperta = REAZIONI.esorcismo.vita;
-    this.ferisci(j, this.prDanno[i], 0, this.prVX[i] / v, this.prVY[i] / v, this.prAff[i], STATI.probabilita, true, this.prReazione[i]);
+    // Fuoco fatuo al potenziale: il colpo del ritorno fa meno danno (POTENZIALI.fuocoFatuo.danno)
+    const danno = torna ? this.prDanno[i] * POTENZIALI.fuocoFatuo.danno : this.prDanno[i];
+    this.ferisci(j, danno, 0, this.prVX[i] / v, this.prVY[i] / v, this.prAff[i], STATI.probabilita, true, this.prReazione[i]);
     // Candela al potenziale: una fiammella (non già nata da un'altra) che uccide si divide (le figlie partono a fine passo)
     if (this.prFonte[i] === F.candela && this.potenziale[F.candela] && this.prUnione[i] !== FIGLIA && o.salute[j] <= 0 && this.divisioni < MAX_DIVISIONI) {
       const k = this.divisioni++;

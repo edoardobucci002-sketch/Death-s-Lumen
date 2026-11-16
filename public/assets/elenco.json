@@ -638,6 +638,22 @@
       "tag": []
     },
     {
+      "chiave": "Pixelfx_Rosario_colpo",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Rosario_colpo.png",
+      "dati": "assets/effetti/Pixelfx_Rosario_colpo.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
+      "chiave": "Pixelfx_Rosario_grano",
+      "categoria": "effetti",
+      "immagine": "assets/effetti/Pixelfx_Rosario_grano.png",
+      "dati": "assets/effetti/Pixelfx_Rosario_grano.json",
+      "versioneFile": 0,
+      "tag": []
+    },
+    {
       "chiave": "Pixelfx_Sepoltura_mani",
       "categoria": "effetti",
       "immagine": "assets/effetti/Pixelfx_Sepoltura_mani.png",

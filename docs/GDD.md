@@ -805,7 +805,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Valore dell'abilità | Numero | Note |
 | --- | --- | --- |
 | Carica | 8 colpi a segno; il cerchio abbaglia ogni 0,3 s | un colpo conta 1, solo con la Lanterna |
-| Colpo dell'accensione | 20–30 | una volta sola (*da rivedere*) |
+| Colpo dell'accensione | 20–30 | una volta sola (confermato da Edoardo il 16/11) |
 | Pulsante | 36 pixel disegnati, 14 px dal joystick d'attacco; area di tocco 10 punti più larga | ingrandito come i joystick |
 
 **Tre stanze, porte e carte** (passo 6, decisioni di Edoardo del 13/11; `PERCORSO` e `PORTE` in `src/data/stanze.ts`, `src/sistema/percorso.ts`, `src/sistema/porte.ts`). Numeri di Claude, *da rivedere*.
@@ -850,7 +850,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Candela | una fiammella che uccide si divide in 2 fiammelle, aperte a ventaglio, che inseguono il nemico più vicino per 0,9 s e fanno metà danno; le figlie non si dividono più |
 | Falce | due anelli: metà delle falci gira al contrario, su un cerchio 1,35 volte più largo (l'anello interno al livello 5 è di 132 px, quello esterno di 178) |
 | Campana | il rintocco interrompe l'attacco che i nemici nel suo raggio stanno preparando (l'avviso si spegne e il nemico si riprende); in cambio suona più di rado (ricarica 2,6 s, era 1,8) e il doppio rintocco sparisce (nota di Edoardo) |
-| Fuoco fatuo | il primo nemico che un fuoco colpisce lo trapassa senza fermarlo: il fuoco va dritto fino al muro senza colpire nessuno, ci rimbalza una volta e torna a colpire lo stesso nemico (se è già morto, insegue il più vicino); dopo il muro vive almeno 1,5 s e gira più svelto |
+| Fuoco fatuo | il primo nemico che un fuoco colpisce lo trapassa senza fermarlo: il fuoco va dritto fino al muro senza colpire nessuno, ci rimbalza una volta e torna a colpire lo stesso nemico con il 70% del danno (se è già morto, insegue il più vicino); dopo il muro vive almeno 1,5 s e gira più svelto |
 | Acqua santa | dentro una pozza recuperi 1 di salute al secondo (le pozze non si sommano) |
 | Lama di luce | il fendente è una croce: avanti, dietro e ai due lati, tutti e quattro nello stesso momento |
 | Lapide | la lapide resta in piedi 3 s come un muro largo 22 px: i nemici non la attraversano e i grumi ci scoppiano contro |
@@ -942,6 +942,8 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | 5 | 3,2 | 70–150 | 110 | 2 | Potenziale: la lapide resta in piedi 3 s e blocca nemici e grumi. +20–40 danno. |
 
 #### Stanze · Rosario spezzato
+
+Nel gioco a stanze il grano **vola**: parte da te e va da un nemico all'altro in 0,14 s con un piccolo arco alto 10 px, e colpisce quando arriva (nel survivor salta all'istante ogni 0,09 s). In volo è una perla di vetro viola, su ogni nemico scoppia con una croce di luce e un anello che si rompe (effetti pixelfx, `ROSARIO_VOLO` in `src/data/armi-stanze.ts`; numeri di Claude, *da rivedere*).
 
 | Lv | Ricarica (s) | Danno | Rimbalzi | Quantità | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |

@@ -169,7 +169,7 @@ export const POTENZIALI = {
   candela: { figlie: 2, apertura: 0.7, sterzo: 6, vita: 0.9, danno: 0.5 }, // una fiammella che uccide si divide in 2 (aperte di 0,7 rad, inseguono, vivono 0,9 s, metà danno; non si dividono più)
   falce: { anello: 1.35 }, // metà delle falci gira al contrario su un cerchio 1,35 volte più largo
   campana: {}, // il rintocco interrompe gli avvisi dei nemici nel suo raggio; in cambio la ricarica sale (vedi il livello 5)
-  fuocoFatuo: { ritorno: 1.5, sterzo: 10 }, // trapassato il primo nemico va dritto al muro, rimbalza e torna da lui: dopo il muro vive almeno 1,5 s e gira più svelto (10)
+  fuocoFatuo: { ritorno: 1.5, sterzo: 10, danno: 0.7 }, // trapassato il primo nemico va dritto al muro, rimbalza e torna da lui: dopo il muro vive almeno 1,5 s e gira più svelto (10); il colpo del ritorno fa il 70% del danno
   acquaSanta: { cura: 1 }, // salute al secondo dentro una pozza (le pozze non si sommano)
   lamaDiLuce: {}, // il fendente parte anche ai due lati (avanti e dietro li ha già)
   lapide: { resta: 3, raggio: 22 }, // resta in piedi 3 s come un muro largo 22 px: nemici e grumi non passano
@@ -177,6 +177,17 @@ export const POTENZIALI = {
   corvo: { danno: 0.2, durata: 3 }, // il nemico beccato subisce +20% di danno da tutto per 3 s
   veloFunebre: { crescita: 1, allarga: 1.5, stringe: 0.4 }, // fermo, il raggio cresce fino a ×2 in 1,5 s; camminando torna normale in 0,4 s
   sampietrini: { cerca: 220 }, // il rimbalzo va verso il nemico più vicino entro 220 px dal punto in cui il sasso tocca terra
+} as const;
+
+/**
+ * Il grano del Rosario spezzato nel gioco a stanze (16/11, richiesta di Edoardo: «manca l'animazione di lancio»; numeri di
+ * Claude, da rivedere): invece di saltare all'istante da un nemico all'altro, vola per «durata» secondi con un piccolo arco
+ * alto «arco» px e colpisce quando arriva. Gli effetti sono disegnati con pixelfx (tools/pixelfx/fx/rosario): il grano in
+ * volo e il colpo, con i loro perni (il punto del foglio che cade sul grano e sul nemico) e «fps» fotogrammi al secondo.
+ */
+export const ROSARIO_VOLO = {
+  durata: 0.14, arco: 10,
+  grano: 'Pixelfx_Rosario_grano', pernoGrano: [8, 8], colpo: 'Pixelfx_Rosario_colpo', pernoColpo: [25, 20], fps: 12,
 } as const;
 
 /** Gli Echi che le carte del gioco a stanze possono offrire (le armi comuni del survivor, con i numeri di qui). */

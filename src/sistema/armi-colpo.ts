@@ -21,6 +21,7 @@ import type { Anime } from './anime';
 import type { Chiazze } from './chiazze';
 import type { Rompibili } from './rompibili';
 import { ROMPIBILI } from '../data/rompibili';
+import { ROSARIO_VOLO } from '../data/armi-stanze';
 import { creaSpriteOggetti, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SASSO, SPRITE_VELO } from './segnaposto-oggetti';
 
 export const NUBE = 1;
@@ -251,6 +252,13 @@ export abstract class ArsenaleColpo {
   protected grRipartito = new Uint8Array(MAX_GRANI); // ripartenze già usate da questo lancio (Rosario dei vespri)
   protected grColpiti = new Uint32Array(MAX_GRANI * MAX_RIMBALZI);
   protected grSprite: Phaser.GameObjects.Sprite[] = [];
+  // gioco a stanze: il grano vola verso il nemico grVerso (−1 = fermo) partendo da (grDaX, grDaY); grAX, grAY l'ultimo punto visto del bersaglio
+  protected grVerso = new Int32Array(MAX_GRANI).fill(-1);
+  protected grVersoId = new Uint32Array(MAX_GRANI);
+  protected grDaX = new Float32Array(MAX_GRANI);
+  protected grDaY = new Float32Array(MAX_GRANI);
+  protected grAX = new Float32Array(MAX_GRANI);
+  protected grAY = new Float32Array(MAX_GRANI);
 
   // corvi e aura del Velo
   protected corvi = 0;
@@ -349,6 +357,12 @@ export abstract class ArsenaleColpo {
     for (let i = 0; i < MAX_SASSI; i++) this.ssSprite.push(scena.add.sprite(0, 0, SPRITE_SASSO).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_LAPIDI; i++) this.lpSprite.push(scena.add.sprite(0, 0, SPRITE_LAPIDE).setOrigin(0.5, 1).setScale(LAPIDE.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
     for (let i = 0; i < MAX_GRANI; i++) this.grSprite.push(scena.add.sprite(0, 0, SPRITE_GRANO).setDepth(PROFONDITA.sopra).setVisible(false));
+    // gli effetti pixelfx del Rosario (gioco a stanze): le loro animazioni, se i fogli ci sono
+    for (const [chiave, ripeti] of [[ROSARIO_VOLO.grano, -1], [ROSARIO_VOLO.colpo, 0]] as const) {
+      if (!scena.textures.exists(chiave) || scena.anims.exists(`${chiave}:idle`)) continue;
+      const n = scena.textures.get(chiave).frameTotal - 1; // senza il fotogramma __BASE
+      scena.anims.create({ key: `${chiave}:idle`, frames: Array.from({ length: n }, (_, k) => ({ key: chiave, frame: String(k) })), frameRate: ROSARIO_VOLO.fps, repeat: ripeti });
+    }
     for (let i = 0; i < MAX_CORVI; i++) this.cvSprite.push(scena.add.sprite(0, 0, SPRITE_CORVO).setScale(CORVO.ingrandimento).setDepth(PROFONDITA.sopra).setVisible(false));
     this.velo = scena.add.image(0, 0, SPRITE_VELO).setDepth(PROFONDITA.aTerra).setVisible(false);
   }
@@ -657,6 +671,20 @@ export abstract class ArsenaleColpo {
   }
 
   /** Mostra un effetto centrato in (x, y) per durata secondi; con raggio > 0 lo ingrandisce fino a coprire quell'area. */
+  /** Gioco a stanze: il colpo del grano del Rosario sul nemico (effetto pixelfx a grandezza vera). */
+  protected colpoGrano(x: number, y: number): void {
+    const V = ROSARIO_VOLO, anim = this.scena.anims.get(`${V.colpo}:idle`);
+    if (!anim) return;
+    let i = 0;
+    while (i < MAX_EFFETTI && this.vitaEffetto[i] > 0) i++;
+    if (i === MAX_EFFETTI) return;
+    const s = this.sprEffetti[i].setTexture(V.colpo, '0');
+    s.setOrigin(V.pernoColpo[0] / s.width, V.pernoColpo[1] / s.height).setFlipX(false).setRotation(0).setScale(1)
+      .setPosition(Math.round(x), Math.round(y)).setDepth(PROFONDITA.sopra + 1).setVisible(true);
+    s.play({ key: anim.key, repeat: 0 });
+    this.vitaEffetto[i] = anim.frames.length / V.fps;
+  }
+
   protected effetto(chiave: string, x: number, y: number, raggio: number, profondita: number, durata: number): Phaser.GameObjects.Sprite | null {
     let i = 0;
     while (i < MAX_EFFETTI && this.vitaEffetto[i] > 0) i++;

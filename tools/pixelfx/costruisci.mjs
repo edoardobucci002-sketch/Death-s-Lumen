@@ -195,4 +195,19 @@ for (const [raggio, amp] of [[136, 132], [160, 132], [183, 166]]) {
   const r = { frames: tutti, w: geo.w, h: geo.h, perno: geo.perno };
   totale += salva(`Fendente_${raggio}`, r, r.frames.map(() => 40), raggio);
 }
+// 7) Rosario spezzato (gioco a stanze, richiesta di Edoardo del 16/11: «manca l'animazione di lancio»): il grano in volo
+//    (giro di 0,4 s) e il colpo su ogni nemico (0,42 s), disegnati per il gioco (tools/pixelfx/fx/rosario) con il viola
+//    della maledizione (STATI.maledetto). Visti dall'alto, rotondi: il volo lo fa il gioco
+{
+  const fx = await loadEffect('rosario/grano', join(QUI, 'fx'));
+  const x = rendi(fx, { fps: FPS, opzioni: {} });
+  const r = rifila(x.frames, x.w, x.h, x.perno);
+  totale += salva('Rosario_grano', r, r.frames.map(() => Math.round(1000 / FPS)));
+}
+{
+  const fx = await loadEffect('rosario/colpo', join(QUI, 'fx'));
+  const x = rendi(fx, { fps: FPS, opzioni: {} });
+  const r = rifila(x.frames, x.w, x.h, x.perno);
+  totale += salva('Rosario_colpo', r, r.frames.map(() => Math.round(1000 / FPS)));
+}
 console.log(`totale memoria video ≈ ${totale.toFixed(1)} MB`);
