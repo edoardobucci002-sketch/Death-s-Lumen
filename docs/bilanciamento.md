@@ -50,6 +50,11 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - `ROMPIBILI_STANZE` (nuovo): da 2 a 4 per stanza, a 24–56 px dal muro, ad almeno 110 px dal centro delle porte e 72 px tra loro; ingombro 12 px; gocce e frammenti volano verso il personaggio entro il 60% della raccolta di base (come nel survivor). Contenuto, frammenti, olio e luce con i numeri del survivor.
 - `npm run sim-stanze` (24 partite, semi 2001–2024): **fetta completata 19 volte su 24** (era 20), salute alla fine 45 (era 37), 5 cadute tutte nella stanza 3; differenze dentro il rumore (±12 punti). Danno subito per stanza 17, 22 e 27; A partita 42 nemici battuti, 84 colpi della Lanterna, 4,1 Cerchi di luce. Parte del danno: Lanterna 68%, Lapide 23%, Cerchio di luce 13%. Il bot non cerca i rompibili: ci sbatte contro e li rompe solo se capitano nei colpi.
 
+### 16/11 — Lama di luce rifatta: accieca chi schivi (numeri di Claude, *da rivedere*; il survivor non cambia)
+- La Lama non ferisce più (danno 0, nessun fendente). Alla schivata perfetta il nemico schivato è cieco 3, 3,5, 4, 4,5 e 5 s (livelli 1–5) e sbaglia la mira di 80, 85, 90, 95 e 100 gradi, da una parte o dall'altra. Il graffio del Ricaduto è largo 110°: con più di 55° per lato lo manca. Il grumo del Cantore cieco non cerca più il Lampionaio. Potenziale (livello 5): la cecità passa ai nemici entro 150 px (`POTENZIALI.lamaDiLuce.raggio`).
+- Simulazione `npm run sim-stanze -- 8 potenziali`: con la Lama sola e al livello 5 la fetta è completata 8 volte su 8, salute alla fine 43 (la più bassa degli Echi, ma il bot non cerca la schivata perfetta: non si legge niente sul valore reale della Lama). Il danno della Lama è 0 per costruzione.
+- `npm run prova`: aggiunto il controllo «Lama di luce: acceca dal LAB» (2 nemici accecati, cioè il nemico e un vicino).
+
 ### 16/11 — Fuoco fatuo un po' più debole, il grano del Rosario vola (numeri di Claude, *da rivedere*)
 - **Fuoco fatuo** al potenziale: il colpo del ritorno fa il 70% del danno (`POTENZIALI.fuocoFatuo.danno` 0,7). Edoardo: «riduci leggermente il fuoco fatuo».
 - **Rosario spezzato** nel gioco a stanze: il grano vola 0,14 s da un nemico all'altro, con un arco di 10 px (`ROSARIO_VOLO`), invece di saltare ogni 0,09 s; il primo colpo arriva 0,14 s dopo il lancio. Nel survivor non cambia.
