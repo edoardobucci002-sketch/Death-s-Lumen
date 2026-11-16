@@ -46,6 +46,14 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 - `ROMPIBILI_STANZE` (nuovo): da 2 a 4 per stanza, a 24–56 px dal muro, ad almeno 110 px dal centro delle porte e 72 px tra loro; ingombro 12 px; gocce e frammenti volano verso il personaggio entro il 60% della raccolta di base (come nel survivor). Contenuto, frammenti, olio e luce con i numeri del survivor.
 - `npm run sim-stanze` (24 partite, semi 2001–2024): **fetta completata 19 volte su 24** (era 20), salute alla fine 45 (era 37), 5 cadute tutte nella stanza 3; differenze dentro il rumore (±12 punti). Danno subito per stanza 17, 22 e 27; A partita 42 nemici battuti, 84 colpi della Lanterna, 4,1 Cerchi di luce. Parte del danno: Lanterna 68%, Lapide 23%, Cerchio di luce 13%. Il bot non cerca i rompibili: ci sbatte contro e li rompe solo se capitano nei colpi.
 
+### 16/11 — I potenziali dopo la prova di Edoardo (numeri di Claude, *da rivedere*)
+- **Candela**: le figlie fanno metà danno (`POTENZIALI.candela.danno` 0,5) e al livello 5 le fiammelle restano 3 (erano 4). Edoardo: «troppo forte, forse la più forte; uccidevo qualsiasi cosa rimanendo fermo».
+- **Falce**: anello interno al livello 5 da 160 a 132 px, anello esterno da ×1,5 a ×1,35 (da 240 a 178 px). Edoardo: «restringerei l'ampiezza di entrambi i cerchi».
+- **Lapide**: ricarica al livello 5 da 2,4 a 3,2 s. Edoardo: «diminuirei la cadenza».
+- **Fuoco fatuo**: potenziale nuovo (vedi [decisioni.md](decisioni.md)); dopo il muro il fuoco vive almeno 1,5 s e gira con sterzata 10 (gli altri fuochi 6). Il vecchio numero `preda` 0,25 è tolto.
+- **Lama di luce**: al livello 5 il fendente alle spalle parte insieme agli altri tre (prima arrivava un attimo dopo). Nessun numero cambia.
+- Simulazione (`npm run sim-stanze -- 8 potenziali`, 88 partite, 0 errori): fetta completata 88/88, salute alla fine 66 (era 70). Danno al secondo dell'Eco al livello 5, prima › dopo: Candela 30 › 26 (salute alla fine 79 › 67), Falce 10 › 10,5, **Fuoco fatuo 30 › 39** (è il secondo dopo la Lapide), Lapide 63 › 57, Lama di luce 26 › 25. Gli altri come prima (differenze di rumore).
+
 ### 16/11 — I potenziali misurati uno per uno (nessun numero cambia)
 - `npm run sim-stanze -- 8 potenziali`: 8 partite per ognuno degli 11 Echi, che parte già al livello 5 (semi 2001–2008, carte preferite). Fetta completata **88 su 88**, salute alla fine 70 (contro 37 delle partite normali): con un Eco al livello 5 dall'inizio la fetta è facile, quindi la misura serve a confrontare gli Echi tra loro, non a dire quanto è difficile il gioco.
 - Danno al secondo dell'Eco al livello 5 (e la sua parte del danno): **Lapide 63 (71%)**, Candela 30 (58%), Fuoco fatuo 30 (56%), Rosario spezzato 28 (53%), Lama di luce 26 (51%), Corvo 25 (53%), Sampietrini 23 (44%), Campana 21 (42%), Acqua santa 13 (30%, in più cura), Velo funebre 10 (23%), **Falce 10 (22%)**. La Lanterna fa circa 15 al secondo.
