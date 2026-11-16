@@ -49,6 +49,7 @@ npm run dev        # apre il gioco in locale
 DEATH'S LUMEN/
   PERSONAGGI/<Nome personaggio>/   sorgenti Aseprite di Edoardo (ritratti e sprite in gioco)
   NEMICI/ EFFETTI/ OGGETTI/ ICONE/ stessa logica per gli altri asset (le icone si chiamano Icona_<Nome>)
+  AMBIENTI/<Luogo>/                le stanze del gioco a stanze (Cripta: pavimento, facciata, muri, porte; un fotogramma per pezzo)
   HUD/<Gruppo>/<Elemento>_V#.aseprite  interfaccia (Barre, Pulsanti, Cornici, Pannelli, Emblemi, Segnali);
                                    HUD/Tavole/ tiene le tavole originali (senza _V#, quindi non esportate)
   ANIMATION/  ARCHIVIO/            anteprime e archivio della v0

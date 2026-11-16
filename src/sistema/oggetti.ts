@@ -136,6 +136,11 @@ export class Oggetti {
     for (let k = segnale; k < MAX_SEGNALI; k++) this.segnali[k].setVisible(false);
   }
 
+  /** Via tutto ciò che è a terra (gioco a stanze: una stanza nuova). */
+  svuota(): void {
+    while (this.numero > 0) this.togli(this.numero - 1);
+  }
+
   private togli(i: number): void {
     const u = --this.numero;
     const s = this.sprite[i];

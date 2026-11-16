@@ -151,6 +151,11 @@ export class Chiazze {
     if (this.fuoco[i] > 0) this.arsenale.brucia(j, CHIAZZE.danno);
   }
 
+  /** Via tutte le chiazze (gioco a stanze: una stanza nuova). */
+  svuota(): void {
+    while (this.numero > 0) this.togli(this.numero - 1);
+  }
+
   private togli(i: number): void {
     const u = --this.numero;
     const s = this.sprite[i], a = this.alone[i];

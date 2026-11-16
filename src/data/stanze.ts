@@ -38,6 +38,25 @@ export const STANZA = {
 } as const;
 
 /**
+ * La cripta, la stanza del Mondo 1 (decisione di Edoardo del 16/11): i file in AMBIENTI/Cripta, un fotogramma per pezzo.
+ * Pavimento: 4 lastre da 64 (due lisce, una crepata, una con l'iscrizione). Facciata: 4 pezzi da 64 × 96 (due lisci, la
+ * nicchia con la candela spenta, il pilastro). I pesi dicono quanto spesso esce ognuno (da rivedere).
+ */
+export const CRIPTA = {
+  pavimento: 'Cripta_Pavimento',
+  facciata: 'Cripta_Facciata',
+  muri: 'Cripta_Muri',
+  porte: 'Cripta_Porte',
+  pesiPavimento: [5, 5, 1, 1],
+  pesiFacciata: [4, 4, 1, 1],
+  // Cripta_Muri: il muro di sinistra visto dall'alto (si ripete in verticale; a destra è lo specchio), l'angolo in basso, il muro in basso
+  fotogrammi: { lato: 0, angolo: 1, basso: 2 },
+  // Cripta_Porte: in alto chiusa e aperta (64 × 96, al posto di un pezzo della facciata), a sinistra chiusa e aperta
+  // (32 × 122, centrate sulla porta; a destra lo specchio), in basso chiusa (88 × 32)
+  fotogrammiPorte: { altoChiusa: 0, altoAperta: 1, latoChiusa: 2, latoAperta: 3, bassoChiusa: 4 },
+} as const;
+
+/**
  * Passo 3 della fetta: l'attacco a tasto con l'arma iniziale (la Lanterna del Lampionaio).
  * Ricarica, raggio, ampiezza e danno della Lanterna livello per livello sono in src/data/armi-stanze.ts
  * (LANTERNA_STANZE: 5 livelli, danno a intervallo, dal 14/11). Qui il resto. Tutti i valori sono da rivedere.

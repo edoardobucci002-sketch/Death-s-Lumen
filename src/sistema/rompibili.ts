@@ -4,6 +4,8 @@
  * Una lanterna intera apre un foro nel buio e scalda il terreno intorno; anche una chiazza accesa fa luce.
  * Il mondo è diviso in settori: da seme e settore si ricava sempre lo stesso oggetto, quindi non serve ricordare
  * la mappa ma solo i settori già rotti. Il generatore è a parte: non cambia nemici, carte e drop.
+ * Nel gioco a stanze (dal 16/11, settori spenti) li dispone la stanza: niente settori, non si rompono al tocco e fanno
+ * da ostacolo (spingi), si rompono con i colpi delle armi e con la Lanterna a mano (colpitoArco).
  */
 import Phaser from 'phaser';
 import { LUCE_LANTERNA, ROMPIBILI } from '../data/rompibili';
@@ -38,6 +40,7 @@ export class Rompibili {
   private py = 0;
   private mezzaL = 0;
   private mezzaA = 0;
+  settori = true; // il survivor: oggetti per settori, rotti al tocco. Il gioco a stanze li spegne
 
   constructor(private scena: Phaser.Scene, private seme: number, private quandoRotto: (tipo: number, x: number, y: number) => void) {
     this.fori = creaFori(scena);
@@ -55,6 +58,7 @@ export class Rompibili {
     this.py = y;
     this.mezzaL = mezzaL;
     this.mezzaA = mezzaA;
+    if (!this.settori) return;
     const cx = Math.floor(x / settore), cy = Math.floor(y / settore);
     if (cx !== this.cx || cy !== this.cy) this.cambiaSettore(cx, cy);
     this.rompiEntro(x, y, tocco);
@@ -74,6 +78,46 @@ export class Rompibili {
       const dx = ox - x, dy = oy - y;
       if (dx * dx + dy * dy < r * r) this.rompi(i);
     }
+  }
+
+  /** Il colpo ad arco della Lanterna a mano (gioco a stanze): rompe ciò che sta nello spicchio. Ampiezza in gradi. */
+  colpitoArco(x: number, y: number, angolo: number, raggio: number, ampiezza: number): void {
+    const r = ROMPIBILI.raggio, mezza = (ampiezza * Math.PI) / 360;
+    for (let i = 0; i < MAX; i++) {
+      if (this.stato[i] !== INTERO) continue;
+      const dx = this.x[i] - x, dy = this.y[i] - ROMPIBILI.centro - y, d = Math.hypot(dx, dy);
+      if (d > raggio + r) continue;
+      if (d > r && Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(dy, dx) - angolo)) > mezza + Math.asin(Math.min(1, r / d))) continue;
+      this.rompi(i);
+    }
+  }
+
+  /**
+   * Gioco a stanze: gli oggetti interi sono ostacoli tondi alla base. Chi sta nel punto (xs[k], ys[k]) con quel raggio viene
+   * spinto fuori, dalla parte più vicina.
+   */
+  spingi(xs: Float32Array | number[], ys: Float32Array | number[], k: number, raggio: number, ingombro: number): void {
+    for (let i = 0; i < MAX; i++) {
+      if (this.stato[i] !== INTERO) continue;
+      const ex = xs[k] - this.x[i], ey = ys[k] - this.y[i], d = Math.hypot(ex, ey), r = ingombro + raggio;
+      if (d >= r) continue;
+      const ux = d > 0.01 ? ex / d : 0, uy = d > 0.01 ? ey / d : 1;
+      xs[k] = this.x[i] + ux * r;
+      ys[k] = this.y[i] + uy * r;
+    }
+  }
+
+  /** Quanti oggetti interi ci sono (LAB, prove). */
+  interi(): number {
+    let n = 0;
+    for (let i = 0; i < MAX; i++) if (this.stato[i] === INTERO) n++;
+    return n;
+  }
+
+  /** Via tutti gli oggetti (gioco a stanze: una stanza nuova). */
+  svuota(): void {
+    for (let i = 0; i < MAX; i++) if (this.stato[i] !== LIBERO) this.libera(i);
+    this.rotti.clear();
   }
 
   /** Prova prestazioni: una lanterna che non si rompe, così resta in vista per tutta la misura. */

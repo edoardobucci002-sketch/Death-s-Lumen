@@ -53,6 +53,8 @@ import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 import { areaCamminabile, creaStanza } from '../sistema/stanza';
 import { tela } from '../sistema/scritte';
 import { LabStanze } from '../sistema/lab-stanze';
+import { RompibiliStanza } from '../sistema/rompibili-stanza';
+import { BAGLIORE } from '../data/sopravvivenza';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
@@ -130,6 +132,7 @@ export class Stanze extends Phaser.Scene {
   private pannelloFine!: HTMLElement;
   // passo 6: build (Echi e doni), percorso, porte, carte, passaggio tra le stanze
   arsenale!: Arsenale;
+  rompibili!: RompibiliStanza; // urne, giare e lanterne (dal 16/11), con Cera, mosaico, olio e luce
   percorso!: Percorso;
   porte!: Porte;
   doni!: Doni;
@@ -186,7 +189,7 @@ export class Stanze extends Phaser.Scene {
     this.y = Math.round(areaCamminabile().y1);
     this.cameras.main.setBackgroundColor(STANZA.colori.fondo);
 
-    creaStanza(this);
+    creaStanza(this, this.semeStanza(1));
     this.giocatore = this.add.sprite(0, 0, this.chiaveSprite).setDepth(PROFONDITA.personaggio);
     if (voce(this, this.chiaveSprite)?.versioneFile === 0) {
       this.giocatore.setOrigin(PIEDI_SEGNAPOSTO.x / this.giocatore.frame.realWidth, PIEDI_SEGNAPOSTO.y / this.giocatore.frame.realHeight);
@@ -234,6 +237,9 @@ export class Stanze extends Phaser.Scene {
       arte: { base: ARTE_JOYSTICK.movimentoBase, pomello: ARTE_JOYSTICK.movimentoPomello },
     });
     this.creaInterfaccia(interfaccia);
+    this.rompibili = new RompibiliStanza(this, this.nemici.orda, this.arsenale, interfaccia, this.seme, this.effetti, () => this.cambiaLuce());
+    this.rompibili.nuovaStanza(this.semeStanza(1));
+    this.nemici.ostacoli = this.rompibili;
     this.attacco = new AttaccoATasto(this, this.radice, this.effetti, () => this.fermo(), (cx, cy) => {
       const px = misureHud().px, cam = this.cameras.main;
       return { x: cam.scrollX + cx / px, y: cam.scrollY + cy / px };
@@ -266,6 +272,7 @@ export class Stanze extends Phaser.Scene {
       this.attacco.distruggi();
       this.abilita.distruggi();
       this.doni.distruggi();
+      this.rompibili.distruggi();
       this.comparsa.ferma();
       this.anims.globalTimeScale = 1;
       this.radice.remove();
@@ -325,6 +332,7 @@ export class Stanze extends Phaser.Scene {
   /** Il colpo della Lanterna è partito: ferisce i nemici dentro l'arco (in Grazia fa più male). */
   private colpisci(angolo: number): void {
     const presi = this.nemici.colpisci(this.x, this.y, angolo, this.attacco.raggio, this.attacco.ampiezza, this.dannoLanterna);
+    this.rompibili.rompibili.colpitoArco(this.x, this.y, angolo, this.attacco.raggio, this.attacco.ampiezza);
     this.abilita.colpo(presi); // l'abilità si carica solo così
     if (presi > 0) {
       // impatto: un attimo fermo anche il Lampionaio, lo schermo trema appena, un colpo sordo
@@ -350,7 +358,7 @@ export class Stanze extends Phaser.Scene {
     const massima = BASE.salute + this.pg.salute + per('cuoreDiCera');
     if (massima > this.saluteMassima) this.salute += massima - this.saluteMassima; // più salute massima: la salute sale
     this.saluteMassima = massima;
-    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena'));
+    this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + (this.rompibili && this.rompibili.bagliore > 0 ? BAGLIORE.velocita : 0));
     this.rigenerazione = per('erbeAmare');
     this.scudo = per('scudoDiFerro');
     this.statGrazia.finestra = GRAZIA_STANZA.finestra + per('campanellaDArgento');
@@ -373,6 +381,7 @@ export class Stanze extends Phaser.Scene {
   /** Il Lampionaio subisce un colpo (se non è in Quiete, o sempre con «forza»): lampo, scossa, vibrazione; poi la Quiete; a zero salute cade. */
   ferisci(danno: number, forza = false): void {
     if ((this.inQuiete > 0 && !forza) || this.morto) return;
+    if (this.rompibili.bagliore > 0 && !forza) return; // il Bagliore: nessun danno
     const C = COMBATTIMENTO_STANZA;
     this.ferite++;
     this.inQuiete = this.quiete;
@@ -429,6 +438,7 @@ export class Stanze extends Phaser.Scene {
     if (this.pausa || this.morto || this.finita) return;
     this.pausa = true;
     this.doni.sospesa = true;
+    this.rompibili.nascondiMosaico();
     this.comandi.lascia();
     this.attacco.lascia();
     this.anims.pauseAll();
@@ -483,6 +493,10 @@ export class Stanze extends Phaser.Scene {
     const a = areaCamminabile();
     this.x = Phaser.Math.Clamp(this.x + dx * passo, a.x0, a.x1);
     this.y = Phaser.Math.Clamp(this.y + dy * passo, a.y0, a.y1);
+    // urne, giare e lanterne intere: ci si sbatte contro
+    this.rompibili.spingiPersonaggio(this.x, this.y, COMBATTIMENTO_STANZA.raggio);
+    this.x = Phaser.Math.Clamp(this.rompibili.spintoX, a.x0, a.x1);
+    this.y = Phaser.Math.Clamp(this.rompibili.spintoY, a.y0, a.y1);
     this.attacco.aggiorna(dt, this.guardaX, this.guardaY);
     // l'abilità (il cerchio segue il Lampionaio e rallenta chi c'è dentro), poi i nemici: il colpo più forte che arriva
     // in questo passo e le schivate perfette (finestra e sfioro vengono dalla Grazia del Lampionaio)
@@ -491,6 +505,9 @@ export class Stanze extends Phaser.Scene {
     this.nemici.sfioro = this.statGrazia.sfioro;
     const mezzaL = this.scale.width / 2, mezzaA = this.scale.height / 2;
     this.arsenale.aggiorna(dt, this.x, this.y, this.guardaX, this.guardaY, mezzaL, mezzaA);
+    // il Cerchio di luce acceso rompe ciò che tocca; poi olio, raccolta di gocce e frammenti, Bagliore
+    if (this.abilita.attiva > 0) this.rompibili.rompibili.colpitoDa(this.x, this.y - COLPI.corpo, ABILITA.cerchioDiLuce.raggio);
+    this.rompibili.aggiorna(dt, this.x, this.y, mezzaL, mezzaA, COMBATTIMENTO_STANZA.raggio);
     // le zone che curano (Acqua santa al potenziale): dentro una pozza si recupera salute
     const cura = this.arsenale.cura(this.saluteMassima);
     if (cura > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + cura * dt);
@@ -562,6 +579,11 @@ export class Stanze extends Phaser.Scene {
     suona('campana');
   }
 
+  /** Il seme del disegno della stanza n (lastre, muri e rompibili): separato dal caso della logica. */
+  semeStanza(n: number): number {
+    return (this.seme ^ Math.imul(n, 0x9e3779b1)) >>> 0;
+  }
+
   /** Il Lampionaio entra nella porta k: passaggio a retino, a metà si cambia stanza. */
   attraversa(k: number): void {
     if (this.passaggio > 0 || this.percorso.fase !== 'porte') return;
@@ -590,6 +612,8 @@ export class Stanze extends Phaser.Scene {
     const ricompensa = this.porte.ricompense[this.portaScelta] ?? 'dono';
     this.nemici.svuota();
     this.percorso.entra(this.percorso.stanza + 1, ricompensa);
+    creaStanza(this, this.semeStanza(this.percorso.stanza)); // lastre e muri nuovi a ogni stanza
+    this.rompibili.nuovaStanza(this.semeStanza(this.percorso.stanza));
     this.sim.entra(this.percorso.stanza, ricompensa, this.salute);
     this.porte.togli();
     this.x = Math.round(STANZA.larghezza / 2);
@@ -618,6 +642,8 @@ export class Stanze extends Phaser.Scene {
     this.attacco.lascia();
     this.tastoPausa.hidden = true;
     const p = this.percorso, righe: string[] = [`${this.nemici.uccisi} nemici battuti`, `${this.schivatePerfette} schivate perfette`, `Lanterna ${p.livelloLanterna}`];
+    const cera = this.rompibili.portaCera(!this.immortale && !this.bot);
+    if (cera > 0) righe.push(`Cera +${cera}`);
     for (const e of this.arsenale.possedute) righe.push(`${e.arma.nome} ${e.livello}`);
     for (const id of PERCORSO.doniAttivi) if (p.passivi[id]) righe.push(`${DONO[id].nome} ${p.passivi[id]}`);
     this.pannelloFine.replaceChildren(
@@ -657,6 +683,7 @@ export class Stanze extends Phaser.Scene {
     else if (this.morto) this.giocatore.clearTint();
     else if (this.lampoFerita > 0) this.giocatore.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     else if (this.grazia > 0 && Math.floor(this.orologio * GRAZIA_STANZA.lampi) % 2 === 0) this.giocatore.setTint(GRAZIA_STANZA.alone).setTintMode(Phaser.TintModes.ADD);
+    else if (this.rompibili.bagliore > 0 && Math.floor(this.orologio * (this.rompibili.bagliore < BAGLIORE.ultimi ? BAGLIORE.lampiFine : BAGLIORE.lampi)) % 2 === 0) this.giocatore.setTint(BAGLIORE.alone).setTintMode(Phaser.TintModes.ADD);
     else this.giocatore.clearTint();
     this.scrittaGrazia.setPosition(px, py - C.scritta.sopra).setVisible(this.scrittaVita > 0);
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto);
@@ -667,7 +694,8 @@ export class Stanze extends Phaser.Scene {
     this.attacco.disegna();
     const bx = px - cam.scrollX - Math.floor(this.misureBuio.w / 2);
     const by = py - LUCE.altezza - cam.scrollY - Math.floor(this.misureBuio.h / 2);
-    this.buio.setTexture(CHIAVI_BUIO[this.fiamma]).setPosition(bx, by);
+    this.rompibili.disegna(cam, this.fiamma, dt);
+    this.buio.setTexture(this.rompibili.buio(CHIAVI_BUIO[this.fiamma], this.fiamma, bx, by, this.misureBuio.w, this.misureBuio.h, cam)).setPosition(bx, by);
     this.alone.setTexture(CHIAVI_ALONE[this.fiamma]).setPosition(px, py - LUCE.altezza);
   }
 
@@ -699,9 +727,11 @@ export class Stanze extends Phaser.Scene {
   private mostraFine(): void {
     const n = this.nemici.uccisi;
     const conto = this.scrittaPixel(`${n} ${n === 1 ? 'nemico battuto' : 'nemici battuti'}`, 'stanze-etichetta');
+    const cera = this.rompibili.portaCera(!this.immortale && !this.bot);
     this.pannelloFine.replaceChildren(
       this.scrittaPixel('Sei caduto', 'stanze-titolo'),
       conto,
+      ...(cera > 0 ? [this.scrittaPixel(`Cera +${cera}`, 'stanze-etichetta')] : []),
       this.tastoScritta('Ricomincia', () => this.scene.restart()),
       this.tastoScritta('Menu', () => this.scene.start('Menu')),
     );
@@ -709,8 +739,14 @@ export class Stanze extends Phaser.Scene {
     this.disponi();
   }
 
+  /** Il Bagliore allarga la luce del personaggio (BAGLIORE.luce); finito, torna com'era. */
+  cambiaLuce(): void {
+    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (this.rompibili.bagliore > 0 ? BAGLIORE.luce : 1));
+    this.ricalcola();
+  }
+
   private ridimensiona(): void {
-    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height);
+    this.misureBuio = creaBuio(this, this.scale.width, this.scale.height, LUCE.raggio * (this.rompibili && this.rompibili.bagliore > 0 ? BAGLIORE.luce : 1));
     this.controllaVerso();
     this.disponi();
   }

@@ -815,6 +815,19 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   stessiNomi('Stanza', t, RIGHE_STANZA.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_STANZA) conRiga(t, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 
+  // i rompibili del gioco a stanze (16/11)
+  const RS = D('rompibili').ROMPIBILI_STANZE, tr = tabella('| Valore dei rompibili nelle stanze | Numero |');
+  const RIGHE_ROMPIBILI = [
+    ['Per stanza', 'da {} a {}', RS.quanti.min, RS.quanti.max],
+    ['Distanza dal muro', 'da {} a {} px', RS.dalMuro.min, RS.dalMuro.max],
+    ['Lontano dalle porte', '{} px', RS.porte],
+    ['Distanza tra due rompibili', '{} px', RS.tra],
+    ['Ingombro', '{} px', RS.ingombro],
+    ['Raccolta', '{}% della raccolta di base', pct(RS.raccolta)],
+  ];
+  stessiNomi('Rompibili nelle stanze', tr, RIGHE_ROMPIBILI.map((r) => r[0]));
+  for (const [nome, modello, ...attesi] of RIGHE_ROMPIBILI) conRiga(tr, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+
   // le armi del gioco a stanze: tabelle «#### Stanze · <Nome>», con il danno scritto «minimo–massimo»
   const COLONNE_STANZE = { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Raggio: 'raggio', 'Ampiezza arco (°)': 'ampiezza', Lunghezza: 'lunghezza', 'Durata (s)': 'durata', Trapassa: 'trapassa', 'Rotazione (giri/s)': 'giri', Rimbalzi: 'rimbalzi', 'Colpo alle spalle': 'spalle', 'Colpo doppio': 'doppio' };
   for (const arma of [AS.LANTERNA_STANZE, ...AS.ECHI_STANZE]) {

@@ -127,6 +127,38 @@
       "tag": []
     },
     {
+      "chiave": "Cripta_Facciata",
+      "categoria": "ambienti",
+      "immagine": "assets/ambienti/Cripta_Facciata.png",
+      "dati": "assets/ambienti/Cripta_Facciata.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Cripta_Muri",
+      "categoria": "ambienti",
+      "immagine": "assets/ambienti/Cripta_Muri.png",
+      "dati": "assets/ambienti/Cripta_Muri.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Cripta_Pavimento",
+      "categoria": "ambienti",
+      "immagine": "assets/ambienti/Cripta_Pavimento.png",
+      "dati": "assets/ambienti/Cripta_Pavimento.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
+      "chiave": "Cripta_Porte",
+      "categoria": "ambienti",
+      "immagine": "assets/ambienti/Cripta_Porte.png",
+      "dati": "assets/ambienti/Cripta_Porte.json",
+      "versioneFile": 1,
+      "tag": []
+    },
+    {
       "chiave": "Falce_Rotazione",
       "categoria": "effetti",
       "immagine": "assets/effetti/Falce_Rotazione.png",

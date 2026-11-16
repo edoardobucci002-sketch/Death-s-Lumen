@@ -4,12 +4,15 @@
  * o se manca il simbolo dello stato dell'affinità o un rombo dorato per il dono.
  * Chiusa ha le sbarre; aperta (stanza ripulita e carta scelta) ha la cornice accesa e ci si entra camminandoci contro.
  * In basso c'è sempre la porta da cui si è entrati, chiusa. Numeri e colori in PORTE (src/data/stanze.ts).
+ * Dal 16/11 le porte della cripta sono cancelli di ferro disegnati (Cripta_Porte): chiusa il cancello, aperta il cancello
+ * sollevato con la luce in fondo. Stanno sotto il buio come i muri; sopra il buio restano i medaglioni. Se i file mancano
+ * (o il LAB chiede la stanza dal codice), resta il vano disegnato dal codice, sopra il buio.
  */
 import Phaser from 'phaser';
-import { PORTE, STANZA } from '../data/stanze';
+import { CRIPTA, PORTE, STANZA } from '../data/stanze';
 import { INFO_AFFINITA } from '../data/spiegazioni';
 import type { IdAffinita } from '../data/stati';
-import { areaCamminabile } from './stanza';
+import { areaCamminabile, criptaPronta } from './stanza';
 import { PROFONDITA } from './effetti';
 
 export type Muro = 'alto' | 'sinistra' | 'destra';
@@ -25,6 +28,7 @@ export class Porte {
   aperte = false;
   private readonly grafica: Phaser.GameObjects.Graphics;
   private readonly simboli: Phaser.GameObjects.Image[] = [];
+  private readonly cancelli: Phaser.GameObjects.Image[] = []; // alto, sinistra, destra, basso
 
   constructor(private readonly scena: Phaser.Scene) {
     this.grafica = scena.add.graphics().setDepth(PROFONDITA.anime); // sopra il buio: le porte si vedono anche lontane
@@ -42,6 +46,8 @@ export class Porte {
       g.generateTexture(SIMBOLO_DONO, 11, 11);
       g.destroy();
     }
+    // i cancelli disegnati: sopra muri e pavimento, sotto il personaggio e il buio
+    for (let k = 0; k < 4; k++) this.cancelli.push(scena.add.image(0, 0, '__MISSING').setOrigin(0).setDepth(PROFONDITA.terreno + 0.7).setVisible(false));
     for (let k = 0; k < 3; k++) this.simboli.push(scena.add.image(0, 0, SIMBOLO_DONO).setDepth(PROFONDITA.anime + 0.5).setScale(PORTE.simbolo).setVisible(false));
   }
 
@@ -71,6 +77,11 @@ export class Porte {
 
   apri(): void {
     this.aperte = true;
+    this.disegna();
+  }
+
+  /** Ridisegna le porte (il LAB ha cambiato l'arte della stanza). */
+  ridisegna(): void {
     this.disegna();
   }
 
@@ -110,6 +121,21 @@ export class Porte {
   /** Il vano di ogni porta (e quella in basso, sempre chiusa): scuro, con le sbarre o con la cornice accesa. */
   private disegna(): void {
     const g = this.grafica.clear(), S = STANZA, L = PORTE.larghezza, c = PORTE.colori;
+    for (const i of this.cancelli) i.setVisible(false);
+    if (criptaPronta(this.scena)) {
+      const F = CRIPTA.fotogrammiPorte;
+      const metti = (k: number, fotogramma: number, x: number, y: number, specchio = false): void => {
+        const i = this.cancelli[k].setTexture(CRIPTA.porte, String(fotogramma)).setFlipX(specchio).setVisible(true);
+        i.setPosition(x === -1 ? S.larghezza / 2 - i.width / 2 : x, y === -1 ? S.altezza / 2 - i.height / 2 : y);
+      };
+      metti(3, F.bassoChiusa, -1, S.altezza);
+      for (const muro of this.muri) {
+        if (muro === 'alto') metti(0, this.aperte ? F.altoAperta : F.altoChiusa, -1, -S.muroAlto);
+        else if (muro === 'sinistra') metti(1, this.aperte ? F.latoAperta : F.latoChiusa, -S.muroLati, -1);
+        else metti(2, this.aperte ? F.latoAperta : F.latoChiusa, S.larghezza, -1, true);
+      }
+      return;
+    }
     const vano = (x: number, y: number, w: number, h: number, aperta: boolean, verticale: boolean): void => {
       g.fillStyle(colore(c.cornice)).fillRect(x - 2, y - 2, w + 4, h + 4);
       g.fillStyle(colore(c.vano)).fillRect(x, y, w, h);

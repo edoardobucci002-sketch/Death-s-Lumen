@@ -6,11 +6,14 @@
  * Passo 5: caricare e usare il Cerchio di luce. Passo 6: ripulire la stanza, attraversare una porta, aggiungere un Eco.
  * Restyle del 13/11: ferire o far cadere il Lampionaio per vedere le animazioni hurt e death.
  * Danno a intervallo (14/11): far salire di livello la Lanterna e gli Echi. Bot (14/11): farlo giocare al posto tuo.
+ * La cripta (16/11): tornare al disegno del codice per confrontare, rifare le lastre. Rompibili (16/11): metterli accanto,
+ * romperli, ridisporli, far uscire un frammento, accendere il Bagliore.
  */
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
-import { areaCamminabile } from './stanza';
+import { ARTE_STANZA, areaCamminabile, creaStanza } from './stanza';
+import { ROMPIBILI } from '../data/rompibili';
 import { STATO, type TipoStanza } from './nemici-stanza';
 import { F } from './armi-colpo';
 import { BotStanze } from './bot-stanze';
@@ -256,5 +259,51 @@ export class LabStanze {
       centro: [cx, cy], alto: [cx, a.y0], basso: [cx, a.y1], sinistra: [a.x0, cy], destra: [a.x1, cy], angolo: [a.x0, a.y0],
     };
     [this.s.x, this.s.y] = punti[dove];
+  }
+
+  /** La cripta disegnata o il disegno del codice di prima (per confrontarli). */
+  arteStanza(codice: boolean): void {
+    ARTE_STANZA.codice = codice;
+    creaStanza(this.s, this.s.semeStanza(this.s.percorso.stanza));
+    this.s.porte.ridisegna();
+  }
+
+  /** Altre lastre e altri pezzi della facciata, a caso. */
+  altreLastre(): void {
+    creaStanza(this.s, (Math.random() * 2147483647) >>> 0);
+  }
+
+  /** Urna, giara e lanterna qui accanto, a sinistra del Lampionaio. */
+  rompibiliAccanto(): void {
+    const a = areaCamminabile();
+    ROMPIBILI.tipi.forEach((_, n) => this.s.rompibili.rompibili.piazza(n, Math.max(a.x0 + 20, this.s.x - 80 - n * 60), this.s.y));
+  }
+
+  rompiVicino(): void {
+    this.s.rompibili.rompibili.rompiVicino(this.s.x, this.s.y);
+  }
+
+  /** Via i rompibili della stanza e altri, disposti a caso lungo i muri. */
+  nuoviRompibili(): void {
+    this.s.rompibili.nuovaStanza((Math.random() * 2147483647) >>> 0);
+  }
+
+  /** La prossima urna rotta lascia di sicuro un frammento (anche prima della prima alba vinta). */
+  frammentoSicuro(): void {
+    this.s.rompibili.forzaFrammento = true;
+  }
+
+  /** Un pezzo del mosaico, subito: al terzo parte il Bagliore. */
+  frammento(): void {
+    this.s.rompibili.frammento();
+  }
+
+  bagliore(): void {
+    this.s.rompibili.iniziaBagliore();
+  }
+
+  rompibili(): { interi: number; cera: number; frammenti: number; caduti: number; bagliore: number; codice: boolean } {
+    const r = this.s.rompibili;
+    return { interi: r.rompibili.interi(), cera: r.cera, frammenti: r.frammenti, caduti: r.frammentiCaduti, bagliore: r.bagliore, codice: ARTE_STANZA.codice };
   }
 }

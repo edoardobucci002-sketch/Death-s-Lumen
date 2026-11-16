@@ -1,6 +1,6 @@
 // Esporta da Aseprite tutti gli sprite del gioco.
 //
-// Cerca i file .aseprite nelle cartelle PERSONAGGI, NEMICI, EFFETTI, OGGETTI, ICONE e HUD della
+// Cerca i file .aseprite nelle cartelle PERSONAGGI, NEMICI, EFFETTI, OGGETTI, ICONE, HUD e AMBIENTI (stanze) della
 // cartella principale "DEATH'S LUMEN" (per default la cartella che contiene questo repository).
 // Per ogni sprite usa la versione più alta: La_Badessa_V3.aseprite batte La_Badessa_V2.aseprite.
 // Cerca anche in segnaposto/ (stesse sottocartelle): gli sprite provvisori hanno la versione V0,
@@ -21,9 +21,9 @@ import { fileURLToPath } from 'node:url';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arte = resolve(process.env.DL_ARTE ?? join(repo, '..'));
-const CATEGORIE = { PERSONAGGI: 'personaggi', NEMICI: 'nemici', EFFETTI: 'effetti', OGGETTI: 'oggetti', ICONE: 'icone', HUD: 'hud' };
+const CATEGORIE = { PERSONAGGI: 'personaggi', NEMICI: 'nemici', EFFETTI: 'effetti', OGGETTI: 'oggetti', ICONE: 'icone', HUD: 'hud', AMBIENTI: 'ambienti' };
 // effetti, oggetti, icone e HUD possono non avere tag: tutto il file è una sola animazione
-const SENZA_TAG_OK = ['effetti', 'oggetti', 'icone', 'hud'];
+const SENZA_TAG_OK = ['effetti', 'oggetti', 'icone', 'hud', 'ambienti'];
 const TAG_AMMESSI = ['idle', 'walk', 'attack', 'special', 'hurt', 'death'];
 const NOME = /^(.+)_V(\d+)\.aseprite$/i;
 const LATO_MASSIMO = 2048; // lato massimo di un foglio di sprite, in pixel

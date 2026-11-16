@@ -112,6 +112,8 @@ export class NemiciStanza {
   cerchioLento = 0;
   /** Le lapidi in piedi (Lapide al potenziale): muri tondi che nemici e grumi non passano (li riempie l'arsenale). */
   muri: { n: number; x: Float32Array; y: Float32Array; r: number } | null = null;
+  /** Urne, giare e lanterne intere (dal 16/11): i nemici ci sbattono contro, come il personaggio. */
+  ostacoli: { spingi(xs: Float32Array, ys: Float32Array, k: number, raggio: number): void } | null = null;
   /** Attacchi interrotti (Campana e Fuoco fatuo al potenziale), per il LAB e le prove. */
   interrotti = 0;
   /** Lo stato di un'arma a mano sul nemico j senza ferirlo (il Cerchio di luce che abbaglia): lo dà l'arsenale. */
@@ -342,6 +344,7 @@ export class NemiciStanza {
         o.x[i] = m.x[k] + ux * r;
         o.y[i] = m.y[k] + uy * r;
       }
+      this.ostacoli?.spingi(o.x, o.y, i, o.raggio[i]);
       o.x[i] = Phaser.Math.Clamp(o.x[i], a.x0, a.x1);
       o.y[i] = Phaser.Math.Clamp(o.y[i], a.y0, a.y1);
     }

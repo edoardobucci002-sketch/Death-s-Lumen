@@ -1244,6 +1244,25 @@ for (const [nome, disp] of [
       if (iv.diversi < Math.min(4, b - a)) errori.push(`Lanterna liv ${livello}: solo ${iv.diversi} valori diversi in 200 colpi`);
       nota += livello === 1 ? `, danno Lanterna liv 1 ${Math.round(iv.minimo)}–${Math.round(iv.massimo)}` : ` e liv 5 ${Math.round(iv.minimo)}–${Math.round(iv.massimo)}`;
     }
+    // rompibili (16/11): da 2 a 4 per stanza, ostacoli che non si rompono al tocco; rotti, la giara lascia Cera da raccogliere
+    if (nome === 'stanze-desktop') {
+      const r0 = await L('rompibili');
+      if (r0.interi < 2 || r0.interi > 4) errori.push(`rompibili nella stanza: ${r0.interi} (attesi da 2 a 4)`);
+      await L('vai', 'centro');
+      await L('rompibiliAccanto');
+      const accanto = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); s.x = 336; s.y = 224; return s.lab.rompibili().interi; });
+      await pag.waitForTimeout(150);
+      const urto = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { d: Math.hypot(s.x - 336, s.y - 224), interi: s.lab.rompibili().interi }; });
+      if (urto.interi !== accanto) errori.push('un rompibile si è rotto al tocco');
+      if (urto.d < 20) errori.push(`il Lampionaio entra nell'urna (a ${urto.d.toFixed(0)} px dalla base)`);
+      for (let k = 0; k < 3; k++) await L('rompiVicino');
+      if ((await L('rompibili')).interi !== accanto - 3) errori.push('«Rompi il più vicino» non rompe');
+      await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); s.x = 276; s.y = 224; });
+      await pag.waitForTimeout(600);
+      const cera = (await L('rompibili')).cera;
+      if (cera < 2) errori.push(`la giara rotta non lascia Cera da raccogliere (${cera})`);
+      nota += `, rompibili ${r0.interi} (Cera ${cera})`;
+    }
     await L('livelliAUno');
     await L('immortale', true);
     const giro = [];
