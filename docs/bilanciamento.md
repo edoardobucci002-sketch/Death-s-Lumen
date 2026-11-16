@@ -42,6 +42,12 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 14/11 — I potenziali degli Echi e il Cerchio di luce (scelte di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
+- Livello 5 di ogni Eco nel gioco a stanze: il potenziale scelto da Edoardo (`POTENZIALI` in `src/data/armi-stanze.ts`; tabella nel GDD). Numeri nuovi: Candela 2 figlie aperte di 0,7 rad che inseguono per 0,9 s; Falce anello esterno ×1,5; Fuoco fatuo preda ×0,25 sulla distanza; Acqua santa cura 1/s; Lapide in piedi 3 s, larga 22 px; Rosario +15% a rimbalzo; Corvo +20% per 3 s; Velo ×2 in 1,5 s da fermo, torna in 0,4 s; Sampietrini cerca entro 220 px.
+- **Campana al livello 5**: ricarica 2,6 s (era 1,8) e niente doppio rintocco, in cambio dell'interruzione (nota di Edoardo: «a scapito di una Quiete maggiore tra un rintocco e l'altro»). **Fuoco fatuo al livello 5**: trapassa 1 nemico (erano 3), sostituito dal potenziale.
+- **Cerchio di luce**: un colpo 20–30 all'accensione (era 6 ogni 0,3 s per 5 s, cioè fino a circa 100 a nemico), poi abbaglia ogni 0,3 s senza ferire.
+- Controllo del survivor: 8 notti del bot, 8.187 campi, 0 differenze. Il bot delle stanze (24 partite, semi 2001–2024): fetta completata 20 volte su 24 (era 21), salute alla fine 37; il Cerchio di luce scende dal 20% al 13% del danno. Nella fetta il bot non arriva al livello 5 (3 carte in tutto): per misurare i potenziali c'è `npm run sim-stanze -- N potenziali`.
+
 ### 14/11 — Il bot gioca a stanze: prima misura (nessun numero cambia)
 - `npm run sim-stanze`: 24 partite della fetta (semi 2001–2024, metà con le carte preferite e metà con carte e porte a caso), Lanterna 12–18, Ricaduto 60, Cantore 35. Il bot vede gli avvisi dopo 0,25 s (`BOT_STANZE.reazione`, *da rivedere*).
 - **Fetta completata 21 volte su 24**, salute alla fine 37 in media; 3 cadute, tutte nella stanza 3. Per stanza: 16, 24 e 24 s; danno subito 15, 21 e 33; salute all'uscita 85, 64 e 35. A partita: 42 nemici battuti, 5,4 Ricaduti rialzati, 3,9 schivate perfette, 75 colpi della Lanterna, 4,3 Cerchi di luce.
