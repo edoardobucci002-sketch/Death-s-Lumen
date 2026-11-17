@@ -36,6 +36,21 @@ export class FiaschettaStanza {
     return true;
   }
 
+  /**
+   * Un premio di n sorsi (il Campanaro): vanno nella fiaschetta; quelli che non ci stanno, a fiaschetta piena, si bevono
+   * subito (decisione di Edoardo del 17/11): curano come un sorso, senza togliere sorsi.
+   */
+  premio(n: number): void {
+    for (let k = 0; k < n; k++) {
+      if (this.sorsi < this.massimo) this.sorsi++;
+      else {
+        this.curaRimasta = FIASCHETTA.durata;
+        this.bevuti++; // il suono «cura» lo fa già la scena con il premio
+        vibra('media');
+      }
+    }
+  }
+
   /** Sorsi massimi (il Calice riverso li alza): quelli in più arrivano pieni. */
   impostaMassimo(n: number): void {
     if (n > this.massimo) this.sorsi += n - this.massimo;

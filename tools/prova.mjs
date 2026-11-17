@@ -1312,6 +1312,11 @@ for (const [nome, disp] of [
       if (n === 4) {
         if (!dopo.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('dopo il Campanaro non compare «Fetta completata»');
         if (!(await pag.evaluate(() => document.querySelector('.stanze-capo').hidden))) errori.push('la barra del Campanaro resta dopo di lui');
+        // il premio (17/11): un sorso nella fiaschetta; a fiaschetta piena si beve subito
+        const f = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { sorsi: s.fiaschetta.sorsi, massimo: s.fiaschetta.massimo, bevuti: s.fiaschetta.bevuti }; });
+        const pf = await pag.evaluate(() => { const fz = window.__dl.scene.getScene('Stanze').fiaschetta; fz.sorsi = fz.massimo; const b = fz.bevuti; fz.premio(1); return fz.sorsi === fz.massimo && fz.bevuti === b + 1; });
+        if (!pf) errori.push('a fiaschetta piena il sorso del premio non si beve');
+        if (f.sorsi < Math.min(f.massimo, 1)) errori.push(`dopo il Campanaro la fiaschetta ha ${f.sorsi} sorsi`);
         await pag.screenshot({ path: `prove/${nome}-fetta.png` });
         break;
       }

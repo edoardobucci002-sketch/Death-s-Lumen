@@ -578,7 +578,7 @@ export class Stanze extends Phaser.Scene {
     this.sim.stanzaRipulita(this.percorso.stanza, this.salute);
     if (this.percorso.miniboss && !this.morto) {
       // il Campanaro battuto: un sorso della fiaschetta (17/11) e Cera, oltre alle carte della porta scelta
-      this.fiaschetta.ricarica(CAMPANARO.premio.sorsi);
+      this.fiaschetta.premio(CAMPANARO.premio.sorsi); // a fiaschetta piena si beve subito
       this.rompibili.cera += CAMPANARO.premio.cera;
       suona('cura');
     }

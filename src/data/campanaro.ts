@@ -25,7 +25,7 @@ export const CAMPANARO = {
   chiamata: { avviso: 0.8, ricaduti: 2, ogni: 3, recupero: 0.6 }, // ogni: un attacco su tre in fase 2
   fase2: { soglia: 0.5, ritmo: 0.8 }, // sotto metà salute: pause e avvisi all'80% (gli attacchi arrivano il 20% prima)
   // la ricompensa: «sorsi» sorsi della fiaschetta (decisione di Edoardo del 17/11: un sorso vero, non più una cura diretta;
-  // a fiaschetta piena il sorso va perso, scelta di Claude da rivedere), Cera e le 3 carte della porta scelta;
+  // a fiaschetta piena si beve subito, Edoardo 17/11), Cera e le 3 carte della porta scelta;
   // il Reliquiario arriva con la sua tappa
   premio: { sorsi: 1, cera: 10 },
   colori: { avviso: '#5a1014', onda: '#efe3c8', linea: '#5a1014', barra: '#c2412d', fondoBarra: '#1a1210', bordoBarra: '#efe3c8' },
