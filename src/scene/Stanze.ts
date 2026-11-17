@@ -584,6 +584,7 @@ export class Stanze extends Phaser.Scene {
       return;
     }
     if (this.bot) {
+      this.sim.offerte(carte);
       const d = this.bot.scegliCarta(carte, LANTERNA_STANZE.id);
       this.sim.carta(d);
       this.dopoCarta(d);

@@ -10,6 +10,7 @@
  * romperli, ridisporli, far uscire un frammento, accendere il Bagliore. Il Campanaro (17/11): andare all'arena, farlo
  * comparire, portarlo alla fase 2 o quasi a terra, scegliere il suo prossimo attacco.
  */
+import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE, POTENZIALI } from '../data/armi-stanze';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
@@ -56,6 +57,15 @@ export class LabStanze {
     this.s.ondateAutomatiche = true;
     this.s.nemici.svuota();
     this.s.percorso.ripulisci();
+  }
+
+  /** Le carte escono del grado g quando la porta lo può dare (null = il caso di sempre). */
+  forzaGrado(g: IdGrado | null): void {
+    this.s.percorso.forzaGrado = g;
+  }
+
+  gradoForzato(): IdGrado | null {
+    return this.s.percorso.forzaGrado;
   }
 
   /** Salta all'arena del Campanaro (la quarta stanza), con la build di adesso. */

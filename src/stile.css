@@ -417,3 +417,9 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .stanze-capo { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; z-index: 2; }
 .stanze-capo[hidden] { display: none; }
 .stanze-capo canvas { image-rendering: pixelated; }
+
+/* Rarità delle carte del gioco a stanze (17/11, src/data/rarita.ts): il nome del grado in alto, il lampo del bordo Ardente a scatti */
+.doni-bagliore { position: absolute; left: 0; top: 0; visibility: hidden; animation: doni-bagliore 0.8s steps(1, end) infinite; pointer-events: none; }
+@keyframes doni-bagliore { 50% { visibility: visible; } }
+@media (prefers-reduced-motion: reduce) { .doni-bagliore { animation: none; } }
+.doni.verticali .doni-grado { position: absolute; overflow: hidden; display: flex; justify-content: center; align-items: center; white-space: nowrap; font-family: 'Tiny5', monospace; font-weight: 400; text-transform: uppercase; -webkit-font-smoothing: none; font-smooth: never; }

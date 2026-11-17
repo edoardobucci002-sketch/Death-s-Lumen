@@ -71,6 +71,12 @@ for (let n = 1; n <= stanzeTot; n++) {
 console.log(`\nA partita: ${media(ok.map((r) => r.uccisi)).toFixed(1)} nemici battuti, ${media(ok.map((r) => r.rinascite)).toFixed(1)} Ricaduti rialzati, ` +
   `${media(ok.map((r) => r.schivate)).toFixed(1)} schivate perfette, ${media(ok.map((r) => r.colpiLanterna)).toFixed(0)} colpi della Lanterna, ${media(ok.map((r) => r.usiAbilita)).toFixed(1)} Cerchi di luce`);
 
+// rarità (17/11): quante carte di ogni grado ha visto e preso il bot
+const GR = ['fioca', 'chiara', 'ardente'], NOMI_GR = { fioca: 'Fioca', chiara: 'Chiara', ardente: 'Ardente' };
+const somma = (k, g) => ok.reduce((t, r) => t + (r.gradi?.[k]?.[g] ?? 0), 0);
+const tot = (k) => GR.reduce((t, g) => t + somma(k, g), 0);
+if (tot('offerte')) console.log(`\nCarte per grado (viste / prese): ${GR.map((g) => `${NOMI_GR[g]} ${Math.round((100 * somma('offerte', g)) / tot('offerte'))}% / ${Math.round((100 * somma('scelte', g)) / Math.max(1, tot('scelte')))}%`).join(', ')} su ${tot('offerte')} carte viste`);
+
 // quanto conta ogni arma: la sua parte del danno, nelle partite in cui c'era
 const NOMI = { lanterna: 'Lanterna', abilita: 'Cerchio di luce', candela: 'Candela', falce: 'Falce', campana: 'Campana', fuocoFatuo: 'Fuoco fatuo', acquaSanta: 'Acqua santa', lamaDiLuce: 'Abbacinio', lapide: 'Lapide', rosarioSpezzato: 'Rosario spezzato', corvo: 'Corvo', veloFunebre: 'Velo funebre', sampietrini: 'Sampietrini', eclissi: 'Eclissi', esorcismo: 'Esorcismo', interramento: 'Interramento', fuoco: 'Fuoco', martire: 'Martire' };
 const fonti = new Set(ok.flatMap((r) => Object.keys(r.danno)));

@@ -13,6 +13,7 @@ import { PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import { nomeCampo, postoCampo, TAG } from '../data/glossario';
 import { CAMPI_ARMA, chiaro, DATI_DONI, gradoDevozione, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { CARTA_STANZA, STRISCIA } from '../data/hud';
+import { BAGLIORE_ARDENTE, GRADI, type IdGrado } from '../data/rarita';
 import { INTERRUTTORI } from './interruttori';
 import { arte, registraArte } from './arte';
 import { iconaAmuleto } from './amuleti';
@@ -213,18 +214,22 @@ export function interniCarta(cw: number, ch: number): typeof CARTA_STANZA.intern
 
 const carteNove = new Map<string, string>();
 
-/** La carta provvisoria (17/11): rettangolo scuro con il bordo arancione, cw × ch pixel disegnati; scelta = bordo più chiaro. */
-export function cartaSemplice(cw: number, ch: number, scelta: boolean): string {
-  const k = `semplice${scelta ? '-scelta' : ''}@${cw}x${ch}`, pronta = carteNove.get(k);
+/**
+ * La carta provvisoria (17/11): rettangolo scuro, cw × ch pixel disegnati, con il bordo del colore del grado (rarità,
+ * src/data/rarita.ts); scelta = bordo più chiaro; bagliore = il bordo più spesso del lampo della carta Ardente.
+ */
+export function cartaSemplice(cw: number, ch: number, scelta: boolean, grado: IdGrado = 'chiara', bagliore = false): string {
+  const k = `semplice-${grado}${scelta ? '-scelta' : ''}${bagliore ? '-bagliore' : ''}@${cw}x${ch}`, pronta = carteNove.get(k);
   if (pronta) return pronta;
   const S = CARTA_STANZA.semplice, c = document.createElement('canvas');
   c.width = cw;
   c.height = ch;
-  const g = c.getContext('2d')!;
-  g.fillStyle = scelta ? S.scelta : S.bordo;
+  const g = c.getContext('2d')!, sp = S.spessore + (bagliore ? BAGLIORE_ARDENTE.spessore : 0);
+  g.fillStyle = scelta ? GRADI[grado].scelta : GRADI[grado].bordo;
   g.fillRect(0, 0, cw, ch);
   g.fillStyle = S.fondo;
-  g.fillRect(S.spessore, S.spessore, cw - 2 * S.spessore, ch - 2 * S.spessore);
+  g.fillRect(sp, sp, cw - 2 * sp, ch - 2 * sp);
+  if (bagliore) g.clearRect(sp, sp, cw - 2 * sp, ch - 2 * sp); // il lampo è solo il bordo: sotto resta la carta
   const url = c.toDataURL();
   carteNove.set(k, url);
   return url;

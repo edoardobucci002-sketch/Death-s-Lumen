@@ -283,7 +283,9 @@ export const CARTA_STANZA = {
   // carta provvisoria (richiesta di Edoardo del 17/11, finché non ridisegna la carta): un rettangolo dal fondo scuro con il
   // bordo arancione (più chiaro sulla carta scelta), largo «spessore» pixel disegnati; tutti i testi in Tiny5 a pixel interi:
   // «tiny» = ingrandimento massimo della lettera (1 pixel della lettera = 1 pixel della carta) per tag, numeri e spiegazione
-  semplice: { fondo: '#1c1611', bordo: '#e3913a', scelta: '#fbce4a', spessore: 2, tiny: { tag: 1, dato: 2, riga: 1 } },
+  // dal 17/11 il bordo prende il colore del grado (GRADI in src/data/rarita.ts) e il nome del grado sta in alto, al centro,
+  // nella fascia «grado» (y e altezza in pixel disegnati, da rivedere)
+  semplice: { fondo: '#1c1611', spessore: 2, tiny: { tag: 1, dato: 2, riga: 1, grado: 1 }, grado: { y: 14, a: 10 } },
 };
 
 /** Caselle di armi e doni in partita: piccole, alla Vampire Survivors (la cornice grande sta nel pannello della pausa). */

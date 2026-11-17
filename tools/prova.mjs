@@ -1277,9 +1277,16 @@ for (const [nome, disp] of [
         if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-campanaro.png` });
         giro.push('Campanaro');
       }
+      if (n === 1) await L('forzaGrado', 'ardente'); // rarità (17/11): nella prima stanza la Lapide (Ardente) esce di sicuro
       await L('ripulisci');
       if (!(await quando('l.stato().carteAperte', '', 3000))) { errori.push(`stanza ${n}: le carte non arrivano`); break; }
       if (n === 1) {
+        await L('forzaGrado', null);
+        const gradi = await pag.evaluate(() => [...document.querySelectorAll('.doni-carta')].map((c) => ({ g: c.dataset.grado, nome: c.querySelector('.doni-grado')?.textContent ?? '', lampo: !!c.querySelector('.doni-bagliore') })));
+        if (gradi.some((c) => !c.g || !c.nome)) errori.push('una carta delle stanze non mostra il suo grado');
+        if (!gradi.some((c) => c.g === 'ardente' && c.lampo)) errori.push('con «Carte Ardente» non esce una carta Ardente con il bagliore');
+        if (gradi.some((c) => c.g !== 'ardente' && c.lampo)) errori.push('una carta non Ardente ha il bagliore');
+        nota += `, gradi delle carte ${gradi.map((c) => c.nome).join('/')}`;
         await pag.waitForTimeout(520); // le carte salgono, poi sopra ognuna scoppia l'effetto di comparsa
         if (!(await pag.evaluate(() => document.querySelectorAll('.doni-comparsa').length))) errori.push('sopra le carte non compare l\'effetto di comparsa');
         await pag.screenshot({ path: `prove/${nome}-carte.png` });

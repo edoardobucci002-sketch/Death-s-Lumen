@@ -22,6 +22,7 @@ import type { IdUnione, Unione } from '../data/unioni';
 import { cartaSemplice, creaCarteStanza, creaStrisce, interniCarta, schedaDono, type Riga } from './scheda';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { NUMERI_VOTI } from '../data/voti';
+import { BAGLIORE_ARDENTE, GRADI, gradoDi, type IdGrado } from '../data/rarita';
 
 export type Dono =
   | { tipo: 'arma'; arma: Arma; livello: number }
@@ -31,6 +32,11 @@ export type Dono =
   | { tipo: 'unione'; unione: Unione; arma: Arma } // dal reliquiario: l'arma diventa la sua versione unita
   | { tipo: 'potenziamento' } // dal reliquiario: il potenziamento a caso di prima
   | { tipo: 'rito'; aff: IdAffinita; gia: number }; // la scelta dei Riti: +forza allo stato di quell'affinità (gia = Riti già presi)
+
+/** Gioco a stanze: il grado di una carta, quello del suo oggetto (Eco, Lanterna o dono; src/data/rarita.ts); le altre sono Fioca. */
+export function gradoCarta(d: Dono): IdGrado {
+  return d.tipo === 'arma' ? gradoDi(d.arma.id) : d.tipo === 'passivo' ? gradoDi(d.passivo.id) : 'fioca';
+}
 
 export class Doni {
   sospesa = false; // la pausa è aperta sopra la scelta: i tasti 1-2-3-4 non scelgono
@@ -239,7 +245,9 @@ export class Doni {
     const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni, scoperte: r.scoperte, metaRaccolta: r.metaRaccolta, numeriArma: this.numeriArma });
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = `doni-carta ${sc.categoria}`;
+    const grado = gradoCarta(d);
+    b.className = `doni-carta ${sc.categoria}${this.verticali ? ` grado-${grado}` : ''}`;
+    if (this.verticali) b.dataset.grado = grado;
     const pezzo = (tag: string, classe: string, testo = ''): HTMLElement => {
       const e = document.createElement(tag);
       e.className = classe;
@@ -258,9 +266,20 @@ export class Doni {
     righe.append(...sc.righe.map((x) => this.riga(x)));
     const fondo = this.verticali ? 'Carta_Stanza' : 'Striscia_Dono';
     b.append(immagine(fondo, 'doni-fondo'), immagine(`${fondo}_Scelta`, 'doni-scelta'));
+    if (this.verticali && grado === 'ardente') {
+      const bg = immagine(fondo, 'doni-bagliore');
+      bg.style.animationDuration = `${BAGLIORE_ARDENTE.periodo}s`;
+      b.append(bg);
+    }
     if (sc.icona && arte(sc.icona)) b.append(immagine(sc.icona, 'doni-icona'));
     else b.append(pezzo('span', 'doni-segno', '+'));
     b.append(titolo, pezzo('span', 'doni-tag', sc.tag), dati, righe, pezzo('span', 'doni-tasto', String(n + 1)));
+    if (this.verticali) {
+      const g = pezzo('span', 'doni-grado');
+      g.style.color = GRADI[grado].bordo;
+      scritta(g, GRADI[grado].nome);
+      b.append(g);
+    }
     b.addEventListener('click', () => this.chiudi(d));
     return b;
   }
@@ -386,13 +405,17 @@ export class Doni {
     this.disponiTitolo(y, titolo, x0 + largaFila(zz), m);
     y += titolo;
     const ri = interniCarta(cw, ch);
-    const fondi = { 'doni-fondo': cartaSemplice(cw, ch, false), 'doni-scelta': cartaSemplice(cw, ch, true) }; // carta provvisoria del 17/11 (cartaNove resta per la carta disegnata)
+    // carta provvisoria del 17/11 (cartaNove resta per la carta disegnata), con il bordo del colore del grado
+    const fondo = (el: HTMLElement, classe: string): string => {
+      const g = (el.dataset.grado ?? 'fioca') as IdGrado;
+      return classe === 'doni-scelta' ? cartaSemplice(cw, ch, true, g) : cartaSemplice(cw, ch, false, g, classe === 'doni-bagliore');
+    };
     const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
     carte.forEach((el, i) => {
       posa(el, x0 + i * (cw + S.spazio) * zz, y, m);
       misura(el, cw, ch, zz, m);
-      for (const im of el.querySelectorAll<HTMLImageElement>('.doni-fondo, .doni-scelta')) {
-        const url = fondi[im.classList.contains('doni-fondo') ? 'doni-fondo' : 'doni-scelta'];
+      for (const im of el.querySelectorAll<HTMLImageElement>('.doni-fondo, .doni-scelta, .doni-bagliore')) {
+        const url = fondo(el, im.classList[0]);
         if (url && im.src !== url) im.src = url;
         misura(im, cw, ch, zz, m);
       }
@@ -414,6 +437,8 @@ export class Doni {
       scriviTiny5(el.querySelector('.doni-tag') as HTMLElement, ri.tag, zz, T.tag, m);
       scriviTiny5(el.querySelector('.doni-dati') as HTMLElement, ri.dati, zz, T.dato, m);
       scriviTiny5(el.querySelector('.doni-righe') as HTMLElement, ri.righe, zz, T.riga, m);
+      const gr = el.querySelector<HTMLElement>('.doni-grado');
+      if (gr) scriviTiny5(gr, { x: 0, y: S.semplice.grado.y, l: cw, a: S.semplice.grado.a }, zz, T.grado, m);
       const t = el.querySelector('.doni-tasto') as HTMLElement;
       posa(t, 6 * zz, 5 * zz, m);
       t.style.fontSize = `${TESTI.strisciaTag * zz * px}px`;

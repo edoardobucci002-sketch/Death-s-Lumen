@@ -23,6 +23,7 @@ import { PERSONAGGI } from '../data/personaggi';
 import { CERI, SBLOCCHI_OGGETTI } from '../data/meta';
 import { LIVELLO_ARMA_UNIONE, UNIONI } from '../data/unioni';
 import { PIXELFX } from '../data/effetti';
+import { GRADI } from '../data/rarita';
 import { accendiContatore, contatoreAcceso, riprendiContatore } from './contatore';
 import { FIRMA } from './firma';
 import { letturaSchermo } from './lettura-schermo';
@@ -43,6 +44,7 @@ import * as nemici from '../data/nemici';
 import * as oggetti from '../data/oggetti';
 import * as personaggi from '../data/personaggi';
 import * as progressione from '../data/progressione';
+import * as rarita from '../data/rarita';
 import * as rompibili from '../data/rompibili';
 import * as rosario from '../data/rosario';
 import * as sopravvivenza from '../data/sopravvivenza';
@@ -51,7 +53,7 @@ import * as stanze from '../data/stanze';
 import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -287,6 +289,11 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         ...[0, 1, 2].map((k) => tasto(`Attraversa la porta ${k + 1}`, () => { st.lab.attraversa(k); mostra(false); })),
       ),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto(`Eco di ${a}`, f(() => st.lab.eco(a))))),
+      titolo('Rarità delle carte'),
+      riga(
+        ...([null, 'fioca', 'chiara', 'ardente'] as const).map((g) => tasto(g ? `Carte ${GRADI[g].nome}` : 'Carte a caso', f(() => st.lab.forzaGrado(g)), st.lab.gradoForzato() === g ? 'acceso' : '')),
+      ),
+      el('p', 'lab-nota', 'Ogni Eco e ogni dono ha un grado fisso: Fioca (bordo cenere), Chiara (arancio) o Ardente (oro che pulsa). Per ogni carta esce Fioca 75 volte su 100, Chiara 20, Ardente 5, solo tra i gradi che la porta può dare; ogni carta vale +1 livello. «Carte Ardente» fa uscire quel grado quando c\'è (poi «Ripulisci la stanza» per vedere le carte); «Carte a caso» torna normale. Probabilità e colori in Numeri → rarita → GRADI; i gradi degli oggetti in src/data/rarita.ts.'),
       riga(
         tasto(st.bot ? 'Riprendi tu i comandi' : 'Fai giocare il bot', () => { st.lab.bot(!st.bot); mostra(false); }),
         tasto('Lanterna +1 livello', f(() => st.lab.lanternaSu())),

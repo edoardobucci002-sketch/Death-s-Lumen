@@ -7,15 +7,18 @@
  * Le carte si estraggono con un generatore del caso con seme (riproducibili). La scena mostra le carte e le porte.
  * Dal 17/11 dopo le tre stanze c'è la quarta, l'arena del Campanaro (mini-boss, src/sistema/campanaro.ts): niente ondate,
  * arriva lui da solo; battuto lui, le carte della porta scelta e la fetta è finita.
+ * Rarità (17/11, src/data/rarita.ts): ogni carta tira prima il grado (Fioca, Chiara, Ardente) tra quelli che la porta può
+ * dare, poi un oggetto di quel grado.
  */
 import { ONDATA, PERCORSO } from '../data/stanze';
 import type { Arma } from '../data/armi';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, type IdDono } from '../data/doni';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
+import { GRADI, ORDINE_GRADI, type IdGrado } from '../data/rarita';
 import { Caso } from './caso';
 import type { Arsenale } from './armi';
-import type { Dono } from './doni';
+import { gradoCarta, type Dono } from './doni';
 import type { NemiciStanza } from './nemici-stanza';
 import { MURI, type Muro, type Ricompensa } from './porte';
 
@@ -27,6 +30,8 @@ export class Percorso {
   fase: Fase = 'lotta';
   ricompensa: Ricompensa | 'echi' = 'echi'; // da dove pescano le carte di questa stanza
   livelloLanterna = 1;
+  /** LAB: le carte escono di questo grado, quando la porta lo può dare (null = il caso di sempre). */
+  forzaGrado: IdGrado | null = null;
   readonly passivi: Record<IdDono, number>;
   private ondata = 0; // ondate già arrivate in questa stanza
   private attesa = 0;
@@ -115,13 +120,39 @@ export class Percorso {
       for (const aff of this.mescola([...AFFINITA])) {
         if (scelte.length >= 3) break;
         const nuovi = this.echiNuovi(aff);
-        if (nuovi.length) scelte.push({ tipo: 'arma', arma: nuovi[this.caso.intero(0, nuovi.length - 1)], livello: 1 });
+        if (nuovi.length) scelte.push(this.pesca(nuovi.map((arma) => ({ tipo: 'arma', arma, livello: 1 }) as Dono)));
       }
       return scelte;
     }
     const possibili: Dono[] = this.ricompensa === 'dono' ? this.doni() : this.dallAffinita(this.ricompensa);
     const pool = possibili.length ? possibili : this.doni(); // niente da dare in quell'affinità: doni
-    return this.mescola(pool).slice(0, 3);
+    const resto = [...pool], scelte3: Dono[] = [];
+    while (scelte3.length < 3 && resto.length) {
+      const d = this.pesca(resto);
+      scelte3.push(d);
+      resto.splice(resto.indexOf(d), 1);
+    }
+    return scelte3;
+  }
+
+  /**
+   * Una carta da «pool» con la rarità: tira il grado tra quelli presenti (GRADI[].probabilita, ripartite di nuovo su
+   * quelli che ci sono), poi un oggetto a caso di quel grado. Con forzaGrado (LAB) prende quel grado, se c'è.
+   */
+  private pesca(pool: readonly Dono[]): Dono {
+    const presenti = ORDINE_GRADI.filter((g) => pool.some((d) => gradoCarta(d) === g));
+    let grado = presenti[0];
+    if (this.forzaGrado && presenti.includes(this.forzaGrado)) grado = this.forzaGrado;
+    else {
+      const totale = presenti.reduce((t, g) => t + GRADI[g].probabilita, 0);
+      let r = this.caso.numero() * totale;
+      for (const g of presenti) {
+        r -= GRADI[g].probabilita;
+        if (r < 0) { grado = g; break; }
+      }
+    }
+    const tra = pool.filter((d) => gradoCarta(d) === grado);
+    return tra[this.caso.intero(0, tra.length - 1)];
   }
 
   /** La carta scelta entra nella build. Poi si aprono le porte, o la fetta è finita. */

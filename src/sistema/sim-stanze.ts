@@ -5,7 +5,8 @@
  * Si aggiorna a ogni passo senza creare niente; gli oggetti si creano solo alla fine.
  */
 import { FONTI, type Arsenale } from './armi';
-import type { Dono } from './doni';
+import { gradoCarta, type Dono } from './doni';
+import type { IdGrado } from '../data/rarita';
 
 export interface StanzaSim {
   stanza: number;
@@ -30,6 +31,7 @@ export interface RisultatoStanze {
   usiAbilita: number;
   build: string[]; // «Lanterna 2», «Falce 3», doni
   carte: string[]; // le carte scelte, in ordine
+  gradi: { offerte: Record<IdGrado, number>; scelte: Record<IdGrado, number> }; // quante carte di ogni grado ha visto e preso (rarità, 17/11)
   stanze: StanzaSim[];
   danno: Record<string, number>; // danno fatto da ogni fonte (Lanterna, Echi, Cerchio di luce, reazioni)
 }
@@ -39,6 +41,7 @@ export class SimStanze {
   private saluteMinima = Infinity;
   private readonly stanze: StanzaSim[] = [{ stanza: 1, porta: 'echi', secondi: 0, dannoSubito: 0, saluteEntrata: 0, saluteUscita: null }];
   private readonly carte: string[] = [];
+  private readonly gradi = { offerte: { fioca: 0, chiara: 0, ardente: 0 }, scelte: { fioca: 0, chiara: 0, ardente: 0 } };
   private inizio = 0; // secondi all'ingresso nella stanza in corso
   private ripulita = false;
 
@@ -66,7 +69,13 @@ export class SimStanze {
     this.stanze.push({ stanza, porta, secondi: 0, dannoSubito: 0, saluteEntrata: salute, saluteUscita: null });
   }
 
+  /** Le carte offerte in una stanza: per contare i gradi. */
+  offerte(carte: readonly Dono[]): void {
+    for (const d of carte) this.gradi.offerte[gradoCarta(d)]++;
+  }
+
   carta(d: Dono): void {
+    this.gradi.scelte[gradoCarta(d)]++;
     this.carte.push(d.tipo === 'arma' ? `${d.arma.nome} ${d.livello}` : d.tipo === 'passivo' ? `${d.passivo.nome} ${d.livello}` : d.tipo);
   }
 
@@ -85,7 +94,7 @@ export class SimStanze {
       salute: Math.round(r.salute), saluteMinima: Math.round(Math.min(this.saluteMinima, r.salute)),
       uccisi: r.uccisi, rinascite: r.rinascite, schivate: r.schivate, colpiLanterna: r.colpiLanterna, usiAbilita: r.usiAbilita,
       build: [`Lanterna ${r.livelloLanterna}`, ...r.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`), ...r.doni],
-      carte: this.carte, stanze: this.stanze.map((s) => ({ ...s, secondi: Math.round(s.secondi * 10) / 10, dannoSubito: Math.round(s.dannoSubito), saluteEntrata: Math.round(s.saluteEntrata), saluteUscita: s.saluteUscita === null ? null : Math.round(s.saluteUscita) })),
+      carte: this.carte, gradi: this.gradi, stanze: this.stanze.map((s) => ({ ...s, secondi: Math.round(s.secondi * 10) / 10, dannoSubito: Math.round(s.dannoSubito), saluteEntrata: Math.round(s.saluteEntrata), saluteUscita: s.saluteUscita === null ? null : Math.round(s.saluteUscita) })),
       danno,
     };
   }
