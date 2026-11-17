@@ -16,4 +16,6 @@ Copie in testo delle proposte approvate da Edoardo, nate come documenti su claud
 
 - **Echi al livello 5** (`KCTmuqX8TcWPXRWPuggjLu`, 14/11, eliminato il 16/11): questionario sul potenziale di ogni Eco al livello 5. Risposte applicate: tabella dei potenziali nel [GDD](../GDD.md) e [bilanciamento.md](../bilanciamento.md) del 14/11.
 
+- **Rarità delle carte** (`GyiYMXN74Y1YLed6DfoEh6`, 17/11, eliminato il 17/11): questionario di 8 domande su che cosa vuol dire rarità, gradi, colori, probabilità, Specchio, leve e bot. Risposte applicate: vedi [decisioni.md](../decisioni.md) del 17/11 e il GDD («Rarità»).
+
 Altri riferimenti esterni (v0 giocabile e suo compendio) sono in fondo a [decisioni.md](../decisioni.md).
