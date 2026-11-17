@@ -32,7 +32,7 @@ export const PASSIVI: Passivo[] = [
   { id: 'ceraVotiva', nome: 'Cera votiva', icona: 'Icona_Cera_votiva', massimo: 3, totale: 0.75, testo: '+75% durata di zone e stati in 3 livelli.' },
   { id: 'chiodoDiBara', nome: 'Chiodo di bara', icona: 'Icona_Chiodo_di_bara', massimo: 3, totale: 0.3, testo: '+30% probabilità di colpo critico (danno doppio) in 3 livelli.' },
   { id: 'lacrimaDiLumen', nome: 'Calice riverso', icona: 'Icona_Lacrima_di_lumen', // nome nuovo del 12/11 (proposta del pivot); id e icona restano finché Edoardo disegna Icona_Calice_riverso
-    massimo: 3, totale: 3, testo: '+1 sorso della fiaschetta.' }, // 3 livelli come gli altri doni (Edoardo, 17/11; +1 sorso per livello, da rivedere)
+    massimo: 3, totale: 3, testo: '+1 sorso della fiaschetta.' }, // 3 livelli come gli altri doni, +1 sorso per livello (confermati da Edoardo il 17/11)
   { id: 'campanellaDArgento', nome: "Campanella d'argento", icona: 'Icona_Campanella_d_argento', massimo: 3, totale: 0.3, testo: '+0,1 s di tempo per la schivata perfetta.' }, // 3 livelli dal 17/11 (Edoardo); +0,1 s per livello, da rivedere
 ];
 
