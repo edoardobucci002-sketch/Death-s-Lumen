@@ -23,7 +23,9 @@ import { areaCamminabile } from './stanza';
 import type { Caso } from './caso';
 import type { Impatto } from './impatto';
 import { suona } from './audio';
-import { CAPIENZA, ID_CANTORE, ID_RICADUTO, Orda } from './orda';
+import { CAPIENZA, ID_CAMPANARO, ID_CANTORE, ID_RICADUTO, Orda } from './orda';
+import { Campanaro } from './campanaro';
+import { CAMPANARO } from '../data/campanaro';
 import { Minacce } from './minacce';
 
 export const TIPI_STANZA = ['ricaduto', 'cantore'] as const;
@@ -107,6 +109,11 @@ export class NemiciStanza {
   lama: { durata: number; sviamento: number; raggio: number } | null = null;
   /** Nemici accecati dalla Lama (per il LAB e le prove). */
   accecati = 0;
+  /** Il Campanaro, mini-boss del Mondo 1 (17/11): una sola istanza, in campo quando la Orda ha un nemico del suo tipo. */
+  readonly capo = new Campanaro();
+  /** Il Campanaro battuto (per il percorso, il LAB e le prove). */
+  capiBattuti = 0;
+  private finisciTutti = false; // il Campanaro è battuto: i Ricaduti della Chiamata se ne vanno con lui
   /** Il raggio del corpo del personaggio, per i colpi dei nemici. */
   readonly corpo: number = COMBATTIMENTO_STANZA.raggio;
   /** Schivata perfetta: li imposta la scena dalla Grazia del personaggio (le carte potranno migliorarli). */
@@ -198,9 +205,25 @@ export class NemiciStanza {
     return true;
   }
 
-  /** Il nemico entra davvero nella Orda. */
+  /** Il Campanaro (mini-boss) in (x, y), con il suo segno a terra più lungo. */
+  aggiungiCampanaro(x: number, y: number, comparsa: number = CAMPANARO.comparsa): void {
+    const a = areaCamminabile(), c = this.comparse++;
+    this.cTipo[c] = 2;
+    this.cX[c] = Phaser.Math.Clamp(x, a.x0, a.x1);
+    this.cY[c] = Phaser.Math.Clamp(y, a.y0, a.y1);
+    this.cTempo[c] = comparsa;
+  }
+
+  /** L'indice del Campanaro nella Orda (−1 se non c'è). */
+  indiceCapo(): number {
+    for (let i = 0; i < this.orda.numero; i++) if (this.orda.tipo[i] === ID_CAMPANARO) return i;
+    return -1;
+  }
+
+  /** Il nemico entra davvero nella Orda (k: 0 Ricaduto, 1 Cantore, 2 Campanaro). */
   private nasce(k: number, x: number, y: number): void {
-    const i = this.orda.nasciStanza(k === 0 ? ID_RICADUTO : ID_CANTORE, x, y, k === 0 ? R.salute : C.salute);
+    const i = this.orda.nasciStanza(k === 0 ? ID_RICADUTO : k === 1 ? ID_CANTORE : ID_CAMPANARO, x, y, k === 0 ? R.salute : k === 1 ? C.salute : CAMPANARO.salute);
+    if (k === 2) this.capo.nasce();
     this.stato[i] = STATO.cammina;
     this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.bianco[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
     this.ricarica[i] = C.primoCanto;
@@ -238,6 +261,7 @@ export class NemiciStanza {
     this.comparse = 0;
     this.grumi = 0;
     this.pozze = 0;
+    this.finisciTutti = false;
   }
 
   /**
@@ -268,6 +292,23 @@ export class NemiciStanza {
       if (this.bianco[i] > 0) this.bianco[i] -= dt;
       if (this.cieco[i] > 0) this.cieco[i] -= dt;
       const ricaduto = o.tipo[i] === ID_RICADUTO;
+      if (o.tipo[i] === ID_CAMPANARO) {
+        // il Campanaro battuto se ne va subito, e con lui i Ricaduti della Chiamata (dopo questo giro)
+        if (o.salute[i] <= 0) {
+          this.capiBattuti++;
+          this.finisciTutti = true;
+          suona('campana');
+          this.sparisce(i);
+          continue;
+        }
+        if (this.fermi[i]) continue; // sepolto, interrato o fermato: anche lui aspetta
+        const dentroCerchio = this.cerchioR > 0 && (o.x[i] - this.cerchioX) ** 2 + (o.y[i] - this.cerchioY) ** 2 <= this.cerchioR ** 2;
+        const passo = dt * o.fattoreVelocita(i, false) * (dentroCerchio ? 1 - this.cerchioLento : 1);
+        danno = Math.max(danno, this.capo.passo(this, i, dt, passo, px, py));
+        this.stato[i] = this.capo.inAvviso ? STATO.avviso : STATO.cammina;
+        if (Math.abs(px - o.x[i]) > 1 && !this.capo.inAvviso) this.verso[i] = px < o.x[i] ? 1 : 0;
+        continue;
+      }
       // salute finita (Lanterna, Echi, maledizione, reazioni): il Ricaduto va a terra, il Cantore sparisce
       if (o.salute[i] <= 0 && this.stato[i] !== STATO.aTerra) {
         const morte = this.mosse[ricaduto ? 0 : 1].morte;
@@ -343,6 +384,11 @@ export class NemiciStanza {
         else if (d > C.distanza.massima) this.muovi(i, (dx / d) * C.velocita * passo, (dy / d) * C.velocita * passo);
       }
       if (this.stato[i] === STATO.cammina && Math.abs(dx) > 1) this.verso[i] = dx < 0 ? 1 : 0;
+    }
+    if (this.finisciTutti) {
+      this.finisciTutti = false;
+      this.comparse = 0;
+      while (o.numero > 0) this.sparisce(o.numero - 1);
     }
     // i muri: dopo spinte e separazione della Orda, tutti dentro il pavimento
     const a = areaCamminabile();
@@ -557,11 +603,12 @@ export class NemiciStanza {
       presi++;
       if (o.salute[i] <= 0) continue; // battuto: le scintille grandi le fa il passo dopo
       // ancora in piedi: impatto (fermo, schiacciamento, scintille verso dove va il colpo) e spinta, tranne durante l'avviso
-      if (this.fermoImpatto) this.fermo[i] = IMPATTO.fermo;
+      const capo = o.tipo[i] === ID_CAMPANARO; // il Campanaro non si ferma e non si sposta per un colpo
+      if (this.fermoImpatto && !capo) this.fermo[i] = IMPATTO.fermo;
       this.schiaccia[i] = IMPATTO.schiaccia.durata;
       this.bianco[i] = NEMICI_STANZA.lampo;
       this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, sx, sy, IMPATTO.scintille.colpo);
-      if (this.stato[i] !== STATO.avviso) this.muovi(i, sx * NEMICI_STANZA.spinta, sy * NEMICI_STANZA.spinta);
+      if (this.stato[i] !== STATO.avviso && !capo) this.muovi(i, sx * NEMICI_STANZA.spinta, sy * NEMICI_STANZA.spinta);
     }
     return presi;
   }
@@ -592,7 +639,7 @@ export class NemiciStanza {
    */
   private accieca(i: number): void {
     const L = this.lama;
-    if (!L || !this.colpibile(i)) return;
+    if (!L || !this.colpibile(i) || this.orda.tipo[i] === ID_CAMPANARO) return;
     const o = this.orda;
     for (let j = 0; j < o.numero; j++) {
       if (j !== i && !(L.raggio > 0 && this.colpibile(j) && Math.hypot(o.x[j] - o.x[i], o.y[j] - o.y[i]) <= L.raggio)) continue;
@@ -687,6 +734,19 @@ export class NemiciStanza {
         if (st !== STATO.cammina || this.fermo[i] > 0 || this.fermi[i]) sp.anims.pause();
         else sp.anims.resume();
       }
+      if (o.tipo[i] === ID_CAMPANARO) {
+        // il Campanaro: la sua posa, il lampo bianco e i suoi avvisi; la salute è nella barra grande in cima (barra-capo.ts)
+        const pc = this.capo.posa(sp);
+        if (pc) sp.anims.pause(), sp.setFrame(pc);
+        else if (sp.anims.currentAnim) sp.anims.resume();
+        const trema = this.capo.inAvviso ? (Math.floor(this.orologio * 30) % 2 === 0 ? -1 : 1) : 0;
+        sp.setPosition(x + trema, y).setFlipX(this.verso[i] === 1).setAngle(0);
+        if (this.bianco[i] > 0 || o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        else if (this.capo.inAvviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(col.bordo)).setTintMode(Phaser.TintModes.ADD);
+        else sp.clearTint();
+        this.capo.disegna(t, x, y, this.orologio);
+        continue;
+      }
       const ricaduto = o.tipo[i] === ID_RICADUTO, M = this.mosse[ricaduto ? 0 : 1];
       const posa = this.posa(i, st, ricaduto, M);
       if (posa) sp.anims.pause(), sp.setFrame(posa);
@@ -717,7 +777,8 @@ export class NemiciStanza {
     // il segno a terra dove sta per comparire un nemico: un anello che si stringe
     for (let c = 0; c < this.comparse; c++) {
       const x = Math.round(this.cX[c]), y = Math.round(this.cY[c]);
-      const r = Math.max(4, Math.round(6 + 14 * (this.cTempo[c] / ONDATA.comparsa)));
+      const grande = this.cTipo[c] === 2 ? 2 : 1;
+      const r = Math.max(4, Math.round(grande * (6 + 14 * Math.min(1, this.cTempo[c] / ONDATA.comparsa))));
       t.lineStyle(2, colore(col.bordo), 1).strokeEllipse(x, y, 2 * r, r);
       t.fillStyle(colore(col.comparsa)).fillEllipse(x, y, r, Math.max(2, Math.round(r / 2)));
     }

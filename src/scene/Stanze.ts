@@ -56,6 +56,8 @@ import { tela } from '../sistema/scritte';
 import { LabStanze } from '../sistema/lab-stanze';
 import { RompibiliStanza } from '../sistema/rompibili-stanza';
 import { BAGLIORE } from '../data/sopravvivenza';
+import { BarraCapo } from '../sistema/barra-capo';
+import { CAMPANARO } from '../data/campanaro';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
@@ -131,6 +133,7 @@ export class Stanze extends Phaser.Scene {
   private scrittaVita = 0;
   private scrittaGrazia!: Phaser.GameObjects.Image;
   private barra!: BarraSalute;
+  private barraCapo!: BarraCapo; // la salute del Campanaro, in cima allo schermo (17/11)
   private pannelloFine!: HTMLElement;
   // passo 6: build (Echi e doni), percorso, porte, carte, passaggio tra le stanze
   arsenale!: Arsenale;
@@ -520,16 +523,10 @@ export class Stanze extends Phaser.Scene {
     // le zone che curano (Acqua santa al potenziale): dentro una pozza si recupera salute
     const cura = this.arsenale.cura(this.saluteMassima);
     if (cura > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + cura * dt);
-    // la Falce al potenziale ruba salute: prima riempie quella che manca, il resto diventa salute in più
+    // la Falce al potenziale ruba salute solo a salute piena: diventa salute in più (sotto il massimo il furto si perde)
     if (this.arsenale.rubato > 0) {
-      let r = this.arsenale.rubato;
+      if (!this.morto && this.salute >= this.saluteMassima) this.extra = Math.min(POTENZIALI.falce.tetto * this.saluteMassima, this.extra + this.arsenale.rubato);
       this.arsenale.rubato = 0;
-      if (!this.morto) {
-        const manca = Math.min(r, this.saluteMassima - this.salute);
-        this.salute += manca;
-        r -= manca;
-        this.extra = Math.min(POTENZIALI.falce.tetto * this.saluteMassima, this.extra + r);
-      }
     }
     this.nemici.lama = this.arsenale.lama(); // la Lama di luce accieca chi schivi
     const danno = this.nemici.aggiorna(dt, this.x, this.y, mezzaL, mezzaA);
@@ -568,6 +565,12 @@ export class Stanze extends Phaser.Scene {
     this.comandi.lascia();
     this.attacco.lascia();
     this.sim.stanzaRipulita(this.percorso.stanza, this.salute);
+    if (this.percorso.miniboss && !this.morto) {
+      // il Campanaro battuto: un sorso (una parte della salute massima) e Cera, oltre alle carte della porta scelta
+      this.salute = Math.min(this.saluteMassima, this.salute + CAMPANARO.premio.sorso * this.saluteMassima);
+      this.rompibili.cera += CAMPANARO.premio.cera;
+      suona('cura');
+    }
     if (!carte.length) {
       this.dopoCarta(null);
       return;
@@ -629,7 +632,7 @@ export class Stanze extends Phaser.Scene {
   }
 
   /** La stanza dopo: vuota, con le carte che pescano dalla porta scelta; il Lampionaio entra dal basso. */
-  private nuovaStanza(): void {
+  nuovaStanza(): void {
     const ricompensa = this.porte.ricompense[this.portaScelta] ?? 'dono';
     this.nemici.svuota();
     this.percorso.entra(this.percorso.stanza + 1, ricompensa);
@@ -709,6 +712,8 @@ export class Stanze extends Phaser.Scene {
     this.scrittaGrazia.setPosition(px, py - C.scritta.sopra).setVisible(this.scrittaVita > 0);
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto, this.extra);
     this.nemici.disegna(cam, px, py);
+    const capo = this.nemici.indiceCapo(), o = this.nemici.orda;
+    this.barraCapo.aggiorna(capo >= 0 ? o.salute[capo] / o.saluteMassima[capo] : null);
     this.arsenale.disegna();
     this.abilita.disegna(px, py - COLPI.corpo);
     this.impatto.disegna(dt);
@@ -818,6 +823,7 @@ export class Stanze extends Phaser.Scene {
     this.lineaJoystick.className = 'stanze-linea';
     this.lineaJoystick.hidden = true;
     this.radice.append(this.lineaJoystick, this.tastoPausa, this.velaPassaggio, this.pannelloPausa, this.pannelloFine, this.avvisoRuota);
+    this.barraCapo = new BarraCapo(this.radice);
     interfaccia.append(this.radice);
     this.disponi();
   }

@@ -4,6 +4,8 @@
  * Tutti i valori sono proposte di Claude (da rivedere): misure, colori e margini si provano sul Galaxy S25.
  */
 
+import { CAMPANARO } from './campanaro';
+
 /** La stanza: il pavimento dove si cammina e i muri intorno. */
 export const STANZA = {
   // pavimento: 13 × 7 lastre da 64 px, come le stanze di The Binding of Isaac (scelta di Edoardo del 12/11, misure da rivedere):
@@ -242,13 +244,14 @@ export const IMPATTO = {
 } as const;
 
 /**
- * Ricaduto e Cantore come li vede la Orda del survivor (src/sistema/orda.ts), che li tiene in fondo al suo elenco di tipi:
+ * Ricaduto, Cantore e Campanaro (mini-boss, dal 17/11) come li vede la Orda del survivor (src/sistema/orda.ts), che li tiene in fondo al suo elenco di tipi:
  * così le armi automatiche (gli Echi), gli stati e le reazioni funzionano anche su di loro. Il loro modo di muoversi e
  * di attaccare resta in NEMICI_STANZA e in src/sistema/nemici-stanza.ts.
  */
 export const TIPI_ORDA_STANZE = [
   { id: 'ricaduto', sprite: NEMICI_STANZA.ricaduto.sprite, raggio: NEMICI_STANZA.ricaduto.raggio, danno: NEMICI_STANZA.ricaduto.graffio.danno, attraversa: false, pesante: false, comportamento: 'stanze' },
   { id: 'cantore', sprite: NEMICI_STANZA.cantore.sprite, raggio: NEMICI_STANZA.cantore.raggio, danno: NEMICI_STANZA.cantore.grumo.danno, attraversa: false, pesante: false, comportamento: 'stanze' },
+  { id: 'campanaro', sprite: CAMPANARO.sprite, raggio: CAMPANARO.raggio, danno: CAMPANARO.carica.danno, attraversa: false, pesante: true, comportamento: 'stanze' },
 ] as const;
 
 /**

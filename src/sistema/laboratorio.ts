@@ -32,6 +32,7 @@ import { INTERRUTTORI } from './interruttori';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
 import * as armiStanze from '../data/armi-stanze';
+import * as campanaro from '../data/campanaro';
 import { ECHI_STANZE } from '../data/armi-stanze';
 import * as doni from '../data/doni';
 import * as effetti from '../data/effetti';
@@ -50,7 +51,7 @@ import * as stanze from '../data/stanze';
 import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -278,8 +279,8 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     return [
       titolo('Stanza'),
       riga(el('span', 'lab-stato', `Pavimento ${s.larghezza} × ${s.altezza} px · Lampionaio in ${s.x}, ${s.y}`)),
-      titolo('Percorso (tre stanze)'),
-      riga(el('span', 'lab-stato', `Stanza ${s.stanza} di 3 · carte da: ${s.ricompensa} · fase: ${s.fase}${s.porte.length ? ` · porte: ${s.porte.join(', ')}` : ''}`)),
+      titolo('Percorso (tre stanze e il Campanaro)'),
+      riga(el('span', 'lab-stato', `Stanza ${s.stanza} di 4 · carte da: ${s.ricompensa} · fase: ${s.fase}${s.porte.length ? ` · porte: ${s.porte.join(', ')}` : ''}`)),
       riga(el('span', 'lab-stato', `Build: Lanterna ${s.lanterna}${s.echi.length ? ', ' + s.echi.join(', ') : ''}${s.doni.length ? ' · doni: ' + s.doni.join(', ') : ''}`)),
       riga(
         tasto('Ripulisci la stanza', () => { st.lab.ripulisci(); mostra(false); }),
@@ -295,9 +296,23 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Potenziali (livello 5)'),
       riga(...ECHI_STANZE.map((a) => tasto(a.nome, f(() => st.lab.potenziale(a.id))))),
       riga(tasto('Acceca il nemico vicino', f(() => st.lab.accecaVicino())), el('span', 'lab-stato', `accecati dalla Lama: ${st.lab.accecati()}`)),
-      el('p', 'lab-nota', 'Tocca un Eco: entra nella build al livello 5, con il suo potenziale (Candela: la fiammella che uccide si divide; Falce: due anelli e ruba salute (poi tocca «Salute in più» per vederla); Campana: interrompe gli attacchi; Fuoco fatuo: insegue chi attacca e lo interrompe; Acqua santa: le pozze curano; Gerico: la cecità passa ai vicini; Lapide: muro di 3 s; Rosario: +15% a rimbalzo; Corvo: +20% di danno subito; Velo funebre: fermo si allarga; Sampietrini: rimbalza verso il nemico). Il Cerchio di luce ora fa un colpo grande quando si accende e poi abbaglia soltanto.'),
+      el('p', 'lab-nota', 'Tocca un Eco: entra nella build al livello 5, con il suo potenziale (Candela: la fiammella che uccide si divide; Falce: due anelli e, a salute piena, salute in più (tocca «Salute in più» per vederla); Campana: interrompe la carica; Fuoco fatuo: ritrova il primo nemico trapassato; Acqua santa: dentro le pozze recuperi salute; Gerico: la cecità passa ai vicini; Lapide: muro di 3 s; Rosario: +15% di danno a rimbalzo; Corvo: +20% di danno subito; Velo funebre: fermo si allarga; Sampietrini: rimbalza verso il nemico). Il Cerchio di luce ferisce forte quando si accende e poi colpisce soltanto, abbagliando.'),
       el('p', 'lab-nota', '«Fai giocare il bot»: il bot muove, colpisce, usa il Cerchio di luce e sceglie carte e porte al posto tuo, alla velocità normale (le simulazioni veloci: npm run sim-stanze). Danno a intervallo: ogni colpo esce a caso tra il minimo e il massimo del livello (le carte scrivono «Danno 12–18»). Le armi delle stanze hanno 5 livelli: il 5° è il potenziale (la Lanterna colpisce anche alle spalle). Numeri in Numeri → armiStanze.'),
       el('p', 'lab-nota', '«Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 3 carte. Scelta la carta si aprono le porte, con sopra il simbolo della ricompensa: «Attraversa la porta» ti porta contro una di loro. Nella prima stanza le carte sono 3 Echi; poi pescano dalla porta scelta. Dopo la terza stanza: «Fetta completata». Numeri in Numeri → stanze → PERCORSO e PORTE.'),
+      titolo('Il Campanaro (mini-boss)'),
+      riga(el('span', 'lab-stato', ((c) => c ? (c.massima ? `Salute ${c.salute}/${c.massima} · fase ${c.fase} · rintocchi ${c.rintocchi} · cariche ${c.cariche} · chiamate ${c.chiamate}` : `Battuto (${c.battuti})`) : 'Non è in campo')(st.lab.campanaro()))),
+      riga(
+        tasto('Vai al Campanaro', () => { st.lab.vaiAlCampanaro(); mostra(false); }, 'acceso'),
+        tasto('Campanaro qui', () => { st.lab.campanaroQui(); mostra(false); }),
+        tasto('Fase 2', f(() => st.lab.saluteCampanaro(0.49))),
+        tasto('Salute al 10%', f(() => st.lab.saluteCampanaro(0.1))),
+      ),
+      riga(
+        tasto('Rintocco', () => { st.lab.attaccoCampanaro('rintocco'); mostra(false); }),
+        tasto('Carica', () => { st.lab.attaccoCampanaro('carica'); mostra(false); }),
+        tasto('Chiamata', () => { st.lab.attaccoCampanaro('chiamata'); mostra(false); }),
+      ),
+      el('p', 'lab-nota', '«Vai al Campanaro» ti porta nella quarta stanza, l\'arena, con la build che hai: dopo un attimo compare in fondo. Vicino fa il Rintocco (il disco rosso si riempie, poi l\'onda: esci dal cerchio); lontano la Carica (la linea fino al muro, poi corre: spostati di lato; contro il muro resta stordito 1,5 s). Sotto metà salute (fase 2) gli attacchi arrivano prima, dopo il disco viene l\'anello (torna vicino a lui) e ogni tre attacchi la Chiamata fa comparire 2 Ricaduti. Uscire dall\'area all\'ultimo istante dà la Grazia. «Rintocco», «Carica», «Chiamata» scelgono il suo prossimo attacco. Battuto: un sorso (30% della salute), 10 di Cera e le carte della porta scelta. Numeri in Numeri → campanaro.'),
       titolo('Nemici'),
       riga(el('span', 'lab-stato', `In campo: ${s.nemici} · battuti: ${s.uccisi} · rinati: ${s.rinascite}`)),
       riga(

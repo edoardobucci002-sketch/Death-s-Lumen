@@ -34,6 +34,7 @@ const TIPI: readonly TipoOrda[] = [...NEMICI, ...TIPI_ORDA_STANZE];
 /** Gli indici dei tipi del gioco a stanze. */
 export const ID_RICADUTO = TIPI.findIndex((t) => t.id === 'ricaduto');
 export const ID_CANTORE = TIPI.findIndex((t) => t.id === 'cantore');
+export const ID_CAMPANARO = TIPI.findIndex((t) => t.id === 'campanaro');
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici, alle orde e alla chiamata dei morti. */
 const ID_BRUTO = NEMICI.findIndex((t) => t.id === 'bruto');
 export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + 2 * ORDE.massimo + MIETITORE.chiamata.quanti + 20;

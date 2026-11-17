@@ -7,7 +7,8 @@
  * Restyle del 13/11: ferire o far cadere il Lampionaio per vedere le animazioni hurt e death.
  * Danno a intervallo (14/11): far salire di livello la Lanterna e gli Echi. Bot (14/11): farlo giocare al posto tuo.
  * La cripta (16/11): tornare al disegno del codice per confrontare, rifare le lastre. Rompibili (16/11): metterli accanto,
- * romperli, ridisporli, far uscire un frammento, accendere il Bagliore.
+ * romperli, ridisporli, far uscire un frammento, accendere il Bagliore. Il Campanaro (17/11): andare all'arena, farlo
+ * comparire, portarlo alla fase 2 o quasi a terra, scegliere il suo prossimo attacco.
  */
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE, POTENZIALI } from '../data/armi-stanze';
@@ -18,6 +19,10 @@ import { STATO, type TipoStanza } from './nemici-stanza';
 import { F } from './armi-colpo';
 import { BotStanze } from './bot-stanze';
 import type { Stanze } from '../scene/Stanze';
+import { PERCORSO } from '../data/stanze';
+import { MOSSA_CAPO } from './campanaro';
+
+export type AttaccoCapo = 'rintocco' | 'carica' | 'chiamata';
 
 export type DirezioneColpo = 'destra' | 'sinistra' | 'su' | 'giu' | 'auto';
 
@@ -51,6 +56,42 @@ export class LabStanze {
     this.s.ondateAutomatiche = true;
     this.s.nemici.svuota();
     this.s.percorso.ripulisci();
+  }
+
+  /** Salta all'arena del Campanaro (la quarta stanza), con la build di adesso. */
+  vaiAlCampanaro(): void {
+    const p = this.s.percorso;
+    this.s.ondateAutomatiche = true;
+    this.s.nemici.svuota();
+    p.stanza = PERCORSO.ondate.length;
+    p.fase = 'porte';
+    this.s.nuovaStanza();
+  }
+
+  /** Il Campanaro qui vicino, subito (senza la stanza in corso: per provarlo da solo). */
+  campanaroQui(): void {
+    if (this.s.nemici.indiceCapo() >= 0) return;
+    this.s.nemici.aggiungiCampanaro(this.s.x, this.s.y - 200, 0.3);
+  }
+
+  /** La salute del Campanaro a questa parte della massima (0,49: entra in fase 2). */
+  saluteCampanaro(parte: number): void {
+    const i = this.s.nemici.indiceCapo(), o = this.s.nemici.orda;
+    if (i >= 0) o.salute[i] = Math.max(1, o.saluteMassima[i] * parte);
+  }
+
+  /** Il prossimo attacco del Campanaro, subito (finisce la camminata). */
+  attaccoCampanaro(a: AttaccoCapo): void {
+    const c = this.s.nemici.capo;
+    c.prossimo = a === 'rintocco' ? MOSSA_CAPO.rintocco : a === 'carica' ? MOSSA_CAPO.mira : MOSSA_CAPO.chiamata;
+    if (c.mossa === MOSSA_CAPO.cammina) c.tempo = 0;
+  }
+
+  /** Lo stato del Campanaro per il pannello (null se non è in campo). */
+  campanaro(): { salute: number; massima: number; fase: number; rintocchi: number; cariche: number; chiamate: number; battuti: number } | null {
+    const n = this.s.nemici, i = n.indiceCapo(), c = n.capo;
+    if (i < 0) return n.capiBattuti ? { salute: 0, massima: 0, fase: 0, rintocchi: c.rintocchi, cariche: c.cariche, chiamate: c.chiamate, battuti: n.capiBattuti } : null;
+    return { salute: Math.round(n.orda.salute[i]), massima: Math.round(n.orda.saluteMassima[i]), fase: c.fase, rintocchi: c.rintocchi, cariche: c.cariche, chiamate: c.chiamate, battuti: n.capiBattuti };
   }
 
   /** Porta il Lampionaio contro la porta k (aperta): passa alla stanza dopo. */

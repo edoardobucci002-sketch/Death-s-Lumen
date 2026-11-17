@@ -5,6 +5,7 @@
  * A ogni passo guarda dove sarebbe tra BOT_STANZE.avanti secondi camminando in 16 direzioni (o restando fermo) e sceglie
  * il punto più sicuro: fuori dallo spicchio del Ricaduto e dalla linea del Cantore (che vede solo dopo il suo tempo di
  * reazione, come una persona), lontano da grumi, pozze di cera e muri, alla distanza giusta per colpire con la Lanterna.
+ * Il Campanaro (17/11): esce dal disco del Rintocco, dall'anello e dalla linea della Carica, sempre dopo il tempo di reazione.
  * Colpisce quando un nemico è a portata, usa il Cerchio di luce quando è circondato o ferito, sceglie carte e porte con
  * le preferenze di BOT_STANZE (o a caso nel modo «esplora»). Non usa il caso della partita: a parità di seme gioca uguale.
  * Niente allocazioni nel ciclo di gioco.
@@ -13,7 +14,9 @@ import Phaser from 'phaser';
 import { BOT_STANZE as B } from '../data/bot';
 import { NEMICI_STANZA } from '../data/stanze';
 import { AFFINITA_ARMI } from '../data/stati';
-import { ID_RICADUTO } from './orda';
+import { ID_CAMPANARO, ID_RICADUTO } from './orda';
+import { CAMPANARO } from '../data/campanaro';
+import { MOSSA_CAPO } from './campanaro';
 import { STATO, type NemiciStanza } from './nemici-stanza';
 import { areaCamminabile } from './stanza';
 import { Caso } from './caso';
@@ -89,6 +92,10 @@ export class BotStanze {
       if (st === STATO.aTerra) continue;
       const ex = x - o.x[i], ey = y - o.y[i], d = Math.hypot(ex, ey) || 0.001;
       const ricaduto = o.tipo[i] === ID_RICADUTO;
+      if (o.tipo[i] === ID_CAMPANARO) {
+        s += this.pericoloCapo(x, y, d, n, i, corpo);
+        continue;
+      }
       if (st === STATO.avviso) {
         const visto = (ricaduto ? R.avviso : C.avviso) - n.tempo[i] >= B.reazione;
         if (!visto) continue;
@@ -119,6 +126,18 @@ export class BotStanze {
       const rp = n.raggioPozza(k) + corpo + m, ex = (x - n.pX[k]) / rp, ey = (y - n.pY[k]) / (rp / 2);
       if (ex * ex + ey * ey < 1) s += B.pesi.pozza;
     }
+    return s;
+  }
+
+  /** Il pericolo del Campanaro i nel punto (x, y), a distanza d da lui. */
+  private pericoloCapo(x: number, y: number, d: number, n: NemiciStanza, i: number, corpo: number): number {
+    const c = n.capo, m = B.margine, K = CAMPANARO;
+    let s = d < K.raggio + corpo + m ? (K.raggio + corpo + m - d) * B.pesi.vicino : 0; // non addosso a lui
+    if (c.mossa === MOSSA_CAPO.carica) return s + (c.sullaLinea(n.orda.x[i], n.orda.y[i], x, y, corpo + m) ? B.pesi.graffio : 0);
+    if (c.durata - c.tempo < B.reazione) return s; // l'avviso non l'ha ancora visto
+    if (c.mossa === MOSSA_CAPO.rintocco && d < K.rintocco.raggio + corpo + m) s += B.pesi.graffio;
+    else if (c.mossa === MOSSA_CAPO.anello && d > K.rintocco.raggio - corpo - m && d < K.anello.raggio + corpo + m) s += B.pesi.graffio;
+    else if (c.mossa === MOSSA_CAPO.mira && c.sullaLinea(n.orda.x[i], n.orda.y[i], x, y, corpo + m)) s += B.pesi.graffio;
     return s;
   }
 

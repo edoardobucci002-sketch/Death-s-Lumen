@@ -409,3 +409,7 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 @keyframes abilita-scarica { 0%, 100% { translate: 0 0; } 25% { translate: -3px 0; } 75% { translate: 3px 0; } }
 /* su computer si attacca con il mouse e con J: il tasto serve solo ai telefoni e ai tablet */
 @media (pointer: fine) { #interfaccia .stanze-attacco { display: none; } }
+/* la barra del Campanaro (mini-boss, 17/11): in cima, al centro, sotto la safe area */
+.stanze-capo { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; z-index: 2; }
+.stanze-capo[hidden] { display: none; }
+.stanze-capo canvas { image-rendering: pixelated; }

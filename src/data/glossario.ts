@@ -10,7 +10,7 @@ export const CAMPI_GLOSSARIO: Record<string, { nome: string; unita?: string; meg
   danno: { nome: 'Danno' },
   quantita: { nome: 'Colpi' }, // quanti oggetti lancia o ha l'arma (fiammelle, falci, fiale, corvi…)
   raggio: { nome: 'Area' }, // ciò che è tondo: aure, pozze, rintocchi, impatti, cerchi
-  ampiezza: { nome: 'Ampiezza' },
+  ampiezza: { nome: 'Ampiezza', unita: '°' },
   lunghezza: { nome: 'Portata' }, // ciò che va dritto o ad arco: fendente, Lanterna
   ricarica: { nome: 'Ricarica', unita: ' s', meglioBasso: true }, // il tempo tra due colpi della stessa arma
   durata: { nome: 'Durata', unita: ' s' },
@@ -69,3 +69,40 @@ export const VIETATE: { cerca: RegExp; usa: string }[] = [
 /** Il nome di un campo su una carta: il raggio della Lanterna (ha un'ampiezza: è un arco) si chiama Portata, non Area. */
 export const nomeCampo = (k: string, livello: Record<string, unknown>): string =>
   k === 'raggio' && 'ampiezza' in livello ? CAMPI_GLOSSARIO.lunghezza.nome : CAMPI_GLOSSARIO[k].nome;
+
+const virgolaG = (v: number): string => String(Math.round(v * 100) / 100).replace('.', ',');
+const conSegno = (v: number): string => `${v > 0 ? '+' : '−'}${virgolaG(Math.abs(v))}`;
+const plurale = (n: number, uno: string, tanti: string): string => (Math.abs(n) === 1 ? uno : tanti);
+
+/**
+ * La riga di un livello (glossario, risposta 6): numeri con segno e parola, sempre nello stesso ordine (danno, colpi,
+ * area, ricarica, durata, il resto). La genera il gioco dai numeri del livello prima e di quello nuovo: nessuno la scrive
+ * a mano. Le cose che si contano hanno il numero davanti («+4–6 danno», «+1 colpo», «+1 rimbalzo»); le misure hanno la
+ * parola davanti («ricarica −0,2 s», «area +18%»). Area e portata in percentuale: i pixel non dicono niente a chi gioca.
+ */
+export function rigaLivello(prima: Record<string, unknown>, ora: Record<string, unknown>): string {
+  const pezzi: string[] = [];
+  const chiavi = Object.keys(ora).filter((k) => k in CAMPI_GLOSSARIO && typeof ora[k] === 'number').sort((a, b) => postoCampo(a) - postoCampo(b));
+  for (const k of chiavi) {
+    const a = prima[k] as number, b = ora[k] as number;
+    if (typeof a !== 'number') continue;
+    const d = Math.round((b - a) * 100) / 100;
+    if (k === 'danno') {
+      const dm = typeof ora.dannoMassimo === 'number' && typeof prima.dannoMassimo === 'number' ? Math.round((ora.dannoMassimo - prima.dannoMassimo) * 100) / 100 : d;
+      if (d === 0 && dm === 0) continue;
+      pezzi.push(d === dm ? `${conSegno(d)} danno` : `${conSegno(d)}–${virgolaG(Math.abs(dm))} danno`);
+      continue;
+    }
+    if (d === 0) continue;
+    const nome = nomeCampo(k, ora).toLowerCase(), unita = CAMPI_GLOSSARIO[k].unita?.trim() ?? '';
+    if (k === 'quantita') pezzi.push(`${conSegno(d)} ${plurale(d, 'colpo', 'colpi')}`);
+    else if (k === 'rimbalzi') pezzi.push(`${conSegno(d)} ${plurale(d, 'rimbalzo', 'rimbalzi')}`);
+    else if (k === 'trapassa') pezzi.push(`trapassa ${conSegno(d)} ${plurale(d, 'nemico', 'nemici')}`);
+    else if (k === 'raggio' || k === 'lunghezza') pezzi.push(`${nome} ${conSegno(Math.round((b / a - 1) * 100))}%`);
+    else pezzi.push(`${nome} ${conSegno(d)}${unita === '°' ? '°' : unita ? ' ' + unita : ''}`);
+  }
+  return pezzi.join(', ');
+}
+
+/** Il testo che la riga del livello lascia al gioco: nei dati si scrive AUTO e il gioco ci mette rigaLivello. */
+export const AUTO = '';

@@ -846,3 +846,5 @@ Nuovi o cambiati, tutti *da rivedere*: `REAZIONI.etichetta` (`ingrandimento` da 
 ## 17/11 · Falce al potenziale (ruba salute)
 
 `POTENZIALI.falce`: furto 10% del danno, tetto 20% della salute massima. `npm run sim-stanze -- 8 potenziali` (8 fette per Eco, seme di default): la Falce al livello 5 completa 8/8 con il 98% di salute alla fine (le altre fra 43% e 84%), 24% del danno e 10,4 di danno al secondo. Il furto è molto forte contro lo scarso danno ricevuto: se dopo la prova a mano è troppo, scendere a 5% o abbassare il tetto. Campione piccolo: ±12 punti.
+
+**Seconda versione (17/11, decisione di Edoardo): il furto vale solo a salute piena.** `npm run sim-stanze -- 16 potenziali`: la Falce al livello 5 completa 16/16 con il **71%** di salute alla fine (era 98%), dentro il gruppo degli altri Echi (42–83%); 24% del danno, 10,5 al secondo. Gerico 15/16 (44%), Velo funebre 15/16, Lapide 15/16. Serie normale (`npm run sim-stanze -- 48`): 44/48 fette completate, cadute tutte nella stanza 3, salute media alla fine 36; la Lanterna fa il 69% del danno, la Falce il 4% nelle 4 partite in cui c'era.

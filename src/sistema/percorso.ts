@@ -5,6 +5,8 @@
  * degli Echi di quell'affinità (dalla Luce anche livelli della Lanterna), la porta del dono dà doni (solo quelli che nelle
  * stanze funzionano). Gli Echi e la Lanterna hanno i numeri del gioco a stanze (data/armi-stanze.ts: 5 livelli, danno a intervallo). Scelta la carta si aprono le porte; dopo la terza stanza la fetta è finita.
  * Le carte si estraggono con un generatore del caso con seme (riproducibili). La scena mostra le carte e le porte.
+ * Dal 17/11 dopo le tre stanze c'è la quarta, l'arena del Campanaro (mini-boss, src/sistema/campanaro.ts): niente ondate,
+ * arriva lui da solo; battuto lui, le carte della porta scelta e la fetta è finita.
  */
 import { ONDATA, PERCORSO } from '../data/stanze';
 import type { Arma } from '../data/armi';
@@ -41,7 +43,17 @@ export class Percorso {
   }
 
   get ultima(): boolean {
-    return this.stanza >= PERCORSO.ondate.length;
+    return this.stanza >= PERCORSO.ondate.length + 1;
+  }
+
+  /** La stanza del Campanaro: quella dopo le stanze con le ondate. */
+  get miniboss(): boolean {
+    return this.stanza > PERCORSO.ondate.length;
+  }
+
+  /** Quante «ondate» ha la stanza: nell'arena una sola, il Campanaro. */
+  private get quanteOndate(): number {
+    return this.miniboss ? 1 : PERCORSO.ondate[this.stanza - 1].length;
   }
 
   /** Comincia la stanza n, con le carte che pescano da «ricompensa». */
@@ -59,14 +71,19 @@ export class Percorso {
    * (px, py): il personaggio, perché nessuno compaia addosso a lui.
    */
   aggiorna(dt: number, nemici: NemiciStanza, px: number, py: number): boolean {
-    const ondate = PERCORSO.ondate[this.stanza - 1];
     if (this.fase === 'lotta') {
-      if (this.ondata < ondate.length) {
+      if (this.miniboss && this.ondata === 0) {
+        // l'arena: dopo un attimo il Campanaro compare in fondo, lontano dalla porta da cui si entra
+        if ((this.attesa -= dt) <= 0) {
+          nemici.aggiungiCampanaro(px, py - 2 * ONDATA.distanzaMinima);
+          this.ondata = 1;
+        }
+      } else if (this.ondata < this.quanteOndate) {
         // la prima dopo un attimo; le altre a tempo, o subito se la stanza è (quasi) vuota
         const prima = this.ondata === 0;
         this.attesa -= dt;
         if (this.attesa <= 0 || (!prima && nemici.vivi() <= PERCORSO.restanti)) {
-          const o = ondate[this.ondata++];
+          const o = PERCORSO.ondate[this.stanza - 1][this.ondata++];
           nemici.ondata(px, py, o.ricaduti, o.cantori);
           this.attesa = PERCORSO.intervallo;
         }
@@ -83,7 +100,7 @@ export class Percorso {
 
   /** LAB: la stanza è ripulita subito (le ondate non arrivano più). */
   ripulisci(): void {
-    this.ondata = PERCORSO.ondate[this.stanza - 1].length;
+    this.ondata = this.quanteOndate;
     if (this.fase === 'lotta') {
       this.fase = 'attesa';
       this.attesa = 0;

@@ -9,7 +9,8 @@
  * - Il livello 5 è il «potenziale» dell'arma (proposta del pivot; «potenziale: true»): un effetto nuovo, scelto da Edoardo
  *   il 14/11 per ogni Eco (i suoi numeri sono in POTENZIALI, qui sotto). La Lanterna al livello 5 colpisce anche alle spalle.
  * - I campi che non sono livelli (velocità dei proiettili, rimbalzi, spinta…) sono quelli del survivor.
- * - «testo» è la riga della carta a quel livello: «+4–6 danno» quando crescono il minimo e il massimo.
+ * - «testo»: al livello 1 la descrizione e al 5 l'effetto del potenziale, scritti a mano; ai livelli 2–4 c'è AUTO e la riga
+ *   la genera il gioco dai numeri (rigaLivello in src/data/glossario.ts, glossario del 16/11).
  *
  * Tutti i numeri sono proposte di Claude del 14/11, da rivedere con le prove di Edoardo.
  */
@@ -18,6 +19,7 @@ import {
   type AcquaSanta, type Arma, type Campana, type Candela, type Corvo, type Falce, type FuocoFatuo, type LamaDiLuce, type Lanterna,
   type Lapide, type RosarioSpezzato, type Sampietrini, type VeloFunebre,
 } from './armi';
+import { AUTO, rigaLivello } from './glossario';
 
 /** Un'arma del survivor con i livelli del gioco a stanze: ogni livello ha anche il danno massimo. */
 type ConIntervallo<A extends Arma> = Omit<A, 'livelli'> & { livelli: (A['livelli'][number] & { dannoMassimo: number; potenziale?: boolean })[] };
@@ -31,9 +33,9 @@ export const LANTERNA_STANZE: ConIntervallo<Lanterna> = {
   ...LANTERNA,
   livelli: [
     { ricarica: 0.45, danno: 12, dannoMassimo: 18, raggio: 136, ampiezza: 132, spalle: false, testo: 'Un colpo corto, in un arco ampio davanti a te.' },
-    { ricarica: 0.45, danno: 16, dannoMassimo: 24, raggio: 136, ampiezza: 132, spalle: false, testo: '+4–6 danno.' },
-    { ricarica: 0.4, danno: 16, dannoMassimo: 24, raggio: 160, ampiezza: 132, spalle: false, testo: 'Portata maggiore, ricarica più breve.' },
-    { ricarica: 0.4, danno: 21, dannoMassimo: 31, raggio: 183, ampiezza: 166, spalle: false, testo: '+5–7 danno, portata e ampiezza maggiori.' },
+    { ricarica: 0.45, danno: 16, dannoMassimo: 24, raggio: 136, ampiezza: 132, spalle: false, testo: AUTO },
+    { ricarica: 0.4, danno: 16, dannoMassimo: 24, raggio: 160, ampiezza: 132, spalle: false, testo: AUTO },
+    { ricarica: 0.4, danno: 21, dannoMassimo: 31, raggio: 183, ampiezza: 166, spalle: false, testo: AUTO },
     { ricarica: 0.4, danno: 26, dannoMassimo: 38, raggio: 183, ampiezza: 166, spalle: true, testo: 'Colpisce anche alle spalle.' },
   ],
 };
@@ -42,9 +44,9 @@ const CANDELA_STANZE: ConIntervallo<Candela> = {
   ...CANDELA,
   livelli: [
     { ricarica: 0.95, danno: 6, dannoMassimo: 9, quantita: 1, trapassa: 1, testo: 'Lancia fiammelle verso il nemico più vicino.' },
-    { ricarica: 0.95, danno: 6, dannoMassimo: 9, quantita: 2, trapassa: 1, testo: '+1 fiammella.' },
-    { ricarica: 0.95, danno: 8, dannoMassimo: 12, quantita: 2, trapassa: 2, testo: '+2–3 danno, le fiammelle trapassano un nemico in più.' },
-    { ricarica: 0.75, danno: 8, dannoMassimo: 12, quantita: 3, trapassa: 2, testo: '+1 fiammella, ricarica più breve.' },
+    { ricarica: 0.95, danno: 6, dannoMassimo: 9, quantita: 2, trapassa: 1, testo: AUTO },
+    { ricarica: 0.95, danno: 8, dannoMassimo: 12, quantita: 2, trapassa: 2, testo: AUTO },
+    { ricarica: 0.75, danno: 8, dannoMassimo: 12, quantita: 3, trapassa: 2, testo: AUTO },
     { ricarica: 0.75, danno: 11, dannoMassimo: 16, quantita: 3, trapassa: 3, potenziale: true, testo: 'Una fiammella che uccide si divide in 2, a metà danno.' },
   ],
 };
@@ -53,10 +55,10 @@ const FALCE_STANZE: ConIntervallo<Falce> = {
   ...FALCE,
   livelli: [
     { quantita: 1, danno: 5, dannoMassimo: 7, raggio: 132, giri: 0.45, testo: 'Una falce spettrale ti ruota intorno.' },
-    { quantita: 2, danno: 5, dannoMassimo: 7, raggio: 132, giri: 0.45, testo: '+1 falce.' },
-    { quantita: 2, danno: 7, dannoMassimo: 9, raggio: 160, giri: 0.45, testo: '+2 danno, area più ampia.' },
-    { quantita: 3, danno: 7, dannoMassimo: 9, raggio: 160, giri: 0.45, testo: '+1 falce.' },
-    { quantita: 4, danno: 9, dannoMassimo: 12, raggio: 132, giri: 0.59, potenziale: true, testo: 'Metà delle falci gira al contrario, su un cerchio più largo. Ogni colpo ruba il 10% del danno come salute; oltre il massimo diventa salute in più.' },
+    { quantita: 2, danno: 5, dannoMassimo: 7, raggio: 132, giri: 0.45, testo: AUTO },
+    { quantita: 2, danno: 7, dannoMassimo: 9, raggio: 160, giri: 0.45, testo: AUTO },
+    { quantita: 3, danno: 7, dannoMassimo: 9, raggio: 160, giri: 0.45, testo: AUTO },
+    { quantita: 4, danno: 9, dannoMassimo: 12, raggio: 132, giri: 0.59, potenziale: true, testo: 'Metà delle falci gira al contrario, su un cerchio più largo. A salute piena ogni colpo ti dà il 10% del danno come salute in più.' },
   ],
 };
 
@@ -64,9 +66,9 @@ const CAMPANA_STANZE: ConIntervallo<Campana> = {
   ...CAMPANA,
   livelli: [
     { ricarica: 2.6, danno: 14, dannoMassimo: 24, raggio: 197, doppio: false, testo: 'Rintocchi che respingono e feriscono tutto intorno.' },
-    { ricarica: 2.6, danno: 19, dannoMassimo: 31, raggio: 197, doppio: false, testo: '+5–7 danno.' },
-    { ricarica: 2.2, danno: 19, dannoMassimo: 31, raggio: 240, doppio: false, testo: 'Area più ampia, ricarica più breve.' },
-    { ricarica: 2.2, danno: 25, dannoMassimo: 41, raggio: 240, doppio: false, testo: '+6–10 danno.' },
+    { ricarica: 2.6, danno: 19, dannoMassimo: 31, raggio: 197, doppio: false, testo: AUTO },
+    { ricarica: 2.2, danno: 19, dannoMassimo: 31, raggio: 240, doppio: false, testo: AUTO },
+    { ricarica: 2.2, danno: 25, dannoMassimo: 41, raggio: 240, doppio: false, testo: AUTO },
     { ricarica: 2.6, danno: 30, dannoMassimo: 50, raggio: 240, doppio: false, potenziale: true, testo: 'Il rintocco interrompe la carica dei nemici, ma la ricarica è più lunga.' },
   ],
 };
@@ -75,9 +77,9 @@ const FUOCO_FATUO_STANZE: ConIntervallo<FuocoFatuo> = {
   ...FUOCO_FATUO,
   livelli: [
     { ricarica: 1.3, quantita: 1, danno: 7, dannoMassimo: 11, trapassa: 1, testo: 'Fuochi fatui che inseguono i nemici, prima élite e capi.' },
-    { ricarica: 1.3, quantita: 2, danno: 7, dannoMassimo: 11, trapassa: 1, testo: '+1 fuoco.' },
-    { ricarica: 1.3, quantita: 2, danno: 10, dannoMassimo: 15, trapassa: 1, testo: '+3–4 danno.' },
-    { ricarica: 1, quantita: 3, danno: 10, dannoMassimo: 15, trapassa: 1, testo: '+1 fuoco, ricarica più breve.' },
+    { ricarica: 1.3, quantita: 2, danno: 7, dannoMassimo: 11, trapassa: 1, testo: AUTO },
+    { ricarica: 1.3, quantita: 2, danno: 10, dannoMassimo: 15, trapassa: 1, testo: AUTO },
+    { ricarica: 1, quantita: 3, danno: 10, dannoMassimo: 15, trapassa: 1, testo: AUTO },
     { ricarica: 1, quantita: 4, danno: 13, dannoMassimo: 20, trapassa: 1, potenziale: true, testo: 'Il primo nemico che un fuoco trapassa lo ritrova: il fuoco rimbalza sul muro e torna a colpirlo.' },
   ],
 };
@@ -87,10 +89,10 @@ const ACQUA_SANTA_STANZE: ConIntervallo<AcquaSanta> = {
   ...ACQUA_SANTA,
   livelli: [
     { ricarica: 2.8, quantita: 1, danno: 1, dannoMassimo: 2, raggio: 89, durata: 2.6, testo: 'Fiale che lasciano pozze benedette sui nemici.' },
-    { ricarica: 2.8, quantita: 2, danno: 1, dannoMassimo: 2, raggio: 89, durata: 2.6, testo: '+1 fiala.' },
-    { ricarica: 2.8, quantita: 2, danno: 2, dannoMassimo: 3, raggio: 108, durata: 2.6, testo: '+1 danno, area più ampia.' },
-    { ricarica: 2.3, quantita: 3, danno: 2, dannoMassimo: 3, raggio: 108, durata: 3.2, testo: '+1 fiala, ricarica più breve, durata maggiore.' },
-    { ricarica: 2.3, quantita: 4, danno: 3, dannoMassimo: 4, raggio: 129, durata: 4.2, potenziale: true, testo: 'Dentro le pozze recuperi 1 di salute al secondo.' },
+    { ricarica: 2.8, quantita: 2, danno: 1, dannoMassimo: 2, raggio: 89, durata: 2.6, testo: AUTO },
+    { ricarica: 2.8, quantita: 2, danno: 2, dannoMassimo: 3, raggio: 108, durata: 2.6, testo: AUTO },
+    { ricarica: 2.3, quantita: 3, danno: 2, dannoMassimo: 3, raggio: 108, durata: 3.2, testo: AUTO },
+    { ricarica: 2.3, quantita: 4, danno: 3, dannoMassimo: 4, raggio: 129, durata: 4.2, potenziale: true, testo: 'Dentro le pozze recuperi 1 salute al secondo.' },
   ],
 };
 
@@ -105,9 +107,9 @@ const LAMA_DI_LUCE_STANZE: ConIntervallo<LamaDiLuce> = {
   nome: 'Gerico', // nuovo nome nel gioco a stanze (scelta di Edoardo, 17/11); l'id interno e l'icona restano «lamaDiLuce»
   livelli: [
     { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 3, sviamento: 80, testo: 'Se schivi un attacco al momento giusto, chi lo ha lanciato resta cieco 3 s e sbaglia la mira.' },
-    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 3.5, sviamento: 85, testo: '+0,5 s di cecità, mira più sbagliata.' },
-    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 4, sviamento: 90, testo: '+0,5 s di cecità, mira più sbagliata.' },
-    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 4.5, sviamento: 95, testo: '+0,5 s di cecità, mira più sbagliata.' },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 3.5, sviamento: 85, testo: AUTO },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 4, sviamento: 90, testo: AUTO },
+    { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 4.5, sviamento: 95, testo: AUTO },
     { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 5, sviamento: 100, potenziale: true, testo: 'La cecità si estende ai nemici vicini a chi hai schivato.' },
   ],
 };
@@ -117,9 +119,9 @@ const LAPIDE_STANZE: ConIntervallo<Lapide> = {
   ...LAPIDE,
   livelli: [
     { ricarica: 3.2, danno: 30, dannoMassimo: 70, raggio: 84, quantita: 1, testo: 'Cade sul nemico con più salute in vista e lo seppellisce.' },
-    { ricarica: 3.2, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: '+10–20 danno, area più ampia.' },
-    { ricarica: 2.8, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: 'Ricarica più breve.' },
-    { ricarica: 2.8, danno: 50, dannoMassimo: 110, raggio: 96, quantita: 2, testo: '+1 lapide, +10–20 danno.' },
+    { ricarica: 3.2, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: AUTO },
+    { ricarica: 2.8, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: AUTO },
+    { ricarica: 2.8, danno: 50, dannoMassimo: 110, raggio: 96, quantita: 2, testo: AUTO },
     { ricarica: 3.2, danno: 70, dannoMassimo: 150, raggio: 110, quantita: 2, potenziale: true, testo: 'La lapide resta in piedi 3 s e blocca nemici e grumi.' },
   ],
 };
@@ -128,9 +130,9 @@ const ROSARIO_SPEZZATO_STANZE: ConIntervallo<RosarioSpezzato> = {
   ...ROSARIO_SPEZZATO,
   livelli: [
     { ricarica: 1.6, danno: 6, dannoMassimo: 10, rimbalzi: 4, quantita: 1, testo: 'Un grano rimbalza tra i nemici vicini e li maledice.' },
-    { ricarica: 1.6, danno: 8, dannoMassimo: 13, rimbalzi: 4, quantita: 1, testo: '+2–3 danno.' },
-    { ricarica: 1.4, danno: 8, dannoMassimo: 13, rimbalzi: 5, quantita: 1, testo: '+1 rimbalzo, ricarica più breve.' },
-    { ricarica: 1.4, danno: 8, dannoMassimo: 13, rimbalzi: 6, quantita: 2, testo: '+1 grano, +1 rimbalzo.' },
+    { ricarica: 1.6, danno: 8, dannoMassimo: 13, rimbalzi: 4, quantita: 1, testo: AUTO },
+    { ricarica: 1.4, danno: 8, dannoMassimo: 13, rimbalzi: 5, quantita: 1, testo: AUTO },
+    { ricarica: 1.4, danno: 8, dannoMassimo: 13, rimbalzi: 6, quantita: 2, testo: AUTO },
     { ricarica: 1.2, danno: 12, dannoMassimo: 19, rimbalzi: 8, quantita: 2, potenziale: true, testo: 'Ogni rimbalzo fa il 15% di danno in più del precedente.' },
   ],
 };
@@ -139,9 +141,9 @@ const CORVO_STANZE: ConIntervallo<Corvo> = {
   ...CORVO,
   livelli: [
     { ricarica: 1, danno: 8, dannoMassimo: 14, quantita: 1, testo: 'Becca il nemico più vicino e ti riporta le anime intorno a lui.' },
-    { ricarica: 1, danno: 11, dannoMassimo: 18, quantita: 1, testo: '+3–4 danno.' },
-    { ricarica: 0.9, danno: 11, dannoMassimo: 18, quantita: 2, testo: '+1 corvo, ricarica più breve.' },
-    { ricarica: 0.9, danno: 14, dannoMassimo: 22, quantita: 2, testo: '+3–4 danno.' },
+    { ricarica: 1, danno: 11, dannoMassimo: 18, quantita: 1, testo: AUTO },
+    { ricarica: 0.9, danno: 11, dannoMassimo: 18, quantita: 2, testo: AUTO },
+    { ricarica: 0.9, danno: 14, dannoMassimo: 22, quantita: 2, testo: AUTO },
     { ricarica: 0.75, danno: 14, dannoMassimo: 22, quantita: 3, potenziale: true, testo: 'Il nemico beccato subisce +20% di danno per 3 s.' },
   ],
 };
@@ -151,9 +153,9 @@ const VELO_FUNEBRE_STANZE: ConIntervallo<VeloFunebre> = {
   ...VELO_FUNEBRE,
   livelli: [
     { ricarica: 0.5, danno: 2, dannoMassimo: 3, raggio: 110, testo: 'Un\'aura intorno a te consacra chi entra.' },
-    { ricarica: 0.5, danno: 3, dannoMassimo: 4, raggio: 110, testo: '+1 danno.' },
-    { ricarica: 0.5, danno: 3, dannoMassimo: 4, raggio: 125, testo: 'Area più ampia.' },
-    { ricarica: 0.4, danno: 3, dannoMassimo: 4, raggio: 140, testo: 'Area più ampia, ricarica più breve.' },
+    { ricarica: 0.5, danno: 3, dannoMassimo: 4, raggio: 110, testo: AUTO },
+    { ricarica: 0.5, danno: 3, dannoMassimo: 4, raggio: 125, testo: AUTO },
+    { ricarica: 0.4, danno: 3, dannoMassimo: 4, raggio: 140, testo: AUTO },
     { ricarica: 0.4, danno: 4, dannoMassimo: 6, raggio: 160, potenziale: true, testo: 'Mentre stai fermo il velo si allarga fino al doppio.' },
   ],
 };
@@ -162,9 +164,9 @@ const SAMPIETRINI_STANZE: ConIntervallo<Sampietrini> = {
   ...SAMPIETRINI,
   livelli: [
     { ricarica: 1.5, quantita: 1, rimbalzi: 1, danno: 8, dannoMassimo: 14, testo: 'Lancia un sampietrino sul nemico più vicino: colpisce, rimbalza in avanti e colpisce di nuovo.' },
-    { ricarica: 1.5, quantita: 2, rimbalzi: 1, danno: 8, dannoMassimo: 14, testo: '+1 sampietrino.' },
-    { ricarica: 1.35, quantita: 2, rimbalzi: 1, danno: 11, dannoMassimo: 18, testo: '+3–4 danno, ricarica più breve.' },
-    { ricarica: 1.35, quantita: 2, rimbalzi: 2, danno: 11, dannoMassimo: 18, testo: '+1 rimbalzo.' },
+    { ricarica: 1.5, quantita: 2, rimbalzi: 1, danno: 8, dannoMassimo: 14, testo: AUTO },
+    { ricarica: 1.35, quantita: 2, rimbalzi: 1, danno: 11, dannoMassimo: 18, testo: AUTO },
+    { ricarica: 1.35, quantita: 2, rimbalzi: 2, danno: 11, dannoMassimo: 18, testo: AUTO },
     { ricarica: 1.2, quantita: 3, rimbalzi: 2, danno: 14, dannoMassimo: 22, potenziale: true, testo: 'Il sasso rimbalza verso il nemico più vicino.' },
   ],
 };
@@ -174,7 +176,7 @@ const SAMPIETRINI_STANZE: ConIntervallo<Sampietrini> = {
  */
 export const POTENZIALI = {
   candela: { figlie: 2, apertura: 0.7, sterzo: 6, vita: 0.9, danno: 0.5 }, // una fiammella che uccide si divide in 2 (aperte di 0,7 rad, inseguono, vivono 0,9 s, metà danno; non si dividono più)
-  falce: { anello: 1.35, furto: 0.1, tetto: 0.2 }, // metà delle falci gira al contrario su un cerchio 1,35 volte più largo; ogni colpo ruba il 10% del danno inflitto (lo riavi come salute; se sei al massimo diventa salute in più, fino al 20% della massima; dura tutta la Veglia)
+  falce: { anello: 1.35, furto: 0.1, tetto: 0.2 }, // metà delle falci gira al contrario su un cerchio 1,35 volte più largo; a salute piena ogni colpo ruba il 10% del danno inflitto come salute in più, fino al 20% della massima (sotto il massimo non ruba niente; dura tutta la Veglia)
   campana: {}, // il rintocco interrompe gli avvisi dei nemici nel suo raggio; in cambio la ricarica sale (vedi il livello 5)
   fuocoFatuo: { ritorno: 1.5, sterzo: 10, danno: 0.7 }, // trapassato il primo nemico va dritto al muro, rimbalza e torna da lui: dopo il muro vive almeno 1,5 s e gira più svelto (10); il colpo del ritorno fa il 70% del danno
   acquaSanta: { cura: 1 }, // salute al secondo dentro una pozza (le pozze non si sommano)
@@ -202,6 +204,12 @@ export const ECHI_STANZE: Arma[] = [
   CANDELA_STANZE, FALCE_STANZE, CAMPANA_STANZE, FUOCO_FATUO_STANZE, ACQUA_SANTA_STANZE, LAMA_DI_LUCE_STANZE, LAPIDE_STANZE,
   ROSARIO_SPEZZATO_STANZE, CORVO_STANZE, VELO_FUNEBRE_STANZE, SAMPIETRINI_STANZE,
 ] as Arma[];
+
+// le righe dei livelli 2–4 (AUTO) le scrive il gioco dai numeri: così carte, pausa, LAB e GDD dicono la stessa cosa
+for (const arma of [LANTERNA_STANZE, ...ECHI_STANZE]) {
+  const L = arma.livelli as unknown as Record<string, unknown>[];
+  for (let i = 1; i < L.length; i++) if (L[i].testo === AUTO) L[i].testo = rigaLivello(L[i - 1], L[i]);
+}
 
 /** Il danno più forte di un livello: per le armi con l'intervallo è dannoMassimo, altrimenti il danno stesso. */
 export function dannoMassimo(livello: { danno: number }): number {

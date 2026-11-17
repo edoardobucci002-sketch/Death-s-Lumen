@@ -848,7 +848,7 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Eco | Potenziale (livello 5) |
 | --- | --- |
 | Candela | una fiammella che uccide si divide in 2 fiammelle, aperte a ventaglio, che inseguono il nemico più vicino per 0,9 s e fanno metà danno; le figlie non si dividono più |
-| Falce | due anelli: metà delle falci gira al contrario, su un cerchio 1,35 volte più largo (l'anello interno al livello 5 è di 132 px, quello esterno di 178); **ruba salute**: ogni colpo dà il 10% del danno che ha fatto davvero. Prima riempie la salute che manca; il resto diventa **salute in più**, fino al 20% della salute massima. La salute in più va via per prima quando ti colpiscono, dura tutta la Veglia e si vede come un tratto chiaro in fondo alla barra (`POTENZIALI.falce`, `BARRA_SALUTE.extra`; da rivedere) |
+| Falce | due anelli: metà delle falci gira al contrario, su un cerchio 1,35 volte più largo (l'anello interno al livello 5 è di 132 px, quello esterno di 178); **ruba salute**: a salute piena ogni colpo dà il 10% del danno che ha fatto davvero come **salute in più**, fino al 20% della salute massima; sotto il massimo non ruba niente (decisione di Edoardo del 17/11). La salute in più va via per prima quando ti colpiscono, dura tutta la Veglia e si vede come un tratto chiaro in fondo alla barra (`POTENZIALI.falce`, `BARRA_SALUTE.extra`; da rivedere) |
 | Campana | il rintocco interrompe la carica dei nemici dentro la sua area (la carica si spegne e il nemico si riprende); in cambio la ricarica è più lunga (2,6 s, era 1,8) e il doppio rintocco sparisce (nota di Edoardo) |
 | Fuoco fatuo | il primo nemico che un fuoco colpisce lo trapassa senza fermarlo: il fuoco va dritto fino al muro senza colpire nessuno, ci rimbalza una volta e torna a colpire lo stesso nemico con il 70% del danno (se è già morto, insegue il più vicino); dopo il muro vive almeno 1,5 s e gira più svelto |
 | Acqua santa | dentro una pozza recuperi 1 di salute al secondo (le pozze non si sommano) |
@@ -866,9 +866,9 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Lv | Ricarica (s) | Danno | Portata | Ampiezza arco (°) | Colpo alle spalle | Cosa cambia |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 0,45 | 12–18 | 136 | 132 | no | Un colpo corto, in un arco ampio davanti a te. |
-| 2 | 0,45 | 16–24 | 136 | 132 | no | +4–6 danno. |
-| 3 | 0,4 | 16–24 | 160 | 132 | no | Portata maggiore, ricarica più breve. |
-| 4 | 0,4 | 21–31 | 183 | 166 | no | +5–7 danno, portata e ampiezza maggiori. |
+| 2 | 0,45 | 16–24 | 136 | 132 | no | +4–6 danno |
+| 3 | 0,4 | 16–24 | 160 | 132 | no | portata +18%, ricarica −0,05 s |
+| 4 | 0,4 | 21–31 | 183 | 166 | no | +5–7 danno, portata +14%, ampiezza +34° |
 | 5 | 0,4 | 26–38 | 183 | 166 | sì | Colpisce anche alle spalle. |
 
 #### Stanze · Candela
@@ -876,9 +876,9 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Lv | Ricarica (s) | Danno | Colpi | Trapassa | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 0,95 | 6–9 | 1 | 1 | Lancia fiammelle verso il nemico più vicino. |
-| 2 | 0,95 | 6–9 | 2 | 1 | +1 fiammella. |
-| 3 | 0,95 | 8–12 | 2 | 2 | +2–3 danno, le fiammelle trapassano un nemico in più. |
-| 4 | 0,75 | 8–12 | 3 | 2 | +1 fiammella, ricarica più breve. |
+| 2 | 0,95 | 6–9 | 2 | 1 | +1 colpo |
+| 3 | 0,95 | 8–12 | 2 | 2 | +2–3 danno, trapassa +1 nemico |
+| 4 | 0,75 | 8–12 | 3 | 2 | +1 colpo, ricarica −0,2 s |
 | 5 | 0,75 | 11–16 | 3 | 3 | Una fiammella che uccide si divide in 2, a metà danno. |
 
 #### Stanze · Falce
@@ -886,19 +886,19 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Lv | Colpi | Danno | Area | Rotazione (giri/s) | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1 | 5–7 | 132 | 0,45 | Una falce spettrale ti ruota intorno. |
-| 2 | 2 | 5–7 | 132 | 0,45 | +1 falce. |
-| 3 | 2 | 7–9 | 160 | 0,45 | +2 danno, area più ampia. |
-| 4 | 3 | 7–9 | 160 | 0,45 | +1 falce. |
-| 5 | 4 | 9–12 | 132 | 0,59 | Metà delle falci gira al contrario, su un cerchio più largo. Ogni colpo ruba il 10% del danno come salute; oltre il massimo diventa salute in più. |
+| 2 | 2 | 5–7 | 132 | 0,45 | +1 colpo |
+| 3 | 2 | 7–9 | 160 | 0,45 | +2 danno, area +21% |
+| 4 | 3 | 7–9 | 160 | 0,45 | +1 colpo |
+| 5 | 4 | 9–12 | 132 | 0,59 | Metà delle falci gira al contrario, su un cerchio più largo. A salute piena ogni colpo ti dà il 10% del danno come salute in più. |
 
 #### Stanze · Campana
 
 | Lv | Ricarica (s) | Danno | Area | Colpo doppio | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 2,6 | 14–24 | 197 | no | Rintocchi che respingono e feriscono tutto intorno. |
-| 2 | 2,6 | 19–31 | 197 | no | +5–7 danno. |
-| 3 | 2,2 | 19–31 | 240 | no | Area più ampia, ricarica più breve. |
-| 4 | 2,2 | 25–41 | 240 | no | +6–10 danno. |
+| 2 | 2,6 | 19–31 | 197 | no | +5–7 danno |
+| 3 | 2,2 | 19–31 | 240 | no | area +22%, ricarica −0,4 s |
+| 4 | 2,2 | 25–41 | 240 | no | +6–10 danno |
 | 5 | 2,6 | 30–50 | 240 | no | Il rintocco interrompe la carica dei nemici, ma la ricarica è più lunga. |
 
 #### Stanze · Fuoco fatuo
@@ -906,9 +906,9 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Lv | Ricarica (s) | Colpi | Danno | Trapassa | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1,3 | 1 | 7–11 | 1 | Fuochi fatui che inseguono i nemici, prima élite e capi. |
-| 2 | 1,3 | 2 | 7–11 | 1 | +1 fuoco. |
-| 3 | 1,3 | 2 | 10–15 | 1 | +3–4 danno. |
-| 4 | 1 | 3 | 10–15 | 1 | +1 fuoco, ricarica più breve. |
+| 2 | 1,3 | 2 | 7–11 | 1 | +1 colpo |
+| 3 | 1,3 | 2 | 10–15 | 1 | +3–4 danno |
+| 4 | 1 | 3 | 10–15 | 1 | +1 colpo, ricarica −0,3 s |
 | 5 | 1 | 4 | 13–20 | 1 | Il primo nemico che un fuoco trapassa lo ritrova: il fuoco rimbalza sul muro e torna a colpirlo. |
 
 #### Stanze · Acqua santa
@@ -916,10 +916,10 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Lv | Ricarica (s) | Colpi | Danno | Area | Durata (s) | Cosa cambia |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 2,8 | 1 | 1–2 | 89 | 2,6 | Fiale che lasciano pozze benedette sui nemici. |
-| 2 | 2,8 | 2 | 1–2 | 89 | 2,6 | +1 fiala. |
-| 3 | 2,8 | 2 | 2–3 | 108 | 2,6 | +1 danno, area più ampia. |
-| 4 | 2,3 | 3 | 2–3 | 108 | 3,2 | +1 fiala, ricarica più breve, durata maggiore. |
-| 5 | 2,3 | 4 | 3–4 | 129 | 4,2 | Dentro le pozze recuperi 1 di salute al secondo. |
+| 2 | 2,8 | 2 | 1–2 | 89 | 2,6 | +1 colpo |
+| 3 | 2,8 | 2 | 2–3 | 108 | 2,6 | +1 danno, area +21% |
+| 4 | 2,3 | 3 | 2–3 | 108 | 3,2 | +1 colpo, ricarica −0,5 s, durata +0,6 s |
+| 5 | 2,3 | 4 | 3–4 | 129 | 4,2 | Dentro le pozze recuperi 1 salute al secondo. |
 
 #### Stanze · Gerico
 
@@ -928,9 +928,9 @@ Si chiamava Lama di luce; nel gioco a stanze si chiama **Gerico** (scelta di Edo
 | Lv | Cecità (s) | Mira sbagliata (gradi) | Cosa cambia |
 | --- | --- | --- | --- |
 | 1 | 3 | 80 | Se schivi un attacco al momento giusto, chi lo ha lanciato resta cieco 3 s e sbaglia la mira. |
-| 2 | 3,5 | 85 | +0,5 s di cecità, mira più sbagliata. |
-| 3 | 4 | 90 | +0,5 s di cecità, mira più sbagliata. |
-| 4 | 4,5 | 95 | +0,5 s di cecità, mira più sbagliata. |
+| 2 | 3,5 | 85 | cecità +0,5 s, mira sbagliata +5° |
+| 3 | 4 | 90 | cecità +0,5 s, mira sbagliata +5° |
+| 4 | 4,5 | 95 | cecità +0,5 s, mira sbagliata +5° |
 | 5 | 5 | 100 | La cecità si estende ai nemici vicini a chi hai schivato. |
 
 #### Stanze · Lapide
@@ -938,9 +938,9 @@ Si chiamava Lama di luce; nel gioco a stanze si chiama **Gerico** (scelta di Edo
 | Lv | Ricarica (s) | Danno | Area | Colpi | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 3,2 | 30–70 | 84 | 1 | Cade sul nemico con più salute in vista e lo seppellisce. |
-| 2 | 3,2 | 40–90 | 96 | 1 | +10–20 danno, area più ampia. |
-| 3 | 2,8 | 40–90 | 96 | 1 | Ricarica più breve. |
-| 4 | 2,8 | 50–110 | 96 | 2 | +1 lapide, +10–20 danno. |
+| 2 | 3,2 | 40–90 | 96 | 1 | +10–20 danno, area +14% |
+| 3 | 2,8 | 40–90 | 96 | 1 | ricarica −0,4 s |
+| 4 | 2,8 | 50–110 | 96 | 2 | +10–20 danno, +1 colpo |
 | 5 | 3,2 | 70–150 | 110 | 2 | La lapide resta in piedi 3 s e blocca nemici e grumi. |
 
 #### Stanze · Rosario spezzato
@@ -950,9 +950,9 @@ Nel gioco a stanze il grano **vola**: parte da te e va da un nemico all'altro in
 | Lv | Ricarica (s) | Danno | Rimbalzi | Colpi | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1,6 | 6–10 | 4 | 1 | Un grano rimbalza tra i nemici vicini e li maledice. |
-| 2 | 1,6 | 8–13 | 4 | 1 | +2–3 danno. |
-| 3 | 1,4 | 8–13 | 5 | 1 | +1 rimbalzo, ricarica più breve. |
-| 4 | 1,4 | 8–13 | 6 | 2 | +1 grano, +1 rimbalzo. |
+| 2 | 1,6 | 8–13 | 4 | 1 | +2–3 danno |
+| 3 | 1,4 | 8–13 | 5 | 1 | ricarica −0,2 s, +1 rimbalzo |
+| 4 | 1,4 | 8–13 | 6 | 2 | +1 colpo, +1 rimbalzo |
 | 5 | 1,2 | 12–19 | 8 | 2 | Ogni rimbalzo fa il 15% di danno in più del precedente. |
 
 #### Stanze · Corvo
@@ -960,9 +960,9 @@ Nel gioco a stanze il grano **vola**: parte da te e va da un nemico all'altro in
 | Lv | Ricarica (s) | Danno | Colpi | Cosa cambia |
 | --- | --- | --- | --- | --- |
 | 1 | 1 | 8–14 | 1 | Becca il nemico più vicino e ti riporta le anime intorno a lui. |
-| 2 | 1 | 11–18 | 1 | +3–4 danno. |
-| 3 | 0,9 | 11–18 | 2 | +1 corvo, ricarica più breve. |
-| 4 | 0,9 | 14–22 | 2 | +3–4 danno. |
+| 2 | 1 | 11–18 | 1 | +3–4 danno |
+| 3 | 0,9 | 11–18 | 2 | +1 colpo, ricarica −0,1 s |
+| 4 | 0,9 | 14–22 | 2 | +3–4 danno |
 | 5 | 0,75 | 14–22 | 3 | Il nemico beccato subisce +20% di danno per 3 s. |
 
 #### Stanze · Velo funebre
@@ -970,9 +970,9 @@ Nel gioco a stanze il grano **vola**: parte da te e va da un nemico all'altro in
 | Lv | Ricarica (s) | Danno | Area | Cosa cambia |
 | --- | --- | --- | --- | --- |
 | 1 | 0,5 | 2–3 | 110 | Un'aura intorno a te consacra chi entra. |
-| 2 | 0,5 | 3–4 | 110 | +1 danno. |
-| 3 | 0,5 | 3–4 | 125 | Area più ampia. |
-| 4 | 0,4 | 3–4 | 140 | Area più ampia, ricarica più breve. |
+| 2 | 0,5 | 3–4 | 110 | +1 danno |
+| 3 | 0,5 | 3–4 | 125 | area +14% |
+| 4 | 0,4 | 3–4 | 140 | area +12%, ricarica −0,1 s |
 | 5 | 0,4 | 4–6 | 160 | Mentre stai fermo il velo si allarga fino al doppio. |
 
 #### Stanze · Sampietrini
@@ -980,9 +980,9 @@ Nel gioco a stanze il grano **vola**: parte da te e va da un nemico all'altro in
 | Lv | Ricarica (s) | Colpi | Rimbalzi | Danno | Cosa cambia |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1,5 | 1 | 1 | 8–14 | Lancia un sampietrino sul nemico più vicino: colpisce, rimbalza in avanti e colpisce di nuovo. |
-| 2 | 1,5 | 2 | 1 | 8–14 | +1 sampietrino. |
-| 3 | 1,35 | 2 | 1 | 11–18 | +3–4 danno, ricarica più breve. |
-| 4 | 1,35 | 2 | 2 | 11–18 | +1 rimbalzo. |
+| 2 | 1,5 | 2 | 1 | 8–14 | +1 colpo |
+| 3 | 1,35 | 2 | 1 | 11–18 | +3–4 danno, ricarica −0,15 s |
+| 4 | 1,35 | 2 | 2 | 11–18 | +1 rimbalzo |
 | 5 | 1,2 | 3 | 2 | 14–22 | Il sasso rimbalza verso il nemico più vicino. |
 
 ## 12. Da fare e da decidere
