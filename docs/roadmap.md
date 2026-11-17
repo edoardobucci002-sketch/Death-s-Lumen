@@ -89,7 +89,7 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 - ~~Il bot che gioca a stanze~~ (fatto il 14/11); le regole vincolanti nuove, con mini-boss e Boss.
 - **Unioni nel gioco a stanze** (decisione di Edoardo del 14/11: «andranno inserite»; nel pivot arma al livello 4).
 - Meta: Ceri a budget, Pegno, Cera per Mondo completato.
-- **Stanze collegate tra loro, come in The Binding of Isaac** (nota di Edoardo del 13/11: «il passaggio fra le stanze andrà sicuramente aggiustato»): oggi ogni porta porta avanti e non si torna indietro. Da progettare insieme; con le stanze collegate **le porte vanno riviste** (nota di Edoardo del 13/11 sera).
+- **Stanze collegate tra loro, come in The Binding of Isaac** (nota di Edoardo del 13/11: «il passaggio fra le stanze andrà sicuramente aggiustato»): oggi ogni porta porta avanti e non si torna indietro. **Deciso il 17/11: mappa alla Isaac** (in [decisioni.md](decisioni.md)); i dettagli con il questionario «Fila o mappa?»; con le stanze collegate **le porte vanno riviste** (nota di Edoardo del 13/11 sera).
 - Ciò che resta, ripensato per le stanze (decisione di Edoardo del 12/11): Grazia, oggetti rompibili, Patti, Mosaici e Vetrate, Legame (gli 8 livelli per personaggio), salvataggio della partita in corso.
 - ~~**Danno a intervallo**~~ **fatto il 14/11**: vedi il passo 7 qui sopra.
 - ~~Calice riverso: il nome nuovo del dono «Lacrima di lumen» entra nel codice~~ (**fatto il 17/11**, anche nelle stanze, insieme alla **fiaschetta**, che nelle stanze si beve da sola sotto il 15% di salute; LAB → Stanze → «Fiaschetta piena» / «Fiaschetta vuota»). Manca l'icona di Edoardo (`asset_da_creare.md`).
