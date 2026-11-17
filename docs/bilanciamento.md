@@ -42,6 +42,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 17/11 — Il Campanaro, mini-boss del Mondo 1 (decisioni di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
+- Nuovo `CAMPANARO` (`src/data/campanaro.ts`): salute 3000, danni 20/20/25, raggi 150 e 260, avvisi 1 / 0,7 / 0,8 s. La fetta ha una quarta stanza: l'arena.
+- Bot, 8 partite (`npm run sim-stanze -- 8`), con salute 1200: 1 fetta su 8; il Campanaro battuto in circa 10 s (obiettivo 60–90 s), quindi salute a 3000. Con 3000: **0 fette su 8**, tutti caduti nella stanza 4 dopo 4–10 s. Il bot ci arriva con **32 di salute in media** (da 3 a 58, dopo 32 di danno nella stanza 3) e i colpi del Campanaro fanno 20–25: la durata obiettivo non si può misurare finché non arriva con più salute. Armi: la Lanterna fa il 64% del danno. 8 partite sono poche (±17 punti): è una prima lettura.
+
 ### 16/11 — Dopo la prima prova della cripta: 1 o 2 rompibili, frammenti da subito, porte decise all'ingresso (scelte di Edoardo)
 - `ROMPIBILI_STANZE.quanti` da 1 a 2 (era da 2 a 4); `ROMPIBILI_STANZE.vittorie` 0 (nuovo: i frammenti escono da subito; nel survivor resta 1). Le porte si decidono all'ingresso con un caso loro: la sequenza delle carte non è più quella di prima a parità di seme.
 - `npm run sim-stanze` (24 partite, semi 2001–2024): **fetta completata 24 volte su 24**, salute alla fine 33. Attenzione: la misura comprende anche i ritocchi ai potenziali degli Echi di un'altra sessione, non ancora salvati quando è stata lanciata; danno subito per stanza 17, 21 e 31; Lanterna 69% del danno.

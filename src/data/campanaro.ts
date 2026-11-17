@@ -12,7 +12,7 @@
 export const CAMPANARO = {
   nome: 'Il Campanaro',
   sprite: 'Campanaro', // segnaposto V0 dal codice (17/11); lo sprite vero viene da ChatGPT → rifinitura
-  salute: 1200, // da rivedere: si regola con la simulazione sulla durata obiettivo
+  salute: 3000, // da rivedere (17/11: con 1200 il bot lo batteva in circa 10 s; obiettivo 60–90 s)
   raggio: 24, // il corpo
   velocita: 70, // camminando verso di te tra un attacco e l'altro
   pausa: 1.3, // secondi di camminata tra un attacco e il successivo

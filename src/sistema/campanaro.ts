@@ -217,32 +217,40 @@ export class Campanaro {
     }
   }
 
-  /** Gli avvisi a terra: il disco o l'anello che si riempiono, la linea della Carica, l'onda dopo il colpo. */
-  disegna(g: Phaser.GameObjects.Graphics, x: number, y: number, orologio: number): void {
+  /**
+   * Gli avvisi a terra: il disco o l'anello che si riempiono, la linea della Carica, l'onda dopo il colpo. Il pieno va in
+   * g, sotto il personaggio; i bordi in b, sopra il buio, così l'avviso si legge anche lontano dalla Lanterna.
+   */
+  disegna(g: Phaser.GameObjects.Graphics, b: Phaser.GameObjects.Graphics, x: number, y: number, orologio: number): void {
     const C = K.colori, pieno = 1 - Math.max(0, this.tempo) / this.durata, R1 = K.rintocco.raggio, R2 = K.anello.raggio;
+    const chiaro = colore(C.onda), rosso = colore(C.avviso);
     // cerchi veri, come lo spicchio del Ricaduto: quello che si vede è quello che colpisce
     if (this.mossa === MOSSA_CAPO.rintocco) {
-      g.fillStyle(colore(C.avviso), 1).fillCircle(x, y, Math.max(4, Math.round(R1 * pieno)));
-      g.lineStyle(2, colore(C.onda), 1).strokeCircle(x, y, R1);
+      g.fillStyle(rosso, 1).fillCircle(x, y, Math.max(4, Math.round(R1 * pieno)));
+      b.lineStyle(2, chiaro, 1).strokeCircle(x, y, R1);
     } else if (this.mossa === MOSSA_CAPO.anello) {
       // l'anello si riempie dal bordo interno verso quello esterno
-      const r = R1 + (R2 - R1) * pieno, spesso = Math.max(2, Math.round(r - R1));
-      g.lineStyle(spesso, colore(C.avviso), 1).strokeCircle(x, y, Math.round(R1 + spesso / 2));
-      g.lineStyle(2, colore(C.onda), 1).strokeCircle(x, y, R1).strokeCircle(x, y, R2);
+      const spesso = Math.max(2, Math.round((R2 - R1) * pieno));
+      g.lineStyle(spesso, rosso, 1).strokeCircle(x, y, Math.round(R1 + spesso / 2));
+      b.lineStyle(2, chiaro, 1).strokeCircle(x, y, R1).strokeCircle(x, y, R2);
     } else if (this.mossa === MOSSA_CAPO.mira) {
-      // la linea della Carica lampeggia, poi resta accesa nell'ultimo terzo
+      // la linea della Carica lampeggia, poi resta accesa nell'ultimo terzo; i bordi sopra il buio
       if (pieno > 0.66 || Math.floor(orologio * 8) % 2 === 0) {
-        g.lineStyle(K.carica.larghezza, colore(C.linea), 1).lineBetween(x, y, Math.round(this.fineX), Math.round(this.fineY));
-        g.lineStyle(2, colore(C.onda), 1).lineBetween(x, y, Math.round(this.fineX), Math.round(this.fineY));
+        const fx = Math.round(this.fineX), fy = Math.round(this.fineY), m = K.carica.larghezza / 2;
+        g.lineStyle(K.carica.larghezza, rosso, 1).lineBetween(x, y, fx, fy);
+        b.lineStyle(2, chiaro, 1).lineBetween(Math.round(x - this.dirY * m), Math.round(y + this.dirX * m), Math.round(fx - this.dirY * m), Math.round(fy + this.dirX * m));
+        b.lineBetween(Math.round(x + this.dirY * m), Math.round(y - this.dirX * m), Math.round(fx + this.dirY * m), Math.round(fy - this.dirX * m));
       }
     } else if (this.mossa === MOSSA_CAPO.chiamata) {
-      g.lineStyle(2, colore(C.onda), 1).strokeCircle(x, y, Math.round(20 + 30 * pieno));
+      b.lineStyle(2, chiaro, 1).strokeCircle(x, y, Math.round(20 + 30 * pieno));
     }
     // l'onda: un anello chiaro che si allarga fino al bordo dell'area colpita
     if (this.onda > 0) {
       const t = 1 - this.onda / K.rintocco.onda, da = this.ondaAnello ? R1 : 0, a = this.ondaAnello ? R2 : R1;
-      g.lineStyle(4, colore(C.onda), 1).strokeCircle(x, y, Math.max(4, Math.round(da + (a - da) * t)));
+      b.lineStyle(4, chiaro, 1).strokeCircle(x, y, Math.max(4, Math.round(da + (a - da) * t)));
     }
+    // il Campanaro stesso: un segno chiaro ai piedi, per trovarlo nel buio
+    b.lineStyle(2, chiaro, 1).strokeEllipse(x, y, 2 * K.raggio, K.raggio);
   }
 }
 

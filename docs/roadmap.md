@@ -84,7 +84,8 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 ### Dopo la fetta (ordine da decidere con Edoardo)
 
 - Armi su 5 livelli con il potenziale del livello 5; la quarta arma della Terra; Reliquiari, Unioni al livello 4, porte d'élite.
-- Mini-boss, Boss (Seth e gli altri capi), Sosta e Lacrime di Lumen; un Mondo intero, poi tre.
+- ~~Mini-boss~~ **il Campanaro, primo passo fatto il 17/11**: quarta stanza dopo la fetta, Rintocco, Carica, Chiamata, due fasi, barra in cima, sorso e Cera; sprite segnaposto dal codice (LAB → Stanze → Il Campanaro). Restano: lo sprite vero (ChatGPT → rifinitura, 2 pose chiave), la salute sulla durata obiettivo, il Reliquiario come ricompensa, la regola dell'Eclissi (5%, Quiete 6 s).
+- Boss (Seth e gli altri capi), Sosta e Lacrime di Lumen; un Mondo intero, poi tre.
 - ~~Il bot che gioca a stanze~~ (fatto il 14/11); le regole vincolanti nuove, con mini-boss e Boss.
 - **Unioni nel gioco a stanze** (decisione di Edoardo del 14/11: «andranno inserite»; nel pivot arma al livello 4).
 - Meta: Ceri a budget, Pegno, Cera per Mondo completato.
@@ -162,6 +163,7 @@ Da costruire: le **Vetrate** nella Cappella (collezione sempre visibile, con un 
 
 ## Da confermare
 
+- **Il Campanaro (17/11, da rivedere)**: salute 3000, danni 20 (Rintocco e anello) e 25 (Carica), raggi 150 e 260 px, avvisi 1 / 0,7 / 0,8 s, stordito 1,5 s, fase 2 a metà salute con ritmo all'80%, Chiamata di 2 Ricaduti ogni 3 attacchi, sorso del 30% e 10 di Cera. Il bot ci arriva con 32 di salute in media e cade sempre (vedi bilanciamento 17/11): da decidere se curarsi prima dell'arena (con la fiaschetta) o abbassare i danni. Il sorso diventa un sorso di fiaschetta quando la fiaschetta delle stanze è nel gioco. Le carte dopo di lui pescano dalla porta scelta (la proposta diceva Reliquiario).
 - **Lama di luce (16/11, da rivedere)**: cecità 3–5 s, mira sbagliata 80–100°, potenziale che accieca i vicini entro 150 px (Edoardo aveva detto «solo su chi hai schivato»: il potenziale lo allarga, è una proposta di Claude).
 Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da Claude e non ancora confermati da Edoardo. Quando Edoardo ne conferma una, si toglie da qui e dall'etichetta nel testo.
 

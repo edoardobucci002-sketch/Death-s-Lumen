@@ -1233,7 +1233,7 @@ for (const [nome, disp] of [
     }
     nota += `, nemici sì (graffio, schivate ${s3.schivate}, pozza, battuti, rinascita, caduta), abilità e rallentatore sì`;
     // passo 6: tre stanze. Ripulita la stanza arrivano le carte (nella prima 3 Echi); scelta una carta si aprono le porte;
-    // attraversata una porta si entra nella stanza dopo; finita la terza, «Fetta completata»
+    // attraversata una porta si entra nella stanza dopo; dopo la terza l'arena del Campanaro (17/11), poi «Fetta completata»
     // danno a intervallo (14/11): i colpi della Lanterna escono tra il minimo e il massimo del livello, e non sempre uguali
     for (const livello of [1, 5]) {
       await L('livelliAUno');
@@ -1266,7 +1266,16 @@ for (const [nome, disp] of [
     await L('livelliAUno');
     await L('immortale', true);
     const giro = [];
-    for (let n = 1; n <= 3; n++) {
+    for (let n = 1; n <= 4; n++) {
+      if (n === 4) {
+        // l'arena: il Campanaro compare da solo, con la sua barra in cima; poi si ripulisce come le altre
+        if (!(await quando('l.campanaro() && l.campanaro().massima > 0', '', 4000))) { errori.push('nella quarta stanza il Campanaro non compare'); break; }
+        if (await pag.evaluate(() => document.querySelector('.stanze-capo').hidden)) errori.push('la barra del Campanaro non si vede');
+        await L('attaccoCampanaro', 'carica');
+        await pag.waitForTimeout(500);
+        if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-campanaro.png` });
+        giro.push('Campanaro');
+      }
       await L('ripulisci');
       if (!(await quando('l.stato().carteAperte', '', 3000))) { errori.push(`stanza ${n}: le carte non arrivano`); break; }
       if (n === 1) {
@@ -1281,8 +1290,9 @@ for (const [nome, disp] of [
       if (dopo.carteAperte) { errori.push(`stanza ${n}: la carta scelta non chiude le carte`); break; }
       if (n === 1 && dopo.echi.length !== 1) errori.push(`nella prima stanza la carta non dà un Eco (${dopo.echi.join(', ')})`);
       giro.push(`${dopo.stanza}: ${dopo.echi.join('+') || '-'}`);
-      if (n === 3) {
-        if (!dopo.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('dopo la terza stanza non compare «Fetta completata»');
+      if (n === 4) {
+        if (!dopo.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('dopo il Campanaro non compare «Fetta completata»');
+        if (!(await pag.evaluate(() => document.querySelector('.stanze-capo').hidden))) errori.push('la barra del Campanaro resta dopo di lui');
         await pag.screenshot({ path: `prove/${nome}-fetta.png` });
         break;
       }

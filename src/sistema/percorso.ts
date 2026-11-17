@@ -75,7 +75,7 @@ export class Percorso {
       if (this.miniboss && this.ondata === 0) {
         // l'arena: dopo un attimo il Campanaro compare in fondo, lontano dalla porta da cui si entra
         if ((this.attesa -= dt) <= 0) {
-          nemici.aggiungiCampanaro(px, py - 2 * ONDATA.distanzaMinima);
+          nemici.aggiungiCampanaro(px, py - ONDATA.distanzaMinima);
           this.ondata = 1;
         }
       } else if (this.ondata < this.quanteOndate) {

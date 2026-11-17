@@ -99,6 +99,19 @@
       "tag": []
     },
     {
+      "chiave": "Campanaro",
+      "categoria": "nemici",
+      "immagine": "assets/nemici/Campanaro.png",
+      "dati": "assets/nemici/Campanaro.json",
+      "versioneFile": 0,
+      "tag": [
+        "walk",
+        "attack",
+        "special",
+        "death"
+      ]
+    },
+    {
       "chiave": "Candela_Fiammella",
       "categoria": "effetti",
       "immagine": "assets/effetti/Candela_Fiammella.png",

@@ -97,6 +97,7 @@ export class NemiciStanza {
   private pFotogrammi = 0;
   private terra: Phaser.GameObjects.Graphics; // avvisi e comparse a terra (sotto i nemici)
   private sopra: Phaser.GameObjects.Graphics; // barre della salute
+  private sopraBuio: Phaser.GameObjects.Graphics; // i bordi degli avvisi del Campanaro: si vedono anche nel buio
   private orologio = 0;
   schivate = 0; // schivate perfette da quando la scena le ha lette (le rimette a 0)
   uccisi = 0; // nemici battuti per davvero (per il LAB e le prove)
@@ -175,6 +176,7 @@ export class NemiciStanza {
     }
     this.terra = scena.add.graphics().setDepth(PROFONDITA.aTerra + 1);
     this.sopra = scena.add.graphics().setDepth(PROFONDITA.sopra - 1);
+    this.sopraBuio = scena.add.graphics().setDepth(PROFONDITA.buio + 0.5);
   }
 
   /** Nemici in campo (nella Orda). */
@@ -723,6 +725,7 @@ export class NemiciStanza {
 
   /** Disegno: sprite (dalla Orda, poi ritoccati), avvisi a terra, comparse, grumi, barre della salute dei feriti. */
   disegna(cam: Phaser.Cameras.Scene2D.Camera, gx: number, gy: number): void {
+    this.sopraBuio.clear();
     const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra, E = NEMICI_STANZA.effetti;
     o.disegna(cam, 64, gx, gy);
     for (let i = 0; i < o.numero; i++) {
@@ -744,7 +747,7 @@ export class NemiciStanza {
         if (this.bianco[i] > 0 || o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
         else if (this.capo.inAvviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(col.bordo)).setTintMode(Phaser.TintModes.ADD);
         else sp.clearTint();
-        this.capo.disegna(t, x, y, this.orologio);
+        this.capo.disegna(t, this.sopraBuio, x, y, this.orologio);
         continue;
       }
       const ricaduto = o.tipo[i] === ID_RICADUTO, M = this.mosse[ricaduto ? 0 : 1];
