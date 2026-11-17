@@ -19,7 +19,7 @@ import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import type { Amuleto } from '../data/rosario';
 import type { IdUnione, Unione } from '../data/unioni';
-import { cartaNove, creaCarteStanza, creaStrisce, interniCarta, schedaDono, type Riga } from './scheda';
+import { cartaSemplice, creaCarteStanza, creaStrisce, interniCarta, schedaDono, type Riga } from './scheda';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { NUMERI_VOTI } from '../data/voti';
 
@@ -362,7 +362,7 @@ export class Doni {
     scriviNel(this.radice.querySelector('.doni-rimaste') as HTMLElement, { x: 0, y: y + riga * zt + 2, l: m.W, a: 12 }, 1, 2 * m.raddoppio, m, TESTI.cartaTasto, '#000');
   }
 
-  /** Gioco a stanze: titolo e carte verticali una accanto all'altra, al centro dello schermo, in pixel di gioco interi. */
+    /** Gioco a stanze: titolo e carte verticali una accanto all'altra, al centro dello schermo, in pixel di gioco interi. */
   private disponiVerticali(): void {
     const m = misureHud(), b = bordiHud(m), px = m.px;
     const c = arte('Carta_Stanza'), r = arte('Pulsante_Scuro'), alto = arte('Pulsante_Acceso');
@@ -386,7 +386,7 @@ export class Doni {
     this.disponiTitolo(y, titolo, x0 + largaFila(zz), m);
     y += titolo;
     const ri = interniCarta(cw, ch);
-    const fondi = { 'doni-fondo': cartaNove('Carta_Stanza', cw, ch), 'doni-scelta': cartaNove('Carta_Stanza_Scelta', cw, ch) };
+    const fondi = { 'doni-fondo': cartaSemplice(cw, ch, false), 'doni-scelta': cartaSemplice(cw, ch, true) }; // carta provvisoria del 17/11 (cartaNove resta per la carta disegnata)
     const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
     carte.forEach((el, i) => {
       posa(el, x0 + i * (cw + S.spazio) * zz, y, m);
@@ -410,9 +410,10 @@ export class Doni {
       }
       for (const s of el.querySelectorAll<HTMLElement>('.doni-simbolo')) misura(s, 11, 11, Math.max(1, zz - 1), m);
       scriviNel(el.querySelector('.doni-titolo') as HTMLElement, ri.titolo, zz, kTitoli, m, TESTI.cartaTitolo, '#000');
-      scriviIn(el.querySelector('.doni-tag') as HTMLElement, ri.tag, zz, S.testi.tag, m);
-      scriviIn(el.querySelector('.doni-dati') as HTMLElement, ri.dati, zz, S.testi.dato, m);
-      scriviIn(el.querySelector('.doni-righe') as HTMLElement, ri.righe, zz, S.testi.riga, m);
+      const T = S.semplice.tiny;
+      scriviTiny5(el.querySelector('.doni-tag') as HTMLElement, ri.tag, zz, T.tag, m);
+      scriviTiny5(el.querySelector('.doni-dati') as HTMLElement, ri.dati, zz, T.dato, m);
+      scriviTiny5(el.querySelector('.doni-righe') as HTMLElement, ri.righe, zz, T.riga, m);
       const t = el.querySelector('.doni-tasto') as HTMLElement;
       posa(t, 6 * zz, 5 * zz, m);
       t.style.fontSize = `${TESTI.strisciaTag * zz * px}px`;
@@ -436,4 +437,20 @@ export class Doni {
       this.chiudi(this.carte[n]);
     }
   };
+}
+
+/**
+ * Un testo della carta in Tiny5 a pixel interi (17/11): la lettera è grande 8 × k pixel di gioco; si sceglie il k più
+ * grande, fino a kMax volte l'ingrandimento della carta, a cui il testo sta nel riquadro (al minimo 1 pixel di gioco).
+ */
+function scriviTiny5(el: HTMLElement, r: { x: number; y: number; l: number; a: number }, z: number, kMax: number, m: MisureHud): void {
+  posa(el, r.x * z, r.y * z, m);
+  misura(el, r.l, r.a, z, m);
+  const allinea = el.style.justifyContent;
+  el.style.justifyContent = 'flex-start';
+  for (let k = Math.max(1, kMax * z); k >= 1; k--) {
+    el.style.fontSize = `${8 * k * m.px}px`;
+    if (el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight) break;
+  }
+  el.style.justifyContent = allinea;
 }

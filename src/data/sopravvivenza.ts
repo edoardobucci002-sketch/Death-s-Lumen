@@ -5,7 +5,7 @@
 
 /** Fiaschetta: cure contate. Si beve con il pulsante accanto all'abilità o con il tasto F. */
 export const FIASCHETTA = {
-  sorsi: 3, // all'inizio della notte e, senza Lacrima di lumen, al massimo
+  sorsi: 3, // all'inizio della notte e, senza Calice riverso, al massimo
   cura: 0.35, // ogni sorso cura il 35% della salute massima…
   durata: 1, // …in 1 secondo
   perElite: 1, // sorsi che tornano uccidendo un'élite (il Mietitore la riempie tutta)

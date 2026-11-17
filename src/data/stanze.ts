@@ -219,6 +219,11 @@ export const ONDATA = {
  * src/data/abilita.ts: raggio, danno, durata, rallentamento). Si carica SOLO colpendo i nemici con la Lanterna
  * (decisione del 12/11). Valori proposti da Claude, da rivedere.
  */
+/** La fiaschetta nel gioco a stanze (17/11): pulsante tondo sopra quello dell'abilità (posizione di Claude, da provare sul S25). */
+export const FIASCHETTA_STANZA = {
+  tasto: { lato: 36, distanza: 8, margine: 10 }, // diametro e distanza sopra l'abilità in pixel disegnati; margine di tocco in punti
+} as const;
+
 export const ABILITA_STANZA = {
   // piena dopo 8 colpi della Lanterna a segno; un colpo conta 1 anche se prende più nemici (decisione di Edoardo del 13/11)
   colpi: 8,
@@ -280,8 +285,8 @@ export const PERCORSO = {
   porte: { minimo: 2, massimo: 3 },
   echi: 3, // Echi al massimo nella build (più la Lanterna)
   doni: 6, // doni diversi al massimo
-  // i doni che nelle stanze fanno davvero qualcosa (decisione di Edoardo del 13/11): mancano Calamita e Lacrima di lumen
-  doniAttivi: ['cuoreDiCera', 'saleNero', 'clessidra', 'stoppinoLungo', 'aliDiFalena', 'erbeAmare', 'scudoDiFerro', 'specchio', 'ceraVotiva', 'chiodoDiBara', 'campanellaDArgento'],
+  // i doni che nelle stanze fanno davvero qualcosa (decisione di Edoardo del 13/11): manca la Calamita; il Calice riverso c'è dal 17/11
+  doniAttivi: ['cuoreDiCera', 'saleNero', 'clessidra', 'stoppinoLungo', 'aliDiFalena', 'erbeAmare', 'scudoDiFerro', 'specchio', 'ceraVotiva', 'chiodoDiBara', 'campanellaDArgento', 'lacrimaDiLumen'],
   passaggio: 0.25, // secondi del passaggio a retino tra una stanza e l'altra (metà per scurire, metà per schiarire)
 } as const;
 

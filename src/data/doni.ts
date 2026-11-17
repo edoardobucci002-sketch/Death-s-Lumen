@@ -16,7 +16,7 @@ export interface Passivo {
 
 /*
  * Doni a 3 livelli (decisione di Edoardo del 10/11, da rivedere): i doni che arrivavano a 4 o 5 arrivano a 3,
- * con lo stesso effetto al massimo di prima. Specchio, Lacrima di lumen e Campanella d'argento restano come sono.
+ * con lo stesso effetto al massimo di prima. Specchio, Calice riverso e Campanella d'argento restano come sono.
  */
 export const PASSIVI: Passivo[] = [
   { id: 'cuoreDiCera', nome: 'Cuore di cera', icona: 'Icona_Cuore_di_cera', massimo: 3, totale: 100, testo: '+100 salute massima in 3 livelli.' },
@@ -31,7 +31,8 @@ export const PASSIVI: Passivo[] = [
   { id: 'specchio', nome: 'Specchio', icona: 'Icona_Specchio', massimo: 1, totale: 1, testo: '+1 proiettile, nube, fiala, fuoco o falce.' },
   { id: 'ceraVotiva', nome: 'Cera votiva', icona: 'Icona_Cera_votiva', massimo: 3, totale: 0.75, testo: '+75% durata di zone e stati in 3 livelli.' },
   { id: 'chiodoDiBara', nome: 'Chiodo di bara', icona: 'Icona_Chiodo_di_bara', massimo: 3, totale: 0.3, testo: '+30% probabilità di colpo critico (danno doppio) in 3 livelli.' },
-  { id: 'lacrimaDiLumen', nome: 'Lacrima di lumen', icona: 'Icona_Lacrima_di_lumen', massimo: 2, totale: 2, testo: '+1 sorso della fiaschetta.' },
+  { id: 'lacrimaDiLumen', nome: 'Calice riverso', icona: 'Icona_Lacrima_di_lumen', // nome nuovo del 12/11 (proposta del pivot); id e icona restano finché Edoardo disegna Icona_Calice_riverso
+    massimo: 2, totale: 2, testo: '+1 sorso della fiaschetta.' },
   { id: 'campanellaDArgento', nome: "Campanella d'argento", icona: 'Icona_Campanella_d_argento', massimo: 2, totale: 0.2, testo: '+0,1 s di tempo per la schivata perfetta.' },
 ];
 

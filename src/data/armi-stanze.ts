@@ -104,7 +104,7 @@ const ACQUA_SANTA_STANZE: ConIntervallo<AcquaSanta> = {
  */
 const LAMA_DI_LUCE_STANZE: ConIntervallo<LamaDiLuce> = {
   ...LAMA_DI_LUCE,
-  nome: 'Gerico', // nuovo nome nel gioco a stanze (scelta di Edoardo, 17/11); l'id interno e l'icona restano «lamaDiLuce»
+  nome: 'Abbacinio', // nuovo nome nel gioco a stanze (scelta di Edoardo, 17/11; per poco si è chiamata Gerico); l'id interno e l'icona restano «lamaDiLuce»
   livelli: [
     { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 3, sviamento: 80, testo: 'Se schivi un attacco al momento giusto, chi lo ha lanciato resta cieco 3 s e sbaglia la mira.' },
     { ricarica: 99, danno: 0, dannoMassimo: 0, lunghezza: 0, spalle: false, cecita: 3.5, sviamento: 85, testo: AUTO },

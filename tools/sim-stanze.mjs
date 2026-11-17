@@ -72,7 +72,7 @@ console.log(`\nA partita: ${media(ok.map((r) => r.uccisi)).toFixed(1)} nemici ba
   `${media(ok.map((r) => r.schivate)).toFixed(1)} schivate perfette, ${media(ok.map((r) => r.colpiLanterna)).toFixed(0)} colpi della Lanterna, ${media(ok.map((r) => r.usiAbilita)).toFixed(1)} Cerchi di luce`);
 
 // quanto conta ogni arma: la sua parte del danno, nelle partite in cui c'era
-const NOMI = { lanterna: 'Lanterna', abilita: 'Cerchio di luce', candela: 'Candela', falce: 'Falce', campana: 'Campana', fuocoFatuo: 'Fuoco fatuo', acquaSanta: 'Acqua santa', lamaDiLuce: 'Gerico', lapide: 'Lapide', rosarioSpezzato: 'Rosario spezzato', corvo: 'Corvo', veloFunebre: 'Velo funebre', sampietrini: 'Sampietrini', eclissi: 'Eclissi', esorcismo: 'Esorcismo', interramento: 'Interramento', fuoco: 'Fuoco', martire: 'Martire' };
+const NOMI = { lanterna: 'Lanterna', abilita: 'Cerchio di luce', candela: 'Candela', falce: 'Falce', campana: 'Campana', fuocoFatuo: 'Fuoco fatuo', acquaSanta: 'Acqua santa', lamaDiLuce: 'Abbacinio', lapide: 'Lapide', rosarioSpezzato: 'Rosario spezzato', corvo: 'Corvo', veloFunebre: 'Velo funebre', sampietrini: 'Sampietrini', eclissi: 'Eclissi', esorcismo: 'Esorcismo', interramento: 'Interramento', fuoco: 'Fuoco', martire: 'Martire' };
 const fonti = new Set(ok.flatMap((r) => Object.keys(r.danno)));
 const righe = [...fonti].map((f) => {
   const con = ok.filter((r) => r.danno[f]);

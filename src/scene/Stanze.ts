@@ -39,6 +39,9 @@ import { BOT_STANZE } from '../data/bot';
 import { BotStanze } from '../sistema/bot-stanze';
 import { SimStanze } from '../sistema/sim-stanze';
 import { AbilitaStanza } from '../sistema/abilita-stanza';
+import { FiaschettaStanza } from '../sistema/fiaschetta-stanza';
+import { FIASCHETTA } from '../data/sopravvivenza';
+import { BOT } from '../data/bot';
 import { ARTE_JOYSTICK, preparaJoystickStanze } from '../sistema/joystick-stanze';
 import { NemiciStanza } from '../sistema/nemici-stanza';
 import { BarraSalute } from '../sistema/barra-salute';
@@ -117,6 +120,7 @@ export class Stanze extends Phaser.Scene {
   ondateAutomatiche = true; // LAB: spente, la stanza resta vuota finché non si chiama un nemico
   nemici!: NemiciStanza;
   abilita!: AbilitaStanza;
+  fiaschetta!: FiaschettaStanza; // sorsi contati, tasto F (17/11)
   /** Statistiche che le carte potranno migliorare (passo 6): Quiete del Lampionaio e Grazia. Si azzerano in create. */
   quiete: number = COMBATTIMENTO_STANZA.quiete;
   readonly statGrazia = { durata: 0, danno: 0, velocita: 0, finestra: 0, sfioro: 0 };
@@ -252,6 +256,7 @@ export class Stanze extends Phaser.Scene {
       return { x: cam.scrollX + cx / px, y: cam.scrollY + cy / px };
     }, () => this.corpo(), (verso) => this.mira(verso), (angolo) => this.colpisci(angolo));
     this.abilita = new AbilitaStanza(this, this.radice, this.pg.colore, () => this.fermo());
+    this.fiaschetta = new FiaschettaStanza(this.radice, () => !this.fermo() && !this.morto && this.salute < this.saluteMassima);
     // le carte: verticali (Carta_Stanza), con le carte decise dal percorso e la spiegazione del survivor
     const nessuno = new Set<never>();
     this.doni = new Doni(this.radice, this.arsenale, LANTERNA_STANZE, this.percorso.passivi, new Caso(this.seme + 3),
@@ -278,6 +283,7 @@ export class Stanze extends Phaser.Scene {
       this.comandi.distruggi();
       this.attacco.distruggi();
       this.abilita.distruggi();
+      this.fiaschetta.distruggi();
       this.doni.distruggi();
       this.rompibili.distruggi();
       this.comparsa.ferma();
@@ -365,6 +371,7 @@ export class Stanze extends Phaser.Scene {
     const massima = BASE.salute + this.pg.salute + per('cuoreDiCera');
     if (massima > this.saluteMassima) this.salute += massima - this.saluteMassima; // più salute massima: la salute sale
     this.saluteMassima = massima;
+    this.fiaschetta?.impostaMassimo(FIASCHETTA.sorsi + (this.percorso.passivi.lacrimaDiLumen ?? 0)); // il Calice riverso: +1 sorso per livello
     this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + (this.rompibili && this.rompibili.bagliore > 0 ? BAGLIORE.velocita : 0));
     this.rigenerazione = per('erbeAmare');
     this.scudo = per('scudoDiFerro');
@@ -488,6 +495,7 @@ export class Stanze extends Phaser.Scene {
       dy = this.bot.dy;
       if (this.bot.colpisce && this.attacco.attesa <= 0) this.attacco.automatico();
       if (this.bot.abilita) this.abilita.usa();
+      if (this.salute < this.saluteMassima * BOT.beviSotto) this.fiaschetta.bevi(); // come nel survivor
     }
     // durante il fermo d'impatto il Lampionaio non avanza (il resto della stanza sì)
     const fermoColpo = this.fermoColpo > 0;
@@ -523,6 +531,9 @@ export class Stanze extends Phaser.Scene {
     // le zone che curano (Acqua santa al potenziale): dentro una pozza si recupera salute
     const cura = this.arsenale.cura(this.saluteMassima);
     if (cura > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + cura * dt);
+    // la fiaschetta: il sorso cura una parte della salute massima nell'arco di un secondo
+    const sorso = this.fiaschetta.aggiorna(dt);
+    if (sorso > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + sorso * this.saluteMassima);
     // la Falce al potenziale ruba salute solo a salute piena: diventa salute in più (sotto il massimo il furto si perde)
     if (this.arsenale.rubato > 0) {
       if (!this.morto && this.salute >= this.saluteMassima) this.extra = Math.min(POTENZIALI.falce.tetto * this.saluteMassima, this.extra + this.arsenale.rubato);
@@ -868,6 +879,7 @@ export class Stanze extends Phaser.Scene {
     const m = misureHud(), b = bordiHud(m), { lato, ingrandimento: z } = STANZA.pausa;
     this.attacco?.disponi(m, b);
     if (this.attacco) this.abilita?.disponi(m, this.attacco.riquadro);
+    if (this.attacco) this.fiaschetta?.disponi(m, this.attacco.riquadro);
     this.pannelloPausa.style.backgroundSize = this.pannelloFine.style.backgroundSize = this.velaPassaggio.style.backgroundSize = `${4 * m.px}px ${4 * m.px}px`;
     this.barra?.scala(ingr('salute', m));
     // pulsante piccolo, ma l'area di tocco arriva comunque a TOCCO_MINIMO punti (regola dei 44 punti)

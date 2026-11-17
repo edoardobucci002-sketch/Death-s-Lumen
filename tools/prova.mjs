@@ -1380,9 +1380,16 @@ for (const [nome, disp] of [
   if (!(prima.extra > 0)) errori.push('la salute in più non compare');
   if (!(dopo.extra < prima.extra)) errori.push('la salute in più non assorbe il colpo');
   if (dopo.salute !== prima.salute) errori.push('il colpo ha tolto salute normale mentre c\'era salute in più');
+  // la fiaschetta (17/11): a salute non piena un sorso cura in un secondo e consuma un sorso
+  await L('salute', 30);
+  const primaSorso = await L('stato');
+  const bevuto = await L('bevi');
+  await pag.waitForTimeout(1300);
+  const dopoSorso = await L('stato');
+  if (!bevuto || dopoSorso.sorsi !== primaSorso.sorsi - 1 || !(dopoSorso.salute > primaSorso.salute)) errori.push(`la fiaschetta non cura (sorsi ${primaSorso.sorsi} › ${dopoSorso.sorsi}, salute ${primaSorso.salute} › ${dopoSorso.salute})`);
   await ctx.close();
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} salute in più: ${prima?.extra} › ${dopo?.extra}, salute ${prima?.salute} › ${dopo?.salute}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} salute in più: ${prima?.extra} › ${dopo?.extra}, salute ${prima?.salute} › ${dopo?.salute}; fiaschetta ${primaSorso?.sorsi} › ${dopoSorso?.sorsi} sorsi, salute ${primaSorso?.salute} › ${dopoSorso?.salute}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
 // Bot del gioco a stanze (14/11): gioca la fetta da solo, veloce e senza disegno; a parità di seme gioca la stessa partita

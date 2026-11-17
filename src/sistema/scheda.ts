@@ -213,6 +213,23 @@ export function interniCarta(cw: number, ch: number): typeof CARTA_STANZA.intern
 
 const carteNove = new Map<string, string>();
 
+/** La carta provvisoria (17/11): rettangolo scuro con il bordo arancione, cw × ch pixel disegnati; scelta = bordo più chiaro. */
+export function cartaSemplice(cw: number, ch: number, scelta: boolean): string {
+  const k = `semplice${scelta ? '-scelta' : ''}@${cw}x${ch}`, pronta = carteNove.get(k);
+  if (pronta) return pronta;
+  const S = CARTA_STANZA.semplice, c = document.createElement('canvas');
+  c.width = cw;
+  c.height = ch;
+  const g = c.getContext('2d')!;
+  g.fillStyle = scelta ? S.scelta : S.bordo;
+  g.fillRect(0, 0, cw, ch);
+  g.fillStyle = S.fondo;
+  g.fillRect(S.spessore, S.spessore, cw - 2 * S.spessore, ch - 2 * S.spessore);
+  const url = c.toDataURL();
+  carteNove.set(k, url);
+  return url;
+}
+
 /**
  * La carta «chiave» (Carta_Stanza o Carta_Stanza_Scelta) ricomposta a cw × ch pixel disegnati con il 9-slice: le parti fisse
  * restano come sono, le strisce di CARTA_STANZA.nove si ripetono (a pixel interi, niente sfumature). Restituisce l'immagine.

@@ -280,6 +280,10 @@ export const CARTA_STANZA = {
   // grandezza delle scritte, più grandi di quelle delle strisce (13, 8 e 7,5): richiesta di Edoardo del 13/11 sera, da rivedere.
   // Se una spiegazione non ci sta, scende da sola di mezzo punto alla volta
   testi: { dato: 16, tag: 9, riga: 9.5 },
+  // carta provvisoria (richiesta di Edoardo del 17/11, finché non ridisegna la carta): un rettangolo dal fondo scuro con il
+  // bordo arancione (più chiaro sulla carta scelta), largo «spessore» pixel disegnati; tutti i testi in Tiny5 a pixel interi:
+  // «tiny» = ingrandimento massimo della lettera (1 pixel della lettera = 1 pixel della carta) per tag, numeri e spiegazione
+  semplice: { fondo: '#1c1611', bordo: '#e3913a', scelta: '#fbce4a', spessore: 2, tiny: { tag: 1, dato: 2, riga: 1 } },
 };
 
 /** Caselle di armi e doni in partita: piccole, alla Vampire Survivors (la cornice grande sta nel pannello della pausa). */

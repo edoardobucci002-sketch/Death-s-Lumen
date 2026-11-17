@@ -72,7 +72,7 @@ export const SBLOCCHI_OGGETTI: SbloccoOggetto[] = [
   { id: 'veloFunebre', nome: 'Velo funebre', tipo: 'arma', impresa: 'Resta 3 minuti dentro le tue nubi in una veglia', soglia: 180, testo: 'Un\'aura che consacra chi entra.' },
   { id: 'campanellaDArgento', nome: "Campanella d'argento", tipo: 'dono', impresa: 'Fai 20 schivate perfette in una veglia', soglia: 20, cera: 120, testo: 'Più tempo per la schivata perfetta.' },
   { id: 'chiodoDiBara', nome: 'Chiodo di bara', tipo: 'dono', cera: 120, testo: 'Colpi critici.' },
-  { id: 'lacrimaDiLumen', nome: 'Lacrima di lumen', tipo: 'dono', cera: 120, testo: 'Più sorsi nella fiaschetta.' },
+  { id: 'lacrimaDiLumen', nome: 'Calice riverso', tipo: 'dono', cera: 120, testo: 'Più sorsi nella fiaschetta.' },
 ];
 
 /** Le unioni delle armi si sbloccano con un'impresa, con qualsiasi personaggio (decisione di Edoardo del 10/11). Chi le aveva già le tiene. */

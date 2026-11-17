@@ -15,7 +15,7 @@ const C = FIASCHETTA.colori;
 
 export class Fiaschetta {
   sorsi: number = FIASCHETTA.sorsi;
-  massimo: number = FIASCHETTA.sorsi; // la Lacrima di lumen lo alza
+  massimo: number = FIASCHETTA.sorsi; // la Calice riverso lo alza
   private curaRimasta = 0; // secondi di cura ancora in corso
   private pulsante: HTMLButtonElement;
   private tela: HTMLCanvasElement;
