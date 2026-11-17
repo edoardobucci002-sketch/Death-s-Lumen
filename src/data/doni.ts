@@ -28,7 +28,7 @@ export const PASSIVI: Passivo[] = [
   { id: 'calamita', nome: 'Calamita', icona: 'Icona_Calamita', massimo: 3, totale: 5, anime: 0.25, testo: '+500% raggio di raccolta e +25% anime in 3 livelli.' },
   { id: 'erbeAmare', nome: 'Erbe amare', icona: 'Icona_Erbe_amare', massimo: 3, totale: 1.25, testo: '+1,25 salute al secondo in 3 livelli.' },
   { id: 'scudoDiFerro', nome: 'Scudo di ferro', icona: 'Icona_Scudo_di_ferro', massimo: 3, totale: 0.24, testo: '−24% danno subito in 3 livelli.' },
-  { id: 'specchio', nome: 'Specchio', icona: 'Icona_Specchio', massimo: 3, totale: 3, testo: '+1 colpo a ogni arma per livello.' }, // 3 livelli dal 17/11 (Edoardo); +1 colpo per livello: valore di Claude, da rivedere
+  { id: 'specchio', nome: 'Specchio', icona: 'Icona_Specchio', massimo: 3, totale: 3, testo: '+1 colpo a ogni arma per livello.' }, // 3 livelli dal 17/11 (Edoardo); così nel survivor; nel gioco a stanze vale SPECCHIO_STANZE, qui sotto
   { id: 'ceraVotiva', nome: 'Cera votiva', icona: 'Icona_Cera_votiva', massimo: 3, totale: 0.75, testo: '+75% durata di zone e stati in 3 livelli.' },
   { id: 'chiodoDiBara', nome: 'Chiodo di bara', icona: 'Icona_Chiodo_di_bara', massimo: 3, totale: 0.3, testo: '+30% probabilità di colpo critico (danno doppio) in 3 livelli.' },
   { id: 'lacrimaDiLumen', nome: 'Calice riverso', icona: 'Icona_Lacrima_di_lumen', // nome nuovo del 12/11 (proposta del pivot); id e icona restano finché Edoardo disegna Icona_Calice_riverso
@@ -42,6 +42,17 @@ export const effettoDono = (q: Passivo, l: number): number => (q.totale * l) / q
 export const animeDono = (q: Passivo, l: number): number => ((q.anime ?? 0) * l) / q.massimo;
 /** Clessidra: la ricarica si moltiplica a ogni livello; al massimo vale 1 − totale. Restituisce il moltiplicatore (1 = nessun effetto). */
 export const ricaricaDono = (q: Passivo, l: number): number => (1 - q.totale) ** (l / q.massimo);
+
+/**
+ * Lo Specchio nel gioco a stanze (decisione di Edoardo del 17/11, «colpi riflessi»): per livello, quanti colpi in più ha ogni
+ * arma e a che parte del danno feriscono, con la riga della carta (parole di Edoardo). Al massimo +2 colpi, non +3.
+ * Il survivor resta con PASSIVI (+1 colpo per livello).
+ */
+export const SPECCHIO_STANZE = {
+  colpi: [1, 2, 2],
+  danno: [0.5, 0.5, 1],
+  righe: ['+1 colpo a ogni arma, al 50% del danno.', '+1 colpo a ogni arma.', 'I colpi in più feriscono al 100% del danno.'],
+};
 
 export const MAX_PASSIVI = 6;
 export const MOLTIPLICA_CRITICO = 2; // un colpo critico (Chiodo di bara) fa il doppio del danno

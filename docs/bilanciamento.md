@@ -10,6 +10,13 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 17/11 — Specchio a colpi riflessi, Rosario Ardente, premio del Campanaro come sorso
+
+- **Specchio** (gioco a stanze, `SPECCHIO_STANZE`): da +1 colpo per livello (+3 al massimo) a +1, +2, +2 colpi, che feriscono al 50%, 50%, 100% del danno. Edoardo: «+3 colpi a ogni arma sono tanti».
+- **Rosario spezzato** da Chiara ad Ardente (Edoardo).
+- **Premio del Campanaro**: da cura diretta del 30% della salute massima a 1 sorso della fiaschetta (Edoardo).
+- `npm run sim-stanze -- 48`: **fetta completata 6/48** (era 8/48: rumore, ±12 punti); 42 cadute nella stanza 4. La salute media alla fine scende da 64 a 32 perché il sorso del premio ora va nella fiaschetta e la fetta finisce subito dopo. Carte viste: Fioca 75%, Chiara 17%, **Ardente 8%** (era 3%: gli Ardenti ora sono tre). Lo Specchio è stato preso in una partita sola: per misurarlo servirà una prova apposta.
+
 ### 17/11 — Rarità delle carte (Fioca 75%, Chiara 20%, Ardente 5%)
 
 `npm run sim-stanze -- 48` (metà carte preferite, metà a caso), prima simulazione con la fiaschetta automatica e con le rarità: **fetta completata 8/48**; nessuno cade nelle stanze 1–3, **40 cadono nella stanza 4** (il Campanaro), dopo 16 s in media e 82 di danno subito; salute all'uscita della stanza 3: 41. Carte viste: **Fioca 75%, Chiara 22%, Ardente 3%** su 441 (prese: 72%, 20%, 8%); l'Ardente esce meno del 5% perché oggi gli Ardenti sono solo Lapide e Specchio, e spesso la porta non li può dare. Danno: Lanterna 67%, Corvo 13%, Lapide 12% (in 11 partite), Campana 11%, Falce 3%. Prima (31 cadute su 48 nella stanza 4) c'erano altre estrazioni delle carte e niente fiaschetta automatica: il confronto non dice quale delle due cose pesa. Campione da 48: ±12 punti.

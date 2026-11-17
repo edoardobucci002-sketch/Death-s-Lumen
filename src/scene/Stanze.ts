@@ -32,7 +32,7 @@ import { Porte } from '../sistema/porte';
 import { Doni } from '../sistema/doni';
 import { ComparsaCarte } from '../sistema/comparsa-carte';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
-import { PASSIVI, RICARICA_MINIMA, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
+import { PASSIVI, RICARICA_MINIMA, SPECCHIO_STANZE, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
 import { Impatto } from '../sistema/impatto';
 import { ABILITA } from '../data/abilita';
 import { BOT_STANZE } from '../data/bot';
@@ -363,7 +363,10 @@ export class Stanze extends Phaser.Scene {
     b.danno = per('saleNero') + (this.grazia > 0 ? this.statGrazia.danno : 0);
     b.ricarica = Math.max(RICARICA_MINIMA, ricaricaDono(DONO.clessidra, p.clessidra));
     b.area = area;
-    b.quantita = per('specchio');
+    // lo Specchio delle stanze (17/11): colpi in più e il loro danno, livello per livello (SPECCHIO_STANZE)
+    const sp = p.specchio;
+    b.quantita = sp > 0 ? SPECCHIO_STANZE.colpi[sp - 1] : 0;
+    b.riflesso = sp > 0 ? SPECCHIO_STANZE.danno[sp - 1] : 1;
     b.durata = per('ceraVotiva');
     b.critico = per('chiodoDiBara');
     const massima = BASE.salute + this.pg.salute + per('cuoreDiCera');
@@ -574,8 +577,8 @@ export class Stanze extends Phaser.Scene {
     this.attacco.lascia();
     this.sim.stanzaRipulita(this.percorso.stanza, this.salute);
     if (this.percorso.miniboss && !this.morto) {
-      // il Campanaro battuto: un sorso (una parte della salute massima) e Cera, oltre alle carte della porta scelta
-      this.salute = Math.min(this.saluteMassima, this.salute + CAMPANARO.premio.sorso * this.saluteMassima);
+      // il Campanaro battuto: un sorso della fiaschetta (17/11) e Cera, oltre alle carte della porta scelta
+      this.fiaschetta.ricarica(CAMPANARO.premio.sorsi);
       this.rompibili.cera += CAMPANARO.premio.cera;
       suona('cura');
     }

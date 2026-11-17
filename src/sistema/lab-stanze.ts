@@ -59,6 +59,15 @@ export class LabStanze {
     this.s.percorso.ripulisci();
   }
 
+  /** Porta lo Specchio al livello l (0 = toglierlo): colpi in più e il loro danno valgono dal passo dopo (SPECCHIO_STANZE). */
+  specchio(l: number): void {
+    this.s.percorso.passivi.specchio = Math.max(0, Math.min(3, l));
+  }
+
+  livelloSpecchio(): number {
+    return this.s.percorso.passivi.specchio;
+  }
+
   /** Le carte escono del grado g quando la porta lo può dare (null = il caso di sempre). */
   forzaGrado(g: IdGrado | null): void {
     this.s.percorso.forzaGrado = g;

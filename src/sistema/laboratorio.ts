@@ -293,6 +293,10 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(
         ...([null, 'fioca', 'chiara', 'ardente'] as const).map((g) => tasto(g ? `Carte ${GRADI[g].nome}` : 'Carte a caso', f(() => st.lab.forzaGrado(g)), st.lab.gradoForzato() === g ? 'acceso' : '')),
       ),
+      riga(
+        ...[0, 1, 2, 3].map((l) => tasto(l ? `Specchio liv ${l}` : 'Senza Specchio', f(() => st.lab.specchio(l)), st.lab.livelloSpecchio() === l ? 'acceso' : '')),
+      ),
+      el('p', 'lab-nota', 'Specchio (Ardente): liv 1 +1 colpo a ogni arma al 50% del danno, liv 2 +2 colpi al 50%, liv 3 i colpi in più feriscono al 100%. Vale per gli Echi che lanciano più colpi (Candela, Falce, Fuoco fatuo, Acqua santa, Lapide, Rosario, Corvo, Sampietrini). Numeri in Numeri → doni → SPECCHIO_STANZE.'),
       el('p', 'lab-nota', 'Ogni Eco e ogni dono ha un grado fisso: Fioca (bordo cenere), Chiara (arancio) o Ardente (oro che pulsa). Per ogni carta esce Fioca 75 volte su 100, Chiara 20, Ardente 5, solo tra i gradi che la porta può dare; ogni carta vale +1 livello. «Carte Ardente» fa uscire quel grado quando c\'è (poi «Ripulisci la stanza» per vedere le carte); «Carte a caso» torna normale. Probabilità e colori in Numeri → rarita → GRADI; i gradi degli oggetti in src/data/rarita.ts.'),
       riga(
         tasto(st.bot ? 'Riprendi tu i comandi' : 'Fai giocare il bot', () => { st.lab.bot(!st.bot); mostra(false); }),
@@ -319,7 +323,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Carica', () => { st.lab.attaccoCampanaro('carica'); mostra(false); }),
         tasto('Chiamata', () => { st.lab.attaccoCampanaro('chiamata'); mostra(false); }),
       ),
-      el('p', 'lab-nota', '«Vai al Campanaro» ti porta nella quarta stanza, l\'arena, con la build che hai: dopo un attimo compare in fondo. Vicino fa il Rintocco (il disco rosso si riempie, poi l\'onda: esci dal cerchio); lontano la Carica (la linea fino al muro, poi corre: spostati di lato; contro il muro resta stordito 1,5 s). Sotto metà salute (fase 2) gli attacchi arrivano prima, dopo il disco viene l\'anello (torna vicino a lui) e ogni tre attacchi la Chiamata fa comparire 2 Ricaduti. Uscire dall\'area all\'ultimo istante dà la Grazia. «Rintocco», «Carica», «Chiamata» scelgono il suo prossimo attacco. Battuto: un sorso (30% della salute), 10 di Cera e le carte della porta scelta. Numeri in Numeri → campanaro.'),
+      el('p', 'lab-nota', '«Vai al Campanaro» ti porta nella quarta stanza, l\'arena, con la build che hai: dopo un attimo compare in fondo. Vicino fa il Rintocco (il disco rosso si riempie, poi l\'onda: esci dal cerchio); lontano la Carica (la linea fino al muro, poi corre: spostati di lato; contro il muro resta stordito 1,5 s). Sotto metà salute (fase 2) gli attacchi arrivano prima, dopo il disco viene l\'anello (torna vicino a lui) e ogni tre attacchi la Chiamata fa comparire 2 Ricaduti. Uscire dall\'area all\'ultimo istante dà la Grazia. «Rintocco», «Carica», «Chiamata» scelgono il suo prossimo attacco. Battuto: un sorso della fiaschetta, 10 di Cera e le carte della porta scelta. Numeri in Numeri → campanaro.'),
       titolo('Nemici'),
       riga(el('span', 'lab-stato', `In campo: ${s.nemici} · battuti: ${s.uccisi} · rinati: ${s.rinascite}`)),
       riga(

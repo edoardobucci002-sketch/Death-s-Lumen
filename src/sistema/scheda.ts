@@ -9,7 +9,7 @@ import { AFFINITA_ARMI, RITI } from '../data/stati';
 import { CARTE } from '../data/progressione';
 import { ROSARIO } from '../data/rosario';
 import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
-import { PASSIVI, type IdDono, type Passivo } from '../data/doni';
+import { PASSIVI, SPECCHIO_STANZE, type IdDono, type Passivo } from '../data/doni';
 import { nomeCampo, postoCampo, TAG } from '../data/glossario';
 import { CAMPI_ARMA, chiaro, DATI_DONI, gradoDevozione, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { CARTA_STANZA, STRISCIA } from '../data/hud';
@@ -129,11 +129,20 @@ function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
   return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, arma.livelli.length, stanze ? TAG.nuovoEco : 'Nuova arma', stanze), dati, righe };
 }
 
+/** Lo Specchio nel gioco a stanze (17/11): colpi in più e il loro danno, con la riga di Edoardo (SPECCHIO_STANZE). */
+function schedaSpecchioStanze(q: Passivo, l: number): Scheda {
+  const S = SPECCHIO_STANZE, pct = (x: number): string => `${Math.round(x * 100)}%`;
+  const dati: Dato[] = [{ nome: NOME_COLPI_IN_PIU, prima: l > 1 ? `+${S.colpi[l - 2]}` : undefined, dopo: `+${S.colpi[l - 1]}`, tono: 'bene' }];
+  if (l === 1 || S.danno[l - 1] !== S.danno[l - 2]) dati.push({ nome: 'Danno', prima: l > 1 ? pct(S.danno[l - 2]) : undefined, dopo: pct(S.danno[l - 1]), tono: 'bene' });
+  return { nome: q.nome, icona: q.icona, categoria: 'dono', tag: tagLivello(l, q.massimo, 'Nuovo dono'), dati, righe: [{ testo: S.righe[l - 1] }] };
+}
+
 /** Che cosa raccontano le strisce del dono d. */
 export function schedaDono(d: Dono, c: Contesto): Scheda {
   switch (d.tipo) {
     case 'arma': return schedaArma(d.arma, d.livello, c);
     case 'passivo': {
+      if (d.passivo.id === 'specchio' && c.numeriArma) return schedaSpecchioStanze(d.passivo, d.livello);
       const q = d.passivo, ora = DATI_DONI[q.id](q, d.livello, c.metaRaccolta), prima = DATI_DONI[q.id](q, d.livello - 1, c.metaRaccolta);
       // un dono può aprire più Unioni (lo Scudo di ferro: Vanga del custode e Selciato; la Calamita: Fuochi erranti e Stormo del lutto)
       const unioni = c.unioni ? UNIONI.filter((x) => x.dono === q.id && c.scoperte.has(x.id) && c.armi.some((a) => a.id === x.arma)) : [];

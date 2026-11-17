@@ -1297,6 +1297,17 @@ for (const [nome, disp] of [
       const dopo = await st();
       if (dopo.carteAperte) { errori.push(`stanza ${n}: la carta scelta non chiude le carte`); break; }
       if (n === 1 && dopo.echi.length !== 1) errori.push(`nella prima stanza la carta non dà un Eco (${dopo.echi.join(', ')})`);
+        // lo Specchio delle stanze (17/11): colpi in più e il loro danno per livello
+      if (n === 1 && nome === 'stanze-desktop') {
+          const sp = [];
+          for (const l of [1, 2, 3]) {
+            await L('specchio', l);
+            await pag.waitForTimeout(60);
+            sp.push(await pag.evaluate(() => { const b = window.__dl.scene.getScene('Stanze').bonus; return `${b.quantita}@${b.riflesso}`; }));
+          }
+          await L('specchio', 0);
+          if (sp.join(' ') !== '1@0.5 2@0.5 2@1') errori.push(`Specchio: colpi e danno per livello ${sp.join(' ')} (attesi 1@0.5 2@0.5 2@1)`);
+        }
       giro.push(`${dopo.stanza}: ${dopo.echi.join('+') || '-'}`);
       if (n === 4) {
         if (!dopo.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('dopo il Campanaro non compare «Fetta completata»');

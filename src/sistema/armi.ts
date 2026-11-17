@@ -321,7 +321,7 @@ export class Arsenale extends ArsenaleVicine {
           }
           // Incensiere dell'ultima ora: le nubi curano e rallentano di più (con il tetto: vedi toccaZona)
           const inc = !!this.unite.turibolo;
-          this.zona(a.effetto, nx, ny, l.raggio * area, l.danno, l.durata, a.intervallo, inc ? Math.max(a.rallenta, U.incensiere.rallenta) : a.rallenta, 0, inc ? U.incensiere.cura : 0, false, false, NUBE, SACRO);
+          this.zona(a.effetto, nx, ny, l.raggio * area, this.dannoColpo(l.danno, k, l.quantita), l.durata, a.intervallo, inc ? Math.max(a.rallenta, U.incensiere.rallenta) : a.rallenta, 0, inc ? U.incensiere.cura : 0, false, false, NUBE, SACRO);
         }
         return l.ricarica;
       }
@@ -332,7 +332,7 @@ export class Arsenale extends ArsenaleVicine {
           const j = this.nemicoVisibile();
           if (j < 0) break;
           // potenziale (gioco a stanze): la pozza cura chi ci sta dentro
-          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, l.danno, l.durata, a.intervallo, 0, 0, this.potenziale[F.acquaSanta] ? POTENZIALI.acquaSanta.cura : 0, false, true, POZZA, SACRO);
+          this.zona(a.effetto, o.x[j], o.y[j] - o.raggio[j], l.raggio * area, this.dannoColpo(l.danno, k, l.quantita), l.durata, a.intervallo, 0, 0, this.potenziale[F.acquaSanta] ? POTENZIALI.acquaSanta.cura : 0, false, true, POZZA, SACRO);
         }
         return l.ricarica;
       }
@@ -353,7 +353,7 @@ export class Arsenale extends ArsenaleVicine {
           const j = this.piuVicino(a.portata, k);
           if (j < 0) break;
           this.scelti[k] = j;
-          this.lancia(a.effetto, j, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, 0, 0, false, 0, LUCE);
+          this.lancia(a.effetto, j, a.velocita, a.vita, this.dannoColpo(l.danno, k, l.quantita), l.trapassa, a.raggio, 0, 0, false, 0, LUCE);
           if (this.unite.candela && this.proiettili) this.prUnione[this.proiettili - 1] = SCIA;
         }
         return l.ricarica;
@@ -363,7 +363,7 @@ export class Arsenale extends ArsenaleVicine {
         const n = l.quantita + piu;
         // partono a raggiera e poi girano verso i nemici
         for (let k = 0; k < n; k++) {
-          this.lancia(a.effetto, -1, a.velocita, a.vita, l.danno, l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2, OMBRA);
+          this.lancia(a.effetto, -1, a.velocita, a.vita, this.dannoColpo(l.danno, k, l.quantita), l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2, OMBRA);
           if (this.unite.fuocoFatuo && this.proiettili) this.prUnione[this.proiettili - 1] = RACCOGLIE;
         }
         return l.ricarica;
@@ -375,7 +375,7 @@ export class Arsenale extends ArsenaleVicine {
           const j = this.piuForte(k);
           if (j < 0) break;
           this.scelti[k] = j;
-          this.lapideCade(this.orda.x[j], this.orda.y[j], l.raggio * area, l.danno);
+          this.lapideCade(this.orda.x[j], this.orda.y[j], l.raggio * area, this.dannoColpo(l.danno, k, l.quantita));
         }
         return l.ricarica;
       }
@@ -386,7 +386,7 @@ export class Arsenale extends ArsenaleVicine {
           const j = this.piuVicino(a.portata, k);
           if (j < 0) break;
           this.scelti[k] = j;
-          this.lanciaSasso(this.orda.x[j], this.orda.y[j], a.raggio * area, l.danno, l.rimbalzi);
+          this.lanciaSasso(this.orda.x[j], this.orda.y[j], a.raggio * area, this.dannoColpo(l.danno, k, l.quantita), l.rimbalzi);
         }
         return l.ricarica;
       }
@@ -397,7 +397,7 @@ export class Arsenale extends ArsenaleVicine {
           const j = this.piuVicino(a.portata, k);
           if (j < 0) break;
           this.scelti[k] = j;
-          this.lanciaGrano(j, l.danno, l.rimbalzi);
+          this.lanciaGrano(j, this.dannoColpo(l.danno, k, l.quantita), l.rimbalzi);
         }
         return l.ricarica;
       }
@@ -414,7 +414,7 @@ export class Arsenale extends ArsenaleVicine {
           this.cvMX[k] = o.x[j];
           this.cvMY[k] = o.y[j] - o.raggio[j];
           this.cvMira[k] = 0.18;
-          this.ferisci(j, l.danno, 0, 0, 0, LUCE);
+          this.ferisci(j, this.dannoColpo(l.danno, k, l.quantita), 0, 0, 0, LUCE);
           if (this.potenziale[F.corvo]) o.segnoCorvo[j] = POTENZIALI.corvo.durata; // potenziale: +danno subito per un po'
           this.rompibili?.colpitoDa(this.cvMX[k], this.cvMY[k], ROMPIBILI.raggio);
           // a ogni beccata le anime a terra intorno al nemico beccato volano verso il personaggio

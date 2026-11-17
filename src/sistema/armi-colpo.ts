@@ -79,6 +79,7 @@ export interface Bonus {
   quantita: number; // proiettili, nubi, fiale, fuochi, falci in più (Specchio)
   durata: number; // 0,15 = zone +15% (Cera votiva)
   critico: number; // 0,06 = 6% di colpi critici (Chiodo di bara)
+  riflesso?: number; // gioco a stanze: il danno dei colpi in più dello Specchio (0,5 = metà; assente = pieno, come nel survivor)
 }
 
 export abstract class ArsenaleColpo {
@@ -88,6 +89,10 @@ export abstract class ArsenaleColpo {
   posseduta(id: Arma['id']): Posseduta | undefined {
     for (const p of this.possedute) if (p.arma.id === id) return p;
     return undefined;
+  }
+  /** Il danno del colpo k di un'arma con «base» colpi suoi: i colpi in più (Specchio) feriscono al bonus.riflesso del danno. */
+  protected dannoColpo(danno: number, k: number, base: number): number {
+    return k < base ? danno : danno * (this.bonus.riflesso ?? 1);
   }
   dannoTotale = 0; // per il riepilogo di fine partita
   reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)

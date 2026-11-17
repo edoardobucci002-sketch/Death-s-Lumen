@@ -142,6 +142,7 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
         const fuori = k >= meta, quante = fuori ? n - meta : meta, h = fuori ? k - meta : k;
         const ang = (fuori ? -this.angoloFalci : this.angoloFalci) + (h / quante) * Math.PI * 2;
         const rk = fuori ? r * POTENZIALI.falce.anello : r;
+        this.cDanno = this.dannoColpo(l.danno, k, l.quantita); // le falci in più dello Specchio
         this.cx = this.px + Math.cos(ang) * rk;
         this.cy = this.py + Math.sin(ang) * rk;
         this.orda.griglia.vicini(this.cx, this.cy, this.visitaFalce);

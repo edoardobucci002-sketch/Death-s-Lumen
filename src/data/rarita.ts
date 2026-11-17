@@ -32,8 +32,8 @@ export const BAGLIORE_ARDENTE = { spessore: 1, periodo: 0.8 };
  */
 export const GRADO_OGGETTO: Record<string, IdGrado> = {
   // Echi
-  lapide: 'ardente',
-  candela: 'chiara', fuocoFatuo: 'chiara', rosarioSpezzato: 'chiara', corvo: 'chiara',
+  lapide: 'ardente', rosarioSpezzato: 'ardente', // il Rosario Ardente: Edoardo, 17/11
+  candela: 'chiara', fuocoFatuo: 'chiara', corvo: 'chiara',
   lamaDiLuce: 'fioca', sampietrini: 'fioca', campana: 'fioca', acquaSanta: 'fioca', veloFunebre: 'fioca', falce: 'fioca',
   lanterna: 'fioca',
   // doni
