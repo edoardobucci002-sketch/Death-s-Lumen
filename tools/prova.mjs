@@ -983,6 +983,13 @@ for (const [nome, disp] of [
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
   // muri, pausa e attacco si provano nella stanza vuota; i nemici hanno la loro prova in fondo
   await pag.evaluate(() => { const l = window.__dl.scene.getScene('Stanze').lab; l.ondateAutomatiche(false); l.svuota(); });
+  // la mappa del Mondo (17/11, passo 1): mille semi, ognuno deve rispettare le regole (src/sistema/mappa.ts → controllaMappa)
+  let notaMappe = '';
+  if (nome === 'stanze-desktop') {
+    const r = await pag.evaluate(() => window.__dl.scene.getScene('Stanze').lab.provaMappe(1000));
+    if (r.sbagliate) errori.push(`mappa del Mondo: ${r.sbagliate} semi su 1000 non rispettano le regole (${r.primo})`);
+    notaMappe = `, mappe ${r.stanze[0]}–${r.stanze[1]} stanze, Boss a ${r.boss[0]}–${r.boss[1]} porte (${r.ms} ms per mille)`;
+  }
   await pag.waitForTimeout(500);
   const stato = () => pag.evaluate(() => {
     const s = window.__dl.scene.getScene('Stanze');
@@ -1331,7 +1338,7 @@ for (const [nome, disp] of [
     nota += `, percorso ${giro.join(' › ')}`;
   }
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${notaMappe}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

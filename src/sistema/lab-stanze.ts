@@ -8,7 +8,8 @@
  * Danno a intervallo (14/11): far salire di livello la Lanterna e gli Echi. Bot (14/11): farlo giocare al posto tuo.
  * La cripta (16/11): tornare al disegno del codice per confrontare, rifare le lastre. Rompibili (16/11): metterli accanto,
  * romperli, ridisporli, far uscire un frammento, accendere il Bagliore. Il Campanaro (17/11): andare all'arena, farlo
- * comparire, portarlo alla fase 2 o quasi a terra, scegliere il suo prossimo attacco.
+ * comparire, portarlo alla fase 2 o quasi a terra, scegliere il suo prossimo attacco. La mappa del Mondo (17/11, passo 1):
+ * guardarla, generarne un'altra, controllare le regole su mille semi.
  */
 import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
@@ -22,6 +23,8 @@ import { BotStanze } from './bot-stanze';
 import type { Stanze } from '../scene/Stanze';
 import { PERCORSO } from '../data/stanze';
 import { MOSSA_CAPO } from './campanaro';
+import { controllaMappa, generaMappa, type Mappa } from './mappa';
+import { MAPPA } from '../data/mappa';
 
 export type AttaccoCapo = 'rintocco' | 'carica' | 'chiamata';
 
@@ -75,6 +78,36 @@ export class LabStanze {
 
   gradoForzato(): IdGrado | null {
     return this.s.percorso.forzaGrado;
+  }
+
+  /** La mappa del Mondo di questa Veglia (per il disegno nel LAB). */
+  mappa(): Mappa {
+    return this.s.mappa;
+  }
+
+  /** Un'altra mappa, con il seme dopo (solo la mappa: la stanza in corso non cambia). */
+  mappaNuova(): void {
+    this.s.mappa = generaMappa(this.s.mappa.seme + 1);
+  }
+
+  /**
+   * Genera le mappe dei semi da 1 a n e controlla le regole (npm run prova): quante ne sbagliano, il primo errore,
+   * quante stanze al minimo e al massimo e quanto è lontano il Boss.
+   */
+  provaMappe(n: number): { sbagliate: number; primo: string; stanze: [number, number]; boss: [number, number]; ms: number } {
+    const t = performance.now();
+    let sbagliate = 0, primo = '', s0 = 99, s1 = 0, b0 = 99, b1 = 0;
+    for (let seme = 1; seme <= n; seme++) {
+      const m = generaMappa(seme), e = controllaMappa(m), k = m.stanze.length, d = m.stanze[m.boss].distanza;
+      if (e.length && !sbagliate++) primo = `seme ${seme}: ${e.join(', ')}`;
+      s0 = Math.min(s0, k); s1 = Math.max(s1, k); b0 = Math.min(b0, d); b1 = Math.max(b1, d);
+    }
+    return { sbagliate, primo, stanze: [s0, s1], boss: [b0, b1], ms: Math.round(performance.now() - t) };
+  }
+
+  /** La griglia della mappa (MAPPA.griglia), per il disegno nel LAB. */
+  grigliaMappa(): { larghezza: number; altezza: number } {
+    return MAPPA.griglia;
   }
 
   /** Salta all'arena del Campanaro (la quarta stanza), con la build di adesso. */

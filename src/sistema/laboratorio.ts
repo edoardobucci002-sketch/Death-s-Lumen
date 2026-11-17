@@ -33,6 +33,8 @@ import { INTERRUTTORI } from './interruttori';
 import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
 import * as armiStanze from '../data/armi-stanze';
+import * as mappa from '../data/mappa';
+import type { Mappa } from './mappa';
 import * as campanaro from '../data/campanaro';
 import { ECHI_STANZE } from '../data/armi-stanze';
 import * as doni from '../data/doni';
@@ -53,7 +55,7 @@ import * as stanze from '../data/stanze';
 import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, meta, mondo, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, mappa, meta, mondo, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -111,6 +113,50 @@ function applicaSalvati(): void {
 }
 
 // ——— Piccoli strumenti per costruire il pannello ———
+/**
+ * La mappa del Mondo disegnata nel LAB (passo 1 del 17/11): una casella per stanza con la sua lettera, e un trattino dove
+ * due stanze hanno una porta in comune. Solo per guardarla: non è la minimappa del gioco.
+ */
+function disegnoMappa(m: Mappa, g: { larghezza: number; altezza: number }): HTMLElement {
+  const lato = 22, passo = 6;
+  const tela = el('div');
+  tela.style.cssText = `display:grid;grid-template-columns:repeat(${g.larghezza * 2 - 1},auto);gap:0;justify-content:start;margin:6px 0;font:12px monospace;line-height:${lato}px;text-align:center`;
+  const dove = new Map<number, number>();
+  m.stanze.forEach((s, i) => dove.set(s.y * 100 + s.x, i));
+  const lettera: Record<string, string> = { luce: 'L', sacro: 'S', ombra: 'O', terra: 'T', dono: 'D', echi: 'E' };
+  for (let y = 0; y < g.altezza * 2 - 1; y++) {
+    for (let x = 0; x < g.larghezza * 2 - 1; x++) {
+      const c = el('div');
+      const w = x % 2 ? passo : lato, h = y % 2 ? passo : lato;
+      c.style.cssText = `width:${w}px;height:${h}px`;
+      if (x % 2 === 0 && y % 2 === 0) {
+        const i = dove.get((y / 2) * 100 + x / 2);
+        if (i !== undefined) {
+          const s = m.stanze[i];
+          const [fondo, testo, segno] = s.tipo === 'ingresso' ? ['#e8dcc0', '#120c08', 'I'] : s.tipo === 'boss' ? ['#a3262a', '#fff', 'B']
+            : s.tipo === 'campanaro' ? ['#e3913a', '#120c08', 'C'] : ['#3a2f26', '#e8dcc0', lettera[s.ricompensa ?? ''] ?? '?'];
+          c.style.background = fondo;
+          c.style.color = testo;
+          c.textContent = segno;
+          c.title = `stanza ${i}, a ${s.distanza} porte dall'ingresso`;
+        }
+      } else if (x % 2 !== y % 2) {
+        // un passaggio: tra la casella a sinistra e quella a destra, o tra quella sopra e quella sotto
+        const ax = x % 2 ? (x - 1) / 2 : x / 2, ay = y % 2 ? (y - 1) / 2 : y / 2;
+        const a = dove.get(ay * 100 + ax), lat = x % 2 ? 1 : 2;
+        if (a !== undefined && m.stanze[a].vicine[lat] >= 0) {
+          c.style.background = '#8a7a66';
+          c.style.margin = x % 2 ? `${(lato - 4) / 2}px 0` : `0 ${(lato - 4) / 2}px`;
+          c.style.height = x % 2 ? '4px' : `${passo}px`;
+          c.style.width = x % 2 ? `${passo}px` : '4px';
+        }
+      }
+      tela.append(c);
+    }
+  }
+  return tela;
+}
+
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, classe = '', testo = '', figli: (Node | string)[] = []): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
   if (classe) e.className = classe;
@@ -265,6 +311,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
   }
 
   // ——— Stanze (gioco a stanze, pivot del 12/11) ———
+  let esitoMappe = ''; // il risultato di «Controlla mille mappe»
   function schedaStanze(): HTMLElement[] {
     const entra = (): void => { for (const k of ['Gioco', 'Menu']) if (gioco.scene.isActive(k)) gioco.scene.stop(k); gioco.scene.start('Stanze'); setTimeout(ridisegna, 600); };
     const st = stanza();
@@ -289,6 +336,15 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         ...[0, 1, 2].map((k) => tasto(`Attraversa la porta ${k + 1}`, () => { st.lab.attraversa(k); mostra(false); })),
       ),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto(`Eco di ${a}`, f(() => st.lab.eco(a))))),
+      titolo('Mappa del Mondo (passo 1: si genera, il gioco la userà dal passo 2)'),
+      (() => { const m = st.lab.mappa(); return riga(el('span', 'lab-stato', `Seme ${m.seme} · ${m.stanze.length} stanze · Boss a ${m.stanze[m.boss].distanza} porte dall'ingresso · Campanaro a ${m.stanze[m.campanaro]?.distanza ?? '?'}`)); })(),
+      disegnoMappa(st.lab.mappa(), st.lab.grigliaMappa()),
+      riga(
+        tasto('Mappa nuova', f(() => st.lab.mappaNuova())),
+        tasto('Controlla mille mappe', f(() => { const r = st.lab.provaMappe(1000); esitoMappe = r.sbagliate ? `${r.sbagliate} mappe sbagliate su 1000. Prima: ${r.primo}` : `Mille mappe giuste in ${r.ms} ms: da ${r.stanze[0]} a ${r.stanze[1]} stanze, Boss tra ${r.boss[0]} e ${r.boss[1]} porte dall'ingresso.`; })),
+      ),
+      ...(esitoMappe ? [riga(el('span', 'lab-stato', esitoMappe))] : []),
+      el('p', 'lab-nota', 'I = ingresso (vuoto, porte aperte) · E = Echi d\'inizio (le stanze attaccate all\'ingresso) · L, S, O, T = Luce, Sacro, Ombra, Terra · D = dono · C = Campanaro (a metà strada) · B = Boss (la stanza più lontana, in un vicolo cieco). Le stanze sono da 12 a 15, ingresso e capi compresi; il gioco la genera con il seme della Veglia (?seme=N nell\'indirizzo). Numeri in Numeri → mappa → MAPPA.'),
       titolo('Rarità delle carte'),
       riga(
         ...([null, 'fioca', 'chiara', 'ardente'] as const).map((g) => tasto(g ? `Carte ${GRADI[g].nome}` : 'Carte a caso', f(() => st.lab.forzaGrado(g)), st.lab.gradoForzato() === g ? 'acceso' : '')),

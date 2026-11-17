@@ -60,6 +60,7 @@ import { RompibiliStanza } from '../sistema/rompibili-stanza';
 import { BAGLIORE } from '../data/sopravvivenza';
 import { BarraCapo } from '../sistema/barra-capo';
 import { CAMPANARO } from '../data/campanaro';
+import { generaMappa, type Mappa } from '../sistema/mappa';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
@@ -143,6 +144,8 @@ export class Stanze extends Phaser.Scene {
   rompibili!: RompibiliStanza; // urne, giare e lanterne (dal 16/11), con Cera, mosaico, olio e luce
   percorso!: Percorso;
   porte!: Porte;
+  // la mappa del Mondo (17/11, src/sistema/mappa.ts): oggi si genera e si guarda nel LAB; il gioco la userà dal passo 2
+  mappa!: Mappa;
   doni!: Doni;
   private comparsa!: ComparsaCarte;
   private readonly bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
@@ -165,6 +168,7 @@ export class Stanze extends Phaser.Scene {
     // ?esplora=1: il bot sceglie carte e porte a caso. Dal LAB il bot gioca invece alla velocità normale
     const parametri = new URLSearchParams(location.search);
     this.seme = Number(parametri.get('seme')) || ONDATA.seme;
+    this.mappa = generaMappa(this.seme);
     this.botVeloce = parametri.has('bot');
     this.bot = this.botVeloce ? new BotStanze() : null;
     if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(this.seme);
