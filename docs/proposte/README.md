@@ -20,4 +20,6 @@ Copie in testo delle proposte approvate da Edoardo, nate come documenti su claud
 
 - **La mappa del Mondo** (`8SMnkr6GwPgctL1a4had93`, 17/11, eliminato il 17/11): prima «Fila o mappa?» (fila alla Hades contro mappa alla Isaac), poi, scelta la mappa, 10 domande su ricompense, stanze, Campanaro e Boss, ritorno, minimappa, stanze speciali, porte, piante e Boss del Mondo 1. Risposte applicate: vedi [decisioni.md](../decisioni.md) del 17/11.
 
+- **Porte chiuse** (`6X7gTJS1txkrSqoA7aVxzP`, 17/11, eliminato il 17/11): questionario di 8 domande su chiavi (dove, cosa c'è dietro, quante) e altri modi di chiudere una porta (candele, muri crepati, prezzo, prova, affinità). Risposte applicate: vedi [decisioni.md](../decisioni.md) del 17/11.
+
 Altri riferimenti esterni (v0 giocabile e suo compendio) sono in fondo a [decisioni.md](../decisioni.md).
