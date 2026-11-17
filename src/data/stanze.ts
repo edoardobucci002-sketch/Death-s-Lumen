@@ -263,16 +263,17 @@ export const TIPI_ORDA_STANZE = [
 ] as const;
 
 /**
- * Passo 6 della fetta: tre stanze collegate da porte (decisioni di Edoardo del 13/11). Nella prima stanza le 3 carte sono
- * 3 Echi di affinità diverse; poi la porta scelta decide da dove pescano: una porta d'affinità dà Echi nuovi e livelli degli
- * Echi di quell'affinità (dalla Luce anche livelli della Lanterna), la porta del dono dà doni. Le porte (2 o 3) stanno su
- * muri diversi (in alto, a sinistra, a destra); si entra sempre dalla porta in basso. Finita la terza stanza: «Fetta
- * completata». Numeri di Claude, da rivedere.
+ * Le stanze della mappa del Mondo (dal 17/11, passo 2; prima la fila di tre stanze della fetta, decisioni del 13/11).
+ * Ogni stanza ha la sua ricompensa, scritta sul medaglione della porta che ci porta: una stanza d'affinità dà Echi nuovi e
+ * livelli degli Echi di quell'affinità (dalla Luce anche livelli della Lanterna), una stanza del dono dà doni, le stanze
+ * attaccate all'ingresso danno gli Echi d'inizio. Numeri di Claude, da rivedere.
  */
 export const PERCORSO = {
-  // le ondate di ogni stanza (decisione di Edoardo del 13/11: più ondate; la prima stanza 3+1 e 3+1, le altre di Claude,
-  // da rivedere). L'ondata dopo arriva quando sono passati «intervallo» secondi dalla precedente, anche se ci sono ancora
-  // nemici; se prima restano al massimo «restanti» nemici, arriva subito
+  // le ondate di una stanza secondo quante porte dista dall'ingresso: la prima riga a 1 porta, la seconda a 2, l'ultima da
+  // 3 in su (mappa, 17/11: prima erano le ondate della prima, seconda e terza stanza della fetta. Edoardo, 13/11: più
+  // ondate; la prima riga 3+1 e 3+1, le altre di Claude, da rivedere). L'ondata dopo arriva quando sono passati
+  // «intervallo» secondi dalla precedente, anche se ci sono ancora nemici; se prima restano al massimo «restanti» nemici,
+  // arriva subito
   ondate: [
     [{ ricaduti: 3, cantori: 1 }, { ricaduti: 3, cantori: 1 }],
     [{ ricaduti: 3, cantori: 1 }, { ricaduti: 3, cantori: 2 }, { ricaduti: 4, cantori: 2 }],
@@ -285,20 +286,24 @@ export const PERCORSO = {
   // una dopo l'altra (richiesta di Edoardo del 13/11 sera; tempi di Claude, da rivedere): «pop» secondi a carta, a «scatti»
   // passi; quando ogni carta è grande, sopra di lei scoppia un effetto pixelfx (collect-burst in oro), a «fps» fotogrammi al secondo
   carte: { pop: 0.24, scatti: 6, sfasamento: 0.1, effetto: 'Pixelfx_Comparsa_carta', fps: 12 },
-  porte: { minimo: 2, massimo: 3 },
+  quanteCarte: 2, // carte offerte a stanza ripulita (Edoardo, 17/11: si parte da 2; la terza arriverà con la Fortuna)
   echi: 3, // Echi al massimo nella build (più la Lanterna)
   doni: 6, // doni diversi al massimo
   // i doni che nelle stanze fanno davvero qualcosa (decisione di Edoardo del 13/11): manca la Calamita; il Calice riverso c'è dal 17/11
   doniAttivi: ['cuoreDiCera', 'saleNero', 'clessidra', 'stoppinoLungo', 'aliDiFalena', 'erbeAmare', 'scudoDiFerro', 'specchio', 'ceraVotiva', 'chiodoDiBara', 'campanellaDArgento', 'lacrimaDiLumen'],
   passaggio: 0.25, // secondi del passaggio a retino tra una stanza e l'altra (metà per scurire, metà per schiarire)
+  passaggioRipulita: 0.12, // verso una stanza già ripulita il passaggio è più veloce (Edoardo, 17/11; durata di Claude, da rivedere)
 } as const;
 
 /** Le porte: un'apertura nel muro, chiusa da sbarre finché la stanza non è ripulita e la carta scelta. */
 export const PORTE = {
   larghezza: 64, // in alto: quanto è larga l'apertura; ai lati e in basso: quanto è alta
   simbolo: 2, // ingrandimento del simbolo della ricompensa sopra la porta
-  colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a' },
+  colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a', echi: '#e8dcc0' },
   // il medaglione vuoto (EFFETTI/Porta_Vuota, 31 × 31) con dentro il simbolo dello stato (11 × 11) in questo punto (16/11)
   medaglione: { vuoto: 'Porta_Vuota', simbolo: { x: 10, y: 9 } },
   vicino: 170, // più vicino di così al centro di una porta, il suo arco non si disegna sopra il buio (da rivedere)
+  // entrando in una stanza si compare davanti alla porta da cui si arriva, tanti px verso il centro (mappa, 17/11): così
+  // in una stanza già ripulita, con le porte aperte, non si riesce subito indietro (Claude, da rivedere)
+  entrata: 40,
 } as const;

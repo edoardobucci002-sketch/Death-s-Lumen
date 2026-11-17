@@ -23,12 +23,12 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, PERCORSO, STANZA } from '../data/stanze';
+import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, PERCORSO, PORTE, STANZA } from '../data/stanze';
 import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
 import { Percorso } from '../sistema/percorso';
-import { Porte } from '../sistema/porte';
+import { MURI, Porte, davantiAlMuro, type Muro } from '../sistema/porte';
 import { Doni } from '../sistema/doni';
 import { ComparsaCarte } from '../sistema/comparsa-carte';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
@@ -60,7 +60,7 @@ import { RompibiliStanza } from '../sistema/rompibili-stanza';
 import { BAGLIORE } from '../data/sopravvivenza';
 import { BarraCapo } from '../sistema/barra-capo';
 import { CAMPANARO } from '../data/campanaro';
-import { generaMappa, type Mappa } from '../sistema/mappa';
+import { generaMappa, opposto, type Mappa } from '../sistema/mappa';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
@@ -84,7 +84,7 @@ export class Stanze extends Phaser.Scene {
   private versoSinistra = false;
   private inMoto = false;
   private accumulo = 0;
-  private seme: number = ONDATA.seme;
+  seme: number = ONDATA.seme;
   /** Il bot che gioca al posto del giocatore (null = gioca il giocatore). Con ?bot va veloce e senza disegno. */
   bot: BotStanze | null = null;
   private botVeloce = false;
@@ -144,8 +144,14 @@ export class Stanze extends Phaser.Scene {
   rompibili!: RompibiliStanza; // urne, giare e lanterne (dal 16/11), con Cera, mosaico, olio e luce
   percorso!: Percorso;
   porte!: Porte;
-  // la mappa del Mondo (17/11, src/sistema/mappa.ts): oggi si genera e si guarda nel LAB; il gioco la userà dal passo 2
+  // la mappa del Mondo (17/11, src/sistema/mappa.ts): generata con il seme a ogni Veglia; si gira di porta in porta
   mappa!: Mappa;
+  /** LAB: la prossima Veglia (Ricomincia) usa questo seme, per avere un'altra mappa. */
+  semeDopo: number | null = null;
+  /** LAB e prove: le porte aperte non si attraversano (per provare i muri). */
+  porteBloccate = false;
+  private verso: number[] = []; // dove porta ogni porta della stanza (indice della mappa), nell'ordine di porte.muri
+  private durataPassaggio: number = PERCORSO.passaggio;
   doni!: Doni;
   private comparsa!: ComparsaCarte;
   private readonly bonus: Bonus = { danno: 0, ricarica: 1, area: 0, quantita: 0, durata: 0, critico: 0 };
@@ -167,8 +173,10 @@ export class Stanze extends Phaser.Scene {
     // ?seme=N: un'altra partita (ondate, carte); ?bot: gioca il bot, veloce e senza disegno (npm run sim-stanze);
     // ?esplora=1: il bot sceglie carte e porte a caso. Dal LAB il bot gioca invece alla velocità normale
     const parametri = new URLSearchParams(location.search);
-    this.seme = Number(parametri.get('seme')) || ONDATA.seme;
+    this.seme = this.semeDopo ?? (Number(parametri.get('seme')) || ONDATA.seme);
+    this.semeDopo = null;
     this.mappa = generaMappa(this.seme);
+    this.porteBloccate = false;
     this.botVeloce = parametri.has('bot');
     this.bot = this.botVeloce ? new BotStanze() : null;
     if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(this.seme);
@@ -197,12 +205,12 @@ export class Stanze extends Phaser.Scene {
     this.passaggio = 0;
     this.portaScelta = -1;
     this.finita = false;
-    // si entra dalla porta in basso
+    // si comincia al centro dell'ingresso della mappa: vuoto, sicuro, con le porte già aperte (Edoardo, 17/11)
     this.x = Math.round(STANZA.larghezza / 2);
-    this.y = Math.round(areaCamminabile().y1);
+    this.y = Math.round(STANZA.altezza / 2);
     this.cameras.main.setBackgroundColor(STANZA.colori.fondo);
 
-    creaStanza(this, this.semeStanza(1));
+    creaStanza(this, this.semeStanza(this.mappa.ingresso + 1));
     this.giocatore = this.add.sprite(0, 0, this.chiaveSprite).setDepth(PROFONDITA.personaggio);
     if (voce(this, this.chiaveSprite)?.versioneFile === 0) {
       this.giocatore.setOrigin(PIEDI_SEGNAPOSTO.x / this.giocatore.frame.realWidth, PIEDI_SEGNAPOSTO.y / this.giocatore.frame.realHeight);
@@ -227,8 +235,8 @@ export class Stanze extends Phaser.Scene {
     this.nemici.muri = this.arsenale.muri;
     this.nemici.statoArma = (j) => this.arsenale.statoDaFuori(j, CODICE_AFFINITA.luce, F.abilita);
     this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce, fonte === FONTE.lanterna ? F.lanterna : F.abilita);
-    this.percorso = new Percorso(this.arsenale, this.seme);
-    this.percorso.entra(1, 'echi');
+    this.percorso = new Percorso(this.arsenale, this.mappa, this.seme);
+    this.percorso.entra(this.mappa.ingresso);
     // ?potenziale=candela (per le simulazioni): la partita parte con quell'Eco già al livello 5
     const eco = ECHI_STANZE.find((a) => a.id === parametri.get('potenziale'));
     if (eco) {
@@ -236,7 +244,7 @@ export class Stanze extends Phaser.Scene {
       while (this.arsenale.livello(eco) < eco.livelli.length) this.arsenale.potenzia(eco);
     }
     this.porte = new Porte(this);
-    this.porte.chiudi(this.percorso.uscite.muri); // chiuse durante il combattimento, senza medaglione
+    this.mostraPorte();
     this.barra = new BarraSalute(this, this.salute);
     const scritta = 'stanze-scritta-grazia';
     if (!this.textures.exists(scritta)) this.textures.addCanvas(scritta, tela('Grazia', '#86c5e8', '#000000'));
@@ -252,7 +260,7 @@ export class Stanze extends Phaser.Scene {
     });
     this.creaInterfaccia(interfaccia);
     this.rompibili = new RompibiliStanza(this, this.nemici.orda, this.arsenale, interfaccia, this.seme, this.effetti, () => this.cambiaLuce());
-    this.rompibili.nuovaStanza(this.semeStanza(1));
+    this.rompibili.nuovaStanza(this.semeStanza(this.mappa.ingresso + 1), 0, true); // l'ingresso è vuoto
     this.nemici.ostacoli = this.rompibili;
     this.attacco = new AttaccoATasto(this, this.radice, this.effetti, () => this.fermo(), (cx, cy) => {
       const px = misureHud().px, cam = this.cameras.main;
@@ -555,9 +563,9 @@ export class Stanze extends Phaser.Scene {
     if (this.morto) return;
     // il percorso: ondate della stanza, carte a stanza ripulita (con «ondate automatiche» spente nel LAB resta fermo)
     if (this.ondateAutomatiche && this.percorso.aggiorna(dt, this.nemici, this.x, this.y)) this.apriCarte();
-    // le porte aperte: camminandoci contro si passa alla stanza dopo
-    if (this.percorso.fase === 'porte') {
-      const k = this.bot ? this.bot.scegliPorta(this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma)) : this.porte.attraversata(this.x, this.y);
+    // le porte aperte: camminandoci contro si passa alla stanza accanto
+    if (this.percorso.fase === 'porte' && !this.porteBloccate) {
+      const k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma)) : this.porte.attraversata(this.x, this.y);
       if (k >= 0 && this.botVeloce) {
         // simulazione: niente passaggio a retino, si cambia stanza subito
         this.portaScelta = k;
@@ -572,7 +580,7 @@ export class Stanze extends Phaser.Scene {
     this.ondate++;
   }
 
-  /** Stanza ripulita: le 3 carte. Scelta la carta, si aprono le porte (o la fetta è finita). */
+  /** Stanza ripulita: le carte. Scelta la carta, si aprono le porte. */
   apriCarte(): void {
     this.percorso.fase = 'carte';
     this.radice.classList.add('con-carte');
@@ -606,35 +614,46 @@ export class Stanze extends Phaser.Scene {
     this.comparsa.ferma();
     this.radice.classList.remove('con-carte');
     if (d) this.percorso.scegli(d);
-    else this.percorso.fase = this.percorso.ultima ? 'fine' : 'porte';
+    else this.percorso.ripulita();
     this.ricalcola();
     this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza); // la carta può aver cambiato la Lanterna
-    if (this.percorso.fase === 'fine') {
-      this.mostraFineFetta();
-      return;
-    }
-    const p = this.percorso.porte();
-    this.porte.imposta(p.muri, p.ricompense);
-    this.porte.apri();
+    this.mostraPorte();
     suona('campana');
   }
 
-  /** Il seme del disegno della stanza n (lastre, muri e rompibili): separato dal caso della logica. */
+  /**
+   * Le porte della stanza in cui si è: a stanza da ripulire chiuse e senza medaglione; a stanza vuota (ingresso, ripulita)
+   * aperte, con il medaglione della ricompensa della stanza dopo.
+   */
+  private mostraPorte(): void {
+    const p = this.percorso.porte();
+    this.verso = p.verso;
+    if (this.percorso.fase !== 'porte') {
+      this.porte.chiudi(p.muri);
+      return;
+    }
+    this.porte.imposta(p.muri, p.ricompense);
+    this.porte.apri();
+  }
+
+  /** Il seme del disegno della stanza n (lastre, muri e rompibili; n = indice della mappa + 1): separato dal caso della logica. */
   semeStanza(n: number): number {
     return (this.seme ^ Math.imul(n, 0x9e3779b1)) >>> 0;
   }
 
   /** Il Lampionaio entra nella porta k: passaggio a retino, a metà si cambia stanza. */
   attraversa(k: number): void {
-    if (this.passaggio > 0 || this.percorso.fase !== 'porte') return;
+    if (this.passaggio > 0 || this.percorso.fase !== 'porte' || k < 0 || k >= this.verso.length) return;
     this.portaScelta = k;
-    this.passaggio = PERCORSO.passaggio;
+    // verso una stanza già ripulita il passaggio è più veloce (Edoardo, 17/11)
+    this.durataPassaggio = this.mappa.stanze[this.verso[k]].ripulita ? PERCORSO.passaggioRipulita : PERCORSO.passaggio;
+    this.passaggio = this.durataPassaggio;
     this.comandi.lascia();
     this.attacco.lascia();
   }
 
   private avanzaPassaggio(dt: number): void {
-    const prima = this.passaggio, meta = PERCORSO.passaggio / 2;
+    const prima = this.passaggio, meta = this.durataPassaggio / 2;
     this.passaggio = Math.max(0, this.passaggio - dt);
     if (prima > meta && this.passaggio <= meta) this.nuovaStanza();
     // il retino si infittisce fino al nero, poi si dirada (16 = tutto nero)
@@ -647,19 +666,33 @@ export class Stanze extends Phaser.Scene {
     }
   }
 
-  /** La stanza dopo: vuota, con le carte che pescano dalla porta scelta; il Lampionaio entra dal basso. */
+  /** Si passa dalla porta scelta: si entra nella stanza accanto dalla porta sul muro opposto (chi esce a destra entra da sinistra). */
   nuovaStanza(): void {
-    const ricompensa = this.porte.ricompense[this.portaScelta] ?? 'dono';
+    const k = this.portaScelta, muro = this.porte.muri[k];
+    if (!muro) return;
+    this.entraInStanza(this.verso[k], MURI[opposto(MURI.indexOf(muro))]);
+  }
+
+  /**
+   * Entra nella stanza i della mappa, davanti alla porta sul muro «da» (null: al centro, per il LAB). Lastre e rompibili
+   * sono sempre gli stessi per quella stanza (i rompibili già rotti restano rotti); una stanza già ripulita è vuota e aperta.
+   */
+  entraInStanza(i: number, da: Muro | null): void {
+    this.percorso.qui.rotti = this.rompibili.rotti(); // la stanza che si lascia ricorda cosa è rotto
     this.nemici.svuota();
-    this.percorso.entra(this.percorso.stanza + 1, ricompensa);
-    creaStanza(this, this.semeStanza(this.percorso.stanza)); // lastre e muri nuovi a ogni stanza
-    this.rompibili.nuovaStanza(this.semeStanza(this.percorso.stanza));
-    this.sim.entra(this.percorso.stanza, ricompensa, this.salute);
-    this.porte.chiudi(this.percorso.uscite.muri);
-    this.x = Math.round(STANZA.larghezza / 2);
-    this.y = Math.round(areaCamminabile().y1);
-    this.guardaX = 0;
-    this.guardaY = -1;
+    this.percorso.entra(i);
+    const s = this.percorso.qui;
+    creaStanza(this, this.semeStanza(i + 1));
+    this.rompibili.nuovaStanza(this.semeStanza(i + 1), s.rotti, s.tipo === 'ingresso');
+    if (this.percorso.fase === 'lotta') this.sim.entra(this.percorso.stanza, this.percorso.ricompensa, this.salute, s.distanza, s.tipo);
+    this.mostraPorte();
+    const p = da ? davantiAlMuro(da, PORTE.entrata) : { x: STANZA.larghezza / 2, y: STANZA.altezza / 2 };
+    this.x = Math.round(p.x);
+    this.y = Math.round(p.y);
+    // guarda verso il centro della stanza
+    this.guardaX = da === 'sinistra' ? 1 : da === 'destra' ? -1 : 0;
+    this.guardaY = da === 'alto' ? 1 : da === 'basso' || !da ? -1 : 0;
+    if (this.percorso.fase === 'fine') this.mostraFineFetta(); // il Boss: oggi la fine provvisoria (passo 3: porta chiusa e Seth)
   }
 
   /** Fine della partita: il resoconto per le simulazioni (window.__sim), solo quando gioca il bot. */

@@ -916,15 +916,18 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   for (const [nome, modello, ...attesi] of RIGHE_ABILITA) conRiga(tb, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 
   const tp = tabella('| Valore del percorso | Numero |');
-  const PE = SZ.PERCORSO, O = PE.ondate;
+  const PE = SZ.PERCORSO, O = PE.ondate, MA = D('mappa').MAPPA;
   const RIGHE_PERCORSO = [
-    ['Stanze', '{}', O.length],
-    ['Ondate', 'stanza 1: {} Ricaduti e {} Cantore, poi {} e {}; stanza 2: {} e {}, poi {} e {}, poi {} e {}; stanza 3: {} e {}, poi {} e {}, poi {} e {}',
+    ['Stanze', 'da {} a {} per Mondo, ingresso e capi compresi; griglia {} × {}; crescita {}', MA.stanze.minimo, MA.stanze.massimo, MA.griglia.larghezza, MA.griglia.altezza, MA.crescita],
+    ['Ingresso', 'almeno {} porte', MA.porteIngresso],
+    ['Campanaro', 'a {} della distanza del Boss', MA.campanaro],
+    ['Ricompense', 'Luce {}, Sacro {}, Ombra {}, Terra {}, dono {}', MA.ricompense.luce, MA.ricompense.sacro, MA.ricompense.ombra, MA.ricompense.terra, MA.ricompense.dono],
+    ['Ondate', 'a 1 porta dall\'ingresso: {} Ricaduti e {} Cantore, poi {} e {}; a 2 porte: {} e {}, poi {} e {}, poi {} e {}; da 3 porte in su: {} e {}, poi {} e {}, poi {} e {}',
       ...O.flat().flatMap((o) => [o.ricaduti, o.cantori])],
-    ['Carte', '3, dopo {} s; verticali {} × {}; pop in {} s a {} scatti, {} s l\'una dall\'altra', PE.attesaCarte, H.CARTA_STANZA.l, H.CARTA_STANZA.a, PE.carte.pop, PE.carte.scatti, PE.carte.sfasamento],
+    ['Carte', '{}, dopo {} s; verticali {} × {}; pop in {} s a {} scatti, {} s l\'una dall\'altra', PE.quanteCarte, PE.attesaCarte, H.CARTA_STANZA.l, H.CARTA_STANZA.a, PE.carte.pop, PE.carte.scatti, PE.carte.sfasamento],
     ['Build', 'al massimo {} Echi e {} doni', PE.echi, PE.doni],
-    ['Porte', 'da {} a {}, larghe {} px', PE.porte.minimo, PE.porte.massimo, SZ.PORTE.larghezza],
-    ['Passaggio', '{} s', PE.passaggio],
+    ['Porte', 'larghe {} px; entrando si compare {} px dentro la stanza', SZ.PORTE.larghezza, SZ.PORTE.entrata],
+    ['Passaggio', '{} s; {} s verso una stanza già ripulita', PE.passaggio, PE.passaggioRipulita],
   ];
   stessiNomi('Percorso', tp, RIGHE_PERCORSO.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_PERCORSO) conRiga(tp, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));

@@ -3,13 +3,17 @@
  * durata, quanto danno ha preso il Lampionaio e con quanta salute ne è uscito; alla fine la build, le carte scelte e il
  * danno fatto da ogni arma (per vedere quali Echi e quali intervalli pesano di più). Scrive window.__sim alla fine.
  * Si aggiorna a ogni passo senza creare niente; gli oggetti si creano solo alla fine.
+ * Mappa del Mondo (17/11): le stanze sono quelle nuove con dei nemici, nell'ordine in cui il bot le combatte (l'ingresso e
+ * le stanze già ripulite non contano), con quante porte distano dall'ingresso e se è l'arena del Campanaro.
  */
 import { FONTI, type Arsenale } from './armi';
 import { gradoCarta, type Dono } from './doni';
 import type { IdGrado } from '../data/rarita';
 
 export interface StanzaSim {
-  stanza: number;
+  stanza: number; // la n-esima stanza combattuta
+  distanza: number; // quante porte dall'ingresso
+  tipo: string; // «combattimento» o «campanaro»
   porta: string; // da dove pescavano le carte (la porta scelta per entrare)
   secondi: number; // dall'ingresso alla stanza ripulita (o alla morte)
   dannoSubito: number;
@@ -20,7 +24,7 @@ export interface StanzaSim {
 export interface RisultatoStanze {
   seme: number;
   completata: boolean;
-  stanza: number; // l'ultima stanza raggiunta
+  stanza: number; // quante stanze ha combattuto (l'ultima raggiunta)
   secondi: number;
   salute: number;
   saluteMinima: number;
@@ -39,7 +43,7 @@ export interface RisultatoStanze {
 export class SimStanze {
   private secondi = 0;
   private saluteMinima = Infinity;
-  private readonly stanze: StanzaSim[] = [{ stanza: 1, porta: 'echi', secondi: 0, dannoSubito: 0, saluteEntrata: 0, saluteUscita: null }];
+  private readonly stanze: StanzaSim[] = [];
   private readonly carte: string[] = [];
   private readonly gradi = { offerte: { fioca: 0, chiara: 0, ardente: 0 }, scelte: { fioca: 0, chiara: 0, ardente: 0 } };
   private inizio = 0; // secondi all'ingresso nella stanza in corso
@@ -47,26 +51,27 @@ export class SimStanze {
 
   /** Un passo di logica. */
   passo(dt: number, salute: number): void {
-    if (this.secondi === 0) this.stanze[0].saluteEntrata = salute;
     this.secondi += dt;
     if (salute < this.saluteMinima) this.saluteMinima = salute;
   }
 
   ferita(danno: number): void {
-    this.stanze[this.stanze.length - 1].dannoSubito += danno;
+    const s = this.stanze[this.stanze.length - 1];
+    if (s) s.dannoSubito += danno;
   }
 
   stanzaRipulita(_stanza: number, salute: number): void {
     const s = this.stanze[this.stanze.length - 1];
+    if (!s) return;
     s.secondi = this.secondi - this.inizio;
     s.saluteUscita = salute;
     this.ripulita = true;
   }
 
-  entra(stanza: number, porta: string, salute: number): void {
+  entra(stanza: number, porta: string, salute: number, distanza: number, tipo: string): void {
     this.inizio = this.secondi;
     this.ripulita = false;
-    this.stanze.push({ stanza, porta, secondi: 0, dannoSubito: 0, saluteEntrata: salute, saluteUscita: null });
+    this.stanze.push({ stanza, distanza, tipo, porta, secondi: 0, dannoSubito: 0, saluteEntrata: salute, saluteUscita: null });
   }
 
   /** Le carte offerte in una stanza: per contare i gradi. */
@@ -84,7 +89,7 @@ export class SimStanze {
     schivate: number; colpiLanterna: number; usiAbilita: number; livelloLanterna: number; arsenale: Arsenale; doni: string[];
   }): RisultatoStanze {
     const ultima = this.stanze[this.stanze.length - 1];
-    if (!this.ripulita) ultima.secondi = this.secondi - this.inizio;
+    if (ultima && !this.ripulita) ultima.secondi = this.secondi - this.inizio;
     const danno: Record<string, number> = {};
     FONTI.forEach((f, i) => {
       if (r.arsenale.dannoFonti[i] > 0) danno[f] = Math.round(r.arsenale.dannoFonti[i]);

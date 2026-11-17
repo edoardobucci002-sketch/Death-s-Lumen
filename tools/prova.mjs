@@ -982,7 +982,8 @@ for (const [nome, disp] of [
   await pag.goto(`${url}?stanze`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
   // muri, pausa e attacco si provano nella stanza vuota; i nemici hanno la loro prova in fondo
-  await pag.evaluate(() => { const l = window.__dl.scene.getScene('Stanze').lab; l.ondateAutomatiche(false); l.svuota(); });
+  // nell'ingresso della mappa le porte sono aperte: per provare i muri camminandoci contro si bloccano
+  await pag.evaluate(() => { const l = window.__dl.scene.getScene('Stanze').lab; l.ondateAutomatiche(false); l.svuota(); l.bloccaPorte(true); });
   // la mappa del Mondo (17/11, passo 1): mille semi, ognuno deve rispettare le regole (src/sistema/mappa.ts → controllaMappa)
   let notaMappe = '';
   if (nome === 'stanze-desktop') {
@@ -1254,6 +1255,9 @@ for (const [nome, disp] of [
     }
     // rompibili (16/11): da 2 a 4 per stanza, ostacoli che non si rompono al tocco; rotti, la giara lascia Cera da raccogliere
     if (nome === 'stanze-desktop') {
+      const vuoto = (await L('rompibili')).interi;
+      if (vuoto) errori.push(`nell'ingresso ci sono ${vuoto} rompibili (deve essere vuoto)`);
+      await L('nuoviRompibili');
       const r0 = await L('rompibili');
       if (r0.interi < 1 || r0.interi > 2) errori.push(`rompibili nella stanza: ${r0.interi} (attesi da 1 a 2)`);
       await L('vai', 'centro');
@@ -1273,39 +1277,46 @@ for (const [nome, disp] of [
     }
     await L('livelliAUno');
     await L('immortale', true);
+    // la mappa del Mondo (17/11, passo 2): si comincia nell'ingresso, vuoto e con le porte aperte (almeno 2, verso gli Echi)
     const giro = [];
-    for (let n = 1; n <= 4; n++) {
-      if (n === 4) {
-        // l'arena: il Campanaro compare da solo, con la sua barra in cima; poi si ripulisce come le altre
-        if (!(await quando('l.campanaro() && l.campanaro().massima > 0', '', 4000))) { errori.push('nella quarta stanza il Campanaro non compare'); break; }
-        if (await pag.evaluate(() => document.querySelector('.stanze-capo').hidden)) errori.push('la barra del Campanaro non si vede');
-        await L('attaccoCampanaro', 'carica');
-        await pag.waitForTimeout(500);
-        if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-campanaro.png` });
-        giro.push('Campanaro');
-      }
-      if (n === 1) await L('forzaGrado', 'ardente'); // rarità (17/11): nella prima stanza la Lapide (Ardente) esce di sicuro
+    const muro = (p) => p.split(':')[0];
+    const opposto = { alto: 'basso', basso: 'alto', destra: 'sinistra', sinistra: 'destra' };
+    // dopo il passaggio a retino si è davanti alla porta sul muro opposto, verso il centro
+    const davanti = (s, m) => (m === 'alto' ? s.y < 120 : m === 'basso' ? s.y > s.altezza - 120 : m === 'sinistra' ? s.x < 120 : s.x > s.larghezza - 120);
+    let m0 = await st();
+    if (m0.tipo !== 'ingresso' || m0.fase !== 'porte' || m0.nemici) errori.push(`all'inizio non si è nell'ingresso vuoto e aperto (${m0.tipo}, ${m0.fase}, ${m0.nemici} nemici)`);
+    if (m0.porte.length < 2 || m0.porte.some((p) => !p.endsWith('echi'))) errori.push(`le porte dell'ingresso non portano agli Echi d'inizio (${m0.porte.join(', ')})`);
+    giro.push(`ingresso (${m0.porte.length} porte)`);
+    const verso = muro(m0.porte[0]);
+    await L('attraversaMuro', verso);
+    if (!(await quando(`l.stato().tipo !== 'ingresso' && l.stato().fase === 'lotta'`, '', 2000))) errori.push('dalla porta dell\'ingresso non si entra in una stanza da combattere');
+    else {
+      const s1 = await st();
+      if (!davanti(s1, opposto[verso])) errori.push(`uscito ${verso}, non si entra dalla porta ${opposto[verso]} (${s1.x}, ${s1.y})`);
+      if (s1.porte.some((p) => !p.endsWith('–'))) errori.push('durante il combattimento le porte hanno il medaglione');
+      // le carte: 2, Echi d'inizio di affinità diverse
+      await L('forzaGrado', 'ardente'); // rarità (17/11): la Lapide (Ardente) esce di sicuro, se tocca alla Terra
       await L('ripulisci');
-      if (!(await quando('l.stato().carteAperte', '', 3000))) { errori.push(`stanza ${n}: le carte non arrivano`); break; }
-      if (n === 1) {
+      if (!(await quando('l.stato().carteAperte', '', 3000))) errori.push('stanza degli Echi: le carte non arrivano');
+      else {
         await L('forzaGrado', null);
         const gradi = await pag.evaluate(() => [...document.querySelectorAll('.doni-carta')].map((c) => ({ g: c.dataset.grado, nome: c.querySelector('.doni-grado')?.textContent ?? '', lampo: !!c.querySelector('.doni-bagliore') })));
+        if (gradi.length !== 2) errori.push(`le carte sono ${gradi.length} (attese 2)`);
         if (gradi.some((c) => !c.g || !c.nome)) errori.push('una carta delle stanze non mostra il suo grado');
-        if (!gradi.some((c) => c.g === 'ardente' && c.lampo)) errori.push('con «Carte Ardente» non esce una carta Ardente con il bagliore');
         if (gradi.some((c) => c.g !== 'ardente' && c.lampo)) errori.push('una carta non Ardente ha il bagliore');
         nota += `, gradi delle carte ${gradi.map((c) => c.nome).join('/')}`;
         await pag.waitForTimeout(520); // le carte salgono, poi sopra ognuna scoppia l'effetto di comparsa
         if (!(await pag.evaluate(() => document.querySelectorAll('.doni-comparsa').length))) errori.push('sopra le carte non compare l\'effetto di comparsa');
         await pag.screenshot({ path: `prove/${nome}-carte.png` });
-      }
-      if (nome === 'stanze-desktop') await pag.keyboard.press('Digit1');
-      else await pag.click('.doni-carta').catch(() => errori.push('la carta non è toccabile'));
-      await pag.waitForTimeout(200);
-      const dopo = await st();
-      if (dopo.carteAperte) { errori.push(`stanza ${n}: la carta scelta non chiude le carte`); break; }
-      if (n === 1 && dopo.echi.length !== 1) errori.push(`nella prima stanza la carta non dà un Eco (${dopo.echi.join(', ')})`);
+        if (nome === 'stanze-desktop') await pag.keyboard.press('Digit1');
+        else await pag.click('.doni-carta').catch(() => errori.push('la carta non è toccabile'));
+        await pag.waitForTimeout(200);
+        const dopo = await st();
+        if (dopo.carteAperte) errori.push('la carta scelta non chiude le carte');
+        if (dopo.echi.length !== 1) errori.push(`nella stanza degli Echi la carta non dà un Eco (${dopo.echi.join(', ')})`);
+        if (dopo.fase !== 'porte' || !dopo.porte.length) errori.push(`scelta la carta le porte non si aprono (${dopo.fase})`);
         // lo Specchio delle stanze (17/11): colpi in più e il loro danno per livello
-      if (n === 1 && nome === 'stanze-desktop') {
+        if (nome === 'stanze-desktop') {
           const sp = [];
           for (const l of [1, 2, 3]) {
             await L('specchio', l);
@@ -1315,25 +1326,63 @@ for (const [nome, disp] of [
           await L('specchio', 0);
           if (sp.join(' ') !== '1@0.5 2@0.5 2@1') errori.push(`Specchio: colpi e danno per livello ${sp.join(' ')} (attesi 1@0.5 2@0.5 2@1)`);
         }
-      giro.push(`${dopo.stanza}: ${dopo.echi.join('+') || '-'}`);
-      if (n === 4) {
-        if (!dopo.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('dopo il Campanaro non compare «Fetta completata»');
+        giro.push(`Echi: ${dopo.echi.join('+')}`);
+        await pag.waitForTimeout(1500); // l'Eco spara da solo
+        await pag.screenshot({ path: `prove/${nome}-porte.png` });
+        // indietro all'ingresso: già ripulito, vuoto e aperto; la porta verso la stanza appena ripulita non ha medaglione
+        await L('attraversaMuro', opposto[verso]);
+        if (!(await quando(`l.stato().tipo === 'ingresso'`, '', 2000))) errori.push('tornando indietro non si arriva all\'ingresso');
+        else {
+          const s2 = await st();
+          if (s2.fase !== 'porte' || s2.nemici) errori.push(`l'ingresso, tornandoci, non è vuoto e aperto (${s2.fase}, ${s2.nemici} nemici)`);
+          if (!davanti(s2, verso)) errori.push(`tornando all'ingresso non si entra dalla porta ${verso}`);
+          const pv = s2.porte.find((p) => muro(p) === verso);
+          if (!pv || !pv.endsWith('–')) errori.push(`la porta verso la stanza ripulita ha ancora il medaglione (${pv})`);
+          // e di nuovo nella stanza ripulita: vuota, porte aperte, niente carte
+          await L('attraversaMuro', verso);
+          if (!(await quando(`l.stato().tipo !== 'ingresso'`, '', 2000))) errori.push('la porta verso la stanza ripulita non si attraversa');
+          else {
+            await pag.waitForTimeout(600);
+            const s3 = await st();
+            if (s3.fase !== 'porte' || s3.nemici || s3.carteAperte) errori.push(`la stanza ripulita torna a combattere (${s3.fase}, ${s3.nemici} nemici)`);
+            giro.push('indietro e avanti');
+          }
+        }
+      }
+    }
+    // l'arena del Campanaro: compare da solo, con la sua barra in cima; poi si ripulisce come le altre
+    await L('vaiAlCampanaro');
+    if (!(await quando('l.campanaro() && l.campanaro().massima > 0', '', 4000))) errori.push('nella stanza del Campanaro lui non compare');
+    else {
+      if (await pag.evaluate(() => document.querySelector('.stanze-capo').hidden)) errori.push('la barra del Campanaro non si vede');
+      await L('attaccoCampanaro', 'carica');
+      await pag.waitForTimeout(500);
+      if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-campanaro.png` });
+      await L('ripulisci');
+      if (!(await quando('l.stato().carteAperte', '', 3000))) errori.push('dopo il Campanaro le carte non arrivano');
+      else {
+        if (nome === 'stanze-desktop') await pag.keyboard.press('Digit1');
+        else await pag.click('.doni-carta').catch(() => errori.push('la carta non è toccabile'));
+        await pag.waitForTimeout(200);
+        const dc = await st();
+        if (dc.fase !== 'porte') errori.push(`dopo il Campanaro le porte non si aprono (${dc.fase})`);
         if (!(await pag.evaluate(() => document.querySelector('.stanze-capo').hidden))) errori.push('la barra del Campanaro resta dopo di lui');
         // il premio (17/11): un sorso nella fiaschetta; a fiaschetta piena si beve subito
-        const f = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { sorsi: s.fiaschetta.sorsi, massimo: s.fiaschetta.massimo, bevuti: s.fiaschetta.bevuti }; });
+        const f = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { sorsi: s.fiaschetta.sorsi, massimo: s.fiaschetta.massimo }; });
         const pf = await pag.evaluate(() => { const fz = window.__dl.scene.getScene('Stanze').fiaschetta; fz.sorsi = fz.massimo; const b = fz.bevuti; fz.premio(1); return fz.sorsi === fz.massimo && fz.bevuti === b + 1; });
         if (!pf) errori.push('a fiaschetta piena il sorso del premio non si beve');
         if (f.sorsi < Math.min(f.massimo, 1)) errori.push(`dopo il Campanaro la fiaschetta ha ${f.sorsi} sorsi`);
-        await pag.screenshot({ path: `prove/${nome}-fetta.png` });
-        break;
+        giro.push('Campanaro');
       }
-      if (dopo.fase !== 'porte' || dopo.porte.length < 2) { errori.push(`stanza ${n}: le porte non si aprono (${dopo.fase}, ${dopo.porte.length})`); break; }
-      if (n === 1) {
-        await pag.waitForTimeout(1500); // l'Eco spara da solo
-        await pag.screenshot({ path: `prove/${nome}-porte.png` });
-      }
-      await L('attraversa', 0);
-      if (!(await quando(`l.stato().stanza === ${n + 1} && l.stato().fase === 'lotta'`, '', 2000))) { errori.push(`la porta non porta alla stanza ${n + 1}`); break; }
+    }
+    // il Boss: oggi la fine provvisoria
+    await L('vaiAlBoss');
+    await pag.waitForTimeout(300);
+    const fb = await st();
+    if (!fb.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('entrando dal Boss la partita non finisce');
+    else {
+      await pag.screenshot({ path: `prove/${nome}-fetta.png` });
+      giro.push('Boss');
     }
     nota += `, percorso ${giro.join(' › ')}`;
   }
@@ -1426,7 +1475,7 @@ for (const [nome, disp] of [
   console.log(`${errori.length ? '✗' : '✓'} salute in più: ${prima?.extra} › ${dopo?.extra}, salute ${prima?.salute} › ${dopo?.salute}; fiaschetta ${primaSorso?.sorsi} › ${dopoSorso?.sorsi} sorsi, salute ${primaSorso?.salute} › ${dopoSorso?.salute}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
-// Bot del gioco a stanze (14/11): gioca la fetta da solo, veloce e senza disegno; a parità di seme gioca la stessa partita
+// Bot del gioco a stanze (14/11): gioca da solo, veloce e senza disegno (dal 17/11 esplora la mappa fino al Boss); a parità di seme gioca la stessa partita
 {
   const errori = [];
   const partita = async (seme, esplora) => {
@@ -1434,7 +1483,7 @@ for (const [nome, disp] of [
     const pag = await ctx.newPage();
     pag.on('pageerror', (e) => errori.push(e.message));
     await pag.goto(`${url}?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}`);
-    const ok = await pag.waitForFunction(() => window.__sim, null, { timeout: 120000, polling: 250 }).then(() => true, () => false);
+    const ok = await pag.waitForFunction(() => window.__sim, null, { timeout: 300000, polling: 250 }).then(() => true, () => false);
     if (!ok) errori.push(`seme ${seme}: la partita del bot non finisce`);
     const r = await pag.evaluate(() => window.__sim ?? null);
     await ctx.close();
@@ -1443,7 +1492,7 @@ for (const [nome, disp] of [
   const a = await partita(7, false), b = await partita(7, false), c = await partita(8, true);
   if (a && b && JSON.stringify(a) !== JSON.stringify(b)) errori.push('con lo stesso seme il bot non gioca la stessa partita');
   for (const r of [a, c]) if (r && (!r.stanze?.length || r.colpiLanterna < 1)) errori.push(`seme ${r.seme}: il bot non gioca (${r.colpiLanterna} colpi)`);
-  const descrivi = (r) => (r ? (r.completata ? `fetta completata con salute ${r.salute}` : `caduto nella stanza ${r.stanza}`) : '?');
+  const descrivi = (r) => (r ? (r.completata ? `arrivato al Boss dopo ${r.stanza} stanze, con salute ${r.salute}` : `caduto nella stanza ${r.stanza} (a ${r.stanze.at(-1)?.distanza ?? '?'} porte dall'ingresso)`) : '?');
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} bot delle stanze: seme 7 ${descrivi(a)} (uguale due volte), seme 8 con carte a caso ${descrivi(c)}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }

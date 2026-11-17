@@ -49,6 +49,7 @@ export class RompibiliStanza {
   private readonly py = new Float32Array(MAX_PER_STANZA);
   private readonly punto = [0];
   private readonly puntoY = [0];
+  private messi = 0; // quanti ne ha messi la stanza in corso (gli indici da 0 a messi - 1)
 
   constructor(scena: Phaser.Scene, private readonly orda: Orda, arsenale: Arsenale, interfaccia: HTMLElement, seme: number,
     private readonly effetti: Effetti, private readonly cambiaBagliore: () => void) {
@@ -63,14 +64,18 @@ export class RompibiliStanza {
     this.mosaiciAperti = carica().vittorie >= ROMPIBILI_STANZE.vittorie;
   }
 
-  /** Stanza nuova: via oggetti, gocce e chiazze, e da 1 a 2 rompibili lungo i muri, lontano dalle porte. */
-  nuovaStanza(seme: number): void {
+  /**
+   * Stanza nuova: via oggetti, gocce e chiazze, e da 1 a 2 rompibili lungo i muri, lontano dalle porte. Con lo stesso seme
+   * escono sempre gli stessi; «rotti» (un bit per ognuno, come lo dà rotti()) toglie quelli già rotti in una visita
+   * precedente. vuota: nessun rompibile (l'ingresso della mappa, vuoto e sicuro).
+   */
+  nuovaStanza(seme: number, rotti = 0, vuota = false): void {
     this.rompibili.svuota();
     this.oggetti.svuota();
     this.chiazze.svuota();
     const R = ROMPIBILI_STANZE, S = STANZA, a = areaCamminabile(), caso = new Caso(seme);
     const porte = [S.larghezza / 2, a.y0, a.x0, S.altezza / 2, a.x1, S.altezza / 2, S.larghezza / 2, a.y1];
-    const quanti = Math.min(MAX_PER_STANZA, caso.intero(R.quanti.min, R.quanti.max));
+    const quanti = vuota ? 0 : Math.min(MAX_PER_STANZA, caso.intero(R.quanti.min, R.quanti.max));
     let messi = 0;
     for (let t = 0; t < R.tentativi && messi < quanti; t++) {
       const muro = caso.intero(0, 3), d = caso.intero(R.dalMuro.min, R.dalMuro.max);
@@ -88,6 +93,16 @@ export class RompibiliStanza {
       messi++;
       this.rompibili.piazza(tipo, x, y);
     }
+    // dopo lo svuota ogni oggetto prende il primo posto libero: il k-esimo messo sta all'indice k
+    this.messi = messi;
+    for (let k = 0; k < messi; k++) if (rotti & (1 << k)) this.rompibili.togli(k);
+  }
+
+  /** Quali rompibili della stanza in corso non sono più interi: un bit per ognuno (da ridare a nuovaStanza tornando qui). */
+  rotti(): number {
+    let r = 0;
+    for (let k = 0; k < this.messi; k++) if (!this.rompibili.intero(k)) r |= 1 << k;
+    return r;
   }
 
   /** Passo di logica, dopo le armi (la griglia dei nemici è aggiornata): olio, raccolta, Bagliore. (x, y): i piedi del personaggio. */

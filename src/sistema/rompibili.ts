@@ -131,6 +131,11 @@ export class Rompibili {
     this.occupa(tipo, x, y, LAB);
   }
 
+  /** Gioco a stanze: toglie l'oggetto i senza romperlo (tornando in una stanza, ciò che era già rotto non c'è più). */
+  togli(i: number): void {
+    if (this.stato[i] !== LIBERO) this.libera(i);
+  }
+
   /** Il bot che cerca le urne: dove sta l'urna intera più vicina a (x, y); -1 se non ce n'è. */
   urnaVicina(x: number, y: number): number {
     let scelta = -1, migliore = Infinity;

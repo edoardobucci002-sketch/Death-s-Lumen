@@ -10,6 +10,13 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 17/11 — La mappa del Mondo: 2 carte e ondate per distanza
+
+- **Carte**: da 3 a **2** per stanza (Edoardo, 17/11: la terza arriverà con la Fortuna).
+- **Ondate**: non più per la prima, seconda e terza stanza della fetta, ma per **quante porte la stanza dista dall'ingresso** (le tre righe di prima valgono a 1 porta, a 2 porte e da 3 porte in su; Claude, *da rivedere*).
+- **Stanze**: da 4 (tre e il Campanaro) a **12–15 per Mondo**, ingresso e capi compresi; il bot le esplora tutte, lascia il Campanaro per ultimo e poi entra dal Boss (fine provvisoria).
+- `npm run sim-stanze -- 48` (metà carte preferite, metà a caso): **arrivati al Boss 12/48** (prima la fetta completata era 6/48: con la mappa il bot arriva al Campanaro dopo 9–12 stanze, con più carte), salute media al Boss 33. Cadute: **29 contro il Campanaro**, 7 nelle stanze normali (3 a 1 porta, 2 a 2 porte, 1 a 4, 1 a 5). Il bot combatte in media 10–11 stanze; esce dalle prime con 88 di salute, poi resta fra 33 e 47 fino in fondo (i sorsi della fiaschetta lo tengono su). Carte viste: Fioca 78%, Chiara 17%, Ardente 5% su 694. Il Campanaro resta il primo vero ostacolo: da decidere con Edoardo quando ci sarà Seth e le regole vincolanti ripartiranno.
+
 ### 17/11 — Specchio a colpi riflessi, Rosario Ardente, premio del Campanaro come sorso
 
 - **Specchio** (gioco a stanze, `SPECCHIO_STANZE`): da +1 colpo per livello (+3 al massimo) a +1, +2, +2 colpi, che feriscono al 50%, 50%, 100% del danno. Edoardo: «+3 colpi a ogni arma sono tanti».

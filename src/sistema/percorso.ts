@@ -1,16 +1,17 @@
 /*
- * Percorso della fetta (passo 6): tre stanze una dopo l'altra. In ogni stanza arrivano le sue ondate (PERCORSO.ondate:
- * la successiva dopo PERCORSO.intervallo secondi, o subito se la stanza si svuota prima); a stanza ripulita, dopo un attimo, le 3 carte. La prima stanza offre
- * 3 Echi di affinità diverse; poi la porta scelta decide da dove pescano: una porta d'affinità dà Echi nuovi e livelli
- * degli Echi di quell'affinità (dalla Luce anche livelli della Lanterna), la porta del dono dà doni (solo quelli che nelle
- * stanze funzionano). Gli Echi e la Lanterna hanno i numeri del gioco a stanze (data/armi-stanze.ts: 5 livelli, danno a intervallo). Scelta la carta si aprono le porte; dopo la terza stanza la fetta è finita.
- * Le carte si estraggono con un generatore del caso con seme (riproducibili). La scena mostra le carte e le porte.
- * Dal 17/11 dopo le tre stanze c'è la quarta, l'arena del Campanaro (mini-boss, src/sistema/campanaro.ts): niente ondate,
- * arriva lui da solo; battuto lui, le carte della porta scelta e la fetta è finita.
- * Rarità (17/11, src/data/rarita.ts): ogni carta tira prima il grado (Fioca, Chiara, Ardente) tra quelli che la porta può
- * dare, poi un oggetto di quel grado.
+ * Percorso nella mappa del Mondo (dal 17/11, passo 2; prima la fila di tre stanze della fetta). Tiene la stanza in cui si
+ * è (un indice della mappa, src/sistema/mappa.ts) e la sua fase: lotta, attesa, carte, porte. Entrando in una stanza:
+ * - l'ingresso e le stanze già ripulite sono vuote, con le porte aperte;
+ * - le altre hanno le loro ondate (PERCORSO.ondate, secondo quante porte distano dall'ingresso: la successiva dopo
+ *   PERCORSO.intervallo secondi, o subito se la stanza si svuota prima); a stanza ripulita, dopo un attimo, le carte
+ *   (PERCORSO.quanteCarte), che pescano dalla ricompensa della stanza: gli Echi d'inizio accanto all'ingresso, Echi nuovi e
+ *   livelli di un'affinità (dalla Luce anche la Lanterna), o doni;
+ * - nella stanza del Campanaro (mini-boss, src/sistema/campanaro.ts) niente ondate: arriva lui da solo, lontano da te;
+ * - la stanza del Boss oggi chiude la partita (fine provvisoria: Seth e la porta chiusa arrivano con il passo 3).
+ * Rarità (17/11, src/data/rarita.ts): ogni carta tira prima il grado (Fioca, Chiara, Ardente) tra quelli che la stanza può
+ * dare, poi un oggetto di quel grado. Le carte si estraggono con un generatore del caso con seme (riproducibili).
  */
-import { ONDATA, PERCORSO } from '../data/stanze';
+import { ONDATA, PERCORSO, STANZA } from '../data/stanze';
 import type { Arma } from '../data/armi';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, type IdDono } from '../data/doni';
@@ -20,55 +21,77 @@ import { Caso } from './caso';
 import type { Arsenale } from './armi';
 import { gradoCarta, type Dono } from './doni';
 import type { NemiciStanza } from './nemici-stanza';
-import { MURI, type Muro, type Ricompensa } from './porte';
+import { MURI, type Medaglione, type Muro, type Ricompensa } from './porte';
+import type { Mappa, StanzaMappa } from './mappa';
+import { areaCamminabile } from './stanza';
 
 export type Fase = 'lotta' | 'attesa' | 'carte' | 'porte' | 'fine';
 const AFFINITA: readonly IdAffinita[] = ['luce', 'sacro', 'ombra', 'terra'];
 
 export class Percorso {
-  stanza = 1; // da 1 a PERCORSO.ondate.length
-  fase: Fase = 'lotta';
+  /** la stanza della mappa in cui si è (un indice di mappa.stanze) */
+  corrente = 0;
+  /** quante stanze nuove con dei nemici si sono combattute (per le simulazioni e il LAB): 0 all'ingresso */
+  stanza = 0;
+  fase: Fase = 'porte';
   ricompensa: Ricompensa | 'echi' = 'echi'; // da dove pescano le carte di questa stanza
   livelloLanterna = 1;
-  /** LAB: le carte escono di questo grado, quando la porta lo può dare (null = il caso di sempre). */
+  /** LAB: le carte escono di questo grado, quando la stanza lo può dare (null = il caso di sempre). */
   forzaGrado: IdGrado | null = null;
   readonly passivi: Record<IdDono, number>;
   private ondata = 0; // ondate già arrivate in questa stanza
   private attesa = 0;
   private readonly caso: Caso;
-  private readonly seme: number;
-  /** Le porte della stanza: decise appena si entra (si vedono chiuse durante il combattimento), con un caso a parte. */
-  uscite: { muri: Muro[]; ricompense: Ricompensa[] } = { muri: [], ricompense: [] };
 
   /** seme: il seme della partita (?seme= nell'indirizzo, per il bot; di solito ONDATA.seme). */
-  constructor(private readonly arsenale: Arsenale, seme: number = ONDATA.seme) {
+  constructor(private readonly arsenale: Arsenale, public mappa: Mappa, seme: number = ONDATA.seme) {
     this.caso = new Caso(seme + 1);
-    this.seme = seme;
     this.passivi = Object.fromEntries(PASSIVI.map((q) => [q.id, 0])) as Record<IdDono, number>;
   }
 
-  get ultima(): boolean {
-    return this.stanza >= PERCORSO.ondate.length + 1;
+  /** La stanza della mappa in cui si è. */
+  get qui(): StanzaMappa {
+    return this.mappa.stanze[this.corrente];
   }
 
-  /** La stanza del Campanaro: quella dopo le stanze con le ondate. */
+  /** La stanza del Boss: oggi la fine della partita. */
+  get ultima(): boolean {
+    return this.qui.tipo === 'boss';
+  }
+
+  /** La stanza del Campanaro. */
   get miniboss(): boolean {
-    return this.stanza > PERCORSO.ondate.length;
+    return this.qui.tipo === 'campanaro';
+  }
+
+  /** Le ondate di questa stanza: secondo quante porte dista dall'ingresso (da 3 in su l'ultima riga). */
+  private get ondate(): readonly { ricaduti: number; cantori: number }[] {
+    return PERCORSO.ondate[Math.min(PERCORSO.ondate.length, Math.max(1, this.qui.distanza)) - 1];
   }
 
   /** Quante «ondate» ha la stanza: nell'arena una sola, il Campanaro. */
   private get quanteOndate(): number {
-    return this.miniboss ? 1 : PERCORSO.ondate[this.stanza - 1].length;
+    return this.miniboss ? 1 : this.ondate.length;
   }
 
-  /** Comincia la stanza n, con le carte che pescano da «ricompensa». */
-  entra(n: number, ricompensa: Ricompensa | 'echi'): void {
-    this.stanza = n;
-    this.ricompensa = ricompensa;
-    this.fase = 'lotta';
+  /** Si entra nella stanza i della mappa: vuota e aperta (ingresso, già ripulita), da combattere, o la fine (il Boss). */
+  entra(i: number): void {
+    this.corrente = i;
+    const s = this.qui;
+    s.visitata = true;
     this.ondata = 0;
     this.attesa = ONDATA.attesaPrima;
-    this.uscite = this.ultima ? { muri: [], ricompense: [] } : this.scegliPorte(n);
+    if (s.tipo === 'boss') {
+      this.fase = 'fine';
+      return;
+    }
+    if (s.ripulita) {
+      this.fase = 'porte';
+      return;
+    }
+    this.stanza++;
+    this.ricompensa = s.ricompensa ?? 'dono';
+    this.fase = 'lotta';
   }
 
   /**
@@ -78,9 +101,11 @@ export class Percorso {
   aggiorna(dt: number, nemici: NemiciStanza, px: number, py: number): boolean {
     if (this.fase === 'lotta') {
       if (this.miniboss && this.ondata === 0) {
-        // l'arena: dopo un attimo il Campanaro compare in fondo, lontano dalla porta da cui si entra
+        // l'arena: dopo un attimo il Campanaro compare dalla parte opposta della stanza, lontano dalla porta da cui si entra
         if ((this.attesa -= dt) <= 0) {
-          nemici.aggiungiCampanaro(px, py - ONDATA.distanzaMinima);
+          const a = areaCamminabile();
+          const cx = Math.min(a.x1, Math.max(a.x0, STANZA.larghezza - px)), cy = Math.min(a.y1, Math.max(a.y0, STANZA.altezza - py));
+          nemici.aggiungiCampanaro(cx, cy);
           this.ondata = 1;
         }
       } else if (this.ondata < this.quanteOndate) {
@@ -88,7 +113,7 @@ export class Percorso {
         const prima = this.ondata === 0;
         this.attesa -= dt;
         if (this.attesa <= 0 || (!prima && nemici.vivi() <= PERCORSO.restanti)) {
-          const o = PERCORSO.ondate[this.stanza - 1][this.ondata++];
+          const o = this.ondate[this.ondata++];
           nemici.ondata(px, py, o.ricaduti, o.cantori);
           this.attesa = PERCORSO.intervallo;
         }
@@ -112,27 +137,34 @@ export class Percorso {
     }
   }
 
-  /** Le 3 carte di questa stanza. */
+  /** Le carte di questa stanza (PERCORSO.quanteCarte). */
   carte(): Dono[] {
-    const scelte: Dono[] = [];
+    const n = PERCORSO.quanteCarte, scelte: Dono[] = [];
     if (this.ricompensa === 'echi') {
-      // tre Echi nuovi di tre affinità diverse
+      // gli Echi d'inizio: Echi nuovi di affinità diverse
       for (const aff of this.mescola([...AFFINITA])) {
-        if (scelte.length >= 3) break;
+        if (scelte.length >= n) break;
         const nuovi = this.echiNuovi(aff);
         if (nuovi.length) scelte.push(this.pesca(nuovi.map((arma) => ({ tipo: 'arma', arma, livello: 1 }) as Dono)));
       }
-      return scelte;
+    } else {
+      const possibili: Dono[] = this.ricompensa === 'dono' ? this.doni() : this.dallAffinita(this.ricompensa);
+      this.riempi(scelte, possibili, n);
     }
-    const possibili: Dono[] = this.ricompensa === 'dono' ? this.doni() : this.dallAffinita(this.ricompensa);
-    const pool = possibili.length ? possibili : this.doni(); // niente da dare in quell'affinità: doni
-    const resto = [...pool], scelte3: Dono[] = [];
-    while (scelte3.length < 3 && resto.length) {
+    // niente (o non abbastanza) da dare da lì, per esempio gli Echi con la build piena: il resto sono doni
+    this.riempi(scelte, this.doni(), n);
+    return scelte;
+  }
+
+  /** Aggiunge a «scelte» carte pescate da «pool» (senza ripetere quelle che ci sono già) finché non sono n. */
+  private riempi(scelte: Dono[], pool: Dono[], n: number): void {
+    const uguali = (a: Dono, b: Dono): boolean => a.tipo === b.tipo && (a.tipo === 'arma' && b.tipo === 'arma' ? a.arma.id === b.arma.id : a.tipo === 'passivo' && b.tipo === 'passivo' ? a.passivo.id === b.passivo.id : false);
+    const resto = pool.filter((d) => !scelte.some((c) => uguali(c, d)));
+    while (scelte.length < n && resto.length) {
       const d = this.pesca(resto);
-      scelte3.push(d);
+      scelte.push(d);
       resto.splice(resto.indexOf(d), 1);
     }
-    return scelte3;
   }
 
   /**
@@ -155,7 +187,7 @@ export class Percorso {
     return tra[this.caso.intero(0, tra.length - 1)];
   }
 
-  /** La carta scelta entra nella build. Poi si aprono le porte, o la fetta è finita. */
+  /** La carta scelta entra nella build. Poi la stanza è ripulita e si aprono le porte. */
   scegli(d: Dono): void {
     if (d.tipo === 'arma') {
       if (d.arma.id === LANTERNA_STANZE.id) this.livelloLanterna = d.livello;
@@ -164,21 +196,29 @@ export class Percorso {
     } else if (d.tipo === 'passivo') {
       this.passivi[d.passivo.id] = d.livello;
     }
-    this.fase = this.ultima ? 'fine' : 'porte';
+    this.ripulita();
   }
 
-  /** Le porte della prossima stanza: 2 o 3, su muri diversi, con ricompense diverse. */
-  porte(): { muri: Muro[]; ricompense: Ricompensa[] } {
-    return this.uscite;
+  /** La stanza è ripulita (carta scelta, o niente da scegliere): resta vuota e con le porte aperte, anche tornandoci. */
+  ripulita(): void {
+    this.qui.ripulita = true;
+    this.fase = 'porte';
   }
 
-  /** Quante porte, su quali muri e con quali ricompense, per la stanza n (dal 16/11 con un caso suo, non quello delle carte). */
-  private scegliPorte(n: number): { muri: Muro[]; ricompense: Ricompensa[] } {
-    const caso = new Caso((this.seme ^ Math.imul(n + 7, 0x85ebca6b)) >>> 0);
-    const quante = caso.intero(PERCORSO.porte.minimo, PERCORSO.porte.massimo);
-    const muri = this.mescola([...MURI], caso).slice(0, quante);
-    const ricompense = this.mescola<Ricompensa>([...AFFINITA, 'dono'], caso).slice(0, quante);
-    return { muri, ricompense };
+  /**
+   * Le porte della stanza in cui si è: una per ogni lato con una stanza accanto, con il medaglione della stanza dopo
+   * (niente medaglione se è già ripulita o se è il Boss), e dove porta ognuna (indice della mappa).
+   */
+  porte(): { muri: Muro[]; ricompense: Medaglione[]; verso: number[] } {
+    const muri: Muro[] = [], ricompense: Medaglione[] = [], verso: number[] = [];
+    this.qui.vicine.forEach((v, l) => {
+      if (v < 0) return;
+      const s = this.mappa.stanze[v];
+      muri.push(MURI[l]);
+      ricompense.push(s.ripulita || s.tipo === 'boss' ? null : s.ricompensa);
+      verso.push(v);
+    });
+    return { muri, ricompense, verso };
   }
 
   /** Echi dell'affinità aff che non si hanno ancora (solo se c'è posto nella build). */

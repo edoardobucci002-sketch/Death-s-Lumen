@@ -4,18 +4,19 @@
  * tocca una stanza sola, così la mappa resta fatta di corridoi e rami (niente blocchi né anelli). Poi:
  * - il Boss è la stanza più lontana dall'ingresso, in un vicolo cieco (una porta sola);
  * - il Campanaro sta a metà strada, mai attaccato all'ingresso né al Boss;
+ * - l'ingresso ha almeno MAPPA.porteIngresso porte;
  * - le stanze attaccate all'ingresso danno gli Echi d'inizio, le altre una ricompensa a caso (MAPPA.ricompense).
  * Ingresso vuoto e sicuro con le porte già aperte. Tutto è dato semplice (numeri e testi), pronto per il salvataggio.
  * Numeri in MAPPA (src/data/mappa.ts). controllaMappa dice quali regole una mappa non rispetta (npm run prova).
  */
 import { MAPPA } from '../data/mappa';
 import { Caso } from './caso';
-import type { Ricompensa } from './porte';
+import { MURI, type Muro, type Ricompensa } from './porte';
 
 export type TipoStanzaMappa = 'ingresso' | 'combattimento' | 'campanaro' | 'boss';
-/** I quattro lati, nell'ordine di StanzaMappa.vicine. */
-export type Lato = 'alto' | 'destra' | 'basso' | 'sinistra';
-export const LATI: readonly Lato[] = ['alto', 'destra', 'basso', 'sinistra'];
+/** I quattro lati, nell'ordine di StanzaMappa.vicine: gli stessi muri delle porte. */
+export type Lato = Muro;
+export const LATI: readonly Lato[] = MURI;
 const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
 
 export interface StanzaMappa {
@@ -30,6 +31,8 @@ export interface StanzaMappa {
   vicine: [number, number, number, number];
   visitata: boolean;
   ripulita: boolean;
+  /** i rompibili già rotti (un bit per ognuno, nell'ordine in cui la stanza li mette): tornando restano rotti */
+  rotti: number;
 }
 
 export interface Mappa {
@@ -107,7 +110,7 @@ function completa(caso: Caso, seme: number, celle: [number, number][], comunque 
   const indice = new Map<number, number>();
   celle.forEach(([x, y], i) => indice.set(y * 100 + x, i));
   const stanze: StanzaMappa[] = celle.map(([x, y]) => ({
-    x, y, tipo: 'combattimento', ricompensa: null, distanza: -1, visitata: false, ripulita: false,
+    x, y, tipo: 'combattimento', ricompensa: null, distanza: -1, visitata: false, ripulita: false, rotti: 0,
     vicine: [0, 1, 2, 3].map((l) => indice.get((y + DY[l]) * 100 + x + DX[l]) ?? -1) as [number, number, number, number],
   }));
   // le distanze dall'ingresso, porta dopo porta
@@ -122,6 +125,7 @@ function completa(caso: Caso, seme: number, celle: [number, number][], comunque 
     }
   }
   const porte = (s: StanzaMappa): number => s.vicine.filter((v) => v >= 0).length;
+  if (porte(stanze[0]) < MAPPA.porteIngresso && !comunque) return null;
   // il Boss: la stanza più lontana, in un vicolo cieco
   const lontana = Math.max(...stanze.map((s) => s.distanza));
   const boss = scegli(caso, stanze.map((_, i) => i).filter((i) => i > 0 && stanze[i].distanza === lontana && porte(stanze[i]) === 1));
@@ -156,6 +160,7 @@ export function controllaMappa(m: Mappa): string[] {
   if (n < MAPPA.stanze.minimo || n > MAPPA.stanze.massimo) e.push(`${n} stanze`);
   if (S[m.ingresso]?.tipo !== 'ingresso' || S[m.ingresso].distanza !== 0) e.push('ingresso sbagliato');
   if (S.some((s) => s.distanza < 0)) e.push('una stanza non si raggiunge');
+  if (S[m.ingresso] && S[m.ingresso].vicine.filter((v) => v >= 0).length < MAPPA.porteIngresso) e.push("l'ingresso ha troppo poche porte");
   for (let i = 0; i < n; i++) {
     S[i].vicine.forEach((v, l) => {
       if (v >= 0 && S[v].vicine[opposto(l)] !== i) e.push(`porta senza ritorno tra ${i} e ${v}`);
@@ -187,6 +192,46 @@ function mescola<T>(v: T[], caso: Caso): T[] {
     [v[i], v[j]] = [v[j], v[i]];
   }
   return v;
+}
+
+/** La stanza più vicina a «da» (per numero di porte) che rispetta la condizione: il suo indice, -1 se non ce n'è. */
+export function piuVicina(m: Mappa, da: number, va: (s: StanzaMappa, i: number) => boolean): number {
+  const visto = new Uint8Array(m.stanze.length);
+  visto[da] = 1;
+  const coda = [da];
+  for (let q = 0; q < coda.length; q++) {
+    const i = coda[q];
+    if (i !== da && va(m.stanze[i], i)) return i;
+    for (const v of m.stanze[i].vicine) {
+      if (v >= 0 && !visto[v]) {
+        visto[v] = 1;
+        coda.push(v);
+      }
+    }
+  }
+  return -1;
+}
+
+/** Il cammino più breve dalla stanza «da» alla stanza «a»: il lato della prima porta da prendere (-1 se si è già lì). */
+export function primoPasso(m: Mappa, da: number, a: number): number {
+  if (da === a) return -1;
+  const prima = new Int16Array(m.stanze.length).fill(-1); // da quale stanza si è arrivati a ognuna
+  prima[da] = da;
+  const coda = [da];
+  for (let q = 0; q < coda.length; q++) {
+    const i = coda[q];
+    for (const v of m.stanze[i].vicine) {
+      if (v < 0 || prima[v] >= 0) continue;
+      prima[v] = i;
+      if (v === a) {
+        let passo = v;
+        while (prima[passo] !== da) passo = prima[passo];
+        return m.stanze[da].vicine.indexOf(passo);
+      }
+      coda.push(v);
+    }
+  }
+  return -1;
 }
 
 /** Un elemento a caso dell'elenco (-1 se è vuoto). */

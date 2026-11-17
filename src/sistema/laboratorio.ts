@@ -117,7 +117,7 @@ function applicaSalvati(): void {
  * La mappa del Mondo disegnata nel LAB (passo 1 del 17/11): una casella per stanza con la sua lettera, e un trattino dove
  * due stanze hanno una porta in comune. Solo per guardarla: non è la minimappa del gioco.
  */
-function disegnoMappa(m: Mappa, g: { larghezza: number; altezza: number }): HTMLElement {
+function disegnoMappa(m: Mappa, g: { larghezza: number; altezza: number }, corrente: number): HTMLElement {
   const lato = 22, passo = 6;
   const tela = el('div');
   tela.style.cssText = `display:grid;grid-template-columns:repeat(${g.larghezza * 2 - 1},auto);gap:0;justify-content:start;margin:6px 0;font:12px monospace;line-height:${lato}px;text-align:center`;
@@ -138,6 +138,8 @@ function disegnoMappa(m: Mappa, g: { larghezza: number; altezza: number }): HTML
           c.style.background = fondo;
           c.style.color = testo;
           c.textContent = segno;
+          if (s.ripulita && s.tipo !== 'ingresso') c.style.opacity = '0.45';
+          if (i === corrente) c.style.boxShadow = 'inset 0 0 0 2px #fff4c8';
           c.title = `stanza ${i}, a ${s.distanza} porte dall'ingresso`;
         }
       } else if (x % 2 !== y % 2) {
@@ -328,23 +330,29 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     return [
       titolo('Stanza'),
       riga(el('span', 'lab-stato', `Pavimento ${s.larghezza} × ${s.altezza} px · Lampionaio in ${s.x}, ${s.y}`)),
-      titolo('Percorso (tre stanze e il Campanaro)'),
-      riga(el('span', 'lab-stato', `Stanza ${s.stanza} di 4 · carte da: ${s.ricompensa} · fase: ${s.fase}${s.porte.length ? ` · porte: ${s.porte.join(', ')}` : ''}`)),
+      titolo('Percorso nella mappa'),
+      riga(el('span', 'lab-stato', `Stanza ${s.indice} (${s.tipo}, a ${s.distanza} porte dall'ingresso) · combattute ${s.stanza} · ripulite ${s.ripulite} di ${s.totale} · fase: ${s.fase}${s.tipo === 'ingresso' ? '' : ` · carte da: ${s.ricompensa}`}${s.porte.length ? ` · porte: ${s.porte.join(', ')}` : ''}`)),
       riga(el('span', 'lab-stato', `Build: Lanterna ${s.lanterna}${s.echi.length ? ', ' + s.echi.join(', ') : ''}${s.doni.length ? ' · doni: ' + s.doni.join(', ') : ''}`)),
       riga(
         tasto('Ripulisci la stanza', () => { st.lab.ripulisci(); mostra(false); }),
-        ...[0, 1, 2].map((k) => tasto(`Attraversa la porta ${k + 1}`, () => { st.lab.attraversa(k); mostra(false); })),
+        ...(['alto', 'destra', 'basso', 'sinistra'] as const).map((m) => tasto(`Porta ${m === 'alto' ? 'in alto' : m === 'basso' ? 'in basso' : `a ${m}`}`, () => { st.lab.attraversaMuro(m); mostra(false); })),
+      ),
+      riga(
+        tasto("Vai all'ingresso", () => { st.lab.vaiAllIngresso(); mostra(false); }),
+        tasto('Vai al Campanaro', () => { st.lab.vaiAlCampanaro(); mostra(false); }),
+        tasto('Vai al Boss', () => { st.lab.vaiAlBoss(); mostra(false); }),
+        tasto(st.porteBloccate ? 'Porte bloccate' : 'Porte libere', f(() => st.lab.bloccaPorte(!st.porteBloccate)), st.porteBloccate ? 'acceso' : ''),
       ),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto(`Eco di ${a}`, f(() => st.lab.eco(a))))),
-      titolo('Mappa del Mondo (passo 1: si genera, il gioco la userà dal passo 2)'),
+      titolo('Mappa del Mondo'),
       (() => { const m = st.lab.mappa(); return riga(el('span', 'lab-stato', `Seme ${m.seme} · ${m.stanze.length} stanze · Boss a ${m.stanze[m.boss].distanza} porte dall'ingresso · Campanaro a ${m.stanze[m.campanaro]?.distanza ?? '?'}`)); })(),
-      disegnoMappa(st.lab.mappa(), st.lab.grigliaMappa()),
+      disegnoMappa(st.lab.mappa(), st.lab.grigliaMappa(), s.indice),
       riga(
         tasto('Mappa nuova', f(() => st.lab.mappaNuova())),
         tasto('Controlla mille mappe', f(() => { const r = st.lab.provaMappe(1000); esitoMappe = r.sbagliate ? `${r.sbagliate} mappe sbagliate su 1000. Prima: ${r.primo}` : `Mille mappe giuste in ${r.ms} ms: da ${r.stanze[0]} a ${r.stanze[1]} stanze, Boss tra ${r.boss[0]} e ${r.boss[1]} porte dall'ingresso.`; })),
       ),
       ...(esitoMappe ? [riga(el('span', 'lab-stato', esitoMappe))] : []),
-      el('p', 'lab-nota', 'I = ingresso (vuoto, porte aperte) · E = Echi d\'inizio (le stanze attaccate all\'ingresso) · L, S, O, T = Luce, Sacro, Ombra, Terra · D = dono · C = Campanaro (a metà strada) · B = Boss (la stanza più lontana, in un vicolo cieco). Le stanze sono da 12 a 15, ingresso e capi compresi; il gioco la genera con il seme della Veglia (?seme=N nell\'indirizzo). Numeri in Numeri → mappa → MAPPA.'),
+      el('p', 'lab-nota', 'I = ingresso (vuoto, porte aperte) · E = Echi d\'inizio (le stanze attaccate all\'ingresso) · L, S, O, T = Luce, Sacro, Ombra, Terra · D = dono · C = Campanaro (a metà strada) · B = Boss (la stanza più lontana, in un vicolo cieco). Bordo chiaro: la stanza in cui sei; lettere spente: stanze già ripulite (vuote, porte aperte, passaggio più veloce). Le stanze sono da 12 a 15, ingresso e capi compresi; il gioco la genera con il seme della Veglia (?seme=N nell\'indirizzo). «Mappa nuova» ricomincia la Veglia con il seme dopo. Numeri in Numeri → mappa → MAPPA.'),
       titolo('Rarità delle carte'),
       riga(
         ...([null, 'fioca', 'chiara', 'ardente'] as const).map((g) => tasto(g ? `Carte ${GRADI[g].nome}` : 'Carte a caso', f(() => st.lab.forzaGrado(g)), st.lab.gradoForzato() === g ? 'acceso' : '')),
@@ -365,7 +373,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(tasto('Acceca il nemico vicino', f(() => st.lab.accecaVicino())), el('span', 'lab-stato', `accecati dalla Lama: ${st.lab.accecati()}`)),
       el('p', 'lab-nota', 'Tocca un Eco: entra nella build al livello 5, con il suo potenziale (Candela: la fiammella che uccide si divide; Falce: due anelli e, a salute piena, salute in più (tocca «Salute in più» per vederla); Campana: interrompe la carica; Fuoco fatuo: ritrova il primo nemico trapassato; Acqua santa: dentro le pozze recuperi salute; Abbacinio: la cecità passa ai vicini; Lapide: muro di 3 s; Rosario: +15% di danno a rimbalzo; Corvo: +20% di danno subito; Velo funebre: fermo si allarga; Sampietrini: rimbalza verso il nemico). Il Cerchio di luce ferisce forte quando si accende e poi colpisce soltanto, abbagliando.'),
       el('p', 'lab-nota', '«Fai giocare il bot»: il bot muove, colpisce, usa il Cerchio di luce e sceglie carte e porte al posto tuo, alla velocità normale (le simulazioni veloci: npm run sim-stanze). Danno a intervallo: ogni colpo esce a caso tra il minimo e il massimo del livello (le carte scrivono «Danno 12–18»). Le armi delle stanze hanno 5 livelli: il 5° è il potenziale (la Lanterna colpisce anche alle spalle). Numeri in Numeri → armiStanze.'),
-      el('p', 'lab-nota', '«Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 3 carte. Scelta la carta si aprono le porte, con sopra il simbolo della ricompensa: «Attraversa la porta» ti porta contro una di loro. Nella prima stanza le carte sono 3 Echi; poi pescano dalla porta scelta. Dopo la terza stanza: «Fetta completata». Numeri in Numeri → stanze → PERCORSO e PORTE.'),
+      el('p', 'lab-nota', 'Si comincia al centro dell\'ingresso, con le porte aperte. Ogni porta porta alla stanza accanto e ha il medaglione della sua ricompensa (il rombo crema: gli Echi d\'inizio; nessun medaglione: stanza già ripulita o il Boss). Si entra dalla porta sul muro opposto. «Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 2 carte; scelta la carta si aprono le porte. «Porta in alto/a destra…» ti porta contro quella porta. Le ondate crescono con la distanza dall\'ingresso. Entrare dal Boss oggi chiude la partita (la porta chiusa dal Campanaro arriva con il passo 3). «Porte bloccate»: le porte aperte non si attraversano, per provare i muri. Numeri in Numeri → stanze → PERCORSO e PORTE.'),
       titolo('Il Campanaro (mini-boss)'),
       riga(el('span', 'lab-stato', ((c) => c ? (c.massima ? `Salute ${c.salute}/${c.massima} · fase ${c.fase} · rintocchi ${c.rintocchi} · cariche ${c.cariche} · chiamate ${c.chiamate}` : `Battuto (${c.battuti})`) : 'Non è in campo')(st.lab.campanaro()))),
       riga(

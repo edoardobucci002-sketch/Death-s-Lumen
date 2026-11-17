@@ -11,6 +11,11 @@
  * copia specchiata composta qui. Se i file mancano (o il LAB chiede la stanza dal codice), resta il vano del codice.
  * Medaglioni (16/11, richiesta di Edoardo): il medaglione vuoto (Porta_Vuota) con dentro il simbolo dello stato
  * dell'affinità (Simbolo_Abbagliato …), a grandezza vera; il dono tiene il suo medaglione (Porta_Dono).
+ * Mappa del Mondo (17/11, passo 2): le porte stanno su tutti e 4 i muri, dove c'è una stanza accanto, e anche quella in
+ * basso si attraversa. Il medaglione dice la ricompensa della stanza a cui la porta porta; una porta verso una stanza già
+ * ripulita (o verso il Boss) non ha medaglione. Gli Echi d'inizio hanno un segnaposto: il medaglione vuoto con un rombo
+ * crema (Porta_Echi, se Edoardo lo disegna, lo sostituisce). La porta in basso aperta della cripta non c'è ancora: si
+ * disegna il vano del codice.
  */
 import Phaser from 'phaser';
 import { CRIPTA, PORTE, STANZA } from '../data/stanze';
@@ -19,16 +24,23 @@ import type { IdAffinita } from '../data/stati';
 import { areaCamminabile, criptaPronta, disegnaFotogramma } from './stanza';
 import { PROFONDITA } from './effetti';
 
-export type Muro = 'alto' | 'sinistra' | 'destra';
+/** I quattro muri, nello stesso ordine dei lati della mappa (alto, destra, basso, sinistra). */
+export type Muro = 'alto' | 'destra' | 'basso' | 'sinistra';
 export type Ricompensa = IdAffinita | 'dono';
-export const MURI: readonly Muro[] = ['alto', 'sinistra', 'destra'];
+/** Cosa mostra il medaglione di una porta: la ricompensa della stanza dopo, gli Echi d'inizio, o niente. */
+export type Medaglione = Ricompensa | 'echi' | null;
+export const MURI: readonly Muro[] = ['alto', 'destra', 'basso', 'sinistra'];
 
 const colore = (h: string): number => parseInt(h.slice(1), 16);
 const SIMBOLO_DONO = 'stanze-simbolo-dono';
+const SIMBOLO_ECHI = 'stanze-simbolo-echi';
+const MEDAGLIONE_ECHI = 'stanze-medaglione-echi';
+// i pezzi della porta: alto, sinistra, destra, basso
+const PEZZO: Record<Muro, number> = { alto: 0, sinistra: 1, destra: 2, basso: 3 };
 
 export class Porte {
   muri: Muro[] = [];
-  ricompense: Ricompensa[] = [];
+  ricompense: Medaglione[] = [];
   aperte = false;
   private readonly grafica: Phaser.GameObjects.Graphics;
   private readonly simboli: Phaser.GameObjects.Image[] = [];
@@ -38,8 +50,9 @@ export class Porte {
 
   constructor(private readonly scena: Phaser.Scene) {
     this.grafica = scena.add.graphics().setDepth(PROFONDITA.anime); // sopra il buio: le porte si vedono anche lontane
-    if (!scena.textures.exists(SIMBOLO_DONO)) {
-      // il dono: un rombo dorato con il bordo scuro, 11 × 11
+    // il dono: un rombo dorato con il bordo scuro, 11 × 11; gli Echi d'inizio (segnaposto): lo stesso rombo, crema
+    for (const [chiave, tinta] of [[SIMBOLO_DONO, PORTE.colori.dono], [SIMBOLO_ECHI, PORTE.colori.echi]] as const) {
+      if (scena.textures.exists(chiave)) continue;
       const g = scena.add.graphics();
       for (let y = 0; y < 11; y++) {
         const l = 5 - Math.abs(5 - y);
@@ -47,9 +60,9 @@ export class Porte {
       }
       for (let y = 1; y < 10; y++) {
         const l = 4 - Math.abs(5 - y);
-        if (l >= 0) g.fillStyle(colore(PORTE.colori.dono)).fillRect(5 - l, y, 2 * l + 1, 1);
+        if (l >= 0) g.fillStyle(colore(tinta)).fillRect(5 - l, y, 2 * l + 1, 1);
       }
-      g.generateTexture(SIMBOLO_DONO, 11, 11);
+      g.generateTexture(chiave, 11, 11);
       g.destroy();
     }
     // i cancelli disegnati: il pezzo intero sopra muri e pavimento (sotto personaggio e buio), l'arco anche sopra il buio
@@ -58,7 +71,7 @@ export class Porte {
       this.vani.push(scena.add.image(0, 0, '__MISSING').setOrigin(0).setDepth(PROFONDITA.buio + 0.5).setVisible(false));
     }
     this.preparaMedaglioni();
-    for (let k = 0; k < 3; k++) this.simboli.push(scena.add.image(0, 0, SIMBOLO_DONO).setDepth(PROFONDITA.anime + 0.5).setScale(PORTE.simbolo).setVisible(false));
+    for (let k = 0; k < 4; k++) this.simboli.push(scena.add.image(0, 0, SIMBOLO_DONO).setDepth(PROFONDITA.anime + 0.5).setScale(PORTE.simbolo).setVisible(false));
   }
 
   /**
@@ -83,8 +96,8 @@ export class Porte {
     this.disegna();
   }
 
-  /** Le porte della stanza: muri e ricompense (stesso ordine); chiuse finché non si chiama apri(). */
-  imposta(muri: Muro[], ricompense: Ricompensa[]): void {
+  /** Le porte della stanza: muri e medaglioni (stesso ordine); chiuse finché non si chiama apri(). */
+  imposta(muri: Muro[], ricompense: Medaglione[]): void {
     this.muri = muri;
     this.ricompense = ricompense;
     this.aperte = false;
@@ -95,6 +108,18 @@ export class Porte {
         continue;
       }
       const r = ricompense[k], p = this.centroSimbolo(muri[k]);
+      if (!r) {
+        s.setVisible(false); // la stanza dopo è già ripulita, o è il Boss
+        continue;
+      }
+      if (r === 'echi') {
+        // gli Echi d'inizio: Porta_Echi se c'è, se no il medaglione vuoto con il rombo crema, se no il rombo ingrandito
+        const t = this.scena.textures.exists('Porta_Echi') ? 'Porta_Echi' : this.scena.textures.exists(MEDAGLIONE_ECHI) ? MEDAGLIONE_ECHI : '';
+        if (t) s.setTexture(t).setScale(1);
+        else s.setTexture(SIMBOLO_ECHI).setScale(PORTE.simbolo);
+        s.setPosition(p.x, p.y).setVisible(true);
+        continue;
+      }
       // il medaglione vuoto con il simbolo dello stato (16/11), o il medaglione disegnato per le porte (EFFETTI/Porta_<Nome>,
       // 14/11) a grandezza vera; se mancano tutti e due, il simbolo dello stato ingrandito
       const composto = r === 'dono' ? '' : chiaveMedaglione(r);
@@ -134,28 +159,28 @@ export class Porte {
       if (muro === 'alto' && y <= a.y0 + 0.5 && Math.abs(x - STANZA.larghezza / 2) < m) return k;
       if (muro === 'sinistra' && x <= a.x0 + 0.5 && Math.abs(y - STANZA.altezza / 2) < m) return k;
       if (muro === 'destra' && x >= a.x1 - 0.5 && Math.abs(y - STANZA.altezza / 2) < m) return k;
+      if (muro === 'basso' && y >= a.y1 - 0.5 && Math.abs(x - STANZA.larghezza / 2) < m) return k;
     }
     return -1;
   }
 
   /** Dove il personaggio deve andare per attraversare la porta k (per il LAB e le prove). */
   davanti(k: number): { x: number; y: number } {
-    const a = areaCamminabile(), muro = this.muri[k];
-    if (muro === 'alto') return { x: STANZA.larghezza / 2, y: a.y0 };
-    if (muro === 'sinistra') return { x: a.x0, y: STANZA.altezza / 2 };
-    return { x: a.x1, y: STANZA.altezza / 2 };
+    return davantiAlMuro(this.muri[k]);
   }
 
   private centroSimbolo(muro: Muro): { x: number; y: number } {
     const L = PORTE.larghezza, S = STANZA;
     if (muro === 'alto') return { x: S.larghezza / 2, y: -S.muroAlto + 18 };
     if (muro === 'sinistra') return { x: -S.muroLati / 2, y: S.altezza / 2 - L / 2 - 14 };
+    if (muro === 'basso') return { x: S.larghezza / 2 + L / 2 + 22, y: S.altezza + S.muroBasso / 2 }; // accanto alla porta, sul muro
     return { x: S.larghezza + S.muroLati / 2, y: S.altezza / 2 - L / 2 - 14 };
   }
 
-  /** Il vano di ogni porta (e quella in basso, sempre chiusa): scuro, con le sbarre o con la cornice accesa. */
+  /** Il vano di ogni porta: scuro, con le sbarre o con la cornice accesa. */
   private disegna(): void {
-    const g = this.grafica.clear(), S = STANZA, L = PORTE.larghezza, c = PORTE.colori;
+    this.grafica.clear();
+    const S = STANZA, L = PORTE.larghezza;
     for (const i of this.cancelli) i.setVisible(false);
     for (const i of this.vani) i.setVisible(false);
     this.accesi.fill(false);
@@ -171,32 +196,35 @@ export class Porte {
         this.accesi[k] = true;
       };
       const V = CRIPTA.vani;
-      metti(3, F.bassoChiusa, -1, S.altezza, V.basso);
       for (const muro of this.muri) {
-        if (muro === 'alto') metti(0, this.aperte ? F.altoAperta : F.altoChiusa, -1, -S.muroAlto, V.alto);
-        else if (muro === 'sinistra') metti(1, this.aperte ? F.latoAperta : F.latoChiusa, -S.muroLati, -1, V.lato);
-        else metti(2, this.aperte ? F.latoAperta : F.latoChiusa, S.larghezza, -1, V.lato, true);
+        if (muro === 'alto') metti(PEZZO.alto, this.aperte ? F.altoAperta : F.altoChiusa, -1, -S.muroAlto, V.alto);
+        else if (muro === 'sinistra') metti(PEZZO.sinistra, this.aperte ? F.latoAperta : F.latoChiusa, -S.muroLati, -1, V.lato);
+        else if (muro === 'destra') metti(PEZZO.destra, this.aperte ? F.latoAperta : F.latoChiusa, S.larghezza, -1, V.lato, true);
+        else if (!this.aperte) metti(PEZZO.basso, F.bassoChiusa, -1, S.altezza, V.basso);
+        else this.vanoCodice(S.larghezza / 2 - L / 2, S.altezza, L, S.muroBasso, true, true); // manca il disegno della porta aperta
       }
       return;
     }
-    const vano = (x: number, y: number, w: number, h: number, aperta: boolean, verticale: boolean): void => {
-      g.fillStyle(colore(c.cornice)).fillRect(x - 2, y - 2, w + 4, h + 4);
-      g.fillStyle(colore(c.vano)).fillRect(x, y, w, h);
-      if (aperta) {
-        g.lineStyle(2, colore(c.aperta), 1).strokeRect(x - 1, y - 1, w + 2, h + 2);
-        return;
-      }
-      g.fillStyle(colore(c.sbarre));
-      if (verticale) for (let bx = x + 6; bx < x + w - 2; bx += 10) g.fillRect(bx, y, 3, h);
-      else for (let by = y + 6; by < y + h - 2; by += 10) g.fillRect(x, by, w, 3);
-    };
-    // la porta da cui si entra, in basso: sempre chiusa
-    vano(S.larghezza / 2 - L / 2, S.altezza, L, S.muroBasso, false, true);
     for (const muro of this.muri) {
-      if (muro === 'alto') vano(S.larghezza / 2 - L / 2, -56, L, 56, this.aperte, true);
-      else if (muro === 'sinistra') vano(-S.muroLati, S.altezza / 2 - L / 2, S.muroLati, L, this.aperte, false);
-      else vano(S.larghezza, S.altezza / 2 - L / 2, S.muroLati, L, this.aperte, false);
+      if (muro === 'alto') this.vanoCodice(S.larghezza / 2 - L / 2, -56, L, 56, this.aperte, true);
+      else if (muro === 'sinistra') this.vanoCodice(-S.muroLati, S.altezza / 2 - L / 2, S.muroLati, L, this.aperte, false);
+      else if (muro === 'destra') this.vanoCodice(S.larghezza, S.altezza / 2 - L / 2, S.muroLati, L, this.aperte, false);
+      else this.vanoCodice(S.larghezza / 2 - L / 2, S.altezza, L, S.muroBasso, this.aperte, true);
     }
+  }
+
+  /** Il vano disegnato dal codice: scuro, con le sbarre (chiusa) o con la cornice accesa (aperta). */
+  private vanoCodice(x: number, y: number, w: number, h: number, aperta: boolean, verticale: boolean): void {
+    const g = this.grafica, c = PORTE.colori;
+    g.fillStyle(colore(c.cornice)).fillRect(x - 2, y - 2, w + 4, h + 4);
+    g.fillStyle(colore(c.vano)).fillRect(x, y, w, h);
+    if (aperta) {
+      g.lineStyle(2, colore(c.aperta), 1).strokeRect(x - 1, y - 1, w + 2, h + 2);
+      return;
+    }
+    g.fillStyle(colore(c.sbarre));
+    if (verticale) for (let bx = x + 6; bx < x + w - 2; bx += 10) g.fillRect(bx, y, 3, h);
+    else for (let by = y + 6; by < y + h - 2; by += 10) g.fillRect(x, by, w, 3);
   }
 
   /**
@@ -227,6 +255,14 @@ export class Porte {
   private preparaMedaglioni(): void {
     const tex = this.scena.textures, M = PORTE.medaglione;
     if (!tex.exists(M.vuoto)) return;
+    if (!tex.exists(MEDAGLIONE_ECHI)) {
+      // gli Echi d'inizio (segnaposto): il medaglione vuoto con il rombo crema al posto del simbolo
+      const f = tex.getFrame(M.vuoto);
+      const t = tex.createCanvas(MEDAGLIONE_ECHI, f.realWidth, f.realHeight)!, g = t.getContext();
+      disegnaFotogramma(g, this.scena, M.vuoto, 0, 0, 0);
+      g.drawImage(tex.get(SIMBOLO_ECHI).getSourceImage() as CanvasImageSource, M.simbolo.x, M.simbolo.y);
+      t.refresh();
+    }
     for (const aff of Object.keys(INFO_AFFINITA) as IdAffinita[]) {
       const chiave = chiaveMedaglione(aff), simbolo = INFO_AFFINITA[aff].simbolo;
       if (tex.exists(chiave) || !tex.exists(simbolo)) continue;
@@ -240,3 +276,15 @@ export class Porte {
 }
 
 const chiaveMedaglione = (aff: IdAffinita): string => `stanze-medaglione-${aff}`;
+
+/**
+ * Dove stanno i piedi del personaggio contro la porta del muro dato (sul bordo dell'area camminabile, al centro del muro).
+ * Con «dentro» px in più verso il centro della stanza: dove si compare entrando da quella porta.
+ */
+export function davantiAlMuro(muro: Muro, dentro = 0): { x: number; y: number } {
+  const a = areaCamminabile(), cx = STANZA.larghezza / 2, cy = STANZA.altezza / 2;
+  if (muro === 'alto') return { x: cx, y: a.y0 + dentro };
+  if (muro === 'basso') return { x: cx, y: a.y1 - dentro };
+  if (muro === 'sinistra') return { x: a.x0 + dentro, y: cy };
+  return { x: a.x1 - dentro, y: cy };
+}

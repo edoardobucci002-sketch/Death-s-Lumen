@@ -8,6 +8,8 @@
  * Il Campanaro (17/11): esce dal disco del Rintocco, dall'anello e dalla linea della Carica, sempre dopo il tempo di reazione.
  * Colpisce quando un nemico è a portata, usa il Cerchio di luce quando è circondato o ferito, sceglie carte e porte con
  * le preferenze di BOT_STANZE (o a caso nel modo «esplora»). Non usa il caso della partita: a parità di seme gioca uguale.
+ * Mappa del Mondo (17/11): esplora tutte le stanze prima del Boss; tra le porte verso stanze nuove sceglie con le
+ * preferenze, e quando intorno è tutto ripulito torna per la strada più corta verso la stanza nuova più vicina.
  * Niente allocazioni nel ciclo di gioco.
  */
 import Phaser from 'phaser';
@@ -22,7 +24,8 @@ import { areaCamminabile } from './stanza';
 import { Caso } from './caso';
 import type { Dono } from './doni';
 import type { Arma } from '../data/armi';
-import type { Ricompensa } from './porte';
+import type { Medaglione } from './porte';
+import { piuVicina, primoPasso, type Mappa } from './mappa';
 
 const R = NEMICI_STANZA.ricaduto, C = NEMICI_STANZA.cantore;
 const N = B.direzioni;
@@ -157,17 +160,36 @@ export class BotStanze {
     return migliore;
   }
 
-  /** Sceglie una porta tra quelle aperte: le affinità degli Echi che ha, poi il dono (a caso nel modo «esplora»). */
-  scegliPorta(ricompense: readonly Ricompensa[], echi: readonly Arma[]): number {
-    if (this.esplora) return this.esplora.intero(0, ricompense.length - 1);
-    let migliore = 0, valore = -Infinity;
-    ricompense.forEach((r, k) => {
-      const v = r === 'dono' ? B.porte.dono : echi.some((a) => AFFINITA_ARMI[a.id] === r) ? B.porte.affinitaPosseduta : B.porte.altra;
-      if (v > valore) {
-        valore = v;
+  /**
+   * Sceglie una porta tra quelle aperte della stanza «qui» (verso[k]: dove porta la porta k; ricompense[k]: il suo
+   * medaglione). Prima le stanze nuove accanto (con le preferenze: gli Echi d'inizio, le affinità degli Echi che ha, il
+   * dono; a caso nel modo «esplora»); se non ce ne sono, il primo passo verso la stanza nuova più vicina. Il Campanaro lo
+   * lascia per ultimo, come farebbe un giocatore (prima la build più forte); finito tutto, il Boss.
+   */
+  scegliPorta(m: Mappa, qui: number, verso: readonly number[], ricompense: readonly Medaglione[], echi: readonly Arma[]): number {
+    const resta = m.stanze.some((s) => !s.ripulita && s.tipo === 'combattimento');
+    const nuova = (i: number): boolean => !m.stanze[i].ripulita && (m.stanze[i].tipo === 'combattimento' || (!resta && m.stanze[i].tipo === 'campanaro'));
+    let migliore = -1, valore = -Infinity;
+    const vicine = verso.filter(nuova).length;
+    let scelta = this.esplora && vicine ? this.esplora.intero(0, vicine - 1) : -1;
+    verso.forEach((v, k) => {
+      if (!nuova(v)) return;
+      if (scelta >= 0) {
+        if (scelta-- === 0) migliore = k;
+        return;
+      }
+      const r = ricompense[k];
+      const val = r === 'echi' ? B.porte.echi : r === 'dono' ? B.porte.dono : echi.some((a) => AFFINITA_ARMI[a.id] === r) ? B.porte.affinitaPosseduta : B.porte.altra;
+      if (val > valore) {
+        valore = val;
         migliore = k;
       }
     });
-    return migliore;
+    if (migliore >= 0) return migliore;
+    // niente di nuovo qui accanto: verso la stanza nuova più vicina, o il Boss
+    let meta = piuVicina(m, qui, (_s, i) => nuova(i));
+    if (meta < 0) meta = m.boss;
+    const lato = primoPasso(m, qui, meta);
+    return lato < 0 ? -1 : verso.indexOf(m.stanze[qui].vicine[lato]);
   }
 }

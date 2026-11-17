@@ -9,7 +9,8 @@
  * La cripta (16/11): tornare al disegno del codice per confrontare, rifare le lastre. Rompibili (16/11): metterli accanto,
  * romperli, ridisporli, far uscire un frammento, accendere il Bagliore. Il Campanaro (17/11): andare all'arena, farlo
  * comparire, portarlo alla fase 2 o quasi a terra, scegliere il suo prossimo attacco. La mappa del Mondo (17/11, passo 1):
- * guardarla, generarne un'altra, controllare le regole su mille semi.
+ * guardarla, generarne un'altra, controllare le regole su mille semi. Passo 2: andare in una stanza qualsiasi (il Campanaro,
+ * il Boss), attraversare la porta di un muro, bloccare le porte per provare i muri.
  */
 import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
@@ -21,7 +22,7 @@ import { STATO, type TipoStanza } from './nemici-stanza';
 import { F } from './armi-colpo';
 import { BotStanze } from './bot-stanze';
 import type { Stanze } from '../scene/Stanze';
-import { PERCORSO } from '../data/stanze';
+import { MURI, type Muro } from './porte';
 import { MOSSA_CAPO } from './campanaro';
 import { controllaMappa, generaMappa, type Mappa } from './mappa';
 import { MAPPA } from '../data/mappa';
@@ -40,7 +41,7 @@ export class LabStanze {
     salute: number; extra: number; sorsi: number; sorsiMassimi: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; pozze: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
     quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
-    stanza: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
+    stanza: number; indice: number; tipo: string; distanza: number; ripulite: number; totale: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
   } {
     const s = this.s, n = s.nemici;
     return {
@@ -49,7 +50,9 @@ export class LabStanze {
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), pozze: n.pozze, uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
       quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto,
-      stanza: s.percorso.stanza, fase: s.percorso.fase, ricompensa: s.percorso.ricompensa, porte: s.porte.muri.map((m, k) => `${m}: ${s.porte.ricompense[k]}`),
+      stanza: s.percorso.stanza, indice: s.percorso.corrente, tipo: s.percorso.qui.tipo, distanza: s.percorso.qui.distanza,
+      ripulite: s.mappa.stanze.filter((x) => x.ripulita).length, totale: s.mappa.stanze.length,
+      fase: s.percorso.fase, ricompensa: s.percorso.ricompensa, porte: s.porte.muri.map((m, k) => `${m}: ${s.porte.ricompense[k] ?? '–'}`),
       echi: s.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`), lanterna: s.percorso.livelloLanterna,
       doni: Object.entries(s.percorso.passivi).filter(([, l]) => l > 0).map(([id, l]) => `${id} ${l}`), carteAperte: s.doni.aperta, finita: s.finita,
     };
@@ -85,9 +88,44 @@ export class LabStanze {
     return this.s.mappa;
   }
 
-  /** Un'altra mappa, con il seme dopo (solo la mappa: la stanza in corso non cambia). */
+  /** Una Veglia nuova con il seme dopo: un'altra mappa (e altre ondate e carte). */
   mappaNuova(): void {
-    this.s.mappa = generaMappa(this.s.mappa.seme + 1);
+    this.s.semeDopo = this.s.seme + 1;
+    this.s.scene.restart();
+  }
+
+  /** Va nella stanza i della mappa, entrando dalla porta che guarda verso l'ingresso (con la build di adesso). */
+  vaiAllaStanza(i: number): void {
+    const m = this.s.mappa, st = m.stanze[i];
+    if (!st) return;
+    this.s.ondateAutomatiche = true;
+    if (this.s.doni.aperta) this.s.doni.scegliPrima();
+    // la porta da cui si entra: quella della stanza accanto più vicina all'ingresso
+    let da = -1;
+    st.vicine.forEach((v, l) => { if (v >= 0 && (da < 0 || m.stanze[v].distanza < m.stanze[st.vicine[da]].distanza)) da = l; });
+    this.s.entraInStanza(i, da >= 0 ? MURI[da] : null);
+  }
+
+  vaiAlCampanaro(): void {
+    this.vaiAllaStanza(this.s.mappa.campanaro);
+  }
+
+  vaiAlBoss(): void {
+    this.vaiAllaStanza(this.s.mappa.boss);
+  }
+
+  vaiAllIngresso(): void {
+    this.vaiAllaStanza(this.s.mappa.ingresso);
+  }
+
+  /** Porta il Lampionaio contro la porta del muro dato, se c'è ed è aperta: passa alla stanza accanto. */
+  attraversaMuro(muro: Muro): void {
+    this.attraversa(this.s.porte.muri.indexOf(muro));
+  }
+
+  /** Le porte aperte non si attraversano (per provare i muri camminandoci contro). */
+  bloccaPorte(si: boolean): void {
+    this.s.porteBloccate = si;
   }
 
   /**
@@ -108,16 +146,6 @@ export class LabStanze {
   /** La griglia della mappa (MAPPA.griglia), per il disegno nel LAB. */
   grigliaMappa(): { larghezza: number; altezza: number } {
     return MAPPA.griglia;
-  }
-
-  /** Salta all'arena del Campanaro (la quarta stanza), con la build di adesso. */
-  vaiAlCampanaro(): void {
-    const p = this.s.percorso;
-    this.s.ondateAutomatiche = true;
-    this.s.nemici.svuota();
-    p.stanza = PERCORSO.ondate.length;
-    p.fase = 'porte';
-    this.s.nuovaStanza();
   }
 
   /** Il Campanaro qui vicino, subito (senza la stanza in corso: per provarlo da solo). */
@@ -148,7 +176,7 @@ export class LabStanze {
 
   /** Porta il Lampionaio contro la porta k (aperta): passa alla stanza dopo. */
   attraversa(k: number): void {
-    if (k >= this.s.porte.muri.length) return;
+    if (k < 0 || k >= this.s.porte.muri.length) return;
     const p = this.s.porte.davanti(k);
     this.s.x = p.x;
     this.s.y = p.y;
@@ -390,7 +418,7 @@ export class LabStanze {
   /** La cripta disegnata o il disegno del codice di prima (per confrontarli). */
   arteStanza(codice: boolean): void {
     ARTE_STANZA.codice = codice;
-    creaStanza(this.s, this.s.semeStanza(this.s.percorso.stanza));
+    creaStanza(this.s, this.s.semeStanza(this.s.percorso.corrente + 1));
     this.s.porte.ridisegna();
   }
 

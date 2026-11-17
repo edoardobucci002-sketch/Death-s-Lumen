@@ -1,5 +1,6 @@
-// Simulazione del gioco a stanze: il bot (src/sistema/bot-stanze.ts) gioca la fetta tante volte, ognuna con un seme diverso
-// (ondate e carte diverse), e alla fine c'è un riepilogo: quante volte arriva in fondo, in che stanza muore, quanto danno
+// Simulazione del gioco a stanze: il bot (src/sistema/bot-stanze.ts) gioca tante Veglie, ognuna con un seme diverso
+// (mappa, ondate e carte diverse: dal 17/11 esplora la mappa del Mondo, il Campanaro per ultimo, poi il Boss), e alla fine
+// c'è un riepilogo: quante volte arriva al Boss, in che stanza e a che distanza dall'ingresso muore, quanto danno
 // prende in ogni stanza, quanto conta ogni arma. Serve a provare e bilanciare i numeri (intervalli del danno, salute dei
 // nemici, ondate). Il risultato completo va in prove/sim-stanze.json.
 // Uso:
@@ -42,7 +43,8 @@ async function gioca({ seme, esplora, eco }) {
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();
   fatte++;
-  const esito = !r ? 'errore' : r.completata ? `fetta completata, salute ${r.salute}` : `caduto nella stanza ${r.stanza}`;
+  const ultima = r?.stanze?.at(-1);
+  const esito = !r ? 'errore' : r.completata ? `arrivato al Boss dopo ${r.stanza} stanze, salute ${r.salute}` : `caduto nella stanza ${r.stanza} (${ultima?.tipo === 'campanaro' ? 'Campanaro, ' : ''}a ${ultima?.distanza ?? '?'} porte dall'ingresso)`;
   console.log(`  [${fatte}/${totale}] seme ${seme}${esplora ? ' (esplora)' : ''}${eco ? ` (${eco} al 5)` : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
   risultati.push({ seme, esplora, eco, ...r, errori });
 }
@@ -58,13 +60,13 @@ server.kill();
 const media = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
 const ok = risultati.filter((r) => r.stanze);
 const fini = ok.filter((r) => r.completata);
-console.log(`\nFetta completata: ${fini.length}/${ok.length}` + (fini.length ? `, con salute media ${Math.round(media(fini.map((r) => r.salute)))} (la più bassa durante la partita: ${Math.round(media(fini.map((r) => r.saluteMinima)))} in media)` : ''));
+console.log(`\nArrivati al Boss: ${fini.length}/${ok.length}` + (fini.length ? `, con salute media ${Math.round(media(fini.map((r) => r.salute)))} (la più bassa durante la partita: ${Math.round(media(fini.map((r) => r.saluteMinima)))} in media)` : ''));
 const stanzeTot = Math.max(...ok.map((r) => r.stanze.length), 0);
-console.log('\nPer stanza                 arrivati  caduti  secondi  danno subito  salute all\'uscita');
+console.log('\nPer stanza combattuta (in ordine)   distanza  arrivati  caduti  secondi  danno subito  salute all\'uscita');
 for (let n = 1; n <= stanzeTot; n++) {
   const qui = ok.map((r) => r.stanze.find((s) => s.stanza === n)).filter(Boolean);
   const usciti = qui.filter((s) => s.saluteUscita !== null);
-  console.log(`  stanza ${n}`.padEnd(28) + String(qui.length).padStart(8) + String(qui.length - usciti.length).padStart(8) +
+  console.log(`  stanza ${n}`.padEnd(28) + media(qui.map((s) => s.distanza)).toFixed(1).padStart(16) + String(qui.length).padStart(10) + String(qui.length - usciti.length).padStart(8) +
     String(Math.round(media(qui.map((s) => s.secondi)))).padStart(9) + String(Math.round(media(qui.map((s) => s.dannoSubito)))).padStart(14) +
     String(usciti.length ? Math.round(media(usciti.map((s) => s.saluteUscita))) : '–').padStart(19));
 }
@@ -98,6 +100,11 @@ if (modo === 'potenziali') {
       `${(Math.round(parte * 100) + '%').padStart(17)}${media(rr.map((r) => (r.danno[eco] ?? 0) / r.secondi)).toFixed(1).padStart(18)}`);
   }
 }
+
+// dove cade il bot: nell'arena del Campanaro o a che distanza dall'ingresso
+const caduti = ok.filter((r) => !r.completata), dove = {};
+for (const r of caduti) { const u = r.stanze.at(-1); const k = !u ? 'ingresso' : u.tipo === 'campanaro' ? 'Campanaro' : `a ${u.distanza} porte`; dove[k] = (dove[k] ?? 0) + 1; }
+if (caduti.length) console.log(`\nDove cade: ${Object.entries(dove).sort().map(([k, v]) => `${k} ${v}`).join(', ')}`);
 
 const errori = risultati.filter((r) => r.errori.length || !r.stanze);
 if (errori.length) console.log(`\n${errori.length} partite con errori: ${errori.map((r) => `seme ${r.seme}: ${r.errori.join(' | ')}`).join('; ')}`);
