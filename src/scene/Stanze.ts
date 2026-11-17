@@ -371,7 +371,7 @@ export class Stanze extends Phaser.Scene {
     const massima = BASE.salute + this.pg.salute + per('cuoreDiCera');
     if (massima > this.saluteMassima) this.salute += massima - this.saluteMassima; // più salute massima: la salute sale
     this.saluteMassima = massima;
-    this.fiaschetta?.impostaMassimo(FIASCHETTA.sorsi + (this.percorso.passivi.lacrimaDiLumen ?? 0)); // il Calice riverso: +1 sorso per livello
+    this.fiaschetta?.impostaMassimo(FIASCHETTA.sorsi + Math.round(per('lacrimaDiLumen'))); // il Calice riverso: +1 sorso per livello
     this.velocita = BASE.velocita * (1 + this.pg.velocita + per('aliDiFalena') + (this.rompibili && this.rompibili.bagliore > 0 ? BAGLIORE.velocita : 0));
     this.rigenerazione = per('erbeAmare');
     this.scudo = per('scudoDiFerro');
