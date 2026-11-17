@@ -99,6 +99,16 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 - Veggente e Sguattera; la pubblicazione.
 - **Glossario del gioco** (richiesta di Edoardo del 13/11 notte, come l'«oracle text» di Magic): stesse parole e stesse forme per le stesse cose in carte, pausa, LAB e GDD (per esempio «ricarica», «area», «ferisce», «danno», gli stati), raccolte in un elenco unico da cui le spiegazioni si generano. **Fatto il 17/11**: le parole sono scelte (risposte di Edoardo del 16/11, in [decisioni.md](decisioni.md)) e l'elenco è in `src/data/glossario.ts`; le carte generano la riga dei numeri, il Potenziale e «Nuovo Eco» hanno il loro tag e `npm run controlla-gdd` segnala le parole vietate. Restano fuori, da portare un pezzo alla volta: LAB e pausa (testi lunghi scritti a mano).
 
+### Quando si toglie il survivor (elenco dei file)
+
+Il riordino del codice in sottocartelle si fa insieme alla cancellazione del survivor, quando il gioco a stanze sarà giocabile dall'inizio alla fine (decisione di Edoardo del 17/11). Fino ad allora questo elenco dice cosa usa ciascun gioco, seguendo gli import a partire dalle due scene (misurato il 17/11). **Quando il gioco a stanze comincia a usare un file del survivor, quel file passa tra i comuni.** Il giorno della cancellazione si tolgono i file «solo survivor», poi le parti che ne dipendono dentro i file comuni, e si ricontrolla l'elenco: un file comune può servire alle stanze solo per un pezzo.
+
+- **Solo survivor** (15): `scene/Gioco.ts`; in `sistema/`: `bot`, `fiaschetta`, `grazia`, `hud`, `lab-partita`, `pausa`, `record`, `rivelazione`, `segnaposto-fasce`, `simulazione`, `speciale`, `tacche`, `tasti`, `terreno`.
+- **Solo stanze** (18): `scene/Stanze.ts`; in `sistema/`: `abilita-stanza`, `attacco`, `barra-capo`, `barra-salute`, `bot-stanze`, `campanaro`, `comparsa-carte`, `fiaschetta-stanza`, `impatto`, `joystick-stanze`, `lab-stanze`, `nemici-stanza`, `percorso`, `porte`, `rompibili-stanza`, `sim-stanze`, `stanza`.
+- **Comuni ai due giochi**: tutti i file di `src/data/`; in `sistema/`: `al-volo`, `amuleti`, `anime`, `armi`, `armi-colpo`, `armi-proiettili`, `armi-vicine`, `armi-zone`, `arte`, `asset`, `audio`, `caso`, `chiazze`, `comandi`, `doni`, `effetti`, `griglia`, `indietro`, `interruttori`, `luce`, `minacce`, `mobile`, `mosaico`, `oggetti`, `orda` (i nemici delle stanze si appoggiano alla sua `Orda`), `pixel`, `rompibili`, `salvataggio`, `scheda`, `scorrimento`, `scritte`, `segnaposto-oggetti`, `simboli`.
+- **Guscio dell'app** (né l'una né l'altra scena, restano): `main.ts`, `scene/Avvio.ts`, `scene/Menu.ts`; in `sistema/`: `aggiornamenti`, `cappella`, `contatore`, `firma`, `fotogrammi`, `laboratorio`, `lettura-schermo`, `prova-prestazioni`, `ritratto`.
+- I file grandi del survivor (`Gioco.ts` 1.468 righe, `orda.ts` 1.102) non si spezzano prima: `Gioco.ts` sparisce, `orda.ts` si alleggerisce togliendo le parti della notte.
+
 ## Tappe del survivor (sospese dal pivot del 12/11)
 
 Scritte per il survivor, prima del pivot. Ogni voce dice in corsivo che cosa diventa nel gioco a stanze.
