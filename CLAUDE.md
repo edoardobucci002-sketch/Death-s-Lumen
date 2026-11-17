@@ -4,7 +4,7 @@ Action roguelite a stanze in pixel art (sul modello di Hades). Una Veglia attrav
 
 **Il gioco sta cambiando genere (pivot del 12/11/2026).** Fino ad allora era un survivor-like alla Vampire Survivors (una notte di 15 minuti, armi tutte automatiche): quella versione è congelata nel tag `survivor-v1` e resta sul link pubblico. Il progetto del gioco a stanze è in `docs/proposte/pivot-hades.md`; le regole del passaggio sono nella sezione «Il passaggio al gioco a stanze», qui sotto.
 
-Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioco com'è oggi: `docs/GDD.md`. Comandi, cartelle e stack: `LEGGIMI.md`. Il codice (`src/data/` e `src/`) è la fonte di verità.
+Questo file contiene **solo le regole** per lavorare al progetto. Cos'è il gioco com'è oggi: `docs/GDD.md` (il survivor congelato è in `docs/survivor/`). Comandi, cartelle e stack: `LEGGIMI.md`. Il codice (`src/data/` e `src/`) è la fonte di verità.
 
 ## Il passaggio al gioco a stanze
 
@@ -110,10 +110,11 @@ Valgono finché il survivor e il gioco a stanze convivono sul ramo `prova` (deci
 | File | Cosa contiene |
 | --- | --- |
 | `LEGGIMI.md` | cos'è il gioco, primi passi, comandi, cartelle, stack |
-| `docs/GDD.md` | il gioco **di oggi**: contenuti e numeri attuali, senza storia dei numeri |
+| `docs/GDD.md` | il gioco a stanze **di oggi**: contenuti e numeri attuali, senza storia dei numeri |
+| `docs/survivor/` | `GDD-survivor.md` e `bilanciamento-survivor.md`: il survivor congelato (si cancellano con il suo codice); `controlla-gdd` legge ancora il GDD del survivor |
 | `docs/lore.md` | mondo, personaggi, trama |
 | `docs/decisioni.md` | registro delle scelte di design e di metodo, con data e motivo |
-| `docs/bilanciamento.md` | obiettivi del bot, ritocchi ai numeri, risultati delle simulazioni |
+| `docs/bilanciamento.md` | ritocchi ai numeri e risultati delle simulazioni del gioco a stanze (quelli del survivor sono in `docs/survivor/`) |
 | `docs/roadmap.md` | un solo piano: cosa è fatto, in corso e futuro |
 | `docs/asset_da_creare.md` | cosa Edoardo deve ancora disegnare e il segnaposto che c'è oggi |
 | `docs/proposte/` | archivio congelato delle proposte approvate: non si modifica |

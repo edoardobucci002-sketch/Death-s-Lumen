@@ -38,7 +38,7 @@ npm run dev        # apre il gioco in locale
 | `npm run build` | controlla i tipi, crea la build in `dist/` e il service worker per l'offline |
 | `npm run sim` | simulazione di bilanciamento: il bot gioca 3 notti per personaggio (`npm run sim -- 5 strega` per sceglierne numero e personaggi; `npm run sim -- 12 tutti meta=max` con la Cappella completa, `meta=meta` a metà, `meta=0` vuota; `esplora`: una notte su tre di ogni personaggio il bot sceglie le carte a caso; `stati=caso`: gli stati a caso di prima, per confrontare (la regola del gioco sono gli Stati certi); `mira=0`: Lanterna e Pala verso dove cammini, per confrontare; `senza=sampietrini`: un oggetto che non esce mai tra le carte; `amuleto=martire`: la notte parte con quell'amuleto acceso; `pochi=1` e `schermo=1`: la prova «pochi e forti»); riepilogo a schermo (con il «Confronto per il pivot»: nemici morti senza reazioni né stati e quanto vivono, per fase della notte), dettagli in `prove/sim.json`. Obiettivi in [docs/bilanciamento.md](docs/bilanciamento.md) Per contare le urne rotte: `DL_EXTRA='&rompibili&immortale' node tools/sim.mjs 12`, con `&cercaurne` il bot va apposta verso le urne. |
 | `npm run sim-stanze` | simulazione del gioco a stanze: il bot (`src/sistema/bot-stanze.ts`, numeri in `BOT_STANZE` di `src/data/bot.ts`) gioca la fetta 24 volte, metà con le carte preferite e metà con carte e porte a caso (`npm run sim-stanze -- 48` per il numero; `esplora`: tutte a caso; `scelte`: tutte con le preferenze); riepilogo a schermo (fette completate, per stanza caduti, tempo, danno subito e salute, danno di ogni arma), dettagli in `prove/sim-stanze.json`. Il bot si guarda giocare dal LAB → Stanze → «Fai giocare il bot» |
-| `npm run controlla-gdd` | confronta le tabelle di `docs/GDD.md` con i numeri di `src/data/` e segnala ogni differenza (da lanciare a fine tappa; se segnala qualcosa, il GDD o i dati vanno aggiornati) |
+| `npm run controlla-gdd` | confronta le tabelle di `docs/GDD.md` e `docs/survivor/GDD-survivor.md` con i numeri di `src/data/` e segnala ogni differenza (da lanciare a fine tappa; se segnala qualcosa, il GDD o i dati vanno aggiornati) |
 | `npm run prova` | prova automatica su desktop, iPhone e Android emulati, su una porta libera; screenshot in `prove/` (la prima volta: `npx playwright install chromium`) |
 | `npm run app` | build + copia nei progetti nativi (Capacitor) |
 | `npm run ios` / `npm run android` | come `app`, poi apre Xcode o Android Studio |
@@ -56,7 +56,8 @@ DEATH'S LUMEN/
   gioco/                           questo repository (su GitHub: Death-s-Lumen)
     CLAUDE.md  LEGGIMI.md
     docs/                          GDD.md, lore.md, decisioni.md, bilanciamento.md, roadmap.md,
-                                   asset_da_creare.md, proposte/ (archivio)
+                                   asset_da_creare.md, proposte/ (archivio),
+                                   survivor/ (GDD e bilanciamento del survivor, congelati)
     src/
       main.ts                      avvio di Phaser in pixel perfect e collegamento al telefono
       scene/                       le scene di Phaser: Avvio, Menu (schede), Gioco (il survivor), Stanze (il gioco a stanze, solo sul link di prova)

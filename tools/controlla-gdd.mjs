@@ -1,4 +1,4 @@
-// Controllo del GDD: confronta docs/GDD.md con i valori veri del gioco.
+// Controllo del GDD: confronta docs/GDD.md e docs/survivor/GDD-survivor.md con i valori veri del gioco.
 //
 // Come funziona: carica gli stessi file che usa il gioco (src/data/ e src/sistema/pixel.ts,
 // trascritti in una cartella temporanea con il compilatore TypeScript già installato), legge i numeri
@@ -48,7 +48,8 @@ const SZ = D('stanze'); // gioco a stanze (pivot del 12/11)
 const GL = D('glossario'); // il glossario: nomi dei numeri, parole vietate (16/11)
 const AS = D('armi-stanze'); // le armi del gioco a stanze: 5 livelli, danno a intervallo (14/11)
 
-const gdd = fs.readFileSync(path.join(radice, 'docs/GDD.md'), 'utf8');
+// il GDD è in due file: il gioco a stanze (docs/GDD.md) e il survivor congelato (docs/survivor/GDD-survivor.md)
+const gdd = ['docs/survivor/GDD-survivor.md', 'docs/GDD.md'].map((f) => fs.readFileSync(path.join(radice, f), 'utf8')).join('\n');
 const righeGdd = gdd.split('\n');
 const diff = [];
 let controlli = 0;
