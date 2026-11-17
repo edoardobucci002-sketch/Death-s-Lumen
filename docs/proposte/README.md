@@ -18,4 +18,6 @@ Copie in testo delle proposte approvate da Edoardo, nate come documenti su claud
 
 - **Rarità delle carte** (`GyiYMXN74Y1YLed6DfoEh6`, 17/11, eliminato il 17/11): questionario di 8 domande su che cosa vuol dire rarità, gradi, colori, probabilità, Specchio, leve e bot. Risposte applicate: vedi [decisioni.md](../decisioni.md) del 17/11 e il GDD («Rarità»).
 
+- **La mappa del Mondo** (`8SMnkr6GwPgctL1a4had93`, 17/11, eliminato il 17/11): prima «Fila o mappa?» (fila alla Hades contro mappa alla Isaac), poi, scelta la mappa, 10 domande su ricompense, stanze, Campanaro e Boss, ritorno, minimappa, stanze speciali, porte, piante e Boss del Mondo 1. Risposte applicate: vedi [decisioni.md](../decisioni.md) del 17/11.
+
 Altri riferimenti esterni (v0 giocabile e suo compendio) sono in fondo a [decisioni.md](../decisioni.md).
