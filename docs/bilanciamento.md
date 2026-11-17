@@ -42,6 +42,10 @@ Ultima simulazione (4/11, dopo le Unioni, 12 notti per personaggio = 48 notti pe
 
 ## Registro
 
+### 17/11 — Il Campanaro, mini-boss del Mondo 1 (decisioni di Edoardo; numeri di Claude, *da rivedere*; il survivor non cambia)
+- Nuovo `CAMPANARO` (`src/data/campanaro.ts`): salute 3000, danni 20/20/25, raggi 150 e 260, avvisi 1 / 0,7 / 0,8 s. La fetta ha una quarta stanza: l'arena.
+- Bot, 8 partite (`npm run sim-stanze -- 8`), con salute 1200: 1 fetta su 8; il Campanaro battuto in circa 10 s (obiettivo 60–90 s), quindi salute a 3000. Con 3000: **0 fette su 8**, tutti caduti nella stanza 4 dopo 4–10 s. Il bot ci arriva con **32 di salute in media** (da 3 a 58, dopo 32 di danno nella stanza 3) e i colpi del Campanaro fanno 20–25: la durata obiettivo non si può misurare finché non arriva con più salute. Armi: la Lanterna fa il 64% del danno. 8 partite sono poche (±17 punti): è una prima lettura.
+
 ### 16/11 — Dopo la prima prova della cripta: 1 o 2 rompibili, frammenti da subito, porte decise all'ingresso (scelte di Edoardo)
 - `ROMPIBILI_STANZE.quanti` da 1 a 2 (era da 2 a 4); `ROMPIBILI_STANZE.vittorie` 0 (nuovo: i frammenti escono da subito; nel survivor resta 1). Le porte si decidono all'ingresso con un caso loro: la sequenza delle carte non è più quella di prima a parità di seme.
 - `npm run sim-stanze` (24 partite, semi 2001–2024): **fetta completata 24 volte su 24**, salute alla fine 33. Attenzione: la misura comprende anche i ritocchi ai potenziali degli Echi di un'altra sessione, non ancora salvati quando è stata lanciata; danno subito per stanza 17, 21 e 31; Lanterna 69% del danno.
@@ -841,3 +845,10 @@ Nuovi o cambiati, tutti *da rivedere*: `REAZIONI.etichetta` (`ingrandimento` da 
 - Esperienza 2 + 3 L + L² (prima ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋); salute dei nemici +28% al minuto invece di +34%; Seth 5500 di salute invece di 3200 (poi 3600 con le mosse nuove); Lanterna +25% (da 14, 19, 25, 35 a 18, 24, 32, 44), perché con la curva dell'esperienza più lenta il Lampionaio non vinceva mai.
 - Motivo: il bot arrivava al livello 100 e tre personaggi su quattro vincevano senza sforzo. Livello medio con il bot dopo il ritocco: circa 7 al primo minuto, 28 al quinto, 60–70 al decimo, 70–90 all'alba (prima 13, 45, 77, 100).
 - Il bot schiva lo scatto di Seth e gira intorno ai nemici con Lanterna e Pala: senza, il Lampionaio sembrava debolissimo per colpa del bot.
+
+
+## 17/11 · Falce al potenziale (ruba salute)
+
+`POTENZIALI.falce`: furto 10% del danno, tetto 20% della salute massima. `npm run sim-stanze -- 8 potenziali` (8 fette per Eco, seme di default): la Falce al livello 5 completa 8/8 con il 98% di salute alla fine (le altre fra 43% e 84%), 24% del danno e 10,4 di danno al secondo. Il furto è molto forte contro lo scarso danno ricevuto: se dopo la prova a mano è troppo, scendere a 5% o abbassare il tetto. Campione piccolo: ±12 punti.
+
+**Seconda versione (17/11, decisione di Edoardo): il furto vale solo a salute piena.** `npm run sim-stanze -- 16 potenziali`: la Falce al livello 5 completa 16/16 con il **71%** di salute alla fine (era 98%), dentro il gruppo degli altri Echi (42–83%); 24% del danno, 10,5 al secondo. Gerico 15/16 (44%), Velo funebre 15/16, Lapide 15/16. Serie normale (`npm run sim-stanze -- 48`): 44/48 fette completate, cadute tutte nella stanza 3, salute media alla fine 36; la Lanterna fa il 69% del danno, la Falce il 4% nelle 4 partite in cui c'era.
