@@ -45,6 +45,7 @@ const A = D('armi'), N = D('nemici'), AB = D('abilita'), P = D('personaggi'), DO
 const R = D('rosario'), U = D('unioni'), ST = D('stati'), PR = D('progressione'), SO = D('sopravvivenza');
 const OG = D('oggetti'), W = D('mondo'), E = D('effetti'), H = D('hud'), PX = D('pixel');
 const SZ = D('stanze'); // gioco a stanze (pivot del 12/11)
+const GL = D('glossario'); // il glossario: nomi dei numeri, parole vietate (16/11)
 const AS = D('armi-stanze'); // le armi del gioco a stanze: 5 livelli, danno a intervallo (14/11)
 
 const gdd = fs.readFileSync(path.join(radice, 'docs/GDD.md'), 'utf8');
@@ -830,7 +831,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   for (const [nome, modello, ...attesi] of RIGHE_ROMPIBILI) conRiga(tr, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
 
   // le armi del gioco a stanze: tabelle «#### Stanze · <Nome>», con il danno scritto «minimo–massimo»
-  const COLONNE_STANZE = { 'Ricarica (s)': 'ricarica', 'Quantità': 'quantita', Raggio: 'raggio', 'Ampiezza arco (°)': 'ampiezza', Lunghezza: 'lunghezza', 'Durata (s)': 'durata', Trapassa: 'trapassa', 'Rotazione (giri/s)': 'giri', Rimbalzi: 'rimbalzi', 'Colpo alle spalle': 'spalle', 'Colpo doppio': 'doppio', 'Cecità (s)': 'cecita', 'Mira sbagliata (gradi)': 'sviamento' };
+  const COLONNE_STANZE = { 'Ricarica (s)': 'ricarica', Colpi: 'quantita', Area: 'raggio', Portata: 'raggio', 'Ampiezza arco (°)': 'ampiezza', 'Durata (s)': 'durata', Trapassa: 'trapassa', 'Rotazione (giri/s)': 'giri', Rimbalzi: 'rimbalzi', 'Colpo alle spalle': 'spalle', 'Colpo doppio': 'doppio', 'Cecità (s)': 'cecita', 'Mira sbagliata (gradi)': 'sviamento' };
   for (const arma of [AS.LANTERNA_STANZE, ...AS.ECHI_STANZE]) {
     const nome = `Stanze · ${arma.nome}`, t = tabella('#### ' + nome);
     // la Lama di luce rifatta non colpisce: danno, ricarica, lunghezza e spalle sono segnaposto per i tipi, la tabella ha solo cecità e mira
@@ -842,7 +843,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     for (const k of Object.keys(arma.livelli[0])) {
       if (segnaposto.includes(k)) continue;
       if (k !== 'testo' && k !== 'danno' && k !== 'dannoMassimo' && !Object.values(COLONNE_STANZE).includes(k)) diff.push(`${nome}: il campo «${k}» non ha una colonna`);
-      else if (k in arma.livelli[0] && Object.entries(COLONNE_STANZE).some(([c, v]) => v === k && !t.colonne.includes(c))) diff.push(`${nome}: manca la colonna del campo «${k}»`);
+      else if (Object.values(COLONNE_STANZE).includes(k) && !Object.entries(COLONNE_STANZE).some(([c, v]) => v === k && t.colonne.includes(c))) diff.push(`${nome}: manca la colonna del campo «${k}»`);
     }
     t.righe.forEach((r, i) => {
       const L = arma.livelli[i];
@@ -858,6 +859,16 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
         vero(`${nome} liv. ${i + 1}: ${col}`, typeof dato === 'boolean' ? g === dato : uguali(g, dato), `GDD ${r[col]} ≠ dati ${dato}`);
       }
     });
+  }
+
+  // il glossario: nei testi del gioco a stanze (carte, Potenziali) e nella sua parte del GDD non compaiono le parole vietate
+  {
+    const testi = [];
+    for (const arma of [AS.LANTERNA_STANZE, ...AS.ECHI_STANZE]) arma.livelli.forEach((L, i) => testi.push([`${arma.nome} liv. ${i + 1}`, L.testo]));
+    const i0 = gdd.indexOf('**Le armi nelle stanze: 5 livelli'), i1 = gdd.indexOf('\n## ', i0 + 10);
+    gdd.slice(i0, i1 < 0 ? undefined : i1).split('\n').forEach((riga, n) => testi.push([`GDD, «Le armi nelle stanze», riga ${n + 1}`, riga]));
+    for (const [dove, testo] of testi) for (const v of GL.VIETATE) if (v.cerca.test(String(testo))) diff.push(`Glossario, ${dove}: «${String(testo).match(v.cerca)[0]}» non è nel glossario, usa ${v.usa}`);
+    controlli += testi.length;
   }
 
   const ta = tabella('| Valore dell\'attacco | Numero |');

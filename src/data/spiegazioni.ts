@@ -4,6 +4,7 @@
  */
 import { REAZIONI, STATI, type IdAffinita } from './stati';
 import { GRAZIA } from './sopravvivenza';
+import { CAMPI_GLOSSARIO } from './glossario';
 import { BASE } from './personaggi';
 import { animeDono, effettoDono, ricaricaDono, type IdDono, type Passivo } from './doni';
 
@@ -59,20 +60,8 @@ export function reazioneTra(a: IdAffinita, b: IdAffinita): InfoReazione | undefi
   return INFO_REAZIONI.find((r) => r.stati[1] === null ? r.stati[0] === a || r.stati[0] === b : r.stati.includes(a) && r.stati.includes(b));
 }
 
-/** Nomi dei numeri delle armi sulle strisce; meglioBasso = scendere è un miglioramento. */
-export const CAMPI_ARMA: Record<string, { nome: string; unita?: string; meglioBasso?: boolean }> = {
-  danno: { nome: 'Danno' },
-  ricarica: { nome: 'Ricarica', unita: ' s', meglioBasso: true },
-  quantita: { nome: 'Quantità' },
-  raggio: { nome: 'Area' },
-  ampiezza: { nome: 'Ampiezza' },
-  lunghezza: { nome: 'Portata' },
-  durata: { nome: 'Durata', unita: ' s' },
-  trapassa: { nome: 'Trapassa' },
-  giri: { nome: 'Giri' },
-  rimbalzi: { nome: 'Rimbalzi' },
-  anime: { nome: 'Anime' },
-};
+/** Nomi dei numeri delle armi sulle strisce, dal glossario (src/data/glossario.ts); meglioBasso = scendere è un miglioramento. */
+export const CAMPI_ARMA = CAMPI_GLOSSARIO;
 
 /**
  * Il dato principale di ogni dono passivo a un dato livello. Dove il valore di partenza è piccolo (la raccolta: 40 px)
@@ -91,7 +80,7 @@ export const DATI_DONI: Record<IdDono, (q: Passivo, l: number, metaRaccolta?: nu
   calamita: (q, l, m = 0) => [{ nome: 'Raccolta', valore: `${Math.round(BASE.raccolta * (1 + effettoDono(q, l) + m))} px`, daZero: true }, { nome: 'Anime', valore: piu(animeDono(q, l)) }],
   erbeAmare: (q, l) => [{ nome: 'Salute/s', valore: `+${virgola(effettoDono(q, l))}` }],
   scudoDiFerro: (q, l) => [{ nome: 'Danno subito', valore: meno(effettoDono(q, l)) }],
-  specchio: (q, l) => [{ nome: 'Quantità', valore: `+${effettoDono(q, l)}` }],
+  specchio: (q, l) => [{ nome: NOME_COLPI_IN_PIU, valore: `+${effettoDono(q, l)}` }],
   ceraVotiva: (q, l) => [{ nome: 'Durata', valore: piu(effettoDono(q, l)) }],
   chiodoDiBara: (q, l) => [{ nome: 'Critico', valore: percento(effettoDono(q, l)) }],
   lacrimaDiLumen: (q, l) => [{ nome: 'Sorsi', valore: `+${effettoDono(q, l)}` }],
@@ -120,7 +109,7 @@ export const segnoPercento = (v: number): string => (Math.abs(v) < 0.0005 ? '0%'
 
 /** Nella pausa c'è spazio per parole più chiare di quelle corte delle strisce. Da rivedere. */
 export const NOMI_CHIARI: Record<string, string> = { Ricarica: 'Attesa colpi', Quantità: 'Colpi', Durata: 'Durata zone' };
-export const NOME_COLPI_IN_PIU = 'Colpi extra'; // la Quantità come bonus: Specchio e Specchio rotto
+export const NOME_COLPI_IN_PIU = 'Colpi extra'; // i Colpi come bonus: Specchio e Specchio rotto
 export const chiaro = (nome: string): string => NOMI_CHIARI[nome] ?? nome;
 
 export const AFFINITA_TUTTE = Object.keys(INFO_AFFINITA) as IdAffinita[];

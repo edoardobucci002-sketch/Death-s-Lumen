@@ -83,6 +83,7 @@ export const BARRA_SALUTE = {
   bordo: '#120606',
   danno: '#d98a2b', // il pezzo appena perso, ambra, che si consuma (le cifre bianche ci si leggono)
   cura: '#6fbf4a', // il pezzo appena guadagnato, verde, che il rosso riempie
+  extra: '#e8d9a0', // la salute in più (Falce al potenziale): un tratto chiaro in fondo alla barra, che si consuma per primo
   // il valore mostrato raggiunge quello vero in «durata» secondi; mai più lento di «minimo» della salute massima al secondo
   scorrimento: { durata: 0.5, minimo: 0.3 },
 } as const;

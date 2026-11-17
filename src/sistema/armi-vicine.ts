@@ -165,7 +165,10 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
     const d = Math.hypot(ex, ey) || 1;
     // Falce di Seth: la soglia dipende dallo stato che il nemico aveva prima del colpo (la Falce stessa maledice)
     const soglia = o.maledetto(j) ? U.falce.maledetti : U.falce.sotto;
+    const prima = o.salute[j];
     this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
+    // potenziale (gioco a stanze): ruba una parte del danno che ha fatto davvero
+    if (this.potenziale[F.falce] === 1) this.rubato += (prima - Math.max(0, o.salute[j])) * POTENZIALI.falce.furto;
     if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < soglia * o.saluteMassima[j]) {
       this.dannoFonti[F.falce] += o.salute[j];
       o.colpisci(j, o.salute[j], 0, 0, 0);

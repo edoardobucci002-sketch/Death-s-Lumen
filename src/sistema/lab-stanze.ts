@@ -10,7 +10,7 @@
  * romperli, ridisporli, far uscire un frammento, accendere il Bagliore.
  */
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
-import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
+import { ECHI_STANZE, LANTERNA_STANZE, POTENZIALI } from '../data/armi-stanze';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { ARTE_STANZA, areaCamminabile, creaStanza } from './stanza';
 import { ROMPIBILI } from '../data/rompibili';
@@ -28,7 +28,7 @@ export class LabStanze {
 
   stato(): {
     x: number; y: number; larghezza: number; altezza: number; fermo: boolean; colpi: number;
-    salute: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
+    salute: number; extra: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; pozze: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
     quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
     stanza: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
@@ -36,7 +36,7 @@ export class LabStanze {
     const s = this.s, n = s.nemici;
     return {
       x: Math.round(s.x), y: Math.round(s.y), larghezza: STANZA.larghezza, altezza: STANZA.altezza, fermo: s.pausaLab, colpi: s.attacco.colpi,
-      salute: Math.round(s.salute), saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
+      salute: Math.round(s.salute), extra: Math.round(s.extra), saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), pozze: n.pozze, uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
       quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto,
@@ -198,6 +198,11 @@ export class LabStanze {
   /** Porta la salute a n (per provare la caduta). */
   salute(n: number): void {
     this.s.salute = Math.max(1, Math.min(this.s.saluteMassima, n));
+  }
+
+  /** Dà salute in più (Falce al potenziale) fino al tetto: per vedere il tratto in fondo alla barra e come assorbe i colpi. */
+  salutePiu(): void {
+    this.s.extra = POTENZIALI.falce.tetto * this.s.saluteMassima;
   }
 
   grazia(): void {

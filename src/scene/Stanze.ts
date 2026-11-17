@@ -42,6 +42,7 @@ import { AbilitaStanza } from '../sistema/abilita-stanza';
 import { ARTE_JOYSTICK, preparaJoystickStanze } from '../sistema/joystick-stanze';
 import { NemiciStanza } from '../sistema/nemici-stanza';
 import { BarraSalute } from '../sistema/barra-salute';
+import { POTENZIALI } from '../data/armi-stanze';
 import { vibra } from '../sistema/mobile';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
@@ -104,6 +105,7 @@ export class Stanze extends Phaser.Scene {
   // passo 4: salute, ferite, Grazia, morte, nemici e ondate
   salute = 0;
   saluteMassima = 0;
+  extra = 0; // salute in più (Falce al potenziale): assorbe i colpi prima della salute, dura tutta la Veglia, al massimo POTENZIALI.falce.tetto della massima
   immortale = false; // LAB
   morto = false;
   grazia = 0; // secondi di Grazia rimasti
@@ -171,6 +173,7 @@ export class Stanze extends Phaser.Scene {
     this.fiamma = 1;
     this.casoLuce = new Caso(STANZA.seme);
     this.velocita = BASE.velocita * (1 + this.pg.velocita);
+    this.extra = 0;
     this.saluteMassima = this.salute = BASE.salute + this.pg.salute; // nel gioco a stanze niente rigenerazione (da rivedere)
     this.morto = this.immortale = false;
     this.ondateAutomatiche = true;
@@ -392,8 +395,13 @@ export class Stanze extends Phaser.Scene {
     suona('danno');
     vibra('media');
     if (this.immortale) return;
-    this.sim.ferita(Math.min(this.salute, danno * (1 - this.scudo)));
-    this.salute = Math.max(0, this.salute - danno * (1 - this.scudo));
+    // la salute in più va via per prima
+    let netto = danno * (1 - this.scudo);
+    const assorbito = Math.min(this.extra, netto);
+    this.extra -= assorbito;
+    netto -= assorbito;
+    this.sim.ferita(Math.min(this.salute, netto));
+    this.salute = Math.max(0, this.salute - netto);
     if (this.salute <= 0) {
       this.morto = true;
       this.attesaFine = C.attesaFine;
@@ -512,6 +520,17 @@ export class Stanze extends Phaser.Scene {
     // le zone che curano (Acqua santa al potenziale): dentro una pozza si recupera salute
     const cura = this.arsenale.cura(this.saluteMassima);
     if (cura > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + cura * dt);
+    // la Falce al potenziale ruba salute: prima riempie quella che manca, il resto diventa salute in più
+    if (this.arsenale.rubato > 0) {
+      let r = this.arsenale.rubato;
+      this.arsenale.rubato = 0;
+      if (!this.morto) {
+        const manca = Math.min(r, this.saluteMassima - this.salute);
+        this.salute += manca;
+        r -= manca;
+        this.extra = Math.min(POTENZIALI.falce.tetto * this.saluteMassima, this.extra + r);
+      }
+    }
     this.nemici.lama = this.arsenale.lama(); // la Lama di luce accieca chi schivi
     const danno = this.nemici.aggiorna(dt, this.x, this.y, mezzaL, mezzaA);
     if (danno > 0) this.ferisci(danno);
@@ -688,7 +707,7 @@ export class Stanze extends Phaser.Scene {
     else if (this.rompibili.bagliore > 0 && Math.floor(this.orologio * (this.rompibili.bagliore < BAGLIORE.ultimi ? BAGLIORE.lampiFine : BAGLIORE.lampi)) % 2 === 0) this.giocatore.setTint(BAGLIORE.alone).setTintMode(Phaser.TintModes.ADD);
     else this.giocatore.clearTint();
     this.scrittaGrazia.setPosition(px, py - C.scritta.sopra).setVisible(this.scrittaVita > 0);
-    this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto);
+    this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto, this.extra);
     this.nemici.disegna(cam, px, py);
     this.arsenale.disegna();
     this.abilita.disegna(px, py - COLPI.corpo);

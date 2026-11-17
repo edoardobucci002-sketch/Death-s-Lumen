@@ -10,6 +10,7 @@ import { CARTE } from '../data/progressione';
 import { ROSARIO } from '../data/rosario';
 import { iconaUnione, LIVELLO_ARMA_UNIONE, livelloDonoUnione, unioneDi, UNIONI, type IdUnione, type Unione } from '../data/unioni';
 import { PASSIVI, type IdDono, type Passivo } from '../data/doni';
+import { nomeCampo, postoCampo, TAG } from '../data/glossario';
 import { CAMPI_ARMA, chiaro, DATI_DONI, gradoDevozione, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { CARTA_STANZA, STRISCIA } from '../data/hud';
 import { INTERRUTTORI } from './interruttori';
@@ -64,9 +65,9 @@ function scriviCampo(livello: Record<string, number | boolean | string>, k: stri
 export function voceArma(arma: Arma, livello: number, unita: boolean, unione?: { u: Unione; stato: string }): VoceDettaglio {
   const ora = arma.livelli[livello - 1] as unknown as Record<string, number | boolean | string>;
   const numeri: VoceDettaglio['numeri'] = [];
-  for (const k of Object.keys(ora)) {
+  for (const k of Object.keys(ora).sort((a, b) => postoCampo(a) - postoCampo(b))) {
     const campo = CAMPI_ARMA[k], v = ora[k];
-    if (campo && typeof v === 'number') numeri.push({ nome: chiaro(campo.nome), valore: scriviCampo(ora, k) + (campo.unita ?? '') });
+    if (campo && typeof v === 'number') numeri.push({ nome: chiaro(nomeCampo(k, ora)), valore: scriviCampo(ora, k) + (campo.unita ?? '') });
   }
   const info = INFO_AFFINITA[AFFINITA_ARMI[arma.id]], fatta = unita ? unioneDi(arma.id) : undefined;
   const righe: Riga[] = [
@@ -82,23 +83,26 @@ export function voceDono(q: Passivo, livello: number, metaRaccolta = 0): VoceDet
   return { chiave: q.id, nome: q.nome, icona: q.icona, livello, massimo: q.massimo, unita: false, numeri: DATI_DONI[q.id](q, livello, metaRaccolta).map((n) => ({ valore: n.valore, nome: n.nome === 'Quantità' ? NOME_COLPI_IN_PIU : chiaro(n.nome) })), righe: [{ testo: SPIEGA_DONI[q.id] }] };
 }
 
-const tagLivello = (l: number, massimo: number, nuovo: string): string => (l === 1 ? nuovo : `Liv ${l - 1} › ${l === massimo ? 'MAX' : l}`);
+/** Il tag in alto: «Nuovo …» al primo livello; poi «Liv 2 › 3»; nel gioco a stanze l'ultimo livello è il «Potenziale» (glossario). */
+const tagLivello = (l: number, massimo: number, nuovo: string, stanze = false): string =>
+  l === 1 ? nuovo : stanze && l === massimo ? TAG.potenziale : `Liv ${l - 1} › ${l === massimo ? 'MAX' : l}`;
 
 function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
   const livello = (k: number): Record<string, number | boolean | string> => ({ ...arma.livelli[k - 1], ...c.numeriArma?.(arma, k) });
   const ora = livello(l);
+  const stanze = 'dannoMassimo' in ora; // le armi del gioco a stanze hanno il danno a intervallo
   const prima = l > 1 ? livello(l - 1) : null;
   const dati: Dato[] = [];
   let novita = l === 1; // un'abilità nuova (non un numero) si racconta a parole
-  for (const k of Object.keys(ora)) {
+  for (const k of Object.keys(ora).sort((a, b) => postoCampo(a) - postoCampo(b))) {
     const campo = CAMPI_ARMA[k], v = ora[k];
     if (typeof v === 'boolean') novita ||= !!prima && v !== prima[k];
     if (!campo || typeof v !== 'number') continue;
     const unita = campo.unita ?? '';
     if (!prima) {
-      if (k === 'danno' || k === 'ricarica' || (k === 'quantita' && v > 1)) dati.push({ nome: campo.nome, dopo: scriviCampo(ora, k) + unita, tono: 'bene' });
+      if (k === 'danno' || k === 'ricarica' || (k === 'quantita' && v > 1)) dati.push({ nome: nomeCampo(k, ora), dopo: scriviCampo(ora, k) + unita, tono: 'bene' });
     } else if (scriviCampo(prima, k) !== scriviCampo(ora, k)) {
-      dati.push({ nome: campo.nome, prima: scriviCampo(prima, k), dopo: scriviCampo(ora, k) + unita, tono: 'bene' });
+      dati.push({ nome: nomeCampo(k, ora), prima: scriviCampo(prima, k), dopo: scriviCampo(ora, k) + unita, tono: 'bene' });
     }
   }
   const aff = AFFINITA_ARMI[arma.id], info = INFO_AFFINITA[aff];
@@ -121,7 +125,7 @@ function schedaArma(arma: Arma, l: number, c: Contesto): Scheda {
   if (u && (l === LIVELLO_ARMA_UNIONE || c.doni[u.dono])) {
     righe.push({ testo: `Al liv ${LIVELLO_ARMA_UNIONE}, con ${PASSIVI.find((q) => q.id === u.dono)!.nome} al liv ${livelloDonoUnione(u.dono)}: ${u.nome}`, tono: 'reazione' });
   }
-  return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, arma.livelli.length, 'Nuova arma'), dati, righe };
+  return { nome: arma.nome, icona: arma.icona, categoria: 'arma', tag: tagLivello(l, arma.livelli.length, stanze ? TAG.nuovoEco : 'Nuova arma', stanze), dati, righe };
 }
 
 /** Che cosa raccontano le strisce del dono d. */

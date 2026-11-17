@@ -40,7 +40,7 @@ export class BarraSalute {
   }
 
   /** Disegno: (px, py) i piedi del personaggio, già arrotondati. */
-  disegna(px: number, py: number, salute: number, massima: number, dt: number, visibile: boolean): void {
+  disegna(px: number, py: number, salute: number, massima: number, dt: number, visibile: boolean, extra = 0): void {
     const b = BARRA_SALUTE, z = this.z;
     const vera = Math.max(0, Math.min(salute, massima)), max = Math.max(1, Math.round(massima));
     this.vista = scorri(this.vista, vera, massima, dt);
@@ -48,7 +48,8 @@ export class BarraSalute {
     const testo = (quanteCifre(ora) + 1 + quanteCifre(max)) * 4 - 1; // cifre larghe 3 più una colonna vuota, l'ultima non conta
     const L = Math.max(b.larghezza, testo + 4), dentro = L - 2;
     const pxVista = Math.round(dentro * Math.min(1, this.vista / max)), pxVera = Math.round(dentro * Math.min(1, vera / max));
-    const chiave = ((ora * 10000 + max) * 1000 + pxVista) * 1000 + pxVera;
+    const pxExtra = Math.min(dentro, Math.round(dentro * Math.max(0, extra) / max)); // salute in più: un tratto chiaro in fondo (esiste solo a salute piena)
+    const chiave = (((ora * 10000 + max) * 1000 + pxVista) * 1000 + pxVera) * 100 + pxExtra;
     if (chiave !== this.mostrata) {
       this.mostrata = chiave;
       this.numeri.setText(`${ora}/${max}`);
@@ -59,6 +60,7 @@ export class BarraSalute {
       g.fillStyle(esadecimale(b.vuoto)).fillRect(1, 1, dentro, b.altezza - 2);
       if (rosso > 0) g.fillStyle(esadecimale(b.rosso)).fillRect(1, 1, rosso, b.altezza - 2);
       if (scia > 0) g.fillStyle(esadecimale(pxVista > pxVera ? b.danno : b.cura)).fillRect(1 + rosso, 1, scia, b.altezza - 2);
+      if (pxExtra > 0) g.fillStyle(esadecimale(b.extra)).fillRect(1 + dentro - pxExtra, 1, pxExtra, b.altezza - 2);
       this.testoX = Math.floor((L - testo) / 2);
     }
     const sx = px - Math.floor((this.larga * z) / 2), sy = py + b.distanza;

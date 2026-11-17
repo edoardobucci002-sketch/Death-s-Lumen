@@ -115,6 +115,7 @@ export abstract class ArsenaleColpo {
   sorsiGuadagnati = 0; // sorsi dell'Acquasantiera: li legge e li azzera la scena
   fiaschettaPiena = false; // la scena lo aggiorna a ogni passo: con la fiaschetta piena il sorso diventa una pozza che cura
   pozzeCuranti = 0; // pozze che hanno curato in questa notte (per la simulazione)
+  rubato = 0; // salute rubata dalla Falce al potenziale, non ancora data al personaggio (la scena la preleva a ogni passo)
   curaPozzaOra = 0; // salute al secondo che danno le pozze adesso (l'ultimo cura(); per la simulazione)
   anime: Anime | null = null; // per i Fuochi erranti e il Corvo
   rompibili: Rompibili | null = null; // le armi li rompono con il loro impatto

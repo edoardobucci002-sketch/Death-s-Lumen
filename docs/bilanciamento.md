@@ -841,3 +841,8 @@ Nuovi o cambiati, tutti *da rivedere*: `REAZIONI.etichetta` (`ingrandimento` da 
 - Esperienza 2 + 3 L + L² (prima ⌊4 + 3,2 L + 2 × max(0, L − 12)^1,8⌋); salute dei nemici +28% al minuto invece di +34%; Seth 5500 di salute invece di 3200 (poi 3600 con le mosse nuove); Lanterna +25% (da 14, 19, 25, 35 a 18, 24, 32, 44), perché con la curva dell'esperienza più lenta il Lampionaio non vinceva mai.
 - Motivo: il bot arrivava al livello 100 e tre personaggi su quattro vincevano senza sforzo. Livello medio con il bot dopo il ritocco: circa 7 al primo minuto, 28 al quinto, 60–70 al decimo, 70–90 all'alba (prima 13, 45, 77, 100).
 - Il bot schiva lo scatto di Seth e gira intorno ai nemici con Lanterna e Pala: senza, il Lampionaio sembrava debolissimo per colpa del bot.
+
+
+## 17/11 · Falce al potenziale (ruba salute)
+
+`POTENZIALI.falce`: furto 10% del danno, tetto 20% della salute massima. `npm run sim-stanze -- 8 potenziali` (8 fette per Eco, seme di default): la Falce al livello 5 completa 8/8 con il 98% di salute alla fine (le altre fra 43% e 84%), 24% del danno e 10,4 di danno al secondo. Il furto è molto forte contro lo scarso danno ricevuto: se dopo la prova a mano è troppo, scendere a 5% o abbassare il tetto. Campione piccolo: ±12 punti.

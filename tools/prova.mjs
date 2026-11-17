@@ -1351,6 +1351,30 @@ for (const [nome, disp] of [
   console.log(`${errori.length ? '✗' : '✓'} Lama di luce: acceca dal LAB (${n} accecati)${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
+// Salute in più della Falce (17/11): sta in cima alla salute, assorbe i colpi per prima e non scende sotto zero
+{
+  const errori = [];
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const pag = await ctx.newPage();
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?stanze`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
+  const L = (f, ...a) => pag.evaluate(([f, a]) => window.__dl.scene.getScene('Stanze').lab[f](...a), [f, a]);
+  await L('ondateAutomatiche', false);
+  await L('svuota');
+  await L('cura');
+  await L('salutePiu');
+  const prima = await L('stato');
+  await L('ferita');
+  const dopo = await L('stato');
+  if (!(prima.extra > 0)) errori.push('la salute in più non compare');
+  if (!(dopo.extra < prima.extra)) errori.push('la salute in più non assorbe il colpo');
+  if (dopo.salute !== prima.salute) errori.push('il colpo ha tolto salute normale mentre c\'era salute in più');
+  await ctx.close();
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} salute in più: ${prima?.extra} › ${dopo?.extra}, salute ${prima?.salute} › ${dopo?.salute}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
 // Bot del gioco a stanze (14/11): gioca la fetta da solo, veloce e senza disegno; a parità di seme gioca la stessa partita
 {
   const errori = [];
