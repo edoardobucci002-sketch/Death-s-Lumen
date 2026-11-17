@@ -10,6 +10,10 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 17/11 — Rarità delle carte (Fioca 75%, Chiara 20%, Ardente 5%)
+
+`npm run sim-stanze -- 48` (metà carte preferite, metà a caso), prima simulazione con la fiaschetta automatica e con le rarità: **fetta completata 8/48**; nessuno cade nelle stanze 1–3, **40 cadono nella stanza 4** (il Campanaro), dopo 16 s in media e 82 di danno subito; salute all'uscita della stanza 3: 41. Carte viste: **Fioca 75%, Chiara 22%, Ardente 3%** su 441 (prese: 72%, 20%, 8%); l'Ardente esce meno del 5% perché oggi gli Ardenti sono solo Lapide e Specchio, e spesso la porta non li può dare. Danno: Lanterna 67%, Corvo 13%, Lapide 12% (in 11 partite), Campana 11%, Falce 3%. Prima (31 cadute su 48 nella stanza 4) c'erano altre estrazioni delle carte e niente fiaschetta automatica: il confronto non dice quale delle due cose pesa. Campione da 48: ±12 punti.
+
 ### 17/11 — Falce al potenziale (ruba salute)
 
 `POTENZIALI.falce`: furto 10% del danno, tetto 20% della salute massima. `npm run sim-stanze -- 8 potenziali` (8 fette per Eco, seme di default): la Falce al livello 5 completa 8/8 con il 98% di salute alla fine (le altre fra 43% e 84%), 24% del danno e 10,4 di danno al secondo. Il furto è molto forte contro lo scarso danno ricevuto: se dopo la prova a mano è troppo, scendere a 5% o abbassare il tetto. Campione piccolo: ±12 punti.
