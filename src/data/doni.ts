@@ -16,7 +16,7 @@ export interface Passivo {
 
 /*
  * Doni a 3 livelli (decisione di Edoardo del 10/11, da rivedere): i doni che arrivavano a 4 o 5 arrivano a 3,
- * con lo stesso effetto al massimo di prima. Specchio (1 livello) e Campanella d'argento (2) restano come sono; il Calice riverso ha 3 livelli dal 17/11.
+ * con lo stesso effetto al massimo di prima. Dal 17/11 (Edoardo) anche Specchio, Calice riverso e Campanella d'argento hanno 3 livelli: ogni dono ne ha 3.
  */
 export const PASSIVI: Passivo[] = [
   { id: 'cuoreDiCera', nome: 'Cuore di cera', icona: 'Icona_Cuore_di_cera', massimo: 3, totale: 100, testo: '+100 salute massima in 3 livelli.' },
@@ -28,12 +28,12 @@ export const PASSIVI: Passivo[] = [
   { id: 'calamita', nome: 'Calamita', icona: 'Icona_Calamita', massimo: 3, totale: 5, anime: 0.25, testo: '+500% raggio di raccolta e +25% anime in 3 livelli.' },
   { id: 'erbeAmare', nome: 'Erbe amare', icona: 'Icona_Erbe_amare', massimo: 3, totale: 1.25, testo: '+1,25 salute al secondo in 3 livelli.' },
   { id: 'scudoDiFerro', nome: 'Scudo di ferro', icona: 'Icona_Scudo_di_ferro', massimo: 3, totale: 0.24, testo: '−24% danno subito in 3 livelli.' },
-  { id: 'specchio', nome: 'Specchio', icona: 'Icona_Specchio', massimo: 1, totale: 1, testo: '+1 proiettile, nube, fiala, fuoco o falce.' },
+  { id: 'specchio', nome: 'Specchio', icona: 'Icona_Specchio', massimo: 3, totale: 3, testo: '+1 colpo a ogni arma per livello.' }, // 3 livelli dal 17/11 (Edoardo); +1 colpo per livello: valore di Claude, da rivedere
   { id: 'ceraVotiva', nome: 'Cera votiva', icona: 'Icona_Cera_votiva', massimo: 3, totale: 0.75, testo: '+75% durata di zone e stati in 3 livelli.' },
   { id: 'chiodoDiBara', nome: 'Chiodo di bara', icona: 'Icona_Chiodo_di_bara', massimo: 3, totale: 0.3, testo: '+30% probabilità di colpo critico (danno doppio) in 3 livelli.' },
   { id: 'lacrimaDiLumen', nome: 'Calice riverso', icona: 'Icona_Lacrima_di_lumen', // nome nuovo del 12/11 (proposta del pivot); id e icona restano finché Edoardo disegna Icona_Calice_riverso
     massimo: 3, totale: 3, testo: '+1 sorso della fiaschetta.' }, // 3 livelli come gli altri doni (Edoardo, 17/11; +1 sorso per livello, da rivedere)
-  { id: 'campanellaDArgento', nome: "Campanella d'argento", icona: 'Icona_Campanella_d_argento', massimo: 2, totale: 0.2, testo: '+0,1 s di tempo per la schivata perfetta.' },
+  { id: 'campanellaDArgento', nome: "Campanella d'argento", icona: 'Icona_Campanella_d_argento', massimo: 3, totale: 0.3, testo: '+0,1 s di tempo per la schivata perfetta.' }, // 3 livelli dal 17/11 (Edoardo); +0,1 s per livello, da rivedere
 ];
 
 /** Quanto dà il dono q al livello l: una parte uguale del totale per livello (la Clessidra si moltiplica: vedi ricaricaDono). */

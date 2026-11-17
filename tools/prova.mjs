@@ -1218,6 +1218,7 @@ for (const [nome, disp] of [
     await L('immortale', false);
     await L('rinascita', null);
     await pag.waitForTimeout(700);
+    await L('fiaschettaVuota'); // la fiaschetta automatica salverebbe il Lampionaio
     await L('salute', 1);
     await L('nemico', 'ricaduto', 40, true);
     await pag.waitForTimeout(700 + 900 + 300);
@@ -1380,13 +1381,16 @@ for (const [nome, disp] of [
   if (!(prima.extra > 0)) errori.push('la salute in più non compare');
   if (!(dopo.extra < prima.extra)) errori.push('la salute in più non assorbe il colpo');
   if (dopo.salute !== prima.salute) errori.push('il colpo ha tolto salute normale mentre c\'era salute in più');
-  // la fiaschetta (17/11): a salute non piena un sorso cura in un secondo e consuma un sorso
+  // la fiaschetta automatica (17/11): sopra il 15% non si beve; sotto, si beve da sola e il sorso cura in un secondo
   await L('salute', 30);
-  const primaSorso = await L('stato');
-  const bevuto = await L('bevi');
+  await pag.waitForTimeout(300);
+  const sopra = await L('stato');
+  await L('salute', 10);
+  const primaSorso = { ...sopra, salute: 10 };
   await pag.waitForTimeout(1300);
   const dopoSorso = await L('stato');
-  if (!bevuto || dopoSorso.sorsi !== primaSorso.sorsi - 1 || !(dopoSorso.salute > primaSorso.salute)) errori.push(`la fiaschetta non cura (sorsi ${primaSorso.sorsi} › ${dopoSorso.sorsi}, salute ${primaSorso.salute} › ${dopoSorso.salute})`);
+  if (sopra.sorsi !== (await L('stato')).sorsi + 1) errori.push('sopra il 15% la fiaschetta ha bevuto, o sotto non ha bevuto');
+  if (dopoSorso.sorsi !== primaSorso.sorsi - 1 || !(dopoSorso.salute > primaSorso.salute)) errori.push(`la fiaschetta automatica non cura (sorsi ${primaSorso.sorsi} › ${dopoSorso.sorsi}, salute ${primaSorso.salute} › ${dopoSorso.salute})`);
   await ctx.close();
   if (errori.length) falliti++;
   console.log(`${errori.length ? '✗' : '✓'} salute in più: ${prima?.extra} › ${dopo?.extra}, salute ${prima?.salute} › ${dopo?.salute}; fiaschetta ${primaSorso?.sorsi} › ${dopoSorso?.sorsi} sorsi, salute ${primaSorso?.salute} › ${dopoSorso?.salute}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);

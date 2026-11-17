@@ -335,6 +335,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Salute a 1', f(() => st.lab.salute(1))),
         tasto('Salute in più', f(() => st.lab.salutePiu())),
         tasto('Fiaschetta piena', f(() => st.lab.fiaschettaPiena())),
+        tasto('Fiaschetta vuota', f(() => st.lab.fiaschettaVuota())),
         tasto('Grazia adesso', () => { st.lab.grazia(); mostra(false); }),
         tasto('Ferito', () => { st.lab.ferita(); mostra(false); }),
         tasto('Cade', () => { st.lab.cadi(); mostra(false); }),

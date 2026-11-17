@@ -246,7 +246,12 @@ export class LabStanze {
     this.s.fiaschetta.ricarica(this.s.fiaschetta.massimo);
   }
 
-  /** Beve un sorso (come il tasto F); restituisce se ha bevuto. */
+  /** Svuota la fiaschetta (per provare la caduta senza che beva da sola). */
+  fiaschettaVuota(): void {
+    this.s.fiaschetta.sorsi = 0;
+  }
+
+  /** Beve un sorso subito; restituisce se ha bevuto. */
   bevi(): boolean {
     return this.s.fiaschetta.bevi();
   }

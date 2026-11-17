@@ -219,9 +219,12 @@ export const ONDATA = {
  * src/data/abilita.ts: raggio, danno, durata, rallentamento). Si carica SOLO colpendo i nemici con la Lanterna
  * (decisione del 12/11). Valori proposti da Claude, da rivedere.
  */
-/** La fiaschetta nel gioco a stanze (17/11): pulsante tondo sopra quello dell'abilità (posizione di Claude, da provare sul S25). */
+/**
+ * La fiaschetta nel gioco a stanze è automatica (idea di Edoardo del 17/11, al posto del pulsante): sotto «soglia» della
+ * salute massima il personaggio beve da solo un sorso, che cura il 35% della salute massima (FIASCHETTA.cura) in 1 s.
+ */
 export const FIASCHETTA_STANZA = {
-  tasto: { lato: 36, distanza: 8, margine: 10 }, // diametro e distanza sopra l'abilità in pixel disegnati; margine di tocco in punti
+  soglia: 0.15,
 } as const;
 
 export const ABILITA_STANZA = {

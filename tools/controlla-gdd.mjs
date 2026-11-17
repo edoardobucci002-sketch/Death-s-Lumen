@@ -375,7 +375,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     calamita: (d) => ['+{}% raggio di raccolta e +{}% anime', pct(d.totale), pct(d.anime)],
     erbeAmare: (d) => ['+{} salute al secondo', d.totale],
     scudoDiFerro: (d) => ['−{}% danno subito', pct(d.totale)],
-    specchio: (d) => ['+{} proiettile', d.totale],
+    specchio: (d) => ['+{} colpi a ogni arma', d.totale],
     ceraVotiva: (d) => ['+{}% durata', pct(d.totale)],
     chiodoDiBara: (d) => ['+{}% probabilità di colpo critico (danno {p})', pct(d.totale), DO.MOLTIPLICA_CRITICO],
     lacrimaDiLumen: (d) => ['+{} sorsi', d.totale],
