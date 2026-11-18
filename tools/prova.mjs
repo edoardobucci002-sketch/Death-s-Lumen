@@ -1440,9 +1440,15 @@ for (const [nome, disp] of [
     if (fonte.sorsi !== fonte.piena || !fonte.usata) errori.push(`la fonte della Sosta non riempie la fiaschetta (${fonte.sorsi} di ${fonte.piena})`);
     else giro.push('Sosta');
     // l'arena del Campanaro: compare da solo, con la sua barra in cima; poi si ripulisce come le altre
+    const sa0 = await st(); // la Sosta: una stanza normale
+    if (sa0.doppia) errori.push('la Sosta è doppia');
     await L('vaiAlCampanaro');
     if (!(await quando('l.campanaro() && l.campanaro().massima > 0', '', 4000))) errori.push('nella stanza del Campanaro lui non compare');
     else {
+      // l'arena doppia (18/11): 26 × 7 lastre, il Campanaro compare al centro
+      const ac = await st(), cc = await L('campanaro');
+      if (!ac.doppia || ac.larghezza !== 2 * sa0.larghezza) errori.push(`l'arena del Campanaro non è doppia (${ac.larghezza} × ${ac.altezza})`);
+      if (Math.abs(cc.x - ac.larghezza / 2) > 4 || Math.abs(cc.y - ac.altezza / 2) > 4) errori.push(`il Campanaro non compare al centro (${cc.x}, ${cc.y})`);
       if (await pag.evaluate(() => document.querySelector('.stanze-capo').hidden)) errori.push('la barra del Campanaro non si vede');
       await L('attaccoCampanaro', 'carica');
       await pag.waitForTimeout(500);
@@ -1476,6 +1482,7 @@ for (const [nome, disp] of [
     if (!(await quando(`l.stato().tipo === 'boss'`, '', 2000))) errori.push('la porta del Boss aperta non si attraversa');
     const db = await st();
     if (db.tipo === 'boss' && (db.fase !== 'fine' || db.finita)) errori.push(`entrando dal Boss: fase ${db.fase}, finita subito ${db.finita}`);
+    if (db.tipo === 'boss' && !db.doppia) errori.push(`la stanza del Boss non è doppia (${db.larghezza} × ${db.altezza})`);
     await pag.waitForTimeout(250);
     const chiuseBoss = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { aperte: s.porte.aperte, muri: s.porte.muri.length, passa: s.porte.attraversata(...Object.values(s.porte.davanti(0))) }; });
     if (chiuseBoss.aperte || chiuseBoss.passa >= 0) errori.push('entrati dal Boss la porta alle spalle non si chiude');

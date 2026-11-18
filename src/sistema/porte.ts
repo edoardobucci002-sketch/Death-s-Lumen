@@ -21,7 +21,7 @@ import Phaser from 'phaser';
 import { CRIPTA, PORTE, STANZA } from '../data/stanze';
 import { INFO_AFFINITA } from '../data/spiegazioni';
 import type { IdAffinita } from '../data/stati';
-import { areaCamminabile, criptaPronta, disegnaFotogramma } from './stanza';
+import { MISURA, areaCamminabile, criptaPronta, disegnaFotogramma } from './stanza';
 import { PROFONDITA } from './effetti';
 
 /** I quattro muri, nello stesso ordine dei lati della mappa (alto, destra, basso, sinistra). */
@@ -254,10 +254,10 @@ export class Porte {
     const a = areaCamminabile(), m = PORTE.larghezza / 2 - 8;
     for (let k = 0; k < this.muri.length; k++) {
       const muro = this.muri[k];
-      if (muro === 'alto' && y <= a.y0 + 0.5 && Math.abs(x - STANZA.larghezza / 2) < m) return k;
-      if (muro === 'sinistra' && x <= a.x0 + 0.5 && Math.abs(y - STANZA.altezza / 2) < m) return k;
-      if (muro === 'destra' && x >= a.x1 - 0.5 && Math.abs(y - STANZA.altezza / 2) < m) return k;
-      if (muro === 'basso' && y >= a.y1 - 0.5 && Math.abs(x - STANZA.larghezza / 2) < m) return k;
+      if (muro === 'alto' && y <= a.y0 + 0.5 && Math.abs(x - MISURA.larghezza / 2) < m) return k;
+      if (muro === 'sinistra' && x <= a.x0 + 0.5 && Math.abs(y - MISURA.altezza / 2) < m) return k;
+      if (muro === 'destra' && x >= a.x1 - 0.5 && Math.abs(y - MISURA.altezza / 2) < m) return k;
+      if (muro === 'basso' && y >= a.y1 - 0.5 && Math.abs(x - MISURA.larghezza / 2) < m) return k;
     }
     return -1;
   }
@@ -268,7 +268,7 @@ export class Porte {
   }
 
   private centroSimbolo(muro: Muro): { x: number; y: number } {
-    const L = PORTE.larghezza, S = STANZA;
+    const L = PORTE.larghezza, S = { ...STANZA, larghezza: MISURA.larghezza, altezza: MISURA.altezza };
     if (muro === 'alto') return { x: S.larghezza / 2, y: -S.muroAlto + 18 };
     if (muro === 'sinistra') return { x: -S.muroLati / 2, y: S.altezza / 2 - L / 2 - 14 };
     if (muro === 'basso') return { x: S.larghezza / 2 + L / 2 + 22, y: S.altezza + S.muroBasso / 2 }; // accanto alla porta, sul muro
@@ -278,7 +278,7 @@ export class Porte {
   /** Il vano di ogni porta: scuro, con le sbarre o con la cornice accesa. */
   private disegna(): void {
     this.grafica.clear();
-    const S = STANZA, L = PORTE.larghezza;
+    const S = { ...STANZA, larghezza: MISURA.larghezza, altezza: MISURA.altezza }, L = PORTE.larghezza;
     for (const i of this.cancelli) i.setVisible(false);
     for (const i of this.vani) i.setVisible(false);
     this.accesi.fill(false);
@@ -391,7 +391,7 @@ const chiaveMedaglione = (aff: IdAffinita): string => `stanze-medaglione-${aff}`
  * Con «dentro» px in più verso il centro della stanza: dove si compare entrando da quella porta.
  */
 export function davantiAlMuro(muro: Muro, dentro = 0): { x: number; y: number } {
-  const a = areaCamminabile(), cx = STANZA.larghezza / 2, cy = STANZA.altezza / 2;
+  const a = areaCamminabile(), cx = MISURA.larghezza / 2, cy = MISURA.altezza / 2;
   if (muro === 'alto') return { x: cx, y: a.y0 + dentro };
   if (muro === 'basso') return { x: cx, y: a.y1 - dentro };
   if (muro === 'sinistra') return { x: a.x0 + dentro, y: cy };

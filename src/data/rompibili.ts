@@ -66,6 +66,7 @@ export const FRAMMENTI = {
  */
 export const ROMPIBILI_STANZE = {
   quanti: { min: 1, max: 2 }, // per stanza (Edoardo, 16/11: erano da 2 a 4)
+  arena: { min: 2, max: 3 }, // nell'arena doppia del Campanaro (Claude, ok di Edoardo del 18/11; da rivedere). Nel Boss nessuno
   dalMuro: { min: 24, max: 56 }, // quanto dista la base dal muro: una fascia lungo i muri, il centro resta libero
   porte: 110, // niente oggetti così vicini al centro di una porta (anche quella in basso, da cui si entra)
   tra: 72, // distanza minima tra due oggetti

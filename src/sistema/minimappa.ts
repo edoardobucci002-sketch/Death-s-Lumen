@@ -9,7 +9,7 @@
  * non è ripulita (gli Echi d'inizio, un'affinità, il dono). Si ridisegna solo quando si cambia stanza o si apre la pausa.
  */
 import { MINIMAPPA } from '../data/mappa';
-import { PORTE } from '../data/stanze';
+import { PORTE, STANZA } from '../data/stanze';
 import { INFO_AFFINITA } from '../data/spiegazioni';
 import type { Mappa, StanzaMappa } from './mappa';
 
@@ -77,21 +77,24 @@ export function disegnaMinimappa(c: HTMLCanvasElement, m: Mappa, qui: number, fi
   m.stanze.forEach((s, i) => {
     const cx = s.x - x0, cy = s.y - y0;
     if (!noto[i] || cx < 0 || cy < 0 || cx >= col || cy >= rig) return;
-    const px = S + cx * (L + S), py = S + cy * (A + S);
+    const py = S + cy * (A + S);
+    // le stanze doppie (Campanaro e Boss, 18/11) si allargano nello spazio ai lati, dove non c'è una stanza accanto
+    const doppia = STANZA.doppie.includes(s.tipo), sx0 = doppia && s.vicine[3] < 0 ? S : 0, sx1 = doppia && s.vicine[1] < 0 ? S : 0;
+    const px = S + cx * (L + S) - sx0, lw = L + sx0 + sx1;
     if (s.visitata) {
       g.fillStyle = i === qui ? M.colori.qui : M.colori.visitata;
-      g.fillRect(px, py, L, A);
+      g.fillRect(px, py, lw, A);
     } else {
       g.fillStyle = M.colori.contorno;
-      g.fillRect(px, py, L, 1);
-      g.fillRect(px, py + A - 1, L, 1);
+      g.fillRect(px, py, lw, 1);
+      g.fillRect(px, py + A - 1, lw, 1);
       g.fillRect(px, py, 1, A);
-      g.fillRect(px + L - 1, py, 1, A);
+      g.fillRect(px + lw - 1, py, 1, A);
     }
     const c = contenuto(s), segno = c ? SIMBOLI[c] : null;
     if (!segno) return;
     g.fillStyle = i === qui ? M.colori.sulChiaro : segno.colore; // sulla stanza in cui si è (crema) il simbolo è scuro
-    const sx = px + Math.floor((L - 3) / 2), sy = py + Math.floor((A - 3) / 2);
+    const sx = px + Math.floor((lw - 3) / 2), sy = py + Math.floor((A - 3) / 2);
     segno.forma.forEach((r, y) => [...r].forEach((k, x) => { if (k === '#') g.fillRect(sx + x, sy + y, 1, 1); }));
   });
 }

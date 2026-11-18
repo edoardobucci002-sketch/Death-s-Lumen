@@ -12,7 +12,6 @@ import { BAGLIORE } from '../data/sopravvivenza';
 import { CERA } from '../data/meta';
 import { BASE } from '../data/personaggi';
 import { COLPI } from '../data/armi';
-import { STANZA } from '../data/stanze';
 import type { Arsenale } from './armi';
 import { Caso } from './caso';
 import { Chiazze } from './chiazze';
@@ -22,7 +21,7 @@ import { CERA_GOCCIA, FRAMMENTO, Oggetti } from './oggetti';
 import type { Orda } from './orda';
 import { Rompibili } from './rompibili';
 import { carica, salva } from './salvataggio';
-import { areaCamminabile } from './stanza';
+import { MISURA, areaCamminabile } from './stanza';
 import { suona } from './audio';
 import { vibra } from './mobile';
 
@@ -65,19 +64,20 @@ export class RompibiliStanza {
   }
 
   /**
-   * Stanza nuova: via oggetti, gocce e chiazze, e da 1 a 2 rompibili lungo i muri, lontano dalle porte. Con lo stesso seme
+   * Stanza nuova: via oggetti, gocce e chiazze, e alcuni rompibili lungo i muri, lontano dalle porte. Con lo stesso seme
    * escono sempre gli stessi; «rotti» (un bit per ognuno, come lo dà rotti()) toglie quelli già rotti in una visita
-   * precedente. vuota: nessun rompibile (l'ingresso della mappa, vuoto e sicuro).
+   * precedente. quanti: tra quanti e quanti (ROMPIBILI_STANZE.quanti, .arena nell'arena doppia), null per nessuno (ingresso,
+   * tesoro, Sosta, Boss).
    */
-  nuovaStanza(seme: number, rotti = 0, vuota = false): void {
+  nuovaStanza(seme: number, rotti = 0, quanti: { min: number; max: number } | null = ROMPIBILI_STANZE.quanti): void {
     this.rompibili.svuota();
     this.oggetti.svuota();
     this.chiazze.svuota();
-    const R = ROMPIBILI_STANZE, S = STANZA, a = areaCamminabile(), caso = new Caso(seme);
+    const R = ROMPIBILI_STANZE, S = MISURA, a = areaCamminabile(), caso = new Caso(seme);
     const porte = [S.larghezza / 2, a.y0, a.x0, S.altezza / 2, a.x1, S.altezza / 2, S.larghezza / 2, a.y1];
-    const quanti = vuota ? 0 : Math.min(MAX_PER_STANZA, caso.intero(R.quanti.min, R.quanti.max));
+    const n = quanti ? Math.min(MAX_PER_STANZA, caso.intero(quanti.min, quanti.max)) : 0;
     let messi = 0;
-    for (let t = 0; t < R.tentativi && messi < quanti; t++) {
+    for (let t = 0; t < R.tentativi && messi < n; t++) {
       const muro = caso.intero(0, 3), d = caso.intero(R.dalMuro.min, R.dalMuro.max);
       const lungo = (da: number, a1: number): number => caso.intero(Math.round(da + R.dalMuro.min), Math.round(a1 - R.dalMuro.min));
       const x = muro === 1 ? a.x0 + d : muro === 2 ? a.x1 - d : lungo(a.x0, a.x1);

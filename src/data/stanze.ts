@@ -12,6 +12,10 @@ export const STANZA = {
   // la stanza intera sta più o meno in uno schermo
   larghezza: 832,
   altezza: 448,
+  // le stanze doppie (decisione di Edoardo del 17/11): 26 × 7 lastre, larghe il doppio, per il Campanaro e il Boss.
+  // Sulla mappa occupano una casella sola, come le altre (Edoardo, 18/11); le porte stanno al centro di ogni muro
+  larghezzaDoppia: 1664,
+  doppie: ['campanaro', 'boss'] as readonly string[],
   muroAlto: 96, // la facciata del muro in alto, vista di fronte
   muroLati: 32, // lo spessore dei muri a sinistra e a destra
   muroBasso: 32,
@@ -281,6 +285,7 @@ export const PERCORSO = {
   ],
   intervallo: 8, // 8 dal 13/11 sera (Edoardo: quasi ogni ondata finiva entro i 10 s)
   restanti: 0,
+  capoLontano: 120, // il Campanaro compare al centro dell'arena, se il personaggio non è più vicino di così (Claude, 18/11)
   attesaCarte: 0.5, // secondi tra la stanza ripulita e le carte (decisione di Edoardo del 13/11 sera; era 1)
   // le carte (verticali, in fila: CARTA_STANZA in src/data/hud.ts) compaiono a pop, prima minuscole poi alla loro grandezza,
   // una dopo l'altra (richiesta di Edoardo del 13/11 sera; tempi di Claude, da rivedere): «pop» secondi a carta, a «scatti»

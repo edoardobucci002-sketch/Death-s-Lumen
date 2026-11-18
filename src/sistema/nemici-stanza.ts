@@ -17,9 +17,9 @@
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
  */
 import Phaser from 'phaser';
-import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, ONDATA, STANZA } from '../data/stanze';
+import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, ONDATA } from '../data/stanze';
 import { PROFONDITA, type Effetti } from './effetti';
-import { areaCamminabile } from './stanza';
+import { MISURA, areaCamminabile } from './stanza';
 import type { Caso } from './caso';
 import type { Impatto } from './impatto';
 import { suona } from './audio';
@@ -498,10 +498,10 @@ export class NemiciStanza {
       this.gX[k] += this.gVX[k] * dt;
       this.gY[k] += this.gVY[k] * dt;
       const x = this.gX[k], y = this.gY[k];
-      if (x < 0 || x > STANZA.larghezza || y < 0 || y > STANZA.altezza) {
-        const cx = Phaser.Math.Clamp(x, 0, STANZA.larghezza), cy = Phaser.Math.Clamp(y, 0, STANZA.altezza);
+      if (x < 0 || x > MISURA.larghezza || y < 0 || y > MISURA.altezza) {
+        const cx = Phaser.Math.Clamp(x, 0, MISURA.larghezza), cy = Phaser.Math.Clamp(y, 0, MISURA.altezza);
         this.effetti.scoppio(cx, cy - C.grumo.altezza);
-        this.pozza(Phaser.Math.Clamp(cx, P.raggio, STANZA.larghezza - P.raggio), Phaser.Math.Clamp(cy, P.raggio / 2, STANZA.altezza - P.raggio / 2));
+        this.pozza(Phaser.Math.Clamp(cx, P.raggio, MISURA.larghezza - P.raggio), Phaser.Math.Clamp(cy, P.raggio / 2, MISURA.altezza - P.raggio / 2));
         this.togliGrumo(k);
         continue;
       }
@@ -513,7 +513,7 @@ export class NemiciStanza {
       }
       if (muro) {
         this.effetti.scoppio(x, y - C.grumo.altezza);
-        this.pozza(Phaser.Math.Clamp(x, P.raggio, STANZA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, STANZA.altezza - P.raggio / 2));
+        this.pozza(Phaser.Math.Clamp(x, P.raggio, MISURA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, MISURA.altezza - P.raggio / 2));
         this.togliGrumo(k);
         continue;
       }
@@ -521,7 +521,7 @@ export class NemiciStanza {
       if (d2 < r * r) {
         danno = Math.max(danno, C.grumo.danno);
         this.effetti.scoppio(x, y - C.grumo.altezza);
-        this.pozza(Phaser.Math.Clamp(x, P.raggio, STANZA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, STANZA.altezza - P.raggio / 2));
+        this.pozza(Phaser.Math.Clamp(x, P.raggio, MISURA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, MISURA.altezza - P.raggio / 2));
         this.togliGrumo(k);
         continue;
       }
@@ -849,9 +849,9 @@ export class NemiciStanza {
   /** Distanza da (x, y) al bordo del pavimento andando in direzione (dx, dy). */
   private finoAlMuro(x: number, y: number, dx: number, dy: number): number {
     let t = Infinity;
-    if (dx > 0) t = Math.min(t, (STANZA.larghezza - x) / dx);
+    if (dx > 0) t = Math.min(t, (MISURA.larghezza - x) / dx);
     else if (dx < 0) t = Math.min(t, -x / dx);
-    if (dy > 0) t = Math.min(t, (STANZA.altezza - y) / dy);
+    if (dy > 0) t = Math.min(t, (MISURA.altezza - y) / dy);
     else if (dy < 0) t = Math.min(t, -y / dy);
     return Number.isFinite(t) ? t : 0;
   }

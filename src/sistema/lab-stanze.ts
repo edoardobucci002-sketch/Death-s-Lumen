@@ -18,7 +18,7 @@ import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE, POTENZIALI } from '../data/armi-stanze';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
-import { ARTE_STANZA, areaCamminabile, creaStanza } from './stanza';
+import { ARTE_STANZA, DOPPIA_LAB, MISURA, areaCamminabile, creaStanza } from './stanza';
 import { ROMPIBILI } from '../data/rompibili';
 import { STATO, type TipoStanza } from './nemici-stanza';
 import { F } from './armi-colpo';
@@ -43,11 +43,11 @@ export class LabStanze {
     salute: number; extra: number; sorsi: number; sorsiMassimi: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; pozze: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
     quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
-    stanza: number; indice: number; tipo: string; chiave: boolean; chiuse: number; latoMinimappa: string; distanza: number; ripulite: number; totale: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
+    doppia: boolean; lastre: string; stanza: number; indice: number; tipo: string; chiave: boolean; chiuse: number; latoMinimappa: string; distanza: number; ripulite: number; totale: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
   } {
     const s = this.s, n = s.nemici;
     return {
-      x: Math.round(s.x), y: Math.round(s.y), larghezza: STANZA.larghezza, altezza: STANZA.altezza, fermo: s.pausaLab, colpi: s.attacco.colpi,
+      x: Math.round(s.x), y: Math.round(s.y), larghezza: MISURA.larghezza, altezza: MISURA.altezza, doppia: MISURA.doppia, lastre: `${MISURA.larghezza / STANZA.piastrella} × ${MISURA.altezza / STANZA.piastrella}`, fermo: s.pausaLab, colpi: s.attacco.colpi,
       salute: Math.round(s.salute), extra: Math.round(s.extra), sorsi: s.fiaschetta.sorsi, sorsiMassimi: s.fiaschetta.massimo, saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), pozze: n.pozze, uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
@@ -126,8 +126,8 @@ export class LabStanze {
 
   /** Porta il Lampionaio sull'oggetto della stanza (forziere o fonte): lo usa. */
   usaOggetto(): void {
-    this.s.x = STANZA.larghezza / 2;
-    this.s.y = STANZA.altezza / 2;
+    this.s.x = MISURA.larghezza / 2;
+    this.s.y = MISURA.altezza / 2;
   }
 
   vaiAllIngresso(): void {
@@ -207,10 +207,10 @@ export class LabStanze {
   }
 
   /** Lo stato del Campanaro per il pannello (null se non è in campo). */
-  campanaro(): { salute: number; massima: number; fase: number; rintocchi: number; cariche: number; chiamate: number; battuti: number } | null {
+  campanaro(): { salute: number; massima: number; fase: number; rintocchi: number; cariche: number; chiamate: number; battuti: number; x?: number; y?: number } | null {
     const n = this.s.nemici, i = n.indiceCapo(), c = n.capo;
     if (i < 0) return n.capiBattuti ? { salute: 0, massima: 0, fase: 0, rintocchi: c.rintocchi, cariche: c.cariche, chiamate: c.chiamate, battuti: n.capiBattuti } : null;
-    return { salute: Math.round(n.orda.salute[i]), massima: Math.round(n.orda.saluteMassima[i]), fase: c.fase, rintocchi: c.rintocchi, cariche: c.cariche, chiamate: c.chiamate, battuti: n.capiBattuti };
+    return { salute: Math.round(n.orda.salute[i]), massima: Math.round(n.orda.saluteMassima[i]), fase: c.fase, rintocchi: c.rintocchi, cariche: c.cariche, chiamate: c.chiamate, battuti: n.capiBattuti, x: Math.round(n.orda.x[i]), y: Math.round(n.orda.y[i]) };
   }
 
   /** Porta il Lampionaio contro la porta k (aperta): passa alla stanza dopo. */
@@ -311,7 +311,7 @@ export class LabStanze {
 
   /** Fa comparire un nemico a «distanza» px dal Lampionaio, verso il centro della stanza (subito, senza il segno a terra se «subito»). */
   nemico(tipo: TipoStanza, distanza: number, subito = false): void {
-    const s = this.s, cx = STANZA.larghezza / 2, cy = STANZA.altezza / 2;
+    const s = this.s, cx = MISURA.larghezza / 2, cy = MISURA.altezza / 2;
     let dx = cx - s.x, dy = cy - s.y;
     const l = Math.hypot(dx, dy);
     if (l < 1) { dx = 1; dy = 0; } else { dx /= l; dy /= l; }
@@ -447,7 +447,7 @@ export class LabStanze {
 
   /** Porta il Lampionaio in un punto della stanza: al centro, contro un muro o nell'angolo in alto a sinistra. */
   vai(dove: PuntoStanza): void {
-    const a = areaCamminabile(), cx = Math.round(STANZA.larghezza / 2), cy = Math.round(STANZA.altezza / 2);
+    const a = areaCamminabile(), cx = Math.round(MISURA.larghezza / 2), cy = Math.round(MISURA.altezza / 2);
     const punti: Record<PuntoStanza, [number, number]> = {
       centro: [cx, cy], alto: [cx, a.y0], basso: [cx, a.y1], sinistra: [a.x0, cy], destra: [a.x1, cy], angolo: [a.x0, a.y0],
     };
@@ -459,6 +459,17 @@ export class LabStanze {
     ARTE_STANZA.codice = codice;
     creaStanza(this.s, this.s.semeStanza(this.s.percorso.corrente + 1));
     this.s.porte.ridisegna();
+  }
+
+  /** Ogni stanza doppia come l'arena del Campanaro (18/11): si rientra subito nella stanza in cui si è, per vederla. */
+  doppiaOvunque(si: boolean): void {
+    DOPPIA_LAB.ovunque = si;
+    this.vaiAllaStanza(this.s.percorso.corrente);
+  }
+
+  /** Il LAB rende doppia ogni stanza. */
+  get doppia(): boolean {
+    return DOPPIA_LAB.ovunque;
   }
 
   /** Altre lastre e altri pezzi della facciata, a caso. */

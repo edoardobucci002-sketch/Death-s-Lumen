@@ -15,7 +15,7 @@
  * Rarità (17/11, src/data/rarita.ts): ogni carta tira prima il grado (Fioca, Chiara, Ardente) tra quelli che la stanza può
  * dare, poi un oggetto di quel grado. Le carte si estraggono con un generatore del caso con seme (riproducibili).
  */
-import { ONDATA, PERCORSO, STANZA } from '../data/stanze';
+import { ONDATA, PERCORSO } from '../data/stanze';
 import { STANZE_SPECIALI } from '../data/mappa';
 import type { Arma } from '../data/armi';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
@@ -28,7 +28,7 @@ import { gradoCarta, type Dono } from './doni';
 import type { NemiciStanza } from './nemici-stanza';
 import { MURI, type Medaglione, type Muro, type Ricompensa } from './porte';
 import type { Mappa, StanzaMappa } from './mappa';
-import { areaCamminabile } from './stanza';
+import { MISURA, areaCamminabile } from './stanza';
 
 export type Fase = 'lotta' | 'attesa' | 'carte' | 'porte' | 'fine';
 const AFFINITA: readonly IdAffinita[] = ['luce', 'sacro', 'ombra', 'terra'];
@@ -115,10 +115,12 @@ export class Percorso {
   aggiorna(dt: number, nemici: NemiciStanza, px: number, py: number): boolean {
     if (this.fase === 'lotta') {
       if (this.miniboss && this.ondata === 0) {
-        // l'arena: dopo un attimo il Campanaro compare dalla parte opposta della stanza, lontano dalla porta da cui si entra
+        // l'arena doppia: dopo un attimo il Campanaro compare al centro (Edoardo, 18/11), a mezzo schermo dalla porta da cui si
+        // entra; se il personaggio è già lì (solo dal LAB), dalla parte opposta
         if ((this.attesa -= dt) <= 0) {
-          const a = areaCamminabile();
-          const cx = Math.min(a.x1, Math.max(a.x0, STANZA.larghezza - px)), cy = Math.min(a.y1, Math.max(a.y0, STANZA.altezza - py));
+          const a = areaCamminabile(), mx = MISURA.larghezza / 2, my = MISURA.altezza / 2;
+          const vicino = Math.hypot(px - mx, py - my) < PERCORSO.capoLontano;
+          const cx = vicino ? Math.min(a.x1, Math.max(a.x0, MISURA.larghezza - px)) : mx, cy = vicino ? Math.min(a.y1, Math.max(a.y0, MISURA.altezza - py)) : my;
           nemici.aggiungiCampanaro(cx, cy);
           this.ondata = 1;
         }

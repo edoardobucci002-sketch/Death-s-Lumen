@@ -75,10 +75,31 @@ function creaMuri(scena: Phaser.Scene): void {
   });
 }
 
+/**
+ * La misura del pavimento della stanza in cui si è (18/11): normale (13 × 7 lastre) o doppia (26 × 7, Campanaro e Boss).
+ * La sceglie misuraStanza a ogni ingresso; tutto il resto (muri, porte, nemici, urne) legge questa.
+ */
+export const MISURA = { larghezza: STANZA.larghezza as number, altezza: STANZA.altezza as number, doppia: false };
+
+/** Il LAB può rendere doppia ogni stanza (scheda Stanze → «Arena doppia anche qui»). */
+export const DOPPIA_LAB = { ovunque: false };
+
+/** Questo tipo di stanza della mappa è doppio (STANZA.doppie), o lo chiede il LAB. */
+export function eDoppia(tipo: string): boolean {
+  return DOPPIA_LAB.ovunque || STANZA.doppie.includes(tipo);
+}
+
+/** Sceglie la misura della stanza in cui si entra. */
+export function misuraStanza(doppia: boolean): void {
+  MISURA.doppia = doppia;
+  MISURA.larghezza = doppia ? STANZA.larghezzaDoppia : STANZA.larghezza;
+  MISURA.altezza = STANZA.altezza;
+}
+
 /** Il rettangolo dove possono stare i piedi del personaggio. */
 export function areaCamminabile(): { x0: number; y0: number; x1: number; y1: number } {
   const s = STANZA;
-  return { x0: s.margineLati, y0: s.margineAlto, x1: s.larghezza - s.margineLati, y1: s.altezza - s.margineBasso };
+  return { x0: s.margineLati, y0: s.margineAlto, x1: MISURA.larghezza - s.margineLati, y1: MISURA.altezza - s.margineBasso };
 }
 
 /** Il LAB può tornare al disegno del codice per confrontarlo con la cripta (scheda Stanze → «Stanza dal codice»). */
@@ -97,7 +118,7 @@ const TELA_CRIPTA = 'stanza-cripta';
 export function creaStanza(scena: Phaser.Scene, seme: number = STANZA.seme): void {
   for (const p of pezzi) p.destroy();
   pezzi = [];
-  const s = STANZA, c = s.colori;
+  const s = { ...STANZA, larghezza: MISURA.larghezza, altezza: MISURA.altezza }, c = s.colori;
   if (criptaPronta(scena)) {
     componiCripta(scena, seme);
     pezzi.push(scena.add.image(-s.muroLati, -s.muroAlto, TELA_CRIPTA).setOrigin(0).setDepth(PROFONDITA.terreno));
@@ -146,7 +167,7 @@ function pesca(caso: Caso, pesi: readonly number[]): number {
  * verticale (quello a destra è lo specchio), muro in basso che si ripete in orizzontale, angoli in basso.
  */
 function componiCripta(scena: Phaser.Scene, seme: number): void {
-  const S = STANZA, C = CRIPTA;
+  const S = { ...STANZA, larghezza: MISURA.larghezza, altezza: MISURA.altezza }, C = CRIPTA;
   const W = S.larghezza + 2 * S.muroLati, H = S.muroAlto + S.altezza + S.muroBasso;
   if (scena.textures.exists(TELA_CRIPTA)) scena.textures.remove(TELA_CRIPTA);
   const t = scena.textures.createCanvas(TELA_CRIPTA, W, H)!;

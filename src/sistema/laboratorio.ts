@@ -331,7 +331,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
     const rin = s.rinascita === true ? 'sempre' : s.rinascita === false ? 'mai' : 'normale (10%)';
     return [
       titolo('Stanza'),
-      riga(el('span', 'lab-stato', `Pavimento ${s.larghezza} × ${s.altezza} px · Lampionaio in ${s.x}, ${s.y}`)),
+      riga(el('span', 'lab-stato', `Pavimento ${s.larghezza} × ${s.altezza} px (${s.lastre} lastre${s.doppia ? ', doppia' : ''}) · Lampionaio in ${s.x}, ${s.y}`)),
+      riga(tasto(st.lab.doppia ? 'Arena doppia anche qui: sì' : 'Arena doppia anche qui: no', f(() => st.lab.doppiaOvunque(!st.lab.doppia)), st.lab.doppia ? 'acceso' : '')),
+      el('p', 'lab-nota', 'Campanaro e Boss combattono nella stanza doppia (26 × 7 lastre). «Arena doppia anche qui» rende doppia ogni stanza, per provarla senza arrivare al Campanaro.'),
       titolo('Percorso nella mappa'),
       riga(el('span', 'lab-stato', `Stanza ${s.indice} (${s.tipo}, a ${s.distanza} porte dall'ingresso) · combattute ${s.stanza} · ripulite ${s.ripulite} di ${s.totale} · fase: ${s.fase}${s.tipo === 'ingresso' ? '' : ` · carte da: ${s.ricompensa}`}${s.porte.length ? ` · porte: ${s.porte.join(', ')}` : ''}`)),
       riga(el('span', 'lab-stato', `Build: Lanterna ${s.lanterna}${s.echi.length ? ', ' + s.echi.join(', ') : ''}${s.doni.length ? ' · doni: ' + s.doni.join(', ') : ''}`)),

@@ -55,13 +55,14 @@ import { AttaccoATasto } from '../sistema/attacco';
 import { COLPI } from '../data/armi';
 import { audioAttivo, impostaAudio, suona } from '../sistema/audio';
 import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
-import { areaCamminabile, creaStanza } from '../sistema/stanza';
+import { MISURA, areaCamminabile, creaStanza, eDoppia, misuraStanza } from '../sistema/stanza';
 import { tela } from '../sistema/scritte';
 import { LabStanze } from '../sistema/lab-stanze';
 import { RompibiliStanza } from '../sistema/rompibili-stanza';
 import { BAGLIORE } from '../data/sopravvivenza';
 import { BarraCapo } from '../sistema/barra-capo';
 import { CAMPANARO } from '../data/campanaro';
+import { ROMPIBILI_STANZE } from '../data/rompibili';
 import { MINIMAPPA, STANZE_SPECIALI } from '../data/mappa';
 import { disegnaMinimappa } from '../sistema/minimappa';
 import { generaMappa, opposto, type Mappa } from '../sistema/mappa';
@@ -216,8 +217,9 @@ export class Stanze extends Phaser.Scene {
     this.portaScelta = -1;
     this.finita = false;
     // si comincia al centro dell'ingresso della mappa: vuoto, sicuro, con le porte già aperte (Edoardo, 17/11)
-    this.x = Math.round(STANZA.larghezza / 2);
-    this.y = Math.round(STANZA.altezza / 2);
+    misuraStanza(eDoppia('ingresso'));
+    this.x = Math.round(MISURA.larghezza / 2);
+    this.y = Math.round(MISURA.altezza / 2);
     this.cameras.main.setBackgroundColor(STANZA.colori.fondo);
 
     creaStanza(this, this.semeStanza(this.mappa.ingresso + 1));
@@ -241,7 +243,8 @@ export class Stanze extends Phaser.Scene {
     // potenziali degli Echi (gioco a stanze): interrompere gli attacchi, le lapidi che fanno da muro, il Cerchio che abbaglia
     this.arsenale.interrompi = (j) => this.nemici.interrompi(j);
     this.arsenale.inAvviso = (j) => this.nemici.inAvviso(j);
-    this.arsenale.campo = { x0: STANZA.muroLati, y0: STANZA.muroAlto, x1: STANZA.larghezza - STANZA.muroLati, y1: STANZA.altezza - STANZA.muroBasso };
+    this.arsenale.campo = { x0: STANZA.muroLati, y0: STANZA.muroAlto, x1: 0, y1: 0 };
+    this.campoArmi();
     this.nemici.muri = this.arsenale.muri;
     this.nemici.statoArma = (j) => this.arsenale.statoDaFuori(j, CODICE_AFFINITA.luce, F.abilita);
     this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce, fonte === FONTE.lanterna ? F.lanterna : F.abilita);
@@ -255,7 +258,7 @@ export class Stanze extends Phaser.Scene {
     }
     this.porte = new Porte(this);
     // l'oggetto di tesoro e Sosta (segnaposto: il simbolo del medaglione, ingrandito 3 volte)
-    this.oggetto = this.add.image(STANZA.larghezza / 2, STANZA.altezza / 2, 'stanze-simbolo-tesoro').setScale(3).setDepth(PROFONDITA.aTerra - 1).setVisible(false);
+    this.oggetto = this.add.image(MISURA.larghezza / 2, MISURA.altezza / 2, 'stanze-simbolo-tesoro').setScale(3).setDepth(PROFONDITA.aTerra - 1).setVisible(false);
     this.mostraPorte();
     this.barra = new BarraSalute(this, this.salute);
     const scritta = 'stanze-scritta-grazia';
@@ -273,7 +276,7 @@ export class Stanze extends Phaser.Scene {
     });
     this.creaInterfaccia(interfaccia);
     this.rompibili = new RompibiliStanza(this, this.nemici.orda, this.arsenale, interfaccia, this.seme, this.effetti, () => this.cambiaLuce());
-    this.rompibili.nuovaStanza(this.semeStanza(this.mappa.ingresso + 1), 0, true); // l'ingresso è vuoto
+    this.rompibili.nuovaStanza(this.semeStanza(this.mappa.ingresso + 1), 0, null); // l'ingresso è vuoto
     this.nemici.ostacoli = this.rompibili;
     this.attacco = new AttaccoATasto(this, this.radice, this.effetti, () => this.fermo(), (cx, cy) => {
       const px = misureHud().px, cam = this.cameras.main;
@@ -604,7 +607,7 @@ export class Stanze extends Phaser.Scene {
   /** L'oggetto della stanza: il forziere del tesoro o la fonte della Sosta (spenti quando sono già stati usati). */
   private mostraOggetto(): void {
     const s = this.percorso.qui, speciale = s.tipo === 'tesoro' || s.tipo === 'sosta';
-    this.oggetto.setVisible(speciale);
+    this.oggetto.setVisible(speciale).setPosition(MISURA.larghezza / 2, MISURA.altezza / 2);
     if (!speciale) return;
     this.oggetto.setTexture(s.tipo === 'tesoro' ? 'stanze-simbolo-tesoro' : 'stanze-simbolo-sosta');
     if (s.ripulita) this.oggetto.setTint(0x55504a).setTintMode(Phaser.TintModes.MULTIPLY);
@@ -765,12 +768,15 @@ export class Stanze extends Phaser.Scene {
     this.nemici.svuota();
     this.percorso.entra(i);
     const s = this.percorso.qui;
+    misuraStanza(eDoppia(s.tipo)); // Campanaro e Boss: la stanza doppia (18/11)
+    this.campoArmi();
     creaStanza(this, this.semeStanza(i + 1));
-    this.rompibili.nuovaStanza(this.semeStanza(i + 1), s.rotti, s.tipo === 'ingresso' || s.tipo === 'tesoro' || s.tipo === 'sosta');
+    const vuota = s.tipo === 'ingresso' || s.tipo === 'tesoro' || s.tipo === 'sosta' || s.tipo === 'boss';
+    this.rompibili.nuovaStanza(this.semeStanza(i + 1), s.rotti, vuota ? null : MISURA.doppia ? ROMPIBILI_STANZE.arena : ROMPIBILI_STANZE.quanti);
     this.mostraOggetto();
     if (this.percorso.fase === 'lotta') this.sim.entra(this.percorso.stanza, this.percorso.ricompensa, this.salute, s.distanza, s.tipo);
     this.mostraPorte();
-    const p = da ? davantiAlMuro(da, PORTE.entrata) : { x: STANZA.larghezza / 2, y: STANZA.altezza / 2 };
+    const p = da ? davantiAlMuro(da, PORTE.entrata) : { x: MISURA.larghezza / 2, y: MISURA.altezza / 2 };
     this.x = Math.round(p.x);
     this.y = Math.round(p.y);
     // guarda verso il centro della stanza
@@ -778,6 +784,13 @@ export class Stanze extends Phaser.Scene {
     this.guardaY = da === 'alto' ? 1 : da === 'basso' || !da ? -1 : 0;
     // il Boss: le porte si sono chiuse alle spalle (mostraPorte); dopo un attimo la fine provvisoria (finché non c'è Seth)
     if (this.percorso.fase === 'fine') this.attesaCapo = this.botVeloce ? 0 : PERCORSO.attesaCapo;
+  }
+
+  /** Il riquadro in cui volano gli Echi (lapidi, grani del Rosario): il pavimento della stanza in cui si è, normale o doppia. */
+  private campoArmi(): void {
+    const c = this.arsenale.campo!;
+    c.x1 = MISURA.larghezza - STANZA.muroLati;
+    c.y1 = MISURA.altezza - STANZA.muroBasso;
   }
 
   /** Una scritta breve sopra la testa del Lampionaio (la porta del capo), per PERCORSO.avviso secondi. */
