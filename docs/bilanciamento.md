@@ -8,6 +8,8 @@ Il bot gioca le stanze con `npm run sim-stanze` (vedi [LEGGIMI.md](../LEGGIMI.md
 
 Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il mini-boss e il Boss (decisione di Edoardo del 12/11). Idea di partenza, *da rivedere*: il primo Boss è il primo vero ostacolo; nessun personaggio muore sempre prima del mini-boss del Mondo 1. Gli obiettivi provvisori del survivor sono nel [documento congelato](survivor/bilanciamento-survivor.md).
 
+**La difficoltà che vuole Edoardo** (18/11), sul modello di Hades: **giustamente difficile, non stressante**. Nella prima Veglia si muore anche prima del primo mini-boss; crescendo si diventa più forti ma il gioco resta impegnativo; solo dopo molte ore (in Hades 15–20) sembra facile, e allora il giocatore può renderlo più duro da sé (nemici più forti, se stesso più debole). La difficoltà verrà soprattutto dalla **quantità e varietà dei nemici e dagli ostacoli** lungo la Veglia, più che dai numeri dei capi. Oggi Edoardo finisce ogni Veglia che gioca: il gioco è ancora troppo facile per chi lo sa giocare. Il bot invece cade spesso contro il Campanaro: **non misura un giocatore esperto**, e i suoi risultati vanno letti così.
+
 ## Registro
 
 ### 18/11 — Seth, Boss del Mondo 1
