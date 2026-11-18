@@ -1,0 +1,75 @@
+/*
+ * La minimappa (passo 4 della mappa del Mondo, 18/11; numeri in MINIMAPPA, src/data/mappa.ts). Una tela piccola disegnata
+ * a pixel e ingrandita a pixel interi, come la barra del capo:
+ * - nell'angolo in alto (a sinistra, o a destra accanto alla pausa: si sceglie dal LAB) una finestra attorno alla stanza
+ *   in cui si è;
+ * - nella pausa la mappa intera di ciò che si conosce.
+ * Si conoscono le stanze visitate (piene; quella in cui si è più chiara) e quelle accanto a una visitata (solo il
+ * contorno). Campanaro e Boss hanno il loro simbolo. Si ridisegna solo quando si cambia stanza o si apre la pausa.
+ */
+import { MINIMAPPA } from '../data/mappa';
+import type { Mappa } from './mappa';
+
+// i simboli, 3 × 3: la campana del Campanaro e il segno del Boss
+const CAMPANA = ['.#.', '###', '#.#'];
+const BOSS = ['#.#', '.#.', '#.#'];
+
+/** Le stanze che si conoscono: visitate, o accanto a una visitata. */
+function conosciute(m: Mappa): boolean[] {
+  const noto = m.stanze.map((s) => s.visitata);
+  m.stanze.forEach((s) => { if (s.visitata) for (const v of s.vicine) if (v >= 0) noto[v] = true; });
+  return noto;
+}
+
+/**
+ * Disegna la mappa su c. Con finestra: quella quantità di stanze attorno a «qui», con il fondo scuro; senza: tutte le
+ * stanze conosciute, senza fondo. La misura in pixel disegnati resta in dataset.l e dataset.a.
+ */
+export function disegnaMinimappa(c: HTMLCanvasElement, m: Mappa, qui: number, finestra: { colonne: number; righe: number } | null): void {
+  const M = MINIMAPPA, L = M.cella.larghezza, A = M.cella.altezza, S = M.spazio, noto = conosciute(m);
+  let x0: number, y0: number, col: number, rig: number;
+  if (finestra) {
+    col = finestra.colonne;
+    rig = finestra.righe;
+    x0 = m.stanze[qui].x - Math.floor(col / 2);
+    y0 = m.stanze[qui].y - Math.floor(rig / 2);
+  } else {
+    let a = 99, b = -1, d = 99, e = -1;
+    m.stanze.forEach((s, i) => { if (noto[i]) { a = Math.min(a, s.x); b = Math.max(b, s.x); d = Math.min(d, s.y); e = Math.max(e, s.y); } });
+    if (b < 0) { a = b = m.stanze[qui].x; d = e = m.stanze[qui].y; }
+    x0 = a; y0 = d; col = b - a + 1; rig = e - d + 1;
+  }
+  const w = col * (L + S) + S, h = rig * (A + S) + S;
+  if (c.width !== w || c.height !== h) {
+    c.width = w;
+    c.height = h;
+  }
+  c.dataset.l = String(w);
+  c.dataset.a = String(h);
+  const g = c.getContext('2d')!;
+  g.clearRect(0, 0, w, h);
+  if (finestra) {
+    g.fillStyle = M.colori.fondo;
+    g.fillRect(0, 0, w, h);
+  }
+  m.stanze.forEach((s, i) => {
+    const cx = s.x - x0, cy = s.y - y0;
+    if (!noto[i] || cx < 0 || cy < 0 || cx >= col || cy >= rig) return;
+    const px = S + cx * (L + S), py = S + cy * (A + S);
+    if (s.visitata) {
+      g.fillStyle = i === qui ? M.colori.qui : M.colori.visitata;
+      g.fillRect(px, py, L, A);
+    } else {
+      g.fillStyle = M.colori.contorno;
+      g.fillRect(px, py, L, 1);
+      g.fillRect(px, py + A - 1, L, 1);
+      g.fillRect(px, py, 1, A);
+      g.fillRect(px + L - 1, py, 1, A);
+    }
+    const segno = s.tipo === 'campanaro' ? CAMPANA : s.tipo === 'boss' ? BOSS : null;
+    if (!segno) return;
+    g.fillStyle = s.tipo === 'boss' ? M.colori.boss : M.colori.campanaro;
+    const sx = px + Math.floor((L - 3) / 2), sy = py + Math.floor((A - 3) / 2);
+    segno.forEach((r, y) => [...r].forEach((k, x) => { if (k === '#') g.fillRect(sx + x, sy + y, 1, 1); }));
+  });
+}

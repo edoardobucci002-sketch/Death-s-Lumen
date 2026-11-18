@@ -1133,6 +1133,34 @@ for (const [nome, disp] of [
       const f = () => { if (new Function('l', `return ${cond}`)(l)) { new Function('l', azione)(l); ok(true); } else if (performance.now() > fine) ok(false); else requestAnimationFrame(f); };
       f();
     }), [cond, azione, ms]);
+    // la minimappa (passo 4, 18/11): nell'angolo in alto, dentro lo schermo e nell'area sicura, senza toccare la pausa, a
+    // sinistra e a destra (LAB); nella pausa la mappa intera
+    {
+      const riquadri = () => pag.evaluate(() => {
+        const q = (s) => { const b = document.querySelector(s)?.getBoundingClientRect(); return b && { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width, h: b.height }; };
+        return { mm: q('.stanze-minimappa'), pausa: q('.stanze-tasto-pausa'), mp: q('.stanze-mappa-pausa'), W: innerWidth, H: innerHeight };
+      });
+      const dentro = (b, r) => b && b.w > 0 && b.h > 0 && b.l >= 0 && b.t >= 0 && b.r <= r.W + 0.5 && b.b <= r.H + 0.5;
+      const tocca = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      for (const lato of ['destra', 'sinistra']) {
+        await L('latoMinimappa', lato);
+        const r = await riquadri();
+        if (!dentro(r.mm, r)) errori.push(`minimappa a ${lato} fuori dallo schermo (${JSON.stringify(r.mm)})`);
+        else {
+          if (r.mm.t > r.H * 0.2) errori.push(`minimappa a ${lato} non in alto (y ${Math.round(r.mm.t)})`);
+          if ((lato === 'destra') !== (r.mm.l > r.W / 2)) errori.push(`minimappa non a ${lato}`);
+          if (tocca(r.mm, r.pausa)) errori.push(`minimappa a ${lato} sopra il pulsante della pausa`);
+        }
+        if (lato === 'destra' && nome !== 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-minimappa-destra.png` });
+      }
+      await pag.evaluate(() => window.__dl.scene.getScene('Stanze').apriPausa());
+      await pag.waitForTimeout(100);
+      const rp = await riquadri();
+      if (!dentro(rp.mp, rp)) errori.push(`nella pausa la mappa non si vede (${JSON.stringify(rp.mp)})`);
+      if (nome !== 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-mappa-pausa.png` });
+      await pag.evaluate(() => window.__dl.scene.getScene('Stanze').riprendi());
+      nota += ', minimappa sì';
+    }
     await L('vai', 'centro');
     await L('cura');
     const s0 = await st();

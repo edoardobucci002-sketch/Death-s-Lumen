@@ -61,6 +61,8 @@ import { RompibiliStanza } from '../sistema/rompibili-stanza';
 import { BAGLIORE } from '../data/sopravvivenza';
 import { BarraCapo } from '../sistema/barra-capo';
 import { CAMPANARO } from '../data/campanaro';
+import { MINIMAPPA } from '../data/mappa';
+import { disegnaMinimappa } from '../sistema/minimappa';
 import { generaMappa, opposto, type Mappa } from '../sistema/mappa';
 
 const PASSO = 1 / 60;
@@ -100,6 +102,8 @@ export class Stanze extends Phaser.Scene {
   private misureBuio = { w: 0, h: 0 };
   private radice!: HTMLElement;
   private tastoPausa!: HTMLButtonElement;
+  private minimappa?: HTMLCanvasElement; // nell'angolo in alto (passo 4 della mappa, 18/11)
+  private mappaPausa!: HTMLCanvasElement; // la mappa intera nella pausa
   private pannelloPausa!: HTMLElement;
   private avvisoRuota!: HTMLElement;
   lineaJoystick!: HTMLElement; // la linea invisibile al centro: il LAB la può mostrare
@@ -479,7 +483,9 @@ export class Stanze extends Phaser.Scene {
     this.comandi.lascia();
     this.attacco.lascia();
     this.anims.pauseAll();
+    disegnaMinimappa(this.mappaPausa, this.mappa, this.percorso.corrente, null);
     this.pannelloPausa.hidden = false;
+    this.disponi();
   }
 
   riprendi(): void {
@@ -641,6 +647,7 @@ export class Stanze extends Phaser.Scene {
    * aperte, con il medaglione della ricompensa della stanza dopo.
    */
   private mostraPorte(): void {
+    this.aggiornaMinimappa();
     const p = this.percorso.porte();
     this.verso = p.verso;
     if (this.percorso.fase !== 'porte') {
@@ -887,7 +894,11 @@ export class Stanze extends Phaser.Scene {
     this.pannelloPausa.style.backgroundImage = `url(${retino(12)})`;
     const riprendi = this.tastoScritta('Riprendi', () => this.riprendi());
     const menu = this.tastoScritta('Menu', () => this.scene.start('Menu'));
-    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), riprendi, menu);
+    this.mappaPausa = document.createElement('canvas');
+    this.mappaPausa.className = 'stanze-mappa-pausa';
+    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), this.mappaPausa, riprendi, menu);
+    this.minimappa = document.createElement('canvas');
+    this.minimappa.className = 'stanze-minimappa';
     this.avvisoRuota = document.createElement('div');
     this.avvisoRuota.className = 'stanze-ruota';
     this.avvisoRuota.hidden = true;
@@ -902,9 +913,10 @@ export class Stanze extends Phaser.Scene {
     this.lineaJoystick = document.createElement('div');
     this.lineaJoystick.className = 'stanze-linea';
     this.lineaJoystick.hidden = true;
-    this.radice.append(this.lineaJoystick, this.tastoPausa, this.velaPassaggio, this.pannelloPausa, this.pannelloFine, this.avvisoRuota);
+    this.radice.append(this.lineaJoystick, this.minimappa, this.tastoPausa, this.velaPassaggio, this.pannelloPausa, this.pannelloFine, this.avvisoRuota);
     this.barraCapo = new BarraCapo(this.radice);
     interfaccia.append(this.radice);
+    this.aggiornaMinimappa();
     this.disponi();
   }
 
@@ -955,6 +967,18 @@ export class Stanze extends Phaser.Scene {
     misura(this.tastoPausa, lato, lato, z, m);
     misura(this.tastoPausa.firstElementChild as HTMLElement, lato, lato, z, m);
     this.tastoPausa.style.setProperty('--margine-tocco', `${Math.max(4, Math.ceil((TOCCO_MINIMO - lato * z * m.px) / 2))}px`);
+    // la minimappa: in alto a sinistra, o a destra accanto alla pausa (MINIMAPPA.lato, dal LAB)
+    if (this.minimappa?.dataset.l) {
+      const w = Number(this.minimappa.dataset.l), h = Number(this.minimappa.dataset.a), zm = MINIMAPPA.ingrandimento;
+      posa(this.minimappa, MINIMAPPA.lato === 'destra' ? m.W - b.d - lato * z - 4 - w * zm : b.s, b.a, m);
+      misura(this.minimappa, w, h, zm, m);
+    }
+    if (this.mappaPausa.dataset.l) {
+      // nella pausa: grande quanto MINIMAPPA.ingrandimentoPausa, o meno se non ci sta (al massimo 80% della larghezza e 45% dell'altezza)
+      const w = Number(this.mappaPausa.dataset.l), h = Number(this.mappaPausa.dataset.a);
+      const zp = Math.max(1, Math.min(MINIMAPPA.ingrandimentoPausa, Math.floor((m.W * 0.8) / w), Math.floor((m.H * 0.45) / h)));
+      misura(this.mappaPausa, w, h, zp, m);
+    }
     for (const c of this.radice.querySelectorAll<HTMLCanvasElement>('.stanze-scritta')) {
       const k = c.classList.contains('stanze-titolo') ? 4 : c.classList.contains('stanze-etichetta') ? 2 : 3;
       misura(c, Number(c.dataset.l), Number(c.dataset.a), k, m);
@@ -962,6 +986,13 @@ export class Stanze extends Phaser.Scene {
   }
 
   private ridisponi = (): void => this.disponi();
+
+  /** La minimappa nell'angolo: si ridisegna entrando in una stanza (e quando il LAB cambia la mappa). */
+  aggiornaMinimappa(): void {
+    if (!this.minimappa) return;
+    disegnaMinimappa(this.minimappa, this.mappa, this.percorso.corrente, MINIMAPPA.finestra);
+    this.disponi();
+  }
 
   private tasto = (e: KeyboardEvent): void => {
     if (this.morto && e.code !== 'KeyM') return;

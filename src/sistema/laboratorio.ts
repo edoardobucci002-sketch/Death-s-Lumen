@@ -346,6 +346,11 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto(s.chiave ? 'Chiave del Campanaro: sì' : 'Chiave del Campanaro: no', f(() => st.lab.chiave(!s.chiave)), s.chiave ? 'acceso' : ''),
       ),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto(`Eco di ${a}`, f(() => st.lab.eco(a))))),
+      riga(
+        el('span', 'lab-stato', 'Minimappa:'),
+        ...(['sinistra', 'destra'] as const).map((l) => tasto(`in alto a ${l}`, f(() => st.lab.latoMinimappa(l)), s.latoMinimappa === l ? 'acceso' : '')),
+        tasto('Visita tutte le stanze', f(() => st.lab.visitaTutto())),
+      ),
       titolo('Mappa del Mondo'),
       (() => { const m = st.lab.mappa(); return riga(el('span', 'lab-stato', `Seme ${m.seme} · ${m.stanze.length} stanze · Boss a ${m.stanze[m.boss].distanza} porte dall'ingresso · Campanaro a ${m.stanze[m.campanaro]?.distanza ?? '?'}`)); })(),
       disegnoMappa(st.lab.mappa(), st.lab.grigliaMappa(), s.indice),

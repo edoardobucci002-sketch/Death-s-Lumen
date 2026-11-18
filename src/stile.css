@@ -423,3 +423,7 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 @keyframes doni-bagliore { 50% { visibility: visible; } }
 @media (prefers-reduced-motion: reduce) { .doni-bagliore { animation: none; } }
 .doni.verticali .doni-grado { position: absolute; overflow: hidden; display: flex; justify-content: center; align-items: center; white-space: nowrap; font-family: 'Tiny5', monospace; font-weight: 400; text-transform: uppercase; -webkit-font-smoothing: none; font-smooth: never; }
+/* la minimappa del gioco a stanze (18/11): nell'angolo in alto, non si tocca; nella pausa sopra i pulsanti */
+.stanze-minimappa { position: fixed; z-index: 2; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+.stanze-minimappa[hidden] { display: none; }
+.stanze-mappa-pausa { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }

@@ -24,3 +24,26 @@ export const MAPPA = {
   // caso: al massimo questi tentativi, poi se ne tiene una qualsiasi (non deve succedere mai: lo controlla npm run prova)
   tentativi: 500,
 } as const;
+
+/**
+ * La minimappa (passo 4, 18/11): in un angolo in alto, una finestra della mappa attorno alla stanza in cui si è; nella
+ * pausa la mappa intera di ciò che si conosce. Le stanze visitate sono piene, quelle accanto (non ancora visitate) solo
+ * con il contorno; Campanaro e Boss hanno il loro simbolo appena si conoscono. Misure in pixel disegnati, ingrandite a
+ * pixel interi. Tutto di Claude, da rivedere sul Galaxy S25.
+ */
+export const MINIMAPPA = {
+  cella: { larghezza: 9, altezza: 5 }, // una stanza (le stanze sono 13 × 7 lastre: più larghe che alte)
+  spazio: 1, // tra una stanza e l'altra
+  finestra: { colonne: 5, righe: 5 }, // quante stanze si vedono nell'angolo, con quella in cui si è al centro
+  ingrandimento: 2, // nell'angolo
+  ingrandimentoPausa: 4, // nella pausa (se ci sta; se no meno)
+  lato: 'sinistra' as 'sinistra' | 'destra', // in quale angolo in alto (si cambia dal LAB per provarlo sul telefono)
+  colori: {
+    fondo: 'rgba(13, 11, 9, 0.6)', // dietro la finestra nell'angolo
+    visitata: '#8a7a66',
+    qui: '#efe3c8',
+    contorno: '#8a7a66',
+    campanaro: '#e3913a',
+    boss: '#c8343a',
+  },
+};
