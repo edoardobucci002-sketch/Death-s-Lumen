@@ -72,6 +72,7 @@ export const ROMPIBILI_STANZE = {
   tra: 72, // distanza minima tra due oggetti
   tentativi: 60, // posti provati per stanza prima di arrendersi
   ingombro: 12, // raggio dell'ostacolo alla base: personaggio e nemici ci sbattono contro
+  chiave: 0.08, // urne e giare (non le lanterne) lasciano una chiave con questa probabilità (Edoardo, 18/11)
   vittorie: 0, // albe vinte (nel survivor) prima che le urne delle stanze contengano frammenti: da subito (Edoardo, 16/11)
   raccolta: 0.6, // le gocce e i frammenti volano verso il personaggio entro questa parte della raccolta di base, come nel survivor
 } as const;

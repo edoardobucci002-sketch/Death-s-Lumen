@@ -9,6 +9,9 @@
  * - il tesoro sta in un vicolo cieco (non il Boss né il Campanaro), lontano almeno 2 porte dall'ingresso (18/11);
  * - le stanze attaccate all'ingresso danno gli Echi d'inizio, le altre di combattimento una ricompensa a caso (MAPPA.ricompense).
  * Tesoro e Sosta sono vuoti, senza ricompensa (hanno il loro oggetto: STANZE_SPECIALI in src/data/mappa.ts).
+ * Porte chiuse a chiave (18/11): da MAPPA.serrate.minimo a .massimo stanze «serrate», sempre vicoli ciechi (mai la strada per
+ * il Boss): il tesoro sempre, le altre sono stanze di combattimento con la ricompensa doppia. Una stanza sempre aperta ha
+ * come ricompensa la chiave sicura.
  * Ingresso vuoto e sicuro con le porte già aperte. Tutto è dato semplice (numeri e testi), pronto per il salvataggio.
  * Numeri in MAPPA (src/data/mappa.ts). controllaMappa dice quali regole una mappa non rispetta (npm run prova).
  */
@@ -26,8 +29,14 @@ export interface StanzaMappa {
   x: number; // casella della griglia (0 a sinistra)
   y: number; // casella della griglia (0 in alto)
   tipo: TipoStanzaMappa;
-  /** da dove pescano le carte quando la si ripulisce: null per ingresso, Boss, tesoro e Sosta */
-  ricompensa: Ricompensa | 'echi' | null;
+  /** da dove pescano le carte quando la si ripulisce (o la chiave sicura): null per ingresso, Boss, tesoro e Sosta */
+  ricompensa: Ricompensa | 'echi' | 'chiave' | null;
+  /** la porta che porta qui è chiusa a chiave, finché non la si apre (18/11) */
+  serrata: boolean;
+  /** dietro una porta chiusa a chiave: a stanza ripulita due giri di carte (PERCORSO.giriDoppia) */
+  doppia: boolean;
+  /** la chiave sicura di questa stanza è già stata raccolta */
+  chiavePresa: boolean;
   /** quante porte bisogna attraversare dall'ingresso per arrivarci */
   distanza: number;
   /** la stanza attaccata su ogni lato (alto, destra, basso, sinistra): il suo indice, -1 se lì c'è muro */
@@ -116,7 +125,7 @@ function completa(caso: Caso, seme: number, celle: [number, number][], comunque 
   const indice = new Map<number, number>();
   celle.forEach(([x, y], i) => indice.set(y * 100 + x, i));
   const stanze: StanzaMappa[] = celle.map(([x, y]) => ({
-    x, y, tipo: 'combattimento', ricompensa: null, distanza: -1, visitata: false, ripulita: false, rotti: 0,
+    x, y, tipo: 'combattimento', ricompensa: null, distanza: -1, visitata: false, ripulita: false, rotti: 0, serrata: false, doppia: false, chiavePresa: false,
     vicine: [0, 1, 2, 3].map((l) => indice.get((y + DY[l]) * 100 + x + DX[l]) ?? -1) as [number, number, number, number],
   }));
   // le distanze dall'ingresso, porta dopo porta
@@ -162,6 +171,15 @@ function completa(caso: Caso, seme: number, celle: [number, number][], comunque 
     if (s.tipo === 'boss' || s.tipo === 'tesoro' || s.tipo === 'sosta') continue;
     s.ricompensa = s.distanza === 1 ? 'echi' : pesca(caso, pesi);
   }
+  // le porte chiuse a chiave (18/11): il tesoro, più altri vicoli ciechi di combattimento con la ricompensa doppia
+  if (tesoro > 0) stanze[tesoro].serrata = true;
+  const vicoli = mescola(stanze.map((_, i) => i).filter((i) => stanze[i].tipo === 'combattimento' && stanze[i].distanza >= 2 && porte(stanze[i]) === 1), caso);
+  const altre = Math.min(vicoli.length, caso.intero(MAPPA.serrate.minimo, MAPPA.serrate.massimo) - 1);
+  for (let k = 0; k < altre; k++) stanze[vicoli[k]].serrata = stanze[vicoli[k]].doppia = true;
+  // la chiave sicura: la ricompensa di una stanza di combattimento sempre aperta, lontana dall'ingresso
+  const aperta = scegli(caso, stanze.map((_, i) => i).filter((i) => stanze[i].tipo === 'combattimento' && !stanze[i].serrata && stanze[i].distanza >= MAPPA.chiaveSicura.distanzaMinima));
+  if (aperta < 0 && !comunque) return null;
+  if (aperta >= 0) stanze[aperta].ricompensa = 'chiave';
   return { seme, stanze, ingresso: 0, campanaro, boss: capo, tesoro: stanze[tesoro]?.tipo === 'tesoro' ? tesoro : -1, sosta: stanze[sosta]?.tipo === 'sosta' ? sosta : -1 };
 }
 
@@ -198,6 +216,15 @@ export function controllaMappa(m: Mappa): string[] {
   else if (T.vicine.filter((v) => v >= 0).length !== 1 || T.distanza < 2) e.push('il tesoro non è in un vicolo cieco lontano dall\'ingresso');
   if (!So || So.tipo !== 'sosta' || S.filter((s) => s.tipo === 'sosta').length !== 1) e.push('niente Sosta (o più di una)');
   else if (!B || !B.vicine.includes(m.sosta)) e.push('la Sosta non è la stanza prima del Boss');
+  // porte chiuse a chiave (18/11): da 1 a 3, sempre vicoli ciechi, mai capi né Sosta; il tesoro sempre; una chiave sicura
+  const serrate = S.filter((s) => s.serrata);
+  if (serrate.length < MAPPA.serrate.minimo || serrate.length > MAPPA.serrate.massimo) e.push(`${serrate.length} porte chiuse a chiave`);
+  if (serrate.some((s) => s.vicine.filter((v) => v >= 0).length !== 1 || s.tipo === 'boss' || s.tipo === 'campanaro' || s.tipo === 'sosta' || s.tipo === 'ingresso')) e.push('una porta chiusa a chiave non porta a un vicolo cieco qualsiasi');
+  if (T && !T.serrata) e.push('il tesoro non è chiuso a chiave');
+  if (serrate.some((s) => s.tipo === 'combattimento' && !s.doppia)) e.push('una stanza chiusa a chiave senza la ricompensa doppia');
+  const chiavi = S.filter((s) => s.ricompensa === 'chiave');
+  if (chiavi.length !== 1) e.push(`${chiavi.length} chiavi sicure`);
+  else if (chiavi[0].serrata || chiavi[0].distanza < MAPPA.chiaveSicura.distanzaMinima || chiavi[0].tipo !== 'combattimento') e.push('la chiave sicura non è in una stanza sempre aperta');
   for (const s of S) {
     if (s.distanza === 1 && s.ricompensa !== 'echi') e.push("una stanza accanto all'ingresso non dà gli Echi");
     if ((s.tipo === 'combattimento' || s.tipo === 'campanaro') && !s.ricompensa) e.push('una stanza senza ricompensa');

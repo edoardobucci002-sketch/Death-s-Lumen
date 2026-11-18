@@ -24,7 +24,7 @@ import { STATO, type TipoStanza } from './nemici-stanza';
 import { F } from './armi-colpo';
 import { BotStanze } from './bot-stanze';
 import type { Stanze } from '../scene/Stanze';
-import { MURI, type Muro } from './porte';
+import { MURI, davantiAlMuro, type Muro } from './porte';
 import { MOSSA_CAPO } from './campanaro';
 import { MOSSA_SETH } from './seth';
 import { ID_CAMPANARO, ID_SETH } from './orda';
@@ -207,6 +207,48 @@ export class LabStanze {
     const c = this.s.nemici.capo;
     c.prossimo = a === 'rintocco' ? MOSSA_CAPO.rintocco : a === 'carica' ? MOSSA_CAPO.mira : MOSSA_CAPO.chiamata;
     if (c.mossa === MOSSA_CAPO.cammina) c.tempo = 0;
+  }
+
+  /** Una chiave in tasca (18/11). */
+  daiChiave(): void {
+    this.s.percorso.chiavi++;
+  }
+
+  /** Apre tutte le porte chiuse a chiave della mappa, senza chiavi. */
+  apriSerrate(): void {
+    for (const s of this.s.mappa.stanze) s.serrata = false;
+    this.s.ridisegnaPorte();
+  }
+
+  /** La prossima urna o giara rotta lascia una chiave. */
+  chiaveDaVaso(): void {
+    this.s.rompibili.forzaChiave = true;
+  }
+
+  /** Va alla stanza della chiave sicura. */
+  vaiAllaChiave(): void {
+    this.vaiAllaStanza(this.s.mappa.stanze.findIndex((s) => s.ricompensa === 'chiave'));
+  }
+
+  /** Va davanti alla prima porta chiusa a chiave: nella stanza accanto a una stanza serrata, contro la sua porta. */
+  vaiAllaSerratura(): void {
+    const m = this.s.mappa, v = m.stanze.findIndex((s) => s.serrata);
+    if (v < 0) return;
+    const lato = m.stanze[v].vicine.findIndex((x) => x >= 0), qui = m.stanze[v].vicine[lato];
+    m.stanze[qui].ripulita = true; // la stanza accanto, già ripulita: le porte sono aperte
+    this.vaiAllaStanza(qui);
+    const muro = MURI[(lato + 2) % 4], p = davantiAlMuro(muro);
+    this.s.x = p.x;
+    this.s.y = p.y;
+  }
+
+  /** Le chiavi e le porte chiuse a chiave, per il pannello. */
+  chiavi(): { chiavi: number; serrate: number; doppie: number; sicura: string } {
+    const m = this.s.mappa, k = m.stanze.find((s) => s.ricompensa === 'chiave');
+    return {
+      chiavi: this.s.percorso.chiavi, serrate: m.stanze.filter((s) => s.serrata).length, doppie: m.stanze.filter((s) => s.doppia).length,
+      sicura: !k ? 'nessuna' : k.chiavePresa ? 'raccolta' : k.ripulita ? 'a terra' : `a ${k.distanza} porte dall'ingresso`,
+    };
   }
 
   /** Seth qui vicino, subito (senza la stanza del Boss: per provarlo da solo). */

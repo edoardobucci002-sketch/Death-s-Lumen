@@ -40,7 +40,9 @@ export class Percorso {
   /** quante stanze nuove con dei nemici si sono combattute (per le simulazioni e il LAB): 0 all'ingresso */
   stanza = 0;
   fase: Fase = 'porte';
-  ricompensa: Ricompensa | 'echi' = 'echi'; // da dove pescano le carte di questa stanza
+  ricompensa: Ricompensa | 'echi' | 'chiave' = 'echi'; // da dove pescano le carte di questa stanza (o la chiave sicura)
+  /** Le chiavi in tasca (18/11): aprono le porte chiuse a chiave; si perdono a fine Veglia. */
+  chiavi = 0;
   livelloLanterna = 1;
   /** LAB: le carte escono di questo grado, quando la stanza lo può dare (null = il caso di sempre). */
   forzaGrado: IdGrado | null = null;
@@ -177,7 +179,8 @@ export class Percorso {
         if (nuovi.length) scelte.push(this.pesca(nuovi.map((arma) => ({ tipo: 'arma', arma, livello: 1 }) as Dono)));
       }
     } else {
-      const possibili: Dono[] = this.ricompensa === 'dono' ? this.doni() : this.dallAffinita(this.ricompensa);
+      const r = this.ricompensa;
+      const possibili: Dono[] = r === 'dono' || r === 'chiave' ? this.doni() : this.dallAffinita(r);
       this.riempi(scelte, possibili, n);
     }
     // niente (o non abbastanza) da dare da lì, per esempio gli Echi con la build piena: il resto sono doni
@@ -251,7 +254,8 @@ export class Percorso {
   /**
    * Le porte della stanza in cui si è: una per ogni lato con una stanza accanto, con il medaglione della stanza dopo
    * (niente medaglione se è già ripulita), e dove porta ognuna (indice della mappa). La porta del Boss ha il medaglione del
-   * capo; senza la chiave del Campanaro ha il lucchetto e resta chiusa (chiuse[k]).
+   * capo; senza la chiave del Campanaro ha il lucchetto e resta chiusa (chiuse[k]). Le porte chiuse a chiave (18/11) hanno la
+ * serratura e restano chiuse finché non le si apre con una chiave (apriSerratura).
    */
   porte(): { muri: Muro[]; ricompense: Medaglione[]; verso: number[]; chiuse: boolean[] } {
     const muri: Muro[] = [], ricompense: Medaglione[] = [], verso: number[] = [], chiuse: boolean[] = [];
@@ -260,11 +264,20 @@ export class Percorso {
       if (v < 0) return;
       const s = this.mappa.stanze[v], boss = s.tipo === 'boss', speciale = s.tipo === 'tesoro' || s.tipo === 'sosta';
       muri.push(MURI[l]);
-      ricompense.push(boss ? (chiave ? 'capo' : 'chiusa') : s.ripulita ? null : speciale ? (s.tipo as 'tesoro' | 'sosta') : s.ricompensa);
+      ricompense.push(boss ? (chiave ? 'capo' : 'chiusa') : s.serrata ? 'serratura' : s.ripulita ? null : speciale ? (s.tipo as 'tesoro' | 'sosta') : s.ricompensa);
       verso.push(v);
-      chiuse.push(boss && !chiave);
+      chiuse.push((boss && !chiave) || s.serrata);
     });
     return { muri, ricompense, verso, chiuse };
+  }
+
+  /** Apre con una chiave la porta chiusa a chiave verso la stanza v (18/11): true se l'ha aperta. */
+  apriSerratura(v: number): boolean {
+    const s = this.mappa.stanze[v];
+    if (!s?.serrata || this.chiavi <= 0) return false;
+    this.chiavi--;
+    s.serrata = false;
+    return true;
   }
 
   /** Echi dell'affinità aff che non si hanno ancora (solo se c'è posto nella build). */

@@ -25,6 +25,12 @@ export const MAPPA = {
   // se una mappa non rispetta le regole (troppo piccola, Boss non in un vicolo cieco) se ne genera un'altra con lo stesso
   // caso: al massimo questi tentativi, poi se ne tiene una qualsiasi (non deve succedere mai: lo controlla npm run prova)
   tentativi: 500,
+  // porte chiuse a chiave (Edoardo, 17/11 e 18/11): da 1 a 3 per Mondo, sempre verso un vicolo cieco (mai la strada per il
+  // Boss); il tesoro è sempre dietro una di loro, le altre danno una stanza con la ricompensa doppia (due giri di carte)
+  serrate: { minimo: 1, massimo: 3 },
+  // la chiave sicura (Edoardo, 18/11): è la ricompensa di una stanza a caso tra quelle sempre aperte, a questa distanza
+  // dall'ingresso o più (le stanze accanto all'ingresso danno gli Echi d'inizio); ripulita, la chiave è a terra al centro
+  chiaveSicura: { distanzaMinima: 2 },
 } as const;
 
 /**
@@ -49,6 +55,8 @@ export const MINIMAPPA = {
     boss: '#c8343a',
     tesoro: '#f2d16b',
     sosta: '#86c5e8',
+    serratura: '#e0b440', // la stanza dietro una porta chiusa a chiave (18/11)
+    chiave: '#e0b440', // la stanza che dà la chiave sicura (18/11)
     sulChiaro: '#120c08', // il simbolo sulla stanza in cui si è
   },
 };

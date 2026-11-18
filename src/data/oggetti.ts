@@ -10,6 +10,7 @@ export const DROP = {
   // la Cera cade rara (molto meno delle anime): da un nemico comune, più gocce da élite e Seth.
   // La Cera di una veglia = gocce raccolte + il premio dell'alba (data/meta.ts)
   cera: { probabilita: 0.004, perElite: 3, perSeth: 10, ingrandimento: 2, volo: 260, sprite: 'Goccia_cera' },
+  chiave: { ingrandimento: 2, sprite: 'Chiave' }, // gioco a stanze (18/11): da urne e giare, apre le porte chiuse a chiave; segnaposto dal codice
   frammento: { ingrandimento: 2, sprite: 'Frammento', colori: 3 }, // lo lasciano le urne (data/rompibili.ts); un colore per fotogramma: rosso, verde, blu scuro
   reliquiario: {
     sprite: 'Reliquiario',

@@ -17,7 +17,7 @@ import { Caso } from './caso';
 import { Chiazze } from './chiazze';
 import type { Effetti } from './effetti';
 import { Mosaico } from './mosaico';
-import { CERA_GOCCIA, FRAMMENTO, Oggetti } from './oggetti';
+import { CERA_GOCCIA, CHIAVE_OGGETTO, FRAMMENTO, Oggetti } from './oggetti';
 import type { Orda } from './orda';
 import { Rompibili } from './rompibili';
 import { carica, salva } from './salvataggio';
@@ -37,6 +37,8 @@ export class RompibiliStanza {
   private readonly caso: Caso;
   private readonly mosaiciAperti: boolean;
   cera = 0; // gocce raccolte in questa Veglia
+  chiavi = 0; // chiavi raccolte e non ancora passate al percorso (la scena le prende a ogni passo)
+  forzaChiave = false; // LAB: il prossimo vaso (urna o giara) lascia sempre una chiave
   frammenti = 0; // pezzi del mosaico accesi
   frammentiCaduti = 0; // quanti ne sono usciti dalle urne in questa Veglia
   bagliore = 0; // secondi di Bagliore rimasti
@@ -202,6 +204,10 @@ export class RompibiliStanza {
       suona('cera');
     } else if (tipo === FRAMMENTO) {
       this.frammento();
+    } else if (tipo === CHIAVE_OGGETTO) {
+      this.chiavi++;
+      suona('vetro');
+      vibra('leggera');
     }
   };
 
@@ -215,6 +221,11 @@ export class RompibiliStanza {
       if (fortuna) this.lasciaFrammento(x, y);
     }
     if (olio) this.chiazze.aggiungi(x, y);
+    // urne e giare (non le lanterne): a volte una chiave (18/11)
+    else if (this.forzaChiave || this.caso.numero() < ROMPIBILI_STANZE.chiave) {
+      this.forzaChiave = false;
+      this.oggetti.aggiungi(CHIAVE_OGGETTO, x + ROMPIBILI.dispersione, y);
+    }
     suona('colpo');
     vibra('leggera');
   };

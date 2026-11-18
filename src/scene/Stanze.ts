@@ -30,7 +30,8 @@ import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
 import { Percorso } from '../sistema/percorso';
-import { MURI, Porte, davantiAlMuro, type Muro } from '../sistema/porte';
+import { MURI, Porte, SIMBOLO_CHIAVE, davantiAlMuro, type Muro } from '../sistema/porte';
+import { CHIAVE_DISEGNO, GOCCIA, telaDisegno } from '../sistema/oggetti';
 import { Doni, type Dono } from '../sistema/doni';
 import { ComparsaCarte } from '../sistema/comparsa-carte';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
@@ -107,6 +108,14 @@ export class Stanze extends Phaser.Scene {
   private radice!: HTMLElement;
   private tastoPausa!: HTMLButtonElement;
   private minimappa?: HTMLCanvasElement; // nell'angolo in alto (passo 4 della mappa, 18/11)
+  private contatori!: HTMLDivElement; // sotto la minimappa: Cera della Veglia e chiavi (18/11)
+  private numeroCera!: HTMLSpanElement;
+  private numeroChiavi!: HTMLSpanElement;
+  private contati = '';
+  private tastoApri!: HTMLButtonElement; // «Apri»: compare davanti a una porta chiusa a chiave, con una chiave in tasca (18/11)
+  private portaDaAprire = -1;
+  private ultimoAvviso = ''; // la scritta sopra la testa in corso: una diversa la sostituisce subito
+  private giriCarte = 1; // giri di carte ancora da scegliere in questa stanza (2 dietro una porta chiusa a chiave)
   private mappaPausa!: HTMLCanvasElement; // la mappa intera nella pausa
   private pannelloPausa!: HTMLElement;
   private avvisoRuota!: HTMLElement;
@@ -527,6 +536,14 @@ export class Stanze extends Phaser.Scene {
         COMBATTIMENTO_STANZA.raggio, this.salute / this.saluteMassima, this.abilita.pronta(), ABILITA.cerchioDiLuce.raggio);
       dx = this.bot.dx;
       dy = this.bot.dy;
+      // stanza vuota con un oggetto da usare (forziere, fonte, la chiave a terra): dritto sull'oggetto
+      if (this.percorso.fase === 'porte' && this.nemici.vivi() === 0 && this.oggetto.visible && this.oggettoDaUsare()) {
+        const ox = this.oggetto.x - this.x, oy = this.oggetto.y - this.y, d = Math.hypot(ox, oy);
+        if (d > 2) {
+          dx = ox / d;
+          dy = oy / d;
+        }
+      }
       if (this.bot.colpisce && this.attacco.attesa <= 0) this.attacco.automatico();
       if (this.bot.abilita) this.abilita.usa();
     }
@@ -590,26 +607,43 @@ export class Stanze extends Phaser.Scene {
     }
     // il percorso: ondate della stanza, carte a stanza ripulita (con «ondate automatiche» spente nel LAB resta fermo)
     if (this.ondateAutomatiche && this.percorso.aggiorna(dt, this.nemici, this.x, this.y)) this.apriCarte();
-    // tesoro e Sosta: camminando contro l'oggetto lo si usa
-    if (this.percorso.fase === 'porte' && this.oggetto.visible && !this.percorso.qui.ripulita
+    // le chiavi raccolte da urne e giare (18/11)
+    if (this.rompibili.chiavi > 0) {
+      this.percorso.chiavi += this.rompibili.chiavi;
+      this.rompibili.chiavi = 0;
+      this.avvisa('Una chiave');
+    }
+    // tesoro e Sosta, la chiave sicura: camminando contro l'oggetto lo si usa
+    if (this.percorso.fase === 'porte' && this.oggetto.visible && (!this.percorso.qui.ripulita || this.chiaveATerra())
       && Math.hypot(this.x - this.oggetto.x, this.y - this.oggetto.y) < STANZE_SPECIALI.tocco) this.usaOggetto();
     // le porte aperte: camminandoci contro si passa alla stanza accanto (il bot prima usa l'oggetto, se gli serve)
     if (this.percorso.fase === 'porte' && !this.porteBloccate && !(this.bot && this.oggettoDaUsare())) {
-      let k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma)) : this.porte.attraversata(this.x, this.y);
-      if (this.porte.chiuse[k]) k = -1; // la porta del capo senza la chiave non si attraversa (nemmeno il bot)
-      if (k < 0 && this.avvisoVita <= 0 && this.porte.controChiusa(this.x, this.y)) this.avvisa('Serve la chiave del Campanaro');
+      let k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma), this.percorso.chiavi) : this.porte.attraversata(this.x, this.y);
+      // il bot apre con una chiave la porta chiusa a chiave che ha scelto (lui non sbaglia porta)
+      if (this.bot && k >= 0 && this.porte.ricompense[k] === 'serratura' && this.percorso.chiavi > 0) this.apriSerratura(k);
+      if (this.porte.chiuse[k]) k = -1; // la porta del capo senza la chiave, o chiusa a chiave, non si attraversa
+      // contro una porta chiusa: con la chiave compare «Apri» (la porta non si apre da sola, Edoardo 18/11); se no l'avviso
+      const kc = k < 0 && !this.bot ? this.porte.controChiusa(this.x, this.y) : -1;
+      const serratura = kc >= 0 && this.porte.ricompense[kc] === 'serratura';
+      this.mostraApri(serratura && this.percorso.chiavi > 0 ? kc : -1);
+      const testo = serratura ? 'Serve una chiave' : 'Serve la chiave del Campanaro';
+      if (kc >= 0 && this.portaDaAprire < 0 && (this.avvisoVita <= 0 || this.ultimoAvviso !== testo)) this.avvisa(testo);
       if (k >= 0 && this.botVeloce) {
         // simulazione: niente passaggio a retino, si cambia stanza subito
         this.portaScelta = k;
         this.nuovaStanza();
       } else if (k >= 0) this.attraversa(k);
-    }
+    } else if (this.portaDaAprire >= 0) this.mostraApri(-1);
   }
 
   /** L'oggetto della stanza: il forziere del tesoro o la fonte della Sosta (spenti quando sono già stati usati). */
   private mostraOggetto(): void {
-    const s = this.percorso.qui, speciale = s.tipo === 'tesoro' || s.tipo === 'sosta';
-    this.oggetto.setVisible(speciale).setPosition(MISURA.larghezza / 2, MISURA.altezza / 2);
+    const s = this.percorso.qui, speciale = s.tipo === 'tesoro' || s.tipo === 'sosta', chiave = this.chiaveATerra();
+    this.oggetto.setVisible(speciale || chiave).setPosition(MISURA.larghezza / 2, MISURA.altezza / 2);
+    if (chiave) {
+      this.oggetto.setTexture(SIMBOLO_CHIAVE).clearTint(); // la chiave sicura, a terra al centro (segnaposto: il simbolo ×3)
+      return;
+    }
     if (!speciale) return;
     this.oggetto.setTexture(s.tipo === 'tesoro' ? 'stanze-simbolo-tesoro' : 'stanze-simbolo-sosta');
     if (s.ripulita) this.oggetto.setTint(0x55504a).setTintMode(Phaser.TintModes.MULTIPLY);
@@ -619,6 +653,7 @@ export class Stanze extends Phaser.Scene {
   /** C'è un oggetto che serve ancora: il forziere chiuso, o la fonte con la fiaschetta non piena. */
   oggettoDaUsare(): boolean {
     const s = this.percorso.qui;
+    if (this.chiaveATerra()) return true;
     if (s.ripulita) return false;
     return s.tipo === 'tesoro' || (s.tipo === 'sosta' && this.fiaschetta.sorsi < this.fiaschetta.massimo);
   }
@@ -626,6 +661,15 @@ export class Stanze extends Phaser.Scene {
   /** Usa l'oggetto: il forziere apre il Reliquiario del tesoro; la fonte riempie la fiaschetta (se non è già piena). */
   usaOggetto(): void {
     const s = this.percorso.qui;
+    if (this.percorso.fase === 'porte' && this.chiaveATerra()) {
+      // la chiave sicura (18/11)
+      s.chiavePresa = true;
+      this.percorso.chiavi++;
+      this.avvisa('Una chiave');
+      this.mostraOggetto();
+      this.aggiornaMinimappa();
+      return;
+    }
     if (s.ripulita || this.percorso.fase !== 'porte') return;
     if (s.tipo === 'sosta') {
       if (this.fiaschetta.sorsi >= this.fiaschetta.massimo) {
@@ -644,6 +688,7 @@ export class Stanze extends Phaser.Scene {
       this.radice.classList.add('con-carte');
       this.comandi.lascia();
       this.attacco.lascia();
+      this.giriCarte = 1;
       this.mostraCarte(this.percorso.carteTesoro(), 'Un tesoro');
     }
   }
@@ -656,6 +701,16 @@ export class Stanze extends Phaser.Scene {
 
   /** Stanza ripulita: le carte. Scelta la carta, si aprono le porte. */
   apriCarte(): void {
+    if (this.percorso.ricompensa === 'chiave') {
+      // la stanza della chiave sicura (18/11): niente carte, la chiave a terra al centro
+      this.sim.stanzaRipulita(this.percorso.stanza, this.salute);
+      this.percorso.ripulita();
+      this.mostraOggetto();
+      this.mostraPorte();
+      suona('campana');
+      return;
+    }
+    this.giriCarte = this.percorso.qui.doppia ? PERCORSO.giriDoppia : 1; // dietro una porta chiusa a chiave: la ricompensa doppia
     this.percorso.fase = 'carte';
     this.radice.classList.add('con-carte');
     const carte = this.percorso.carte();
@@ -695,6 +750,14 @@ export class Stanze extends Phaser.Scene {
     const chiave = this.percorso.chiave;
     if (d) this.percorso.scegli(d);
     else this.percorso.ripulita();
+    if (d && --this.giriCarte > 0) {
+      // la ricompensa doppia: un altro giro di carte
+      this.ricalcola();
+      this.percorso.fase = 'carte';
+      this.radice.classList.add('con-carte');
+      this.mostraCarte(this.percorso.carte(), 'Un altro dono');
+      return;
+    }
     if (!chiave && this.percorso.chiave) this.avvisa('La porta del capo è aperta'); // il Campanaro battuto: la chiave
     this.mostraOggetto(); // il forziere del tesoro, aperto
     this.ricalcola();
@@ -795,8 +858,43 @@ export class Stanze extends Phaser.Scene {
     c.y1 = MISURA.altezza - STANZA.muroBasso;
   }
 
+  /** La chiave sicura è a terra in questa stanza (ripulita e non ancora raccolta). */
+  chiaveATerra(): boolean {
+    const s = this.percorso.qui;
+    return s.ricompensa === 'chiave' && s.ripulita && !s.chiavePresa;
+  }
+
+  /** Il pulsante «Apri» per la porta chiusa a chiave k (-1: nascosto). */
+  private mostraApri(k: number): void {
+    if (k === this.portaDaAprire) return;
+    this.portaDaAprire = k;
+    this.tastoApri.hidden = k < 0;
+  }
+
+  /** Apre con una chiave la porta chiusa a chiave k della stanza in cui si è (18/11). */
+  apriSerratura(k: number): void {
+    if (k < 0 || this.porte.ricompense[k] !== 'serratura' || !this.percorso.apriSerratura(this.verso[k])) return;
+    this.mostraApri(-1);
+    this.mostraPorte();
+    if (!this.bot) {
+      this.avvisa('Porta aperta');
+      suona('campana');
+      vibra('media');
+    }
+  }
+
+  /** I contatori sotto la minimappa (Cera della Veglia e chiavi): si riscrivono solo quando cambiano. */
+  private aggiornaContatori(): void {
+    const testo = `${this.rompibili.cera}|${this.percorso.chiavi}`;
+    if (testo === this.contati) return;
+    this.contati = testo;
+    this.numeroCera.textContent = String(this.rompibili.cera);
+    this.numeroChiavi.textContent = String(this.percorso.chiavi);
+  }
+
   /** Una scritta breve sopra la testa del Lampionaio (la porta del capo), per PERCORSO.avviso secondi. */
   avvisa(testo: string): void {
+    this.ultimoAvviso = testo;
     const chiave = `stanze-avviso-${testo}`;
     if (!this.textures.exists(chiave)) this.textures.addCanvas(chiave, tela(testo, PORTE.colori.echi, '#000000'));
     this.avviso.setTexture(chiave);
@@ -875,6 +973,7 @@ export class Stanze extends Phaser.Scene {
     this.nemici.disegna(cam, px, py);
     const capo = this.nemici.indiceCapo(), o = this.nemici.orda;
     this.barraCapo.aggiorna(capo >= 0 ? o.salute[capo] / o.saluteMassima[capo] : null, capo >= 0 && o.tipo[capo] === ID_SETH);
+    this.aggiornaContatori();
     this.arsenale.disegna();
     this.abilita.disegna(px, py - COLPI.corpo);
     this.impatto.disegna(dt);
@@ -987,7 +1086,25 @@ export class Stanze extends Phaser.Scene {
     this.lineaJoystick = document.createElement('div');
     this.lineaJoystick.className = 'stanze-linea';
     this.lineaJoystick.hidden = true;
-    this.radice.append(this.lineaJoystick, this.minimappa, this.tastoPausa, this.velaPassaggio, this.pannelloPausa, this.pannelloFine, this.avvisoRuota);
+    // sotto la minimappa: la Cera della Veglia e le chiavi (Edoardo, 18/11), numeri in Jersey 10
+    this.contatori = document.createElement('div');
+    this.contatori.className = 'stanze-contatori';
+    this.numeroCera = document.createElement('span');
+    this.numeroChiavi = document.createElement('span');
+    for (const [disegno, numero] of [[GOCCIA, this.numeroCera], [CHIAVE_DISEGNO, this.numeroChiavi]] as const) {
+      const riga = document.createElement('div'), icona = telaDisegno(disegno);
+      icona.className = 'stanze-contatore-icona';
+      icona.dataset.l = String(icona.width);
+      icona.dataset.a = String(icona.height);
+      riga.append(icona, numero);
+      this.contatori.append(riga);
+    }
+    this.contati = '';
+    this.tastoApri = this.tastoScritta('Apri', () => this.apriSerratura(this.portaDaAprire));
+    this.tastoApri.classList.add('stanze-apri');
+    this.tastoApri.hidden = true;
+    this.portaDaAprire = -1;
+    this.radice.append(this.lineaJoystick, this.minimappa, this.contatori, this.tastoApri, this.tastoPausa, this.velaPassaggio, this.pannelloPausa, this.pannelloFine, this.avvisoRuota);
     this.barraCapo = new BarraCapo(this.radice);
     interfaccia.append(this.radice);
     this.aggiornaMinimappa();
@@ -1044,8 +1161,19 @@ export class Stanze extends Phaser.Scene {
     // la minimappa: in alto a sinistra, o a destra accanto alla pausa (MINIMAPPA.lato, dal LAB)
     if (this.minimappa?.dataset.l) {
       const w = Number(this.minimappa.dataset.l), h = Number(this.minimappa.dataset.a), zm = MINIMAPPA.ingrandimento;
-      posa(this.minimappa, MINIMAPPA.lato === 'destra' ? m.W - b.d - lato * z - 4 - w * zm : b.s, b.a, m);
+      const mx = MINIMAPPA.lato === 'destra' ? m.W - b.d - lato * z - 4 - w * zm : b.s;
+      posa(this.minimappa, mx, b.a, m);
       misura(this.minimappa, w, h, zm, m);
+      // i contatori subito sotto, allineati a lei; icone ingrandite come la minimappa, numeri in Jersey 10
+      posa(this.contatori, mx, b.a + h * zm + 3, m);
+      this.contatori.style.fontSize = `${Math.round(10 * zm * m.px)}px`;
+      for (const c of this.contatori.querySelectorAll<HTMLCanvasElement>('canvas')) misura(c, Number(c.dataset.l), Number(c.dataset.a), zm, m);
+    }
+    // «Apri»: in basso al centro, tra i due joystick
+    if (this.tastoApri) {
+      this.tastoApri.style.left = '50%';
+      this.tastoApri.style.transform = 'translateX(-50%)';
+      this.tastoApri.style.bottom = `${(b.b + 24) * m.px}px`;
     }
     if (this.mappaPausa.dataset.l) {
       // nella pausa: grande quanto MINIMAPPA.ingrandimentoPausa, o meno se non ci sta (al massimo 80% della larghezza e 45% dell'altezza)
@@ -1077,6 +1205,8 @@ export class Stanze extends Phaser.Scene {
       if (!this.fermo()) this.attacco.automatico();
     } else if (e.code === 'Space') {
       this.abilita.usa();
+    } else if (e.code === 'KeyE') {
+      if (this.portaDaAprire >= 0) this.apriSerratura(this.portaDaAprire); // la porta chiusa a chiave (18/11)
     } else if (e.code === 'KeyM') {
       impostaAudio(!audioAttivo());
     } else {

@@ -1397,6 +1397,31 @@ for (const [nome, disp] of [
     if (sb2.indice !== vb.i) errori.push('la porta del Boss chiusa si attraversa');
     if (!avviso) errori.push('spingendo contro la porta del Boss chiusa non compare la scritta');
     if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-boss-chiuso.png` });
+    // chiavi e porte chiuse a chiave (18/11): senza chiave l'avviso; con la chiave «Apri», che apre e consuma la chiave
+    {
+      const c0 = await L('chiavi');
+      if (c0.serrate < 1 || c0.sicura === 'nessuna') errori.push(`la mappa non ha porte chiuse a chiave o la chiave sicura (${JSON.stringify(c0)})`);
+      await pag.waitForTimeout(1700); // finisce la scritta della porta del Boss, provata qui sopra
+      await pag.evaluate(() => { window.__dl.scene.getScene('Stanze').percorso.chiavi = 0; }); // le prove prima possono averne trovata una
+      await L('vaiAllaSerratura');
+      await pag.waitForTimeout(300);
+      const senza = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { apri: !document.querySelector('.stanze-apri').hidden, avviso: s.avvisoVita > 0 && s.avviso.texture.key.endsWith('Serve una chiave') }; });
+      if (senza.apri || !senza.avviso) errori.push(`senza chiave, davanti alla porta chiusa: «Apri» ${senza.apri}, avviso ${senza.avviso}`);
+      await L('daiChiave');
+      await pag.waitForTimeout(200);
+      const conChiave = await pag.evaluate(() => !document.querySelector('.stanze-apri').hidden);
+      if (!conChiave) errori.push('con la chiave, davanti alla porta chiusa, «Apri» non compare');
+      else {
+        if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-serratura.png` });
+        await pag.click('.stanze-apri').catch(() => errori.push('«Apri» non è toccabile'));
+        await pag.waitForTimeout(200);
+        const c1 = await L('chiavi');
+        if (c1.chiavi !== 0 || c1.serrate !== c0.serrate - 1) errori.push(`«Apri» non apre la porta (${JSON.stringify(c1)})`);
+        else giro.push('porta chiusa a chiave');
+      }
+      const cont = await pag.evaluate(() => { const c = document.querySelector('.stanze-contatori'); return c && !c.hidden && c.textContent.length > 1; });
+      if (!cont) errori.push('sotto la minimappa non ci sono Cera e chiavi');
+    }
     // tesoro e Sosta (18/11): vuoti e aperti; il forziere dà 3 carte rare (Chiara o Ardente), la fonte riempie la fiaschetta
     await L('vaiAlTesoro');
     await pag.waitForTimeout(300);

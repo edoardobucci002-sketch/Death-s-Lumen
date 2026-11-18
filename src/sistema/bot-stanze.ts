@@ -203,10 +203,12 @@ export class BotStanze {
    * lascia per ultimo, come farebbe un giocatore (prima la build più forte); finito tutto, il Boss (la sua porta si apre solo
    * con la chiave del Campanaro, 18/11).
    */
-  scegliPorta(m: Mappa, qui: number, verso: readonly number[], ricompense: readonly Medaglione[], echi: readonly Arma[]): number {
-    const resta = m.stanze.some((s) => !s.ripulita && s.tipo === 'combattimento');
+  scegliPorta(m: Mappa, qui: number, verso: readonly number[], ricompense: readonly Medaglione[], echi: readonly Arma[], chiavi = 0): number {
+    // dietro una porta chiusa a chiave (18/11) ci va solo con una chiave in tasca (la porta la apre la scena)
+    const raggiungibile = (i: number): boolean => !m.stanze[i].serrata || chiavi > 0;
+    const resta = m.stanze.some((s, i) => !s.ripulita && s.tipo === 'combattimento' && raggiungibile(i));
     // stanze nuove: da combattere, il tesoro (18/11), e il Campanaro quando non resta altro; la Sosta la usa passando
-    const nuova = (i: number): boolean => !m.stanze[i].ripulita && (m.stanze[i].tipo === 'combattimento' || m.stanze[i].tipo === 'tesoro' || (!resta && m.stanze[i].tipo === 'campanaro'));
+    const nuova = (i: number): boolean => !m.stanze[i].ripulita && raggiungibile(i) && (m.stanze[i].tipo === 'combattimento' || m.stanze[i].tipo === 'tesoro' || (!resta && m.stanze[i].tipo === 'campanaro'));
     let migliore = -1, valore = -Infinity;
     const vicine = verso.filter(nuova).length;
     let scelta = this.esplora && vicine ? this.esplora.intero(0, vicine - 1) : -1;
@@ -216,7 +218,7 @@ export class BotStanze {
         if (scelta-- === 0) migliore = k;
         return;
       }
-      const r = ricompense[k];
+      const r = m.stanze[v].tipo === 'tesoro' || m.stanze[v].serrata ? 'tesoro' : ricompense[k]; // chiusa a chiave: c'è di più
       const val = r === 'tesoro' ? B.porte.tesoro : r === 'echi' ? B.porte.echi : r === 'dono' ? B.porte.dono : echi.some((a) => AFFINITA_ARMI[a.id] === r) ? B.porte.affinitaPosseduta : B.porte.altra;
       if (val > valore) {
         valore = val;

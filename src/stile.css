@@ -426,4 +426,11 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 /* la minimappa del gioco a stanze (18/11): nell'angolo in alto, non si tocca; nella pausa sopra i pulsanti */
 .stanze-minimappa { position: fixed; z-index: 2; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; }
 .stanze-minimappa[hidden] { display: none; }
+/* sotto la minimappa (18/11): Cera della Veglia e chiavi, icona e numero in Jersey 10; non si toccano */
+.stanze-contatori { position: fixed; z-index: 2; pointer-events: none; display: flex; flex-direction: column; gap: 2px; font-family: var(--f-pixel); color: #efe3c8; line-height: 1; text-shadow: 2px 2px 0 #000; }
+.stanze-contatori > div { display: flex; align-items: center; gap: 6px; }
+.stanze-contatore-icona { image-rendering: pixelated; image-rendering: crisp-edges; }
+/* «Apri» davanti a una porta chiusa a chiave (18/11): in basso al centro */
+#interfaccia .stanze-apri { position: fixed; z-index: 5; }
+#interfaccia .stanze-apri[hidden] { display: none; }
 .stanze-mappa-pausa { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }

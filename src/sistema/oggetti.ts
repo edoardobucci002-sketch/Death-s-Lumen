@@ -15,11 +15,12 @@ export const CALAMITA = 1;
 export const RELIQUIARIO = 2;
 export const CERA_GOCCIA = 3;
 export const FRAMMENTO = 4;
-const SPRITE = [DROP.pane.sprite, DROP.calamita.sprite, DROP.reliquiario.sprite, DROP.cera.sprite, DROP.frammento.sprite];
+export const CHIAVE_OGGETTO = 5; // gioco a stanze (18/11): la chiave che esce da urne e giare
+const SPRITE = [DROP.pane.sprite, DROP.calamita.sprite, DROP.reliquiario.sprite, DROP.cera.sprite, DROP.frammento.sprite, DROP.chiave.sprite];
 const MAX_OGGETTI = 128;
 
 /** La goccia di cera, provvisoria, disegnata qui in pixel art (8×11) finché Edoardo non ne disegna una. */
-const GOCCIA = [
+export const GOCCIA = [
   '...OO...',
   '..OYYO..',
   '..OYYO..',
@@ -33,6 +34,16 @@ const GOCCIA = [
   '..OOOO..',
 ];
 /** Il frammento di vetro, di riserva se manca il disegno: una scheggia d'oro con un bordo rotto. */
+/** La chiave (gioco a stanze, 18/11), provvisoria: l'anello a sinistra, il gambo, i denti (11×7). */
+export const CHIAVE_DISEGNO = [
+  '.OOO.......',
+  'OYYYO......',
+  'OYWYOOOOOOO',
+  'OYYYYYYYYYO',
+  'OYAYOOOOAAO',
+  'OAAAO..OAOO',
+  '.OOO....O..',
+];
 const SCHEGGIA = [
   '....OO....',
   '...OWYO...',
@@ -44,16 +55,27 @@ const SCHEGGIA = [
   'OAAO..OAO.',
   '.OO....O..',
 ];
+const COLORI_DISEGNO: Record<string, string> = { O: '#3a2208', Y: '#f2cf6a', W: '#fff4c8', A: '#c98a2c' };
 function creaDisegno(scena: Phaser.Scene, chiave: string, righe: string[]): void {
   if (scena.textures.exists(chiave)) return;
   const c = scena.textures.createCanvas(chiave, righe[0].length, righe.length)!;
-  const colori: Record<string, string> = { O: '#3a2208', Y: '#f2cf6a', W: '#fff4c8', A: '#c98a2c' };
+  dipingi(c.context, righe);
+  c.refresh();
+}
+function dipingi(g: CanvasRenderingContext2D, righe: readonly string[]): void {
   righe.forEach((riga, y) => [...riga].forEach((ch, x) => {
     if (ch === '.') return;
-    c.context.fillStyle = colori[ch];
-    c.context.fillRect(x, y, 1, 1);
+    g.fillStyle = COLORI_DISEGNO[ch];
+    g.fillRect(x, y, 1, 1);
   }));
-  c.refresh();
+}
+/** Uno dei disegni qui sopra su una tela HTML (per l'interfaccia: i contatori del gioco a stanze). */
+export function telaDisegno(righe: readonly string[]): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = righe[0].length;
+  c.height = righe.length;
+  dipingi(c.getContext('2d')!, righe);
+  return c;
 }
 const MAX_SEGNALI = 6;
 
@@ -70,6 +92,7 @@ export class Oggetti {
   constructor(scena: Phaser.Scene) {
     creaDisegno(scena, DROP.cera.sprite, GOCCIA);
     creaDisegno(scena, DROP.frammento.sprite, SCHEGGIA);
+    creaDisegno(scena, DROP.chiave.sprite, CHIAVE_DISEGNO);
     for (let i = 0; i < MAX_OGGETTI; i++) {
       this.sprite.push(scena.add.sprite(0, 0, DROP.pane.sprite).setScale(DROP.ingrandimento).setDepth(PROFONDITA.anime).setVisible(false));
     }
@@ -87,6 +110,7 @@ export class Oggetti {
     const s = this.sprite[i].setTexture(SPRITE[tipo]).setVisible(true);
     if (tipo === CERA_GOCCIA) s.stop().setScale(DROP.cera.ingrandimento);
     // il colore nasce dal punto in cui cade: non tocca il generatore del caso, che deve restare uguale per carte e comparse
+    else if (tipo === CHIAVE_OGGETTO) s.stop().setScale(DROP.chiave.ingrandimento);
     else if (tipo === FRAMMENTO) s.stop().setScale(DROP.frammento.ingrandimento).setFrame(String(Math.abs(Math.floor(x * 1.7 + y * 3.1)) % DROP.frammento.colori));
     else s.setScale(DROP.ingrandimento).play(`${SPRITE[tipo]}:idle`);
   }
@@ -96,7 +120,7 @@ export class Oggetti {
     for (let i = this.numero - 1; i >= 0; i--) {
       let dx = gx - this.x[i];
       let dy = gy - this.y[i];
-      if (this.tipo[i] === CERA_GOCCIA || this.tipo[i] === FRAMMENTO) {
+      if (this.tipo[i] === CERA_GOCCIA || this.tipo[i] === FRAMMENTO || this.tipo[i] === CHIAVE_OGGETTO) {
         const d = Math.hypot(dx, dy);
         if (d < raggioCera && d > 0) {
           const passo = Math.min(d, DROP.cera.volo * dt);

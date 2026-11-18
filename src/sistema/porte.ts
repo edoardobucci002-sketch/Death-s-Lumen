@@ -32,7 +32,7 @@ export type Ricompensa = IdAffinita | 'dono';
  * il lucchetto (la porta del capo chiusa finché il Campanaro non è battuto, passo 3 del 18/11), il tesoro o la Sosta (18/11),
  * o niente.
  */
-export type Medaglione = Ricompensa | 'echi' | 'capo' | 'chiusa' | 'tesoro' | 'sosta' | null;
+export type Medaglione = Ricompensa | 'echi' | 'capo' | 'chiusa' | 'tesoro' | 'sosta' | 'serratura' | 'chiave' | null;
 export const MURI: readonly Muro[] = ['alto', 'destra', 'basso', 'sinistra'];
 
 const colore = (h: string): number => parseInt(h.slice(1), 16);
@@ -47,13 +47,47 @@ const MEDAGLIONE_CAPO = 'stanze-medaglione-capo';
 const MEDAGLIONE_CHIUSA = 'stanze-medaglione-chiusa';
 const MEDAGLIONE_TESORO = 'stanze-medaglione-tesoro';
 const MEDAGLIONE_SOSTA = 'stanze-medaglione-sosta';
+const SIMBOLO_SERRATURA = 'stanze-simbolo-serratura';
+export const SIMBOLO_CHIAVE = 'stanze-simbolo-chiave';
+const MEDAGLIONE_SERRATURA = 'stanze-medaglione-serratura';
+const MEDAGLIONE_CHIAVE = 'stanze-medaglione-chiave';
 /** I medaglioni speciali: il disegno di Edoardo (se c'è), il medaglione vuoto con il simbolo dal codice, il simbolo. */
 const SPECIALI = {
   capo: ['Porta_Capo', MEDAGLIONE_CAPO, SIMBOLO_CAPO],
   chiusa: ['Porta_Chiusa', MEDAGLIONE_CHIUSA, SIMBOLO_LUCCHETTO],
   tesoro: ['Porta_Tesoro', MEDAGLIONE_TESORO, SIMBOLO_TESORO],
   sosta: ['Porta_Sosta', MEDAGLIONE_SOSTA, SIMBOLO_SOSTA],
+  serratura: ['Porta_Serratura', MEDAGLIONE_SERRATURA, SIMBOLO_SERRATURA], // chiusa a chiave (18/11)
+  chiave: ['Porta_Chiave', MEDAGLIONE_CHIAVE, SIMBOLO_CHIAVE], // la stanza che dà la chiave sicura (18/11)
 } as const;
+// la chiave (segnaposto, 11 × 11): l'anello a sinistra, il gambo e i denti
+export const CHIAVE = [
+  '...........',
+  '.###.......',
+  '#ooo#......',
+  '#o.o#######',
+  '#ooooooooo#',
+  '#o.o####oo#',
+  '#ooo#..#o##',
+  '.###....#..',
+  '...........',
+  '...........',
+  '...........',
+];
+// la serratura (segnaposto, 11 × 11): una toppa dorata con il buco della chiave
+const SERRATURA = [
+  '..#######..',
+  '.#ooooooo#.',
+  '#ooooooooo#',
+  '#oooo#oooo#',
+  '#ooo###ooo#',
+  '#oooo#oooo#',
+  '#oooo#oooo#',
+  '#ooo###ooo#',
+  '#ooooooooo#',
+  '.#ooooooo#.',
+  '..#######..',
+];
 // il forziere del tesoro e la coppa della Sosta (segnaposto, 11 × 11): «#» il bordo scuro, «o» il colore, «k» il chiaro
 const FORZIERE = [
   '...........',
@@ -127,7 +161,7 @@ export class Porte {
       g.generateTexture(chiave, 11, 11);
       g.destroy();
     }
-    for (const [chiave, disegno, tinta, dx] of [[SIMBOLO_LUCCHETTO, LUCCHETTO, PORTE.colori.lucchetto, 1], [SIMBOLO_TESORO, FORZIERE, PORTE.colori.tesoro, 0], [SIMBOLO_SOSTA, COPPA, PORTE.colori.sosta, 1]] as const) {
+    for (const [chiave, disegno, tinta, dx] of [[SIMBOLO_LUCCHETTO, LUCCHETTO, PORTE.colori.lucchetto, 1], [SIMBOLO_TESORO, FORZIERE, PORTE.colori.tesoro, 0], [SIMBOLO_SOSTA, COPPA, PORTE.colori.sosta, 1], [SIMBOLO_SERRATURA, SERRATURA, PORTE.colori.serratura, 0], [SIMBOLO_CHIAVE, CHIAVE, PORTE.colori.chiave, 0]] as const) {
       if (scena.textures.exists(chiave)) continue;
       const g = scena.add.graphics();
       disegno.forEach((riga, y) => [...riga].forEach((c, x) => {
@@ -188,7 +222,7 @@ export class Porte {
         s.setVisible(false); // la stanza dopo è già ripulita, o è il Boss
         continue;
       }
-      if (r === 'capo' || r === 'chiusa' || r === 'tesoro' || r === 'sosta') {
+      if (r === 'capo' || r === 'chiusa' || r === 'tesoro' || r === 'sosta' || r === 'serratura' || r === 'chiave') {
         // la porta del capo, del tesoro, della Sosta (segnaposto): il medaglione disegnato (Porta_Capo…) se c'è, se no il
         // medaglione vuoto con il simbolo dal codice, se no il simbolo ingrandito
         const [disegno, composto, simbolo] = SPECIALI[r];
@@ -243,10 +277,10 @@ export class Porte {
     return k >= 0 && !this.chiuse[k] ? k : -1;
   }
 
-  /** Il personaggio spinge contro una porta rimasta chiusa (la porta del capo senza la chiave). */
-  controChiusa(x: number, y: number): boolean {
+  /** La porta rimasta chiusa (del capo senza la chiave, o chiusa a chiave) contro cui spinge il personaggio: indice, o -1. */
+  controChiusa(x: number, y: number): number {
     const k = this.aperte ? this.contro(x, y) : -1;
-    return k >= 0 && !!this.chiuse[k];
+    return k >= 0 && this.chiuse[k] ? k : -1;
   }
 
   /** La porta contro cui spinge il personaggio con i piedi in (x, y), aperta o chiusa: il suo indice, se no -1. */
