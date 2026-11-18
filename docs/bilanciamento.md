@@ -12,6 +12,11 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Candele del Lampionaio, a caso
+
+- `MAPPA.candele.probabilita` **0,5** (Claude, *da rivedere*): metà delle Veglie del Lampionaio ha la porta delle candele. Posto della candela a caso vicino ai muri (`dalMuro` 24–56 px, `porte` 110, `vasi` 48), al posto del punto fisso.
+- `npm run sim-stanze -- 48`: **arrivati al Boss 8/48** (prima 9/48), **Seth battuto 6/48** in 127 s (prima 9/48): dentro il rumore, con mappe di nuovo diverse. Tesoro aperto 22/48. Cadute: Campanaro 36, Seth 2, stanze normali 4.
+
 ### 18/11 — Porta delle candele
 
 - Nuovi: `MAPPA.candele` (3 candele, posto nella stanza, tocco di 14 px; Claude, *da rivedere*). La porta delle candele prende un vicolo cieco in più: per lo stesso seme le porte chiuse e la chiave sicura possono cadere in stanze diverse da prima.
