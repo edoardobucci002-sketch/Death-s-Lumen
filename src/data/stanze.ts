@@ -312,7 +312,7 @@ export const PERCORSO = {
 export const PORTE = {
   larghezza: 64, // in alto: quanto è larga l'apertura; ai lati e in basso: quanto è alta
   simbolo: 2, // ingrandimento del simbolo della ricompensa sopra la porta
-  colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a', echi: '#e8dcc0', capo: '#a3262a', lucchetto: '#8a8f99', tesoro: '#c9a23a', sosta: '#5a8fb0', serratura: '#e0b440', chiave: '#e0b440' }, // tesoro e sosta: segnaposto (18/11) // capo e lucchetto: segnaposto della porta del capo (18/11)
+  colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a', echi: '#e8dcc0', capo: '#a3262a', lucchetto: '#8a8f99', tesoro: '#c9a23a', sosta: '#5a8fb0', serratura: '#e0b440', chiave: '#e0b440', candele: '#f7a14a' }, // tesoro e sosta: segnaposto (18/11) // capo e lucchetto: segnaposto della porta del capo (18/11)
   // il medaglione vuoto (EFFETTI/Porta_Vuota, 31 × 31) con dentro il simbolo dello stato (11 × 11) in questo punto (16/11)
   medaglione: { vuoto: 'Porta_Vuota', simbolo: { x: 10, y: 9 } },
   vicino: 170, // più vicino di così al centro di una porta, il suo arco non si disegna sopra il buio (da rivedere)

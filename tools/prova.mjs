@@ -1419,6 +1419,18 @@ for (const [nome, disp] of [
         if (c1.chiavi !== 0 || c1.serrate !== c0.serrate - 1) errori.push(`«Apri» non apre la porta (${JSON.stringify(c1)})`);
         else giro.push('porta chiusa a chiave');
       }
+      // la porta delle candele (18/11): la Lanterna accende una candela; accese tutte, la porta si apre
+      await L('vaiAllaCandela');
+      await pag.waitForTimeout(300);
+      const k0 = await L('chiavi');
+      await pag.keyboard.press('KeyJ');
+      await pag.waitForTimeout(700);
+      const k1 = await L('chiavi');
+      if (parseInt(k1.candele) !== parseInt(k0.candele) + 1) errori.push(`la Lanterna non accende la candela (${k0.candele} › ${k1.candele})`);
+      await L('accendiCandele');
+      const aperta = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return s.percorso.candeleAccese && s.mappa.stanze.some((x) => x.candele); });
+      if (!aperta) errori.push('accese tutte le candele la porta delle candele non si apre');
+      else giro.push('candele');
       const cont = await pag.evaluate(() => { const c = document.querySelector('.stanze-contatori'); return c && !c.hidden && c.textContent.length > 1; });
       if (!cont) errori.push('sotto la minimappa non ci sono Cera e chiavi');
     }

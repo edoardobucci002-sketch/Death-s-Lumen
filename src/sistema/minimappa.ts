@@ -27,12 +27,14 @@ const SIMBOLI: Record<string, { forma: readonly string[]; colore: string }> = {
   sosta: { forma: ['###', '.#.', '###'], colore: MINIMAPPA.colori.sosta }, // la coppa della fonte (18/11)
   serratura: { forma: ['.#.', '#.#', '###'], colore: MINIMAPPA.colori.serratura }, // chiusa a chiave (18/11): il lucchetto
   chiave: { forma: ['#..', '###', '#.#'], colore: MINIMAPPA.colori.chiave }, // la chiave sicura (18/11)
+  candela: { forma: ['.#.', '.#.', '###'], colore: MINIMAPPA.colori.candela }, // una candela spenta, o la porta delle candele chiusa (18/11)
 };
 
 /** Il simbolo del contenuto della stanza: il capo, o la ricompensa (il tesoro, la Sosta) finché non è ripulita (usata). */
 function contenuto(s: StanzaMappa): string | null {
   if (s.tipo === 'campanaro' || s.tipo === 'boss') return s.tipo;
   if (s.serrata) return 'serratura'; // chiusa a chiave: non si sa cosa c'è dietro
+  if (s.candela === 1 || (s.candele && !s.ripulita)) return 'candela'; // una candela da accendere, o la stanza dietro le candele
   if (s.ricompensa === 'chiave' && s.ripulita && !s.chiavePresa) return 'chiave'; // la chiave è ancora a terra
   if (s.ripulita) return null;
   if (s.tipo === 'tesoro' || s.tipo === 'sosta') return s.tipo;

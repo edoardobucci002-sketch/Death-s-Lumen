@@ -264,11 +264,27 @@ export class Percorso {
       if (v < 0) return;
       const s = this.mappa.stanze[v], boss = s.tipo === 'boss', speciale = s.tipo === 'tesoro' || s.tipo === 'sosta';
       muri.push(MURI[l]);
-      ricompense.push(boss ? (chiave ? 'capo' : 'chiusa') : s.serrata ? 'serratura' : s.ripulita ? null : speciale ? (s.tipo as 'tesoro' | 'sosta') : s.ricompensa);
+      const candele = s.candele && !this.candeleAccese;
+      ricompense.push(boss ? (chiave ? 'capo' : 'chiusa') : s.serrata ? 'serratura' : candele ? 'candele' : s.ripulita ? null : speciale ? (s.tipo as 'tesoro' | 'sosta') : s.ricompensa);
       verso.push(v);
-      chiuse.push((boss && !chiave) || s.serrata);
+      chiuse.push((boss && !chiave) || s.serrata || candele);
     });
     return { muri, ricompense, verso, chiuse };
+  }
+
+  /** Le candele accese del Mondo (18/11). */
+  get candeleAccese(): boolean {
+    return this.mappa.stanze.every((s) => s.candela !== 1);
+  }
+
+  /** Quante candele sono accese, e quante sono in tutto. */
+  contaCandele(): [number, number] {
+    let accese = 0, tutte = 0;
+    for (const s of this.mappa.stanze) if (s.candela) {
+      tutte++;
+      if (s.candela === 2) accese++;
+    }
+    return [accese, tutte];
   }
 
   /** Apre con una chiave la porta chiusa a chiave verso la stanza v (18/11): true se l'ha aperta. */

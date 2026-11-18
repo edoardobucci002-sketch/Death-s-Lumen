@@ -203,9 +203,10 @@ export class BotStanze {
    * lascia per ultimo, come farebbe un giocatore (prima la build più forte); finito tutto, il Boss (la sua porta si apre solo
    * con la chiave del Campanaro, 18/11).
    */
-  scegliPorta(m: Mappa, qui: number, verso: readonly number[], ricompense: readonly Medaglione[], echi: readonly Arma[], chiavi = 0): number {
+  scegliPorta(m: Mappa, qui: number, verso: readonly number[], ricompense: readonly Medaglione[], echi: readonly Arma[], chiavi = 0, candeleAccese = false): number {
     // dietro una porta chiusa a chiave (18/11) ci va solo con una chiave in tasca (la porta la apre la scena)
-    const raggiungibile = (i: number): boolean => !m.stanze[i].serrata || chiavi > 0;
+    // e dietro la porta delle candele solo con le candele accese (il bot non le cerca: le accende se capita di colpirle)
+    const raggiungibile = (i: number): boolean => (!m.stanze[i].serrata || chiavi > 0) && (!m.stanze[i].candele || candeleAccese);
     const resta = m.stanze.some((s, i) => !s.ripulita && s.tipo === 'combattimento' && raggiungibile(i));
     // stanze nuove: da combattere, il tesoro (18/11), e il Campanaro quando non resta altro; la Sosta la usa passando
     const nuova = (i: number): boolean => !m.stanze[i].ripulita && raggiungibile(i) && (m.stanze[i].tipo === 'combattimento' || m.stanze[i].tipo === 'tesoro' || (!resta && m.stanze[i].tipo === 'campanaro'));
@@ -218,7 +219,7 @@ export class BotStanze {
         if (scelta-- === 0) migliore = k;
         return;
       }
-      const r = m.stanze[v].tipo === 'tesoro' || m.stanze[v].serrata ? 'tesoro' : ricompense[k]; // chiusa a chiave: c'è di più
+      const r = m.stanze[v].tipo === 'tesoro' || m.stanze[v].serrata || m.stanze[v].candele ? 'tesoro' : ricompense[k]; // chiusa a chiave: c'è di più
       const val = r === 'tesoro' ? B.porte.tesoro : r === 'echi' ? B.porte.echi : r === 'dono' ? B.porte.dono : echi.some((a) => AFFINITA_ARMI[a.id] === r) ? B.porte.affinitaPosseduta : B.porte.altra;
       if (val > valore) {
         valore = val;

@@ -32,7 +32,7 @@ export type Ricompensa = IdAffinita | 'dono';
  * il lucchetto (la porta del capo chiusa finché il Campanaro non è battuto, passo 3 del 18/11), il tesoro o la Sosta (18/11),
  * o niente.
  */
-export type Medaglione = Ricompensa | 'echi' | 'capo' | 'chiusa' | 'tesoro' | 'sosta' | 'serratura' | 'chiave' | null;
+export type Medaglione = Ricompensa | 'echi' | 'capo' | 'chiusa' | 'tesoro' | 'sosta' | 'serratura' | 'chiave' | 'candele' | null;
 export const MURI: readonly Muro[] = ['alto', 'destra', 'basso', 'sinistra'];
 
 const colore = (h: string): number => parseInt(h.slice(1), 16);
@@ -51,6 +51,9 @@ const SIMBOLO_SERRATURA = 'stanze-simbolo-serratura';
 export const SIMBOLO_CHIAVE = 'stanze-simbolo-chiave';
 const MEDAGLIONE_SERRATURA = 'stanze-medaglione-serratura';
 const MEDAGLIONE_CHIAVE = 'stanze-medaglione-chiave';
+export const SIMBOLO_CANDELA = 'stanze-simbolo-candela'; // accesa: il medaglione della porta delle candele
+export const CANDELA_SPENTA = 'stanze-candela-spenta';
+const MEDAGLIONE_CANDELE = 'stanze-medaglione-candele';
 /** I medaglioni speciali: il disegno di Edoardo (se c'è), il medaglione vuoto con il simbolo dal codice, il simbolo. */
 const SPECIALI = {
   capo: ['Porta_Capo', MEDAGLIONE_CAPO, SIMBOLO_CAPO],
@@ -59,6 +62,7 @@ const SPECIALI = {
   sosta: ['Porta_Sosta', MEDAGLIONE_SOSTA, SIMBOLO_SOSTA],
   serratura: ['Porta_Serratura', MEDAGLIONE_SERRATURA, SIMBOLO_SERRATURA], // chiusa a chiave (18/11)
   chiave: ['Porta_Chiave', MEDAGLIONE_CHIAVE, SIMBOLO_CHIAVE], // la stanza che dà la chiave sicura (18/11)
+  candele: ['Porta_Candele', MEDAGLIONE_CANDELE, SIMBOLO_CANDELA], // la porta delle candele (18/11)
 } as const;
 // la chiave (segnaposto, 11 × 11): l'anello a sinistra, il gambo e i denti
 export const CHIAVE = [
@@ -73,6 +77,20 @@ export const CHIAVE = [
   '...........',
   '...........',
   '...........',
+];
+// la candela (segnaposto, 11 × 11): accesa con la fiamma («f» fiamma, «k» il cuore chiaro); spenta senza fiamma e grigia
+const CANDELA = [
+  '.....f.....',
+  '....fkf....',
+  '....fkf....',
+  '.....f.....',
+  '....###....',
+  '....#k#....',
+  '....#o#....',
+  '....#o#....',
+  '....#o#....',
+  '..#######..',
+  '..#ooooo#..',
 ];
 // la serratura (segnaposto, 11 × 11): una toppa dorata con il buco della chiave
 const SERRATURA = [
@@ -170,6 +188,18 @@ export class Porte {
       g.generateTexture(chiave, 11, 11);
       g.destroy();
     }
+    // la candela accesa e spenta (18/11)
+    for (const [chiave, accesa] of [[SIMBOLO_CANDELA, true], [CANDELA_SPENTA, false]] as const) {
+      if (scena.textures.exists(chiave)) continue;
+      const g = scena.add.graphics();
+      CANDELA.forEach((riga, y) => [...riga].forEach((c, x) => {
+        if (c === '.' || ((c === 'f' || (c === 'k' && y < 4)) && !accesa)) return;
+        const tinta = c === '#' ? 0x120c08 : c === 'f' ? colore(PORTE.colori.candele) : c === 'k' ? (accesa ? 0xfff4c8 : 0x6a625a) : accesa ? 0xefe3c8 : 0x8a8278;
+        g.fillStyle(tinta).fillRect(x, y, 1, 1);
+      }));
+      g.generateTexture(chiave, 11, 11);
+      g.destroy();
+    }
     // i cancelli disegnati: il pezzo intero sopra muri e pavimento (sotto personaggio e buio), l'arco anche sopra il buio
     for (let k = 0; k < 4; k++) {
       this.cancelli.push(scena.add.image(0, 0, '__MISSING').setOrigin(0).setDepth(PROFONDITA.terreno + 0.7).setVisible(false));
@@ -222,7 +252,7 @@ export class Porte {
         s.setVisible(false); // la stanza dopo è già ripulita, o è il Boss
         continue;
       }
-      if (r === 'capo' || r === 'chiusa' || r === 'tesoro' || r === 'sosta' || r === 'serratura' || r === 'chiave') {
+      if (r === 'capo' || r === 'chiusa' || r === 'tesoro' || r === 'sosta' || r === 'serratura' || r === 'chiave' || r === 'candele') {
         // la porta del capo, del tesoro, della Sosta (segnaposto): il medaglione disegnato (Porta_Capo…) se c'è, se no il
         // medaglione vuoto con il simbolo dal codice, se no il simbolo ingrandito
         const [disegno, composto, simbolo] = SPECIALI[r];

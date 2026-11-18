@@ -31,6 +31,11 @@ export const MAPPA = {
   // la chiave sicura (Edoardo, 18/11): è la ricompensa di una stanza a caso tra quelle sempre aperte, a questa distanza
   // dall'ingresso o più (le stanze accanto all'ingresso danno gli Echi d'inizio); ripulita, la chiave è a terra al centro
   chiaveSicura: { distanzaMinima: 2 },
+  // la porta delle candele (Edoardo, 17/11): sempre 3 candele, in stanze di combattimento diverse e sempre aperte; si
+  // accendono colpendole con la Lanterna; accese tutte e tre, la porta si apre. Porta a un vicolo cieco con la ricompensa
+  // doppia, come le porte chiuse a chiave. La candela sta in questo punto della stanza (parte della larghezza e
+  // dell'altezza del pavimento) e si accende se il colpo la prende entro «tocco» px (Claude, 18/11, da rivedere)
+  candele: { quante: 3, posto: { x: 0.25, y: 0.3 }, tocco: 14, ingrandimento: 3 },
 } as const;
 
 /**
@@ -57,6 +62,7 @@ export const MINIMAPPA = {
     sosta: '#86c5e8',
     serratura: '#e0b440', // la stanza dietro una porta chiusa a chiave (18/11)
     chiave: '#e0b440', // la stanza che dà la chiave sicura (18/11)
+    candela: '#f7a14a', // una candela ancora spenta, e la stanza dietro la porta delle candele (18/11)
     sulChiaro: '#120c08', // il simbolo sulla stanza in cui si è
   },
 };

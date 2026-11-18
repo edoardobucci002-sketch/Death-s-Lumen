@@ -44,6 +44,19 @@ export const CHIAVE_DISEGNO = [
   'OAAAO..OAOO',
   '.OOO....O..',
 ];
+/** La candela per i contatori del gioco a stanze (18/11): la fiamma e il cero (5×10). */
+export const CANDELA_ICONA = [
+  '..A..',
+  '.AYA.',
+  '..W..',
+  '.OOO.',
+  '.OWO.',
+  '.OWO.',
+  '.OWO.',
+  '.OWO.',
+  'OOOOO',
+  'OWWWO',
+];
 const SCHEGGIA = [
   '....OO....',
   '...OWYO...',

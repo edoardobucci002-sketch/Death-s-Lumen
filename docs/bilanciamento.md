@@ -12,6 +12,11 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Porta delle candele
+
+- Nuovi: `MAPPA.candele` (3 candele, posto nella stanza, tocco di 14 px; Claude, *da rivedere*). La porta delle candele prende un vicolo cieco in più: per lo stesso seme le porte chiuse e la chiave sicura possono cadere in stanze diverse da prima.
+- `npm run sim-stanze -- 48`: **arrivati al Boss 9/48** (prima 12/48), **Seth battuto 9/48** in 109 s (prima 7/48 in 127 s): dentro il rumore, con mappe diverse. Tesoro aperto 21/48. Cadute: Campanaro 33, stanze normali 6. Il bot non cerca le candele.
+
 ### 18/11 — Chiavi e porte chiuse a chiave
 
 - Nuovi: da 1 a 3 porte chiuse a chiave per Mondo (`MAPPA.serrate`, il tesoro sempre), chiave sicura come ricompensa di una stanza aperta ad almeno 2 porte (`MAPPA.chiaveSicura`), **8%** di chiavi da urne e giare (`ROMPIBILI_STANZE.chiave`, Edoardo), 2 giri di carte dietro le altre porte chiuse (`PERCORSO.giriDoppia`). Le mappe hanno la stessa forma di prima per lo stesso seme; cambiano la ricompensa di una stanza (la chiave) e le porte chiuse.

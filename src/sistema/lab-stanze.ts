@@ -242,10 +242,29 @@ export class LabStanze {
     this.s.y = p.y;
   }
 
+  /** Accende tutte le candele del Mondo: la porta delle candele si apre. */
+  accendiCandele(): void {
+    for (const s of this.s.mappa.stanze) if (s.candela) s.candela = 2;
+    this.s.ridisegnaPorte();
+  }
+
+  /** Va alla prima candela spenta e si mette alla sua destra, girato verso di lei (J la colpisce). */
+  vaiAllaCandela(): void {
+    const i = this.s.mappa.stanze.findIndex((s) => s.candela === 1);
+    if (i < 0) return;
+    this.s.mappa.stanze[i].ripulita = true; // la stanza vuota: si prova la candela senza nemici
+    this.vaiAllaStanza(i);
+    const C = MAPPA.candele;
+    this.s.x = Math.round(MISURA.larghezza * C.posto.x) + 40;
+    this.s.y = Math.round(MISURA.altezza * C.posto.y);
+    this.s.guardaVerso(-1, 0);
+  }
+
   /** Le chiavi e le porte chiuse a chiave, per il pannello. */
-  chiavi(): { chiavi: number; serrate: number; doppie: number; sicura: string } {
-    const m = this.s.mappa, k = m.stanze.find((s) => s.ricompensa === 'chiave');
+  chiavi(): { chiavi: number; serrate: number; doppie: number; sicura: string; candele: string } {
+    const m = this.s.mappa, k = m.stanze.find((s) => s.ricompensa === 'chiave'), [accese, tutte] = this.s.percorso.contaCandele();
     return {
+      candele: `${accese} di ${tutte} accese${accese >= tutte ? ' (porta aperta)' : ''}`,
       chiavi: this.s.percorso.chiavi, serrate: m.stanze.filter((s) => s.serrata).length, doppie: m.stanze.filter((s) => s.doppia).length,
       sicura: !k ? 'nessuna' : k.chiavePresa ? 'raccolta' : k.ripulita ? 'a terra' : `a ${k.distanza} porte dall'ingresso`,
     };

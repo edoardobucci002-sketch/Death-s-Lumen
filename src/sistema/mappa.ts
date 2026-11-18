@@ -11,7 +11,8 @@
  * Tesoro e Sosta sono vuoti, senza ricompensa (hanno il loro oggetto: STANZE_SPECIALI in src/data/mappa.ts).
  * Porte chiuse a chiave (18/11): da MAPPA.serrate.minimo a .massimo stanze «serrate», sempre vicoli ciechi (mai la strada per
  * il Boss): il tesoro sempre, le altre sono stanze di combattimento con la ricompensa doppia. Una stanza sempre aperta ha
- * come ricompensa la chiave sicura.
+ * come ricompensa la chiave sicura. La porta delle candele (18/11) porta a un altro vicolo cieco con la ricompensa doppia;
+ * le sue 3 candele stanno in tre stanze di combattimento sempre aperte.
  * Ingresso vuoto e sicuro con le porte già aperte. Tutto è dato semplice (numeri e testi), pronto per il salvataggio.
  * Numeri in MAPPA (src/data/mappa.ts). controllaMappa dice quali regole una mappa non rispetta (npm run prova).
  */
@@ -37,6 +38,10 @@ export interface StanzaMappa {
   doppia: boolean;
   /** la chiave sicura di questa stanza è già stata raccolta */
   chiavePresa: boolean;
+  /** dietro la porta delle candele (18/11): si apre quando le 3 candele del Mondo sono accese */
+  candele: boolean;
+  /** la candela di questa stanza: 0 nessuna, 1 spenta, 2 accesa */
+  candela: number;
   /** quante porte bisogna attraversare dall'ingresso per arrivarci */
   distanza: number;
   /** la stanza attaccata su ogni lato (alto, destra, basso, sinistra): il suo indice, -1 se lì c'è muro */
@@ -125,7 +130,7 @@ function completa(caso: Caso, seme: number, celle: [number, number][], comunque 
   const indice = new Map<number, number>();
   celle.forEach(([x, y], i) => indice.set(y * 100 + x, i));
   const stanze: StanzaMappa[] = celle.map(([x, y]) => ({
-    x, y, tipo: 'combattimento', ricompensa: null, distanza: -1, visitata: false, ripulita: false, rotti: 0, serrata: false, doppia: false, chiavePresa: false,
+    x, y, tipo: 'combattimento', ricompensa: null, distanza: -1, visitata: false, ripulita: false, rotti: 0, serrata: false, doppia: false, chiavePresa: false, candele: false, candela: 0,
     vicine: [0, 1, 2, 3].map((l) => indice.get((y + DY[l]) * 100 + x + DX[l]) ?? -1) as [number, number, number, number],
   }));
   // le distanze dall'ingresso, porta dopo porta
@@ -176,8 +181,14 @@ function completa(caso: Caso, seme: number, celle: [number, number][], comunque 
   const vicoli = mescola(stanze.map((_, i) => i).filter((i) => stanze[i].tipo === 'combattimento' && stanze[i].distanza >= 2 && porte(stanze[i]) === 1), caso);
   const altre = Math.min(vicoli.length, caso.intero(MAPPA.serrate.minimo, MAPPA.serrate.massimo) - 1);
   for (let k = 0; k < altre; k++) stanze[vicoli[k]].serrata = stanze[vicoli[k]].doppia = true;
+  // la porta delle candele (18/11): un altro vicolo cieco, con la ricompensa doppia; le 3 candele in stanze sempre aperte
+  if (vicoli.length <= altre && !comunque) return null;
+  if (vicoli.length > altre) stanze[vicoli[altre]].candele = stanze[vicoli[altre]].doppia = true;
+  const conCandela = mescola(stanze.map((_, i) => i).filter((i) => stanze[i].tipo === 'combattimento' && !stanze[i].serrata && !stanze[i].candele), caso);
+  if (conCandela.length < MAPPA.candele.quante && !comunque) return null;
+  for (let k = 0; k < Math.min(MAPPA.candele.quante, conCandela.length); k++) stanze[conCandela[k]].candela = 1;
   // la chiave sicura: la ricompensa di una stanza di combattimento sempre aperta, lontana dall'ingresso
-  const aperta = scegli(caso, stanze.map((_, i) => i).filter((i) => stanze[i].tipo === 'combattimento' && !stanze[i].serrata && stanze[i].distanza >= MAPPA.chiaveSicura.distanzaMinima));
+  const aperta = scegli(caso, stanze.map((_, i) => i).filter((i) => stanze[i].tipo === 'combattimento' && !stanze[i].serrata && !stanze[i].candele && stanze[i].distanza >= MAPPA.chiaveSicura.distanzaMinima));
   if (aperta < 0 && !comunque) return null;
   if (aperta >= 0) stanze[aperta].ricompensa = 'chiave';
   return { seme, stanze, ingresso: 0, campanaro, boss: capo, tesoro: stanze[tesoro]?.tipo === 'tesoro' ? tesoro : -1, sosta: stanze[sosta]?.tipo === 'sosta' ? sosta : -1 };
@@ -222,9 +233,15 @@ export function controllaMappa(m: Mappa): string[] {
   if (serrate.some((s) => s.vicine.filter((v) => v >= 0).length !== 1 || s.tipo === 'boss' || s.tipo === 'campanaro' || s.tipo === 'sosta' || s.tipo === 'ingresso')) e.push('una porta chiusa a chiave non porta a un vicolo cieco qualsiasi');
   if (T && !T.serrata) e.push('il tesoro non è chiuso a chiave');
   if (serrate.some((s) => s.tipo === 'combattimento' && !s.doppia)) e.push('una stanza chiusa a chiave senza la ricompensa doppia');
+  // la porta delle candele (18/11): una, verso un vicolo cieco di combattimento; 3 candele in stanze diverse sempre aperte
+  const dietro = S.filter((s) => s.candele);
+  if (dietro.length !== 1) e.push(`${dietro.length} porte delle candele`);
+  else if (dietro[0].vicine.filter((v) => v >= 0).length !== 1 || dietro[0].tipo !== 'combattimento' || dietro[0].serrata || !dietro[0].doppia) e.push('la porta delle candele non porta a un vicolo cieco con la ricompensa doppia');
+  const candele = S.filter((s) => s.candela);
+  if (candele.length !== MAPPA.candele.quante || candele.some((s) => s.tipo !== 'combattimento' || s.serrata || s.candele)) e.push(`${candele.length} candele, o in stanze sbagliate`);
   const chiavi = S.filter((s) => s.ricompensa === 'chiave');
   if (chiavi.length !== 1) e.push(`${chiavi.length} chiavi sicure`);
-  else if (chiavi[0].serrata || chiavi[0].distanza < MAPPA.chiaveSicura.distanzaMinima || chiavi[0].tipo !== 'combattimento') e.push('la chiave sicura non è in una stanza sempre aperta');
+  else if (chiavi[0].serrata || chiavi[0].candele || chiavi[0].distanza < MAPPA.chiaveSicura.distanzaMinima || chiavi[0].tipo !== 'combattimento') e.push('la chiave sicura non è in una stanza sempre aperta');
   for (const s of S) {
     if (s.distanza === 1 && s.ricompensa !== 'echi') e.push("una stanza accanto all'ingresso non dà gli Echi");
     if ((s.tipo === 'combattimento' || s.tipo === 'campanaro') && !s.ricompensa) e.push('una stanza senza ricompensa');

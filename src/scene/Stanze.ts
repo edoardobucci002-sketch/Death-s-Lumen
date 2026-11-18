@@ -30,8 +30,8 @@ import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
 import { Percorso } from '../sistema/percorso';
-import { MURI, Porte, SIMBOLO_CHIAVE, davantiAlMuro, type Muro } from '../sistema/porte';
-import { CHIAVE_DISEGNO, GOCCIA, telaDisegno } from '../sistema/oggetti';
+import { CANDELA_SPENTA, MURI, Porte, SIMBOLO_CANDELA, SIMBOLO_CHIAVE, davantiAlMuro, type Muro } from '../sistema/porte';
+import { CANDELA_ICONA, CHIAVE_DISEGNO, GOCCIA, telaDisegno } from '../sistema/oggetti';
 import { Doni, type Dono } from '../sistema/doni';
 import { ComparsaCarte } from '../sistema/comparsa-carte';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
@@ -66,7 +66,7 @@ import { CAMPANARO } from '../data/campanaro';
 import { SETH } from '../data/seth';
 import { ID_SETH } from '../sistema/orda';
 import { ROMPIBILI_STANZE } from '../data/rompibili';
-import { MINIMAPPA, STANZE_SPECIALI } from '../data/mappa';
+import { MAPPA, MINIMAPPA, STANZE_SPECIALI } from '../data/mappa';
 import { disegnaMinimappa } from '../sistema/minimappa';
 import { generaMappa, opposto, type Mappa } from '../sistema/mappa';
 
@@ -111,10 +111,12 @@ export class Stanze extends Phaser.Scene {
   private contatori!: HTMLDivElement; // sotto la minimappa: Cera della Veglia e chiavi (18/11)
   private numeroCera!: HTMLSpanElement;
   private numeroChiavi!: HTMLSpanElement;
+  private numeroCandele!: HTMLSpanElement;
   private contati = '';
   private tastoApri!: HTMLButtonElement; // «Apri»: compare davanti a una porta chiusa a chiave, con una chiave in tasca (18/11)
   private portaDaAprire = -1;
   private ultimoAvviso = ''; // la scritta sopra la testa in corso: una diversa la sostituisce subito
+  private candela!: Phaser.GameObjects.Image; // la candela della porta delle candele, se la stanza ne ha una (18/11)
   private giriCarte = 1; // giri di carte ancora da scegliere in questa stanza (2 dietro una porta chiusa a chiave)
   private mappaPausa!: HTMLCanvasElement; // la mappa intera nella pausa
   private pannelloPausa!: HTMLElement;
@@ -270,6 +272,7 @@ export class Stanze extends Phaser.Scene {
     this.porte = new Porte(this);
     // l'oggetto di tesoro e Sosta (segnaposto: il simbolo del medaglione, ingrandito 3 volte)
     this.oggetto = this.add.image(MISURA.larghezza / 2, MISURA.altezza / 2, 'stanze-simbolo-tesoro').setScale(3).setDepth(PROFONDITA.aTerra - 1).setVisible(false);
+    this.candela = this.add.image(0, 0, CANDELA_SPENTA).setOrigin(0.5, 1).setScale(MAPPA.candele.ingrandimento).setDepth(PROFONDITA.aTerra - 1).setVisible(false);
     this.mostraPorte();
     this.barra = new BarraSalute(this, this.salute);
     const scritta = 'stanze-scritta-grazia';
@@ -383,6 +386,13 @@ export class Stanze extends Phaser.Scene {
   private colpisci(angolo: number): void {
     const presi = this.nemici.colpisci(this.x, this.y, angolo, this.attacco.raggio, this.attacco.ampiezza, this.dannoLanterna);
     this.rompibili.rompibili.colpitoArco(this.x, this.y, angolo, this.attacco.raggio, this.attacco.ampiezza);
+    // la candela della porta delle candele: la Lanterna la accende se il colpo la prende (18/11)
+    const q = this.percorso.qui;
+    if (q.candela === 1) {
+      const dx = this.candela.x - this.x, dy = this.candela.y - this.y, d = Math.hypot(dx, dy);
+      const mezza = (this.attacco.ampiezza * Math.PI) / 360, scarto = Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(dy, dx) - angolo));
+      if (d <= this.attacco.raggio + MAPPA.candele.tocco && (d <= MAPPA.candele.tocco || scarto <= mezza + Math.asin(Math.min(1, MAPPA.candele.tocco / d)))) this.accendiCandela();
+    }
     this.abilita.colpo(presi); // l'abilità si carica solo così
     if (presi > 0) {
       // impatto: un attimo fermo anche il Lampionaio, lo schermo trema appena, un colpo sordo
@@ -618,7 +628,7 @@ export class Stanze extends Phaser.Scene {
       && Math.hypot(this.x - this.oggetto.x, this.y - this.oggetto.y) < STANZE_SPECIALI.tocco) this.usaOggetto();
     // le porte aperte: camminandoci contro si passa alla stanza accanto (il bot prima usa l'oggetto, se gli serve)
     if (this.percorso.fase === 'porte' && !this.porteBloccate && !(this.bot && this.oggettoDaUsare())) {
-      let k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma), this.percorso.chiavi) : this.porte.attraversata(this.x, this.y);
+      let k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma), this.percorso.chiavi, this.percorso.candeleAccese) : this.porte.attraversata(this.x, this.y);
       // il bot apre con una chiave la porta chiusa a chiave che ha scelto (lui non sbaglia porta)
       if (this.bot && k >= 0 && this.porte.ricompense[k] === 'serratura' && this.percorso.chiavi > 0) this.apriSerratura(k);
       if (this.porte.chiuse[k]) k = -1; // la porta del capo senza la chiave, o chiusa a chiave, non si attraversa
@@ -626,7 +636,8 @@ export class Stanze extends Phaser.Scene {
       const kc = k < 0 && !this.bot ? this.porte.controChiusa(this.x, this.y) : -1;
       const serratura = kc >= 0 && this.porte.ricompense[kc] === 'serratura';
       this.mostraApri(serratura && this.percorso.chiavi > 0 ? kc : -1);
-      const testo = serratura ? 'Serve una chiave' : 'Serve la chiave del Campanaro';
+      const candele = kc >= 0 && this.porte.ricompense[kc] === 'candele', [accese, tutte] = this.percorso.contaCandele();
+      const testo = serratura ? 'Serve una chiave' : candele ? `Accendi le candele: ${accese} di ${tutte}` : 'Serve la chiave del Campanaro';
       if (kc >= 0 && this.portaDaAprire < 0 && (this.avvisoVita <= 0 || this.ultimoAvviso !== testo)) this.avvisa(testo);
       if (k >= 0 && this.botVeloce) {
         // simulazione: niente passaggio a retino, si cambia stanza subito
@@ -638,6 +649,9 @@ export class Stanze extends Phaser.Scene {
 
   /** L'oggetto della stanza: il forziere del tesoro o la fonte della Sosta (spenti quando sono già stati usati). */
   private mostraOggetto(): void {
+    const q = this.percorso.qui, C = MAPPA.candele;
+    this.candela.setVisible(q.candela > 0).setTexture(q.candela === 2 ? SIMBOLO_CANDELA : CANDELA_SPENTA)
+      .setPosition(Math.round(MISURA.larghezza * C.posto.x), Math.round(MISURA.altezza * C.posto.y));
     const s = this.percorso.qui, speciale = s.tipo === 'tesoro' || s.tipo === 'sosta', chiave = this.chiaveATerra();
     this.oggetto.setVisible(speciale || chiave).setPosition(MISURA.larghezza / 2, MISURA.altezza / 2);
     if (chiave) {
@@ -858,6 +872,28 @@ export class Stanze extends Phaser.Scene {
     c.y1 = MISURA.altezza - STANZA.muroBasso;
   }
 
+  /** LAB: il personaggio guarda in questa direzione (per colpire con J dove serve). */
+  guardaVerso(dx: number, dy: number): void {
+    this.guardaX = dx;
+    this.guardaY = dy;
+    this.versoSinistra = dx < 0;
+  }
+
+  /** Accende la candela della stanza in cui si è; con tutte e tre accese, la porta delle candele si apre (18/11). */
+  accendiCandela(): void {
+    const q = this.percorso.qui;
+    if (q.candela !== 1) return;
+    q.candela = 2;
+    const [accese, tutte] = this.percorso.contaCandele();
+    this.mostraOggetto();
+    this.aggiornaMinimappa();
+    if (this.percorso.fase === 'porte') this.mostraPorte();
+    if (this.bot) return;
+    this.avvisa(accese >= tutte ? 'La porta delle candele è aperta' : `Candele accese: ${accese} di ${tutte}`);
+    suona(accese >= tutte ? 'alba' : 'campana');
+    vibra('media');
+  }
+
   /** La chiave sicura è a terra in questa stanza (ripulita e non ancora raccolta). */
   chiaveATerra(): boolean {
     const s = this.percorso.qui;
@@ -885,11 +921,13 @@ export class Stanze extends Phaser.Scene {
 
   /** I contatori sotto la minimappa (Cera della Veglia e chiavi): si riscrivono solo quando cambiano. */
   private aggiornaContatori(): void {
-    const testo = `${this.rompibili.cera}|${this.percorso.chiavi}`;
+    const [accese, tutte] = this.percorso.contaCandele();
+    const testo = `${this.rompibili.cera}|${this.percorso.chiavi}|${accese}`;
     if (testo === this.contati) return;
     this.contati = testo;
     this.numeroCera.textContent = String(this.rompibili.cera);
     this.numeroChiavi.textContent = String(this.percorso.chiavi);
+    this.numeroCandele.textContent = `${accese}/${tutte}`;
   }
 
   /** Una scritta breve sopra la testa del Lampionaio (la porta del capo), per PERCORSO.avviso secondi. */
@@ -1091,7 +1129,8 @@ export class Stanze extends Phaser.Scene {
     this.contatori.className = 'stanze-contatori';
     this.numeroCera = document.createElement('span');
     this.numeroChiavi = document.createElement('span');
-    for (const [disegno, numero] of [[GOCCIA, this.numeroCera], [CHIAVE_DISEGNO, this.numeroChiavi]] as const) {
+    this.numeroCandele = document.createElement('span');
+    for (const [disegno, numero] of [[GOCCIA, this.numeroCera], [CHIAVE_DISEGNO, this.numeroChiavi], [CANDELA_ICONA, this.numeroCandele]] as const) {
       const riga = document.createElement('div'), icona = telaDisegno(disegno);
       icona.className = 'stanze-contatore-icona';
       icona.dataset.l = String(icona.width);
