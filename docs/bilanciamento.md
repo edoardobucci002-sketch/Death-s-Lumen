@@ -10,6 +10,12 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Lapide più lenta e più debole; Echi fermi senza nemici
+
+- **Lapide** (Edoardo: «troppo forte», tempo tra due lapidi oltre i 20 s e danno un po' più basso): ricarica **24 / 24 / 21 / 21 / 24 s** (era 3,2 / 3,2 / 2,8 / 2,8 / 3,2), danno **27–63, 36–81, 36–81, 45–99, 63–135** (era 30–70, 40–90, 40–90, 50–110, 70–150, cioè −10%). Valori esatti di Claude, *da rivedere*.
+- **Echi**: non sparano senza nemici in campo (prima sparavano a vuoto nelle stanze ripulite).
+- `npm run sim-stanze -- 48`: **arrivati al Boss 12/48** (prima 14/48: dentro il rumore). La Lapide, nelle 9 partite in cui c'era, fa il **4% del danno** (1,8 al secondo; prima il 24%, 12 al secondo). Tesoro aperto 40/48, Sosta usata 15. Cadute: **34 contro il Campanaro**, 2 nelle stanze normali.
+
 ### 18/11 — Tesoro e Sosta
 
 - Nuovi: il Reliquiario del tesoro dà **3 carte Chiara o Ardente** (`STANZE_SPECIALI.tesoro`, Edoardo); l'oggetto si usa a **34 px** dal centro (Claude, *da rivedere*). La Sosta riempie la fiaschetta.
