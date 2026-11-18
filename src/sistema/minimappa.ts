@@ -5,14 +5,32 @@
  *   in cui si è;
  * - nella pausa la mappa intera di ciò che si conosce.
  * Si conoscono le stanze visitate (piene; quella in cui si è più chiara) e quelle accanto a una visitata (solo il
- * contorno). Campanaro e Boss hanno il loro simbolo. Si ridisegna solo quando si cambia stanza o si apre la pausa.
+ * contorno). Ogni stanza mostra il suo contenuto (18/11, Edoardo): Campanaro e Boss sempre, la ricompensa finché la stanza
+ * non è ripulita (gli Echi d'inizio, un'affinità, il dono). Si ridisegna solo quando si cambia stanza o si apre la pausa.
  */
 import { MINIMAPPA } from '../data/mappa';
-import type { Mappa } from './mappa';
+import { PORTE } from '../data/stanze';
+import { INFO_AFFINITA } from '../data/spiegazioni';
+import type { Mappa, StanzaMappa } from './mappa';
 
-// i simboli, 3 × 3: la campana del Campanaro e il segno del Boss
-const CAMPANA = ['.#.', '###', '#.#'];
-const BOSS = ['#.#', '.#.', '#.#'];
+// i simboli, 3 × 3, con il loro colore (segnaposto di Claude): ogni contenuto ha una forma diversa, non solo un colore
+const SIMBOLI: Record<string, { forma: readonly string[]; colore: string }> = {
+  campanaro: { forma: ['.#.', '###', '#.#'], colore: MINIMAPPA.colori.campanaro }, // la campana
+  boss: { forma: ['#.#', '.#.', '#.#'], colore: MINIMAPPA.colori.boss }, // la croce
+  luce: { forma: ['.#.', '#.#', '.#.'], colore: INFO_AFFINITA.luce.colore }, // il sole
+  sacro: { forma: ['.#.', '###', '.#.'], colore: INFO_AFFINITA.sacro.colore }, // la croce greca
+  ombra: { forma: ['##.', '#..', '##.'], colore: INFO_AFFINITA.ombra.colore }, // la falce di luna
+  terra: { forma: ['...', '.#.', '###'], colore: INFO_AFFINITA.terra.colore }, // il tumulo
+  dono: { forma: ['###', '#.#', '###'], colore: PORTE.colori.dono }, // il reliquiario
+  echi: { forma: ['#.#', '###', '#.#'], colore: PORTE.colori.echi }, // gli Echi d'inizio
+};
+
+/** Il simbolo del contenuto della stanza: il capo, o la ricompensa finché non è ripulita. */
+function contenuto(s: StanzaMappa): string | null {
+  if (s.tipo === 'campanaro' || s.tipo === 'boss') return s.tipo;
+  if (s.ripulita || !s.ricompensa) return null;
+  return s.ricompensa;
+}
 
 /** Le stanze che si conoscono: visitate, o accanto a una visitata. */
 function conosciute(m: Mappa): boolean[] {
@@ -66,10 +84,10 @@ export function disegnaMinimappa(c: HTMLCanvasElement, m: Mappa, qui: number, fi
       g.fillRect(px, py, 1, A);
       g.fillRect(px + L - 1, py, 1, A);
     }
-    const segno = s.tipo === 'campanaro' ? CAMPANA : s.tipo === 'boss' ? BOSS : null;
+    const c = contenuto(s), segno = c ? SIMBOLI[c] : null;
     if (!segno) return;
-    g.fillStyle = s.tipo === 'boss' ? M.colori.boss : M.colori.campanaro;
+    g.fillStyle = i === qui ? M.colori.sulChiaro : segno.colore; // sulla stanza in cui si è (crema) il simbolo è scuro
     const sx = px + Math.floor((L - 3) / 2), sy = py + Math.floor((A - 3) / 2);
-    segno.forEach((r, y) => [...r].forEach((k, x) => { if (k === '#') g.fillRect(sx + x, sy + y, 1, 1); }));
+    segno.forma.forEach((r, y) => [...r].forEach((k, x) => { if (k === '#') g.fillRect(sx + x, sy + y, 1, 1); }));
   });
 }

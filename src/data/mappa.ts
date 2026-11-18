@@ -28,7 +28,7 @@ export const MAPPA = {
 /**
  * La minimappa (passo 4, 18/11): in un angolo in alto, una finestra della mappa attorno alla stanza in cui si è; nella
  * pausa la mappa intera di ciò che si conosce. Le stanze visitate sono piene, quelle accanto (non ancora visitate) solo
- * con il contorno; Campanaro e Boss hanno il loro simbolo appena si conoscono. Misure in pixel disegnati, ingrandite a
+ * con il contorno; ogni stanza ha il simbolo del suo contenuto (Campanaro, Boss, la ricompensa finché non è ripulita). Misure in pixel disegnati, ingrandite a
  * pixel interi. Tutto di Claude, da rivedere sul Galaxy S25.
  */
 export const MINIMAPPA = {
@@ -37,7 +37,7 @@ export const MINIMAPPA = {
   finestra: { colonne: 5, righe: 5 }, // quante stanze si vedono nell'angolo, con quella in cui si è al centro
   ingrandimento: 2, // nell'angolo
   ingrandimentoPausa: 4, // nella pausa (se ci sta; se no meno)
-  lato: 'sinistra' as 'sinistra' | 'destra', // in quale angolo in alto (si cambia dal LAB per provarlo sul telefono)
+  lato: 'sinistra' as 'sinistra' | 'destra', // in quale angolo in alto: a sinistra (Edoardo, 18/11; dal LAB si può spostare)
   colori: {
     fondo: 'rgba(13, 11, 9, 0.6)', // dietro la finestra nell'angolo
     visitata: '#8a7a66',
@@ -45,5 +45,6 @@ export const MINIMAPPA = {
     contorno: '#8a7a66',
     campanaro: '#e3913a',
     boss: '#c8343a',
+    sulChiaro: '#120c08', // il simbolo sulla stanza in cui si è
   },
 };
