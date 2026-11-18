@@ -93,7 +93,7 @@ Dopo la prova del V6 (13/11, scelte di Edoardo): colpo con la mossa intera e dan
 - Ciò che resta, ripensato per le stanze (decisione di Edoardo del 12/11): Grazia, oggetti rompibili, Patti, Mosaici e Vetrate, Legame (gli 8 livelli per personaggio), salvataggio della partita in corso.
 - ~~**Danno a intervallo**~~ **fatto il 14/11**: vedi il passo 7 qui sopra.
 - ~~Calice riverso: il nome nuovo del dono «Lacrima di lumen» entra nel codice~~ (**fatto il 17/11**, anche nelle stanze, insieme alla **fiaschetta**, che nelle stanze si beve da sola sotto il 15% di salute; LAB → Stanze → «Fiaschetta piena» / «Fiaschetta vuota»). Manca l'icona di Edoardo (`asset_da_creare.md`).
-- **Sorsi della fiaschetta come pallini vicino alla barra della salute** (decisione di Edoardo del 17/11, stile Hollow Knight); ~~e il **premio del Campanaro diventa un sorso vero**~~ (fatto il 17/11: `CAMPANARO.premio.sorsi`).
+- ~~**Sorsi della fiaschetta come pallini vicino alla barra della salute**~~ (**fatto il 18/11**: pallini tondi 5 × 5 sotto la barra, tanti quanti i sorsi massimi; LAB → Stanze → Lampionaio → «Bevi un sorso», «Arriva un sorso», «Calice riverso: sorsi +1») (decisione di Edoardo del 17/11, stile Hollow Knight); ~~e il **premio del Campanaro diventa un sorso vero**~~ (fatto il 17/11: `CAMPANARO.premio.sorsi`).
 - ~~**Rarità di doni, armi ed Echi**~~ **fatta il 17/11**: ogni Eco e dono è Fioca, Chiara o Ardente (grado fisso, visibile sulla carta), 75 / 20 / 5 per carta (LAB → Stanze → Rarità delle carte). Lo **Specchio a colpi riflessi** è fatto il 17/11 (+2 colpi al massimo, metà danno fino al livello 3; LAB → Stanze → «Specchio liv 1/2/3»). Restano le leve che alzano la rarità (Reliquiario, Ceri) quando ci saranno.
 - **Carte provvisorie** (17/11, richiesta di Edoardo): rettangoli scuri con il bordo arancione e testi in Tiny5, finché Edoardo non ridisegna la carta.
 - Veggente e Sguattera; la pubblicazione.
@@ -175,6 +175,7 @@ Soggetti approvati da Edoardo il 7/11, per il mondo del cimitero, dal meno impor
 Da costruire: le **Vetrate** nella Cappella (collezione sempre visibile, con un testo breve da epitaffio per ogni mosaico), il passaggio al mosaico successivo, ciò che ogni mosaico sblocca la prima volta e la ricompensa quando se ne ricompleta uno già trovato.
 
 ## Da confermare
+
 
 - **Difficoltà scelta dal giocatore** (idea di Edoardo del 18/11, da Hades): dopo molte ore, personalizzare la Veglia con nemici più forti e il personaggio più debole. Quando e come, da decidere.
 
