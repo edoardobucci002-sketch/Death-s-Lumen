@@ -10,6 +10,11 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Stanze doppie per Campanaro e Boss
+
+- L'arena del Campanaro è larga il doppio (26 × 7 lastre): lui compare al centro (prima dalla parte opposta al Lampionaio) e la Carica può correre il doppio prima del muro. Rompibili nell'arena: **2–3** (prima 1–2). Nessun numero del Campanaro è cambiato.
+- `npm run sim-stanze -- 48`: **arrivati al Boss 13/48** (prima 12/48: dentro il rumore). Cadute: **33 contro il Campanaro**, 2 nelle stanze normali (prima 34 e 2). Tesoro aperto 41/48, Sosta usata 16.
+
 ### 18/11 — Lapide più lenta e più debole; Echi fermi senza nemici
 
 - **Lapide** (Edoardo: «troppo forte», tempo tra due lapidi oltre i 20 s e danno un po' più basso): ricarica **24 / 24 / 21 / 21 / 24 s** (era 3,2 / 3,2 / 2,8 / 2,8 / 3,2), danno **27–63, 36–81, 36–81, 45–99, 63–135** (era 30–70, 40–90, 40–90, 50–110, 70–150, cioè −10%). Valori esatti di Claude, *da rivedere*.
