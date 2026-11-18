@@ -12,6 +12,12 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Chiavi e porte chiuse a chiave
+
+- Nuovi: da 1 a 3 porte chiuse a chiave per Mondo (`MAPPA.serrate`, il tesoro sempre), chiave sicura come ricompensa di una stanza aperta ad almeno 2 porte (`MAPPA.chiaveSicura`), **8%** di chiavi da urne e giare (`ROMPIBILI_STANZE.chiave`, Edoardo), 2 giri di carte dietro le altre porte chiuse (`PERCORSO.giriDoppia`). Le mappe hanno la stessa forma di prima per lo stesso seme; cambiano la ricompensa di una stanza (la chiave) e le porte chiuse.
+- Il bot ora va dritto sugli oggetti da usare: con la chiave a terra si fermava a 36 px e 4 partite su 48 non finivano.
+- `npm run sim-stanze -- 48`: **arrivati al Boss 12/48** (prima 13/48), **Seth battuto 7/48** in 127 s (prima 8/48 in 122 s): dentro il rumore. Il **tesoro aperto 26/48** (prima 41/48): ora serve una chiave. Cadute: Campanaro 34, Seth 5, stanze normali 2.
+
 ### 18/11 — Seth, Boss del Mondo 1
 
 - Nuovo: `SETH` in `src/data/seth.ts` (tutti i numeri di Claude, *da rivedere*). Salute misurata con `npm run sim-stanze -- 48`, obiettivo 90–120 s di battaglia:
