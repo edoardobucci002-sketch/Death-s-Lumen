@@ -28,7 +28,7 @@ import { MURI, davantiAlMuro, type Muro } from './porte';
 import { MOSSA_CAPO } from './campanaro';
 import { MOSSA_SETH } from './seth';
 import { ID_CAMPANARO, ID_SETH } from './orda';
-import { controllaMappa, generaMappa, type Mappa } from './mappa';
+import { CANDELE_LAB, controllaMappa, generaMappa, type Mappa } from './mappa';
 import { MAPPA, MINIMAPPA } from '../data/mappa';
 
 export type AttaccoCapo = 'rintocco' | 'carica' | 'chiamata';
@@ -178,7 +178,7 @@ export class LabStanze {
     const t = performance.now();
     let sbagliate = 0, primo = '', s0 = 99, s1 = 0, b0 = 99, b1 = 0;
     for (let seme = 1; seme <= n; seme++) {
-      const m = generaMappa(seme), e = controllaMappa(m), k = m.stanze.length, d = m.stanze[m.boss].distanza;
+      const m = generaMappa(seme, seme % 2 ? 'lampionaio' : ''), e = controllaMappa(m), k = m.stanze.length, d = m.stanze[m.boss].distanza;
       if (e.length && !sbagliate++) primo = `seme ${seme}: ${e.join(', ')}`;
       s0 = Math.min(s0, k); s1 = Math.max(s1, k); b0 = Math.min(b0, d); b1 = Math.max(b1, d);
     }
@@ -242,6 +242,17 @@ export class LabStanze {
     this.s.y = p.y;
   }
 
+  /** La porta delle candele in ogni Veglia del Lampionaio (sì) o a caso (no): ricomincia la Veglia con lo stesso seme. */
+  candeleSempre(si: boolean): void {
+    CANDELE_LAB.sempre = si;
+    this.s.semeDopo = this.s.seme;
+    this.s.scene.restart();
+  }
+
+  get candeleSempreAttive(): boolean {
+    return CANDELE_LAB.sempre;
+  }
+
   /** Accende tutte le candele del Mondo: la porta delle candele si apre. */
   accendiCandele(): void {
     for (const s of this.s.mappa.stanze) if (s.candela) s.candela = 2;
@@ -254,10 +265,11 @@ export class LabStanze {
     if (i < 0) return;
     this.s.mappa.stanze[i].ripulita = true; // la stanza vuota: si prova la candela senza nemici
     this.vaiAllaStanza(i);
-    const C = MAPPA.candele;
-    this.s.x = Math.round(MISURA.larghezza * C.posto.x) + 40;
-    this.s.y = Math.round(MISURA.altezza * C.posto.y);
-    this.s.guardaVerso(-1, 0);
+    // accanto alla candela, dalla parte del centro della stanza, girato verso di lei
+    const c = this.s.posizioneCandela(), dx = MISURA.larghezza / 2 - c.x, dy = MISURA.altezza / 2 - c.y, d = Math.hypot(dx, dy) || 1;
+    this.s.x = c.x + (dx / d) * 40;
+    this.s.y = c.y + (dy / d) * 40;
+    this.s.guardaVerso(-dx / d, -dy / d);
   }
 
   /** Le chiavi e le porte chiuse a chiave, per il pannello. */

@@ -100,6 +100,12 @@ export class RompibiliStanza {
     for (let k = 0; k < messi; k++) if (rotti & (1 << k)) this.rompibili.togli(k);
   }
 
+  /** C'è un vaso della stanza (intero o rotto) a meno di d px da (x, y)? (la candela non ci si mette sopra) */
+  vicinoAVaso(x: number, y: number, d: number): boolean {
+    for (let k = 0; k < this.messi; k++) if (Math.hypot(x - this.px[k], y - this.py[k]) < d) return true;
+    return false;
+  }
+
   /** Quali rompibili della stanza in corso non sono più interi: un bit per ognuno (da ridare a nuovaStanza tornando qui). */
   rotti(): number {
     let r = 0;

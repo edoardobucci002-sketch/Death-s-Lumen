@@ -31,11 +31,13 @@ export const MAPPA = {
   // la chiave sicura (Edoardo, 18/11): è la ricompensa di una stanza a caso tra quelle sempre aperte, a questa distanza
   // dall'ingresso o più (le stanze accanto all'ingresso danno gli Echi d'inizio); ripulita, la chiave è a terra al centro
   chiaveSicura: { distanzaMinima: 2 },
-  // la porta delle candele (Edoardo, 17/11): sempre 3 candele, in stanze di combattimento diverse e sempre aperte; si
-  // accendono colpendole con la Lanterna; accese tutte e tre, la porta si apre. Porta a un vicolo cieco con la ricompensa
-  // doppia, come le porte chiuse a chiave. La candela sta in questo punto della stanza (parte della larghezza e
-  // dell'altezza del pavimento) e si accende se il colpo la prende entro «tocco» px (Claude, 18/11, da rivedere)
-  candele: { quante: 3, posto: { x: 0.25, y: 0.3 }, tocco: 14, ingrandimento: 3 },
+  // la porta delle candele (Edoardo, 17/11 e 18/11): esclusiva del Lampionaio (solo la sua Lanterna le accende; gli altri
+  // personaggi avranno le loro cose esclusive) e non in ogni Veglia: c'è con questa probabilità (Claude, da rivedere).
+  // Sempre 3 candele, in stanze di combattimento diverse e sempre aperte; ognuna in un punto a caso della sua stanza, vicino
+  // ai muri (dalMuro: quanto dista dal muro, lontano dalle porte e dai vasi); si accende se cade nell'arco del colpo della
+  // Lanterna («tocco»: la mezza larghezza della candela). Accese tutte e tre, la porta si apre da sola e porta a un vicolo
+  // cieco con la ricompensa doppia, come le porte chiuse a chiave
+  candele: { personaggio: 'lampionaio', probabilita: 0.5, quante: 3, dalMuro: { min: 24, max: 56 }, porte: 110, vasi: 48, tocco: 14, ingrandimento: 3 },
 } as const;
 
 /**

@@ -68,7 +68,7 @@ import { ID_SETH } from '../sistema/orda';
 import { ROMPIBILI_STANZE } from '../data/rompibili';
 import { MAPPA, MINIMAPPA, STANZE_SPECIALI } from '../data/mappa';
 import { disegnaMinimappa } from '../sistema/minimappa';
-import { generaMappa, opposto, type Mappa } from '../sistema/mappa';
+import { CANDELE_LAB, generaMappa, opposto, type Mappa } from '../sistema/mappa';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
@@ -199,7 +199,8 @@ export class Stanze extends Phaser.Scene {
     const parametri = new URLSearchParams(location.search);
     this.seme = this.semeDopo ?? (Number(parametri.get('seme')) || ONDATA.seme);
     this.semeDopo = null;
-    this.mappa = generaMappa(this.seme);
+    if (parametri.get('candele') === '1') CANDELE_LAB.sempre = true; // per le prove: la porta delle candele c'è sempre
+    this.mappa = generaMappa(this.seme, this.pg.id);
     this.porteBloccate = false;
     this.botVeloce = parametri.has('bot');
     this.bot = this.botVeloce ? new BotStanze() : null;
@@ -649,9 +650,9 @@ export class Stanze extends Phaser.Scene {
 
   /** L'oggetto della stanza: il forziere del tesoro o la fonte della Sosta (spenti quando sono già stati usati). */
   private mostraOggetto(): void {
-    const q = this.percorso.qui, C = MAPPA.candele;
-    this.candela.setVisible(q.candela > 0).setTexture(q.candela === 2 ? SIMBOLO_CANDELA : CANDELA_SPENTA)
-      .setPosition(Math.round(MISURA.larghezza * C.posto.x), Math.round(MISURA.altezza * C.posto.y));
+    const q = this.percorso.qui;
+    this.candela.setVisible(q.candela > 0).setTexture(q.candela === 2 ? SIMBOLO_CANDELA : CANDELA_SPENTA);
+    if (q.candela > 0) this.mettiCandela();
     const s = this.percorso.qui, speciale = s.tipo === 'tesoro' || s.tipo === 'sosta', chiave = this.chiaveATerra();
     this.oggetto.setVisible(speciale || chiave).setPosition(MISURA.larghezza / 2, MISURA.altezza / 2);
     if (chiave) {
@@ -877,6 +878,30 @@ export class Stanze extends Phaser.Scene {
     this.guardaX = dx;
     this.guardaY = dy;
     this.versoSinistra = dx < 0;
+  }
+
+  /**
+   * La candela in un punto a caso della stanza, vicino ai muri, lontano dalle porte e dai vasi (Edoardo, 18/11). Con il seme
+   * della stanza: tornando, è sempre allo stesso posto.
+   */
+  /** Dove sta la candela della stanza in cui si è (per il LAB). */
+  posizioneCandela(): { x: number; y: number } {
+    return { x: this.candela.x, y: this.candela.y };
+  }
+
+  private mettiCandela(): void {
+    const C = MAPPA.candele, a = areaCamminabile(), caso = new Caso((this.semeStanza(this.percorso.corrente + 1) ^ 0x51ed270b) >>> 0);
+    const cx = MISURA.larghezza / 2, cy = MISURA.altezza / 2, porte = [cx, a.y0, a.x0, cy, a.x1, cy, cx, a.y1];
+    let x = cx, y = cy;
+    for (let t = 0; t < 60; t++) {
+      const muro = caso.intero(0, 3), d = caso.intero(C.dalMuro.min, C.dalMuro.max);
+      x = muro === 1 ? a.x0 + d : muro === 2 ? a.x1 - d : caso.intero(Math.round(a.x0 + C.dalMuro.min), Math.round(a.x1 - C.dalMuro.min));
+      y = muro === 0 ? a.y0 + d : muro === 3 ? a.y1 - d : caso.intero(Math.round(a.y0 + C.dalMuro.min), Math.round(a.y1 - C.dalMuro.min));
+      let libero = !this.rompibili.vicinoAVaso(x, y, C.vasi);
+      for (let k = 0; k < porte.length && libero; k += 2) libero = Math.hypot(x - porte[k], y - porte[k + 1]) >= C.porte;
+      if (libero) break;
+    }
+    this.candela.setPosition(Math.round(x), Math.round(y));
   }
 
   /** Accende la candela della stanza in cui si è; con tutte e tre accese, la porta delle candele si apre (18/11). */

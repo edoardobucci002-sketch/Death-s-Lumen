@@ -979,7 +979,7 @@ for (const [nome, disp] of [
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
   pag.on('console', (m) => (m.type() === 'error' || m.text().includes('has no frame')) && errori.push(m.text()));
-  await pag.goto(`${url}?stanze`);
+  await pag.goto(`${url}?stanze&candele=1`);
   await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
   // muri, pausa e attacco si provano nella stanza vuota; i nemici hanno la loro prova in fondo
   // nell'ingresso della mappa le porte sono aperte: per provare i muri camminandoci contro si bloccano
