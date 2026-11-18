@@ -10,6 +10,12 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Passo 3: porta del Boss chiusa, bot che evita l'arena del Campanaro
+
+- Nessun numero di combattimento cambia. Nuovi: `PERCORSO.attesaCapo` 1,5 s (fine provvisoria dopo l'ingresso dal Boss) e `PERCORSO.avviso` 1,6 s (scritte della porta del capo), tutti e due di Claude, *da rivedere*.
+- **Il bot non attraversa più l'arena del Campanaro per andare in altre stanze** finché c'è altro da esplorare: prima ci passava in mezzo e affrontava il Campanaro anche alla seconda stanza. Ora lo affronta dopo 7–13 stanze combattute (di solito 9–10).
+- `npm run sim-stanze -- 48` (metà carte preferite, metà a caso): **arrivati al Boss 17/48** (prima 12/48). Cadute: **21 contro il Campanaro**, 10 nelle stanze normali (2 a 1 porta, 4 a 2 porte, 2 a 3, 1 a 4, 1 a 5). Il Campanaro resta il primo vero ostacolo del bot; Edoardo lo batte sempre e lo vuole più forte (vedi decisioni del 18/11).
+
 ### 17/11 — La mappa del Mondo: 2 carte e ondate per distanza
 
 - **Carte**: da 3 a **2** per stanza (Edoardo, 17/11: la terza arriverà con la Fortuna).
