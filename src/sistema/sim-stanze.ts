@@ -24,6 +24,9 @@ export interface StanzaSim {
 export interface RisultatoStanze {
   seme: number;
   completata: boolean;
+  /** il forziere del tesoro aperto, la fonte della Sosta usata (18/11) */
+  tesoro: boolean;
+  sosta: boolean;
   stanza: number; // quante stanze ha combattuto (l'ultima raggiunta)
   secondi: number;
   salute: number;
@@ -85,7 +88,7 @@ export class SimStanze {
   }
 
   risultato(r: {
-    seme: number; completata: boolean; stanza: number; salute: number; saluteMassima: number; uccisi: number; rinascite: number;
+    seme: number; completata: boolean; tesoro: boolean; sosta: boolean; stanza: number; salute: number; saluteMassima: number; uccisi: number; rinascite: number;
     schivate: number; colpiLanterna: number; usiAbilita: number; livelloLanterna: number; arsenale: Arsenale; doni: string[];
   }): RisultatoStanze {
     const ultima = this.stanze[this.stanze.length - 1];
@@ -95,7 +98,7 @@ export class SimStanze {
       if (r.arsenale.dannoFonti[i] > 0) danno[f] = Math.round(r.arsenale.dannoFonti[i]);
     });
     return {
-      seme: r.seme, completata: r.completata, stanza: r.stanza, secondi: Math.round(this.secondi * 10) / 10,
+      seme: r.seme, completata: r.completata, tesoro: r.tesoro, sosta: r.sosta, stanza: r.stanza, secondi: Math.round(this.secondi * 10) / 10,
       salute: Math.round(r.salute), saluteMinima: Math.round(Math.min(this.saluteMinima, r.salute)),
       uccisi: r.uccisi, rinascite: r.rinascite, schivate: r.schivate, colpiLanterna: r.colpiLanterna, usiAbilita: r.usiAbilita,
       build: [`Lanterna ${r.livelloLanterna}`, ...r.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`), ...r.doni],

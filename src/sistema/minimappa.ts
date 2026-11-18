@@ -23,12 +23,16 @@ const SIMBOLI: Record<string, { forma: readonly string[]; colore: string }> = {
   terra: { forma: ['...', '.#.', '###'], colore: INFO_AFFINITA.terra.colore }, // il tumulo
   dono: { forma: ['###', '#.#', '###'], colore: PORTE.colori.dono }, // il reliquiario
   echi: { forma: ['#.#', '###', '#.#'], colore: PORTE.colori.echi }, // gli Echi d'inizio
+  tesoro: { forma: ['###', '###', '#.#'], colore: MINIMAPPA.colori.tesoro }, // il forziere (18/11)
+  sosta: { forma: ['###', '.#.', '###'], colore: MINIMAPPA.colori.sosta }, // la coppa della fonte (18/11)
 };
 
-/** Il simbolo del contenuto della stanza: il capo, o la ricompensa finché non è ripulita. */
+/** Il simbolo del contenuto della stanza: il capo, o la ricompensa (il tesoro, la Sosta) finché non è ripulita (usata). */
 function contenuto(s: StanzaMappa): string | null {
   if (s.tipo === 'campanaro' || s.tipo === 'boss') return s.tipo;
-  if (s.ripulita || !s.ricompensa) return null;
+  if (s.ripulita) return null;
+  if (s.tipo === 'tesoro' || s.tipo === 'sosta') return s.tipo;
+  if (!s.ricompensa) return null;
   return s.ricompensa;
 }
 

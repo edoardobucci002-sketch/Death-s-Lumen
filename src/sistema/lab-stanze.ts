@@ -12,7 +12,7 @@
  * guardarla, generarne un'altra, controllare le regole su mille semi. Passo 2: andare in una stanza qualsiasi (il Campanaro,
  * il Boss), attraversare la porta di un muro, bloccare le porte per provare i muri. Passo 3 (18/11): dare o togliere la
  * chiave del Campanaro, che apre la porta del Boss. Passo 4 (18/11): spostare la minimappa a sinistra o a destra,
- * visitare tutte le stanze per vederla piena.
+ * visitare tutte le stanze per vederla piena. Tesoro e Sosta (18/11): andarci, usare l'oggetto.
  */
 import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
@@ -114,6 +114,20 @@ export class LabStanze {
 
   vaiAlBoss(): void {
     this.vaiAllaStanza(this.s.mappa.boss);
+  }
+
+  vaiAlTesoro(): void {
+    this.vaiAllaStanza(this.s.mappa.tesoro);
+  }
+
+  vaiAllaSosta(): void {
+    this.vaiAllaStanza(this.s.mappa.sosta);
+  }
+
+  /** Porta il Lampionaio sull'oggetto della stanza (forziere o fonte): lo usa. */
+  usaOggetto(): void {
+    this.s.x = STANZA.larghezza / 2;
+    this.s.y = STANZA.altezza / 2;
   }
 
   vaiAllIngresso(): void {

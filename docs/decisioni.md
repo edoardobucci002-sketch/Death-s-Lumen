@@ -9,6 +9,7 @@ Regole del registro (4 novembre 2026, scelte di Edoardo):
 
 | Data | Decisione | Motivo |
 | --- | --- | --- |
+| 2026-11-18 | **Tesoro e Sosta** (risposte di Edoardo alle domande di Claude): il **tesoro** sta in un vicolo cieco e il suo Reliquiario offre **3 carte rare** (Chiara o Ardente, da tutte le fonti; Amuleti e Unioni quando ci saranno); la **Sosta** è la stanza prima del Boss e dà **solo la fiaschetta piena**; in tutte e due si prende il contenuto **toccando un oggetto** al centro (forziere, fonte), una volta sola. Claude: a fiaschetta piena la fonte non si consuma. | Edoardo, 18/11. |
 | 2026-11-18 | **Minimappa in alto a sinistra, con il contenuto di ogni stanza**: Campanaro e Boss sempre, la ricompensa finché la stanza non è ripulita (simboli e colori di Claude, *da rivedere*). | Edoardo, 18/11. |
 | 2026-11-18 | **Mappa del Mondo, passo 4: minimappa e mappa nella pausa.** In alto a sinistra una finestra della mappa attorno alla stanza in cui si è (visitate piene, vicine col contorno, simboli di Campanaro e Boss); nella pausa la mappa intera di ciò che si conosce. L'angolo (sinistra o destra) si prova sul Galaxy S25 con l'interruttore del LAB. Misure, colori e simboli di Claude, *da rivedere*. | Piano del 17/11; Edoardo: «Passo 4». |
 | 2026-11-18 | **Il redesign del Campanaro si fa insieme al suo restyle**: non si decide ora come renderlo più forte. Le scritte della porta del capo (1,6 s, Tiny5 sopra la testa) vanno bene. | Edoardo, 18/11. |

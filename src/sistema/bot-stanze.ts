@@ -169,7 +169,8 @@ export class BotStanze {
    */
   scegliPorta(m: Mappa, qui: number, verso: readonly number[], ricompense: readonly Medaglione[], echi: readonly Arma[]): number {
     const resta = m.stanze.some((s) => !s.ripulita && s.tipo === 'combattimento');
-    const nuova = (i: number): boolean => !m.stanze[i].ripulita && (m.stanze[i].tipo === 'combattimento' || (!resta && m.stanze[i].tipo === 'campanaro'));
+    // stanze nuove: da combattere, il tesoro (18/11), e il Campanaro quando non resta altro; la Sosta la usa passando
+    const nuova = (i: number): boolean => !m.stanze[i].ripulita && (m.stanze[i].tipo === 'combattimento' || m.stanze[i].tipo === 'tesoro' || (!resta && m.stanze[i].tipo === 'campanaro'));
     let migliore = -1, valore = -Infinity;
     const vicine = verso.filter(nuova).length;
     let scelta = this.esplora && vicine ? this.esplora.intero(0, vicine - 1) : -1;
@@ -180,7 +181,7 @@ export class BotStanze {
         return;
       }
       const r = ricompense[k];
-      const val = r === 'echi' ? B.porte.echi : r === 'dono' ? B.porte.dono : echi.some((a) => AFFINITA_ARMI[a.id] === r) ? B.porte.affinitaPosseduta : B.porte.altra;
+      const val = r === 'tesoro' ? B.porte.tesoro : r === 'echi' ? B.porte.echi : r === 'dono' ? B.porte.dono : echi.some((a) => AFFINITA_ARMI[a.id] === r) ? B.porte.affinitaPosseduta : B.porte.altra;
       if (val > valore) {
         valore = val;
         migliore = k;

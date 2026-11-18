@@ -10,6 +10,12 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Tesoro e Sosta
+
+- Nuovi: il Reliquiario del tesoro dà **3 carte Chiara o Ardente** (`STANZE_SPECIALI.tesoro`, Edoardo); l'oggetto si usa a **34 px** dal centro (Claude, *da rivedere*). La Sosta riempie la fiaschetta.
+- Le mappe ora devono avere tesoro e Sosta: per lo stesso seme la mappa può essere diversa da prima.
+- `npm run sim-stanze -- 48`: **arrivati al Boss 14/48** (prima 17/48: dentro il rumore di ±12 punti, con mappe diverse). Tesoro aperto in 39 partite su 48, Sosta usata in 16 (il bot ci passa andando al Boss). Cadute: **29 contro il Campanaro**, 5 nelle stanze normali.
+
 ### 18/11 — Passo 3: porta del Boss chiusa, bot che evita l'arena del Campanaro
 
 - Nessun numero di combattimento cambia. Nuovi: `PERCORSO.attesaCapo` 1,5 s (fine provvisoria dopo l'ingresso dal Boss) e `PERCORSO.avviso` 1,6 s (scritte della porta del capo), tutti e due di Claude, *da rivedere*.

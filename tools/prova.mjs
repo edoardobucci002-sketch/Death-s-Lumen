@@ -1397,6 +1397,48 @@ for (const [nome, disp] of [
     if (sb2.indice !== vb.i) errori.push('la porta del Boss chiusa si attraversa');
     if (!avviso) errori.push('spingendo contro la porta del Boss chiusa non compare la scritta');
     if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-boss-chiuso.png` });
+    // tesoro e Sosta (18/11): vuoti e aperti; il forziere dà 3 carte rare (Chiara o Ardente), la fonte riempie la fiaschetta
+    await L('vaiAlTesoro');
+    await pag.waitForTimeout(300);
+    const t0 = await st();
+    if (t0.tipo !== 'tesoro' || t0.fase !== 'porte' || t0.nemici) errori.push(`il tesoro non è vuoto e aperto (${t0.tipo}, ${t0.fase}, ${t0.nemici} nemici)`);
+    if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-tesoro.png` });
+    await L('usaOggetto');
+    if (!(await quando('l.stato().carteAperte', '', 2000))) errori.push('il forziere del tesoro non apre le carte');
+    else {
+      const gt = await pag.evaluate(() => [...document.querySelectorAll('.doni-carta')].map((c) => c.dataset.grado));
+      if (gt.length !== 3 || gt.some((g) => g !== 'chiara' && g !== 'ardente')) errori.push(`le carte del tesoro non sono 3 rare (${gt.join(', ')})`);
+      if (nome === 'stanze-desktop') await pag.keyboard.press('Digit1');
+      else await pag.click('.doni-carta').catch(() => errori.push('la carta del tesoro non è toccabile'));
+      await pag.waitForTimeout(200);
+      const t1 = await st();
+      const preso = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return s.mappa.stanze[s.mappa.tesoro].ripulita; });
+      if (t1.carteAperte || t1.fase !== 'porte' || !preso) errori.push('scelta la carta, il tesoro non resta aperto e preso');
+      giro.push(`tesoro (${gt.join('/')})`);
+    }
+    await L('vaiAllaSosta');
+    await pag.waitForTimeout(300);
+    const so = await st();
+    if (so.tipo !== 'sosta' || so.fase !== 'porte' || so.nemici) errori.push(`la Sosta non è vuota e aperta (${so.tipo}, ${so.fase})`);
+    const fonte = await pag.evaluate(async () => {
+      const s = window.__dl.scene.getScene('Stanze'), f = s.fiaschetta, piena = f.massimo;
+      s.mappa.stanze[s.mappa.sosta].ripulita = false; // la prova della porta del Boss l'aveva segnata ripulita
+      f.sorsi = f.massimo;
+      s.lab.usaOggetto();
+      await new Promise((ok) => setTimeout(ok, 150));
+      const restaPiena = !s.mappa.stanze[s.mappa.sosta].ripulita; // a fiaschetta piena la fonte non si consuma
+      s.x = s.porte.davanti(0).x; s.y = s.porte.davanti(0).y;
+      await new Promise((ok) => setTimeout(ok, 50));
+      s.porteBloccate = true;
+      f.sorsi = 0;
+      s.lab.usaOggetto();
+      await new Promise((ok) => setTimeout(ok, 150));
+      s.porteBloccate = false;
+      return { restaPiena, sorsi: f.sorsi, piena, usata: s.mappa.stanze[s.mappa.sosta].ripulita };
+    });
+    if (!fonte.restaPiena) errori.push('a fiaschetta piena la fonte della Sosta si consuma lo stesso');
+    if (fonte.sorsi !== fonte.piena || !fonte.usata) errori.push(`la fonte della Sosta non riempie la fiaschetta (${fonte.sorsi} di ${fonte.piena})`);
+    else giro.push('Sosta');
     // l'arena del Campanaro: compare da solo, con la sua barra in cima; poi si ripulisce come le altre
     await L('vaiAlCampanaro');
     if (!(await quando('l.campanaro() && l.campanaro().massima > 0', '', 4000))) errori.push('nella stanza del Campanaro lui non compare');

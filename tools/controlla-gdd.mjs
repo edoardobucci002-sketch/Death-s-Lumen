@@ -929,6 +929,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Porte', 'larghe {} px; entrando si compare {} px dentro la stanza', SZ.PORTE.larghezza, SZ.PORTE.entrata],
     ['Passaggio', '{} s; {} s verso una stanza già ripulita', PE.passaggio, PE.passaggioRipulita],
     ['Stanza del Boss', 'la fine provvisoria dopo {} s; scritte della porta del capo per {} s', PE.attesaCapo, PE.avviso],
+    ['Tesoro', '{} carte di grado Chiara o Ardente; l\'oggetto si usa arrivando a {} px dal suo centro', D('mappa').STANZE_SPECIALI.tesoro.carte, D('mappa').STANZE_SPECIALI.tocco],
     ['Minimappa', 'stanze di {} × {} px con {} px tra l\'una e l\'altra; finestra di {} × {} stanze ingrandita {} volte; nella pausa fino a {} volte', MM.cella.larghezza, MM.cella.altezza, MM.spazio, MM.finestra.colonne, MM.finestra.righe, MM.ingrandimento, MM.ingrandimentoPausa],
   ];
   stessiNomi('Percorso', tp, RIGHE_PERCORSO.map((r) => r[0]));

@@ -7,6 +7,8 @@
  *   (PERCORSO.quanteCarte), che pescano dalla ricompensa della stanza: gli Echi d'inizio accanto all'ingresso, Echi nuovi e
  *   livelli di un'affinità (dalla Luce anche la Lanterna), o doni;
  * - nella stanza del Campanaro (mini-boss, src/sistema/campanaro.ts) niente ondate: arriva lui da solo, lontano da te;
+ * - tesoro e Sosta (18/11) sono vuoti e aperti: il loro oggetto (il forziere con le carte rare, la fonte che riempie la
+ *   fiaschetta) lo usa la scena (src/scene/Stanze.ts); usato, la stanza è «ripulita»;
  * - la porta del Boss resta chiusa (il lucchetto) finché il Campanaro non è battuto: lui ha la chiave (passo 3, 18/11);
  * - entrati dal Boss le porte si chiudono alle spalle e non si torna; oggi lì finisce la partita (fine provvisoria, finché
  *   non c'è Seth).
@@ -14,6 +16,7 @@
  * dare, poi un oggetto di quel grado. Le carte si estraggono con un generatore del caso con seme (riproducibili).
  */
 import { ONDATA, PERCORSO, STANZA } from '../data/stanze';
+import { STANZE_SPECIALI } from '../data/mappa';
 import type { Arma } from '../data/armi';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, type IdDono } from '../data/doni';
@@ -92,6 +95,10 @@ export class Percorso {
       this.fase = 'fine';
       return;
     }
+    if (s.tipo === 'tesoro' || s.tipo === 'sosta') {
+      this.fase = 'porte'; // vuota e aperta: c'è solo il suo oggetto
+      return;
+    }
     if (s.ripulita) {
       this.fase = 'porte';
       return;
@@ -163,6 +170,20 @@ export class Percorso {
     return scelte;
   }
 
+  /**
+   * Il Reliquiario del tesoro (18/11): STANZE_SPECIALI.tesoro.carte carte pescate da tutte le fonti (Echi nuovi e livelli di
+   * ogni affinità, doni) tra quelle dei gradi rari; se non bastano, le altre.
+   */
+  carteTesoro(): Dono[] {
+    const T = STANZE_SPECIALI.tesoro, tutte: Dono[] = [];
+    for (const aff of AFFINITA) tutte.push(...this.dallAffinita(aff));
+    tutte.push(...this.doni());
+    const scelte: Dono[] = [];
+    this.riempi(scelte, tutte.filter((d) => T.gradi.includes(gradoCarta(d))), T.carte);
+    this.riempi(scelte, tutte, T.carte);
+    return scelte;
+  }
+
   /** Aggiunge a «scelte» carte pescate da «pool» (senza ripetere quelle che ci sono già) finché non sono n. */
   private riempi(scelte: Dono[], pool: Dono[], n: number): void {
     const uguali = (a: Dono, b: Dono): boolean => a.tipo === b.tipo && (a.tipo === 'arma' && b.tipo === 'arma' ? a.arma.id === b.arma.id : a.tipo === 'passivo' && b.tipo === 'passivo' ? a.passivo.id === b.passivo.id : false);
@@ -222,9 +243,9 @@ export class Percorso {
     const chiave = this.chiave;
     this.qui.vicine.forEach((v, l) => {
       if (v < 0) return;
-      const s = this.mappa.stanze[v], boss = s.tipo === 'boss';
+      const s = this.mappa.stanze[v], boss = s.tipo === 'boss', speciale = s.tipo === 'tesoro' || s.tipo === 'sosta';
       muri.push(MURI[l]);
-      ricompense.push(boss ? (chiave ? 'capo' : 'chiusa') : s.ripulita ? null : s.ricompensa);
+      ricompense.push(boss ? (chiave ? 'capo' : 'chiusa') : s.ripulita ? null : speciale ? (s.tipo as 'tesoro' | 'sosta') : s.ricompensa);
       verso.push(v);
       chiuse.push(boss && !chiave);
     });

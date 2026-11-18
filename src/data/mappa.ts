@@ -1,3 +1,5 @@
+import type { IdGrado } from './rarita';
+
 /*
  * La mappa del Mondo, alla The Binding of Isaac (decisioni di Edoardo del 17/11): le stanze stanno su una griglia e si
  * toccano dai lati; il gioco la genera a ogni Veglia con il seme. Il generatore è in src/sistema/mappa.ts.
@@ -45,6 +47,22 @@ export const MINIMAPPA = {
     contorno: '#8a7a66',
     campanaro: '#e3913a',
     boss: '#c8343a',
+    tesoro: '#f2d16b',
+    sosta: '#86c5e8',
     sulChiaro: '#120c08', // il simbolo sulla stanza in cui si è
   },
 };
+
+/**
+ * Le stanze speciali del Mondo 1 (decisioni di Edoardo del 17/11 e del 18/11): sono vuote, senza nemici e con le porte
+ * aperte; al centro c'è un oggetto che si usa camminandoci contro, una volta sola.
+ * - Il tesoro: in un vicolo cieco qualsiasi (non accanto all'ingresso); il forziere apre un Reliquiario di carte rare.
+ * - La Sosta: la stanza da cui si entra nel Boss; la fonte riempie la fiaschetta (se non è già piena).
+ */
+export const STANZE_SPECIALI = {
+  // il Reliquiario del tesoro: tante carte, pescate da tutte le fonti (Echi, livelli, doni) di questi gradi (Edoardo, 18/11:
+  // «3 carte rare»; Amuleti e Unioni ci entreranno quando ci saranno)
+  tesoro: { carte: 3, gradi: ['chiara', 'ardente'] as readonly IdGrado[] },
+  // quanto vicino (px, dai piedi al centro dell'oggetto) bisogna arrivare per usarlo (Claude, da rivedere)
+  tocco: 34,
+} as const;

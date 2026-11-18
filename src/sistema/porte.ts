@@ -29,9 +29,10 @@ export type Muro = 'alto' | 'destra' | 'basso' | 'sinistra';
 export type Ricompensa = IdAffinita | 'dono';
 /**
  * Cosa mostra il medaglione di una porta: la ricompensa della stanza dopo, gli Echi d'inizio, la porta del capo (aperta) o
- * il lucchetto (la porta del capo chiusa finché il Campanaro non è battuto, passo 3 del 18/11), o niente.
+ * il lucchetto (la porta del capo chiusa finché il Campanaro non è battuto, passo 3 del 18/11), il tesoro o la Sosta (18/11),
+ * o niente.
  */
-export type Medaglione = Ricompensa | 'echi' | 'capo' | 'chiusa' | null;
+export type Medaglione = Ricompensa | 'echi' | 'capo' | 'chiusa' | 'tesoro' | 'sosta' | null;
 export const MURI: readonly Muro[] = ['alto', 'destra', 'basso', 'sinistra'];
 
 const colore = (h: string): number => parseInt(h.slice(1), 16);
@@ -40,8 +41,46 @@ const SIMBOLO_ECHI = 'stanze-simbolo-echi';
 const MEDAGLIONE_ECHI = 'stanze-medaglione-echi';
 const SIMBOLO_CAPO = 'stanze-simbolo-capo';
 const SIMBOLO_LUCCHETTO = 'stanze-simbolo-lucchetto';
+const SIMBOLO_TESORO = 'stanze-simbolo-tesoro';
+const SIMBOLO_SOSTA = 'stanze-simbolo-sosta';
 const MEDAGLIONE_CAPO = 'stanze-medaglione-capo';
 const MEDAGLIONE_CHIUSA = 'stanze-medaglione-chiusa';
+const MEDAGLIONE_TESORO = 'stanze-medaglione-tesoro';
+const MEDAGLIONE_SOSTA = 'stanze-medaglione-sosta';
+/** I medaglioni speciali: il disegno di Edoardo (se c'è), il medaglione vuoto con il simbolo dal codice, il simbolo. */
+const SPECIALI = {
+  capo: ['Porta_Capo', MEDAGLIONE_CAPO, SIMBOLO_CAPO],
+  chiusa: ['Porta_Chiusa', MEDAGLIONE_CHIUSA, SIMBOLO_LUCCHETTO],
+  tesoro: ['Porta_Tesoro', MEDAGLIONE_TESORO, SIMBOLO_TESORO],
+  sosta: ['Porta_Sosta', MEDAGLIONE_SOSTA, SIMBOLO_SOSTA],
+} as const;
+// il forziere del tesoro e la coppa della Sosta (segnaposto, 11 × 11): «#» il bordo scuro, «o» il colore, «k» il chiaro
+const FORZIERE = [
+  '...........',
+  '.#########.',
+  '#ooooooooo#',
+  '#ooooooooo#',
+  '###########',
+  '#ooookoooo#',
+  '#oooo#oooo#',
+  '#ooooooooo#',
+  '#ooooooooo#',
+  '###########',
+  '...........',
+];
+const COPPA = [
+  '...........',
+  '#########..',
+  '#kkkkkkk#..',
+  '#ooooooo#..',
+  '.#ooooo#...',
+  '..#ooo#....',
+  '...#o#.....',
+  '...#o#.....',
+  '..#ooo#....',
+  '.#######...',
+  '...........',
+];
 // il lucchetto (segnaposto, 11 × 11): «#» il bordo scuro, «o» il ferro, «k» il buco della chiave
 const LUCCHETTO = [
   '...###.....',
@@ -88,12 +127,13 @@ export class Porte {
       g.generateTexture(chiave, 11, 11);
       g.destroy();
     }
-    if (!scena.textures.exists(SIMBOLO_LUCCHETTO)) {
+    for (const [chiave, disegno, tinta, dx] of [[SIMBOLO_LUCCHETTO, LUCCHETTO, PORTE.colori.lucchetto, 1], [SIMBOLO_TESORO, FORZIERE, PORTE.colori.tesoro, 0], [SIMBOLO_SOSTA, COPPA, PORTE.colori.sosta, 1]] as const) {
+      if (scena.textures.exists(chiave)) continue;
       const g = scena.add.graphics();
-      LUCCHETTO.forEach((riga, y) => [...riga].forEach((c, x) => {
-        if (c !== '.') g.fillStyle(c === '#' ? 0x120c08 : colore(PORTE.colori.lucchetto)).fillRect(x + 1, y, 1, 1);
+      disegno.forEach((riga, y) => [...riga].forEach((c, x) => {
+        if (c !== '.') g.fillStyle(c === '#' ? 0x120c08 : c === 'k' ? 0xefe3c8 : colore(tinta)).fillRect(x + dx, y, 1, 1);
       }));
-      g.generateTexture(SIMBOLO_LUCCHETTO, 11, 11);
+      g.generateTexture(chiave, 11, 11);
       g.destroy();
     }
     // i cancelli disegnati: il pezzo intero sopra muri e pavimento (sotto personaggio e buio), l'arco anche sopra il buio
@@ -148,13 +188,13 @@ export class Porte {
         s.setVisible(false); // la stanza dopo è già ripulita, o è il Boss
         continue;
       }
-      if (r === 'capo' || r === 'chiusa') {
-        // la porta del capo (segnaposto): il medaglione disegnato (Porta_Capo, Porta_Chiusa) se c'è, se no il medaglione
-        // vuoto con il rombo rosso o con il lucchetto, se no il simbolo ingrandito
-        const disegno = r === 'capo' ? 'Porta_Capo' : 'Porta_Chiusa', composto = r === 'capo' ? MEDAGLIONE_CAPO : MEDAGLIONE_CHIUSA;
+      if (r === 'capo' || r === 'chiusa' || r === 'tesoro' || r === 'sosta') {
+        // la porta del capo, del tesoro, della Sosta (segnaposto): il medaglione disegnato (Porta_Capo…) se c'è, se no il
+        // medaglione vuoto con il simbolo dal codice, se no il simbolo ingrandito
+        const [disegno, composto, simbolo] = SPECIALI[r];
         const t = this.scena.textures.exists(disegno) ? disegno : this.scena.textures.exists(composto) ? composto : '';
         if (t) s.setTexture(t).setScale(1);
-        else s.setTexture(r === 'capo' ? SIMBOLO_CAPO : SIMBOLO_LUCCHETTO).setScale(PORTE.simbolo);
+        else s.setTexture(simbolo).setScale(PORTE.simbolo);
         s.setPosition(p.x, p.y).setVisible(true);
         continue;
       }
@@ -324,7 +364,7 @@ export class Porte {
       t.refresh();
     }
     // la porta del capo (segnaposto): il medaglione vuoto con il rombo rosso (aperta) o con il lucchetto (chiusa)
-    for (const [chiave, simbolo] of [[MEDAGLIONE_CAPO, SIMBOLO_CAPO], [MEDAGLIONE_CHIUSA, SIMBOLO_LUCCHETTO]] as const) {
+    for (const [, chiave, simbolo] of Object.values(SPECIALI)) {
       if (tex.exists(chiave)) continue;
       const f = tex.getFrame(M.vuoto);
       const t = tex.createCanvas(chiave, f.realWidth, f.realHeight)!, g = t.getContext();

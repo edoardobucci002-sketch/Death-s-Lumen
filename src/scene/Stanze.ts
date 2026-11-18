@@ -11,7 +11,8 @@
  * (le strisce del survivor, src/sistema/doni.ts), poi si aprono 2 o 3 porte con la ricompensa mostrata; ci si passa a
  * retino. Gli Echi sono le armi automatiche del survivor (Arsenale), con i nemici nella sua Orda. Dal 17/11 le stanze sono
  * una mappa alla Isaac (src/sistema/mappa.ts); dal 18/11 la porta del Boss si apre con la chiave del Campanaro, entrati dal
- * Boss le porte si chiudono alle spalle e dopo un attimo compare la fine provvisoria, «Il capo arriverà qui».
+ * Boss le porte si chiudono alle spalle e dopo un attimo compare la fine provvisoria, «Il capo arriverà qui». Tesoro e
+ * Sosta (18/11): al centro un oggetto da toccare, il forziere (3 carte rare) e la fonte (fiaschetta piena).
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
  * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
  * Riprendi e Menu). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
@@ -30,7 +31,7 @@ import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
 import { Percorso } from '../sistema/percorso';
 import { MURI, Porte, davantiAlMuro, type Muro } from '../sistema/porte';
-import { Doni } from '../sistema/doni';
+import { Doni, type Dono } from '../sistema/doni';
 import { ComparsaCarte } from '../sistema/comparsa-carte';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, RICARICA_MINIMA, SPECCHIO_STANZE, effettoDono, ricaricaDono, type IdDono, type Passivo } from '../data/doni';
@@ -61,7 +62,7 @@ import { RompibiliStanza } from '../sistema/rompibili-stanza';
 import { BAGLIORE } from '../data/sopravvivenza';
 import { BarraCapo } from '../sistema/barra-capo';
 import { CAMPANARO } from '../data/campanaro';
-import { MINIMAPPA } from '../data/mappa';
+import { MINIMAPPA, STANZE_SPECIALI } from '../data/mappa';
 import { disegnaMinimappa } from '../sistema/minimappa';
 import { generaMappa, opposto, type Mappa } from '../sistema/mappa';
 
@@ -144,6 +145,7 @@ export class Stanze extends Phaser.Scene {
   private avvisoVita = 0; // la scritta sopra la testa per la porta del capo (aperta, o chiusa quando ci si spinge contro)
   private avviso!: Phaser.GameObjects.Image;
   private attesaCapo = 0; // nella stanza del Boss: secondi alla fine provvisoria
+  private oggetto!: Phaser.GameObjects.Image; // il forziere del tesoro o la fonte della Sosta, al centro della stanza (18/11)
   private barra!: BarraSalute;
   private barraCapo!: BarraCapo; // la salute del Campanaro, in cima allo schermo (17/11)
   private pannelloFine!: HTMLElement;
@@ -252,6 +254,8 @@ export class Stanze extends Phaser.Scene {
       while (this.arsenale.livello(eco) < eco.livelli.length) this.arsenale.potenzia(eco);
     }
     this.porte = new Porte(this);
+    // l'oggetto di tesoro e Sosta (segnaposto: il simbolo del medaglione, ingrandito 3 volte)
+    this.oggetto = this.add.image(STANZA.larghezza / 2, STANZA.altezza / 2, 'stanze-simbolo-tesoro').setScale(3).setDepth(PROFONDITA.aTerra - 1).setVisible(false);
     this.mostraPorte();
     this.barra = new BarraSalute(this, this.salute);
     const scritta = 'stanze-scritta-grazia';
@@ -580,8 +584,11 @@ export class Stanze extends Phaser.Scene {
     }
     // il percorso: ondate della stanza, carte a stanza ripulita (con «ondate automatiche» spente nel LAB resta fermo)
     if (this.ondateAutomatiche && this.percorso.aggiorna(dt, this.nemici, this.x, this.y)) this.apriCarte();
-    // le porte aperte: camminandoci contro si passa alla stanza accanto
-    if (this.percorso.fase === 'porte' && !this.porteBloccate) {
+    // tesoro e Sosta: camminando contro l'oggetto lo si usa
+    if (this.percorso.fase === 'porte' && this.oggetto.visible && !this.percorso.qui.ripulita
+      && Math.hypot(this.x - this.oggetto.x, this.y - this.oggetto.y) < STANZE_SPECIALI.tocco) this.usaOggetto();
+    // le porte aperte: camminandoci contro si passa alla stanza accanto (il bot prima usa l'oggetto, se gli serve)
+    if (this.percorso.fase === 'porte' && !this.porteBloccate && !(this.bot && this.oggettoDaUsare())) {
       let k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma)) : this.porte.attraversata(this.x, this.y);
       if (this.porte.chiuse[k]) k = -1; // la porta del capo senza la chiave non si attraversa (nemmeno il bot)
       if (k < 0 && this.avvisoVita <= 0 && this.porte.controChiusa(this.x, this.y)) this.avvisa('Serve la chiave del Campanaro');
@@ -590,6 +597,48 @@ export class Stanze extends Phaser.Scene {
         this.portaScelta = k;
         this.nuovaStanza();
       } else if (k >= 0) this.attraversa(k);
+    }
+  }
+
+  /** L'oggetto della stanza: il forziere del tesoro o la fonte della Sosta (spenti quando sono già stati usati). */
+  private mostraOggetto(): void {
+    const s = this.percorso.qui, speciale = s.tipo === 'tesoro' || s.tipo === 'sosta';
+    this.oggetto.setVisible(speciale);
+    if (!speciale) return;
+    this.oggetto.setTexture(s.tipo === 'tesoro' ? 'stanze-simbolo-tesoro' : 'stanze-simbolo-sosta');
+    if (s.ripulita) this.oggetto.setTint(0x55504a).setTintMode(Phaser.TintModes.MULTIPLY);
+    else this.oggetto.clearTint();
+  }
+
+  /** C'è un oggetto che serve ancora: il forziere chiuso, o la fonte con la fiaschetta non piena. */
+  oggettoDaUsare(): boolean {
+    const s = this.percorso.qui;
+    if (s.ripulita) return false;
+    return s.tipo === 'tesoro' || (s.tipo === 'sosta' && this.fiaschetta.sorsi < this.fiaschetta.massimo);
+  }
+
+  /** Usa l'oggetto: il forziere apre il Reliquiario del tesoro; la fonte riempie la fiaschetta (se non è già piena). */
+  usaOggetto(): void {
+    const s = this.percorso.qui;
+    if (s.ripulita || this.percorso.fase !== 'porte') return;
+    if (s.tipo === 'sosta') {
+      if (this.fiaschetta.sorsi >= this.fiaschetta.massimo) {
+        if (this.avvisoVita <= 0) this.avvisa('La fiaschetta è già piena');
+        return;
+      }
+      this.fiaschetta.sorsi = this.fiaschetta.massimo;
+      this.percorso.ripulita();
+      this.avvisa('La fiaschetta è piena');
+      if (!this.bot) suona('cura');
+      this.mostraOggetto();
+      this.aggiornaMinimappa();
+      this.mostraPorte();
+    } else if (s.tipo === 'tesoro') {
+      this.percorso.fase = 'carte';
+      this.radice.classList.add('con-carte');
+      this.comandi.lascia();
+      this.attacco.lascia();
+      this.mostraCarte(this.percorso.carteTesoro(), 'Un tesoro');
     }
   }
 
@@ -613,6 +662,11 @@ export class Stanze extends Phaser.Scene {
       this.rompibili.cera += CAMPANARO.premio.cera;
       suona('cura');
     }
+    this.mostraCarte(carte, 'Un nuovo dono');
+  }
+
+  /** Le carte da scegliere (a stanza ripulita, o il Reliquiario del tesoro); il bot sceglie da solo. */
+  private mostraCarte(carte: Dono[], titolo: string): void {
     if (!carte.length) {
       this.dopoCarta(null);
       return;
@@ -625,7 +679,7 @@ export class Stanze extends Phaser.Scene {
       return;
     }
     suona('livello');
-    this.doni.mostraReliquiario(carte, (d) => this.dopoCarta(d), 'Un nuovo dono');
+    this.doni.mostraReliquiario(carte, (d) => this.dopoCarta(d), titolo);
     this.comparsa.suCarte([...this.radice.querySelectorAll<HTMLElement>('.doni-carta')], this.doni.zoomCarte, misureHud());
   }
 
@@ -636,6 +690,7 @@ export class Stanze extends Phaser.Scene {
     if (d) this.percorso.scegli(d);
     else this.percorso.ripulita();
     if (!chiave && this.percorso.chiave) this.avvisa('La porta del capo è aperta'); // il Campanaro battuto: la chiave
+    this.mostraOggetto(); // il forziere del tesoro, aperto
     this.ricalcola();
     this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza); // la carta può aver cambiato la Lanterna
     this.mostraPorte();
@@ -710,7 +765,8 @@ export class Stanze extends Phaser.Scene {
     this.percorso.entra(i);
     const s = this.percorso.qui;
     creaStanza(this, this.semeStanza(i + 1));
-    this.rompibili.nuovaStanza(this.semeStanza(i + 1), s.rotti, s.tipo === 'ingresso');
+    this.rompibili.nuovaStanza(this.semeStanza(i + 1), s.rotti, s.tipo === 'ingresso' || s.tipo === 'tesoro' || s.tipo === 'sosta');
+    this.mostraOggetto();
     if (this.percorso.fase === 'lotta') this.sim.entra(this.percorso.stanza, this.percorso.ricompensa, this.salute, s.distanza, s.tipo);
     this.mostraPorte();
     const p = da ? davantiAlMuro(da, PORTE.entrata) : { x: STANZA.larghezza / 2, y: STANZA.altezza / 2 };
@@ -736,7 +792,7 @@ export class Stanze extends Phaser.Scene {
   private chiudiSim(completata: boolean): void {
     if (!this.bot) return;
     (window as unknown as { __sim?: unknown }).__sim = this.sim.risultato({
-      seme: this.seme, completata, stanza: this.percorso.stanza, salute: this.salute, saluteMassima: this.saluteMassima,
+      seme: this.seme, completata, tesoro: !!this.mappa.stanze[this.mappa.tesoro]?.ripulita, sosta: !!this.mappa.stanze[this.mappa.sosta]?.ripulita, stanza: this.percorso.stanza, salute: this.salute, saluteMassima: this.saluteMassima,
       uccisi: this.nemici.uccisi, rinascite: this.nemici.rinascite, schivate: this.schivatePerfette, colpiLanterna: this.attacco.colpi,
       usiAbilita: this.abilita.usi, livelloLanterna: this.percorso.livelloLanterna, arsenale: this.arsenale,
       doni: PERCORSO.doniAttivi.filter((id) => this.percorso.passivi[id] > 0).map((id) => `${DONO[id].nome} ${this.percorso.passivi[id]}`),

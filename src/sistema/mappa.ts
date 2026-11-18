@@ -5,7 +5,10 @@
  * - il Boss è la stanza più lontana dall'ingresso, in un vicolo cieco (una porta sola);
  * - il Campanaro sta a metà strada, mai attaccato all'ingresso né al Boss;
  * - l'ingresso ha almeno MAPPA.porteIngresso porte;
- * - le stanze attaccate all'ingresso danno gli Echi d'inizio, le altre una ricompensa a caso (MAPPA.ricompense).
+ * - la Sosta è la stanza da cui si entra nel Boss (18/11), lontana almeno 2 porte dall'ingresso;
+ * - il tesoro sta in un vicolo cieco (non il Boss né il Campanaro), lontano almeno 2 porte dall'ingresso (18/11);
+ * - le stanze attaccate all'ingresso danno gli Echi d'inizio, le altre di combattimento una ricompensa a caso (MAPPA.ricompense).
+ * Tesoro e Sosta sono vuoti, senza ricompensa (hanno il loro oggetto: STANZE_SPECIALI in src/data/mappa.ts).
  * Ingresso vuoto e sicuro con le porte già aperte. Tutto è dato semplice (numeri e testi), pronto per il salvataggio.
  * Numeri in MAPPA (src/data/mappa.ts). controllaMappa dice quali regole una mappa non rispetta (npm run prova).
  */
@@ -13,7 +16,7 @@ import { MAPPA } from '../data/mappa';
 import { Caso } from './caso';
 import { MURI, type Muro, type Ricompensa } from './porte';
 
-export type TipoStanzaMappa = 'ingresso' | 'combattimento' | 'campanaro' | 'boss';
+export type TipoStanzaMappa = 'ingresso' | 'combattimento' | 'campanaro' | 'boss' | 'tesoro' | 'sosta';
 /** I quattro lati, nell'ordine di StanzaMappa.vicine: gli stessi muri delle porte. */
 export type Lato = Muro;
 export const LATI: readonly Lato[] = MURI;
@@ -23,13 +26,14 @@ export interface StanzaMappa {
   x: number; // casella della griglia (0 a sinistra)
   y: number; // casella della griglia (0 in alto)
   tipo: TipoStanzaMappa;
-  /** da dove pescano le carte quando la si ripulisce: null per ingresso e Boss */
+  /** da dove pescano le carte quando la si ripulisce: null per ingresso, Boss, tesoro e Sosta */
   ricompensa: Ricompensa | 'echi' | null;
   /** quante porte bisogna attraversare dall'ingresso per arrivarci */
   distanza: number;
   /** la stanza attaccata su ogni lato (alto, destra, basso, sinistra): il suo indice, -1 se lì c'è muro */
   vicine: [number, number, number, number];
   visitata: boolean;
+  /** ripulita (e con le porte aperte); per tesoro e Sosta: il loro oggetto è già stato usato */
   ripulita: boolean;
   /** i rompibili già rotti (un bit per ognuno, nell'ordine in cui la stanza li mette): tornando restano rotti */
   rotti: number;
@@ -41,6 +45,8 @@ export interface Mappa {
   ingresso: number;
   campanaro: number;
   boss: number;
+  tesoro: number; // -1 solo nelle mappe di riserva senza regole
+  sosta: number;
 }
 
 /** Il lato opposto: chi esce a destra entra dalla porta di sinistra. */
@@ -137,18 +143,26 @@ function completa(caso: Caso, seme: number, celle: [number, number][], comunque 
   const scarto = Math.min(...adatte.map((i) => Math.abs(stanze[i].distanza - meta)));
   const campanaro = scegli(caso, adatte.filter((i) => Math.abs(stanze[i].distanza - meta) === scarto));
   if (campanaro < 0 && !comunque) return null;
+  // la Sosta: la stanza da cui si entra nel Boss
+  const sosta = stanze[capo].vicine.find((v) => v >= 0) ?? -1;
+  if ((sosta < 0 || stanze[sosta].distanza < 2 || sosta === campanaro) && !comunque) return null;
+  // il tesoro: un vicolo cieco qualsiasi, a più di una porta dall'ingresso, che non sia già di un capo o della Sosta
+  const tesoro = scegli(caso, stanze.map((_, i) => i).filter((i) => i !== capo && i !== campanaro && i !== sosta && stanze[i].distanza >= 2 && porte(stanze[i]) === 1));
+  if (tesoro < 0 && !comunque) return null;
   // tipi e ricompense
   stanze[0].tipo = 'ingresso';
   stanze[0].visitata = stanze[0].ripulita = true; // vuota e sicura, con le porte già aperte
   stanze[capo].tipo = 'boss';
   if (campanaro >= 0) stanze[campanaro].tipo = 'campanaro';
+  if (sosta > 0 && sosta !== campanaro) stanze[sosta].tipo = 'sosta';
+  if (tesoro > 0) stanze[tesoro].tipo = 'tesoro';
   const pesi = Object.entries(MAPPA.ricompense) as [Ricompensa, number][];
   for (let i = 1; i < stanze.length; i++) {
     const s = stanze[i];
-    if (s.tipo === 'boss') continue;
+    if (s.tipo === 'boss' || s.tipo === 'tesoro' || s.tipo === 'sosta') continue;
     s.ricompensa = s.distanza === 1 ? 'echi' : pesca(caso, pesi);
   }
-  return { seme, stanze, ingresso: 0, campanaro, boss: capo };
+  return { seme, stanze, ingresso: 0, campanaro, boss: capo, tesoro: stanze[tesoro]?.tipo === 'tesoro' ? tesoro : -1, sosta: stanze[sosta]?.tipo === 'sosta' ? sosta : -1 };
 }
 
 /**
@@ -179,9 +193,15 @@ export function controllaMappa(m: Mappa): string[] {
     if (B && B.vicine.includes(m.campanaro)) e.push('il Campanaro è attaccato al Boss');
   }
   if (S.filter((s) => s.tipo === 'campanaro').length > 1 || S.filter((s) => s.tipo === 'boss').length > 1) e.push('capi doppi');
+  const T = S[m.tesoro], So = S[m.sosta];
+  if (!T || T.tipo !== 'tesoro' || S.filter((s) => s.tipo === 'tesoro').length !== 1) e.push('niente tesoro (o più di uno)');
+  else if (T.vicine.filter((v) => v >= 0).length !== 1 || T.distanza < 2) e.push('il tesoro non è in un vicolo cieco lontano dall\'ingresso');
+  if (!So || So.tipo !== 'sosta' || S.filter((s) => s.tipo === 'sosta').length !== 1) e.push('niente Sosta (o più di una)');
+  else if (!B || !B.vicine.includes(m.sosta)) e.push('la Sosta non è la stanza prima del Boss');
   for (const s of S) {
     if (s.distanza === 1 && s.ricompensa !== 'echi') e.push("una stanza accanto all'ingresso non dà gli Echi");
-    if (s.tipo !== 'ingresso' && s.tipo !== 'boss' && !s.ricompensa) e.push('una stanza senza ricompensa');
+    if ((s.tipo === 'combattimento' || s.tipo === 'campanaro') && !s.ricompensa) e.push('una stanza senza ricompensa');
+    if ((s.tipo === 'tesoro' || s.tipo === 'sosta') && s.ricompensa) e.push(`${s.tipo} con una ricompensa`);
   }
   return e;
 }

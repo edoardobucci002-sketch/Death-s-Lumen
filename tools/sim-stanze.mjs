@@ -70,6 +70,7 @@ for (let n = 1; n <= stanzeTot; n++) {
     String(Math.round(media(qui.map((s) => s.secondi)))).padStart(9) + String(Math.round(media(qui.map((s) => s.dannoSubito)))).padStart(14) +
     String(usciti.length ? Math.round(media(usciti.map((s) => s.saluteUscita))) : '–').padStart(19));
 }
+console.log(`\nTesoro aperto in ${ok.filter((r) => r.tesoro).length} partite su ${ok.length}, Sosta usata in ${ok.filter((r) => r.sosta).length} (18/11)`);
 console.log(`\nA partita: ${media(ok.map((r) => r.uccisi)).toFixed(1)} nemici battuti, ${media(ok.map((r) => r.rinascite)).toFixed(1)} Ricaduti rialzati, ` +
   `${media(ok.map((r) => r.schivate)).toFixed(1)} schivate perfette, ${media(ok.map((r) => r.colpiLanterna)).toFixed(0)} colpi della Lanterna, ${media(ok.map((r) => r.usiAbilita)).toFixed(1)} Cerchi di luce`);
 
