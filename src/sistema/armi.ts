@@ -120,6 +120,12 @@ export class Arsenale extends ArsenaleVicine {
    * Un passo di logica. (x, y) sono i piedi del personaggio, (dx, dy) la direzione in cui cammina,
    * mezzaL e mezzaA sono metà dello schermo.
    */
+  /**
+   * Gioco a stanze (18/11, Edoardo): senza nemici in campo le armi non sparano; la ricarica resta pronta e sparano appena
+   * arriva qualcuno. Nel survivor resta false.
+   */
+  senzaBersagli = false;
+
   aggiorna(dt: number, x: number, y: number, dx: number, dy: number, mezzaL: number, mezzaA: number): void {
     // Velo funebre al potenziale: fermo, il velo si allarga a poco a poco; camminando torna normale
     if (this.potenziale[F.veloFunebre]) {
@@ -140,6 +146,10 @@ export class Arsenale extends ArsenaleVicine {
       if (p.arma.id === 'falce') continue; // sempre attiva
       this.attesa[n] -= dt;
       if (this.attesa[n] > 0) continue;
+      if (this.senzaBersagli) {
+        this.attesa[n] = 0;
+        continue;
+      }
       this.attesa[n] += this.spara(p) * this.bonus.ricarica;
       if (this.attesa[n] < 0) this.attesa[n] = 0;
     }

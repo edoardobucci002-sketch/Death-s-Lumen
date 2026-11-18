@@ -118,11 +118,13 @@ const LAMA_DI_LUCE_STANZE: ConIntervallo<LamaDiLuce> = {
 const LAPIDE_STANZE: ConIntervallo<Lapide> = {
   ...LAPIDE,
   livelli: [
-    { ricarica: 3.2, danno: 30, dannoMassimo: 70, raggio: 84, quantita: 1, testo: 'Cade sul nemico con più salute in vista e lo seppellisce.' },
-    { ricarica: 3.2, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: AUTO },
-    { ricarica: 2.8, danno: 40, dannoMassimo: 90, raggio: 96, quantita: 1, testo: AUTO },
-    { ricarica: 2.8, danno: 50, dannoMassimo: 110, raggio: 96, quantita: 2, testo: AUTO },
-    { ricarica: 3.2, danno: 70, dannoMassimo: 150, raggio: 110, quantita: 2, potenziale: true, testo: 'La lapide resta in piedi 3 s e blocca nemici e grumi.' },
+    // 18/11 (Edoardo: «troppo forte»): ricarica sopra i 20 s (era 3,2 / 3,2 / 2,8 / 2,8 / 3,2) e danno −10% circa
+    // (era 30–70, 40–90, 40–90, 50–110, 70–150); valori esatti di Claude, da rivedere
+    { ricarica: 24, danno: 27, dannoMassimo: 63, raggio: 84, quantita: 1, testo: 'Cade sul nemico con più salute in vista e lo seppellisce.' },
+    { ricarica: 24, danno: 36, dannoMassimo: 81, raggio: 96, quantita: 1, testo: AUTO },
+    { ricarica: 21, danno: 36, dannoMassimo: 81, raggio: 96, quantita: 1, testo: AUTO },
+    { ricarica: 21, danno: 45, dannoMassimo: 99, raggio: 96, quantita: 2, testo: AUTO },
+    { ricarica: 24, danno: 63, dannoMassimo: 135, raggio: 110, quantita: 2, potenziale: true, testo: 'La lapide resta in piedi 3 s e blocca nemici e grumi.' },
   ],
 };
 

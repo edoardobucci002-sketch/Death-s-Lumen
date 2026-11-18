@@ -552,6 +552,7 @@ export class Stanze extends Phaser.Scene {
     this.nemici.finestra = this.statGrazia.finestra;
     this.nemici.sfioro = this.statGrazia.sfioro;
     const mezzaL = this.scale.width / 2, mezzaA = this.scale.height / 2;
+    this.arsenale.senzaBersagli = this.nemici.orda.numero === 0; // senza nemici gli Echi non sparano (Edoardo, 18/11)
     this.arsenale.aggiorna(dt, this.x, this.y, this.guardaX, this.guardaY, mezzaL, mezzaA);
     // il Cerchio di luce acceso rompe ciò che tocca; poi olio, raccolta di gocce e frammenti, Bagliore
     if (this.abilita.attiva > 0) this.rompibili.rompibili.colpitoDa(this.x, this.y - COLPI.corpo, ABILITA.cerchioDiLuce.raggio);
