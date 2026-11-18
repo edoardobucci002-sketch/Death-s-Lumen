@@ -32,7 +32,7 @@ export const MAPPA = {
   // dall'ingresso o più (le stanze accanto all'ingresso danno gli Echi d'inizio); ripulita, la chiave è a terra al centro
   chiaveSicura: { distanzaMinima: 2 },
   // la porta delle candele (Edoardo, 17/11 e 18/11): esclusiva del Lampionaio (solo la sua Lanterna le accende; gli altri
-  // personaggi avranno le loro cose esclusive) e non in ogni Veglia: c'è con questa probabilità (Claude, da rivedere).
+  // personaggi avranno le loro cose esclusive) e non in ogni Veglia: c'è con questa probabilità (Claude; confermata da Edoardo il 18/11, come le distanze).
   // Sempre 3 candele, in stanze di combattimento diverse e sempre aperte; ognuna in un punto a caso della sua stanza, vicino
   // ai muri (dalMuro: quanto dista dal muro, lontano dalle porte e dai vasi); si accende se cade nell'arco del colpo della
   // Lanterna («tocco»: la mezza larghezza della candela). Accese tutte e tre, la porta si apre da sola e porta a un vicolo
