@@ -26,10 +26,13 @@ import { BotStanze } from './bot-stanze';
 import type { Stanze } from '../scene/Stanze';
 import { MURI, type Muro } from './porte';
 import { MOSSA_CAPO } from './campanaro';
+import { MOSSA_SETH } from './seth';
+import { ID_CAMPANARO, ID_SETH } from './orda';
 import { controllaMappa, generaMappa, type Mappa } from './mappa';
 import { MAPPA, MINIMAPPA } from '../data/mappa';
 
 export type AttaccoCapo = 'rintocco' | 'carica' | 'chiamata';
+export type AttaccoSeth = 'falciata' | 'falci' | 'passo';
 
 export type DirezioneColpo = 'destra' | 'sinistra' | 'su' | 'giu' | 'auto';
 
@@ -193,7 +196,7 @@ export class LabStanze {
     this.s.nemici.aggiungiCampanaro(this.s.x, this.s.y - 200, 0.3);
   }
 
-  /** La salute del Campanaro a questa parte della massima (0,49: entra in fase 2). */
+  /** La salute del capo in campo (Campanaro o Seth) a questa parte della massima (0,49: entra in fase 2). */
   saluteCampanaro(parte: number): void {
     const i = this.s.nemici.indiceCapo(), o = this.s.nemici.orda;
     if (i >= 0) o.salute[i] = Math.max(1, o.saluteMassima[i] * parte);
@@ -206,9 +209,33 @@ export class LabStanze {
     if (c.mossa === MOSSA_CAPO.cammina) c.tempo = 0;
   }
 
+  /** Seth qui vicino, subito (senza la stanza del Boss: per provarlo da solo). */
+  sethQui(): void {
+    if (this.s.nemici.indiceCapo() >= 0) return;
+    this.s.nemici.aggiungiSeth(this.s.x, this.s.y - 200, 0.3);
+  }
+
+  /** Il prossimo attacco di Seth, subito (finisce la camminata). */
+  attaccoSeth(a: AttaccoSeth): void {
+    const c = this.s.nemici.seth;
+    c.prossimo = a === 'falciata' ? MOSSA_SETH.falciata : a === 'falci' ? MOSSA_SETH.falci : MOSSA_SETH.passo;
+    if (!c.inAvviso) {
+      c.mossa = MOSSA_SETH.cammina; // anche dal recupero: parte subito
+      c.tempo = 0;
+    }
+  }
+
+  /** Lo stato di Seth per il pannello (null se non è in campo e non è mai stato battuto). */
+  seth(): { salute: number; massima: number; fase: number; falciate: number; lanci: number; passi: number; detriti: number; proiettili: number; battuto: number; x?: number; y?: number } | null {
+    const n = this.s.nemici, c = n.seth, i = n.indiceCapo(), qui = i >= 0 && n.orda.tipo[i] === ID_SETH;
+    const base = { fase: c.fase, falciate: c.falciate, lanci: c.lanci, passi: c.passi, detriti: c.detriti, proiettili: c.numero, battuto: n.sethBattuto };
+    if (!qui) return n.sethBattuto ? { salute: 0, massima: 0, ...base } : null;
+    return { salute: Math.round(n.orda.salute[i]), massima: Math.round(n.orda.saluteMassima[i]), ...base, x: Math.round(n.orda.x[i]), y: Math.round(n.orda.y[i]) };
+  }
+
   /** Lo stato del Campanaro per il pannello (null se non è in campo). */
   campanaro(): { salute: number; massima: number; fase: number; rintocchi: number; cariche: number; chiamate: number; battuti: number; x?: number; y?: number } | null {
-    const n = this.s.nemici, i = n.indiceCapo(), c = n.capo;
+    const n = this.s.nemici, c = n.capo, j = n.indiceCapo(), i = j >= 0 && n.orda.tipo[j] === ID_CAMPANARO ? j : -1;
     if (i < 0) return n.capiBattuti ? { salute: 0, massima: 0, fase: 0, rintocchi: c.rintocchi, cariche: c.cariche, chiamate: c.chiamate, battuti: n.capiBattuti } : null;
     return { salute: Math.round(n.orda.salute[i]), massima: Math.round(n.orda.saluteMassima[i]), fase: c.fase, rintocchi: c.rintocchi, cariche: c.cariche, chiamate: c.chiamate, battuti: n.capiBattuti, x: Math.round(n.orda.x[i]), y: Math.round(n.orda.y[i]) };
   }

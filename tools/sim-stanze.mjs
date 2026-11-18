@@ -1,6 +1,6 @@
 // Simulazione del gioco a stanze: il bot (src/sistema/bot-stanze.ts) gioca tante Veglie, ognuna con un seme diverso
-// (mappa, ondate e carte diverse: dal 17/11 esplora la mappa del Mondo, il Campanaro per ultimo, poi il Boss), e alla fine
-// c'è un riepilogo: quante volte arriva al Boss, in che stanza e a che distanza dall'ingresso muore, quanto danno
+// (mappa, ondate e carte diverse: dal 17/11 esplora la mappa del Mondo, il Campanaro per ultimo, poi il Boss: dal 18/11
+// Seth), e alla fine c'è un riepilogo: quante volte arriva al Boss e batte Seth, quanto dura la battaglia, in che stanza e a che distanza dall'ingresso muore, quanto danno
 // prende in ogni stanza, quanto conta ogni arma. Serve a provare e bilanciare i numeri (intervalli del danno, salute dei
 // nemici, ondate). Il risultato completo va in prove/sim-stanze.json.
 // Uso:
@@ -44,7 +44,7 @@ async function gioca({ seme, esplora, eco }) {
   await ctx.close();
   fatte++;
   const ultima = r?.stanze?.at(-1);
-  const esito = !r ? 'errore' : r.completata ? `arrivato al Boss dopo ${r.stanza} stanze, salute ${r.salute}` : `caduto nella stanza ${r.stanza} (${ultima?.tipo === 'campanaro' ? 'Campanaro, ' : ''}a ${ultima?.distanza ?? '?'} porte dall'ingresso)`;
+  const esito = !r ? 'errore' : r.completata ? `battuto Seth dopo ${r.stanza} stanze (${ultima?.secondi ?? '?'} s contro di lui), salute ${r.salute}` : `caduto nella stanza ${r.stanza} (${ultima?.tipo === 'campanaro' ? 'Campanaro, ' : ultima?.tipo === 'boss' ? 'Seth, ' : ''}a ${ultima?.distanza ?? '?'} porte dall'ingresso)`;
   console.log(`  [${fatte}/${totale}] seme ${seme}${esplora ? ' (esplora)' : ''}${eco ? ` (${eco} al 5)` : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
   risultati.push({ seme, esplora, eco, ...r, errori });
 }
@@ -59,8 +59,11 @@ server.kill();
 // ——— riepilogo ———
 const media = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
 const ok = risultati.filter((r) => r.stanze);
-const fini = ok.filter((r) => r.completata);
-console.log(`\nArrivati al Boss: ${fini.length}/${ok.length}` + (fini.length ? `, con salute media ${Math.round(media(fini.map((r) => r.salute)))} (la più bassa durante la partita: ${Math.round(media(fini.map((r) => r.saluteMinima)))} in media)` : ''));
+const fini = ok.filter((r) => r.completata), alBoss = ok.filter((r) => r.stanze.some((s) => s.tipo === 'boss'));
+const contro = alBoss.map((r) => r.stanze.find((s) => s.tipo === 'boss'));
+console.log(`\nArrivati al Boss: ${alBoss.length}/${ok.length}` + (alBoss.length ? `, con salute media ${Math.round(media(contro.map((s) => s.saluteEntrata)))} all'ingresso` : ''));
+const vinte = contro.filter((s) => s.saluteUscita !== null);
+console.log(`Battuto Seth: ${fini.length}/${ok.length}` + (vinte.length ? `, in ${Math.round(media(vinte.map((s) => s.secondi)))} s in media (da ${Math.round(Math.min(...vinte.map((s) => s.secondi)))} a ${Math.round(Math.max(...vinte.map((s) => s.secondi)))})` : '') + (fini.length ? `, con salute media ${Math.round(media(fini.map((r) => r.salute)))} (la più bassa durante la partita: ${Math.round(media(fini.map((r) => r.saluteMinima)))} in media)` : ''));
 const stanzeTot = Math.max(...ok.map((r) => r.stanze.length), 0);
 console.log('\nPer stanza combattuta (in ordine)   distanza  arrivati  caduti  secondi  danno subito  salute all\'uscita');
 for (let n = 1; n <= stanzeTot; n++) {
@@ -104,7 +107,7 @@ if (modo === 'potenziali') {
 
 // dove cade il bot: nell'arena del Campanaro o a che distanza dall'ingresso
 const caduti = ok.filter((r) => !r.completata), dove = {};
-for (const r of caduti) { const u = r.stanze.at(-1); const k = !u ? 'ingresso' : u.tipo === 'campanaro' ? 'Campanaro' : `a ${u.distanza} porte`; dove[k] = (dove[k] ?? 0) + 1; }
+for (const r of caduti) { const u = r.stanze.at(-1); const k = !u ? 'ingresso' : u.tipo === 'campanaro' ? 'Campanaro' : u.tipo === 'boss' ? 'Seth' : `a ${u.distanza} porte`; dove[k] = (dove[k] ?? 0) + 1; }
 if (caduti.length) console.log(`\nDove cade: ${Object.entries(dove).sort().map(([k, v]) => `${k} ${v}`).join(', ')}`);
 
 const errori = risultati.filter((r) => r.errori.length || !r.stanze);

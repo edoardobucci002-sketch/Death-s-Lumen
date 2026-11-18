@@ -5,6 +5,7 @@
  */
 
 import { CAMPANARO } from './campanaro';
+import { SETH } from './seth';
 
 /** La stanza: il pavimento dove si cammina e i muri intorno. */
 export const STANZA = {
@@ -256,7 +257,7 @@ export const IMPATTO = {
 } as const;
 
 /**
- * Ricaduto, Cantore e Campanaro (mini-boss, dal 17/11) come li vede la Orda del survivor (src/sistema/orda.ts), che li tiene in fondo al suo elenco di tipi:
+ * Ricaduto, Cantore, Campanaro (mini-boss, dal 17/11) e Seth (Boss, dal 18/11) come li vede la Orda del survivor (src/sistema/orda.ts), che li tiene in fondo al suo elenco di tipi:
  * così le armi automatiche (gli Echi), gli stati e le reazioni funzionano anche su di loro. Il loro modo di muoversi e
  * di attaccare resta in NEMICI_STANZA e in src/sistema/nemici-stanza.ts.
  */
@@ -264,6 +265,7 @@ export const TIPI_ORDA_STANZE = [
   { id: 'ricaduto', sprite: NEMICI_STANZA.ricaduto.sprite, raggio: NEMICI_STANZA.ricaduto.raggio, danno: NEMICI_STANZA.ricaduto.graffio.danno, attraversa: false, pesante: false, comportamento: 'stanze' },
   { id: 'cantore', sprite: NEMICI_STANZA.cantore.sprite, raggio: NEMICI_STANZA.cantore.raggio, danno: NEMICI_STANZA.cantore.grumo.danno, attraversa: false, pesante: false, comportamento: 'stanze' },
   { id: 'campanaro', sprite: CAMPANARO.sprite, raggio: CAMPANARO.raggio, danno: CAMPANARO.carica.danno, attraversa: false, pesante: true, comportamento: 'stanze' },
+  { id: 'seth', sprite: SETH.sprite, raggio: SETH.raggio, danno: SETH.passo.danno, attraversa: false, pesante: true, comportamento: 'stanze' },
 ] as const;
 
 /**

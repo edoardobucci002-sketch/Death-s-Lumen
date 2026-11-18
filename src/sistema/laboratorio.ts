@@ -36,6 +36,7 @@ import * as armiStanze from '../data/armi-stanze';
 import * as mappa from '../data/mappa';
 import type { Mappa } from './mappa';
 import * as campanaro from '../data/campanaro';
+import * as seth from '../data/seth';
 import { ECHI_STANZE } from '../data/armi-stanze';
 import * as doni from '../data/doni';
 import * as effetti from '../data/effetti';
@@ -55,7 +56,7 @@ import * as stanze from '../data/stanze';
 import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, mappa, meta, mondo, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, sopravvivenza, stanze, stati, unioni };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, mappa, meta, mondo, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, seth, sopravvivenza, stanze, stati, unioni };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -386,7 +387,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(tasto('Acceca il nemico vicino', f(() => st.lab.accecaVicino())), el('span', 'lab-stato', `accecati dalla Lama: ${st.lab.accecati()}`)),
       el('p', 'lab-nota', 'Tocca un Eco: entra nella build al livello 5, con il suo potenziale (Candela: la fiammella che uccide si divide; Falce: due anelli e, a salute piena, salute in più (tocca «Salute in più» per vederla); Campana: interrompe la carica; Fuoco fatuo: ritrova il primo nemico trapassato; Acqua santa: dentro le pozze recuperi salute; Abbacinio: la cecità passa ai vicini; Lapide: muro di 3 s; Rosario: +15% di danno a rimbalzo; Corvo: +20% di danno subito; Velo funebre: fermo si allarga; Sampietrini: rimbalza verso il nemico). Il Cerchio di luce ferisce forte quando si accende e poi colpisce soltanto, abbagliando.'),
       el('p', 'lab-nota', '«Fai giocare il bot»: il bot muove, colpisce, usa il Cerchio di luce e sceglie carte e porte al posto tuo, alla velocità normale (le simulazioni veloci: npm run sim-stanze). Danno a intervallo: ogni colpo esce a caso tra il minimo e il massimo del livello (le carte scrivono «Danno 12–18»). Le armi delle stanze hanno 5 livelli: il 5° è il potenziale (la Lanterna colpisce anche alle spalle). Numeri in Numeri → armiStanze.'),
-      el('p', 'lab-nota', 'Si comincia al centro dell\'ingresso, con le porte aperte. Ogni porta porta alla stanza accanto e ha il medaglione della sua ricompensa (il rombo crema: gli Echi d\'inizio; nessun medaglione: stanza già ripulita o il Boss). Si entra dalla porta sul muro opposto. «Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 2 carte; scelta la carta si aprono le porte. «Porta in alto/a destra…» ti porta contro quella porta. Le ondate crescono con la distanza dall\'ingresso. La porta del Boss (medaglione rosso) resta chiusa con il lucchetto finché il Campanaro non è battuto: «Chiave del Campanaro» la dà o la toglie (darla segna battuto il Campanaro). Entrati dal Boss le porte si chiudono alle spalle e dopo un attimo arriva la fine provvisoria, «Il capo arriverà qui» (Numeri → PERCORSO.attesaCapo); «Vai al Boss» ci porta anche senza chiave. Tesoro ($ nella mappa) e Sosta (+, la stanza prima del Boss): vuoti, con al centro il forziere (3 carte rare) e la fonte (riempie la fiaschetta, se non è piena); ci si cammina contro, o «Usa l\'oggetto». «Fiaschetta vuota» (Lampionaio) per provare la fonte. «Porte bloccate»: le porte aperte non si attraversano, per provare i muri. Numeri in Numeri → stanze → PERCORSO e PORTE.'),
+      el('p', 'lab-nota', 'Si comincia al centro dell\'ingresso, con le porte aperte. Ogni porta porta alla stanza accanto e ha il medaglione della sua ricompensa (il rombo crema: gli Echi d\'inizio; nessun medaglione: stanza già ripulita o il Boss). Si entra dalla porta sul muro opposto. «Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 2 carte; scelta la carta si aprono le porte. «Porta in alto/a destra…» ti porta contro quella porta. Le ondate crescono con la distanza dall\'ingresso. La porta del Boss (medaglione rosso) resta chiusa con il lucchetto finché il Campanaro non è battuto: «Chiave del Campanaro» la dà o la toglie (darla segna battuto il Campanaro). Entrati dal Boss le porte si chiudono alle spalle e arriva Seth; battuto lui, dopo un attimo «Mondo 1 completato» (Numeri → PERCORSO.attesaCapo); «Vai al Boss» ci porta anche senza chiave. Tesoro ($ nella mappa) e Sosta (+, la stanza prima del Boss): vuoti, con al centro il forziere (3 carte rare) e la fonte (riempie la fiaschetta, se non è piena); ci si cammina contro, o «Usa l\'oggetto». «Fiaschetta vuota» (Lampionaio) per provare la fonte. «Porte bloccate»: le porte aperte non si attraversano, per provare i muri. Numeri in Numeri → stanze → PERCORSO e PORTE.'),
       titolo('Il Campanaro (mini-boss)'),
       riga(el('span', 'lab-stato', ((c) => c ? (c.massima ? `Salute ${c.salute}/${c.massima} · fase ${c.fase} · rintocchi ${c.rintocchi} · cariche ${c.cariche} · chiamate ${c.chiamate}` : `Battuto (${c.battuti})`) : 'Non è in campo')(st.lab.campanaro()))),
       riga(
@@ -401,6 +402,20 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Chiamata', () => { st.lab.attaccoCampanaro('chiamata'); mostra(false); }),
       ),
       el('p', 'lab-nota', '«Vai al Campanaro» ti porta nella quarta stanza, l\'arena, con la build che hai: dopo un attimo compare in fondo. Vicino fa il Rintocco (il disco rosso si riempie, poi l\'onda: esci dal cerchio); lontano la Carica (la linea fino al muro, poi corre: spostati di lato; contro il muro resta stordito 1,5 s). Sotto metà salute (fase 2) gli attacchi arrivano prima, dopo il disco viene l\'anello (torna vicino a lui) e ogni tre attacchi la Chiamata fa comparire 2 Ricaduti. Uscire dall\'area all\'ultimo istante dà la Grazia. «Rintocco», «Carica», «Chiamata» scelgono il suo prossimo attacco. Battuto: un sorso della fiaschetta (piena: si beve subito), 10 di Cera e le carte della porta scelta. Numeri in Numeri → campanaro.'),
+      titolo('Seth (Boss del Mondo 1)'),
+      riga(el('span', 'lab-stato', ((c) => c ? (c.massima ? `Salute ${c.salute}/${c.massima} · fase ${c.fase} · falciate ${c.falciate} · falci ${c.lanci} · passi ${c.passi} · detriti ${c.detriti} · proiettili in volo ${c.proiettili}` : `Battuto (${c.battuto})`) : 'Non è in campo')(st.lab.seth()))),
+      riga(
+        tasto('Vai al Boss', () => { st.lab.vaiAlBoss(); mostra(false); }, 'acceso'),
+        tasto('Seth qui', () => { st.lab.sethQui(); mostra(false); }),
+        tasto('Fase 2', f(() => st.lab.saluteCampanaro(0.49))),
+        tasto('Salute al 10%', f(() => st.lab.saluteCampanaro(0.1))),
+      ),
+      riga(
+        tasto('Falciata', () => { st.lab.attaccoSeth('falciata'); mostra(false); }),
+        tasto('Falci spettrali', () => { st.lab.attaccoSeth('falci'); mostra(false); }),
+        tasto('Passo della Morte', () => { st.lab.attaccoSeth('passo'); mostra(false); }),
+      ),
+      el('p', 'lab-nota', '«Vai al Boss» ti porta nella stanza doppia del Boss, con la build che hai: dopo un attimo Seth compare al centro. Vicino fa la Falciata (lo spicchio a mezzaluna davanti a lui: esci o giragli dietro); lontano le Falci spettrali (5 linee a ventaglio, poi le falci: mettiti tra due linee); un attacco su tre il Passo della Morte (affonda, sotto di te si riempie un cerchio, poi riappare lì: spostati). Sotto metà salute (fase 2) tutto arriva prima e il Passo fa partire i detriti a raggiera fino ai muri (le loro linee si vedono durante l\'avviso), seguito subito da una Falciata. Uscire dall\'area all\'ultimo istante o farsi sfiorare da una falce o da un detrito dà la Grazia. «Fase 2» e «Salute al 10%» valgono per il capo in campo. Battuto: «Mondo 1 completato» e 25 di Cera. Numeri in Numeri → seth.'),
       titolo('Nemici'),
       riga(el('span', 'lab-stato', `In campo: ${s.nemici} · battuti: ${s.uccisi} · rinati: ${s.rinascite}`)),
       riga(

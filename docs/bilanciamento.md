@@ -10,6 +10,14 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 18/11 — Seth, Boss del Mondo 1
+
+- Nuovo: `SETH` in `src/data/seth.ts` (tutti i numeri di Claude, *da rivedere*). Salute misurata con `npm run sim-stanze -- 48`, obiettivo 90–120 s di battaglia:
+  - **6000** (il doppio del Campanaro): battuto 13 volte su 13, in **25 s**.
+  - **24000**: 34 s soltanto. Causa: maledizione ed Eclissi toglievano una parte della salute massima (come ai bruti), quindi più salute non allungava la battaglia. Rimedio: Seth **resiste agli stati come il Seth del survivor** (`comeSeth` in `src/sistema/orda.ts`).
+  - **24000 con le resistenze**: 234 s, battuto 7 volte su 13.
+  - **11000 con le resistenze** (tenuto): arrivati al Boss **13/48**, Seth battuto **8/48** in **122 s** di media (da 90 a 199), cadute contro Seth **5**, contro il Campanaro 33.
+
 ### 18/11 — Stanze doppie per Campanaro e Boss
 
 - L'arena del Campanaro è larga il doppio (26 × 7 lastre): lui compare al centro (prima dalla parte opposta al Lampionaio) e la Carica può correre il doppio prima del muro. Rompibili nell'arena: **2–3** (prima 1–2). Nessun numero del Campanaro è cambiato.

@@ -7,7 +7,7 @@
 import Phaser from 'phaser';
 import { ingrandimento, raggioDisegnato } from './asset';
 import { Caso } from './caso';
-import { ECLISSI, ESORCISMO, INTERRAMENTO, LUCE, OMBRA, RIVELAZIONE, SACRO, TERRA, type Orda } from './orda';
+import { ECLISSI, ESORCISMO, INTERRAMENTO, LUCE, OMBRA, RIVELAZIONE, SACRO, TERRA, comeSeth, type Orda } from './orda';
 import { REAZIONI, RUOLI, STATI, STATI_CERTI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
 import { NEMICI } from '../data/nemici';
@@ -431,7 +431,7 @@ export abstract class ArsenaleColpo {
     this.dannoTotale += danno;
     suona('colpo');
     if (reazione) this.effetti.sommaReazione(reazione, this.cRX, this.cRY, danno, this.cRAperta);
-    else if (o.elite[j] || o.tipo[j] === ID_MIETITORE) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno);
+    else if (o.elite[j] || comeSeth(o.tipo[j])) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno);
     else this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno, this.critico);
   }
 
@@ -447,9 +447,9 @@ export abstract class ArsenaleColpo {
     this.qJ[k] = j;
     this.qX[k] = o.x[j];
     this.qY[k] = o.y[j] - o.raggio[j];
-    const forte = o.tipo[j] === ID_MIETITORE || o.elite[j];
+    const forte = comeSeth(o.tipo[j]) || o.elite[j];
     // l'Eclissi toglie una parte della salute massima, con un tetto (il Mietitore subisce sempre il tetto)
-    let eclissi = o.tipo[j] === ID_MIETITORE ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
+    let eclissi = comeSeth(o.tipo[j]) ? REAZIONI.eclissi.tetto : Math.min(REAZIONI.eclissi.tetto, REAZIONI.eclissi.parte * o.saluteMassima[j]);
     // Stati certi: senza tetto sui nemici normali e sui bruti; su élite e Seth il doppio del colpo (senza colpo, il tetto)
     if (INTERRUTTORI.statiCerti) eclissi = !forte ? STATI_CERTI.eclissi.parte * o.saluteMassima[j] : danno > 0 ? danno * STATI_CERTI.eclissi.colpoElite : REAZIONI.eclissi.tetto;
     // Devozione e Riti: la reazione si moltiplica per il grado dello stato consumato (orda.moltReazione, dall'ultima marca)

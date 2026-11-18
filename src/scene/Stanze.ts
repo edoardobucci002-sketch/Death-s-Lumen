@@ -11,7 +11,7 @@
  * (le strisce del survivor, src/sistema/doni.ts), poi si aprono 2 o 3 porte con la ricompensa mostrata; ci si passa a
  * retino. Gli Echi sono le armi automatiche del survivor (Arsenale), con i nemici nella sua Orda. Dal 17/11 le stanze sono
  * una mappa alla Isaac (src/sistema/mappa.ts); dal 18/11 la porta del Boss si apre con la chiave del Campanaro, entrati dal
- * Boss le porte si chiudono alle spalle e dopo un attimo compare la fine provvisoria, «Il capo arriverà qui». Tesoro e
+ * Boss le porte si chiudono alle spalle e arriva Seth (src/sistema/seth.ts); battuto lui, «Mondo 1 completato». Tesoro e
  * Sosta (18/11): al centro un oggetto da toccare, il forziere (3 carte rare) e la fonte (fiaschetta piena).
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
  * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
@@ -62,6 +62,8 @@ import { RompibiliStanza } from '../sistema/rompibili-stanza';
 import { BAGLIORE } from '../data/sopravvivenza';
 import { BarraCapo } from '../sistema/barra-capo';
 import { CAMPANARO } from '../data/campanaro';
+import { SETH } from '../data/seth';
+import { ID_SETH } from '../sistema/orda';
 import { ROMPIBILI_STANZE } from '../data/rompibili';
 import { MINIMAPPA, STANZE_SPECIALI } from '../data/mappa';
 import { disegnaMinimappa } from '../sistema/minimappa';
@@ -581,7 +583,7 @@ export class Stanze extends Phaser.Scene {
     }
     this.sim.passo(dt, this.salute);
     if (this.morto) return;
-    // la stanza del Boss: le porte chiuse alle spalle, poi la fine provvisoria (finché non c'è Seth)
+    // la stanza del Boss: battuto Seth, dopo un attimo la fine del Mondo 1
     if (this.percorso.fase === 'fine' && (this.attesaCapo -= dt) <= 0) {
       this.mostraFineFetta();
       return;
@@ -782,8 +784,8 @@ export class Stanze extends Phaser.Scene {
     // guarda verso il centro della stanza
     this.guardaX = da === 'sinistra' ? 1 : da === 'destra' ? -1 : 0;
     this.guardaY = da === 'alto' ? 1 : da === 'basso' || !da ? -1 : 0;
-    // il Boss: le porte si sono chiuse alle spalle (mostraPorte); dopo un attimo la fine provvisoria (finché non c'è Seth)
-    if (this.percorso.fase === 'fine') this.attesaCapo = this.botVeloce ? 0 : PERCORSO.attesaCapo;
+    // il Boss: le porte si sono chiuse alle spalle (mostraPorte); battuto Seth, dopo un attimo la fine del Mondo 1
+    if (s.tipo === 'boss') this.attesaCapo = this.botVeloce ? 0 : PERCORSO.attesaCapo;
   }
 
   /** Il riquadro in cui volano gli Echi (lapidi, grani del Rosario): il pavimento della stanza in cui si è, normale o doppia. */
@@ -813,11 +815,13 @@ export class Stanze extends Phaser.Scene {
     });
   }
 
-  /** La fine provvisoria del Mondo, «Il capo arriverà qui» (finché non c'è Seth): nemici battuti, schivate perfette, la build presa; Ricomincia e Menu. */
+  /** La fine del Mondo 1, battuto Seth (18/11): nemici battuti, schivate perfette, Cera, la build presa; Ricomincia e Menu. */
   private mostraFineFetta(): void {
     this.finita = true;
+    this.sim.stanzaRipulita(this.percorso.stanza, this.salute); // la battaglia contro Seth, per le simulazioni
     this.chiudiSim(true);
     if (this.botVeloce) return;
+    if (this.nemici.sethBattuto > 0) this.rompibili.cera += SETH.premio.cera; // il premio di Seth, con la Cera della Veglia
     this.comandi.lascia();
     this.attacco.lascia();
     this.tastoPausa.hidden = true;
@@ -827,7 +831,7 @@ export class Stanze extends Phaser.Scene {
     for (const e of this.arsenale.possedute) righe.push(`${e.arma.nome} ${e.livello}`);
     for (const id of PERCORSO.doniAttivi) if (p.passivi[id]) righe.push(`${DONO[id].nome} ${p.passivi[id]}`);
     this.pannelloFine.replaceChildren(
-      this.scrittaPixel('Il capo arriverà qui', 'stanze-titolo'),
+      this.scrittaPixel('Mondo 1 completato', 'stanze-titolo'),
       ...righe.map((t) => this.scrittaPixel(t, 'stanze-etichetta')),
       this.tastoScritta('Ricomincia', () => this.scene.restart()),
       this.tastoScritta('Menu', () => this.scene.start('Menu')),
@@ -870,7 +874,7 @@ export class Stanze extends Phaser.Scene {
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto, this.extra);
     this.nemici.disegna(cam, px, py);
     const capo = this.nemici.indiceCapo(), o = this.nemici.orda;
-    this.barraCapo.aggiorna(capo >= 0 ? o.salute[capo] / o.saluteMassima[capo] : null);
+    this.barraCapo.aggiorna(capo >= 0 ? o.salute[capo] / o.saluteMassima[capo] : null, capo >= 0 && o.tipo[capo] === ID_SETH);
     this.arsenale.disegna();
     this.abilita.disegna(px, py - COLPI.corpo);
     this.impatto.disegna(dt);

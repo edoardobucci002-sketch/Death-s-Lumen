@@ -1481,17 +1481,38 @@ for (const [nome, disp] of [
     await L('attraversaMuro', vb.muro);
     if (!(await quando(`l.stato().tipo === 'boss'`, '', 2000))) errori.push('la porta del Boss aperta non si attraversa');
     const db = await st();
-    if (db.tipo === 'boss' && (db.fase !== 'fine' || db.finita)) errori.push(`entrando dal Boss: fase ${db.fase}, finita subito ${db.finita}`);
+    if (db.tipo === 'boss' && (db.fase !== 'lotta' || db.finita)) errori.push(`entrando dal Boss: fase ${db.fase}, finita subito ${db.finita}`);
     if (db.tipo === 'boss' && !db.doppia) errori.push(`la stanza del Boss non è doppia (${db.larghezza} × ${db.altezza})`);
     await pag.waitForTimeout(250);
     const chiuseBoss = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { aperte: s.porte.aperte, muri: s.porte.muri.length, passa: s.porte.attraversata(...Object.values(s.porte.davanti(0))) }; });
     if (chiuseBoss.aperte || chiuseBoss.passa >= 0) errori.push('entrati dal Boss la porta alle spalle non si chiude');
-    await pag.waitForTimeout(1700);
-    const fb = await st();
-    if (!fb.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('entrando dal Boss la fine non arriva');
+    // Seth (18/11): compare al centro con la sua barra; le tre mosse, i detriti in fase 2; battuto, «Mondo 1 completato»
+    if (!(await quando('l.seth() && l.seth().massima > 0', '', 5000))) errori.push('nella stanza del Boss Seth non compare');
     else {
-      await pag.screenshot({ path: `prove/${nome}-fetta.png` });
-      giro.push('Boss');
+      const sc = await L('seth');
+      if (Math.abs(sc.x - db.larghezza / 2) > 4 && db.tipo === 'boss') errori.push(`Seth non compare al centro (${sc.x}, ${sc.y})`);
+      if (await pag.evaluate(() => document.querySelector('.stanze-capo').hidden)) errori.push('la barra di Seth non si vede');
+      await L('immortale', true);
+      for (const m of ['falciata', 'falci', 'passo']) {
+        await L('attaccoSeth', m);
+        await pag.waitForTimeout(1300);
+      }
+      const s1 = await L('seth');
+      if (s1.falciate < 1 || s1.lanci < 1 || s1.passi < 1) errori.push(`Seth non fa le sue mosse (falciate ${s1.falciate}, falci ${s1.lanci}, passi ${s1.passi})`);
+      if (nome === 'stanze-desktop') { await L('attaccoSeth', 'falci'); await pag.waitForTimeout(400); await pag.screenshot({ path: `prove/${nome}-seth.png` }); }
+      await L('saluteCampanaro', 0.49);
+      if (!(await quando('l.seth().detriti > 0', '', 6000))) errori.push(`in fase 2 il Passo della Morte non lancia i detriti (${JSON.stringify(await L('seth'))}, mossa ${await pag.evaluate(() => { const st = window.__dl.scene.getScene('Stanze'), n = st.nemici, i = n.indiceCapo(); return `${n.seth.mossa}, tempo ${n.seth.tempo.toFixed(2)}, fermo ${n.fermi[i]}, echi ${st.arsenale.possedute.map((p) => p.arma.id).join('/')}`; })})`);
+      else if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-seth-detriti.png` });
+      await L('immortale', false);
+      await pag.evaluate(() => { const n = window.__dl.scene.getScene('Stanze').nemici, i = n.indiceCapo(); if (i >= 0) n.orda.salute[i] = 0; });
+      await pag.waitForTimeout(1900); // PERCORSO.attesaCapo (1,5 s) e il passo in cui Seth se ne va
+      const fb = await st();
+      const titolo = await pag.evaluate(() => document.querySelector('.stanze-fine')?.hidden === false);
+      if (!fb.finita || !titolo) errori.push('battuto Seth la fine del Mondo 1 non arriva');
+      else {
+        await pag.screenshot({ path: `prove/${nome}-fetta.png` });
+        giro.push('Seth');
+      }
     }
     nota += `, percorso ${giro.join(' › ')}`;
   }

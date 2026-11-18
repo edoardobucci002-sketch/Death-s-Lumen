@@ -10,12 +10,13 @@
  * - tesoro e Sosta (18/11) sono vuoti e aperti: il loro oggetto (il forziere con le carte rare, la fonte che riempie la
  *   fiaschetta) lo usa la scena (src/scene/Stanze.ts); usato, la stanza è «ripulita»;
  * - la porta del Boss resta chiusa (il lucchetto) finché il Campanaro non è battuto: lui ha la chiave (passo 3, 18/11);
- * - entrati dal Boss le porte si chiudono alle spalle e non si torna; oggi lì finisce la partita (fine provvisoria, finché
- *   non c'è Seth).
+ * - entrati dal Boss le porte si chiudono alle spalle e non si torna; arriva Seth (src/sistema/seth.ts, 18/11), da solo
+ *   come il Campanaro; battuto lui la fase è «fine»: il Mondo 1 è completato.
  * Rarità (17/11, src/data/rarita.ts): ogni carta tira prima il grado (Fioca, Chiara, Ardente) tra quelli che la stanza può
  * dare, poi un oggetto di quel grado. Le carte si estraggono con un generatore del caso con seme (riproducibili).
  */
 import { ONDATA, PERCORSO } from '../data/stanze';
+import { SETH } from '../data/seth';
 import { STANZE_SPECIALI } from '../data/mappa';
 import type { Arma } from '../data/armi';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
@@ -79,9 +80,9 @@ export class Percorso {
     return PERCORSO.ondate[Math.min(PERCORSO.ondate.length, Math.max(1, this.qui.distanza)) - 1];
   }
 
-  /** Quante «ondate» ha la stanza: nell'arena una sola, il Campanaro. */
+  /** Quante «ondate» ha la stanza: nelle arene dei capi una sola, il Campanaro o Seth. */
   private get quanteOndate(): number {
-    return this.miniboss ? 1 : this.ondate.length;
+    return this.miniboss || this.ultima ? 1 : this.ondate.length;
   }
 
   /** Si entra nella stanza i della mappa: vuota e aperta (ingresso, già ripulita), da combattere, o la fine (il Boss). */
@@ -92,7 +93,10 @@ export class Percorso {
     this.ondata = 0;
     this.attesa = ONDATA.attesaPrima;
     if (s.tipo === 'boss') {
-      this.fase = 'fine';
+      // Seth (18/11): si combatte; battuto lui, la fine del Mondo 1 (fase «fine»)
+      this.stanza++;
+      this.attesa = SETH.attesa;
+      this.fase = 'lotta';
       return;
     }
     if (s.tipo === 'tesoro' || s.tipo === 'sosta') {
@@ -114,14 +118,15 @@ export class Percorso {
    */
   aggiorna(dt: number, nemici: NemiciStanza, px: number, py: number): boolean {
     if (this.fase === 'lotta') {
-      if (this.miniboss && this.ondata === 0) {
-        // l'arena doppia: dopo un attimo il Campanaro compare al centro (Edoardo, 18/11), a mezzo schermo dalla porta da cui si
-        // entra; se il personaggio è già lì (solo dal LAB), dalla parte opposta
+      if ((this.miniboss || this.ultima) && this.ondata === 0) {
+        // l'arena doppia: dopo un attimo il capo (Campanaro o Seth) compare al centro (Edoardo, 18/11), lontano dalla porta da
+        // cui si entra; se il personaggio è già lì (solo dal LAB), dalla parte opposta
         if ((this.attesa -= dt) <= 0) {
           const a = areaCamminabile(), mx = MISURA.larghezza / 2, my = MISURA.altezza / 2;
           const vicino = Math.hypot(px - mx, py - my) < PERCORSO.capoLontano;
           const cx = vicino ? Math.min(a.x1, Math.max(a.x0, MISURA.larghezza - px)) : mx, cy = vicino ? Math.min(a.y1, Math.max(a.y0, MISURA.altezza - py)) : my;
-          nemici.aggiungiCampanaro(cx, cy);
+          if (this.ultima) nemici.aggiungiSeth(cx, cy);
+          else nemici.aggiungiCampanaro(cx, cy);
           this.ondata = 1;
         }
       } else if (this.ondata < this.quanteOndate) {
@@ -134,6 +139,11 @@ export class Percorso {
           this.attesa = PERCORSO.intervallo;
         }
       } else if (nemici.vivi() === 0) {
+        if (this.ultima) {
+          this.fase = 'fine'; // Seth battuto: il Mondo 1 è completato
+          this.qui.ripulita = true;
+          return false;
+        }
         this.fase = 'attesa';
         this.attesa = PERCORSO.attesaCarte;
       }
@@ -147,7 +157,10 @@ export class Percorso {
   /** LAB: la stanza è ripulita subito (le ondate non arrivano più). */
   ripulisci(): void {
     this.ondata = this.quanteOndate;
-    if (this.fase === 'lotta') {
+    if (this.fase === 'lotta' && this.ultima) {
+      this.fase = 'fine';
+      this.qui.ripulita = true;
+    } else if (this.fase === 'lotta') {
       this.fase = 'attesa';
       this.attesa = 0;
     }

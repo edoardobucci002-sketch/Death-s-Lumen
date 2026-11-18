@@ -35,6 +35,14 @@ const TIPI: readonly TipoOrda[] = [...NEMICI, ...TIPI_ORDA_STANZE];
 export const ID_RICADUTO = TIPI.findIndex((t) => t.id === 'ricaduto');
 export const ID_CANTORE = TIPI.findIndex((t) => t.id === 'cantore');
 export const ID_CAMPANARO = TIPI.findIndex((t) => t.id === 'campanaro');
+export const ID_SETH = TIPI.findIndex((t) => t.id === 'seth');
+/**
+ * Il tipo t è Seth: quello del survivor (il Mietitore) o il Boss del gioco a stanze (18/11). Tutti e due resistono agli
+ * stati come nel survivor (maledizione al 10%, fermo, rallentamento e attrazione ridotti; Eclissi al doppio del colpo).
+ */
+export function comeSeth(t: number): boolean {
+  return t === ID_MIETITORE || t === ID_SETH;
+}
 /** Più posti del massimo in campo: servono anche alla prova con 400 nemici, alle orde e alla chiamata dei morti. */
 const ID_BRUTO = NEMICI.findIndex((t) => t.id === 'bruto');
 export const CAPIENZA = Math.max(DIFFICOLTA.tetto, 400) + 2 * ORDE.massimo + MIETITORE.chiamata.quanti + 20;
@@ -264,7 +272,7 @@ export class Orda {
       const fermo = this.aggiornaStati(i, dt);
       if (!fermo && this.tipo[i] === ID_MIETITORE && this.muoviMietitore(i, dt, dx, dy, d, gx, gy, secondi)) continue;
       let v = fermo ? 0 : this.velocita[i] * (this.lentoPer[i] > 0 ? 1 - this.lento[i] : 1);
-      if (this.sConsacrato[i] > 0) v *= 1 - this.forza(SACRO) * (this.tipo[i] === ID_MIETITORE ? MIETITORE.rallentamento : 1);
+      if (this.sConsacrato[i] > 0) v *= 1 - this.forza(SACRO) * (comeSeth(this.tipo[i]) ? MIETITORE.rallentamento : 1);
       // Incensiere dell'ultima ora: dentro le nubi il rallentamento totale resta sotto il tetto del Consacrato
       if (this.tettoPer[i] > 0 && !fermo) v = Math.max(v, this.velocita[i] * (1 - DEVOZIONE.lentoMassimo));
       let tx = gx;
@@ -447,7 +455,7 @@ export class Orda {
     const certi = INTERRUTTORI.statiCerti;
     if (certi && r && !forza && this.quiete[i] > 0) r = 0; // in quiete: lo stato arriva, la reazione no
     if (aff === TERRA && this.pausaSepolto[i] > 0 && !(forza && r)) return 0;
-    const resiste = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1;
+    const resiste = comeSeth(this.tipo[i]) ? STATI.mietitore.fermo : 1;
     if (r) {
       this.storia[i] |= STORIA_STATO | STORIA_REAZIONE;
       // lo stato consumato insieme alla Terra (con gli Stati certi decide l'effetto in più dell'Interramento)
@@ -551,7 +559,7 @@ export class Orda {
   }
 
   ferma(i: number, secondi: number): void {
-    const s = secondi * (this.tipo[i] === ID_MIETITORE ? STATI.mietitore.fermo : 1);
+    const s = secondi * (comeSeth(this.tipo[i]) ? STATI.mietitore.fermo : 1);
     if (s > this.fermo[i]) this.fermo[i] = s;
   }
 
@@ -563,7 +571,7 @@ export class Orda {
     if (this.pausaLucciola[i] > 0) this.pausaLucciola[i] -= dt;
     if (this.sMaledetto[i] > 0) {
       this.sMaledetto[i] -= dt;
-      const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
+      const f = comeSeth(this.tipo[i]) ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
       const via = this.saluteMassima[i] * this.forza(OMBRA) * f * dt;
       this.dannoMaledizione += Math.min(via, Math.max(0, this.salute[i])); // per la simulazione: solo la salute tolta davvero
       if (this.salute[i] > 0 && this.salute[i] <= via) this.uccisore[i] = UCCISO_MALEDIZIONE;
@@ -579,7 +587,7 @@ export class Orda {
       fermo = true;
       // Stati certi: se l'Interramento ha consumato l'Ombra, la maledizione continua al doppio
       if (this.interraTipo[i] === OMBRA) { // interraTipo è 0 senza la regola nuova
-        const f = this.tipo[i] === ID_MIETITORE ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
+        const f = comeSeth(this.tipo[i]) ? STATI.mietitore.maledetto : this.elite[i] ? STATI.elite.maledetto : 1;
         const via = this.saluteMassima[i] * this.forza(OMBRA) * STATI_CERTI.interramento.maledettoOmbra * this.moltInterrato[i] * f * dt;
         this.dannoMaledizioneInterrata += Math.min(via, Math.max(0, this.salute[i]));
         if (this.salute[i] > 0 && this.salute[i] <= via) this.uccisore[i] = UCCISO_MALEDIZIONE;
@@ -602,7 +610,7 @@ export class Orda {
    * per quei secondi il rallentamento totale, Consacrato compreso, non supera DEVOZIONE.lentoMassimo.
    */
   rallenta(i: number, quanto: number, secondi: number, tetto = false): void {
-    if (this.tipo[i] === ID_MIETITORE) quanto *= MIETITORE.rallentamento;
+    if (comeSeth(this.tipo[i])) quanto *= MIETITORE.rallentamento;
     if (this.lentoPer[i] <= 0 || quanto >= this.lento[i]) this.lento[i] = quanto;
     this.lentoPer[i] = Math.max(this.lentoPer[i], secondi);
     if (tetto) this.tettoPer[i] = Math.max(this.tettoPer[i], secondi);
@@ -614,7 +622,7 @@ export class Orda {
     const dy = ty - this.y[i];
     const d = Math.hypot(dx, dy);
     if (d < 1) return;
-    const f = this.tipo[i] === ID_MIETITORE ? MIETITORE.attrazione : TIPI[this.tipo[i]].pesante || this.elite[i] ? ATTRAZIONE_PESANTI : 1;
+    const f = comeSeth(this.tipo[i]) ? MIETITORE.attrazione : TIPI[this.tipo[i]].pesante || this.elite[i] ? ATTRAZIONE_PESANTI : 1;
     const p = Math.min(d, passo * f);
     this.x[i] += (dx / d) * p;
     this.y[i] += (dy / d) * p;

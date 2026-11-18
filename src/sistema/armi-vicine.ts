@@ -2,7 +2,7 @@
  * Armi, quarto strato: i colpi vicini al personaggio. Lanterna (arco), Pala e Campana (cerchio), Lama di luce
  * (fendente), le Falci che girano intorno e i colpi ritardati (secondo colpo di Pala e Campana, fendente alle spalle).
  */
-import { LUCE, OMBRA, SACRO, TERRA } from './orda';
+import { LUCE, OMBRA, SACRO, TERRA, comeSeth } from './orda';
 import { RUOLI, STATI } from '../data/stati';
 import { INTERRUTTORI } from './interruttori';
 import { suona } from './audio';
@@ -11,7 +11,7 @@ import { EFFETTI } from '../data/effetti';
 import { CAMPANA, FALCE, LAMA_DI_LUCE, LANTERNA, PALA, type Arma } from '../data/armi';
 import { POTENZIALI } from '../data/armi-stanze';
 import { NUMERI_UNIONI as U } from '../data/unioni';
-import { ID_MIETITORE, MAX_LAME, MAX_RITARDATI, F } from './armi-colpo';
+import { MAX_LAME, MAX_RITARDATI, F } from './armi-colpo';
 import { ArsenaleProiettili } from './armi-proiettili';
 
 export abstract class ArsenaleVicine extends ArsenaleProiettili {
@@ -170,7 +170,7 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
     this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
     // potenziale (gioco a stanze): ruba una parte del danno che ha fatto davvero
     if (this.potenziale[F.falce] === 1) this.rubato += (prima - Math.max(0, o.salute[j])) * POTENZIALI.falce.furto;
-    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && o.tipo[j] !== ID_MIETITORE && o.salute[j] < soglia * o.saluteMassima[j]) {
+    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && !comeSeth(o.tipo[j]) && o.salute[j] < soglia * o.saluteMassima[j]) {
       this.dannoFonti[F.falce] += o.salute[j];
       o.colpisci(j, o.salute[j], 0, 0, 0);
       o.uccisore[j] = F.falce + 1;

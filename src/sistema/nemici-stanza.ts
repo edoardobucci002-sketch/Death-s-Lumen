@@ -23,9 +23,11 @@ import { MISURA, areaCamminabile } from './stanza';
 import type { Caso } from './caso';
 import type { Impatto } from './impatto';
 import { suona } from './audio';
-import { CAPIENZA, ID_CAMPANARO, ID_CANTORE, ID_RICADUTO, Orda } from './orda';
+import { CAPIENZA, ID_CAMPANARO, ID_CANTORE, ID_RICADUTO, ID_SETH, Orda } from './orda';
 import { Campanaro } from './campanaro';
 import { CAMPANARO } from '../data/campanaro';
+import { Seth } from './seth';
+import { SETH } from '../data/seth';
 import { Minacce } from './minacce';
 
 export const TIPI_STANZA = ['ricaduto', 'cantore'] as const;
@@ -114,6 +116,10 @@ export class NemiciStanza {
   readonly capo = new Campanaro();
   /** Il Campanaro battuto (per il percorso, il LAB e le prove). */
   capiBattuti = 0;
+  /** Seth, Boss del Mondo 1 (18/11): una sola istanza, in campo quando la Orda ha un nemico del suo tipo. */
+  readonly seth = new Seth();
+  /** Seth battuto (per il percorso, il LAB e le prove). */
+  sethBattuto = 0;
   private finisciTutti = false; // il Campanaro è battuto: i Ricaduti della Chiamata se ne vanno con lui
   /** Il raggio del corpo del personaggio, per i colpi dei nemici. */
   readonly corpo: number = COMBATTIMENTO_STANZA.raggio;
@@ -216,16 +222,33 @@ export class NemiciStanza {
     this.cTempo[c] = comparsa;
   }
 
-  /** L'indice del Campanaro nella Orda (−1 se non c'è). */
+  /** Seth (Boss) in (x, y), con il suo segno a terra. */
+  aggiungiSeth(x: number, y: number, comparsa: number = SETH.comparsa): void {
+    const a = areaCamminabile(), c = this.comparse++;
+    this.cTipo[c] = 3;
+    this.cX[c] = Phaser.Math.Clamp(x, a.x0, a.x1);
+    this.cY[c] = Phaser.Math.Clamp(y, a.y0, a.y1);
+    this.cTempo[c] = comparsa;
+  }
+
+  /** L'indice del capo in campo nella Orda, Campanaro o Seth (−1 se non c'è). */
   indiceCapo(): number {
-    for (let i = 0; i < this.orda.numero; i++) if (this.orda.tipo[i] === ID_CAMPANARO) return i;
+    for (let i = 0; i < this.orda.numero; i++) if (this.eCapo(i)) return i;
     return -1;
   }
 
-  /** Il nemico entra davvero nella Orda (k: 0 Ricaduto, 1 Cantore, 2 Campanaro). */
+  /** Il nemico i è un capo (Campanaro o Seth): non si ferma e non si sposta per un colpo, la Lama non lo accieca. */
+  eCapo(i: number): boolean {
+    const t = this.orda.tipo[i];
+    return t === ID_CAMPANARO || t === ID_SETH;
+  }
+
+  /** Il nemico entra davvero nella Orda (k: 0 Ricaduto, 1 Cantore, 2 Campanaro, 3 Seth). */
   private nasce(k: number, x: number, y: number): void {
-    const i = this.orda.nasciStanza(k === 0 ? ID_RICADUTO : k === 1 ? ID_CANTORE : ID_CAMPANARO, x, y, k === 0 ? R.salute : k === 1 ? C.salute : CAMPANARO.salute);
+    const i = this.orda.nasciStanza(k === 0 ? ID_RICADUTO : k === 1 ? ID_CANTORE : k === 2 ? ID_CAMPANARO : ID_SETH, x, y,
+      k === 0 ? R.salute : k === 1 ? C.salute : k === 2 ? CAMPANARO.salute : SETH.salute);
     if (k === 2) this.capo.nasce();
+    if (k === 3) this.seth.nasce();
     this.stato[i] = STATO.cammina;
     this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.bianco[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
     this.ricarica[i] = C.primoCanto;
@@ -264,6 +287,7 @@ export class NemiciStanza {
     this.grumi = 0;
     this.pozze = 0;
     this.finisciTutti = false;
+    this.seth.svuota();
   }
 
   /**
@@ -309,6 +333,24 @@ export class NemiciStanza {
         danno = Math.max(danno, this.capo.passo(this, i, dt, passo, px, py));
         this.stato[i] = this.capo.inAvviso ? STATO.avviso : STATO.cammina;
         if (Math.abs(px - o.x[i]) > 1 && !this.capo.inAvviso) this.verso[i] = px < o.x[i] ? 1 : 0;
+        continue;
+      }
+      if (o.tipo[i] === ID_SETH) {
+        // Seth battuto se ne va, con i suoi proiettili
+        if (o.salute[i] <= 0) {
+          this.sethBattuto++;
+          this.finisciTutti = true;
+          this.seth.svuota();
+          suona('campana');
+          this.sparisce(i);
+          continue;
+        }
+        if (this.fermi[i]) continue; // sepolto, interrato o fermato: anche lui aspetta
+        const dentroCerchio = this.cerchioR > 0 && (o.x[i] - this.cerchioX) ** 2 + (o.y[i] - this.cerchioY) ** 2 <= this.cerchioR ** 2;
+        const passo = dt * o.fattoreVelocita(i, false) * (dentroCerchio ? 1 - this.cerchioLento : 1);
+        danno = Math.max(danno, this.seth.passo(this, i, dt, passo, px, py));
+        this.stato[i] = this.seth.inAvviso ? STATO.avviso : STATO.cammina;
+        if (Math.abs(px - o.x[i]) > 1 && !this.seth.inAvviso) this.verso[i] = px < o.x[i] ? 1 : 0;
         continue;
       }
       // salute finita (Lanterna, Echi, maledizione, reazioni): il Ricaduto va a terra, il Cantore sparisce
@@ -408,6 +450,7 @@ export class NemiciStanza {
       o.x[i] = Phaser.Math.Clamp(o.x[i], a.x0, a.x1);
       o.y[i] = Phaser.Math.Clamp(o.y[i], a.y0, a.y1);
     }
+    danno = Math.max(danno, this.seth.proiettili(this, dt, px, py));
     return Math.max(danno, this.aggiornaGrumi(dt, px, py));
   }
 
@@ -605,7 +648,7 @@ export class NemiciStanza {
       presi++;
       if (o.salute[i] <= 0) continue; // battuto: le scintille grandi le fa il passo dopo
       // ancora in piedi: impatto (fermo, schiacciamento, scintille verso dove va il colpo) e spinta, tranne durante l'avviso
-      const capo = o.tipo[i] === ID_CAMPANARO; // il Campanaro non si ferma e non si sposta per un colpo
+      const capo = this.eCapo(i); // Campanaro e Seth non si fermano e non si spostano per un colpo
       if (this.fermoImpatto && !capo) this.fermo[i] = IMPATTO.fermo;
       this.schiaccia[i] = IMPATTO.schiaccia.durata;
       this.bianco[i] = NEMICI_STANZA.lampo;
@@ -641,7 +684,7 @@ export class NemiciStanza {
    */
   private accieca(i: number): void {
     const L = this.lama;
-    if (!L || !this.colpibile(i) || this.orda.tipo[i] === ID_CAMPANARO) return;
+    if (!L || !this.colpibile(i) || this.eCapo(i)) return;
     const o = this.orda;
     for (let j = 0; j < o.numero; j++) {
       if (j !== i && !(L.raggio > 0 && this.colpibile(j) && Math.hypot(o.x[j] - o.x[i], o.y[j] - o.y[i]) <= L.raggio)) continue;
@@ -728,6 +771,7 @@ export class NemiciStanza {
     this.sopraBuio.clear();
     const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra, E = NEMICI_STANZA.effetti;
     o.disegna(cam, 64, gx, gy);
+    this.seth.disegnaProiettili(this.sopraBuio, this.orologio); // falci e detriti di Seth, sopra il buio
     for (let i = 0; i < o.numero; i++) {
       const sp = o.spriteDi(i), st = this.stato[i], x = Math.round(o.x[i]), y = Math.round(o.y[i]);
       // schiacciamento: largo e basso subito dopo il colpo, poi torna come prima
@@ -748,6 +792,20 @@ export class NemiciStanza {
         else if (this.capo.inAvviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(col.bordo)).setTintMode(Phaser.TintModes.ADD);
         else sp.clearTint();
         this.capo.disegna(t, this.sopraBuio, x, y, this.orologio);
+        continue;
+      }
+      if (o.tipo[i] === ID_SETH) {
+        // Seth: la posa special negli avvisi, il lampo bianco; nel Passo della Morte è affondato (a retino: si vede a lampi)
+        const pc = this.seth.posa(sp);
+        if (pc) sp.anims.pause(), sp.setFrame(pc);
+        else if (sp.anims.currentAnim) sp.anims.resume();
+        const trema = this.seth.inAvviso && !this.seth.affondato ? (Math.floor(this.orologio * 30) % 2 === 0 ? -1 : 1) : 0;
+        sp.setPosition(x + trema, y).setFlipX(this.verso[i] === 1).setAngle(0);
+        sp.setVisible(!this.seth.affondato || Math.floor(this.orologio * 10) % 2 === 0);
+        if (this.bianco[i] > 0 || o.inLampo(i)) sp.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        else if (this.seth.inAvviso && Math.floor(this.orologio * 12) % 2 === 0) sp.setTint(colore(col.bordo)).setTintMode(Phaser.TintModes.ADD);
+        else sp.clearTint();
+        this.seth.disegna(t, this.sopraBuio, x, y, this.orologio);
         continue;
       }
       const ricaduto = o.tipo[i] === ID_RICADUTO, M = this.mosse[ricaduto ? 0 : 1];
@@ -780,7 +838,7 @@ export class NemiciStanza {
     // il segno a terra dove sta per comparire un nemico: un anello che si stringe
     for (let c = 0; c < this.comparse; c++) {
       const x = Math.round(this.cX[c]), y = Math.round(this.cY[c]);
-      const grande = this.cTipo[c] === 2 ? 2 : 1;
+      const grande = this.cTipo[c] >= 2 ? 2 : 1; // i capi: un segno più grande
       const r = Math.max(4, Math.round(grande * (6 + 14 * Math.min(1, this.cTempo[c] / ONDATA.comparsa))));
       t.lineStyle(2, colore(col.bordo), 1).strokeEllipse(x, y, 2 * r, r);
       t.fillStyle(colore(col.comparsa)).fillEllipse(x, y, r, Math.max(2, Math.round(r / 2)));

@@ -3,7 +3,7 @@
  * dell'Esorcismo), i Sampietrini che volano e rimbalzano, i grani del Rosario spezzato e i Corvi.
  */
 import { ingrandimento } from './asset';
-import { LUCE, OMBRA, TERRA } from './orda';
+import { LUCE, OMBRA, TERRA, comeSeth } from './orda';
 import { REAZIONI, RUOLI, STATI } from '../data/stati';
 import { suona } from './audio';
 import { PROFONDITA } from './effetti';
@@ -13,7 +13,7 @@ import { POTENZIALI, ROSARIO_VOLO } from '../data/armi-stanze';
 import { NUMERI_UNIONI as U } from '../data/unioni';
 import { CHIAZZE, ROMPIBILI } from '../data/rompibili';
 import { SASSO_LARGO, SPRITE_SCIA } from './segnaposto-oggetti';
-import { ESPLOSIONE, ID_MIETITORE, MAX_PROIETTILI, MAX_GRANI, MAX_SASSI, MAX_RIMBALZI, SCIA, RACCOGLIE, PROIETTILI_V0, F } from './armi-colpo';
+import { ESPLOSIONE, MAX_PROIETTILI, MAX_GRANI, MAX_SASSI, MAX_RIMBALZI, SCIA, RACCOGLIE, PROIETTILI_V0, F } from './armi-colpo';
 import { ArsenaleZone } from './armi-zone';
 
 const FIGLIA = 3; // proiettile nato da una fiammella che si è divisa (Candela al potenziale): non si divide più
@@ -460,7 +460,7 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
     const ex = o.x[j] - this.cx;
     const ey = o.y[j] - o.raggio[j] - this.cy;
     // élite e Mietitore sembrano più vicini: il fuoco fatuo li insegue per primi
-    const d2 = (ex * ex + ey * ey) * (o.elite[j] || o.tipo[j] === ID_MIETITORE ? RUOLI.fuocoFatuoPreda : 1);
+    const d2 = (ex * ex + ey * ey) * (o.elite[j] || comeSeth(o.tipo[j]) ? RUOLI.fuocoFatuoPreda : 1);
     if (d2 < this.cDistanza) {
       this.cDistanza = d2;
       this.cMigliore = j;

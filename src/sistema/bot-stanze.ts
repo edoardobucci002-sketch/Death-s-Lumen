@@ -6,6 +6,8 @@
  * il punto più sicuro: fuori dallo spicchio del Ricaduto e dalla linea del Cantore (che vede solo dopo il suo tempo di
  * reazione, come una persona), lontano da grumi, pozze di cera e muri, alla distanza giusta per colpire con la Lanterna.
  * Il Campanaro (17/11): esce dal disco del Rintocco, dall'anello e dalla linea della Carica, sempre dopo il tempo di reazione.
+ * Seth (18/11): esce dallo spicchio della Falciata, dal cerchio del Passo e dalle linee di falci e detriti, e scansa i
+ * proiettili in volo come i grumi.
  * Colpisce quando un nemico è a portata, usa il Cerchio di luce quando è circondato o ferito, sceglie carte e porte con
  * le preferenze di BOT_STANZE (o a caso nel modo «esplora»). Non usa il caso della partita: a parità di seme gioca uguale.
  * Mappa del Mondo (17/11): esplora tutte le stanze prima del Boss; tra le porte verso stanze nuove sceglie con le
@@ -16,9 +18,11 @@ import Phaser from 'phaser';
 import { BOT_STANZE as B } from '../data/bot';
 import { NEMICI_STANZA } from '../data/stanze';
 import { AFFINITA_ARMI } from '../data/stati';
-import { ID_CAMPANARO, ID_RICADUTO } from './orda';
+import { ID_CAMPANARO, ID_RICADUTO, ID_SETH } from './orda';
 import { CAMPANARO } from '../data/campanaro';
 import { MOSSA_CAPO } from './campanaro';
+import { SETH } from '../data/seth';
+import { MOSSA_SETH } from './seth';
 import { STATO, type NemiciStanza } from './nemici-stanza';
 import { areaCamminabile } from './stanza';
 import { Caso } from './caso';
@@ -99,6 +103,10 @@ export class BotStanze {
         s += this.pericoloCapo(x, y, d, n, i, corpo);
         continue;
       }
+      if (o.tipo[i] === ID_SETH) {
+        s += this.pericoloSeth(x, y, d, n, i, corpo);
+        continue;
+      }
       if (st === STATO.avviso) {
         const visto = (ricaduto ? R.avviso : C.avviso) - n.tempo[i] >= B.reazione;
         if (!visto) continue;
@@ -124,6 +132,12 @@ export class BotStanze {
       const r = C.grumo.raggio + corpo + m * 2;
       if ((gx - x) ** 2 + (gy - y) ** 2 < r * r || (n.gX[k] - x) ** 2 + (n.gY[k] - y) ** 2 < r * r) s += B.pesi.grumo;
     }
+    // falci e detriti di Seth: dove saranno tra poco (in linea retta)
+    const P = n.seth;
+    for (let k = 0; k < P.numero; k++) {
+      const gx = P.pX[k] + P.pVX[k] * B.avanti, gy = P.pY[k] + P.pVY[k] * B.avanti, r = P.pR[k] + corpo + m * 2;
+      if (vicinoAlSegmento(x, y, P.pX[k], P.pY[k], gx, gy) < r) s += B.pesi.grumo;
+    }
     // le pozze di cera: ellissi a terra larghe il doppio di quanto sono alte
     for (let k = 0; k < n.pozze; k++) {
       const rp = n.raggioPozza(k) + corpo + m, ex = (x - n.pX[k]) / rp, ey = (y - n.pY[k]) / (rp / 2);
@@ -141,6 +155,28 @@ export class BotStanze {
     if (c.mossa === MOSSA_CAPO.rintocco && d < K.rintocco.raggio + corpo + m) s += B.pesi.graffio;
     else if (c.mossa === MOSSA_CAPO.anello && d > K.rintocco.raggio - corpo - m && d < K.anello.raggio + corpo + m) s += B.pesi.graffio;
     else if (c.mossa === MOSSA_CAPO.mira && c.sullaLinea(n.orda.x[i], n.orda.y[i], x, y, corpo + m)) s += B.pesi.graffio;
+    return s;
+  }
+
+  /** Il pericolo di Seth i nel punto (x, y), a distanza d da lui. */
+  private pericoloSeth(x: number, y: number, d: number, n: NemiciStanza, i: number, corpo: number): number {
+    const c = n.seth, m = B.margine, K = SETH;
+    let s = d < K.raggio + corpo + m ? (K.raggio + corpo + m - d) * B.pesi.vicino : 0; // non addosso a lui
+    if (!c.inAvviso || c.durata - c.tempo < B.reazione) return s; // l'avviso non l'ha ancora visto
+    if (c.mossa === MOSSA_SETH.falciata && c.nellaFalciata(n.orda.x[i], n.orda.y[i], x, y, corpo + m)) s += B.pesi.graffio;
+    else if (c.mossa === MOSSA_SETH.passo) {
+      if (Math.hypot(x - c.passoX, y - c.passoY) < K.passo.raggio + corpo + m) s += B.pesi.graffio;
+      // in fase 2 i detriti partono dal cerchio a raggiera: fuori dalle loro linee
+      for (let k = 0; c.fase === 2 && k < K.detriti.quanti; k++) {
+        const ex = x - c.passoX, ey = y - c.passoY, lungo = ex * c.detritiX[k] + ey * c.detritiY[k], lato = Math.abs(ex * c.detritiY[k] - ey * c.detritiX[k]);
+        if (lungo > 0 && lato < K.detriti.raggio + corpo + m * 2) s += B.pesi.linea;
+      }
+    } else if (c.mossa === MOSSA_SETH.falci) {
+      for (let k = 0; k < K.falci.quante; k++) {
+        const ex = x - c.origineX, ey = y - c.origineY, lungo = ex * c.falciX[k] + ey * c.falciY[k], lato = Math.abs(ex * c.falciY[k] - ey * c.falciX[k]);
+        if (lungo > 0 && lato < K.falci.raggio + corpo + m * 2) s += B.pesi.linea;
+      }
+    }
     return s;
   }
 
@@ -201,4 +237,11 @@ export class BotStanze {
     const lato = primoPasso(m, qui, meta, passa);
     return lato < 0 ? -1 : verso.indexOf(m.stanze[qui].vicine[lato]);
   }
+}
+
+/** Distanza dal punto (x, y) al segmento da (ax, ay) a (bx, by). */
+function vicinoAlSegmento(x: number, y: number, ax: number, ay: number, bx: number, by: number): number {
+  const lx = bx - ax, ly = by - ay, l2 = lx * lx + ly * ly || 1;
+  const t = Phaser.Math.Clamp(((x - ax) * lx + (y - ay) * ly) / l2, 0, 1);
+  return Math.hypot(x - (ax + lx * t), y - (ay + ly * t));
 }

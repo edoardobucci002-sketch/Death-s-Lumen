@@ -23,6 +23,7 @@ export interface CampoCapo {
   readonly orda: { x: Float32Array; y: Float32Array; salute: Float32Array; saluteMassima: Float32Array };
   readonly corpo: number;
   finestra: number;
+  sfioro: number;
   schivate: number;
   aggiungi(t: 'ricaduto', x: number, y: number, comparsa?: number): boolean;
 }
