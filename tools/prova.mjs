@@ -991,6 +991,22 @@ for (const [nome, disp] of [
     if (r.sbagliate) errori.push(`mappa del Mondo: ${r.sbagliate} semi su 1000 non rispettano le regole (${r.primo})`);
     notaMappe = `, mappe ${r.stanze[0]}–${r.stanze[1]} stanze, Boss a ${r.boss[0]}–${r.boss[1]} porte (${r.ms} ms per mille)`;
   }
+  // i pallini della fiaschetta (18/11): tanti quanti i sorsi massimi, sotto la barra; 4 massimi con 2 pieni, poi se ne beve uno
+  let notaPallini = '';
+  if (!nome.endsWith('verticale')) {
+    await pag.evaluate(() => window.__dl.scene.getScene('Stanze').lab.sorsiMassimi(4)); // il Calice riverso al livello 1
+    await pag.waitForTimeout(150);
+    await pag.evaluate(() => { window.__dl.scene.getScene('Stanze').fiaschetta.sorsi = 2; });
+    await pag.waitForTimeout(400);
+    const p1 = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'), g = s.barra.pallini; return { visibile: g.visible, sotto: g.y > s.barra.rett.y, n: s.fiaschetta.massimo }; });
+    if (!p1.visibile || !p1.sotto || p1.n !== 4) errori.push(`i pallini della fiaschetta non si vedono sotto la barra (${JSON.stringify(p1)})`);
+    await pag.screenshot({ path: `prove/${nome}-pallini.png`, clip: await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'), c = s.cameras.main, r = s.game.canvas.getBoundingClientRect(), k = r.width / s.scale.width; return { x: r.x + (s.x - c.scrollX - 60) * k, y: r.y + (s.y - c.scrollY - 90) * k, width: 120 * k, height: 130 * k }; }) });
+    const bevuto = await pag.evaluate(() => window.__dl.scene.getScene('Stanze').lab.bevi());
+    if (!bevuto) errori.push('la fiaschetta non beve dal LAB');
+    await pag.waitForTimeout(1200);
+    await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); s.lab.sorsiMassimi(3); s.lab.fiaschettaPiena(); });
+    notaPallini = ', pallini della fiaschetta sì';
+  }
   await pag.waitForTimeout(500);
   const stato = () => pag.evaluate(() => {
     const s = window.__dl.scene.getScene('Stanze');
@@ -1554,7 +1570,7 @@ for (const [nome, disp] of [
     nota += `, percorso ${giro.join(' › ')}`;
   }
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${notaMappe}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} ${nome}: ${nota}${notaPallini}${notaMappe}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
   await ctx.close();
 }
 

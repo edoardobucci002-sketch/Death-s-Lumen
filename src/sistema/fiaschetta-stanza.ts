@@ -14,7 +14,14 @@ export class FiaschettaStanza {
   sorsi: number = FIASCHETTA.sorsi;
   massimo: number = FIASCHETTA.sorsi;
   bevuti = 0; // per il LAB e le prove
+  /** Premi bevuti subito a fiaschetta piena (per il lampo verde dei pallini). */
+  premiBevuti = 0;
   private curaRimasta = 0;
+
+  /** Quanto manca alla fine del sorso in corso, da 1 (appena bevuto) a 0 (finito, o nessun sorso in corso). */
+  get bevendo(): number {
+    return Math.max(0, this.curaRimasta) / FIASCHETTA.durata;
+  }
 
   /** Un passo: beve da solo se la salute è sotto la soglia; restituisce la parte di salute massima da curare in questo passo. */
   aggiorna(dt: number, salute: number, massima: number, puo: boolean): number {
@@ -46,6 +53,7 @@ export class FiaschettaStanza {
       else {
         this.curaRimasta = FIASCHETTA.durata;
         this.bevuti++; // il suono «cura» lo fa già la scena con il premio
+        this.premiBevuti++;
         vibra('media');
       }
     }

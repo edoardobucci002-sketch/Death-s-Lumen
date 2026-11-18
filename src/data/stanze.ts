@@ -230,6 +230,16 @@ export const ONDATA = {
  */
 export const FIASCHETTA_STANZA = {
   soglia: 0.15,
+  // i sorsi come pallini sotto la barra della salute (decisione di Edoardo del 17/11, stile Hollow Knight; forma e stacco
+  // scelti da Edoardo il 18/11): se ne vedono tanti quanti sono i sorsi massimi (3, fino a 6 con il Calice riverso). In
+  // pixel disegnati, ingranditi come la barra. Il resto è di Claude, accettato da Edoardo il 18/11:
+  pallini: {
+    lato: 5, // tondi, 5 × 5 (Edoardo)
+    stacco: 2, // tra un pallino e l'altro (Edoardo)
+    distanza: 2, // sotto la barra
+    lampo: 0.25, // secondi di lampo quando un sorso arriva, quando se ne beve uno (bianco) o quando un premio si beve subito (verde)
+    colori: { pieno: '#f2cf6a', luce: '#fff4c8', vuoto: '#1a120c', bordo: '#120606', lampo: '#ffffff', cura: '#6fbf4a' },
+  },
 } as const;
 
 export const ABILITA_STANZA = {

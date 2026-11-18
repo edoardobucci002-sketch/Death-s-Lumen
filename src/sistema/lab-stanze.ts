@@ -27,6 +27,7 @@ import type { Stanze } from '../scene/Stanze';
 import { MURI, davantiAlMuro, type Muro } from './porte';
 import { MOSSA_CAPO } from './campanaro';
 import { MOSSA_SETH } from './seth';
+import { FIASCHETTA } from '../data/sopravvivenza';
 import { ID_CAMPANARO, ID_SETH } from './orda';
 import { CANDELE_LAB, controllaMappa, generaMappa, type Mappa } from './mappa';
 import { MAPPA, MINIMAPPA } from '../data/mappa';
@@ -468,6 +469,16 @@ export class LabStanze {
   /** Svuota la fiaschetta (per provare la caduta senza che beva da sola). */
   fiaschettaVuota(): void {
     this.s.fiaschetta.sorsi = 0;
+  }
+
+  /** Un sorso in più nella fiaschetta, come il premio del Campanaro (a fiaschetta piena si beve subito). */
+  premioSorso(): void {
+    this.s.fiaschetta.premio(1);
+  }
+
+  /** Sorsi massimi n (da 3 a 6): dà il Calice riverso del livello che serve (+1 sorso per livello), o lo toglie. */
+  sorsiMassimi(n: number): void {
+    this.s.percorso.passivi.lacrimaDiLumen = Math.max(0, Math.min(3, n - FIASCHETTA.sorsi));
   }
 
   /** Beve un sorso subito; restituisce se ha bevuto. */

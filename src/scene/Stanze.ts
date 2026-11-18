@@ -1033,6 +1033,8 @@ export class Stanze extends Phaser.Scene {
     this.scrittaGrazia.setPosition(px, py - C.scritta.sopra).setVisible(this.scrittaVita > 0);
     this.avviso.setPosition(px, py - C.scritta.sopra - (this.scrittaVita > 0 ? 24 : 0)).setScale(2).setVisible(this.avvisoVita > 0);
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto, this.extra);
+    const F = this.fiaschetta;
+    this.barra.disegnaPallini(px, py, F.sorsi, F.massimo, F.bevendo, F.premiBevuti, dt, !this.morto);
     this.nemici.disegna(cam, px, py);
     const capo = this.nemici.indiceCapo(), o = this.nemici.orda;
     this.barraCapo.aggiorna(capo >= 0 ? o.salute[capo] / o.saluteMassima[capo] : null, capo >= 0 && o.tipo[capo] === ID_SETH);
