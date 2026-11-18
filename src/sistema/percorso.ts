@@ -7,7 +7,9 @@
  *   (PERCORSO.quanteCarte), che pescano dalla ricompensa della stanza: gli Echi d'inizio accanto all'ingresso, Echi nuovi e
  *   livelli di un'affinità (dalla Luce anche la Lanterna), o doni;
  * - nella stanza del Campanaro (mini-boss, src/sistema/campanaro.ts) niente ondate: arriva lui da solo, lontano da te;
- * - la stanza del Boss oggi chiude la partita (fine provvisoria: Seth e la porta chiusa arrivano con il passo 3).
+ * - la porta del Boss resta chiusa (il lucchetto) finché il Campanaro non è battuto: lui ha la chiave (passo 3, 18/11);
+ * - entrati dal Boss le porte si chiudono alle spalle e non si torna; oggi lì finisce la partita (fine provvisoria, finché
+ *   non c'è Seth).
  * Rarità (17/11, src/data/rarita.ts): ogni carta tira prima il grado (Fioca, Chiara, Ardente) tra quelli che la stanza può
  * dare, poi un oggetto di quel grado. Le carte si estraggono con un generatore del caso con seme (riproducibili).
  */
@@ -57,6 +59,11 @@ export class Percorso {
   /** La stanza del Boss: oggi la fine della partita. */
   get ultima(): boolean {
     return this.qui.tipo === 'boss';
+  }
+
+  /** La chiave della porta del Boss: il Campanaro è battuto (la sua stanza è ripulita). Si salva con la mappa. */
+  get chiave(): boolean {
+    return this.mappa.stanze[this.mappa.campanaro]?.ripulita ?? true;
   }
 
   /** La stanza del Campanaro. */
@@ -207,18 +214,21 @@ export class Percorso {
 
   /**
    * Le porte della stanza in cui si è: una per ogni lato con una stanza accanto, con il medaglione della stanza dopo
-   * (niente medaglione se è già ripulita o se è il Boss), e dove porta ognuna (indice della mappa).
+   * (niente medaglione se è già ripulita), e dove porta ognuna (indice della mappa). La porta del Boss ha il medaglione del
+   * capo; senza la chiave del Campanaro ha il lucchetto e resta chiusa (chiuse[k]).
    */
-  porte(): { muri: Muro[]; ricompense: Medaglione[]; verso: number[] } {
-    const muri: Muro[] = [], ricompense: Medaglione[] = [], verso: number[] = [];
+  porte(): { muri: Muro[]; ricompense: Medaglione[]; verso: number[]; chiuse: boolean[] } {
+    const muri: Muro[] = [], ricompense: Medaglione[] = [], verso: number[] = [], chiuse: boolean[] = [];
+    const chiave = this.chiave;
     this.qui.vicine.forEach((v, l) => {
       if (v < 0) return;
-      const s = this.mappa.stanze[v];
+      const s = this.mappa.stanze[v], boss = s.tipo === 'boss';
       muri.push(MURI[l]);
-      ricompense.push(s.ripulita || s.tipo === 'boss' ? null : s.ricompensa);
+      ricompense.push(boss ? (chiave ? 'capo' : 'chiusa') : s.ripulita ? null : s.ricompensa);
       verso.push(v);
+      chiuse.push(boss && !chiave);
     });
-    return { muri, ricompense, verso };
+    return { muri, ricompense, verso, chiuse };
   }
 
   /** Echi dell'affinità aff che non si hanno ancora (solo se c'è posto nella build). */

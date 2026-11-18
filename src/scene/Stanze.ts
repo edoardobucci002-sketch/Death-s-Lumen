@@ -9,8 +9,9 @@
  * (src/sistema/abilita-stanza.ts), con il pulsante accanto al joystick d'attacco o Spazio.
  * Passo 6: tre stanze (src/sistema/percorso.ts) collegate da porte (src/sistema/porte.ts): a stanza ripulita le 3 carte
  * (le strisce del survivor, src/sistema/doni.ts), poi si aprono 2 o 3 porte con la ricompensa mostrata; ci si passa a
- * retino. Gli Echi sono le armi automatiche del survivor (Arsenale), con i nemici nella sua Orda. Dopo la terza stanza:
- * «Fetta completata».
+ * retino. Gli Echi sono le armi automatiche del survivor (Arsenale), con i nemici nella sua Orda. Dal 17/11 le stanze sono
+ * una mappa alla Isaac (src/sistema/mappa.ts); dal 18/11 la porta del Boss si apre con la chiave del Campanaro, entrati dal
+ * Boss le porte si chiudono alle spalle e dopo un attimo compare la fine provvisoria, «Il capo arriverà qui».
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
  * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
  * Riprendi e Menu). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
@@ -136,6 +137,9 @@ export class Stanze extends Phaser.Scene {
   private orologio = 0;
   private scrittaVita = 0;
   private scrittaGrazia!: Phaser.GameObjects.Image;
+  private avvisoVita = 0; // la scritta sopra la testa per la porta del capo (aperta, o chiusa quando ci si spinge contro)
+  private avviso!: Phaser.GameObjects.Image;
+  private attesaCapo = 0; // nella stanza del Boss: secondi alla fine provvisoria
   private barra!: BarraSalute;
   private barraCapo!: BarraCapo; // la salute del Campanaro, in cima allo schermo (17/11)
   private pannelloFine!: HTMLElement;
@@ -196,7 +200,7 @@ export class Stanze extends Phaser.Scene {
     this.morto = this.immortale = false;
     this.ondateAutomatiche = true;
     this.fermoColpo = 0;
-    this.grazia = this.inQuiete = this.rallentatore = this.lampoFerita = this.feritaAnim = this.attesaFine = this.orologio = this.scrittaVita = 0;
+    this.grazia = this.inQuiete = this.rallentatore = this.lampoFerita = this.feritaAnim = this.attesaFine = this.orologio = this.scrittaVita = this.avvisoVita = this.attesaCapo = 0;
     this.quiete = COMBATTIMENTO_STANZA.quiete;
     const G = GRAZIA_STANZA;
     Object.assign(this.statGrazia, { durata: G.durata, danno: G.danno, velocita: G.velocita, finestra: G.finestra, sfioro: G.sfioro });
@@ -249,6 +253,7 @@ export class Stanze extends Phaser.Scene {
     const scritta = 'stanze-scritta-grazia';
     if (!this.textures.exists(scritta)) this.textures.addCanvas(scritta, tela('Grazia', '#86c5e8', '#000000'));
     this.scrittaGrazia = this.add.image(0, 0, scritta).setOrigin(0.5, 1).setScale(2).setDepth(PROFONDITA.barra).setVisible(false);
+    this.avviso = this.add.image(0, 0, scritta).setOrigin(0.5, 1).setDepth(PROFONDITA.barra).setVisible(false);
 
     const interfaccia = document.getElementById('interfaccia')!;
     interfaccia.replaceChildren();
@@ -497,6 +502,7 @@ export class Stanze extends Phaser.Scene {
     if (this.lampoFerita > 0) this.lampoFerita -= dt;
     if (this.feritaAnim > 0) this.feritaAnim -= dt;
     if (this.scrittaVita > 0) this.scrittaVita -= dt;
+    if (this.avvisoVita > 0) this.avvisoVita -= dt;
     this.ricalcola();
     if (this.rigenerazione > 0) this.salute = Math.min(this.saluteMassima, this.salute + this.rigenerazione * dt);
     this.comandi.aggiorna();
@@ -561,11 +567,18 @@ export class Stanze extends Phaser.Scene {
     }
     this.sim.passo(dt, this.salute);
     if (this.morto) return;
+    // la stanza del Boss: le porte chiuse alle spalle, poi la fine provvisoria (finché non c'è Seth)
+    if (this.percorso.fase === 'fine' && (this.attesaCapo -= dt) <= 0) {
+      this.mostraFineFetta();
+      return;
+    }
     // il percorso: ondate della stanza, carte a stanza ripulita (con «ondate automatiche» spente nel LAB resta fermo)
     if (this.ondateAutomatiche && this.percorso.aggiorna(dt, this.nemici, this.x, this.y)) this.apriCarte();
     // le porte aperte: camminandoci contro si passa alla stanza accanto
     if (this.percorso.fase === 'porte' && !this.porteBloccate) {
-      const k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma)) : this.porte.attraversata(this.x, this.y);
+      let k = this.bot ? this.bot.scegliPorta(this.mappa, this.percorso.corrente, this.verso, this.porte.ricompense, this.arsenale.possedute.map((p) => p.arma)) : this.porte.attraversata(this.x, this.y);
+      if (this.porte.chiuse[k]) k = -1; // la porta del capo senza la chiave non si attraversa (nemmeno il bot)
+      if (k < 0 && this.avvisoVita <= 0 && this.porte.controChiusa(this.x, this.y)) this.avvisa('Serve la chiave del Campanaro');
       if (k >= 0 && this.botVeloce) {
         // simulazione: niente passaggio a retino, si cambia stanza subito
         this.portaScelta = k;
@@ -613,8 +626,10 @@ export class Stanze extends Phaser.Scene {
   private dopoCarta(d: Parameters<Percorso['scegli']>[0] | null): void {
     this.comparsa.ferma();
     this.radice.classList.remove('con-carte');
+    const chiave = this.percorso.chiave;
     if (d) this.percorso.scegli(d);
     else this.percorso.ripulita();
+    if (!chiave && this.percorso.chiave) this.avvisa('La porta del capo è aperta'); // il Campanaro battuto: la chiave
     this.ricalcola();
     this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza); // la carta può aver cambiato la Lanterna
     this.mostraPorte();
@@ -632,8 +647,13 @@ export class Stanze extends Phaser.Scene {
       this.porte.chiudi(p.muri);
       return;
     }
-    this.porte.imposta(p.muri, p.ricompense);
+    this.porte.imposta(p.muri, p.ricompense, p.chiuse);
     this.porte.apri();
+  }
+
+  /** LAB: le porte della stanza in cui si è, di nuovo (è cambiata la chiave del Campanaro). */
+  ridisegnaPorte(): void {
+    this.mostraPorte();
   }
 
   /** Il seme del disegno della stanza n (lastre, muri e rompibili; n = indice della mappa + 1): separato dal caso della logica. */
@@ -643,7 +663,7 @@ export class Stanze extends Phaser.Scene {
 
   /** Il Lampionaio entra nella porta k: passaggio a retino, a metà si cambia stanza. */
   attraversa(k: number): void {
-    if (this.passaggio > 0 || this.percorso.fase !== 'porte' || k < 0 || k >= this.verso.length) return;
+    if (this.passaggio > 0 || this.percorso.fase !== 'porte' || k < 0 || k >= this.verso.length || this.porte.chiuse[k]) return;
     this.portaScelta = k;
     // verso una stanza già ripulita il passaggio è più veloce (Edoardo, 17/11)
     this.durataPassaggio = this.mappa.stanze[this.verso[k]].ripulita ? PERCORSO.passaggioRipulita : PERCORSO.passaggio;
@@ -692,7 +712,17 @@ export class Stanze extends Phaser.Scene {
     // guarda verso il centro della stanza
     this.guardaX = da === 'sinistra' ? 1 : da === 'destra' ? -1 : 0;
     this.guardaY = da === 'alto' ? 1 : da === 'basso' || !da ? -1 : 0;
-    if (this.percorso.fase === 'fine') this.mostraFineFetta(); // il Boss: oggi la fine provvisoria (passo 3: porta chiusa e Seth)
+    // il Boss: le porte si sono chiuse alle spalle (mostraPorte); dopo un attimo la fine provvisoria (finché non c'è Seth)
+    if (this.percorso.fase === 'fine') this.attesaCapo = this.botVeloce ? 0 : PERCORSO.attesaCapo;
+  }
+
+  /** Una scritta breve sopra la testa del Lampionaio (la porta del capo), per PERCORSO.avviso secondi. */
+  avvisa(testo: string): void {
+    const chiave = `stanze-avviso-${testo}`;
+    if (!this.textures.exists(chiave)) this.textures.addCanvas(chiave, tela(testo, PORTE.colori.echi, '#000000'));
+    this.avviso.setTexture(chiave);
+    this.avvisoVita = PERCORSO.avviso;
+    if (!this.bot) suona('campana');
   }
 
   /** Fine della partita: il resoconto per le simulazioni (window.__sim), solo quando gioca il bot. */
@@ -706,7 +736,7 @@ export class Stanze extends Phaser.Scene {
     });
   }
 
-  /** «Fetta completata»: nemici battuti, schivate perfette, la build presa; Ricomincia e Menu. */
+  /** La fine provvisoria del Mondo, «Il capo arriverà qui» (finché non c'è Seth): nemici battuti, schivate perfette, la build presa; Ricomincia e Menu. */
   private mostraFineFetta(): void {
     this.finita = true;
     this.chiudiSim(true);
@@ -720,7 +750,7 @@ export class Stanze extends Phaser.Scene {
     for (const e of this.arsenale.possedute) righe.push(`${e.arma.nome} ${e.livello}`);
     for (const id of PERCORSO.doniAttivi) if (p.passivi[id]) righe.push(`${DONO[id].nome} ${p.passivi[id]}`);
     this.pannelloFine.replaceChildren(
-      this.scrittaPixel('Fetta completata', 'stanze-titolo'),
+      this.scrittaPixel('Il capo arriverà qui', 'stanze-titolo'),
       ...righe.map((t) => this.scrittaPixel(t, 'stanze-etichetta')),
       this.tastoScritta('Ricomincia', () => this.scene.restart()),
       this.tastoScritta('Menu', () => this.scene.start('Menu')),
@@ -759,6 +789,7 @@ export class Stanze extends Phaser.Scene {
     else if (this.rompibili.bagliore > 0 && Math.floor(this.orologio * (this.rompibili.bagliore < BAGLIORE.ultimi ? BAGLIORE.lampiFine : BAGLIORE.lampi)) % 2 === 0) this.giocatore.setTint(BAGLIORE.alone).setTintMode(Phaser.TintModes.ADD);
     else this.giocatore.clearTint();
     this.scrittaGrazia.setPosition(px, py - C.scritta.sopra).setVisible(this.scrittaVita > 0);
+    this.avviso.setPosition(px, py - C.scritta.sopra - (this.scrittaVita > 0 ? 24 : 0)).setScale(2).setVisible(this.avvisoVita > 0);
     this.barra.disegna(px, py, this.salute, this.saluteMassima, dt, !this.morto, this.extra);
     this.nemici.disegna(cam, px, py);
     const capo = this.nemici.indiceCapo(), o = this.nemici.orda;

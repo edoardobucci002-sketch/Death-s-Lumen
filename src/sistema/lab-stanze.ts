@@ -10,7 +10,8 @@
  * romperli, ridisporli, far uscire un frammento, accendere il Bagliore. Il Campanaro (17/11): andare all'arena, farlo
  * comparire, portarlo alla fase 2 o quasi a terra, scegliere il suo prossimo attacco. La mappa del Mondo (17/11, passo 1):
  * guardarla, generarne un'altra, controllare le regole su mille semi. Passo 2: andare in una stanza qualsiasi (il Campanaro,
- * il Boss), attraversare la porta di un muro, bloccare le porte per provare i muri.
+ * il Boss), attraversare la porta di un muro, bloccare le porte per provare i muri. Passo 3 (18/11): dare o togliere la
+ * chiave del Campanaro, che apre la porta del Boss.
  */
 import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
@@ -41,7 +42,7 @@ export class LabStanze {
     salute: number; extra: number; sorsi: number; sorsiMassimi: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; pozze: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
     quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
-    stanza: number; indice: number; tipo: string; distanza: number; ripulite: number; totale: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
+    stanza: number; indice: number; tipo: string; chiave: boolean; chiuse: number; distanza: number; ripulite: number; totale: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
   } {
     const s = this.s, n = s.nemici;
     return {
@@ -50,7 +51,7 @@ export class LabStanze {
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), pozze: n.pozze, uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
       quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto,
-      stanza: s.percorso.stanza, indice: s.percorso.corrente, tipo: s.percorso.qui.tipo, distanza: s.percorso.qui.distanza,
+      stanza: s.percorso.stanza, indice: s.percorso.corrente, tipo: s.percorso.qui.tipo, chiave: s.percorso.chiave, chiuse: s.porte.chiuse.filter(Boolean).length, distanza: s.percorso.qui.distanza,
       ripulite: s.mappa.stanze.filter((x) => x.ripulita).length, totale: s.mappa.stanze.length,
       fase: s.percorso.fase, ricompensa: s.percorso.ricompensa, porte: s.porte.muri.map((m, k) => `${m}: ${s.porte.ricompense[k] ?? '–'}`),
       echi: s.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`), lanterna: s.percorso.livelloLanterna,
@@ -121,6 +122,17 @@ export class LabStanze {
   /** Porta il Lampionaio contro la porta del muro dato, se c'è ed è aperta: passa alla stanza accanto. */
   attraversaMuro(muro: Muro): void {
     this.attraversa(this.s.porte.muri.indexOf(muro));
+  }
+
+  /**
+   * La chiave del Campanaro (apre la porta del Boss): darla segna ripulita la stanza del Campanaro (lui non c'è più);
+   * toglierla la rimette da combattere. Le porte della stanza in cui si è si ridisegnano subito.
+   */
+  chiave(si: boolean): void {
+    const c = this.s.mappa.stanze[this.s.mappa.campanaro];
+    if (!c || c.ripulita === si || this.s.percorso.corrente === this.s.mappa.campanaro) return;
+    c.ripulita = si;
+    this.s.ridisegnaPorte();
   }
 
   /** Le porte aperte non si attraversano (per provare i muri camminandoci contro). */

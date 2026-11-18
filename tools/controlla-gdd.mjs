@@ -928,6 +928,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Build', 'al massimo {} Echi e {} doni', PE.echi, PE.doni],
     ['Porte', 'larghe {} px; entrando si compare {} px dentro la stanza', SZ.PORTE.larghezza, SZ.PORTE.entrata],
     ['Passaggio', '{} s; {} s verso una stanza già ripulita', PE.passaggio, PE.passaggioRipulita],
+    ['Stanza del Boss', 'la fine provvisoria dopo {} s; scritte della porta del capo per {} s', PE.attesaCapo, PE.avviso],
   ];
   stessiNomi('Percorso', tp, RIGHE_PERCORSO.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_PERCORSO) conRiga(tp, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));

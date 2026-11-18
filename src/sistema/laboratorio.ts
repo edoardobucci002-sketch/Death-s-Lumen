@@ -139,6 +139,7 @@ function disegnoMappa(m: Mappa, g: { larghezza: number; altezza: number }, corre
           c.style.color = testo;
           c.textContent = segno;
           if (s.ripulita && s.tipo !== 'ingresso') c.style.opacity = '0.45';
+          if (s.tipo === 'boss' && !m.stanze[m.campanaro]?.ripulita) { c.textContent = 'B·'; c.style.outline = '2px dashed #8a8f99'; c.title = 'il Boss: chiuso finché il Campanaro non è battuto'; }
           if (i === corrente) c.style.boxShadow = 'inset 0 0 0 2px #fff4c8';
           c.title = `stanza ${i}, a ${s.distanza} porte dall'ingresso`;
         }
@@ -342,6 +343,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Vai al Campanaro', () => { st.lab.vaiAlCampanaro(); mostra(false); }),
         tasto('Vai al Boss', () => { st.lab.vaiAlBoss(); mostra(false); }),
         tasto(st.porteBloccate ? 'Porte bloccate' : 'Porte libere', f(() => st.lab.bloccaPorte(!st.porteBloccate)), st.porteBloccate ? 'acceso' : ''),
+        tasto(s.chiave ? 'Chiave del Campanaro: sì' : 'Chiave del Campanaro: no', f(() => st.lab.chiave(!s.chiave)), s.chiave ? 'acceso' : ''),
       ),
       riga(...(['luce', 'sacro', 'ombra', 'terra'] as const).map((a) => tasto(`Eco di ${a}`, f(() => st.lab.eco(a))))),
       titolo('Mappa del Mondo'),
@@ -373,7 +375,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       riga(tasto('Acceca il nemico vicino', f(() => st.lab.accecaVicino())), el('span', 'lab-stato', `accecati dalla Lama: ${st.lab.accecati()}`)),
       el('p', 'lab-nota', 'Tocca un Eco: entra nella build al livello 5, con il suo potenziale (Candela: la fiammella che uccide si divide; Falce: due anelli e, a salute piena, salute in più (tocca «Salute in più» per vederla); Campana: interrompe la carica; Fuoco fatuo: ritrova il primo nemico trapassato; Acqua santa: dentro le pozze recuperi salute; Abbacinio: la cecità passa ai vicini; Lapide: muro di 3 s; Rosario: +15% di danno a rimbalzo; Corvo: +20% di danno subito; Velo funebre: fermo si allarga; Sampietrini: rimbalza verso il nemico). Il Cerchio di luce ferisce forte quando si accende e poi colpisce soltanto, abbagliando.'),
       el('p', 'lab-nota', '«Fai giocare il bot»: il bot muove, colpisce, usa il Cerchio di luce e sceglie carte e porte al posto tuo, alla velocità normale (le simulazioni veloci: npm run sim-stanze). Danno a intervallo: ogni colpo esce a caso tra il minimo e il massimo del livello (le carte scrivono «Danno 12–18»). Le armi delle stanze hanno 5 livelli: il 5° è il potenziale (la Lanterna colpisce anche alle spalle). Numeri in Numeri → armiStanze.'),
-      el('p', 'lab-nota', 'Si comincia al centro dell\'ingresso, con le porte aperte. Ogni porta porta alla stanza accanto e ha il medaglione della sua ricompensa (il rombo crema: gli Echi d\'inizio; nessun medaglione: stanza già ripulita o il Boss). Si entra dalla porta sul muro opposto. «Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 2 carte; scelta la carta si aprono le porte. «Porta in alto/a destra…» ti porta contro quella porta. Le ondate crescono con la distanza dall\'ingresso. Entrare dal Boss oggi chiude la partita (la porta chiusa dal Campanaro arriva con il passo 3). «Porte bloccate»: le porte aperte non si attraversano, per provare i muri. Numeri in Numeri → stanze → PERCORSO e PORTE.'),
+      el('p', 'lab-nota', 'Si comincia al centro dell\'ingresso, con le porte aperte. Ogni porta porta alla stanza accanto e ha il medaglione della sua ricompensa (il rombo crema: gli Echi d\'inizio; nessun medaglione: stanza già ripulita o il Boss). Si entra dalla porta sul muro opposto. «Ripulisci la stanza» toglie i nemici: dopo un attimo arrivano le 2 carte; scelta la carta si aprono le porte. «Porta in alto/a destra…» ti porta contro quella porta. Le ondate crescono con la distanza dall\'ingresso. La porta del Boss (medaglione rosso) resta chiusa con il lucchetto finché il Campanaro non è battuto: «Chiave del Campanaro» la dà o la toglie (darla segna battuto il Campanaro). Entrati dal Boss le porte si chiudono alle spalle e dopo un attimo arriva la fine provvisoria, «Il capo arriverà qui» (Numeri → PERCORSO.attesaCapo); «Vai al Boss» ci porta anche senza chiave. «Porte bloccate»: le porte aperte non si attraversano, per provare i muri. Numeri in Numeri → stanze → PERCORSO e PORTE.'),
       titolo('Il Campanaro (mini-boss)'),
       riga(el('span', 'lab-stato', ((c) => c ? (c.massima ? `Salute ${c.salute}/${c.massima} · fase ${c.fase} · rintocchi ${c.rintocchi} · cariche ${c.cariche} · chiamate ${c.chiamate}` : `Battuto (${c.battuti})`) : 'Non è in campo')(st.lab.campanaro()))),
       riga(

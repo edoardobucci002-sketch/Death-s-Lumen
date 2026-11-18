@@ -1350,6 +1350,25 @@ for (const [nome, disp] of [
         }
       }
     }
+    // la porta del Boss (18/11): dalla stanza accanto (ripulita) è chiusa, con il lucchetto, finché il Campanaro non è
+    // battuto; spingendoci contro non si passa e compare la scritta
+    const vb = await pag.evaluate(() => {
+      const m = window.__dl.scene.getScene('Stanze').mappa, b = m.stanze[m.boss], l = b.vicine.findIndex((v) => v >= 0);
+      m.stanze[b.vicine[l]].ripulita = true;
+      return { i: b.vicine[l], muro: ['basso', 'sinistra', 'alto', 'destra'][l] };
+    });
+    await L('vaiAllaStanza', vb.i);
+    await pag.waitForTimeout(300);
+    const sb = await st();
+    const pb = sb.porte.find((p) => muro(p) === vb.muro);
+    if (sb.chiave || sb.chiuse !== 1 || !pb?.endsWith('chiusa')) errori.push(`prima del Campanaro la porta del Boss non è chiusa col lucchetto (chiave ${sb.chiave}, chiuse ${sb.chiuse}, ${pb})`);
+    await L('attraversaMuro', vb.muro);
+    await pag.waitForTimeout(500);
+    const sb2 = await st();
+    const avviso = await pag.evaluate(() => window.__dl.scene.getScene('Stanze').avvisoVita > 0);
+    if (sb2.indice !== vb.i) errori.push('la porta del Boss chiusa si attraversa');
+    if (!avviso) errori.push('spingendo contro la porta del Boss chiusa non compare la scritta');
+    if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-boss-chiuso.png` });
     // l'arena del Campanaro: compare da solo, con la sua barra in cima; poi si ripulisce come le altre
     await L('vaiAlCampanaro');
     if (!(await quando('l.campanaro() && l.campanaro().massima > 0', '', 4000))) errori.push('nella stanza del Campanaro lui non compare');
@@ -1375,11 +1394,24 @@ for (const [nome, disp] of [
         giro.push('Campanaro');
       }
     }
-    // il Boss: oggi la fine provvisoria
-    await L('vaiAlBoss');
+    // battuto il Campanaro la porta del Boss è aperta (medaglione del capo); entrati, le porte si chiudono alle spalle e
+    // dopo un attimo arriva la fine provvisoria
+    await L('vaiAllaStanza', vb.i);
     await pag.waitForTimeout(300);
+    const sa = await st();
+    const pa = sa.porte.find((p) => muro(p) === vb.muro);
+    if (!sa.chiave || sa.chiuse || !pa?.endsWith('capo')) errori.push(`battuto il Campanaro la porta del Boss non si apre (chiave ${sa.chiave}, chiuse ${sa.chiuse}, ${pa})`);
+    if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-boss-aperto.png` });
+    await L('attraversaMuro', vb.muro);
+    if (!(await quando(`l.stato().tipo === 'boss'`, '', 2000))) errori.push('la porta del Boss aperta non si attraversa');
+    const db = await st();
+    if (db.tipo === 'boss' && (db.fase !== 'fine' || db.finita)) errori.push(`entrando dal Boss: fase ${db.fase}, finita subito ${db.finita}`);
+    await pag.waitForTimeout(250);
+    const chiuseBoss = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { aperte: s.porte.aperte, muri: s.porte.muri.length, passa: s.porte.attraversata(...Object.values(s.porte.davanti(0))) }; });
+    if (chiuseBoss.aperte || chiuseBoss.passa >= 0) errori.push('entrati dal Boss la porta alle spalle non si chiude');
+    await pag.waitForTimeout(1700);
     const fb = await st();
-    if (!fb.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('entrando dal Boss la partita non finisce');
+    if (!fb.finita || (await pag.evaluate(() => document.querySelector('.stanze-fine').hidden))) errori.push('entrando dal Boss la fine non arriva');
     else {
       await pag.screenshot({ path: `prove/${nome}-fetta.png` });
       giro.push('Boss');

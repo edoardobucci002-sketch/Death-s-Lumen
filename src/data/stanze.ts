@@ -293,13 +293,18 @@ export const PERCORSO = {
   doniAttivi: ['cuoreDiCera', 'saleNero', 'clessidra', 'stoppinoLungo', 'aliDiFalena', 'erbeAmare', 'scudoDiFerro', 'specchio', 'ceraVotiva', 'chiodoDiBara', 'campanellaDArgento', 'lacrimaDiLumen'],
   passaggio: 0.25, // secondi del passaggio a retino tra una stanza e l'altra (metà per scurire, metà per schiarire)
   passaggioRipulita: 0.12, // verso una stanza già ripulita il passaggio è più veloce (Edoardo, 17/11; durata di Claude, da rivedere)
+  // la stanza del Boss (passo 3, 18/11): entrati, le porte si chiudono alle spalle e dopo questi secondi compare la fine
+  // provvisoria, finché non c'è Seth (Claude; va bene a Edoardo, da rivedere)
+  attesaCapo: 1.5,
+  // la scritta sopra la testa quando la porta del capo si apre o quando ci si spinge contro chiusa: secondi
+  avviso: 1.6,
 } as const;
 
 /** Le porte: un'apertura nel muro, chiusa da sbarre finché la stanza non è ripulita e la carta scelta. */
 export const PORTE = {
   larghezza: 64, // in alto: quanto è larga l'apertura; ai lati e in basso: quanto è alta
   simbolo: 2, // ingrandimento del simbolo della ricompensa sopra la porta
-  colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a', echi: '#e8dcc0' },
+  colori: { vano: '#050403', sbarre: '#5a4a3c', cornice: '#2a2119', aperta: '#e3913a', dono: '#dcc07a', echi: '#e8dcc0', capo: '#a3262a', lucchetto: '#8a8f99' }, // capo e lucchetto: segnaposto della porta del capo (18/11)
   // il medaglione vuoto (EFFETTI/Porta_Vuota, 31 × 31) con dentro il simbolo dello stato (11 × 11) in questo punto (16/11)
   medaglione: { vuoto: 'Porta_Vuota', simbolo: { x: 10, y: 9 } },
   vicino: 170, // più vicino di così al centro di una porta, il suo arco non si disegna sopra il buio (da rivedere)

@@ -27,14 +27,35 @@ import { PROFONDITA } from './effetti';
 /** I quattro muri, nello stesso ordine dei lati della mappa (alto, destra, basso, sinistra). */
 export type Muro = 'alto' | 'destra' | 'basso' | 'sinistra';
 export type Ricompensa = IdAffinita | 'dono';
-/** Cosa mostra il medaglione di una porta: la ricompensa della stanza dopo, gli Echi d'inizio, o niente. */
-export type Medaglione = Ricompensa | 'echi' | null;
+/**
+ * Cosa mostra il medaglione di una porta: la ricompensa della stanza dopo, gli Echi d'inizio, la porta del capo (aperta) o
+ * il lucchetto (la porta del capo chiusa finché il Campanaro non è battuto, passo 3 del 18/11), o niente.
+ */
+export type Medaglione = Ricompensa | 'echi' | 'capo' | 'chiusa' | null;
 export const MURI: readonly Muro[] = ['alto', 'destra', 'basso', 'sinistra'];
 
 const colore = (h: string): number => parseInt(h.slice(1), 16);
 const SIMBOLO_DONO = 'stanze-simbolo-dono';
 const SIMBOLO_ECHI = 'stanze-simbolo-echi';
 const MEDAGLIONE_ECHI = 'stanze-medaglione-echi';
+const SIMBOLO_CAPO = 'stanze-simbolo-capo';
+const SIMBOLO_LUCCHETTO = 'stanze-simbolo-lucchetto';
+const MEDAGLIONE_CAPO = 'stanze-medaglione-capo';
+const MEDAGLIONE_CHIUSA = 'stanze-medaglione-chiusa';
+// il lucchetto (segnaposto, 11 × 11): «#» il bordo scuro, «o» il ferro, «k» il buco della chiave
+const LUCCHETTO = [
+  '...###.....',
+  '..#ooo#....',
+  '.#o###o#...',
+  '.#o#.#o#...',
+  '#########..',
+  '#ooooooo#..',
+  '#ooo#ooo#..',
+  '#ooo#ooo#..',
+  '#ooooooo#..',
+  '#########..',
+  '...........',
+];
 // i pezzi della porta: alto, sinistra, destra, basso
 const PEZZO: Record<Muro, number> = { alto: 0, sinistra: 1, destra: 2, basso: 3 };
 
@@ -42,6 +63,8 @@ export class Porte {
   muri: Muro[] = [];
   ricompense: Medaglione[] = [];
   aperte = false;
+  /** le porte che restano chiuse anche quando le altre si aprono (la porta del capo senza la chiave) */
+  chiuse: boolean[] = [];
   private readonly grafica: Phaser.GameObjects.Graphics;
   private readonly simboli: Phaser.GameObjects.Image[] = [];
   private readonly cancelli: Phaser.GameObjects.Image[] = []; // alto, sinistra, destra, basso: il pezzo intero, sotto il buio
@@ -51,7 +74,7 @@ export class Porte {
   constructor(private readonly scena: Phaser.Scene) {
     this.grafica = scena.add.graphics().setDepth(PROFONDITA.anime); // sopra il buio: le porte si vedono anche lontane
     // il dono: un rombo dorato con il bordo scuro, 11 × 11; gli Echi d'inizio (segnaposto): lo stesso rombo, crema
-    for (const [chiave, tinta] of [[SIMBOLO_DONO, PORTE.colori.dono], [SIMBOLO_ECHI, PORTE.colori.echi]] as const) {
+    for (const [chiave, tinta] of [[SIMBOLO_DONO, PORTE.colori.dono], [SIMBOLO_ECHI, PORTE.colori.echi], [SIMBOLO_CAPO, PORTE.colori.capo]] as const) {
       if (scena.textures.exists(chiave)) continue;
       const g = scena.add.graphics();
       for (let y = 0; y < 11; y++) {
@@ -63,6 +86,14 @@ export class Porte {
         if (l >= 0) g.fillStyle(colore(tinta)).fillRect(5 - l, y, 2 * l + 1, 1);
       }
       g.generateTexture(chiave, 11, 11);
+      g.destroy();
+    }
+    if (!scena.textures.exists(SIMBOLO_LUCCHETTO)) {
+      const g = scena.add.graphics();
+      LUCCHETTO.forEach((riga, y) => [...riga].forEach((c, x) => {
+        if (c !== '.') g.fillStyle(c === '#' ? 0x120c08 : colore(PORTE.colori.lucchetto)).fillRect(x + 1, y, 1, 1);
+      }));
+      g.generateTexture(SIMBOLO_LUCCHETTO, 11, 11);
       g.destroy();
     }
     // i cancelli disegnati: il pezzo intero sopra muri e pavimento (sotto personaggio e buio), l'arco anche sopra il buio
@@ -91,15 +122,20 @@ export class Porte {
   chiudi(muri: Muro[]): void {
     this.muri = muri;
     this.ricompense = [];
+    this.chiuse = [];
     this.aperte = false;
     for (const s of this.simboli) s.setVisible(false);
     this.disegna();
   }
 
-  /** Le porte della stanza: muri e medaglioni (stesso ordine); chiuse finché non si chiama apri(). */
-  imposta(muri: Muro[], ricompense: Medaglione[]): void {
+  /**
+   * Le porte della stanza: muri e medaglioni (stesso ordine); chiuse finché non si chiama apri(). chiuse[k]: la porta k
+   * resta chiusa anche dopo apri() (la porta del capo senza la chiave).
+   */
+  imposta(muri: Muro[], ricompense: Medaglione[], chiuse: boolean[] = []): void {
     this.muri = muri;
     this.ricompense = ricompense;
+    this.chiuse = chiuse;
     this.aperte = false;
     for (let k = 0; k < this.simboli.length; k++) {
       const s = this.simboli[k];
@@ -110,6 +146,16 @@ export class Porte {
       const r = ricompense[k], p = this.centroSimbolo(muri[k]);
       if (!r) {
         s.setVisible(false); // la stanza dopo è già ripulita, o è il Boss
+        continue;
+      }
+      if (r === 'capo' || r === 'chiusa') {
+        // la porta del capo (segnaposto): il medaglione disegnato (Porta_Capo, Porta_Chiusa) se c'è, se no il medaglione
+        // vuoto con il rombo rosso o con il lucchetto, se no il simbolo ingrandito
+        const disegno = r === 'capo' ? 'Porta_Capo' : 'Porta_Chiusa', composto = r === 'capo' ? MEDAGLIONE_CAPO : MEDAGLIONE_CHIUSA;
+        const t = this.scena.textures.exists(disegno) ? disegno : this.scena.textures.exists(composto) ? composto : '';
+        if (t) s.setTexture(t).setScale(1);
+        else s.setTexture(r === 'capo' ? SIMBOLO_CAPO : SIMBOLO_LUCCHETTO).setScale(PORTE.simbolo);
+        s.setPosition(p.x, p.y).setVisible(true);
         continue;
       }
       if (r === 'echi') {
@@ -153,6 +199,18 @@ export class Porte {
   /** La porta contro cui spinge il personaggio con i piedi in (x, y), se è aperta: il suo indice, se no -1. */
   attraversata(x: number, y: number): number {
     if (!this.aperte) return -1;
+    const k = this.contro(x, y);
+    return k >= 0 && !this.chiuse[k] ? k : -1;
+  }
+
+  /** Il personaggio spinge contro una porta rimasta chiusa (la porta del capo senza la chiave). */
+  controChiusa(x: number, y: number): boolean {
+    const k = this.aperte ? this.contro(x, y) : -1;
+    return k >= 0 && !!this.chiuse[k];
+  }
+
+  /** La porta contro cui spinge il personaggio con i piedi in (x, y), aperta o chiusa: il suo indice, se no -1. */
+  private contro(x: number, y: number): number {
     const a = areaCamminabile(), m = PORTE.larghezza / 2 - 8;
     for (let k = 0; k < this.muri.length; k++) {
       const muro = this.muri[k];
@@ -196,21 +254,23 @@ export class Porte {
         this.accesi[k] = true;
       };
       const V = CRIPTA.vani;
-      for (const muro of this.muri) {
-        if (muro === 'alto') metti(PEZZO.alto, this.aperte ? F.altoAperta : F.altoChiusa, -1, -S.muroAlto, V.alto);
-        else if (muro === 'sinistra') metti(PEZZO.sinistra, this.aperte ? F.latoAperta : F.latoChiusa, -S.muroLati, -1, V.lato);
-        else if (muro === 'destra') metti(PEZZO.destra, this.aperte ? F.latoAperta : F.latoChiusa, S.larghezza, -1, V.lato, true);
-        else if (!this.aperte) metti(PEZZO.basso, F.bassoChiusa, -1, S.altezza, V.basso);
+      this.muri.forEach((muro, k) => {
+        const aperta = this.aperte && !this.chiuse[k];
+        if (muro === 'alto') metti(PEZZO.alto, aperta ? F.altoAperta : F.altoChiusa, -1, -S.muroAlto, V.alto);
+        else if (muro === 'sinistra') metti(PEZZO.sinistra, aperta ? F.latoAperta : F.latoChiusa, -S.muroLati, -1, V.lato);
+        else if (muro === 'destra') metti(PEZZO.destra, aperta ? F.latoAperta : F.latoChiusa, S.larghezza, -1, V.lato, true);
+        else if (!aperta) metti(PEZZO.basso, F.bassoChiusa, -1, S.altezza, V.basso);
         else this.vanoCodice(S.larghezza / 2 - L / 2, S.altezza, L, S.muroBasso, true, true); // manca il disegno della porta aperta
-      }
+      });
       return;
     }
-    for (const muro of this.muri) {
-      if (muro === 'alto') this.vanoCodice(S.larghezza / 2 - L / 2, -56, L, 56, this.aperte, true);
-      else if (muro === 'sinistra') this.vanoCodice(-S.muroLati, S.altezza / 2 - L / 2, S.muroLati, L, this.aperte, false);
-      else if (muro === 'destra') this.vanoCodice(S.larghezza, S.altezza / 2 - L / 2, S.muroLati, L, this.aperte, false);
-      else this.vanoCodice(S.larghezza / 2 - L / 2, S.altezza, L, S.muroBasso, this.aperte, true);
-    }
+    this.muri.forEach((muro, k) => {
+      const aperta = this.aperte && !this.chiuse[k];
+      if (muro === 'alto') this.vanoCodice(S.larghezza / 2 - L / 2, -56, L, 56, aperta, true);
+      else if (muro === 'sinistra') this.vanoCodice(-S.muroLati, S.altezza / 2 - L / 2, S.muroLati, L, aperta, false);
+      else if (muro === 'destra') this.vanoCodice(S.larghezza, S.altezza / 2 - L / 2, S.muroLati, L, aperta, false);
+      else this.vanoCodice(S.larghezza / 2 - L / 2, S.altezza, L, S.muroBasso, aperta, true);
+    });
   }
 
   /** Il vano disegnato dal codice: scuro, con le sbarre (chiusa) o con la cornice accesa (aperta). */
@@ -261,6 +321,15 @@ export class Porte {
       const t = tex.createCanvas(MEDAGLIONE_ECHI, f.realWidth, f.realHeight)!, g = t.getContext();
       disegnaFotogramma(g, this.scena, M.vuoto, 0, 0, 0);
       g.drawImage(tex.get(SIMBOLO_ECHI).getSourceImage() as CanvasImageSource, M.simbolo.x, M.simbolo.y);
+      t.refresh();
+    }
+    // la porta del capo (segnaposto): il medaglione vuoto con il rombo rosso (aperta) o con il lucchetto (chiusa)
+    for (const [chiave, simbolo] of [[MEDAGLIONE_CAPO, SIMBOLO_CAPO], [MEDAGLIONE_CHIUSA, SIMBOLO_LUCCHETTO]] as const) {
+      if (tex.exists(chiave)) continue;
+      const f = tex.getFrame(M.vuoto);
+      const t = tex.createCanvas(chiave, f.realWidth, f.realHeight)!, g = t.getContext();
+      disegnaFotogramma(g, this.scena, M.vuoto, 0, 0, 0);
+      g.drawImage(tex.get(simbolo).getSourceImage() as CanvasImageSource, M.simbolo.x, M.simbolo.y);
       t.refresh();
     }
     for (const aff of Object.keys(INFO_AFFINITA) as IdAffinita[]) {

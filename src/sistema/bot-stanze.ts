@@ -164,7 +164,8 @@ export class BotStanze {
    * Sceglie una porta tra quelle aperte della stanza «qui» (verso[k]: dove porta la porta k; ricompense[k]: il suo
    * medaglione). Prima le stanze nuove accanto (con le preferenze: gli Echi d'inizio, le affinità degli Echi che ha, il
    * dono; a caso nel modo «esplora»); se non ce ne sono, il primo passo verso la stanza nuova più vicina. Il Campanaro lo
-   * lascia per ultimo, come farebbe un giocatore (prima la build più forte); finito tutto, il Boss.
+   * lascia per ultimo, come farebbe un giocatore (prima la build più forte); finito tutto, il Boss (la sua porta si apre solo
+   * con la chiave del Campanaro, 18/11).
    */
   scegliPorta(m: Mappa, qui: number, verso: readonly number[], ricompense: readonly Medaglione[], echi: readonly Arma[]): number {
     const resta = m.stanze.some((s) => !s.ripulita && s.tipo === 'combattimento');
@@ -186,10 +187,17 @@ export class BotStanze {
       }
     });
     if (migliore >= 0) return migliore;
-    // niente di nuovo qui accanto: verso la stanza nuova più vicina, o il Boss
-    let meta = piuVicina(m, qui, (_s, i) => nuova(i));
-    if (meta < 0) meta = m.boss;
-    const lato = primoPasso(m, qui, meta);
+    // niente di nuovo qui accanto: verso la stanza nuova più vicina, senza passare dall'arena del Campanaro finché c'è
+    // altro da esplorare (se una stanza si raggiunge solo da lì, si affronta lui); finito tutto, il Boss, con la chiave
+    const libera = (i: number): boolean => i !== m.campanaro || m.stanze[i].ripulita;
+    let meta = piuVicina(m, qui, (_s, i) => nuova(i), libera), passa = libera;
+    if (meta < 0 && resta) {
+      meta = m.campanaro;
+      passa = () => true;
+    }
+    if (meta < 0 && m.stanze[m.campanaro]?.ripulita !== false) meta = m.boss; // il Boss solo con la chiave del Campanaro
+    if (meta < 0) return -1;
+    const lato = primoPasso(m, qui, meta, passa);
     return lato < 0 ? -1 : verso.indexOf(m.stanze[qui].vicine[lato]);
   }
 }

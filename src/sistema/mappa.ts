@@ -195,13 +195,14 @@ function mescola<T>(v: T[], caso: Caso): T[] {
 }
 
 /** La stanza più vicina a «da» (per numero di porte) che rispetta la condizione: il suo indice, -1 se non ce n'è. */
-export function piuVicina(m: Mappa, da: number, va: (s: StanzaMappa, i: number) => boolean): number {
+export function piuVicina(m: Mappa, da: number, va: (s: StanzaMappa, i: number) => boolean, passa: (i: number) => boolean = () => true): number {
   const visto = new Uint8Array(m.stanze.length);
   visto[da] = 1;
   const coda = [da];
   for (let q = 0; q < coda.length; q++) {
     const i = coda[q];
     if (i !== da && va(m.stanze[i], i)) return i;
+    if (i !== da && !passa(i)) continue; // da qui non si passa (ci si può solo arrivare)
     for (const v of m.stanze[i].vicine) {
       if (v >= 0 && !visto[v]) {
         visto[v] = 1;
@@ -212,8 +213,11 @@ export function piuVicina(m: Mappa, da: number, va: (s: StanzaMappa, i: number) 
   return -1;
 }
 
-/** Il cammino più breve dalla stanza «da» alla stanza «a»: il lato della prima porta da prendere (-1 se si è già lì). */
-export function primoPasso(m: Mappa, da: number, a: number): number {
+/**
+ * Il cammino più breve dalla stanza «da» alla stanza «a»: il lato della prima porta da prendere (-1 se si è già lì o se
+ * non c'è strada). passa(i): se si può attraversare la stanza i per arrivare più in là (il bot evita il Campanaro).
+ */
+export function primoPasso(m: Mappa, da: number, a: number, passa: (i: number) => boolean = () => true): number {
   if (da === a) return -1;
   const prima = new Int16Array(m.stanze.length).fill(-1); // da quale stanza si è arrivati a ognuna
   prima[da] = da;
@@ -228,7 +232,7 @@ export function primoPasso(m: Mappa, da: number, a: number): number {
         while (prima[passo] !== da) passo = prima[passo];
         return m.stanze[da].vicine.indexOf(passo);
       }
-      coda.push(v);
+      if (passa(v)) coda.push(v);
     }
   }
   return -1;
