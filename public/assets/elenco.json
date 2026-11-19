@@ -103,7 +103,7 @@
       "categoria": "nemici",
       "immagine": "assets/nemici/Campanaro.png",
       "dati": "assets/nemici/Campanaro.json",
-      "versioneFile": 0,
+      "versioneFile": 1,
       "tag": [
         "walk",
         "attack",

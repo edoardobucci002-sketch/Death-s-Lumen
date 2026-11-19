@@ -211,8 +211,9 @@ export class Campanaro {
       case MOSSA_CAPO.carica:
         return f(spe, 1);
       case MOSSA_CAPO.stordito:
-      case MOSSA_CAPO.recupero:
         return f(att, att.frames.length - 1);
+      case MOSSA_CAPO.recupero: // subito dopo il Rintocco, finché si vede l'onda, la campana a terra (il colpo)
+        return f(att, this.onda > 0 ? meta : att.frames.length - 1);
       default:
         return this.onda > 0 ? f(att, meta) : null;
     }
