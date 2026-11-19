@@ -12,10 +12,14 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 19/11 — Ombra meno schiacciata
+
+- `OMBRE.schiaccia` **0,3 → 0,35** (*da rivedere*): Edoardo, «la farei leggermente meno schiacciata, ma proprio leggermente». Confermati da Edoardo `BARRA_STANZA.abbassa` 6 e la sagoma come ombra.
+
 ### 19/11 — Ombre a terra (numeri nuovi, solo aspetto)
 
 - `OMBRE`: colore #7a6470 (confermato da Edoardo), sagoma alta 0,3 volte lo sprite (`schiaccia`, *da rivedere*). La prima versione aveva ellissi larghe 28/32/30/48/60 px con proporzione 3: tolte, ora la larghezza è quella di ciascun personaggio.
-- `BARRA_STANZA.abbassa` **6** (*da rivedere*): la barra della salute delle stanze scende di 6 px (Edoardo: «abbassa leggermente»).
+- `BARRA_STANZA.abbassa` **6** (confermato da Edoardo il 19/11): la barra della salute delle stanze scende di 6 px (Edoardo: «abbassa leggermente»).
 - Non toccano il combattimento: niente simulazione.
 
 ### 18/11 — Candele del Lampionaio, a caso

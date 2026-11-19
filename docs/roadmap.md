@@ -190,7 +190,7 @@ Tutte le voci «da rivedere» sparse nei documenti: valori e scelte proposti da 
 | Voce | Dove è scritta |
 | --- | --- |
 | HUD: carta 9-slice dal 16/11 (minimo 140 × 214, massimo 210 × 320); medaglioni delle porte di 31 px; joystick ridisegnati dal codice il 16/11 | `asset_da_creare.md`, GDD «Carte» |
-| Ombre a terra (19/11): sagoma alta 0,3 volte lo sprite (`OMBRE.schiaccia`); barra della salute delle stanze 6 px più in basso (`BARRA_STANZA.abbassa`) | GDD «Il gioco a stanze» |
+| Ombre a terra (19/11): sagoma alta 0,35 volte lo sprite (`OMBRE.schiaccia`, era 0,3: «leggermente meno schiacciata») | GDD «Il gioco a stanze» |
 | Bocca del Cantore (`NEMICI_STANZA.cantore.bocca`: [7, 87] nel canto, [46, 72] nello sputo, discesa 0,3 s), misurata sullo sprite V1 | GDD «Il Cantore» |
 | Fiaschetta nel gioco a stanze (17/11): automatica sotto il 15% di salute (idea di Edoardo); i sorsi non tornano nella fetta; ~~Specchio a 3 livelli con +1 colpo per livello~~ (nelle stanze dal 17/11 +1, +2, +2 colpi al 50/50/100% del danno, righe di Edoardo) e Campanella +0,1 s per livello; ~~Calice riverso a 3 livelli, +1 sorso per livello~~ (confermato da Edoardo il 17/11) | GDD «Il percorso» |
 | Rarità (17/11): il grado di ogni oggetto (Ardente Lapide, Rosario spezzato e Specchio; Chiara Candela, Fuoco fatuo, Corvo, Sale nero, Clessidra, Scudo di ferro, Chiodo di bara, Calice riverso; Fioca gli altri e la Lanterna); il grado vale anche per i livelli; ~~il lampo dell'Ardente e il nome del grado in alto~~ (vanno bene per ora, Edoardo 17/11); probabilità 75 / 20 / 5 da tarare | GDD «Rarità», `src/data/rarita.ts` |
