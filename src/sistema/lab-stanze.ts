@@ -14,6 +14,7 @@
  * chiave del Campanaro, che apre la porta del Boss. Passo 4 (18/11): spostare la minimappa a sinistra o a destra,
  * visitare tutte le stanze per vederla piena. Tesoro e Sosta (18/11): andarci, usare l'oggetto.
  */
+import { Ombre } from './ombre';
 import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE, POTENZIALI } from '../data/armi-stanze';
@@ -46,7 +47,7 @@ export class LabStanze {
     x: number; y: number; larghezza: number; altezza: number; fermo: boolean; colpi: number;
     salute: number; extra: number; sorsi: number; sorsiMassimi: number; saluteMassima: number; immortale: boolean; morto: boolean; grazia: number; schivate: number; ferite: number;
     nemici: number; pozze: number; uccisi: number; rinascite: number; ondate: number; ondateAutomatiche: boolean; rinascita: boolean | null;
-    quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean;
+    quiete: number; carica: number; caricaPiena: number; abilitaUsi: number; abilitaAttiva: number; fermoImpatto: boolean; ombre: boolean;
     doppia: boolean; lastre: string; stanza: number; indice: number; tipo: string; chiave: boolean; chiuse: number; latoMinimappa: string; distanza: number; ripulite: number; totale: number; fase: string; ricompensa: string; porte: string[]; echi: string[]; lanterna: number; doni: string[]; carteAperte: boolean; finita: boolean;
   } {
     const s = this.s, n = s.nemici;
@@ -55,7 +56,7 @@ export class LabStanze {
       salute: Math.round(s.salute), extra: Math.round(s.extra), sorsi: s.fiaschetta.sorsi, sorsiMassimi: s.fiaschetta.massimo, saluteMassima: Math.round(s.saluteMassima), immortale: s.immortale, morto: s.morto,
       grazia: Math.max(0, s.grazia), schivate: s.schivatePerfette, ferite: s.ferite,
       nemici: n.vivi(), pozze: n.pozze, uccisi: n.uccisi, rinascite: n.rinascite, ondate: s.ondate, ondateAutomatiche: s.ondateAutomatiche, rinascita: n.rinascitaForzata,
-      quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto,
+      quiete: s.quiete, carica: s.abilita.carica, caricaPiena: ABILITA_STANZA.colpi, abilitaUsi: s.abilita.usi, abilitaAttiva: Math.max(0, s.abilita.attiva), fermoImpatto: n.fermoImpatto, ombre: Ombre.accese,
       stanza: s.percorso.stanza, indice: s.percorso.corrente, tipo: s.percorso.qui.tipo, chiave: s.percorso.chiave, chiuse: s.porte.chiuse.filter(Boolean).length, latoMinimappa: MINIMAPPA.lato, distanza: s.percorso.qui.distanza,
       ripulite: s.mappa.stanze.filter((x) => x.ripulita).length, totale: s.mappa.stanze.length,
       fase: s.percorso.fase, ricompensa: s.percorso.ricompensa, porte: s.porte.muri.map((m, k) => `${m}: ${s.porte.ricompense[k] ?? '–'}`),
@@ -398,6 +399,11 @@ export class LabStanze {
   /** Accende o spegne il fermo d'impatto (per confrontare). */
   fermoImpatto(si: boolean): void {
     this.s.nemici.fermoImpatto = si;
+  }
+
+  /** Accende o spegne le ombre a terra di personaggio e nemici (per confrontare). */
+  ombre(si: boolean): void {
+    Ombre.accese = si;
   }
 
   /** Carica dell'abilità piena (o vuota). */

@@ -267,6 +267,19 @@ export const IMPATTO = {
 } as const;
 
 /**
+ * Ombre a terra sotto i personaggi (idea di Edoardo del 19/11: come le ombre dipinte sui fogli d'acetato dell'animazione
+ * classica). Ellisse piatta a bordi netti che scurisce il pavimento («moltiplica»: il colore si moltiplica per quello del
+ * pavimento, più è scuro più l'ombra è scura). Misure, colore e proporzione proposti da Claude, da rivedere.
+ */
+export const OMBRE = {
+  accese: true, // si spengono dal LAB per confrontare
+  colore: 0x7a6470, // il colore del foglio d'ombra: viola-grigio caldo, moltiplicato sul pavimento (da rivedere)
+  proporzione: 3, // larga 3 volte la sua altezza (da rivedere)
+  // larghezza in pixel del mondo, circa il doppio del corpo (raggio) di ciascuno (da rivedere)
+  larghezza: { lampionaio: 28, ricaduto: 32, cantore: 30, campanaro: 48, seth: 60 },
+} as const;
+
+/**
  * Ricaduto, Cantore, Campanaro (mini-boss, dal 17/11) e Seth (Boss, dal 18/11) come li vede la Orda del survivor (src/sistema/orda.ts), che li tiene in fondo al suo elenco di tipi:
  * così le armi automatiche (gli Echi), gli stati e le reazioni funzionano anche su di loro. Il loro modo di muoversi e
  * di attaccare resta in NEMICI_STANZA e in src/sistema/nemici-stanza.ts.

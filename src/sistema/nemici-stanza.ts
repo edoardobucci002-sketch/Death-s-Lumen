@@ -17,7 +17,8 @@
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
  */
 import Phaser from 'phaser';
-import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, ONDATA } from '../data/stanze';
+import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, OMBRE, ONDATA } from '../data/stanze';
+import { Ombre } from './ombre';
 import { PROFONDITA, type Effetti } from './effetti';
 import { MISURA, areaCamminabile } from './stanza';
 import type { Caso } from './caso';
@@ -42,6 +43,7 @@ export const FONTE = { lanterna: 0, abilita: 1 } as const;
 const MAX_COMPARSE = ONDATA.massimo;
 const MAX_GRUMI = 16;
 const MAX_POZZE = 16;
+const MAX_OMBRE = 64; // ombre dei nemici disegnate insieme (oltre, i nemici restano senza)
 const P = NEMICI_STANZA.pozza;
 const R = NEMICI_STANZA.ricaduto;
 const C = NEMICI_STANZA.cantore;
@@ -98,6 +100,7 @@ export class NemiciStanza {
   private pSprite: Phaser.GameObjects.Image[] = []; // le pozze di cera (effetto pixelfx), se il foglio c'è
   private pFotogrammi = 0;
   private terra: Phaser.GameObjects.Graphics; // avvisi e comparse a terra (sotto i nemici)
+  private readonly ombre: Ombre; // le ombre a terra dei nemici in campo
   private sopra: Phaser.GameObjects.Graphics; // barre della salute
   private sopraBuio: Phaser.GameObjects.Graphics; // i bordi degli avvisi del Campanaro: si vedono anche nel buio
   private orologio = 0;
@@ -181,6 +184,7 @@ export class NemiciStanza {
       }
     }
     this.terra = scena.add.graphics().setDepth(PROFONDITA.aTerra + 1);
+    this.ombre = new Ombre(scena, MAX_OMBRE);
     this.sopra = scena.add.graphics().setDepth(PROFONDITA.sopra - 1);
     this.sopraBuio = scena.add.graphics().setDepth(PROFONDITA.buio + 0.5);
   }
@@ -771,9 +775,15 @@ export class NemiciStanza {
     this.sopraBuio.clear();
     const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra, E = NEMICI_STANZA.effetti;
     o.disegna(cam, 64, gx, gy);
+    this.ombre.inizia();
     this.seth.disegnaProiettili(this.sopraBuio, this.orologio); // falci e detriti di Seth, sopra il buio
     for (let i = 0; i < o.numero; i++) {
       const sp = o.spriteDi(i), st = this.stato[i], x = Math.round(o.x[i]), y = Math.round(o.y[i]);
+      // l'ombra resta ai piedi anche quando il nemico si solleva nell'avviso o è a terra; Seth affondato lampeggia con lei
+      if (sp.visible && !(o.tipo[i] === ID_SETH && this.seth.affondato && Math.floor(this.orologio * 10) % 2 !== 0)) {
+        const L = OMBRE.larghezza, ti = o.tipo[i];
+        this.ombre.ombra(x, y, ti === ID_RICADUTO ? L.ricaduto : ti === ID_CAMPANARO ? L.campanaro : ti === ID_SETH ? L.seth : L.cantore);
+      }
       // schiacciamento: largo e basso subito dopo il colpo, poi torna come prima
       const k = Math.max(0, this.schiaccia[i]) / IMPATTO.schiaccia.durata, S = IMPATTO.schiaccia, ing = o.ingrandimentoDi(i);
       sp.setScale(ing * (1 + (S.largo - 1) * k), ing * (1 + (S.basso - 1) * k)).setDepth(PROFONDITA.aTerra + 10 + y);
@@ -835,6 +845,7 @@ export class NemiciStanza {
         s.fillStyle(0xc0262d).fillRect(bx + 2, by + 2, pieno, H - 4);
       }
     }
+    this.ombre.fine();
     // il segno a terra dove sta per comparire un nemico: un anello che si stringe
     for (let c = 0; c < this.comparse; c++) {
       const x = Math.round(this.cX[c]), y = Math.round(this.cY[c]);

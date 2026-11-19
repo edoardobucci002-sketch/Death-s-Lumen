@@ -18,6 +18,7 @@ import { chiediFendente, fendenteCaricato } from './al-volo';
 /** Ordine di disegno, dal basso verso l'alto. Personaggio e nemici stanno in mezzo, ordinati per i piedi. */
 export const PROFONDITA = {
   terreno: -1e7,
+  ombre: -1e6 - 0.5, // ombre a terra del gioco a stanze: sopra il pavimento e l'alone, sotto tutto il resto
   aTerra: -1e6, // archi, impatti, nubi: sotto i nemici, così non li coprono
   personaggio: 4e6, // sopra tutti i nemici, Seth compreso: non deve mai sparire sotto di loro
   sopra: 5e6, // proiettili, esplosioni, scoppi, numeri

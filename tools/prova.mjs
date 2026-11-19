@@ -1006,6 +1006,20 @@ for (const [nome, disp] of [
     await pag.waitForTimeout(1200);
     await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); s.lab.sorsiMassimi(3); s.lab.fiaschettaPiena(); });
     notaPallini = ', pallini della fiaschetta sì';
+    // le ombre a terra (19/11): una sotto il Lampionaio e una per nemico; il LAB le spegne tutte
+    const ombre = () => pag.evaluate(() => window.__dl.scene.getScene('Stanze').children.list.filter((o) => o.visible && o.texture?.key.startsWith('ombra-')).length);
+    await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'), l = s.lab; l.immortale(true); l.nemicoIn('ricaduto', s.x + 70, s.y + 10); l.nemicoIn('cantore', s.x - 70, s.y - 10); });
+    await pag.waitForTimeout(150);
+    await pag.evaluate(() => window.__dl.scene.getScene('Stanze').lab.ferma(true));
+    const accese = await ombre();
+    if (accese !== 3) errori.push(`ombre a terra: ${accese} invece di 3 (Lampionaio e 2 nemici)`);
+    await pag.screenshot({ path: `prove/${nome}-ombre.png`, clip: await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'), c = s.cameras.main, r = s.game.canvas.getBoundingClientRect(), k = r.width / s.scale.width; return { x: r.x + (s.x - c.scrollX - 130) * k, y: r.y + (s.y - c.scrollY - 100) * k, width: 260 * k, height: 140 * k }; }) });
+    await pag.evaluate(() => { const l = window.__dl.scene.getScene('Stanze').lab; l.ferma(false); l.ombre(false); });
+    await pag.waitForTimeout(100);
+    const spente = await ombre();
+    if (spente !== 0) errori.push(`ombre spente dal LAB: se ne vedono ancora ${spente}`);
+    notaPallini += ', ombre sì';
+    await pag.evaluate(() => { const l = window.__dl.scene.getScene('Stanze').lab; l.ombre(true); l.svuota(); l.immortale(false); });
   }
   await pag.waitForTimeout(500);
   const stato = () => pag.evaluate(() => {

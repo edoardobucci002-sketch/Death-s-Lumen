@@ -463,8 +463,9 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Ferito', () => { st.lab.ferita(); mostra(false); }),
         tasto('Cade', () => { st.lab.cadi(); mostra(false); }),
         tasto(s.fermoImpatto ? 'Fermo d\'impatto: sì' : 'Fermo d\'impatto: no', f(() => st.lab.fermoImpatto(!s.fermoImpatto)), s.fermoImpatto ? 'acceso' : ''),
+        tasto(s.ombre ? 'Ombre: sì' : 'Ombre: no', f(() => st.lab.ombre(!s.ombre)), s.ombre ? 'acceso' : ''),
       ),
-      el('p', 'lab-nota', '«Ferito» e «Cade» chiudono il pannello e mostrano le animazioni hurt e death (Ferito toglie 10 di salute ma non uccide). «Grazia adesso» fa partire anche l\'attimo al rallentatore. Il fermo d\'impatto ferma per un attimo il Lampionaio e il nemico colpito: spegnilo per sentire la differenza (vale finché non esci dalla stanza; numeri in Numeri → stanze → IMPATTO). Quiete e Grazia sono in Numeri → stanze → COMBATTIMENTO_STANZA e GRAZIA_STANZA.'),
+      el('p', 'lab-nota', '«Ferito» e «Cade» chiudono il pannello e mostrano le animazioni hurt e death (Ferito toglie 10 di salute ma non uccide). «Grazia adesso» fa partire anche l\'attimo al rallentatore. Ombre: l\'ombra a terra sotto personaggio e nemici, come sui fogli d\'acetato (numeri in Numeri → stanze → OMBRE). Il fermo d\'impatto ferma per un attimo il Lampionaio e il nemico colpito: spegnilo per sentire la differenza (vale finché non esci dalla stanza; numeri in Numeri → stanze → IMPATTO). Quiete e Grazia sono in Numeri → stanze → COMBATTIMENTO_STANZA e GRAZIA_STANZA.'),
       titolo('Abilità (Cerchio di luce)'),
       riga(el('span', 'lab-stato', `Carica ${s.carica}/${s.caricaPiena} colpi · usata ${s.abilitaUsi} volte${s.abilitaAttiva > 0 ? ` · attiva ancora ${s.abilitaAttiva.toFixed(1)} s` : ''}`)),
       riga(

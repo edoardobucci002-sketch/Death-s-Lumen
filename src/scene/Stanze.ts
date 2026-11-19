@@ -25,7 +25,7 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, PERCORSO, PORTE, STANZA } from '../data/stanze';
+import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, OMBRE, ONDATA, PERCORSO, PORTE, STANZA } from '../data/stanze';
 import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
@@ -56,6 +56,7 @@ import { AttaccoATasto } from '../sistema/attacco';
 import { COLPI } from '../data/armi';
 import { audioAttivo, impostaAudio, suona } from '../sistema/audio';
 import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
+import { Ombre } from '../sistema/ombre';
 import { MISURA, areaCamminabile, creaStanza, eDoppia, misuraStanza } from '../sistema/stanza';
 import { tela } from '../sistema/scritte';
 import { LabStanze } from '../sistema/lab-stanze';
@@ -103,6 +104,7 @@ export class Stanze extends Phaser.Scene {
   private attesaTremolio = 0;
   private fiamma = 1;
   private buio!: Phaser.GameObjects.Image;
+  private ombra!: Ombre; // l'ombra a terra del personaggio
   private alone!: Phaser.GameObjects.Image;
   private misureBuio = { w: 0, h: 0 };
   private radice!: HTMLElement;
@@ -238,6 +240,7 @@ export class Stanze extends Phaser.Scene {
 
     creaStanza(this, this.semeStanza(this.mappa.ingresso + 1));
     this.giocatore = this.add.sprite(0, 0, this.chiaveSprite).setDepth(PROFONDITA.personaggio);
+    this.ombra = new Ombre(this, 1);
     if (voce(this, this.chiaveSprite)?.versioneFile === 0) {
       this.giocatore.setOrigin(PIEDI_SEGNAPOSTO.x / this.giocatore.frame.realWidth, PIEDI_SEGNAPOSTO.y / this.giocatore.frame.realHeight);
     } else {
@@ -1036,6 +1039,10 @@ export class Stanze extends Phaser.Scene {
     const F = this.fiaschetta;
     this.barra.disegnaPallini(px, py, F.sorsi, F.massimo, F.bevendo, F.premiBevuti, dt, !this.morto);
     this.nemici.disegna(cam, px, py);
+    // l'ombra segue il corpo quando si sporge per colpire; resta anche mentre lampeggia in Quiete e da caduto
+    this.ombra.inizia();
+    this.ombra.ombra(this.giocatore.x, py, OMBRE.larghezza.lampionaio);
+    this.ombra.fine();
     const capo = this.nemici.indiceCapo(), o = this.nemici.orda;
     this.barraCapo.aggiorna(capo >= 0 ? o.salute[capo] / o.saluteMassima[capo] : null, capo >= 0 && o.tipo[capo] === ID_SETH);
     this.aggiornaContatori();
