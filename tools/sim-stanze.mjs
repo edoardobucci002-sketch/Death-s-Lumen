@@ -31,7 +31,9 @@ const browser = await chromium.launch();
 const inizio = Date.now();
 
 const coda = [];
-if (modo === 'unioni') for (const unione of UNIONI) for (let k = 0; k < partite; k++) for (const unita of [true, false]) coda.push({ seme: 2001 + k, esplora: false, unione, unita });
+// «solo=faroDeiMorti,sudario»: solo quelle Unioni
+const solo = argomenti.find((a) => a.startsWith('solo='))?.slice(5).split(',');
+if (modo === 'unioni') for (const unione of UNIONI.filter((u) => !solo || solo.includes(u))) for (let k = 0; k < partite; k++) for (const unita of [true, false]) coda.push({ seme: 2001 + k, esplora: false, unione, unita });
 else if (modo === 'potenziali') for (const eco of ECHI) for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: false, eco });
 else for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: modo === 'esplora' || (modo === 'misto' && k % 2 === 1) });
 const totale = coda.length;
@@ -122,11 +124,19 @@ if (modo === 'potenziali') {
 // modo «unioni»: per ogni Unione, partite con l'Unione e con la stessa build senza: Seth battuto, stanze, parte del danno dell'arma
 if (modo === 'unioni') {
   console.log('\nUnione (arma al 4, dono al massimo)   Seth battuto  stanze in media  parte del danno dell\'arma   (con l\'Unione / senza)');
-  for (const u of UNIONI) {
+  for (const u of UNIONI.filter((x) => !solo || solo.includes(x))) {
     const arma = ARMA_UNIONE[u], con = ok.filter((r) => r.unione === u && r.unita), senza = ok.filter((r) => r.unione === u && !r.unita);
     const parte = (rr) => Math.round(100 * media(rr.map((r) => (r.danno[arma] ?? 0) / Object.values(r.danno).reduce((x, y) => x + y, 0))));
     console.log(`  ${u.padEnd(36)}${`${con.filter((r) => r.completata).length}/${con.length} · ${senza.filter((r) => r.completata).length}/${senza.length}`.padStart(13)}` +
       `${`${media(con.map((r) => r.stanza)).toFixed(1)} · ${media(senza.map((r) => r.stanza)).toFixed(1)}`.padStart(17)}${`${parte(con)}% · ${parte(senza)}%`.padStart(27)}`);
+    // l'effetto misurato, a Veglia e al minuto (le Veglie durano diversamente: al minuto si confronta meglio)
+    const e = (k) => media(con.map((r) => r.effetti?.[k] ?? 0)), min = media(con.map((r) => r.secondi)) / 60, tot = media(con.map((r) => Object.values(r.danno).reduce((x, y) => x + y, 0)));
+    const dps = (rr) => media(rr.map((r) => Object.values(r.danno).reduce((x, y) => x + y, 0) / r.secondi));
+    const riga = { faroDeiMorti: `lampi ${e('lampi').toFixed(0)}, loro danno ${e('dannoLampi').toFixed(0)} (${Math.round((100 * e('dannoLampi')) / tot)}% della Veglia)`,
+      fuochiErranti: `uccisioni dei fuochi ${e('fuochi').toFixed(0)} = ${(e('fuochi') * 0.8).toFixed(0)} s di ricarica tolti`,
+      falceDelMietitore: `esecuzioni ${e('esecuzioni').toFixed(0)}, salute tolta ${e('dannoEsecuzioni').toFixed(0)} (${Math.round((100 * e('dannoEsecuzioni')) / tot)}% della Veglia)`,
+      sudario: `Grazia tenuta ${e('sudario').toFixed(1)} s` }[u];
+    console.log(`      ${riga ? riga + '; ' : ''}danno al secondo della build ${dps(con).toFixed(1)} con · ${dps(senza).toFixed(1)} senza (${Math.round((100 * (dps(con) - dps(senza))) / dps(senza))}%); durata ${(min).toFixed(1)} min`);
   }
 }
 

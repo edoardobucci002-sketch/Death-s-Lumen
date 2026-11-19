@@ -174,6 +174,8 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
     if (this.potenziale[F.falce] === 1) this.rubato += (prima - Math.max(0, o.salute[j])) * POTENZIALI.falce.furto;
     if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && !comeSeth(o.tipo[j]) && !this.eCapo?.(j) && o.salute[j] < soglia * o.saluteMassima[j]) {
       this.dannoFonti[F.falce] += o.salute[j];
+      this.esecuzioni++;
+      this.dannoEsecuzioni += o.salute[j];
       o.colpisci(j, o.salute[j], 0, 0, 0);
       o.uccisore[j] = F.falce + 1;
       this.uccisione(j);

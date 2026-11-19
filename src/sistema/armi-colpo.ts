@@ -137,6 +137,9 @@ export abstract class ArsenaleColpo {
   lampiFaro = 0; // lampi del Faro dei morti, uccisioni dei Fuochi erranti, nemici in lutto morti: per il LAB e le prove
   uccisiFuochi = 0;
   lutti = 0;
+  dannoLampi = 0; // danno dei lampi del Faro (contato anche come Lanterna); esecuzioni della Falce di Seth e salute che hanno tolto
+  esecuzioni = 0;
+  dannoEsecuzioni = 0;
   /** Gioco a stanze: il nemico j è un capo (Campanaro o Seth)? La Falce di Seth non li uccide all'istante. */
   eCapo: ((j: number) => boolean) | null = null;
   protected raffiche = 0; // raffiche del Bastone (Verga dei nomi)
@@ -535,7 +538,7 @@ export abstract class ArsenaleColpo {
       } else if (t === INTERRAMENTO) {
         this.effetti.reazione(x, y, REAZIONI.interramento.raggio, REAZIONI.interramento.colore, REAZIONI.interramento.bordo, REAZIONI.durataEffetto);
       }
-      if (this.qLampo[k]) this.lampoFaro(x, y, j);
+      if (this.qLampo[k]) this.lampoFaro(x, y);
       if (t !== ESPLOSIONE) {
         this.reazioni++;
         this.reazioniPerTipo[t]++;
@@ -545,16 +548,17 @@ export abstract class ArsenaleColpo {
     this.code = 0;
   }
 
-  /** Faro dei morti (gioco a stanze, 19/11): il nemico j abbagliato che ha reagito esplode in un lampo che ferisce chi gli sta intorno. */
-  private lampoFaro(x: number, y: number, j: number): void {
+  /** Faro dei morti (gioco a stanze, 19/11): il nemico abbagliato che ha reagito esplode in un lampo che ferisce lui e chi gli sta intorno. */
+  private lampoFaro(x: number, y: number): void {
     const L = NUMERI_UNIONI_STANZE.faro.lampo;
     this.lampiFaro++;
+    const prima = this.dannoFonti[F.lanterna];
     this.prepara(0, x, y, L.raggio, L.danno, 0); // senza affinità: il lampo non lascia stati, quindi non fa altre reazioni
     this.fonte = F.lanterna;
-    this.orda.segno[j] = this.colpo; // lui no: ferisce chi gli sta vicino
     this.orda.griglia.nelRaggio(x, y, L.raggio + 40, this.visitaColpo);
     this.rompiForma();
     this.effetti.reazione(x, y, L.raggio, L.colore, L.bordo, REAZIONI.durataEffetto);
+    this.dannoLampi += this.dannoFonti[F.lanterna] - prima;
   }
 
   /**

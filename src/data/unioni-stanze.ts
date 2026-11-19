@@ -18,9 +18,10 @@ export const LIVELLO_ARMA_UNIONE_STANZE = 4;
 /** I numeri delle quattro Unioni adattate alle stanze (proposte di Claude del 19/11, da rivedere). */
 export const NUMERI_UNIONI_STANZE = {
   // Faro dei morti: l'arco del Fendente si allarga di «arco»; un nemico abbagliato che fa scattare una reazione (Eclissi,
-  // Rivelazione, Interramento: ogni reazione che consuma la Luce) esplode in un lampo che ferisce i nemici entro «raggio» px
-  // intorno a lui (non lui), con «danno» prima dei doni; il lampo non lascia stati (idea di Edoardo del 19/11; colori segnaposto)
-  faro: { arco: 0.25, lampo: { raggio: 64, danno: 8, colore: '#fff1b8', bordo: '#ffffff' } }, // lampo 15 → 8 (19/11)
+  // Rivelazione, Interramento: ogni reazione che consuma la Luce) esplode in un lampo che ferisce lui e i nemici entro «raggio»
+  // px, con «danno» prima dei doni; il lampo non lascia stati (idea di Edoardo del 19/11; colori segnaposto). Misurato il 19/11:
+  // a 64 px e 8 di danno, solo sui vicini, valeva circa +1% (colpiva quasi a vuoto): ora lui compreso, 96 px e 20 (Edoardo)
+  faro: { arco: 0.25, lampo: { raggio: 96, danno: 20, colore: '#fff1b8', bordo: '#ffffff' } },
   // Fuochi erranti: ogni nemico ucciso da un fuoco fatuo toglie tanti secondi alla ricarica di tutti gli Echi (Edoardo, 19/11)
   fuochi: { ricarica: 0.8 }, // 0,3 → 0,8 (19/11)
   // Stormo del lutto: un nemico beccato che muore entro «durata» secondi ti cura «cura» salute (Edoardo, 19/11)
@@ -53,7 +54,7 @@ export const UNIONI_STANZE: Unione[] = [
   { id: 'sudario', arma: 'veloFunebre', dono: 'campanellaDArgento', nome: 'Sudario', testo: `In Grazia, finché un nemico è dentro il velo la Grazia non scade, fino a ${num(N.stanze.sudario.fino)} s in tutto.` },
   { id: 'selciato', arma: 'sampietrini', dono: 'scudoDiFerro', nome: 'Selciato', testo: 'Un sampietrino che colpisce un nemico fermo rimbalza una volta in più.' },
   // le quattro adattate (19/11)
-  { id: 'faroDeiMorti', arma: 'lanterna', dono: 'stoppinoLungo', nome: 'Faro dei morti', testo: `L'arco del Fendente si allarga del ${pc(N.faro.arco)}; un nemico abbagliato che fa scattare una reazione esplode in un lampo di luce che ferisce chi gli sta vicino.` },
+  { id: 'faroDeiMorti', arma: 'lanterna', dono: 'stoppinoLungo', nome: 'Faro dei morti', testo: `L'arco del Fendente si allarga del ${pc(N.faro.arco)}; un nemico abbagliato che fa scattare una reazione esplode in un lampo di luce che ferisce lui e chi gli sta vicino.` },
   { id: 'fuochiErranti', arma: 'fuocoFatuo', dono: 'clessidra', nome: 'Fuochi erranti', testo: `Ogni nemico ucciso da un fuoco toglie ${num(N.fuochi.ricarica)} s alla ricarica di tutti gli Echi.` },
   { id: 'stormoDelLutto', arma: 'corvo', dono: 'erbeAmare', nome: 'Stormo del lutto', testo: `Un nemico beccato che muore entro ${num(N.lutto.durata)} s ti cura ${num(N.lutto.cura)} salute.` },
   { id: 'midolloSplendente', arma: 'lamaDiLuce', dono: 'aliDiFalena', nome: 'Midollo Splendente', testo: 'I nemici ciechi si colpiscono tra loro: l\'attacco che sbaglia la mira ferisce gli altri nemici che trova.' },

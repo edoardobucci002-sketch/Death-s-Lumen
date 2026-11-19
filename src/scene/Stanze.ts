@@ -151,6 +151,7 @@ export class Stanze extends Phaser.Scene {
   grazia = 0; // secondi di Grazia rimasti
   graziaDa = 0; // secondi dall'inizio della Grazia in corso (Sudario: la tiene fino a NUMERI_UNIONI_STANZE.stanze.sudario.fino in tutto)
   private sudarioTiene = false;
+  sudarioSecondi = 0; // secondi di Grazia tenuti dal Sudario (per le simulazioni)
   private rivelazione!: Rivelazione; // l'animazione della scoperta di un'Unione (la stessa del survivor)
   private unioniScoperte = new Set<IdUnione>(); // Unioni delle stanze già scoperte su questo dispositivo
   schivatePerfette = 0; // in questa stanza (per il LAB e le prove)
@@ -602,6 +603,7 @@ export class Stanze extends Phaser.Scene {
         this.arsenale.tingiVelo(tiene);
       }
       if (!tiene) this.grazia -= dt;
+      else this.sudarioSecondi += dt;
     } else if (this.sudarioTiene) {
       this.sudarioTiene = false;
       this.arsenale.tingiVelo(false);
@@ -1155,6 +1157,7 @@ export class Stanze extends Phaser.Scene {
       uccisi: this.nemici.uccisi, rinascite: this.nemici.rinascite, schivate: this.schivatePerfette, colpiLanterna: this.attacco.colpi,
       usiAbilita: this.abilita.usi, livelloLanterna: this.percorso.livelloLanterna, arsenale: this.arsenale,
       doni: PERCORSO.doniAttivi.filter((id) => this.percorso.passivi[id] > 0).map((id) => `${DONO[id].nome} ${this.percorso.passivi[id]}`),
+      sudarioSecondi: this.sudarioSecondi,
     });
   }
 

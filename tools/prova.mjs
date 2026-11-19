@@ -1676,9 +1676,12 @@ for (const [nome, disp] of [
   await chiudiScoperte();
   await L('bloccaPorte', true);
   await L('bot', true);
-  for (let k = 0; k < 14; k++) {
+  // finché lampi, uccisioni dei Fuochi e lutti non sono comparsi tutti (al massimo 30 s): chi uccide per primo cambia ogni volta
+  for (let k = 0; k < 30; k++) {
     if (k % 4 === 0) await L('ondata');
     await pag.waitForTimeout(1000);
+    const x = await L('effettiUnioni');
+    if (k >= 6 && x.lampi && x.fuochi && x.lutti) break;
   }
   // Midollo Splendente: personaggio fermo al centro, cinque Ricaduti stretti davanti a lui, accecati di continuo; i graffi che
   // sbagliano la mira devono ferire i vicini
