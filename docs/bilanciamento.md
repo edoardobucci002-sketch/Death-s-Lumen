@@ -12,6 +12,21 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 19/11 — I doni dei mosaici: prima misura
+
+- Numeri di partenza di Claude (*da rivedere*): Fiamma custodita +30% entro 80 px; Ultimo cero 9 ceri da +4%; Brace nel petto 24 danni ogni 0,5 s entro 40 px; Mano tesa +12 salute a schivata perfetta; Corona incrinata +60% ai capi e +15% subito da loro. Mosaico ritrovato: 10 Cera.
+- `npm run sim-stanze -- 8 mosaici`: 8 Veglie per dono, ognuna con il dono al massimo dall'inizio, contro le stesse 8 senza dono. Senza dono la Veglia media dura **144 s**, fa **6144 danni** in **7 stanze**, con **8,9 schivate perfette**; il bot cade quasi sempre contro il Campanaro (40 Veglie su 48).
+
+| Dono (al massimo) | Seth battuto (con · senza) | Effetto misurato a Veglia | Danno al secondo |
+| --- | --- | --- | --- |
+| Fiamma custodita | 1/8 · 0/8 | — | **+11%** |
+| Ultimo cero | 0/8 · 0/8 | 1,5 ceri accesi e 1,5 spenti: il bot si fa colpire in quasi ogni stanza, il cero dura fino al colpo dopo | **0%** |
+| Brace nel petto | 1/8 · 0/8 | 143 danni, il **2%** della Veglia | 0% |
+| Mano tesa | 3/8 · 0/8 | **126 salute** curata | +12% (vive più a lungo) |
+| Corona incrinata | 0/8 · 0/8 | quasi tutto il danno in più va sul Campanaro | **+16%** |
+
+- Con l'obiettivo delle Unioni (circa +10% di danni o 100 salute a Veglia): Fiamma custodita è in linea, Mano tesa un po' sopra, Corona incrinata un po' sopra (ma ha il rovescio), Brace nel petto e Ultimo cero molto sotto. Con 8 Veglie per lato il rumore è grande (±12 punti con 48): sono indicazioni, non misure.
+
 ### 19/11 — Lapide inchiodata a 1 s per critico; Midollo confermato
 
 - **Lapide inchiodata**: **2 → 1 s** tolti per critico (Edoardo: con 2 valeva +17%, sopra l'obiettivo del +10%). Midollo Splendente resta com'è; i colori della polvere vanno bene (l'effetto verrà ridisegnato).
