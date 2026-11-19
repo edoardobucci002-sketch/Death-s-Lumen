@@ -11,6 +11,7 @@ import { EFFETTI } from '../data/effetti';
 import { CAMPANA, FALCE, LAMA_DI_LUCE, LANTERNA, PALA, type Arma } from '../data/armi';
 import { POTENZIALI } from '../data/armi-stanze';
 import { NUMERI_UNIONI as U } from '../data/unioni';
+import { NUMERI_UNIONI_STANZE } from '../data/unioni-stanze';
 import { MAX_LAME, MAX_RITARDATI, F } from './armi-colpo';
 import { ArsenaleProiettili } from './armi-proiettili';
 
@@ -165,7 +166,8 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
     const ey = o.y[j] - o.raggio[j] - this.py;
     const d = Math.hypot(ex, ey) || 1;
     // Falce di Seth: la soglia dipende dallo stato che il nemico aveva prima del colpo (la Falce stessa maledice)
-    const soglia = o.maledetto(j) ? U.falce.maledetti : U.falce.sotto;
+    const F_ = this.unioniStanze ? NUMERI_UNIONI_STANZE.stanze.falce : U.falce; // nelle stanze soglie loro (19/11)
+    const soglia = o.maledetto(j) ? F_.maledetti : F_.sotto;
     const prima = o.salute[j];
     this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
     // potenziale (gioco a stanze): ruba una parte del danno che ha fatto davvero

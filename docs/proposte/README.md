@@ -22,4 +22,6 @@ Copie in testo delle proposte approvate da Edoardo, nate come documenti su claud
 
 - **Porte chiuse** (`6X7gTJS1txkrSqoA7aVxzP`, 17/11, eliminato il 17/11): questionario di 8 domande su chiavi (dove, cosa c'è dietro, quante) e altri modi di chiudere una porta (candele, muri crepati, prezzo, prova, affinità). Risposte applicate: vedi [decisioni.md](../decisioni.md) del 17/11.
 
+- **Unioni nel gioco a stanze** (`GkYNcG8TCL1KFF7fpsuKUL`, 19/11, eliminato il 19/11): proposta delle 12 Unioni con 9 domande (le otto come nel survivor, le quattro da adattare, come si ottengono, sblocco, cosa cambia, la carta). Risposte applicate: vedi [decisioni.md](../decisioni.md) del 19/11.
+
 Altri riferimenti esterni (v0 giocabile e suo compendio) sono in fondo a [decisioni.md](../decisioni.md).

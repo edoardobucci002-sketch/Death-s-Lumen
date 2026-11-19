@@ -30,7 +30,7 @@ import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
 import { NUMERI_UNIONI_STANZE } from '../data/unioni-stanze';
-import { NUMERI_UNIONI, iconaUnione, livelloDonoUnione, type IdUnione, type Unione } from '../data/unioni';
+import { iconaUnione, livelloDonoUnione, type IdUnione, type Unione } from '../data/unioni';
 import { LIVELLO_ARMA_UNIONE_STANZE, UNIONI_STANZE } from '../data/unioni-stanze';
 import { Rivelazione } from '../sistema/rivelazione';
 import { Percorso } from '../sistema/percorso';
@@ -149,7 +149,7 @@ export class Stanze extends Phaser.Scene {
   immortale = false; // LAB
   morto = false;
   grazia = 0; // secondi di Grazia rimasti
-  graziaDa = 0; // secondi dall'inizio della Grazia in corso (Sudario: la tiene fino a NUMERI_UNIONI.sudario.fino in tutto)
+  graziaDa = 0; // secondi dall'inizio della Grazia in corso (Sudario: la tiene fino a NUMERI_UNIONI_STANZE.stanze.sudario.fino in tutto)
   private sudarioTiene = false;
   private rivelazione!: Rivelazione; // l'animazione della scoperta di un'Unione (la stessa del survivor)
   private unioniScoperte = new Set<IdUnione>(); // Unioni delle stanze già scoperte su questo dispositivo
@@ -594,9 +594,9 @@ export class Stanze extends Phaser.Scene {
     }
     this.orologio += dt;
     if (this.grazia > 0) {
-      // Sudario (Velo funebre unito): con un nemico dentro il velo la Grazia non scade, fino a NUMERI_UNIONI.sudario.fino s in tutto
+      // Sudario (Velo funebre unito): con un nemico dentro il velo la Grazia non scade, fino a 9 s in tutto (stanze.sudario.fino)
       this.graziaDa += dt;
-      const tiene = this.graziaDa + this.grazia < NUMERI_UNIONI.sudario.fino && this.arsenale.sudario();
+      const tiene = this.graziaDa + this.grazia < NUMERI_UNIONI_STANZE.stanze.sudario.fino && this.arsenale.sudario();
       if (tiene !== this.sudarioTiene) {
         this.sudarioTiene = tiene;
         this.arsenale.tingiVelo(tiene);

@@ -11,6 +11,7 @@ import { EFFETTI } from '../data/effetti';
 import { BASTONE, CANDELA, SAMPIETRINI, CORVO, ROSARIO_SPEZZATO } from '../data/armi';
 import { POTENZIALI, ROSARIO_VOLO } from '../data/armi-stanze';
 import { NUMERI_UNIONI as U } from '../data/unioni';
+import { NUMERI_UNIONI_STANZE } from '../data/unioni-stanze';
 import { CHIAZZE, ROMPIBILI } from '../data/rompibili';
 import { SASSO_LARGO, SPRITE_SCIA } from './segnaposto-oggetti';
 import { ESPLOSIONE, MAX_PROIETTILI, MAX_GRANI, MAX_SASSI, MAX_RIMBALZI, SCIA, RACCOGLIE, PROIETTILI_V0, F } from './armi-colpo';
@@ -369,7 +370,8 @@ export abstract class ArsenaleProiettili extends ArsenaleZone {
       if (this.prUnione[i] === RACCOGLIE) this.anime?.attiraVicino(this.prX[i], this.prY[i], U.fuochi.raggio);
       else if (scia && this.prUnione[i] === SCIA) {
         const c = U.candelabro;
-        this.zona(SPRITE_SCIA, this.prX[i], this.prY[i], c.raggio, this.prDanno[i] * c.danno, c.durata, c.intervallo, 0, 0, 0, false, false, 0, LUCE);
+        const parte = this.unioniStanze ? NUMERI_UNIONI_STANZE.stanze.candelabro.danno : c.danno; // nelle stanze 15% (19/11)
+        this.zona(SPRITE_SCIA, this.prX[i], this.prY[i], c.raggio, this.prDanno[i] * parte, c.durata, c.intervallo, 0, 0, 0, false, false, 0, LUCE);
       }
       if (this.prVita[i] > 0) {
         this.cProiettile = i;

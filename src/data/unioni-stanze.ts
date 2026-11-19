@@ -5,7 +5,9 @@
  * ricompare alla stanza dopo; una per stanza. L'Unione dà solo l'effetto, non è un livello: l'arma può ancora salire al 5 e
  * Unione e potenziale si sommano. Disponibili da subito, senza sblocco nella Cappella (se ne riparla con il Mondo 2).
  * Le Unioni del survivor (src/data/unioni.ts) non cambiano: otto di queste usano il loro stesso effetto e i loro numeri
- * (NUMERI_UNIONI); le quattro adattate alle stanze hanno i numeri qui sotto. Tutti i numeri sono da rivedere.
+ * (NUMERI_UNIONI), tranne i ritocchi di «stanze» qui sotto; le quattro adattate hanno i numeri qui sotto. Tutti da rivedere.
+ * Ritocchi del 19/11 (Edoardo, dai calcoli a Veglia di Claude; obiettivo: un'Unione vale circa +10% di danni o 100 salute a
+ * Veglia): Candelabro, Faro e Stormo più deboli; Fuochi, Falce e Sudario più forti (docs/bilanciamento.md).
  */
 import type { Unione } from './unioni';
 import { NUMERI_UNIONI as U } from './unioni';
@@ -18,14 +20,18 @@ export const NUMERI_UNIONI_STANZE = {
   // Faro dei morti: l'arco del Fendente si allarga di «arco»; un nemico abbagliato che fa scattare una reazione (Eclissi,
   // Rivelazione, Interramento: ogni reazione che consuma la Luce) esplode in un lampo che ferisce i nemici entro «raggio» px
   // intorno a lui (non lui), con «danno» prima dei doni; il lampo non lascia stati (idea di Edoardo del 19/11; colori segnaposto)
-  faro: { arco: 0.25, lampo: { raggio: 64, danno: 15, colore: '#fff1b8', bordo: '#ffffff' } },
+  faro: { arco: 0.25, lampo: { raggio: 64, danno: 8, colore: '#fff1b8', bordo: '#ffffff' } }, // lampo 15 → 8 (19/11)
   // Fuochi erranti: ogni nemico ucciso da un fuoco fatuo toglie tanti secondi alla ricarica di tutti gli Echi (Edoardo, 19/11)
-  fuochi: { ricarica: 0.3 },
+  fuochi: { ricarica: 0.8 }, // 0,3 → 0,8 (19/11)
   // Stormo del lutto: un nemico beccato che muore entro «durata» secondi ti cura «cura» salute (Edoardo, 19/11)
-  lutto: { durata: 3, cura: 2 },
+  lutto: { durata: 3, cura: 1 }, // cura 2 → 1 (19/11)
   // Midollo Splendente: i ciechi si colpiscono tra loro; danno del graffio del Ricaduto e del grumo del Cantore a un altro
   // nemico (prima dei doni: Sale nero, Grazia e critico valgono come per le armi)
   midollo: { graffio: 20, grumo: 15 },
+  // le Unioni del survivor con numeri diversi nelle stanze (19/11; il survivor resta con NUMERI_UNIONI): la scia del
+  // Candelabro fa il 15% del danno della fiammella (survivor 40%); la Falce di Seth uccide sotto il 30%, i maledetti sotto
+  // il 50% (survivor 15% e 30%); il Sudario tiene la Grazia fino a 9 s in tutto (survivor 6)
+  stanze: { candelabro: { danno: 0.15 }, falce: { sotto: 0.3, maledetti: 0.5 }, sudario: { fino: 9 } },
 } as const;
 
 /** L'aspetto della carta Unione (19/11): al posto del grado il nastro «Unione», con un bordo freddo suo (segnaposto). */
@@ -39,12 +45,12 @@ const N = NUMERI_UNIONI_STANZE;
 export const UNIONI_STANZE: Unione[] = [
   // le otto come nel survivor (stesso effetto, stessi numeri: NUMERI_UNIONI)
   { id: 'candelabroFunebre', arma: 'candela', dono: 'cuoreDiCera', nome: 'Candelabro funebre', testo: 'Le fiammelle lasciano una scia che brucia.' },
-  { id: 'falceDelMietitore', arma: 'falce', dono: 'saleNero', nome: 'Falce di Seth', testo: `Uccide all'istante i nemici sotto il ${pc(U.falce.sotto)} di salute, i maledetti sotto il ${pc(U.falce.maledetti)} (mai i capi).` },
+  { id: 'falceDelMietitore', arma: 'falce', dono: 'saleNero', nome: 'Falce di Seth', testo: `Uccide all'istante i nemici sotto il ${pc(N.stanze.falce.sotto)} di salute, i maledetti sotto il ${pc(N.stanze.falce.maledetti)} (mai i capi).` },
   { id: 'campanaAMorto', arma: 'campana', dono: 'ceraVotiva', nome: 'Campana a morto', testo: `Ogni rintocco ferma i nemici per ${num(U.campana.fermo)} s.` },
   { id: 'acquasantiera', arma: 'acquaSanta', dono: 'lacrimaDiLumen', nome: 'Acquasantiera', testo: `Ogni ${U.acquasantiera.uccisioni} uccisioni nelle pozze torna un sorso di fiaschetta, al massimo uno ogni ${U.acquasantiera.pausa} s.` },
   { id: 'lapideInchiodata', arma: 'lapide', dono: 'chiodoDiBara', nome: 'Lapide inchiodata', testo: `La lapide resta a terra ${num(U.lapide.resta)} s e seppellisce chi la tocca.` },
   { id: 'rosarioDeiVespri', arma: 'rosarioSpezzato', dono: 'specchio', nome: 'Rosario dei vespri', testo: 'Quando un grano uccide un maledetto, da lui riparte un grano nuovo (una volta per lancio).' },
-  { id: 'sudario', arma: 'veloFunebre', dono: 'campanellaDArgento', nome: 'Sudario', testo: `In Grazia, finché un nemico è dentro il velo la Grazia non scade, fino a ${num(U.sudario.fino)} s in tutto.` },
+  { id: 'sudario', arma: 'veloFunebre', dono: 'campanellaDArgento', nome: 'Sudario', testo: `In Grazia, finché un nemico è dentro il velo la Grazia non scade, fino a ${num(N.stanze.sudario.fino)} s in tutto.` },
   { id: 'selciato', arma: 'sampietrini', dono: 'scudoDiFerro', nome: 'Selciato', testo: 'Un sampietrino che colpisce un nemico fermo rimbalza una volta in più.' },
   // le quattro adattate (19/11)
   { id: 'faroDeiMorti', arma: 'lanterna', dono: 'stoppinoLungo', nome: 'Faro dei morti', testo: `L'arco del Fendente si allarga del ${pc(N.faro.arco)}; un nemico abbagliato che fa scattare una reazione esplode in un lampo di luce che ferisce chi gli sta vicino.` },
