@@ -12,6 +12,29 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 19/11 — Unioni nel gioco a stanze
+
+- Nuovi (`src/data/unioni-stanze.ts`): `LIVELLO_ARMA_UNIONE_STANZE` **4** (pivot); `NUMERI_UNIONI_STANZE` (Claude, *da rivedere*): Faro dei morti arco **+25%** e lampo di **64 px** e **15** di danno; Fuochi erranti **−0,3 s** di ricarica degli Echi per uccisione; Stormo del lutto **3 s** e **2** salute; Midollo Splendente **20** (graffio) e **15** (grumo). Le otto come nel survivor usano `NUMERI_UNIONI` (Edoardo: «i numeri vanno comunque verificati»). Preferenza del bot: prende sempre la carta Unione (`BOT_STANZE.carte.unione`).
+- `npm run sim-stanze -- 48`: **identico a prima** (arrivati al Boss 8/48, Seth battuto 6/48 in 127 s, tesoro 22, cadute al Campanaro 36). Con le carte normali il bot **non arriva mai a un'Unione** (0 su 48): cade quasi sempre al Campanaro prima di avere un Eco al 4 e il suo dono al 3.
+- Modo nuovo `npm run sim-stanze -- 4 unioni`: ogni Veglia parte con l'arma al 4 e il dono al massimo, unita o no (stessi semi). Sono **4 Veglie per lato: tutto è dentro il rumore** (±25 punti); serve solo a vedere che ogni Unione funziona e a individuare gli estremi.
+
+| Unione | Seth battuto (con · senza) | stanze in media | parte del danno dell'arma |
+| --- | --- | --- | --- |
+| Candelabro funebre | 3/4 · 3/4 | 8,8 · 8,8 | **53% · 31%** |
+| Falce di Seth | 1/4 · 1/4 | 8,3 · 8,3 | 9% · 10% |
+| Campana a morto | 2/4 · 1/4 | 8,3 · 7,8 | 31% · 32% |
+| Acquasantiera | 0/4 · 0/4 | 7,5 · 7,5 | 22% · 22% |
+| Lapide inchiodata | 0/4 · 1/4 | 8,3 · 8,3 | 14% · 14% |
+| Rosario dei vespri | 2/4 · 2/4 | 9,0 · 8,8 | 25% · 25% |
+| Sudario | 1/4 · 2/4 | 7,8 · 8,0 | 16% · 17% |
+| Selciato | 1/4 · 1/4 | 9,0 · 9,0 | 24% · 24% |
+| Faro dei morti | 4/4 · 4/4 | 9,5 · 9,0 | 80% · 80% (il lampo conta come Lanterna) |
+| Fuochi erranti | 2/4 · 3/4 | 9,0 · 8,8 | 46% · 44% |
+| Stormo del lutto | 2/4 · 2/4 | 8,5 · 8,5 | 37% · 37%; **207 salute curata a Veglia** |
+| Midollo Splendente | 0/4 · 0/4 | 5,0 · 5,0 | 0% · 0% |
+
+- Da guardare con Edoardo: il **Candelabro funebre** quasi raddoppia il peso della Candela; lo **Stormo del lutto** cura circa 200 salute a Veglia (il doppio della salute massima), forse troppo; **Midollo Splendente** con il bot non scatta mai, perché il bot fa poche schivate perfette (1–9 a Veglia), e la build con l'Abbacinio al 4 cade presto (stanza 5): va provato a mano. In `npm run prova` funziona (280 di danno dei ciechi in 8 s con cinque Ricaduti accecati). Le otto «come nel survivor» cambiano poco o niente per il bot: Falce di Seth, Acquasantiera, Selciato e Rosario dei vespri hanno soglie e conteggi pensati per le orde del survivor.
+
 ### 19/11 — Ombra meno schiacciata
 
 - `OMBRE.schiaccia` **0,3 → 0,35** (confermato da Edoardo il 19/11): Edoardo, «la farei leggermente meno schiacciata, ma proprio leggermente». Confermati da Edoardo `BARRA_STANZA.abbassa` 6 e la sagoma come ombra.
