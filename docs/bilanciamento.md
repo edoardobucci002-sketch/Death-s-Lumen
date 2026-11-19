@@ -12,6 +12,13 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 19/11 — Unioni: calcolo a Veglia e ritocchi (decisioni di Edoardo)
+
+- **Veglia media** del bot con un'arma al livello 4: 206 s, 90 nemici battuti, 13.066 danni fatti, 253 subiti, 12 schivate perfette. **Obiettivo (Edoardo): un'Unione vale circa +10% di danni o circa 100 salute a Veglia.**
+- Calcolo di Claude prima dei ritocchi: Candelabro **+29%** (misurato: la Candela da 5.200 a 9.100), Faro **+20%** (stima: arco +1.000, circa 90 lampi × 15–18), Rosario dei vespri +5%, Selciato +4%, Fuochi erranti +4% (40 uccisioni × 0,3 s), Sudario +3%, Falce di Seth +1% (un colpo della Falce vale già il 15% di un Ricaduto), Lapide inchiodata circa +1%, Midollo Splendente +0,5%; Stormo del lutto **200 salute** (misurato), Campana a morto 65 salute, Acquasantiera 10 salute (0,3 sorsi).
+- Ritocchi scelti da Edoardo: scia del Candelabro **40% → 15%** del danno della fiammella; lampo del Faro **15 → 8**; Stormo del lutto **2 → 1** salute; Fuochi erranti **0,3 → 0,8 s**; Falce di Seth **15%/30% → 30%/50%**; Sudario **6 → 9 s**. Candelabro, Falce e Sudario solo nelle stanze (`NUMERI_UNIONI_STANZE.stanze`): il survivor resta con `NUMERI_UNIONI`. Acquasantiera, Rosario e Selciato restano; Midollo e Lapide avranno effetti nuovi.
+- `npm run sim-stanze -- 4 unioni` dopo i ritocchi: lo Stormo cura **104 salute a Veglia** (era 207); la Candela unita fa circa **+2.000 danni** sulla stessa build senza Unione (era +3.900). Faro, Fuochi, Falce e Sudario: differenze dentro il rumore (4 Veglie per lato, con durate diverse). Per misurarle bene servono più Veglie (almeno 24 per lato) o contatori per ogni effetto nella simulazione.
+
 ### 19/11 — Unioni nel gioco a stanze
 
 - Nuovi (`src/data/unioni-stanze.ts`): `LIVELLO_ARMA_UNIONE_STANZE` **4** (pivot); `NUMERI_UNIONI_STANZE` (Claude, *da rivedere*): Faro dei morti arco **+25%** e lampo di **64 px** e **15** di danno; Fuochi erranti **−0,3 s** di ricarica degli Echi per uccisione; Stormo del lutto **3 s** e **2** salute; Midollo Splendente **20** (graffio) e **15** (grumo). Le otto come nel survivor usano `NUMERI_UNIONI` (Edoardo: «i numeri vanno comunque verificati»). Preferenza del bot: prende sempre la carta Unione (`BOT_STANZE.carte.unione`).
