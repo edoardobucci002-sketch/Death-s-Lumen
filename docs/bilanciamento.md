@@ -12,6 +12,13 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 19/11 — Unioni misurate con 24 Veglie per lato; Faro dei morti rifatto
+
+- Contatori nuovi nella simulazione (lampi del Faro e loro danno, uccisioni dei Fuochi, esecuzioni della Falce, Grazia tenuta dal Sudario) e filtro `solo=` (`npm run sim-stanze -- 24 unioni solo=faroDeiMorti,…`). Il danno al secondo della build si confronta con la stessa build senza Unione, sugli stessi semi.
+- Prima del ritocco: **Faro dei morti circa +1%** (72 lampi a Veglia ma 132 danni: il lampo trovava un vicino entro 64 px 1 volta su 4; l'arco +25% non cambiava il danno al secondo); **Falce di Seth +2%** (22 esecuzioni, 237 salute); **Sudario +1%** (19 s di Grazia tenuta: il bot schiva poco); **Fuochi erranti +6%** (63 uccisioni, 50 s di ricarica tolti). Le stime a calcolo del passo prima erano troppo alte, soprattutto il Faro (+20%).
+- Ritocco scelto da Edoardo: il lampo del Faro **ferisce anche il nemico che esplode**, raggio **64 → 96 px**, danno **8 → 20**. Falce, Fuochi e Sudario restano.
+- Dopo: **lampi 68 a Veglia, 2.014 danni (10% della Veglia)**; danno al secondo della build **+6%** (88,8 contro 83,7; una parte dei lampi colpisce nemici che sarebbero morti comunque); Seth battuto 23/24 contro 22/24.
+
 ### 19/11 — Unioni: calcolo a Veglia e ritocchi (decisioni di Edoardo)
 
 - **Veglia media** del bot con un'arma al livello 4: 206 s, 90 nemici battuti, 13.066 danni fatti, 253 subiti, 12 schivate perfette. **Obiettivo (Edoardo): un'Unione vale circa +10% di danni o circa 100 salute a Veglia.**
