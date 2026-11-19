@@ -20,7 +20,8 @@ import { tempo } from '../sistema/hud';
 import { Cappella } from '../sistema/cappella';
 import { carica, salva, type Salvataggio } from '../sistema/salvataggio';
 import { SBLOCCHI } from '../data/meta';
-import { STANZE_DISPONIBILI } from './Stanze';
+import { STANZE_DISPONIBILI, type Stanze } from './Stanze';
+import { caricaVeglia } from '../sistema/veglia-salvata';
 
 const BARRE = ['Vitalità', 'Danno', 'Velocità', 'Raggio', 'Controllo'];
 
@@ -45,6 +46,7 @@ export class Menu extends Phaser.Scene {
         ${FIRMA ? `<span class="firma">${FIRMA}</span>` : ''}
         <h1>Death's Lumen</h1>
         <p>Sopravvivi alla veglia, fino all'alba.</p>
+        ${STANZE_DISPONIBILI && caricaVeglia() ? '<button type="button" class="menu-continua">Continua la Veglia</button>' : ''}
         ${STANZE_DISPONIBILI ? '<button type="button" class="menu-stanze">Stanze (prova)</button>' : ''}
       </header>
       <nav class="menu-nomi">${PERSONAGGI.map((p, n) => `<button type="button" data-n="${n}" style="--colore:${p.colore}">${p.nome}</button>`).join('')}</nav>
@@ -64,6 +66,7 @@ export class Menu extends Phaser.Scene {
       else if (b.dataset.passo) this.mostra((this.scelto + Number(b.dataset.passo) + PERSONAGGI.length) % PERSONAGGI.length);
       else if (b.classList.contains('menu-inizia')) this.inizia();
       else if (b.classList.contains('menu-stanze')) this.scene.start('Stanze');
+      else if (b.classList.contains('menu-continua')) this.continua();
       else if (b.classList.contains('menu-cappella')) this.apriCappella();
       else if ('sblocca' in b.dataset) this.sblocca();
     });
@@ -195,6 +198,14 @@ export class Menu extends Phaser.Scene {
     this.radice.hidden = false;
     this.salvataggio = carica();
     this.mostra(this.scelto);
+  }
+
+  /** «Continua la Veglia»: il gioco a stanze riparte dall'ingresso della stanza in cui si era (salvataggio del 19/11). */
+  private continua(): void {
+    const v = caricaVeglia();
+    if (!v) return;
+    (this.scene.get('Stanze') as Stanze).daRiprendere = v;
+    this.scene.start('Stanze');
   }
 
   private inizia(): void {

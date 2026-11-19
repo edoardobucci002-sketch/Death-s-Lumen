@@ -1694,6 +1694,64 @@ for (const [nome, disp] of [
   console.log(`${errori.length ? '✗' : '✓'} bot delle stanze: seme 7 ${descrivi(a)} (uguale due volte), seme 8 con carte a caso ${descrivi(c)}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
+// Salvataggio della Veglia in corso (19/11): il bot salva entrando in una stanza, si ricarica da lì e la Veglia finisce
+// identica; poi a mano: entrando in una stanza la Veglia si salva, il menu mostra «Continua la Veglia» e riporta lì
+{
+  const errori = [];
+  const gioca = async (indirizzo, foto) => {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
+    if (foto) await ctx.addInitScript((f) => localStorage.setItem('dl-veglia', f), JSON.stringify(foto));
+    const pag = await ctx.newPage();
+    pag.on('pageerror', (e) => errori.push(e.message));
+    await pag.goto(`${url}${indirizzo}`);
+    const ok = await pag.waitForFunction(() => window.__sim, null, { timeout: 300000, polling: 250 }).then(() => true, () => false);
+    if (!ok) errori.push(`${indirizzo}: la partita del bot non finisce`);
+    const r = await pag.evaluate(() => ({ sim: window.__sim ?? null, foto: window.__foto ?? null, ingressi: window.__dl.scene.getScene('Stanze').ingressi }));
+    await ctx.close();
+    return r;
+  };
+  const intera = await gioca('?stanze&bot&seme=7&foto=4');
+  let ripresa = null;
+  if (!intera.foto) errori.push('il bot non ha salvato entrando nella quinta stanza');
+  else {
+    ripresa = await gioca('?stanze&bot&riprendi=1', intera.foto);
+    const A = intera.sim, B = ripresa.sim;
+    // ripresa davvero: le stanze in cui si entra sono 4 di meno (non è una Veglia nuova con lo stesso seme)
+    if (ripresa.ingressi !== intera.ingressi - 4) errori.push(`la ripresa non parte dalla quinta stanza (ingressi ${intera.ingressi} › ${ripresa.ingressi})`);
+    if (A && B && JSON.stringify(A) !== JSON.stringify(B)) {
+      const diversi = Object.keys(A).filter((k) => JSON.stringify(A[k]) !== JSON.stringify(B[k]));
+      errori.push(`ripresa dalla quinta stanza, la Veglia non finisce identica (diversi: ${diversi.join(', ')})`);
+    }
+  }
+  // a mano: entrare in una stanza salva; il menu la propone e riporta lì
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
+  const pag = await ctx.newPage();
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?stanze`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 });
+  const prima = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'), m = s.mappa, i = m.stanze[m.ingresso].vicine.find((v) => v >= 0); s.lab.vaiAllaStanza(i); s.salute = 37; return { i, salvata: !!localStorage.getItem('dl-veglia'), seme: s.seme }; });
+  if (!prima.salvata) errori.push('entrando in una stanza la Veglia non si salva');
+  await pag.goto(url);
+  const continua = await pag.waitForSelector('.menu-continua', { timeout: 15000 }).then(() => true, () => false);
+  if (!continua) errori.push('il menu non mostra «Continua la Veglia»');
+  else {
+    await pag.click('.menu-continua');
+    await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 });
+    await pag.waitForTimeout(300);
+    const dopo = await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); return { i: s.percorso.corrente, seme: s.seme, salute: Math.round(s.salute) }; });
+    if (dopo.i !== prima.i || dopo.seme !== prima.seme) errori.push(`«Continua la Veglia» non riporta nella stanza salvata (${JSON.stringify(dopo)} invece di stanza ${prima.i})`);
+    // la salute cambiata dopo l'ingresso non conta: si riprende con quella di quando si è entrati
+    if (dopo.salute === 37) errori.push('la ripresa ha salvato anche ciò che è successo dopo l\'ingresso');
+    // cadere cancella la Veglia salvata
+    await pag.evaluate(() => { const s = window.__dl.scene.getScene('Stanze'); s.ferisci(9999, true); });
+    if (await pag.evaluate(() => !!localStorage.getItem('dl-veglia'))) errori.push('caduti, la Veglia salvata resta');
+  }
+  await ctx.close();
+  if (errori.length) falliti++;
+  const r = intera.sim;
+  console.log(`${errori.length ? '✗' : '✓'} Veglia salvata: il bot (seme 7) ripreso dalla quinta stanza finisce identico${r ? ` (${r.completata ? 'Boss' : `caduto nella stanza ${r.stanza}`})` : ''}; il menu la riprende; cadendo si cancella${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
 await browser.close();
 server.kill();
 console.log(falliti ? `\n${falliti} prove fallite` : '\nTutto a posto. Screenshot in prove/.');

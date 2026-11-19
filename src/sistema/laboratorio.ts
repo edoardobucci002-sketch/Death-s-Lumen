@@ -503,6 +503,13 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Joystick'),
       riga(tasto(st.lab.lineaVisibile() ? 'Linea al centro: visibile' : 'Linea al centro: invisibile', () => { st.lab.linea(!st.lab.lineaVisibile()); ridisegna(); }, st.lab.lineaVisibile() ? 'acceso' : '')),
       el('p', 'lab-nota', 'Il joystick di movimento nasce solo a sinistra della linea e la sua base non la supera; a destra della linea il dito non muove il Lampionaio (sarà il joystick d\'attacco).'),
+      titolo('Veglia salvata'),
+      riga(el('span', 'lab-stato', st.lab.vegliaSalvata())),
+      riga(
+        tasto('Riprendi la Veglia salvata', () => { if (st.lab.riprendiVeglia()) mostra(false); else ridisegna(); }),
+        tasto('Cancella la Veglia salvata', f(() => st.lab.cancellaVeglia())),
+      ),
+      el('p', 'lab-nota', 'La Veglia si salva da sola entrando in ogni stanza (non nel survivor). «Riprendi» la fa ripartire dall\'ingresso della stanza salvata, come «Continua la Veglia» del menu: la salute e tutto ciò che è successo dopo l\'ingresso tornano come allora. Cadere o battere Seth la cancella.'),
       titolo('Esci'),
       riga(tasto('Torna al menu', () => { gioco.scene.stop('Stanze'); gioco.scene.start('Menu'); setTimeout(ridisegna, 300); })),
     ];

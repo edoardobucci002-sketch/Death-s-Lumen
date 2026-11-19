@@ -15,6 +15,7 @@
  * visitare tutte le stanze per vederla piena. Tesoro e Sosta (18/11): andarci, usare l'oggetto.
  */
 import { Ombre } from './ombre';
+import { cancellaVeglia, caricaVeglia } from './veglia-salvata';
 import type { IdGrado } from '../data/rarita';
 import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE, POTENZIALI } from '../data/armi-stanze';
@@ -399,6 +400,25 @@ export class LabStanze {
   /** Accende o spegne il fermo d'impatto (per confrontare). */
   fermoImpatto(si: boolean): void {
     this.s.nemici.fermoImpatto = si;
+  }
+
+  /** La Veglia salvata, in una riga (per la scheda Stanze). */
+  vegliaSalvata(): string {
+    const v = caricaVeglia();
+    return v ? `Salvata entrando nella stanza ${v.verso} della mappa · combattute ${v.stanza} · seme ${v.seme} · ${v.echi.length} Echi` : 'Nessuna Veglia salvata';
+  }
+
+  /** Riparte dalla Veglia salvata, come «Continua la Veglia» del menu (false se non c'è). */
+  riprendiVeglia(): boolean {
+    const v = caricaVeglia();
+    if (!v) return false;
+    this.s.daRiprendere = v;
+    this.s.scene.restart();
+    return true;
+  }
+
+  cancellaVeglia(): void {
+    cancellaVeglia();
   }
 
   /** Accende o spegne le ombre a terra di personaggio e nemici (per confrontare). */

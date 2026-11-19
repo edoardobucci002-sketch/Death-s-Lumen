@@ -17,6 +17,16 @@ export class Caso {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 
+  /** Il punto in cui è arrivato (per il salvataggio della Veglia in corso). */
+  get punto(): number {
+    return this.stato;
+  }
+
+  /** Riporta il generatore a un punto salvato: da lì dà gli stessi numeri di allora. */
+  riprendi(punto: number): void {
+    this.stato = punto >>> 0;
+  }
+
   /** Intero tra min e max, entrambi compresi. */
   intero(min: number, max: number): number {
     return min + Math.floor(this.numero() * (max - min + 1));

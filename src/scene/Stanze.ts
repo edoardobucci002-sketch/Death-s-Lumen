@@ -70,6 +70,8 @@ import { ROMPIBILI_STANZE } from '../data/rompibili';
 import { MAPPA, MINIMAPPA, STANZE_SPECIALI } from '../data/mappa';
 import { disegnaMinimappa } from '../sistema/minimappa';
 import { CANDELE_LAB, generaMappa, opposto, type Mappa } from '../sistema/mappa';
+import { fotografa, ripristina, type Foto } from '../sistema/fotografia';
+import { VERSIONE_VEGLIA, cancellaVeglia, caricaVeglia, salvaVeglia, type VegliaSalvata } from '../sistema/veglia-salvata';
 
 const PASSO = 1 / 60;
 const PASSO_MS = 1000 * PASSO;
@@ -78,6 +80,12 @@ const DONO = Object.fromEntries(PASSIVI.map((q) => [q.id, q])) as Record<IdDono,
 
 /** Il gioco a stanze si raggiunge solo dal link di prova, in sviluppo e nelle prove automatiche. */
 export const STANZE_DISPONIBILI = import.meta.env.VITE_CANALE === 'prova' || import.meta.env.DEV || navigator.webdriver === true;
+
+/** I campi della scena che passano da una stanza all'altra (salvataggio della Veglia in corso). */
+const CAMPI_VEGLIA = ['salute', 'saluteMassima', 'extra', 'grazia', 'inQuiete', 'rallentatore', 'fermoColpo', 'lampoFerita', 'feritaAnim',
+  'quiete', 'statGrazia', 'guardaX', 'guardaY', 'versoSinistra', 'inMoto', 'orologio', 'schivatePerfette', 'ferite', 'ondate', 'giriCarte',
+  'attesaTremolio', 'fiamma', 'casoLuce', 'scrittaVita', 'avvisoVita', 'attesaCapo', 'durataPassaggio', 'portaScelta', 'velocita',
+  'rigenerazione', 'scudo', 'dannoLanterna', 'x', 'y'] as const;
 
 export class Stanze extends Phaser.Scene {
   pg!: Personaggio;
@@ -174,6 +182,12 @@ export class Stanze extends Phaser.Scene {
   mappa!: Mappa;
   /** LAB: la prossima Veglia (Ricomincia) usa questo seme, per avere un'altra mappa. */
   semeDopo: number | null = null;
+  /** La Veglia salvata da riprendere al prossimo avvio della scena (la mette il menu con «Continua la Veglia»). */
+  daRiprendere: VegliaSalvata | null = null;
+  /** L'ultima fotografia fatta entrando in una stanza (per il LAB e le prove). */
+  ultimaFoto: VegliaSalvata | null = null;
+  private ingressi = 0; // stanze in cui si è entrati in questa Veglia (per le prove: ?foto=N tiene la fotografia dell'N-esimo)
+  private fotoDaTenere = -1;
   /** LAB e prove: le porte aperte non si attraversano (per provare i muri). */
   porteBloccate = false;
   private verso: number[] = []; // dove porta ogni porta della stanza (indice della mappa), nell'ordine di porte.muri
@@ -199,13 +213,21 @@ export class Stanze extends Phaser.Scene {
     // ?seme=N: un'altra partita (ondate, carte); ?bot: gioca il bot, veloce e senza disegno (npm run sim-stanze);
     // ?esplora=1: il bot sceglie carte e porte a caso. Dal LAB il bot gioca invece alla velocità normale
     const parametri = new URLSearchParams(location.search);
-    this.seme = this.semeDopo ?? (Number(parametri.get('seme')) || ONDATA.seme);
+    // ?riprendi=1 (per le prove): riprende la Veglia salvata come «Continua la Veglia» del menu
+    if (parametri.get('riprendi') === '1' && !this.daRiprendere) this.daRiprendere = caricaVeglia();
+    const riprendi = this.daRiprendere;
+    this.daRiprendere = null;
+    this.seme = riprendi?.seme ?? this.semeDopo ?? (Number(parametri.get('seme')) || ONDATA.seme);
     this.semeDopo = null;
+    this.ultimaFoto = null;
+    this.ingressi = 0;
+    this.fotoDaTenere = parametri.has('foto') ? Number(parametri.get('foto')) : -1;
     if (parametri.get('candele') === '1') CANDELE_LAB.sempre = true; // per le prove: la porta delle candele c'è sempre
     this.mappa = generaMappa(this.seme, this.pg.id);
     this.porteBloccate = false;
     this.botVeloce = parametri.has('bot');
     this.bot = this.botVeloce ? new BotStanze() : null;
+    if (!riprendi && !this.bot) cancellaVeglia(); // una Veglia nuova prende il posto di quella salvata
     if (this.bot && parametri.get('esplora') === '1') this.bot.esplorando(this.seme);
     this.sim = new SimStanze();
     document.documentElement.style.setProperty('--accento', this.pg.colore);
@@ -309,6 +331,7 @@ export class Stanze extends Phaser.Scene {
     this.radice.querySelector<HTMLElement>('.doni-aiuto')?.setAttribute('hidden', '');
     this.doni.verticali = PERCORSO.carte; // in fila, perché lo schermo è in orizzontale, e compaiono a pop
     this.comparsa = new ComparsaCarte(this);
+    if (riprendi) this.riprendiVeglia(riprendi);
     this.ricalcola();
     this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza);
     this.disponi();
@@ -468,6 +491,7 @@ export class Stanze extends Phaser.Scene {
     this.salute = Math.max(0, this.salute - netto);
     if (this.salute <= 0) {
       this.morto = true;
+      if (!this.bot) cancellaVeglia(); // caduto: la Veglia salvata non c'è più
       this.attesaFine = C.attesaFine;
       this.grazia = 0;
       this.comandi.lascia();
@@ -846,8 +870,13 @@ export class Stanze extends Phaser.Scene {
    * Entra nella stanza i della mappa, davanti alla porta sul muro «da» (null: al centro, per il LAB). Lastre e rompibili
    * sono sempre gli stessi per quella stanza (i rompibili già rotti restano rotti); una stanza già ripulita è vuota e aperta.
    */
-  entraInStanza(i: number, da: Muro | null): void {
-    this.percorso.qui.rotti = this.rompibili.rotti(); // la stanza che si lascia ricorda cosa è rotto
+  entraInStanza(i: number, da: Muro | null, ripresa = false): void {
+    if (!ripresa) this.percorso.qui.rotti = this.rompibili.rotti(); // la stanza che si lascia ricorda cosa è rotto
+    // il punto di controllo (19/11): la Veglia si salva prima di entrare; riprendendola si rifà questo stesso ingresso
+    const foto = this.fotografaVeglia(i, da);
+    this.ultimaFoto = foto;
+    if (this.ingressi++ === this.fotoDaTenere) (window as unknown as { __foto?: VegliaSalvata }).__foto = foto;
+    if (!this.bot) salvaVeglia(foto);
     this.nemici.svuota();
     this.percorso.entra(i);
     const s = this.percorso.qui;
@@ -867,6 +896,58 @@ export class Stanze extends Phaser.Scene {
     this.guardaY = da === 'alto' ? 1 : da === 'basso' || !da ? -1 : 0;
     // il Boss: le porte si sono chiuse alle spalle (mostraPorte); battuto Seth, dopo un attimo la fine del Mondo 1
     if (s.tipo === 'boss') this.attesaCapo = this.botVeloce ? 0 : PERCORSO.attesaCapo;
+  }
+
+  /**
+   * La fotografia della Veglia (salvataggio della partita in corso, 19/11): tutto ciò che passa da una stanza all'altra.
+   * Mappa, carte, chiavi, Cera, salute, sorsi, Echi con i loro tempi e i generatori del caso: riprendendo, la Veglia
+   * va avanti identica. Un sistema nuovo che deve passare tra le stanze si aggiunge qui (e nasce salvabile).
+   */
+  fotografaVeglia(verso: number, da: Muro | null): VegliaSalvata {
+    const scalari = (o: object): string[] => Object.keys(o).filter((k) => !ArrayBuffer.isView((o as Record<string, unknown>)[k]));
+    const sistemi: Record<string, Foto> = {
+      scena: fotografa(this, [], CAMPI_VEGLIA),
+      percorso: fotografa(this.percorso), // con la mappa: stanze ripulite, vasi rotti, chiavi, candele
+      arsenale: fotografa(this.arsenale, ['possedute']),
+      nemici: fotografa(this.nemici, [], scalari(this.nemici)), // all'ingresso la stanza è vuota: bastano contatori e caso
+      orda: fotografa(this.nemici.orda, [], scalari(this.nemici.orda)),
+      rompibili: fotografa(this.rompibili),
+      doni: fotografa(this.doni, ['carte']),
+      fiaschetta: fotografa(this.fiaschetta),
+      abilita: fotografa(this.abilita, [], ['carica', 'usi', 'attiva', 'ritmo', 'primo']),
+      attacco: fotografa(this.attacco, [], ['attesa', 'posa', 'carica', 'angolo', 'dx', 'dy', 'colpi', 'richiesta', 'rAuto', 'rDX', 'rDY']),
+      sim: fotografa(this.sim),
+    };
+    if (this.bot) sistemi.bot = fotografa(this.bot);
+    return {
+      versione: VERSIONE_VEGLIA, personaggio: this.pg.id, seme: this.seme, stanza: this.percorso.stanza, verso, da,
+      echi: this.arsenale.possedute.map((p) => ({ id: p.arma.id, livello: p.livello })), sistemi,
+    };
+  }
+
+  /** Rimette la Veglia salvata nella scena appena creata e rifà l'ingresso nella stanza in cui si stava entrando. */
+  private riprendiVeglia(v: VegliaSalvata): void {
+    for (const e of v.echi) {
+      const eco = ECHI_STANZE.find((a) => a.id === e.id);
+      if (!eco) continue;
+      this.arsenale.aggiungi(eco);
+      while (this.arsenale.livello(eco) < e.livello) this.arsenale.potenzia(eco);
+    }
+    const S = v.sistemi;
+    ripristina(this, S.scena);
+    ripristina(this.percorso, S.percorso);
+    ripristina(this.arsenale, S.arsenale);
+    ripristina(this.nemici, S.nemici);
+    ripristina(this.nemici.orda, S.orda);
+    ripristina(this.rompibili, S.rompibili);
+    ripristina(this.doni, S.doni);
+    ripristina(this.fiaschetta, S.fiaschetta);
+    ripristina(this.abilita, S.abilita);
+    ripristina(this.attacco, S.attacco);
+    ripristina(this.sim, S.sim);
+    if (this.bot && S.bot) ripristina(this.bot, S.bot);
+    this.ingressi = 0;
+    this.entraInStanza(v.verso, v.da as Muro | null, true);
   }
 
   /** Il riquadro in cui volano gli Echi (lapidi, grani del Rosario): il pavimento della stanza in cui si è, normale o doppia. */
@@ -982,6 +1063,7 @@ export class Stanze extends Phaser.Scene {
   /** La fine del Mondo 1, battuto Seth (18/11): nemici battuti, schivate perfette, Cera, la build presa; Ricomincia e Menu. */
   private mostraFineFetta(): void {
     this.finita = true;
+    if (!this.bot) cancellaVeglia(); // il Mondo 1 completato: la Veglia è finita
     this.sim.stanzaRipulita(this.percorso.stanza, this.salute); // la battaglia contro Seth, per le simulazioni
     this.chiudiSim(true);
     if (this.botVeloce) return;

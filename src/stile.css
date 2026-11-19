@@ -335,7 +335,7 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
   position: sticky; bottom: 0; box-shadow: 0 0 0 10px var(--sfondo), 0 -14px 24px 10px var(--sfondo); background: var(--sfondo);
 }
 .menu-piede .menu-inizia { position: static; box-shadow: none; }
-.menu-cappella, .menu-stanze { padding: 12px 18px; min-height: 52px; font: 400 18px var(--f-titolo); color: var(--pergamena); background: transparent; border: 2px solid var(--linea); }
+.menu-cappella, .menu-stanze, .menu-continua { padding: 12px 18px; min-height: 52px; font: 400 18px var(--f-titolo); color: var(--pergamena); background: transparent; border: 2px solid var(--linea); }
 .scheda-blocco { display: grid; gap: 8px; padding: 10px 12px; border: 1px dashed var(--accento); }
 .scheda-blocco p { margin: 0; font-size: 17px; color: var(--pergamena); }
 .scheda-blocco button, .cappella button { padding: 8px 14px; min-height: 40px; font: 400 16px var(--f-titolo); color: var(--pergamena); background: var(--pannello); border: 2px solid var(--accento); cursor: pointer; justify-self: start; }
@@ -393,7 +393,7 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .stanze-ruota { background: var(--sfondo); }
 .stanze-pausa[hidden], .stanze-ruota[hidden] { display: none; }
 .stanze-tasto { min-width: 44px; min-height: 52px; padding: 10px 24px; background: var(--pannello); border: 2px solid var(--accento); cursor: pointer; }
-.menu-testata .menu-stanze { margin-top: 10px; min-height: 44px; padding: 6px 14px; font-size: 16px; }
+.menu-testata .menu-stanze, .menu-testata .menu-continua { margin-top: 10px; min-height: 44px; padding: 6px 14px; font-size: 16px; }
 .stanze-linea { position: fixed; top: 0; bottom: 0; left: 50%; width: 0; border-left: 2px dashed #a57ae0; pointer-events: none; z-index: 1; }
 .stanze-linea[hidden] { display: none; }
 /* tasto d'attacco del gioco a stanze (src/sistema/attacco.ts): in basso a destra, area di tocco di almeno 44 punti */
