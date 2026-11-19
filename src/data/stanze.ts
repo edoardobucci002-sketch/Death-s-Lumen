@@ -270,12 +270,12 @@ export const IMPATTO = {
  * Ombre a terra sotto i personaggi (idea di Edoardo del 19/11: come le ombre dipinte sui fogli d'acetato dell'animazione
  * classica). L'ombra è la sagoma del personaggio schiacciata a terra (risposta di Edoardo del 19/11), ribaltata sotto i
  * piedi: larga quanto lui e animata con lui. Scurisce il pavimento («moltiplica»: il colore si moltiplica per quello del
- * pavimento). Colore confermato da Edoardo il 19/11; lo schiacciamento è da rivedere.
+ * pavimento). Colore confermato da Edoardo il 19/11; schiacciamento 0,35 confermato il 19/11.
  */
 export const OMBRE = {
   accese: true, // si spengono dal LAB per confrontare
   colore: 0x7a6470, // il colore del foglio d'ombra: viola-grigio caldo, moltiplicato sul pavimento (Edoardo, 19/11)
-  schiaccia: 0.35, // l'altezza della sagoma a terra rispetto allo sprite: 0,35 dal 19/11 (era 0,3; Edoardo: «leggermente meno schiacciata»; da rivedere)
+  schiaccia: 0.35, // l'altezza della sagoma a terra rispetto allo sprite: 0,35 dal 19/11 (era 0,3; Edoardo: «leggermente meno schiacciata»; confermato da Edoardo il 19/11)
 } as const;
 
 /** La barra della salute del gioco a stanze: quanti pixel più in basso di quella del survivor (Edoardo, 19/11: «abbassa leggermente»; 6 confermato da Edoardo il 19/11). */
