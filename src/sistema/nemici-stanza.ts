@@ -17,7 +17,7 @@
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
  */
 import Phaser from 'phaser';
-import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, OMBRE, ONDATA } from '../data/stanze';
+import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, ONDATA } from '../data/stanze';
 import { Ombre } from './ombre';
 import { PROFONDITA, type Effetti } from './effetti';
 import { MISURA, areaCamminabile } from './stanza';
@@ -779,11 +779,6 @@ export class NemiciStanza {
     this.seth.disegnaProiettili(this.sopraBuio, this.orologio); // falci e detriti di Seth, sopra il buio
     for (let i = 0; i < o.numero; i++) {
       const sp = o.spriteDi(i), st = this.stato[i], x = Math.round(o.x[i]), y = Math.round(o.y[i]);
-      // l'ombra resta ai piedi anche quando il nemico si solleva nell'avviso o è a terra; Seth affondato lampeggia con lei
-      if (sp.visible && !(o.tipo[i] === ID_SETH && this.seth.affondato && Math.floor(this.orologio * 10) % 2 !== 0)) {
-        const L = OMBRE.larghezza, ti = o.tipo[i];
-        this.ombre.ombra(x, y, ti === ID_RICADUTO ? L.ricaduto : ti === ID_CAMPANARO ? L.campanaro : ti === ID_SETH ? L.seth : L.cantore);
-      }
       // schiacciamento: largo e basso subito dopo il colpo, poi torna come prima
       const k = Math.max(0, this.schiaccia[i]) / IMPATTO.schiaccia.durata, S = IMPATTO.schiaccia, ing = o.ingrandimentoDi(i);
       sp.setScale(ing * (1 + (S.largo - 1) * k), ing * (1 + (S.basso - 1) * k)).setDepth(PROFONDITA.aTerra + 10 + y);
@@ -844,6 +839,12 @@ export class NemiciStanza {
         s.fillStyle(0x3a0c10).fillRect(bx + 2, by + 2, L - 4, H - 4);
         s.fillStyle(0xc0262d).fillRect(bx + 2, by + 2, pieno, H - 4);
       }
+    }
+    // le ombre, con il fotogramma già scelto: restano ai piedi anche quando il nemico si solleva nell'avviso o è a terra;
+    // Seth affondato nel Passo della Morte lampeggia, la sua ombra no (Edoardo, 19/11)
+    for (let i = 0; i < o.numero; i++) {
+      const sp = o.spriteDi(i);
+      if (sp.visible || (o.tipo[i] === ID_SETH && this.seth.affondato)) this.ombre.ombra(sp, Math.round(o.x[i]), Math.round(o.y[i]));
     }
     this.ombre.fine();
     // il segno a terra dove sta per comparire un nemico: un anello che si stringe

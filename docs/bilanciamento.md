@@ -14,7 +14,9 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ### 19/11 — Ombre a terra (numeri nuovi, solo aspetto)
 
-- `OMBRE`: colore #7a6470, proporzione 3, larghezze 28 (Lampionaio), 32 (Ricaduto), 30 (Cantore), 48 (Campanaro), 60 (Seth): circa il doppio del raggio del corpo. Proposte di Claude, *da rivedere*. Non toccano il combattimento: niente simulazione.
+- `OMBRE`: colore #7a6470 (confermato da Edoardo), sagoma alta 0,3 volte lo sprite (`schiaccia`, *da rivedere*). La prima versione aveva ellissi larghe 28/32/30/48/60 px con proporzione 3: tolte, ora la larghezza è quella di ciascun personaggio.
+- `BARRA_STANZA.abbassa` **6** (*da rivedere*): la barra della salute delle stanze scende di 6 px (Edoardo: «abbassa leggermente»).
+- Non toccano il combattimento: niente simulazione.
 
 ### 18/11 — Candele del Lampionaio, a caso
 

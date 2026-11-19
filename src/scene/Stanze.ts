@@ -25,7 +25,7 @@ import { TOCCO_MINIMO } from '../data/hud';
 import { entraInPartita, esciDallaPartita } from '../sistema/indietro';
 import { BASE, PERSONAGGI, type Personaggio } from '../data/personaggi';
 import { LUCE, PIEDI_SEGNAPOSTO } from '../data/mondo';
-import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, OMBRE, ONDATA, PERCORSO, PORTE, STANZA } from '../data/stanze';
+import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, JOYSTICK_STANZE, ONDATA, PERCORSO, PORTE, STANZA } from '../data/stanze';
 import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
@@ -1041,7 +1041,7 @@ export class Stanze extends Phaser.Scene {
     this.nemici.disegna(cam, px, py);
     // l'ombra segue il corpo quando si sporge per colpire; resta anche mentre lampeggia in Quiete e da caduto
     this.ombra.inizia();
-    this.ombra.ombra(this.giocatore.x, py, OMBRE.larghezza.lampionaio);
+    this.ombra.ombra(this.giocatore, this.giocatore.x, py);
     this.ombra.fine();
     const capo = this.nemici.indiceCapo(), o = this.nemici.orda;
     this.barraCapo.aggiorna(capo >= 0 ? o.salute[capo] / o.saluteMassima[capo] : null, capo >= 0 && o.tipo[capo] === ID_SETH);

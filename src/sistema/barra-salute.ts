@@ -1,6 +1,6 @@
 /*
  * Barra della salute del personaggio nel gioco a stanze: la stessa del survivor (BARRA_SALUTE in src/data/mondo.ts),
- * sotto i piedi e sopra il buio. Il rosso si accorcia da destra, «rimasta/massima» al centro; il valore mostrato scorre
+ * sotto i piedi (BARRA_STANZA.abbassa pixel più in basso che nel survivor) e sopra il buio. Il rosso si accorcia da destra, «rimasta/massima» al centro; il valore mostrato scorre
  * verso quello vero (il pezzo perso resta ambra e si consuma, quello guadagnato è verde). Si ridisegna solo quando cambia.
  * Il survivor ha ancora la sua copia dentro Gioco.ts: quando il survivor si toglie resta solo questa.
  * Sotto la barra, i sorsi della fiaschetta come pallini (18/11, FIASCHETTA_STANZA.pallini): tanti quanti i sorsi massimi,
@@ -9,7 +9,7 @@
  */
 import Phaser from 'phaser';
 import { BARRA_SALUTE } from '../data/mondo';
-import { FIASCHETTA_STANZA } from '../data/stanze';
+import { BARRA_STANZA, FIASCHETTA_STANZA } from '../data/stanze';
 import { FIASCHETTA } from '../data/sopravvivenza';
 import { PROFONDITA } from './effetti';
 import { scorri } from './scorrimento';
@@ -93,7 +93,7 @@ export class BarraSalute {
       }
     }
     const larga = n * P.lato + Math.max(0, n - 1) * P.stacco;
-    this.pallini.setPosition(px - Math.floor((larga * z) / 2), py + b.distanza + (b.altezza + P.distanza) * z).setVisible(visibile && n > 0);
+    this.pallini.setPosition(px - Math.floor((larga * z) / 2), py + b.distanza + BARRA_STANZA.abbassa + (b.altezza + P.distanza) * z).setVisible(visibile && n > 0);
   }
 
   /** Disegno: (px, py) i piedi del personaggio, già arrotondati. */
@@ -120,7 +120,7 @@ export class BarraSalute {
       if (pxExtra > 0) g.fillStyle(esadecimale(b.extra)).fillRect(1 + dentro - pxExtra, 1, pxExtra, b.altezza - 2);
       this.testoX = Math.floor((L - testo) / 2);
     }
-    const sx = px - Math.floor((this.larga * z) / 2), sy = py + b.distanza;
+    const sx = px - Math.floor((this.larga * z) / 2), sy = py + b.distanza + BARRA_STANZA.abbassa;
     this.rett.setPosition(sx, sy).setVisible(visibile);
     this.numeri.setPosition(sx + this.testoX * z, sy + Math.floor((b.altezza - 5) / 2) * z).setVisible(visibile);
   }
