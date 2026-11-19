@@ -12,6 +12,13 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 19/11 — Effetti nuovi di Lapide inchiodata e Midollo Splendente
+
+- Nuovi (`NUMERI_UNIONI_STANZE` in `src/data/unioni-stanze.ts`, Claude, *da rivedere*): **Lapide inchiodata** `lapide.critico` **2 s** tolti all'attesa della Lapide per ogni critico; **Midollo Splendente** `midollo.polvere`: un granello ogni **8 px**, dura **1 s**, tocco entro **10 px** più il corpo, cecità **2 s**, pausa **4 s**. Stima di Claude prima: Lapide circa +8%, Midollo circa 100 salute a Veglia.
+- `npm run sim-stanze -- 24 unioni solo=lapideInchiodata,midolloSplendente` (con l'Unione / senza):
+  - **Lapide inchiodata**: Seth battuto **8/24 · 5/24**, stanze 8,8 · 8,7; i critici tolgono **295 s** a Veglia all'attesa della Lapide (la Veglia dura 3,2 min); la Lapide fa il **32%** del danno (senza 16%); danno al secondo della build **+17%** (69,0 contro 59,1). Sopra l'obiettivo del +10%.
+  - **Midollo Splendente**: Seth battuto 0/24 · 0/24, il bot cade alla stanza **4,5** (la build con l'Abbacinio al 4 non fa danno: Veglia di 1,5 min); **13 nemici accecati dalla polvere** a Veglia, danno dei ciechi 7, danno al secondo +1%. Il bot combatte di fronte e i nemici calpestano poco la scia, che resta dietro di lui: va provato a mano. In `npm run prova` la polvere acceca 5 Ricaduti con «Polvere intorno».
+
 ### 19/11 — Unioni misurate con 24 Veglie per lato; Faro dei morti rifatto
 
 - Contatori nuovi nella simulazione (lampi del Faro e loro danno, uccisioni dei Fuochi, esecuzioni della Falce, Grazia tenuta dal Sudario) e filtro `solo=` (`npm run sim-stanze -- 24 unioni solo=faroDeiMorti,…`). Il danno al secondo della build si confronta con la stessa build senza Unione, sugli stessi semi.

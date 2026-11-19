@@ -1157,7 +1157,7 @@ export class Stanze extends Phaser.Scene {
       uccisi: this.nemici.uccisi, rinascite: this.nemici.rinascite, schivate: this.schivatePerfette, colpiLanterna: this.attacco.colpi,
       usiAbilita: this.abilita.usi, livelloLanterna: this.percorso.livelloLanterna, arsenale: this.arsenale,
       doni: PERCORSO.doniAttivi.filter((id) => this.percorso.passivi[id] > 0).map((id) => `${DONO[id].nome} ${this.percorso.passivi[id]}`),
-      sudarioSecondi: this.sudarioSecondi,
+      sudarioSecondi: this.sudarioSecondi, accecatiPolvere: this.nemici.accecatiPolvere,
     });
   }
 

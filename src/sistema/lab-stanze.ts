@@ -415,16 +415,22 @@ export class LabStanze {
     return true;
   }
 
+  /** Midollo Splendente: sparge un cerchio di polvere luminosa largo 60 px intorno al personaggio (dura come la scia). */
+  polvereIntorno(): void {
+    this.s.nemici.polvereIntorno(this.s.x, this.s.y, 60);
+  }
+
   /** Acceca tutti i nemici in campo (per provare Midollo Splendente: i ciechi si colpiscono tra loro). */
   accecaTutti(): void {
     const n = this.s.nemici;
     for (let j = 0; j < n.orda.numero; j++) n.accecaPerProva(j);
   }
 
-  /** Quante volte hanno agito gli effetti delle Unioni nuove: lampi del Faro, uccisioni dei Fuochi, lutti dello Stormo, danno dei ciechi. */
-  effettiUnioni(): { lampi: number; fuochi: number; lutti: number; midollo: number } {
+  /** Quante volte hanno agito gli effetti delle Unioni nuove: lampi del Faro, uccisioni dei Fuochi, lutti dello Stormo, danno dei ciechi, accecati dalla polvere, secondi tolti alla Lapide. */
+  effettiUnioni(): { lampi: number; fuochi: number; lutti: number; midollo: number; polvere: number; lapide: number } {
     const a = this.s.arsenale;
-    return { lampi: a.lampiFaro, fuochi: a.uccisiFuochi, lutti: a.lutti, midollo: Math.round(a.dannoFonti[F.lamaDiLuce]) };
+    return { lampi: a.lampiFaro, fuochi: a.uccisiFuochi, lutti: a.lutti, midollo: Math.round(a.dannoFonti[F.lamaDiLuce]),
+      polvere: this.s.nemici.accecatiPolvere, lapide: Math.round(a.secondiLapide * 10) / 10 };
   }
 
   /** Quanti nemici ha accecato la Lama di luce. */

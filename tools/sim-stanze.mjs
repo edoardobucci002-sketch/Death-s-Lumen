@@ -135,7 +135,9 @@ if (modo === 'unioni') {
     const riga = { faroDeiMorti: `lampi ${e('lampi').toFixed(0)}, loro danno ${e('dannoLampi').toFixed(0)} (${Math.round((100 * e('dannoLampi')) / tot)}% della Veglia)`,
       fuochiErranti: `uccisioni dei fuochi ${e('fuochi').toFixed(0)} = ${(e('fuochi') * 0.8).toFixed(0)} s di ricarica tolti`,
       falceDelMietitore: `esecuzioni ${e('esecuzioni').toFixed(0)}, salute tolta ${e('dannoEsecuzioni').toFixed(0)} (${Math.round((100 * e('dannoEsecuzioni')) / tot)}% della Veglia)`,
-      sudario: `Grazia tenuta ${e('sudario').toFixed(1)} s` }[u];
+      sudario: `Grazia tenuta ${e('sudario').toFixed(1)} s`,
+      lapideInchiodata: `secondi tolti alla Lapide dai critici ${e('secondiLapide').toFixed(0)}`,
+      midolloSplendente: `accecati dalla polvere ${e('polvere').toFixed(0)}, danno dei ciechi ${e('dannoCiechi').toFixed(0)} (${Math.round((100 * e('dannoCiechi')) / tot)}% della Veglia)` }[u];
     console.log(`      ${riga ? riga + '; ' : ''}danno al secondo della build ${dps(con).toFixed(1)} con · ${dps(senza).toFixed(1)} senza (${Math.round((100 * (dps(con) - dps(senza))) / dps(senza))}%); durata ${(min).toFixed(1)} min`);
   }
 }

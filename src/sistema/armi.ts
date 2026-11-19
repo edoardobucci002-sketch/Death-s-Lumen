@@ -164,6 +164,16 @@ export class Arsenale extends ArsenaleVicine {
       for (let n = 0; n < this.attesa.length; n++) this.attesa[n] = Math.max(0, this.attesa[n] - this.accorcia);
       this.accorcia = 0;
     }
+    // Lapide inchiodata (gioco a stanze): i critici accorciano l'attesa della Lapide
+    if (this.richiamaLapide > 0) {
+      for (let n = 0; n < this.possedute.length; n++) {
+        if (this.possedute[n].arma.id !== 'lapide') continue;
+        const t = Math.min(this.attesa[n], this.richiamaLapide);
+        this.attesa[n] -= t;
+        this.secondiLapide += t;
+      }
+      this.richiamaLapide = 0;
+    }
     this.aggiornaRitardati(dt);
     this.aggiornaRaffica(dt);
     this.aggiornaFalci(dt);

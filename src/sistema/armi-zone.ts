@@ -85,8 +85,9 @@ export abstract class ArsenaleZone extends ArsenaleColpo {
     this.lpY[i] = y;
     this.lpR[i] = raggio;
     this.lpDanno[i] = danno;
-    // Lapide inchiodata: solo le lapidi vere (non quelle da vedere della Vanga) restano e seppelliscono
-    this.lpChiodo[i] = danno && this.unite.lapide ? 1 : 0;
+    // Lapide inchiodata (survivor): solo le lapidi vere (non quelle da vedere della Vanga) restano e seppelliscono;
+    // nelle stanze l'Unione ha un altro effetto (i critici avvicinano la lapide, vedi danno() in armi-colpo.ts)
+    this.lpChiodo[i] = danno && this.unite.lapide && !this.unioniStanze ? 1 : 0;
     this.lpResta[i] = this.lpChiodo[i] ? U.lapide.resta : LAPIDE.resta;
     // potenziale (gioco a stanze): la lapide vera resta in piedi e blocca nemici e grumi
     this.lpMuro[i] = danno && this.potenziale[F.lapide] ? 1 : 0;

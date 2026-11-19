@@ -1672,7 +1672,7 @@ for (const [nome, disp] of [
   await pag.waitForTimeout(300);
   if ((await L('unioni')).find((u) => u.id === 'campanaAMorto')?.stato !== 'unita') errori.push('scelta la carta, la Campana non è unita');
   // tre delle adattate con il bot che gioca (Midollo Splendente a parte, qui sotto)
-  for (const id of ['faroDeiMorti', 'fuochiErranti', 'stormoDelLutto']) await L('unisciSubito', id);
+  for (const id of ['faroDeiMorti', 'fuochiErranti', 'stormoDelLutto', 'lapideInchiodata']) await L('unisciSubito', id);
   await chiudiScoperte();
   await L('bloccaPorte', true);
   await L('bot', true);
@@ -1681,7 +1681,7 @@ for (const [nome, disp] of [
     if (k % 4 === 0) await L('ondata');
     await pag.waitForTimeout(1000);
     const x = await L('effettiUnioni');
-    if (k >= 6 && x.lampi && x.fuochi && x.lutti) break;
+    if (k >= 6 && x.lampi && x.fuochi && x.lutti && x.lapide) break;
   }
   // Midollo Splendente: personaggio fermo al centro, cinque Ricaduti stretti davanti a lui, accecati di continuo; i graffi che
   // sbagliano la mira devono ferire i vicini
@@ -1696,18 +1696,25 @@ for (const [nome, disp] of [
   await L('vai', 'centro');
   const c = await L('stato');
   for (const [dx, dy] of [[60, 0], [60, 36], [60, -36], [96, 18], [96, -18]]) await L('nemicoIn', 'ricaduto', c.x + dx, c.y + dy);
+  // la polvere: un cerchio di 60 px intorno al personaggio deve accecare i Ricaduti che lo toccano (poi per 4 s non più)
+  await pag.waitForTimeout(800);
+  await L('polvereIntorno');
+  await pag.waitForTimeout(300);
+  const polvere = (await L('effettiUnioni')).polvere;
   for (let k = 0; k < 10; k++) {
     await pag.waitForTimeout(800);
     await L('accecaTutti');
   }
-  const e = { ...e3, midollo: (await L('effettiUnioni')).midollo };
+  const e = { ...e3, midollo: (await L('effettiUnioni')).midollo, polvere };
+  if (!e.polvere) errori.push('la polvere di Midollo Splendente non acceca nessuno');
+  if (!e.lapide) errori.push('i critici non accorciano l\'attesa della Lapide (Lapide inchiodata)');
   if (!e.lampi) errori.push('il Faro dei morti non fa lampi');
   if (!e.fuochi) errori.push('i Fuochi erranti non contano le uccisioni');
   if (!e.lutti) errori.push('lo Stormo del lutto non cura');
   if (!e.midollo) errori.push('i ciechi non si colpiscono tra loro (Midollo Splendente)');
   await ctx.close();
   if (errori.length) falliti++;
-  console.log(`${errori.length ? '✗' : '✓'} Unioni delle stanze: scoperta, carta Unione scelta, ${e.lampi} lampi del Faro, ${e.fuochi} uccisioni dei Fuochi, ${e.lutti} lutti, ${e.midollo} danno dei ciechi${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+  console.log(`${errori.length ? '✗' : '✓'} Unioni delle stanze: scoperta, carta Unione scelta, ${e.lampi} lampi del Faro, ${e.fuochi} uccisioni dei Fuochi, ${e.lutti} lutti, ${e.midollo} danno dei ciechi, ${e.polvere} accecati dalla polvere, ${e.lapide} s tolti alla Lapide${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
 // Salute in più della Falce (17/11): sta in cima alla salute, assorbe i colpi per prima e non scende sotto zero

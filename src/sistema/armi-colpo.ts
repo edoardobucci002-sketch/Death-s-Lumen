@@ -133,6 +133,8 @@ export abstract class ArsenaleColpo {
    */
   unioniStanze = false;
   accorcia = 0; // secondi da togliere alla ricarica degli Echi (Fuochi erranti), alla fine del passo
+  richiamaLapide = 0; // secondi da togliere all'attesa della Lapide (Lapide inchiodata nelle stanze: i critici), alla fine del passo
+  secondiLapide = 0; // secondi davvero tolti alla Lapide dai critici (per il LAB e le simulazioni)
   curaLutto = 0; // salute da dare al personaggio (Stormo del lutto): la preleva la scena a ogni passo
   lampiFaro = 0; // lampi del Faro dei morti, uccisioni dei Fuochi erranti, nemici in lutto morti: per il LAB e le prove
   uccisiFuochi = 0;
@@ -406,6 +408,8 @@ export abstract class ArsenaleColpo {
     const caso = f > 0 ? 1 + this.caso.numero() * (f - 1) : COLPI.casoMinimo + this.caso.numero() * (COLPI.casoMassimo - COLPI.casoMinimo);
     const d = base * (1 + this.bonus.danno) * caso;
     this.critico = this.bonus.critico > 0 && this.casoStati.numero() < this.bonus.critico;
+    // Lapide inchiodata (gioco a stanze, 19/11): ogni critico avvicina la prossima lapide
+    if (this.critico && this.unioniStanze && this.unite.lapide) this.richiamaLapide += NUMERI_UNIONI_STANZE.lapide.critico;
     return this.critico ? d * MOLTIPLICA_CRITICO : d;
   }
 

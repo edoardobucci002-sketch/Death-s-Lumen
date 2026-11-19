@@ -39,6 +39,9 @@ export type TipoStanza = (typeof TIPI_STANZA)[number];
 export const STATO = { cammina: 1, avviso: 2, recupero: 3, aTerra: 4 } as const;
 
 /** Le armi a mano, ognuna con la sua Quiete. */
+const MAX_POLVERE = 48; // granelli di polvere di Midollo Splendente al massimo (1 s di corsa veloce)
+const BAYER_POLVERE = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]; // retino per far sparire i granelli
+
 export const FONTE = { lanterna: 0, abilita: 1, midollo: 2 } as const; // midollo: un cieco che ne colpisce un altro (Midollo Splendente)
 
 const MAX_COMPARSE = ONDATA.massimo;
@@ -118,6 +121,16 @@ export class NemiciStanza {
   midollo = false;
   /** Nemici accecati dalla Lama (per il LAB e le prove). */
   accecati = 0;
+  /** Nemici accecati dalla polvere di Midollo Splendente (per il LAB e le simulazioni). */
+  accecatiPolvere = 0;
+  // Midollo Splendente (effetto del 19/11): la scia di polvere luminosa che lasci camminando, granelli a terra con la loro età
+  private polX = new Float32Array(MAX_POLVERE);
+  private polY = new Float32Array(MAX_POLVERE);
+  private polEta = new Float32Array(MAX_POLVERE);
+  private granelli = 0;
+  private polUltX = NaN;
+  private polUltY = NaN;
+  private pausaPolvere = new Float32Array(CAPIENZA); // secondi in cui la polvere non può accecare di nuovo quel nemico
   /** Il Campanaro, mini-boss del Mondo 1 (17/11): una sola istanza, in campo quando la Orda ha un nemico del suo tipo. */
   readonly capo = new Campanaro();
   /** Il Campanaro battuto (per il percorso, il LAB e le prove). */
@@ -259,7 +272,7 @@ export class NemiciStanza {
     this.stato[i] = STATO.cammina;
     this.tempo[i] = this.colpo[i] = this.fermo[i] = this.schiaccia[i] = this.bianco[i] = this.quieteLanterna[i] = this.quieteAbilita[i] = 0;
     this.ricarica[i] = C.primoCanto;
-    this.cieco[i] = 0;
+    this.cieco[i] = this.pausaPolvere[i] = 0;
     this.rinato[i] = this.verso[i] = this.risorge[i] = 0;
     this.rialza[i] = 0;
     this.dirX[i] = 1;
@@ -314,6 +327,7 @@ export class NemiciStanza {
     }
     const o = this.orda;
     o.aggiornaStanza(dt, px, py, mezzaL, mezzaA, this.fermi);
+    this.polvere(dt, px, py);
     let danno = 0;
     for (let i = o.numero - 1; i >= 0; i--) {
       if (o.segnoCorvo[i] > 0) o.segnoCorvo[i] -= dt;
@@ -733,6 +747,76 @@ export class NemiciStanza {
     }
   }
 
+  /**
+   * Midollo Splendente (19/11): camminando lasci un granello di polvere ogni «passo» px; ogni granello dura «durata» s. Chi
+   * ne tocca uno resta cieco (sbaglia la mira come dopo l'Abbacinio), poi per «pausa» s la polvere non lo acceca più.
+   * I capi non diventano ciechi. Senza l'Unione la scia sparisce.
+   */
+  private polvere(dt: number, px: number, py: number): void {
+    const P = NUMERI_UNIONI_STANZE.midollo.polvere, o = this.orda;
+    for (let i = 0; i < o.numero; i++) if (this.pausaPolvere[i] > 0) this.pausaPolvere[i] -= dt;
+    if (!this.midollo || !this.lama) {
+      this.granelli = 0;
+      this.polUltX = NaN;
+      return;
+    }
+    for (let k = this.granelli - 1; k >= 0; k--) {
+      if ((this.polEta[k] += dt) < P.durata) continue;
+      const u = --this.granelli;
+      this.polX[k] = this.polX[u];
+      this.polY[k] = this.polY[u];
+      this.polEta[k] = this.polEta[u];
+    }
+    const dx = px - this.polUltX, dy = py - this.polUltY;
+    if (!(dx * dx + dy * dy < P.passo * P.passo)) { // anche la prima volta (NaN)
+      if (this.polUltX === this.polUltX && this.granelli < MAX_POLVERE) {
+        const k = this.granelli++;
+        this.polX[k] = px;
+        this.polY[k] = py;
+        this.polEta[k] = 0;
+      }
+      this.polUltX = px;
+      this.polUltY = py;
+    }
+    if (!this.granelli) return;
+    for (let i = 0; i < o.numero; i++) {
+      if (this.pausaPolvere[i] > 0 || !this.colpibile(i) || this.eCapo(i)) continue;
+      const r = P.raggio + o.raggio[i];
+      for (let k = 0; k < this.granelli; k++) {
+        const ex = o.x[i] - this.polX[k], ey = o.y[i] - this.polY[k];
+        if (ex * ex + ey * ey > r * r) continue;
+        if (this.cieco[i] <= 0) this.accecati++;
+        this.cieco[i] = Math.max(this.cieco[i], P.cecita);
+        this.pausaPolvere[i] = P.pausa;
+        this.accecatiPolvere++;
+        this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, 0, -1, IMPATTO.scintille.colpo);
+        break;
+      }
+    }
+  }
+
+  /** LAB e prove: sparge un cerchio di granelli di polvere di raggio r intorno a (x, y) (servono l'Unione e l'Abbacinio). */
+  polvereIntorno(x: number, y: number, r: number): void {
+    for (let a = 0; a < 16 && this.granelli < MAX_POLVERE; a++) {
+      const k = this.granelli++;
+      this.polX[k] = x + r * Math.cos((a * Math.PI) / 8);
+      this.polY[k] = y + r * Math.sin((a * Math.PI) / 8);
+      this.polEta[k] = 0;
+    }
+  }
+
+  /** Disegna la scia di Midollo Splendente: granelli chiari che si spengono a retino man mano che invecchiano. */
+  private disegnaPolvere(t: Phaser.GameObjects.Graphics): void {
+    const P = NUMERI_UNIONI_STANZE.midollo.polvere;
+    for (let k = 0; k < this.granelli; k++) {
+      const x = Math.round(this.polX[k]) + ((k * 5) % 7) - 3, y = Math.round(this.polY[k]) + ((k * 3) % 5) - 2;
+      const vivo = 1 - this.polEta[k] / P.durata; // 1 appena caduto, 0 spento
+      if (BAYER_POLVERE[(y & 3) * 4 + (x & 3)] >= vivo * 16) continue;
+      const lato = vivo > 0.5 ? 2 : 1;
+      t.fillStyle(Math.floor(this.orologio * 12 + k) % 3 === 0 ? P.scuro : P.colore, 1).fillRect(x, y, lato, lato);
+    }
+  }
+
   /** LAB: acceca il nemico i (come dopo una schivata perfetta, con i numeri della Lama o di prova). */
   accecaPerProva(i: number): void {
     const prima = this.lama;
@@ -810,6 +894,7 @@ export class NemiciStanza {
     this.sopraBuio.clear();
     const o = this.orda, t = this.terra.clear(), s = this.sopra.clear(), col = NEMICI_STANZA.colori, B = NEMICI_STANZA.barra, E = NEMICI_STANZA.effetti;
     o.disegna(cam, 64, gx, gy);
+    this.disegnaPolvere(t);
     this.ombre.inizia();
     this.seth.disegnaProiettili(this.sopraBuio, this.orologio); // falci e detriti di Seth, sopra il buio
     for (let i = 0; i < o.numero; i++) {
