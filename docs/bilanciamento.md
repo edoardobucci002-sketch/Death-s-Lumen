@@ -14,7 +14,7 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ### 19/11 — Ombra meno schiacciata
 
-- `OMBRE.schiaccia` **0,3 → 0,35** (*da rivedere*): Edoardo, «la farei leggermente meno schiacciata, ma proprio leggermente». Confermati da Edoardo `BARRA_STANZA.abbassa` 6 e la sagoma come ombra.
+- `OMBRE.schiaccia` **0,3 → 0,35** (confermato da Edoardo il 19/11): Edoardo, «la farei leggermente meno schiacciata, ma proprio leggermente». Confermati da Edoardo `BARRA_STANZA.abbassa` 6 e la sagoma come ombra.
 
 ### 19/11 — Ombre a terra (numeri nuovi, solo aspetto)
 
