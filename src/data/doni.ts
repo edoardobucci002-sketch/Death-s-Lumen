@@ -2,7 +2,9 @@
  * Doni passivi: si scelgono tra le carte a ogni livello e migliorano il personaggio e tutte le armi.
  * Valori dal GDD (docs/GDD_base.md, sezione 5). Ogni modifica qui va riportata anche nel GDD.
  */
-export type IdDono = 'cuoreDiCera' | 'saleNero' | 'clessidra' | 'stoppinoLungo' | 'aliDiFalena' | 'calamita' | 'erbeAmare' | 'scudoDiFerro' | 'specchio' | 'ceraVotiva' | 'chiodoDiBara' | 'lacrimaDiLumen' | 'campanellaDArgento';
+export type IdDono = 'cuoreDiCera' | 'saleNero' | 'clessidra' | 'stoppinoLungo' | 'aliDiFalena' | 'calamita' | 'erbeAmare' | 'scudoDiFerro' | 'specchio' | 'ceraVotiva' | 'chiodoDiBara' | 'lacrimaDiLumen' | 'campanellaDArgento'
+  // i doni dei mosaici, solo nel gioco a stanze (19/11)
+  | 'fiammaCustodita' | 'ultimoCero' | 'braceNelPetto' | 'manoTesa' | 'coronaIncrinata';
 
 export interface Passivo {
   id: IdDono;
@@ -12,6 +14,7 @@ export interface Passivo {
   totale: number; // quanto dà al livello massimo (ogni livello ne dà una parte uguale: vedi effettoDono)
   testo: string; // sulla carta
   anime?: number; // anime in più al livello massimo (Calamita)
+  soloStanze?: true; // esiste solo nel gioco a stanze (i doni dei mosaici): il survivor non lo offre mai
 }
 
 /*
@@ -34,6 +37,13 @@ export const PASSIVI: Passivo[] = [
   { id: 'lacrimaDiLumen', nome: 'Calice riverso', icona: 'Icona_Lacrima_di_lumen', // nome nuovo del 12/11 (proposta del pivot); id e icona restano finché Edoardo disegna Icona_Calice_riverso
     massimo: 3, totale: 3, testo: '+1 sorso della fiaschetta.' }, // 3 livelli come gli altri doni, +1 sorso per livello (confermati da Edoardo il 17/11)
   { id: 'campanellaDArgento', nome: "Campanella d'argento", icona: 'Icona_Campanella_d_argento', massimo: 3, totale: 0.3, testo: '+0,1 s di tempo per la schivata perfetta.' }, // 3 livelli dal 17/11 (Edoardo); +0,1 s per livello, da rivedere
+  // i doni dei mosaici (19/11, src/data/mosaici.ts): solo nel gioco a stanze, si sbloccano completando il mosaico la prima
+  // volta. Numeri di Claude, da rivedere (raggi e parti fisse in DONI_MOSAICI)
+  { id: 'fiammaCustodita', nome: 'Fiamma custodita', icona: 'Icona_Fiamma_custodita', massimo: 3, totale: 0.3, soloStanze: true, testo: '+10% danno ai nemici vicini a te.' },
+  { id: 'ultimoCero', nome: 'Ultimo cero', icona: 'Icona_Ultimo_cero', massimo: 3, totale: 9, soloStanze: true, testo: 'Ogni stanza ripulita senza ferite accende un cero, fino a 3 per livello: +4% danno ciascuno. Ogni ferita ne spegne uno.' },
+  { id: 'braceNelPetto', nome: 'Brace nel petto', icona: 'Icona_Brace_nel_petto', massimo: 3, totale: 24, soloStanze: true, testo: 'I Ricaduti a terra bruciano chi gli sta vicino: +8 danni per livello.' },
+  { id: 'manoTesa', nome: 'Mano tesa', icona: 'Icona_Mano_tesa', massimo: 3, totale: 12, soloStanze: true, testo: 'Ogni schivata perfetta cura 4 salute.' },
+  { id: 'coronaIncrinata', nome: 'Corona incrinata', icona: 'Icona_Corona_incrinata', massimo: 3, totale: 0.6, soloStanze: true, testo: '+20% danno ai capi, ma i loro colpi fanno il 15% in più.' },
 ];
 
 /** Quanto dà il dono q al livello l: una parte uguale del totale per livello (la Clessidra si moltiplica: vedi ricaricaDono). */

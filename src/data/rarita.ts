@@ -39,6 +39,8 @@ export const GRADO_OGGETTO: Record<string, IdGrado> = {
   // doni
   specchio: 'ardente',
   saleNero: 'chiara', clessidra: 'chiara', scudoDiFerro: 'chiara', chiodoDiBara: 'chiara', lacrimaDiLumen: 'chiara',
+  // i doni dei mosaici (19/11, Claude, da rivedere)
+  ultimoCero: 'chiara', coronaIncrinata: 'chiara', fiammaCustodita: 'fioca', braceNelPetto: 'fioca', manoTesa: 'fioca',
   cuoreDiCera: 'fioca', aliDiFalena: 'fioca', erbeAmare: 'fioca', stoppinoLungo: 'fioca', ceraVotiva: 'fioca', campanellaDArgento: 'fioca',
 };
 

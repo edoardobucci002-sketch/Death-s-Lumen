@@ -63,6 +63,7 @@ export const PROIETTILI_V0: Record<string, { fotogramma: string; x: number; y: n
 export const FONTI = [
   'lanterna', 'pala', 'turibolo', 'bastone', 'candela', 'falce', 'campana', 'fuocoFatuo', 'acquaSanta', 'lamaDiLuce',
   'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'sampietrini', 'abilita', 'martire', 'fuoco', 'eclissi', 'esorcismo', 'interramento',
+  'brace', // gioco a stanze: Brace nel petto (dono del mosaico, 19/11)
 ] as const;
 export const F = Object.fromEntries(FONTI.map((f, i) => [f, i])) as Record<(typeof FONTI)[number], number>;
 
@@ -98,6 +99,8 @@ export abstract class ArsenaleColpo {
   dannoTotale = 0; // per il riepilogo di fine partita
   reazioni = 0; // reazioni tra stati in questa notte (per la simulazione)
   readonly reazioniPerTipo = new Uint32Array(5); // per la simulazione: indice = ECLISSI, RIVELAZIONE, ESORCISMO, INTERRAMENTO
+  /** Gioco a stanze (doni dei mosaici, 19/11): il danno in più sul nemico j (Fiamma custodita, Corona incrinata); nel survivor non c'è. */
+  moltBersaglio: ((j: number) => number) | null = null;
   readonly dannoFonti = new Float64Array(FONTI.length); // per la simulazione: danno di ogni fonte (stessa misura di dannoTotale)
   readonly statiFonti = new Float64Array(FONTI.length); // …stati lasciati da ogni fonte
   readonly reazioniFonti = new Float64Array(FONTI.length); // …reazioni fatte partire dai colpi di ogni fonte
@@ -433,7 +436,7 @@ export abstract class ArsenaleColpo {
     const o = this.orda;
     if (o.fuoriSchermo(j)) return; // prova «schermo»
     // Voto della Terra (Becchino): più danno ai nemici fermi
-    const danno = this.danno(base) * (this.votoFermi && o.fermoOra(j) ? 1 + NUMERI_VOTI.dannoFermi : 1);
+    const danno = this.danno(base) * (this.votoFermi && o.fermoOra(j) ? 1 + NUMERI_VOTI.dannoFermi : 1) * (this.moltBersaglio ? this.moltBersaglio(j) : 1);
     this.dannoFonti[this.fonte] += danno;
     if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * o.piuInterrato(j); // la parte in più dell'Interramento
     const viva = o.salute[j] > 0;

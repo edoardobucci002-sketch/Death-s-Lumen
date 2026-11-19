@@ -16,6 +16,7 @@
  * Tutto in array preparati all'inizio (niente allocazioni nel ciclo di gioco); la logica è separata dal disegno.
  * Posizioni ai piedi, in pixel di gioco. Numeri in NEMICI_STANZA e ONDATA (src/data/stanze.ts).
  */
+import { DONI_MOSAICI } from '../data/mosaici';
 import Phaser from 'phaser';
 import { COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, NEMICI_STANZA, ONDATA } from '../data/stanze';
 import { Ombre } from './ombre';
@@ -42,7 +43,7 @@ export const STATO = { cammina: 1, avviso: 2, recupero: 3, aTerra: 4 } as const;
 const MAX_POLVERE = 48; // granelli di polvere di Midollo Splendente al massimo (1 s di corsa veloce)
 const BAYER_POLVERE = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]; // retino per far sparire i granelli
 
-export const FONTE = { lanterna: 0, abilita: 1, midollo: 2 } as const; // midollo: un cieco che ne colpisce un altro (Midollo Splendente)
+export const FONTE = { lanterna: 0, abilita: 1, midollo: 2, brace: 3 } as const; // midollo: un cieco che ne colpisce un altro (Midollo Splendente)
 
 const MAX_COMPARSE = ONDATA.massimo;
 const MAX_GRUMI = 16;
@@ -73,6 +74,12 @@ export class NemiciStanza {
   private bianco = new Float32Array(CAPIENZA); // secondi in cui resta bianco dopo un colpo della Lanterna
   private verso = new Uint8Array(CAPIENZA); // 1 = guarda a sinistra
   private rialza = new Float32Array(CAPIENZA); // secondi di «death» al contrario rimasti (il Ricaduto che si rialza)
+  private braceT = new Float32Array(CAPIENZA); // Brace nel petto: secondi alla prossima bruciatura del Ricaduto a terra
+  /** Brace nel petto (dono del mosaico, 19/11): danno di ogni bruciatura intorno ai Ricaduti a terra (0 = senza il dono). */
+  brace = 0;
+  bruciature = 0; // per il LAB e le prove: bruciature che hanno preso qualcuno
+  /** Il danno restituito dall'ultimo aggiorna viene da un capo (Corona incrinata, 19/11). */
+  daCapo = false;
   private risorge = new Uint8Array(CAPIENZA); // 1 = il Ricaduto a terra si rialzerà (deciso quando cade: la crepa pulsa)
   // fotogrammi e durate (secondi) di attack e death per tipo, presi dalle animazioni dello sprite (null se mancano)
   private readonly mosse: ({ attacco: Mossa | null; morte: Mossa | null; rinascita: Mossa | null })[] = [];
@@ -169,7 +176,7 @@ export class NemiciStanza {
   ) {
     this.orda = new Orda(scena, caso, new Minacce(scena));
     this.orda.registraCampi(this.stato, this.tempo, this.dirX, this.dirY, this.ricarica, this.rinato, this.dentro, this.colpo,
-      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco, this.rialza, this.risorge, this.cieco);
+      this.quieteLanterna, this.quieteAbilita, this.fermo, this.schiaccia, this.verso, this.bianco, this.rialza, this.risorge, this.cieco, this.braceT);
     // «special» del Ricaduto: steso a terra con la crepa che pulsa, il segno che si rialzerà
     for (const sprite of [R.sprite, C.sprite]) {
       this.mosse.push({ attacco: mossa(scena, `${sprite}:attack`), morte: mossa(scena, `${sprite}:death`), rinascita: mossa(scena, `${sprite}:special`) });
@@ -328,7 +335,7 @@ export class NemiciStanza {
     const o = this.orda;
     o.aggiornaStanza(dt, px, py, mezzaL, mezzaA, this.fermi);
     this.polvere(dt, px, py);
-    let danno = 0;
+    let danno = 0, dCapo = 0;
     for (let i = o.numero - 1; i >= 0; i--) {
       if (o.segnoCorvo[i] > 0) o.segnoCorvo[i] -= dt;
       if (o.lutto[i] > 0) o.lutto[i] -= dt;
@@ -352,7 +359,7 @@ export class NemiciStanza {
         if (this.fermi[i]) continue; // sepolto, interrato o fermato: anche lui aspetta
         const dentroCerchio = this.cerchioR > 0 && (o.x[i] - this.cerchioX) ** 2 + (o.y[i] - this.cerchioY) ** 2 <= this.cerchioR ** 2;
         const passo = dt * o.fattoreVelocita(i, false) * (dentroCerchio ? 1 - this.cerchioLento : 1);
-        danno = Math.max(danno, this.capo.passo(this, i, dt, passo, px, py));
+        dCapo = Math.max(dCapo, this.capo.passo(this, i, dt, passo, px, py));
         this.stato[i] = this.capo.inAvviso ? STATO.avviso : STATO.cammina;
         if (Math.abs(px - o.x[i]) > 1 && !this.capo.inAvviso) this.verso[i] = px < o.x[i] ? 1 : 0;
         continue;
@@ -370,7 +377,7 @@ export class NemiciStanza {
         if (this.fermi[i]) continue; // sepolto, interrato o fermato: anche lui aspetta
         const dentroCerchio = this.cerchioR > 0 && (o.x[i] - this.cerchioX) ** 2 + (o.y[i] - this.cerchioY) ** 2 <= this.cerchioR ** 2;
         const passo = dt * o.fattoreVelocita(i, false) * (dentroCerchio ? 1 - this.cerchioLento : 1);
-        danno = Math.max(danno, this.seth.passo(this, i, dt, passo, px, py));
+        dCapo = Math.max(dCapo, this.seth.passo(this, i, dt, passo, px, py));
         this.stato[i] = this.seth.inAvviso ? STATO.avviso : STATO.cammina;
         if (Math.abs(px - o.x[i]) > 1 && !this.seth.inAvviso) this.verso[i] = px < o.x[i] ? 1 : 0;
         continue;
@@ -388,6 +395,11 @@ export class NemiciStanza {
         continue;
       }
       if (this.stato[i] === STATO.aTerra) {
+        // Brace nel petto: il Ricaduto a terra brucia chi gli sta vicino
+        if (this.brace > 0 && ricaduto && (this.braceT[i] -= dt) <= 0) {
+          this.braceT[i] += DONI_MOSAICI.brace.ogni;
+          this.brucia(i);
+        }
         // allo scadere si tira la rinascita (nessun segno prima); se non esce, sparisce
         if ((this.tempo[i] -= dt) <= 0) {
           if (this.risorge[i]) {
@@ -473,8 +485,10 @@ export class NemiciStanza {
       o.x[i] = Phaser.Math.Clamp(o.x[i], a.x0, a.x1);
       o.y[i] = Phaser.Math.Clamp(o.y[i], a.y0, a.y1);
     }
-    danno = Math.max(danno, this.seth.proiettili(this, dt, px, py));
-    return Math.max(danno, this.aggiornaGrumi(dt, px, py));
+    dCapo = Math.max(dCapo, this.seth.proiettili(this, dt, px, py));
+    danno = Math.max(danno, this.aggiornaGrumi(dt, px, py));
+    this.daCapo = dCapo > 0 && dCapo >= danno;
+    return Math.max(danno, dCapo);
   }
 
   /** Il personaggio in (px, py) è dentro lo spicchio del graffio del Ricaduto i? */
@@ -528,7 +542,23 @@ export class NemiciStanza {
     this.risorge[i] = o.tipo[i] === ID_RICADUTO && !this.rinato[i] && (this.rinascitaForzata ?? this.caso.numero() < R.rinascita.probabilita) ? 1 : 0;
     o.salute[i] = 0;
     this.fermo[i] = 0;
+    this.braceT[i] = 0; // Brace nel petto: la prima bruciatura subito
     this.impatto.scintille(o.x[i], o.y[i] - o.altezza(i) / 2, 0, -1, IMPATTO.scintille.battuto);
+  }
+
+  /** Brace nel petto: il Ricaduto a terra i brucia i nemici in piedi entro DONI_MOSAICI.brace.raggio (segnaposto: scintille). */
+  private brucia(i: number): void {
+    const o = this.orda, r = DONI_MOSAICI.brace.raggio;
+    let presi = 0;
+    for (let j = 0; j < o.numero; j++) {
+      if (j === i || !this.colpibile(j)) continue;
+      const dx = o.x[j] - o.x[i], dy = o.y[j] - o.y[i], d = Math.hypot(dx, dy);
+      if (d > r + o.raggio[j]) continue;
+      this.colpoArma(j, this.brace, d > 0 ? dx / d : 0, d > 0 ? dy / d : 0, FONTE.brace);
+      presi++;
+    }
+    if (presi) this.bruciature++;
+    this.impatto.scintille(o.x[i], o.y[i] - 4, 0, -1, IMPATTO.scintille.colpo);
   }
 
   /** Battuto per davvero: scintille, uno scoppio e via. */

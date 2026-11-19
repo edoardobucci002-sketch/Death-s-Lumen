@@ -22,7 +22,9 @@ import { ABILITA_STANZA, NEMICI_STANZA, STANZA } from '../data/stanze';
 import { ECHI_STANZE, LANTERNA_STANZE, POTENZIALI } from '../data/armi-stanze';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { ARTE_STANZA, DOPPIA_LAB, MISURA, areaCamminabile, creaStanza } from './stanza';
-import { ROMPIBILI } from '../data/rompibili';
+import { FRAMMENTI, ROMPIBILI } from '../data/rompibili';
+import { MOSAICI, MOSAICI_STANZE } from '../data/mosaici';
+import type { IdDono } from '../data/doni';
 import { STATO, type TipoStanza } from './nemici-stanza';
 import { F } from './armi-colpo';
 import { BotStanze } from './bot-stanze';
@@ -716,5 +718,63 @@ export class LabStanze {
   rompibili(): { interi: number; cera: number; frammenti: number; caduti: number; bagliore: number; codice: boolean } {
     const r = this.s.rompibili;
     return { interi: r.rompibili.interi(), cera: r.cera, frammenti: r.frammenti, caduti: r.frammentiCaduti, bagliore: r.bagliore, codice: ARTE_STANZA.codice };
+  }
+
+  // ——— Mosaici e Vetrate (19/11) ———
+
+  /** Lo stato dei mosaici: salvati (Vetrate accese, cadute) e della Veglia (mosaico cercato, doni dei mosaici in gioco). */
+  mosaici(): { vetrate: number; cadute: number; aperti: boolean; cercato: string; inGioco: number; nuova: string; ceri: number; bruciature: number; curaMano: number } {
+    const s = carica(), r = this.s.rompibili;
+    return {
+      vetrate: s.mosaici, cadute: s.caduteStanze, aperti: r.mosaiciAperti, cercato: MOSAICI_STANZE[r.indiceMosaico].nome,
+      inGioco: this.s.percorso.mosaici, nuova: this.s.vetrataNuova, ceri: this.s.percorso.ceri,
+      bruciature: this.s.nemici.bruciature, curaMano: Math.round(this.s.curaMano),
+    };
+  }
+
+  /** n Vetrate accese (salvate): i loro doni escono subito nelle carte di questa Veglia, e si cerca il mosaico dopo. */
+  vetrate(n: number): void {
+    const s = carica();
+    s.mosaici = Math.max(0, Math.min(MOSAICI_STANZE.length, n));
+    if (s.mosaici > 0) s.caduteStanze = Math.max(s.caduteStanze, MOSAICI.cadute);
+    salva(s);
+    this.s.percorso.mosaici = s.mosaici;
+    this.s.vetrataNuova = '';
+    this.s.rompibili.mosaiciAperti = s.caduteStanze >= MOSAICI.cadute;
+    this.s.rompibili.scegliMosaico(Math.min(s.mosaici, MOSAICI_STANZE.length - 1));
+  }
+
+  /** Azzera Vetrate e cadute: come la prima Veglia di sempre (le urne non hanno frammenti). */
+  azzeraVetrate(): void {
+    const s = carica();
+    s.mosaici = 0;
+    s.caduteStanze = 0;
+    salva(s);
+    this.vetrate(0);
+  }
+
+  /** Le urne hanno frammenti anche senza essere mai caduti (segna una caduta). */
+  apriMosaici(): void {
+    const s = carica();
+    s.caduteStanze = Math.max(s.caduteStanze, MOSAICI.cadute);
+    salva(s);
+    this.s.rompibili.mosaiciAperti = true;
+  }
+
+  /** I pezzi che mancano al mosaico, subito: si completa (Vetrata accesa la prima volta, altrimenti Cera). */
+  completaMosaico(): void {
+    const r = this.s.rompibili;
+    for (let k = r.frammenti; k < FRAMMENTI.perReliquiario; k++) r.frammento();
+  }
+
+  /** Porta un dono dei mosaici al livello l (0 = toglierlo), anche se la sua Vetrata è spenta. */
+  donoMosaico(id: IdDono, l: number): void {
+    this.s.percorso.passivi[id] = Math.max(0, Math.min(3, l));
+    if (id === 'ultimoCero') this.s.percorso.ceri = Math.min(this.s.percorso.ceri, 3 * this.s.percorso.passivi.ultimoCero);
+  }
+
+  /** Ultimo cero: accende n ceri (fino al massimo del dono). */
+  ceri(n: number): void {
+    this.s.percorso.ceri = Math.max(0, Math.min(3 * this.s.percorso.passivi.ultimoCero, n));
   }
 }

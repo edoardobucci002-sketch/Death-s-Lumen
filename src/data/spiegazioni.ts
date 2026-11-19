@@ -2,6 +2,7 @@
  * Le parole con cui il gioco spiega stati, reazioni e dati degli oggetti: strisce dei doni, legenda, nomi delle reazioni.
  * I numeri non si scrivono qui: si leggono da stati.ts e doni.ts, così cambiando un numero (anche dal Laboratorio) cambia il testo.
  */
+import { DONI_MOSAICI } from './mosaici';
 import { REAZIONI, STATI, type IdAffinita } from './stati';
 import { GRAZIA } from './sopravvivenza';
 import { CAMPI_GLOSSARIO } from './glossario';
@@ -84,6 +85,11 @@ export const DATI_DONI: Record<IdDono, (q: Passivo, l: number, metaRaccolta?: nu
   ceraVotiva: (q, l) => [{ nome: 'Durata', valore: piu(effettoDono(q, l)) }],
   chiodoDiBara: (q, l) => [{ nome: 'Critico', valore: percento(effettoDono(q, l)) }],
   lacrimaDiLumen: (q, l) => [{ nome: 'Sorsi', valore: `+${effettoDono(q, l)}` }],
+  fiammaCustodita: (q, l) => [{ nome: 'Danno vicino', valore: piu(effettoDono(q, l)) }],
+  ultimoCero: (q, l) => [{ nome: 'Ceri', valore: `${Math.round(effettoDono(q, l))}` }, { nome: 'Danno', valore: piu(effettoDono(q, l) * DONI_MOSAICI.cero.danno) }],
+  braceNelPetto: (q, l) => [{ nome: 'Brace', valore: `${Math.round(effettoDono(q, l))}` }],
+  manoTesa: (q, l) => [{ nome: 'Cura', valore: `+${Math.round(effettoDono(q, l))}` }],
+  coronaIncrinata: (q, l) => [{ nome: 'Danno ai capi', valore: piu(effettoDono(q, l)) }, { nome: 'Danno subito', valore: piu(DONI_MOSAICI.corona.subito) }],
   campanellaDArgento: (q, l) => [{ nome: 'Schivata', valore: `+${virgola(effettoDono(q, l))} s` }, { nome: 'Sfioro', valore: `+${GRAZIA.tacche.campanella * l} px` }],
 };
 
@@ -101,6 +107,11 @@ export const SPIEGA_DONI: Record<IdDono, string> = {
   ceraVotiva: 'Nubi, pozze, abilità e stati durano di più.',
   chiodoDiBara: 'Ogni colpo può fare il doppio del danno.',
   lacrimaDiLumen: 'Una fiaschetta più capiente, subito piena di un sorso.',
+  fiammaCustodita: 'Le tue armi fanno più male ai nemici che ti stanno vicino.',
+  ultimoCero: 'Premia chi ripulisce le stanze senza farsi toccare: il danno cresce cero dopo cero.',
+  braceNelPetto: 'Un Ricaduto abbattuto resta a terra in fiamme e brucia i nemici accanto.',
+  manoTesa: 'Ogni schivata perfetta ti cura.',
+  coronaIncrinata: 'Più danno contro i capi, ma i loro colpi pesano di più.',
   campanellaDArgento: 'Più tempo per la Grazia: uscire dai cerchi rossi all\'ultimo istante è più facile, e sfiori i nemici da più lontano.',
 };
 

@@ -25,7 +25,8 @@ export class Mosaico {
   private dpr = 1;
   private lato = 0;
 
-  constructor(contenitore: HTMLElement) {
+  /** chiave: il disegno dell'HUD (gioco a stanze, 19/11: ogni mosaico ha il suo; se manca, quello di «Mosaico»). */
+  constructor(contenitore: HTMLElement, chiave = 'Mosaico') {
     this.el.className = 'mosaico';
     this.el.hidden = true;
     this.el.setAttribute('aria-live', 'polite');
@@ -33,7 +34,7 @@ export class Mosaico {
     this.numero.className = 'mosaico-numero';
     this.el.append(this.tela, this.numero);
     contenitore.append(this.el);
-    const fotogrammi = arte('Mosaico')?.fotogrammi ?? [];
+    const fotogrammi = (arte(chiave) ?? arte('Mosaico'))?.fotogrammi ?? [];
     if (!fotogrammi.length) return;
     this.lato = fotogrammi[0].width;
     this.tela.width = this.tela.height = this.lato;

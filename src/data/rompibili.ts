@@ -60,7 +60,7 @@ export const FRAMMENTI = {
 
 /**
  * Rompibili del gioco a stanze (decisioni di Edoardo del 16/11): urna, giara e lanterna con il funzionamento del survivor
- * (contenuto, frammenti, olio e luce come sopra), ma da 1 a 2 per stanza lungo i muri e frammenti da subito; fanno da ostacolo e si rompono solo
+ * (contenuto, frammenti, olio e luce come sopra), ma da 1 a 2 per stanza lungo i muri e frammenti dopo la prima caduta (MOSAICI in src/data/mosaici.ts); fanno da ostacolo e si rompono solo
  * colpendoli. Quale tipo esce segue le probabilità del survivor, usate come pesi. Distanze in pixel di gioco, misurate
  * alla base dell'oggetto. Tutti i valori sono proposte di Claude (da rivedere).
  */
@@ -73,6 +73,5 @@ export const ROMPIBILI_STANZE = {
   tentativi: 60, // posti provati per stanza prima di arrendersi
   ingombro: 12, // raggio dell'ostacolo alla base: personaggio e nemici ci sbattono contro
   chiave: 0.08, // urne e giare (non le lanterne) lasciano una chiave con questa probabilità (Edoardo, 18/11)
-  vittorie: 0, // albe vinte (nel survivor) prima che le urne delle stanze contengano frammenti: da subito (Edoardo, 16/11)
   raccolta: 0.6, // le gocce e i frammenti volano verso il personaggio entro questa parte della raccolta di base, come nel survivor
 } as const;

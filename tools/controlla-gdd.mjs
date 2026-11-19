@@ -46,6 +46,7 @@ const R = D('rosario'), U = D('unioni'), ST = D('stati'), PR = D('progressione')
 const OG = D('oggetti'), W = D('mondo'), E = D('effetti'), H = D('hud'), PX = D('pixel');
 const SZ = D('stanze'); // gioco a stanze (pivot del 12/11)
 const GL = D('glossario'); // il glossario: nomi dei numeri, parole vietate (16/11)
+const MO = D('mosaici'); // Mosaici e Vetrate del gioco a stanze, con i loro doni (19/11)
 const AS = D('armi-stanze'); // le armi del gioco a stanze: 5 livelli, danno a intervallo (14/11)
 
 // il GDD è in due file: il gioco a stanze (docs/GDD.md) e il survivor congelato (docs/survivor/GDD-survivor.md)
@@ -364,7 +365,8 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   frase('Doni massimi', 'Al massimo {} doni passivi diversi', DO.MAX_PASSIVI);
   frase('Peso degli oggetti nuovi', 'come se fossero sempre {} e {}', PR.CARTE.pool.armi, PR.CARTE.pool.doni);
   const t = tabella('| Dono | Effetto al massimo |');
-  stessiNomi('Doni', t, DO.PASSIVI.map((d) => d.nome));
+  const PASSIVI_SURVIVOR = DO.PASSIVI.filter((d) => !d.soloStanze); // i doni dei mosaici hanno la loro tabella nel GDD delle stanze
+  stessiNomi('Doni', t, PASSIVI_SURVIVOR.map((d) => d.nome));
   const dono = (id) => DO.PASSIVI.find((d) => d.id === id);
   // l'effetto al livello massimo (totale); la colonna «per livello» è solo una lettura arrotondata
   const EFFETTI_DONI = {
@@ -382,7 +384,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     lacrimaDiLumen: (d) => ['+{} sorsi', d.totale],
     campanellaDArgento: (d) => ['+{} s di finestra', d.totale],
   };
-  for (const d of DO.PASSIVI) {
+  for (const d of PASSIVI_SURVIVOR) {
     conRiga(t, d.nome, (r) => {
       inTesto(r['Livello max'], `${d.nome}: livello massimo`, '{}', d.massimo);
       if (!EFFETTI_DONI[d.id]) { diff.push(`Dono ${d.id}: senza corrispondenza nello script`); return; }
@@ -821,7 +823,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   const RS = D('rompibili').ROMPIBILI_STANZE, tr = tabella('| Valore dei rompibili nelle stanze | Numero |');
   const RIGHE_ROMPIBILI = [
     ['Per stanza', 'da {} a {}', RS.quanti.min, RS.quanti.max],
-    ['Frammenti dopo', '{} albe vinte', RS.vittorie],
+    ['Frammenti dopo', '{} caduta', MO.MOSAICI.cadute],
     ['Distanza dal muro', 'da {} a {} px', RS.dalMuro.min, RS.dalMuro.max],
     ['Lontano dalle porte', '{} px', RS.porte],
     ['Distanza tra due rompibili', '{} px', RS.tra],
@@ -830,6 +832,27 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
   ];
   stessiNomi('Rompibili nelle stanze', tr, RIGHE_ROMPIBILI.map((r) => r[0]));
   for (const [nome, modello, ...attesi] of RIGHE_ROMPIBILI) conRiga(tr, nome, (r) => inTesto(r.Numero, nome, modello, ...attesi));
+
+  // Mosaici e Vetrate (19/11): i cinque mosaici del Mondo 1 con il loro dono, e i numeri dei doni
+  const tm = tabella('| Mosaico | Dono che sblocca | Effetto al massimo |'), DM = MO.DONI_MOSAICI;
+  stessiNomi('Mosaici', tm, MO.MOSAICI_STANZE.map((m) => m.nome));
+  const EFFETTI_MOSAICI = {
+    fiammaCustodita: (d) => ['+{}% danno ai nemici entro {} px', pct(d.totale), DM.fiamma.raggio],
+    ultimoCero: (d) => ['{} ceri, +{}% danno ciascuno', d.totale, pct(DM.cero.danno)],
+    braceNelPetto: (d) => ['{} danni ogni {} s entro {} px', d.totale, DM.brace.ogni, DM.brace.raggio],
+    manoTesa: (d) => ['+{} salute a schivata perfetta', d.totale],
+    coronaIncrinata: (d) => ['+{}% danno ai capi, +{}% danno subito dai capi', pct(d.totale), pct(DM.corona.subito)],
+  };
+  for (const m of MO.MOSAICI_STANZE) {
+    conRiga(tm, m.nome, (r) => {
+      const d = DO.PASSIVI.find((q) => q.id === m.dono);
+      inTesto(r['Dono che sblocca'], `${m.nome}: dono`, d.nome);
+      if (!EFFETTI_MOSAICI[d.id]) { diff.push(`Dono ${d.id}: senza corrispondenza nello script`); return; }
+      const [modello, ...attesi] = EFFETTI_MOSAICI[d.id](d);
+      inTesto(r['Effetto al massimo'], d.nome, modello, ...attesi);
+    });
+  }
+  frase('Cera del mosaico ritrovato', 'un mosaico già completato dà il Bagliore e {} Cera', MO.MOSAICI.cera);
 
   // le armi del gioco a stanze: tabelle «#### Stanze · <Nome>», con il danno scritto «minimo–massimo»
   const COLONNE_STANZE = { 'Ricarica (s)': 'ricarica', Colpi: 'quantita', Area: 'raggio', Portata: 'raggio', 'Ampiezza arco (°)': 'ampiezza', 'Durata (s)': 'durata', Trapassa: 'trapassa', 'Rotazione (giri/s)': 'giri', Rimbalzi: 'rimbalzi', 'Colpo alle spalle': 'spalle', 'Colpo doppio': 'doppio', 'Cecità (s)': 'cecita', 'Mira sbagliata (gradi)': 'sviamento' };

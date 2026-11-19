@@ -23,6 +23,7 @@ import { STANZE_SPECIALI } from '../data/mappa';
 import type { Arma } from '../data/armi';
 import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, type IdDono } from '../data/doni';
+import { MOSAICI_STANZE } from '../data/mosaici';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { GRADI, ORDINE_GRADI, type IdGrado } from '../data/rarita';
 import { LIVELLO_ARMA_UNIONE_STANZE, UNIONI_STANZE } from '../data/unioni-stanze';
@@ -53,6 +54,11 @@ export class Percorso {
   /** Simulazioni (?unione=…&unita=0): la carta Unione non esce mai, per confrontare la stessa build senza Unione. */
   senzaUnioni = false;
   readonly passivi: Record<IdDono, number>;
+  /** I mosaici completati all'inizio della Veglia (19/11): i loro doni escono nelle carte. Si fissa all'inizio, così una
+   * Vetrata accesa a metà Veglia vale dalla Veglia dopo, e la Veglia ripresa resta identica. */
+  mosaici = 0;
+  /** Ultimo cero (19/11): i ceri accesi, che danno danno in più fino a fine Veglia. */
+  ceri = 0;
   private ondata = 0; // ondate già arrivate in questa stanza
   private attesa = 0;
   private readonly caso: Caso;
@@ -354,11 +360,19 @@ export class Percorso {
     return d;
   }
 
+  /** I doni che possono uscire nelle carte: quelli di sempre e quelli dei mosaici già completati (19/11). */
+  doniInGioco(): IdDono[] {
+    const d: IdDono[] = [...PERCORSO.doniAttivi];
+    for (let k = 0; k < this.mosaici && k < MOSAICI_STANZE.length; k++) d.push(MOSAICI_STANZE[k].dono);
+    return d;
+  }
+
   /** Dalla porta del dono: livelli dei doni che si hanno, e doni nuovi se c'è posto. */
   private doni(): Dono[] {
-    const posseduti = PERCORSO.doniAttivi.filter((id) => this.passivi[id] > 0).length;
+    const attivi = this.doniInGioco();
+    const posseduti = attivi.filter((id) => this.passivi[id] > 0).length;
     const d: Dono[] = [];
-    for (const id of PERCORSO.doniAttivi) {
+    for (const id of attivi) {
       const q = PASSIVI.find((p) => p.id === id)!, l = this.passivi[id];
       if (l >= q.massimo || (!l && posseduti >= PERCORSO.doni)) continue;
       d.push({ tipo: 'passivo', passivo: q, livello: l + 1 });

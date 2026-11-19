@@ -357,6 +357,8 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .cappella-veglia ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
 .cappella-veglia li { display: flex; justify-content: space-between; gap: 12px; font-size: 16px; color: var(--tenue); }
 .cappella-veglia p { margin: 0; color: var(--accento); }
+.cappella-vetrate { display: grid; gap: 8px; } /* le Vetrate dei mosaici (gioco a stanze, 19/11) */
+.vetrata:not(.spento) .cero-testo p { font-style: italic; }
 .cappella-ceri { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .cero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 12px; background: var(--pannello); border: 1px solid var(--linea); }
 .cero.spento { opacity: 0.6; }

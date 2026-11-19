@@ -1717,6 +1717,103 @@ for (const [nome, disp] of [
   console.log(`${errori.length ? '✗' : '✓'} Unioni delle stanze: scoperta, carta Unione scelta, ${e.lampi} lampi del Faro, ${e.fuochi} uccisioni dei Fuochi, ${e.lutti} lutti, ${e.midollo} danno dei ciechi, ${e.polvere} accecati dalla polvere, ${e.lapide} s tolti alla Lapide${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
+// Mosaici e Vetrate (19/11): il mosaico completato accende la Vetrata (salvata) e il dono dopo; un mosaico già trovato dà
+// Cera; la caduta apre le urne; gli effetti dei cinque doni dei mosaici; le Vetrate nella Cappella
+{
+  const errori = [];
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const pag = await ctx.newPage();
+  pag.on('pageerror', (e) => errori.push(e.message));
+  const entra = async () => {
+    await pag.goto(`${url}?stanze`);
+    await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
+  };
+  const L = (f, ...a) => pag.evaluate(([f, a]) => window.__dl.scene.getScene('Stanze').lab[f](...a), [f, a]);
+  const salvato = () => pag.evaluate(() => JSON.parse(localStorage.getItem('dl-salvataggio') ?? '{}'));
+  await entra();
+  await L('azzeraVetrate');
+  await entra();
+  const m0 = await L('mosaici');
+  if (m0.aperti) errori.push('le urne hanno frammenti prima della prima caduta');
+  await L('completaMosaico');
+  if ((await salvato()).mosaici !== 1) errori.push('il primo mosaico completato non accende la prima Vetrata');
+  if ((await L('mosaici')).nuova !== 'La Veglia') errori.push('la Vetrata accesa non è La Veglia');
+  await entra();
+  const m1 = await L('mosaici');
+  if (m1.cercato !== "L'Ultimo Altare" || m1.inGioco !== 1) errori.push(`dopo la prima Vetrata si cerca ${m1.cercato}, doni in gioco ${m1.inGioco}`);
+  await L('vetrate', 5);
+  await entra();
+  const cera0 = (await L('rompibili')).cera;
+  await L('completaMosaico');
+  if ((await L('rompibili')).cera !== cera0 + 10) errori.push('il mosaico già trovato non dà 10 Cera');
+  if ((await salvato()).mosaici !== 5) errori.push('il mosaico già trovato cambia le Vetrate');
+  // la caduta apre le urne
+  await L('azzeraVetrate');
+  await entra();
+  await L('ondateAutomatiche', false);
+  await L('cadi');
+  if ((await salvato()).caduteStanze !== 1) errori.push('la caduta non viene contata');
+  await entra();
+  if (!(await L('mosaici')).aperti) errori.push('dopo la prima caduta le urne non hanno frammenti');
+  // gli effetti dei doni
+  await L('ondateAutomatiche', false);
+  await L('svuota');
+  await L('immortale', true);
+  const S = (f) => pag.evaluate(f);
+  await L('donoMosaico', 'manoTesa', 3);
+  await S(() => { const s = window.__dl.scene.getScene('Stanze'); s.salute = 50; s.nemici.schivate = 1; });
+  await pag.waitForTimeout(300);
+  const mano = (await L('mosaici')).curaMano;
+  if (mano !== 12) errori.push(`Mano tesa cura ${mano} invece di 12`);
+  await L('donoMosaico', 'ultimoCero', 1);
+  const mp = await L('mappa');
+  await L('vaiAllaStanza', mp.stanze.findIndex((st) => st.tipo === 'combattimento'));
+  await L('ripulisci');
+  await pag.waitForTimeout(800);
+  const ceri1 = (await L('mosaici')).ceri;
+  await L('ferita');
+  const ceri0 = (await L('mosaici')).ceri;
+  if (ceri1 !== 1 || ceri0 !== 0) errori.push(`Ultimo cero: ${ceri1} ceri dopo la stanza senza ferite, ${ceri0} dopo la ferita`);
+  await pag.keyboard.press('1').catch(() => {}); // sceglie una carta, se sono aperte
+  await S(() => {
+    const s = window.__dl.scene.getScene('Stanze'), L = s.lab;
+    L.svuota();
+    L.donoMosaico('fiammaCustodita', 3);
+    L.donoMosaico('coronaIncrinata', 0);
+    L.nemicoIn('ricaduto', s.x + 40, s.y);
+    L.nemicoIn('ricaduto', s.x + 200, s.y);
+  });
+  await pag.waitForTimeout(100);
+  const moltF = await S(() => { const s = window.__dl.scene.getScene('Stanze'); return [s.moltBersaglio(0), s.moltBersaglio(1)]; });
+  if (Math.abs(moltF[0] - 1.3) > 1e-6 || moltF[1] !== 1) errori.push(`Fiamma custodita: ${moltF.join(' e ')} invece di 1,3 vicino e 1 lontano`);
+  // Brace nel petto: tre Ricaduti stretti, uno battuto brucia gli altri
+  await L('svuota');
+  await L('donoMosaico', 'fiammaCustodita', 0);
+  await L('donoMosaico', 'braceNelPetto', 3);
+  await L('rinascita', false);
+  const c = await L('stato');
+  for (const dx of [120, 140, 160]) await L('nemicoIn', 'ricaduto', c.x + dx, c.y + 80);
+  await pag.waitForTimeout(800);
+  await S(() => { const s = window.__dl.scene.getScene('Stanze'); s.nemici.orda.salute[0] = 0; });
+  await pag.waitForTimeout(1200);
+  const brucia = (await L('mosaici')).bruciature;
+  if (!brucia) errori.push('il Ricaduto a terra non brucia i vicini (Brace nel petto)');
+  // le Vetrate nella Cappella
+  await L('vetrate', 2);
+  await pag.goto(url);
+  await pag.waitForSelector('.menu-cappella', { timeout: 15000 }).catch(() => errori.push('il menu non compare'));
+  await pag.click('.menu-cappella').catch(() => errori.push('il pulsante della Cappella non si tocca'));
+  await pag.waitForTimeout(300);
+  const vetrate = await pag.evaluate(() => Array.from(document.querySelectorAll('.vetrata'), (v) => (v.classList.contains('spento') ? 0 : 1)));
+  if (vetrate.join('') !== '11000') errori.push(`nella Cappella le Vetrate accese sono ${vetrate.join('')} invece di 11000`);
+  await pag.evaluate(() => document.querySelector('.cappella-vetrate')?.scrollIntoView());
+  await pag.screenshot({ path: 'prove/cappella-vetrate.png' });
+  await pag.evaluate(() => { const v = JSON.parse(localStorage.getItem('dl-salvataggio')); v.mosaici = 0; v.caduteStanze = 0; localStorage.setItem('dl-salvataggio', JSON.stringify(v)); });
+  await ctx.close();
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} Mosaici e Vetrate: Vetrata accesa e salvata, mosaico ritrovato +10 Cera, urne aperte dalla caduta, Mano tesa ${mano}, ceri ${ceri1} › ${ceri0}, Fiamma ${moltF?.join(' / ')}, ${brucia} bruciature, Vetrate nella Cappella ${vetrate?.join('')}${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
 // Salute in più della Falce (17/11): sta in cima alla salute, assorbe i colpi per prima e non scende sotto zero
 {
   const errori = [];

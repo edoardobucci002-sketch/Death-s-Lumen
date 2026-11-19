@@ -697,7 +697,7 @@ export class Gioco extends Phaser.Scene {
 
   /** Può uscire nella scelta: tutto ciò che non è in SBLOCCHI_OGGETTI, o quello che è stato sbloccato. */
   private disponibile(id: string): boolean {
-    if (this.senza.has(id)) return false;
+    if (this.senza.has(id) || PASSIVI.some((q) => q.id === id && q.soloStanze)) return false; // i doni dei mosaici: solo nelle stanze
     return this.oggettiSbloccati.has(id) || !SBLOCCHI_OGGETTI.some((o) => o.id === id);
   }
 

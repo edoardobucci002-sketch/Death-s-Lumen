@@ -45,6 +45,8 @@ export interface RisultatoStanze {
   /** le Unioni (19/11): offerte (nomi, una volta per stanza in cui la carta è comparsa), prese, nella stanza n; cura dello Stormo del lutto */
   unioni: { offerte: number; prese: { nome: string; stanza: number }[]; curaLutto: number };
   /** quanto hanno agito gli effetti delle Unioni (19/11): lampi del Faro e loro danno, uccisioni dei Fuochi (ognuna toglie ricarica), esecuzioni della Falce e salute tolta, secondi di Grazia tenuti dal Sudario */
+  /** Mosaici e i loro doni (19/11): mosaico completato, ceri accesi e spenti (Ultimo cero), salute curata (Mano tesa), danno della Brace */
+  mosaici: { completato: string; frammenti: number; ceriAccesi: number; ceriSpenti: number; ceri: number; curaMano: number; dannoBrace: number };
   effetti: { lampi: number; dannoLampi: number; fuochi: number; esecuzioni: number; dannoEsecuzioni: number; sudario: number; secondiLapide: number; polvere: number; dannoCiechi: number };
 }
 
@@ -107,6 +109,7 @@ export class SimStanze {
   risultato(r: {
     seme: number; completata: boolean; tesoro: boolean; sosta: boolean; stanza: number; salute: number; saluteMassima: number; uccisi: number; rinascite: number;
     schivate: number; colpiLanterna: number; usiAbilita: number; livelloLanterna: number; arsenale: Arsenale; doni: string[]; sudarioSecondi: number; accecatiPolvere: number;
+    mosaici: RisultatoStanze['mosaici'];
   }): RisultatoStanze {
     const ultima = this.stanze[this.stanze.length - 1];
     if (ultima && !this.ripulita) ultima.secondi = this.secondi - this.inizio;
@@ -123,6 +126,7 @@ export class SimStanze {
       danno, unioni: { offerte: this.unioniOfferte, prese: this.unioniPrese, curaLutto: Math.round(this.lutto) },
       effetti: { lampi: r.arsenale.lampiFaro, dannoLampi: Math.round(r.arsenale.dannoLampi), fuochi: r.arsenale.uccisiFuochi, esecuzioni: r.arsenale.esecuzioni, dannoEsecuzioni: Math.round(r.arsenale.dannoEsecuzioni), sudario: Math.round(r.sudarioSecondi * 10) / 10,
         secondiLapide: Math.round(r.arsenale.secondiLapide), polvere: r.accecatiPolvere, dannoCiechi: Math.round(r.arsenale.dannoFonti[F.lamaDiLuce]) },
+      mosaici: r.mosaici,
     };
   }
 }

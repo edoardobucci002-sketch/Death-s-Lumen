@@ -55,6 +55,7 @@ import { POTENZIALI } from '../data/armi-stanze';
 import { vibra } from '../sistema/mobile';
 import { carica, salva } from '../sistema/salvataggio';
 import { Caso } from '../sistema/caso';
+import { DONI_MOSAICI, MOSAICI, MOSAICI_STANZE } from '../data/mosaici';
 import { Comandi } from '../sistema/comandi';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { AttaccoATasto } from '../sistema/attacco';
@@ -90,7 +91,7 @@ export const STANZE_DISPONIBILI = import.meta.env.VITE_CANALE === 'prova' || imp
 const CAMPI_VEGLIA = ['salute', 'saluteMassima', 'extra', 'grazia', 'inQuiete', 'rallentatore', 'fermoColpo', 'lampoFerita', 'feritaAnim',
   'quiete', 'statGrazia', 'guardaX', 'guardaY', 'versoSinistra', 'inMoto', 'orologio', 'schivatePerfette', 'ferite', 'ondate', 'giriCarte',
   'attesaTremolio', 'fiamma', 'casoLuce', 'scrittaVita', 'avvisoVita', 'attesaCapo', 'durataPassaggio', 'portaScelta', 'velocita',
-  'rigenerazione', 'scudo', 'dannoLanterna', 'x', 'y', 'graziaDa'] as const;
+  'rigenerazione', 'scudo', 'dannoLanterna', 'x', 'y', 'graziaDa', 'curaMano', 'ceriAccesi', 'ceriSpenti', 'vetrataNuova'] as const;
 
 export class Stanze extends Phaser.Scene {
   pg!: Personaggio;
@@ -156,6 +157,16 @@ export class Stanze extends Phaser.Scene {
   private unioniScoperte = new Set<IdUnione>(); // Unioni delle stanze già scoperte su questo dispositivo
   schivatePerfette = 0; // in questa stanza (per il LAB e le prove)
   ferite = 0; // colpi subiti (per il LAB e le prove)
+  private feriteIngresso = 0; // le ferite entrando nella stanza (Ultimo cero: stanza ripulita senza ferite)
+  private mosaiciLab: number | null = null; // ?mosaici=N (prove e simulazioni): N mosaici completati e urne con frammenti
+  vetrataNuova = ''; // il mosaico completato per la prima volta in questa Veglia (per la fine e il LAB)
+  // i doni dei mosaici (19/11), dalla build: li aggiorna ricalcola
+  private fiammaCustodita = 0;
+  private corona = 0;
+  private manoTesa = 0;
+  curaMano = 0; // salute curata da Mano tesa in questa Veglia (LAB e prove)
+  ceriAccesi = 0; // Ultimo cero: ceri accesi e spenti in questa Veglia (simulazioni)
+  ceriSpenti = 0;
   ondate = 0; // ondate comparse
   ondateAutomatiche = true; // LAB: spente, la stanza resta vuota finché non si chiama un nemico
   nemici!: NemiciStanza;
@@ -233,6 +244,8 @@ export class Stanze extends Phaser.Scene {
     this.ingressi = 0;
     this.fotoDaTenere = parametri.has('foto') ? Number(parametri.get('foto')) : -1;
     if (parametri.get('candele') === '1') CANDELE_LAB.sempre = true; // per le prove: la porta delle candele c'è sempre
+    this.mosaiciLab = parametri.has('mosaici') ? Math.max(0, Math.min(MOSAICI_STANZE.length, Number(parametri.get('mosaici')) || 0)) : null;
+    this.vetrataNuova = '';
     this.mappa = generaMappa(this.seme, this.pg.id);
     this.porteBloccate = false;
     this.botVeloce = parametri.has('bot');
@@ -301,7 +314,8 @@ export class Stanze extends Phaser.Scene {
     this.nemici.statoArma = (j) => this.arsenale.statoDaFuori(j, CODICE_AFFINITA.luce, F.abilita);
     // Midollo Splendente: il cieco che ferisce un altro conta come Abbacinio
     this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce,
-      fonte === FONTE.lanterna ? F.lanterna : fonte === FONTE.midollo ? F.lamaDiLuce : F.abilita);
+      fonte === FONTE.lanterna ? F.lanterna : fonte === FONTE.midollo ? F.lamaDiLuce : fonte === FONTE.brace ? F.brace : F.abilita);
+    this.arsenale.moltBersaglio = (j) => this.moltBersaglio(j);
     this.percorso = new Percorso(this.arsenale, this.mappa, this.seme);
     this.percorso.entra(this.mappa.ingresso);
     // ?potenziale=candela (per le simulazioni): la partita parte con quell'Eco già al livello 5
@@ -324,6 +338,9 @@ export class Stanze extends Phaser.Scene {
       if (parametri.get('unita') !== '0') this.arsenale.unisci(this.percorso.armaUnione(un)!);
       else this.percorso.senzaUnioni = true;
     }
+    // ?dono=manoTesa (per le simulazioni, 19/11): la partita parte con quel dono al massimo (anche un dono dei mosaici)
+    const donoSim = PASSIVI.find((q) => q.id === parametri.get('dono'));
+    if (donoSim) this.percorso.passivi[donoSim.id] = donoSim.massimo;
     this.porte = new Porte(this);
     // l'oggetto di tesoro e Sosta (segnaposto: il simbolo del medaglione, ingrandito 3 volte)
     this.oggetto = this.add.image(MISURA.larghezza / 2, MISURA.altezza / 2, 'stanze-simbolo-tesoro').setScale(3).setDepth(PROFONDITA.aTerra - 1).setVisible(false);
@@ -351,6 +368,12 @@ export class Stanze extends Phaser.Scene {
     this.rompibili = new RompibiliStanza(this, this.nemici.orda, this.arsenale, interfaccia, this.seme, this.effetti, () => this.cambiaLuce());
     this.rompibili.nuovaStanza(this.semeStanza(this.mappa.ingresso + 1), 0, null); // l'ingresso è vuoto
     this.nemici.ostacoli = this.rompibili;
+    // Mosaici e Vetrate (19/11): il mosaico da cercare è il primo non ancora completato; le urne hanno frammenti dopo la prima caduta
+    const meta = carica(), completati = this.mosaiciLab ?? meta.mosaici;
+    this.percorso.mosaici = completati;
+    this.rompibili.mosaiciAperti = this.mosaiciLab !== null || meta.caduteStanze >= MOSAICI.cadute;
+    this.rompibili.scegliMosaico(completati < MOSAICI_STANZE.length ? completati : new Caso(this.seme + 7).intero(0, MOSAICI_STANZE.length - 1));
+    this.rompibili.completo = () => this.mosaicoCompleto();
     this.attacco = new AttaccoATasto(this, this.radice, this.effetti, () => this.fermo(), (cx, cy) => {
       const px = misureHud().px, cam = this.cameras.main;
       return { x: cam.scrollX + cx / px, y: cam.scrollY + cy / px };
@@ -364,7 +387,10 @@ export class Stanze extends Phaser.Scene {
     this.radice.querySelector<HTMLElement>('.doni-aiuto')?.setAttribute('hidden', '');
     this.doni.verticali = PERCORSO.carte; // in fila, perché lo schermo è in orizzontale, e compaiono a pop
     this.comparsa = new ComparsaCarte(this);
-    if (riprendi) this.riprendiVeglia(riprendi);
+    if (riprendi) {
+      this.riprendiVeglia(riprendi);
+      this.rompibili.scegliMosaico(this.rompibili.indiceMosaico); // il disegno del mosaico che si stava cercando
+    }
     this.ricalcola();
     this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza);
     this.disponi();
@@ -469,7 +495,11 @@ export class Stanze extends Phaser.Scene {
   private ricalcola(): void {
     const p = this.percorso.passivi, per = (id: IdDono): number => effettoDono(DONO[id], p[id]);
     const b = this.bonus, area = per('stoppinoLungo');
-    b.danno = per('saleNero') + (this.grazia > 0 ? this.statGrazia.danno : 0);
+    b.danno = per('saleNero') + (this.grazia > 0 ? this.statGrazia.danno : 0) + this.percorso.ceri * DONI_MOSAICI.cero.danno; // Ultimo cero
+    this.fiammaCustodita = per('fiammaCustodita');
+    this.corona = per('coronaIncrinata');
+    this.manoTesa = per('manoTesa');
+    this.nemici.brace = per('braceNelPetto');
     b.ricarica = Math.max(RICARICA_MINIMA, ricaricaDono(DONO.clessidra, p.clessidra));
     b.area = area;
     // lo Specchio delle stanze (17/11): colpi in più e il loro danno, livello per livello (SPECCHIO_STANZE)
@@ -507,7 +537,13 @@ export class Stanze extends Phaser.Scene {
     if ((this.inQuiete > 0 && !forza) || this.morto) return;
     if (this.rompibili.bagliore > 0 && !forza) return; // il Bagliore: nessun danno
     const C = COMBATTIMENTO_STANZA;
+    if (!forza && this.corona > 0 && this.nemici.daCapo) danno *= 1 + DONI_MOSAICI.corona.subito; // Corona incrinata
     this.ferite++;
+    if (this.percorso.ceri > 0) {
+      this.percorso.ceri--; // Ultimo cero: ogni ferita ne spegne uno
+      this.ceriSpenti++;
+      this.avvisa('Un cero si spegne');
+    }
     this.inQuiete = this.quiete;
     this.lampoFerita = C.lampo;
     this.feritaAnim = this.durataAnim('hurt');
@@ -524,7 +560,12 @@ export class Stanze extends Phaser.Scene {
     this.salute = Math.max(0, this.salute - netto);
     if (this.salute <= 0) {
       this.morto = true;
-      if (!this.bot) cancellaVeglia(); // caduto: la Veglia salvata non c'è più
+      if (!this.bot) {
+        cancellaVeglia(); // caduto: la Veglia salvata non c'è più
+        const s = carica(); // le cadute aprono i mosaici (19/11)
+        s.caduteStanze++;
+        salva(s);
+      }
       this.attesaFine = C.attesaFine;
       this.grazia = 0;
       this.comandi.lascia();
@@ -694,6 +735,12 @@ export class Stanze extends Phaser.Scene {
     if (danno > 0) this.ferisci(danno);
     if (this.nemici.schivate > 0) {
       this.schivatePerfette += this.nemici.schivate;
+      // Mano tesa: ogni schivata perfetta cura
+      if (this.manoTesa > 0 && !this.morto) {
+        const cura = Math.min(this.saluteMassima - this.salute, this.manoTesa * this.nemici.schivate);
+        this.salute += cura;
+        this.curaMano += cura;
+      }
       this.nemici.schivate = 0;
       if (!this.morto) this.iniziaGrazia();
     }
@@ -802,8 +849,53 @@ export class Stanze extends Phaser.Scene {
     this.ondate++;
   }
 
+  /** Ultimo cero: la stanza è ripulita senza ferite, si accende un cero (fino al massimo del dono). */
+  private accendiCero(): void {
+    const massimo = Math.round(effettoDono(DONO.ultimoCero, this.percorso.passivi.ultimoCero));
+    if (massimo <= 0 || this.ferite !== this.feriteIngresso || this.percorso.ceri >= massimo) return;
+    this.percorso.ceri++;
+    this.ceriAccesi++;
+    this.avvisa(`Un cero si accende (${this.percorso.ceri})`);
+  }
+
+  /** Fiamma custodita e Corona incrinata: il danno in più sul nemico j (1 = niente in più). */
+  private moltBersaglio(j: number): number {
+    if (this.fiammaCustodita <= 0 && this.corona <= 0) return 1;
+    const o = this.nemici.orda;
+    let m = 1;
+    if (this.fiammaCustodita > 0) {
+      const dx = o.x[j] - this.x, dy = o.y[j] - this.y, r = DONI_MOSAICI.fiamma.raggio + o.raggio[j];
+      if (dx * dx + dy * dy <= r * r) m += this.fiammaCustodita;
+    }
+    if (this.corona > 0 && this.nemici.eCapo(j)) m += this.corona;
+    return m;
+  }
+
+  /**
+   * Il mosaico della Veglia è completo (19/11): la prima volta la sua Vetrata si accende nella Cappella e il suo dono entra
+   * nelle carte dalla Veglia dopo; un mosaico già completato dà la Cera. Il bot e le prove (?mosaici=) non salvano niente.
+   */
+  mosaicoCompleto(): void {
+    const k = this.rompibili.indiceMosaico, m = MOSAICI_STANZE[k];
+    if (k === this.percorso.mosaici && !this.vetrataNuova) {
+      this.vetrataNuova = m.nome;
+      if (!this.bot && this.mosaiciLab === null) {
+        const s = carica();
+        if (s.mosaici === k) {
+          s.mosaici = k + 1;
+          salva(s);
+        }
+      }
+      this.avvisa(`Vetrata accesa: ${m.nome}`);
+    } else {
+      this.rompibili.cera += MOSAICI.cera;
+      this.avvisa(`Mosaico ritrovato: +${MOSAICI.cera} Cera`);
+    }
+  }
+
   /** Stanza ripulita: le carte. Scelta la carta, si aprono le porte. */
   apriCarte(): void {
+    this.accendiCero();
     if (this.percorso.ricompensa === 'chiave') {
       // la stanza della chiave sicura (18/11): niente carte, la chiave a terra al centro
       this.sim.stanzaRipulita(this.percorso.stanza, this.salute);
@@ -978,6 +1070,7 @@ export class Stanze extends Phaser.Scene {
     if (!this.bot) salvaVeglia(foto);
     this.nemici.svuota();
     this.percorso.entra(i);
+    this.feriteIngresso = this.ferite;
     const s = this.percorso.qui;
     misuraStanza(eDoppia(s.tipo)); // Campanaro e Boss: la stanza doppia (18/11)
     this.campoArmi();
@@ -1156,8 +1249,9 @@ export class Stanze extends Phaser.Scene {
       seme: this.seme, completata, tesoro: !!this.mappa.stanze[this.mappa.tesoro]?.ripulita, sosta: !!this.mappa.stanze[this.mappa.sosta]?.ripulita, stanza: this.percorso.stanza, salute: this.salute, saluteMassima: this.saluteMassima,
       uccisi: this.nemici.uccisi, rinascite: this.nemici.rinascite, schivate: this.schivatePerfette, colpiLanterna: this.attacco.colpi,
       usiAbilita: this.abilita.usi, livelloLanterna: this.percorso.livelloLanterna, arsenale: this.arsenale,
-      doni: PERCORSO.doniAttivi.filter((id) => this.percorso.passivi[id] > 0).map((id) => `${DONO[id].nome} ${this.percorso.passivi[id]}`),
+      doni: this.percorso.doniInGioco().filter((id) => this.percorso.passivi[id] > 0).map((id) => `${DONO[id].nome} ${this.percorso.passivi[id]}`),
       sudarioSecondi: this.sudarioSecondi, accecatiPolvere: this.nemici.accecatiPolvere,
+      mosaici: { completato: this.vetrataNuova, frammenti: this.rompibili.frammentiCaduti, ceriAccesi: this.ceriAccesi, ceriSpenti: this.ceriSpenti, ceri: this.percorso.ceri, curaMano: Math.round(this.curaMano), dannoBrace: Math.round(this.arsenale.dannoFonti[F.brace]) },
     });
   }
 
@@ -1176,7 +1270,7 @@ export class Stanze extends Phaser.Scene {
     const cera = this.rompibili.portaCera(!this.immortale && !this.bot);
     if (cera > 0) righe.push(`Cera +${cera}`);
     for (const e of this.arsenale.possedute) righe.push(`${e.arma.nome} ${e.livello}`);
-    for (const id of PERCORSO.doniAttivi) if (p.passivi[id]) righe.push(`${DONO[id].nome} ${p.passivi[id]}`);
+    for (const id of p.doniInGioco()) if (p.passivi[id]) righe.push(`${DONO[id].nome} ${p.passivi[id]}`);
     this.pannelloFine.replaceChildren(
       this.scrittaPixel('Mondo 1 completato', 'stanze-titolo'),
       ...righe.map((t) => this.scrittaPixel(t, 'stanze-etichetta')),

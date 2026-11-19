@@ -130,17 +130,39 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Tesoro | 3 carte di grado Chiara o Ardente; l'oggetto si usa arrivando a 16 px dal suo centro | cioè camminandoci sopra |
 | Minimappa | stanze di 9 × 5 px con 1 px tra l'una e l'altra; finestra di 5 × 5 stanze ingrandita 2 volte; nella pausa fino a 4 volte | da rivedere |
 
-**Urne, giare e lanterne** (decisioni di Edoardo del 16/11; `ROMPIBILI_STANZE` in `src/data/rompibili.ts`, `src/sistema/rompibili-stanza.ts`). Sono i rompibili del survivor (sezione 8g), con lo stesso contenuto: la giara lascia 2 gocce di Cera, l'urna a volte un frammento di vetro, la lanterna fa luce e rotta lascia una chiazza d'olio. In ogni stanza ce ne sono 1 o 2 (Edoardo, 16/11), da 2 a 3 nell'arena del Campanaro e nessuno nella stanza del Boss (18/11), disposti a caso lungo i muri, con il centro libero per combattere e nessuno davanti alle porte; il tipo segue le probabilità del survivor (urna e giara il doppio della lanterna). **Fanno da ostacolo**: il personaggio e i nemici ci sbattono contro. **Si rompono solo colpendoli**, con la Lanterna a mano, con gli Echi e con il Cerchio di luce acceso. Le gocce e i frammenti volano verso il personaggio come nel survivor. **La Cera della Veglia va alla Cappella** quando si cade o a fine fetta («Cera +N» nel resoconto; non con l'immortale del LAB e non con il bot). **Frammenti e mosaico** seguono le regole del survivor, ma **da subito** (Edoardo, 16/11; nel survivor solo dopo la prima alba vinta): al 26% delle urne, al massimo 3 per Veglia; 3 frammenti accendono il mosaico e il **Bagliore** (20 s senza danni, il 30% più veloce, luce grande una volta e mezza, chi tocca il personaggio brucia). Tutti i valori *da rivedere*.
+**Urne, giare e lanterne** (decisioni di Edoardo del 16/11; `ROMPIBILI_STANZE` in `src/data/rompibili.ts`, `src/sistema/rompibili-stanza.ts`). Sono i rompibili del survivor (sezione 8g), con lo stesso contenuto: la giara lascia 2 gocce di Cera, l'urna a volte un frammento di vetro, la lanterna fa luce e rotta lascia una chiazza d'olio. In ogni stanza ce ne sono 1 o 2 (Edoardo, 16/11), da 2 a 3 nell'arena del Campanaro e nessuno nella stanza del Boss (18/11), disposti a caso lungo i muri, con il centro libero per combattere e nessuno davanti alle porte; il tipo segue le probabilità del survivor (urna e giara il doppio della lanterna). **Fanno da ostacolo**: il personaggio e i nemici ci sbattono contro. **Si rompono solo colpendoli**, con la Lanterna a mano, con gli Echi e con il Cerchio di luce acceso. Le gocce e i frammenti volano verso il personaggio come nel survivor. **La Cera della Veglia va alla Cappella** quando si cade o a fine fetta («Cera +N» nel resoconto; non con l'immortale del LAB e non con il bot). **Frammenti e mosaico** seguono le regole del survivor, ma **dopo la prima caduta** (Edoardo, 19/11; nel survivor dopo la prima alba vinta; vedi «Mosaici e Vetrate» qui sotto): al 26% delle urne, al massimo 3 per Veglia; 3 frammenti accendono il mosaico e il **Bagliore** (20 s senza danni, il 30% più veloce, luce grande una volta e mezza, chi tocca il personaggio brucia). Tutti i valori *da rivedere*.
 
 | Valore dei rompibili nelle stanze | Numero | Note |
 | --- | --- | --- |
 | Per stanza | da 1 a 2 | |
-| Frammenti dopo | 0 albe vinte | cioè da subito |
+| Frammenti dopo | 1 caduta | la prima Veglia resta pulita (`MOSAICI.cadute` in `src/data/mosaici.ts`) |
 | Distanza dal muro | da 24 a 56 px | misurata alla base |
 | Lontano dalle porte | 110 px | dal centro di ogni porta, anche quella in basso |
 | Distanza tra due rompibili | 72 px | |
 | Ingombro | 12 px | raggio dell'ostacolo alla base |
 | Raccolta | 60% della raccolta di base | come nel survivor |
+
+**Mosaici e Vetrate** (decisioni di Edoardo del 19/11; `src/data/mosaici.ts`, `src/sistema/rompibili-stanza.ts`, `src/sistema/cappella.ts`). Il Mondo 1 ha **5 mosaici, in ordine**: dal primo, con poca lore, all'ultimo, con le rivelazioni. In ogni Veglia si cerca il **primo mosaico non ancora completato**; i suoi tre frammenti escono dalle urne (vedi sopra) e il disegno al centro in alto è il suo (finché non c'è, quello della Veglia). **La prima volta** che un mosaico si completa, oltre al Bagliore, **si accende la sua Vetrata** nella Cappella (con l'epitaffio) e il suo **dono entra nelle carte delle porte del dono dalla Veglia dopo**; sopra la testa compare «Vetrata accesa: <nome>». Quando sono accese tutte e cinque, ogni Veglia cerca un mosaico a caso: un mosaico già completato dà il Bagliore e 10 Cera («Mosaico ritrovato»). Le Vetrate sono in fondo alla Cappella: 5 finestre, accese (nome, epitaffio, dono) o spente. Le cadute e le Vetrate accese restano nel salvataggio. Soggetti, epitaffi, doni e numeri sono proposte di Claude, *da rivedere*.
+
+| Mosaico | Dono che sblocca | Effetto al massimo | Soggetto (ritoccato per la cripta) |
+| --- | --- | --- | --- |
+| La Veglia | Fiamma custodita | +30% danno ai nemici entro 80 px | mani che reggono una fiamma tra le nicchie dei loculi |
+| L'Ultimo Altare | Ultimo cero | 9 ceri, +4% danno ciascuno | candele accese in una cappella sotterranea, il Ceraiolo di spalle |
+| Il Risveglio | Brace nel petto | 24 danni ogni 0,5 s entro 40 px | un loculo sfondato e un morto con una fiamma nel petto |
+| Le Due Mani | Mano tesa | +12 salute a schivata perfetta | in un ossario, chi abbraccia un morto e chi gli porta una lanterna |
+| La Morte Rinnovata | Corona incrinata | +60% danno ai capi, +15% danno subito dai capi | la falce e una corona di Lumen corrotto su un trono di ossa |
+
+I doni dei mosaici esistono **solo nel gioco a stanze** (il survivor non li offre mai) e hanno 3 livelli come gli altri, ognuno con un terzo dell'effetto:
+
+- **Fiamma custodita** (Fioca): le armi fanno più male ai nemici vicini al personaggio (la distanza si misura dal bordo del nemico).
+- **Ultimo cero** (Chiara): ogni stanza ripulita senza ferite accende un cero, fino a 3 per livello; ogni cero dà +4% danno fino a fine Veglia; ogni ferita ne spegne uno. Sopra la testa: «Un cero si accende (N)», «Un cero si spegne».
+- **Brace nel petto** (Fioca): un Ricaduto battuto, mentre resta a terra (1,5 s), brucia subito e poi ogni 0,5 s i nemici in piedi entro 40 px: 8 danni per livello, con i bonus di danno (segnaposto: scintille).
+- **Mano tesa** (Fioca): ogni schivata perfetta cura 4 salute per livello.
+- **Corona incrinata** (Chiara): +20% danno ai capi per livello (oggi Campanaro e Seth: vale per tutti i mini-boss e i Boss); i colpi dei capi fanno il 15% in più.
+
+Fiamma custodita e Corona incrinata si sommano tra loro e si moltiplicano con gli altri bonus di danno. Un mosaico già completato dà il Bagliore e 10 Cera; il mosaico di una Veglia si sceglie all'inizio, quindi una Vetrata accesa a metà Veglia mette il suo dono nelle carte solo dalla Veglia dopo.
+
+- LAB → Stanze → Mosaici e Vetrate: «Completa il mosaico», «Urne con frammenti», «Azzera le Vetrate», «1–5 Vetrate» (salvate, con i loro doni subito nelle carte), il livello di ogni dono dei mosaici, «0/3/6/9 ceri»; in alto lo stato (Vetrate, cadute, mosaico cercato, ceri, bruciature, cura di Mano tesa). Per le simulazioni: `?mosaici=N` (N mosaici completati, urne aperte, niente salvato) e `?dono=<id>` (un dono al massimo dall'inizio); `npm run sim-stanze -- 8 mosaici`.
 
 **Le armi nelle stanze: 5 livelli e danno a intervallo** (decisioni di Edoardo del 13/11 e del 14/11; `src/data/armi-stanze.ts`). Il survivor resta con le sue tabelle a 8 livelli; il gioco a stanze ha tabelle sue, con gli stessi campi. Tutti i numeri sono proposte di Claude del 14/11, *da rivedere*.
 

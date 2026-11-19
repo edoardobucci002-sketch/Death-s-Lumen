@@ -17,6 +17,7 @@ import type { Menu } from '../scene/Menu';
 import type { Stanze } from '../scene/Stanze';
 import type { DirezioneColpo, PuntoStanza } from './lab-stanze';
 import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
+import { MOSAICI_STANZE } from '../data/mosaici';
 import { PASSIVI } from '../data/doni';
 import { AMULETI } from '../data/rosario';
 import { PERSONAGGI } from '../data/personaggi';
@@ -34,6 +35,7 @@ import * as abilita from '../data/abilita';
 import * as armi from '../data/armi';
 import * as armiStanze from '../data/armi-stanze';
 import * as unioniStanze from '../data/unioni-stanze';
+import * as mosaici from '../data/mosaici';
 import * as mappa from '../data/mappa';
 import type { Mappa } from './mappa';
 import * as campanaro from '../data/campanaro';
@@ -57,7 +59,7 @@ import * as stanze from '../data/stanze';
 import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, mappa, meta, mondo, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, seth, sopravvivenza, stanze, stati, unioni, unioniStanze };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, mappa, meta, mondo, mosaici, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, seth, sopravvivenza, stanze, stati, unioni, unioniStanze };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -505,6 +507,20 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         tasto('Bagliore adesso', () => { st.lab.bagliore(); mostra(false); }),
       ),
       el('p', 'lab-nota', 'Da 1 a 2 per stanza, lungo i muri e lontano dalle porte; fanno da ostacolo e si rompono solo colpendoli (Lanterna, Echi, Cerchio di luce). La giara lascia 2 gocce di Cera: a fine fetta o alla caduta vanno alla Cappella (non con l\'immortale). L\'urna a volte lascia un frammento (da subito, al massimo 3 per Veglia): 3 frammenti accendono il mosaico e il Bagliore (20 s senza danni, più veloce, più luce, chi ti tocca brucia). La lanterna fa luce; rotta lascia l\'olio che rallenta i nemici e che Candela e Fuoco fatuo accendono. Numeri in Numeri → rompibili → ROMPIBILI_STANZE.'),
+      titolo('Mosaici e Vetrate'),
+      (() => { const m = st.lab.mosaici(); return riga(el('span', 'lab-stato', `Vetrate accese: ${m.vetrate}/5 · cadute: ${m.cadute} · urne con frammenti: ${m.aperti ? 'sì' : 'no'} · si cerca: ${m.cercato}${m.nuova ? ` · accesa ora: ${m.nuova}` : ''} · doni dei mosaici in gioco: ${m.inGioco} · ceri: ${m.ceri} · bruciature: ${m.bruciature} · cura di Mano tesa: ${m.curaMano}`)); })(),
+      riga(
+        tasto('Completa il mosaico', () => { st.lab.completaMosaico(); mostra(false); }),
+        tasto('Urne con frammenti', f(() => st.lab.apriMosaici())),
+        tasto('Azzera le Vetrate', f(() => st.lab.azzeraVetrate())),
+      ),
+      riga(...[1, 2, 3, 4, 5].map((n) => tasto(`${n} Vetrat${n === 1 ? 'a' : 'e'}`, f(() => st.lab.vetrate(n))))),
+      ...MOSAICI_STANZE.map((m) => riga(
+        el('span', 'lab-stato', `${PASSIVI.find((q) => q.id === m.dono)!.nome} · liv ${st.percorso.passivi[m.dono]}`),
+        ...[0, 1, 2, 3].map((l) => tasto(l ? `liv ${l}` : 'via', f(() => st.lab.donoMosaico(m.dono, l)), st.percorso.passivi[m.dono] === l ? 'acceso' : '')),
+      )),
+      riga(...[0, 3, 6, 9].map((n) => tasto(`${n} ceri`, f(() => st.lab.ceri(n))))),
+      el('p', 'lab-nota', 'Tre frammenti nelle urne di una Veglia completano il mosaico: la prima volta si accende la sua Vetrata nella Cappella (Menu → Cappella, in fondo) e il suo dono esce nelle carte dalla Veglia dopo; un mosaico già completato dà il Bagliore e 10 Cera. Le urne hanno frammenti solo dopo la prima caduta. «N Vetrate» le accende (salvate) e mette subito i loro doni nelle carte; «Azzera le Vetrate» torna alla prima Veglia di sempre. I doni: Fiamma custodita (danno in più entro 80 px), Ultimo cero (stanza senza ferite = un cero, +4% danno; ferita = se ne spegne uno), Brace nel petto (i Ricaduti a terra bruciano i vicini), Mano tesa (la schivata perfetta cura), Corona incrinata (danno in più ai capi, i loro colpi fanno il 15% in più). Numeri in Numeri → mosaici (MOSAICI, DONI_MOSAICI) e Numeri → doni (PASSIVI).'),
       titolo('Prova i muri: porta il Lampionaio'),
       riga(vai('centro', 'Al centro'), vai('alto', 'Al muro in alto'), vai('basso', 'Al muro in basso'), vai('sinistra', 'Al muro a sinistra'), vai('destra', 'Al muro a destra'), vai('angolo', "Nell'angolo")),
       el('p', 'lab-nota', 'Poi chiudi il LAB e spingi contro il muro: il Lampionaio deve fermarsi. Le misure della stanza sono in Numeri → stanze (dopo averle cambiate premi Ricomincia).'),
@@ -599,7 +615,7 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
       titolo('Armi (si sale di livello; per toglierle riavvia la partita)'),
       ...tutteLeArme.map((a) => riga(el('b', '', `${a.nome} · ${livelloArma(a) || '—'}`), tasto('+1', fai((x) => x.lab.arma(a, livelloArma(a) + 1)), 'piccolo'), tasto('Liv. 8', fai((x) => x.lab.arma(a, 8)), 'piccolo'))),
       titolo('Doni passivi'),
-      ...PASSIVI.map((q) => riga(el('b', '', `${q.nome} · ${liv.doni[q.id] || '—'}`), tasto('−1', fai((x) => x.lab.dono(q.id, (liv.doni[q.id] || 0) - 1)), 'piccolo'), tasto('+1', fai((x) => x.lab.dono(q.id, (liv.doni[q.id] || 0) + 1)), 'piccolo'), tasto('Max', fai((x) => x.lab.dono(q.id, q.massimo)), 'piccolo'))),
+      ...PASSIVI.filter((q) => !q.soloStanze).map((q) => riga(el('b', '', `${q.nome} · ${liv.doni[q.id] || '—'}`), tasto('−1', fai((x) => x.lab.dono(q.id, (liv.doni[q.id] || 0) - 1)), 'piccolo'), tasto('+1', fai((x) => x.lab.dono(q.id, (liv.doni[q.id] || 0) + 1)), 'piccolo'), tasto('Max', fai((x) => x.lab.dono(q.id, q.massimo)), 'piccolo'))),
       titolo('Amuleti del Rosario'),
       ...AMULETI.map((a) => riga(el('b', '', `${a.nome} (${a.grani})`), tasto(am.posseduti.includes(a.id) ? 'Presente' : 'Aggiungi', fai((x) => x.lab.amuleto(a.id, !am.posseduti.includes(a.id))), am.posseduti.includes(a.id) ? 'acceso piccolo' : 'piccolo'))),
       titolo(`Unioni (Prepara: arma al ${LIVELLO_ARMA_UNIONE} e dono al massimo, poi apri un reliquiario)`),

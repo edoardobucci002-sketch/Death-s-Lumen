@@ -7,6 +7,7 @@
 import { CERI, META_SIMULAZIONE, OGGETTI_A_META, SBLOCCHI, SBLOCCHI_OGGETTI, rimescolateCero, type IdCero, type IdOggetto } from '../data/meta';
 import type { Personaggio } from '../data/personaggi';
 import { UNIONI, type IdUnione } from '../data/unioni';
+import { MOSAICI_STANZE } from '../data/mosaici';
 import { UNIONI_STANZE } from '../data/unioni-stanze';
 
 const CHIAVE = 'dl-salvataggio';
@@ -33,6 +34,8 @@ export interface Salvataggio {
   unioniUnite: IdUnione[]; // fatte almeno una volta: restano per sempre nella scheda Stati
   unioniStanzeScoperte: IdUnione[]; // gioco a stanze (19/11): Unioni già scoperte, la cui animazione non torna più
   vittorie: number; // veglie arrivate all'alba, in tutto
+  caduteStanze: number; // gioco a stanze (19/11): Veglie finite cadendo (dopo la prima le urne hanno frammenti)
+  mosaici: number; // gioco a stanze (19/11): mosaici completati, in ordine (accendono le Vetrate e sbloccano i loro doni)
   ultimaVeglia: { voci: VoceVeglia[]; totale: number; sbloccato: string | null } | null;
 }
 
@@ -54,7 +57,7 @@ export interface BonusMeta {
 function nuovo(): Salvataggio {
   const ceri = {} as Record<IdCero, number>;
   for (const c of CERI) ceri[c.id] = 0;
-  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], unioni: false, unioniScoperte: [], unioniUnite: [], unioniStanzeScoperte: [], vittorie: 0, ultimaVeglia: null };
+  return { versione: VERSIONE, cera: 0, ceri, spenti: [], secondaCandela: false, secondaCandelaSpenta: false, sbloccati: ['lampionaio'], rosario: false, oggetti: [], unioni: false, unioniScoperte: [], unioniUnite: [], unioniStanzeScoperte: [], vittorie: 0, caduteStanze: 0, mosaici: 0, ultimaVeglia: null };
 }
 
 /** Porta un salvataggio letto (anche vecchio o incompleto) alla forma di oggi. */
@@ -75,6 +78,8 @@ function aggiorna(dati: Partial<Salvataggio>): Salvataggio {
   s.unioniUnite = (dati.unioniUnite ?? []).filter((id) => UNIONI.some((u) => u.id === id));
   s.unioniStanzeScoperte = (dati.unioniStanzeScoperte ?? []).filter((id) => UNIONI_STANZE.some((u) => u.id === id));
   if (typeof dati.vittorie === 'number' && dati.vittorie >= 0) s.vittorie = Math.floor(dati.vittorie);
+  if (typeof dati.caduteStanze === 'number' && dati.caduteStanze >= 0) s.caduteStanze = Math.floor(dati.caduteStanze);
+  if (typeof dati.mosaici === 'number' && dati.mosaici >= 0) s.mosaici = Math.min(MOSAICI_STANZE.length, Math.floor(dati.mosaici));
   s.oggetti = (dati.oggetti ?? []).filter((id) => SBLOCCHI_OGGETTI.some((o) => o.id === id));
   s.ultimaVeglia = dati.ultimaVeglia ?? null;
   return s;

@@ -9,6 +9,8 @@
 //      npm run sim-stanze -- 24 esplora   (tutte con carte e porte a caso: provano tutti gli Echi)
 //      npm run sim-stanze -- 24 scelte    (tutte con le carte preferite)
 //      npm run sim-stanze -- 8 potenziali (8 partite per ogni Eco, che parte già al livello 5, il suo potenziale)
+//      npm run sim-stanze -- 8 mosaici    (19/11: per ogni dono dei mosaici 8 partite che partono con il dono al massimo,
+//                                          più le stesse 8 senza, per confrontare)
 //      npm run sim-stanze -- 4 unioni     (per ogni Unione 4 partite che partono con arma al 4 e dono al massimo già unita,
 //                                          e 4 con la stessa build senza Unione, per confrontare: 19/11)
 // Il bot non è perfetto: vede gli avvisi solo dopo un tempo di reazione (BOT_STANZE in src/data/bot.ts).
@@ -18,9 +20,10 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 const argomenti = process.argv.slice(2);
 const partite = Number(argomenti.find((a) => /^\d+$/.test(a))) || 24;
-const modo = argomenti.includes('unioni') ? 'unioni' : argomenti.includes('potenziali') ? 'potenziali' : argomenti.includes('esplora') ? 'esplora' : argomenti.includes('scelte') ? 'scelte' : 'misto';
+const modo = argomenti.includes('mosaici') ? 'mosaici' : argomenti.includes('unioni') ? 'unioni' : argomenti.includes('potenziali') ? 'potenziali' : argomenti.includes('esplora') ? 'esplora' : argomenti.includes('scelte') ? 'scelte' : 'misto';
 const UNIONI = ['candelabroFunebre', 'falceDelMietitore', 'campanaAMorto', 'acquasantiera', 'lapideInchiodata', 'rosarioDeiVespri', 'sudario', 'selciato', 'faroDeiMorti', 'fuochiErranti', 'stormoDelLutto', 'midolloSplendente'];
 const ARMA_UNIONE = { candelabroFunebre: 'candela', falceDelMietitore: 'falce', campanaAMorto: 'campana', acquasantiera: 'acquaSanta', lapideInchiodata: 'lapide', rosarioDeiVespri: 'rosarioSpezzato', sudario: 'veloFunebre', selciato: 'sampietrini', faroDeiMorti: 'lanterna', fuochiErranti: 'fuocoFatuo', stormoDelLutto: 'corvo', midolloSplendente: 'lamaDiLuce' };
+const DONI_MOSAICI = ['fiammaCustodita', 'ultimoCero', 'braceNelPetto', 'manoTesa', 'coronaIncrinata'];
 const ECHI = ['candela', 'falce', 'campana', 'fuocoFatuo', 'acquaSanta', 'lamaDiLuce', 'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'sampietrini'];
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
 const porta = Number(process.env.DL_PORTA) || 4321;
@@ -34,26 +37,27 @@ const coda = [];
 // «solo=faroDeiMorti,sudario»: solo quelle Unioni
 const solo = argomenti.find((a) => a.startsWith('solo='))?.slice(5).split(',');
 if (modo === 'unioni') for (const unione of UNIONI.filter((u) => !solo || solo.includes(u))) for (let k = 0; k < partite; k++) for (const unita of [true, false]) coda.push({ seme: 2001 + k, esplora: false, unione, unita });
+else if (modo === 'mosaici') for (let k = 0; k < partite; k++) for (const dono of [null, ...DONI_MOSAICI]) coda.push({ seme: 2001 + k, esplora: false, dono });
 else if (modo === 'potenziali') for (const eco of ECHI) for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: false, eco });
 else for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: modo === 'esplora' || (modo === 'misto' && k % 2 === 1) });
 const totale = coda.length;
 const risultati = [];
 let fatte = 0;
 
-async function gioca({ seme, esplora, eco, unione, unita }) {
+async function gioca({ seme, esplora, eco, unione, unita, dono }) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}${eco ? `&potenziale=${eco}` : ''}${unione ? `&unione=${unione}${unita ? '' : '&unita=0'}` : ''}`);
+  await pag.goto(`http://localhost:${porta}/?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}${eco ? `&potenziale=${eco}` : ''}${unione ? `&unione=${unione}${unita ? '' : '&unita=0'}` : ''}${dono ? `&dono=${dono}` : ''}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 5 * 60_000, polling: 500 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();
   fatte++;
   const ultima = r?.stanze?.at(-1);
   const esito = !r ? 'errore' : r.completata ? `battuto Seth dopo ${r.stanza} stanze (${ultima?.secondi ?? '?'} s contro di lui), salute ${r.salute}` : `caduto nella stanza ${r.stanza} (${ultima?.tipo === 'campanaro' ? 'Campanaro, ' : ultima?.tipo === 'boss' ? 'Seth, ' : ''}a ${ultima?.distanza ?? '?'} porte dall'ingresso)`;
-  console.log(`  [${fatte}/${totale}] seme ${seme}${esplora ? ' (esplora)' : ''}${eco ? ` (${eco} al 5)` : ''}${unione ? ` (${unione}${unita ? '' : ', senza unirla'})` : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
-  risultati.push({ seme, esplora, eco, unione, unita, ...r, errori });
+  console.log(`  [${fatte}/${totale}] seme ${seme}${esplora ? ' (esplora)' : ''}${eco ? ` (${eco} al 5)` : ''}${unione ? ` (${unione}${unita ? '' : ', senza unirla'})` : ''}${dono ? ` (${dono} al massimo)` : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
+  risultati.push({ seme, esplora, eco, unione, unita, dono, ...r, errori });
 }
 
 console.log(`Simulazione del gioco a stanze: ${totale} partite (${modo === 'unioni' ? `${partite} per ogni Unione, unita e no` : modo === 'potenziali' ? `${partite} per ogni Eco al livello 5` : modo === 'misto' ? 'metà carte preferite, metà a caso' : modo === 'esplora' ? 'carte e porte a caso' : 'carte preferite'})\n`);
@@ -139,6 +143,23 @@ if (modo === 'unioni') {
       lapideInchiodata: `secondi tolti alla Lapide dai critici ${e('secondiLapide').toFixed(0)}`,
       midolloSplendente: `accecati dalla polvere ${e('polvere').toFixed(0)}, danno dei ciechi ${e('dannoCiechi').toFixed(0)} (${Math.round((100 * e('dannoCiechi')) / tot)}% della Veglia)` }[u];
     console.log(`      ${riga ? riga + '; ' : ''}danno al secondo della build ${dps(con).toFixed(1)} con · ${dps(senza).toFixed(1)} senza (${Math.round((100 * (dps(con) - dps(senza))) / dps(senza))}%); durata ${(min).toFixed(1)} min`);
+  }
+}
+
+// modo «mosaici» (19/11): per ogni dono dei mosaici, partite con il dono al massimo e le stesse senza
+if (modo === 'mosaici') {
+  const tot = (r) => Object.values(r.danno).reduce((x, y) => x + y, 0), dps = (rr) => media(rr.map((r) => tot(r) / r.secondi));
+  const senza = ok.filter((r) => !r.dono);
+  const sethSec = (rr) => media(rr.map((r) => r.stanze.find((s) => s.tipo === 'boss' && s.saluteUscita !== null)?.secondi).filter((x) => x !== undefined));
+  console.log(`\nDono dei mosaici (al massimo)   Seth battuto  stanze  danno subito a Veglia  danno al secondo   (con · senza: ${senza.filter((r) => r.completata).length}/${senza.length}, ${media(senza.map((r) => r.stanza)).toFixed(1)}, ${Math.round(media(senza.map((r) => r.stanze.reduce((t, s) => t + s.dannoSubito, 0))))}, ${dps(senza).toFixed(1)})`);
+  for (const d of DONI_MOSAICI) {
+    const con = ok.filter((r) => r.dono === d), m = (k) => media(con.map((r) => r.mosaici?.[k] ?? 0));
+    const subito = (rr) => Math.round(media(rr.map((r) => r.stanze.reduce((t, s) => t + s.dannoSubito, 0))));
+    const effetto = { ultimoCero: `ceri accesi ${m('ceriAccesi').toFixed(1)}, spenti ${m('ceriSpenti').toFixed(1)}, accesi alla fine ${m('ceri').toFixed(1)}`,
+      manoTesa: `salute curata ${m('curaMano').toFixed(0)} a Veglia`, braceNelPetto: `danno della brace ${m('dannoBrace').toFixed(0)} (${Math.round((100 * m('dannoBrace')) / media(con.map(tot)))}% della Veglia)`,
+      coronaIncrinata: `secondi contro Seth ${sethSec(con).toFixed(0)} · ${sethSec(senza).toFixed(0)} senza` }[d];
+    console.log(`  ${d.padEnd(30)}${`${con.filter((r) => r.completata).length}/${con.length}`.padStart(13)}${media(con.map((r) => r.stanza)).toFixed(1).padStart(8)}${String(subito(con)).padStart(23)}` +
+      `${`${dps(con).toFixed(1)} (${Math.round((100 * (dps(con) - dps(senza))) / dps(senza))}%)`.padStart(19)}${effetto ? '   ' + effetto : ''}`);
   }
 }
 

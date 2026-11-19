@@ -3,6 +3,8 @@
  * livello per livello e da spegnere a piacere, la Seconda candela, il conto dell'ultima veglia
  * e il codice di salvataggio da copiare o da incollare. Si apre dal menu; ogni acquisto si salva subito.
  */
+import { MOSAICI_STANZE } from '../data/mosaici';
+import { PASSIVI } from '../data/doni';
 import { LIVELLO_ARMA_UNIONE } from '../data/unioni';
 import { CERI, COSTI_CERO, SBLOCCHI_OGGETTI, SBLOCCO_ROSARIO, SBLOCCO_UNIONI, SECONDA_CANDELA, rimescolateCero, type IdCero } from '../data/meta';
 import { carica, codice, daCodice, salva, type Salvataggio } from './salvataggio';
@@ -104,6 +106,7 @@ export class Cappella {
           </div>
         </li>
       </ul>
+      ${this.vetrate()}
       <section class="cappella-codice">
         <h3>Codice di salvataggio</h3>
         <p>Copialo e tienilo da parte: se cambi telefono o passi dal link all'app, incollalo qui per ritrovare Cera, ceri e personaggi.</p>
@@ -113,6 +116,22 @@ export class Cappella {
         <button type="button" data-carica>${this.confermaCodice ? 'Conferma: sostituisci i progressi di questo dispositivo' : 'Carica il codice'}</button>
         <p class="cappella-messaggio" aria-live="polite"></p>
       </section>`;
+  }
+
+  /**
+   * Le Vetrate (gioco a stanze, 19/11): una finestra per mosaico del Mondo 1. Accesa, l'epitaffio e il dono che ha
+   * sbloccato; spenta, solo il posto. I mosaici si completano con tre frammenti trovati nelle urne di una Veglia.
+   */
+  private vetrate(): string {
+    const n = this.s.mosaici;
+    const finestre = MOSAICI_STANZE.map((m, k) => {
+      const accesa = k < n, dono = PASSIVI.find((q) => q.id === m.dono)!;
+      return `<li class="cero vetrata${accesa ? '' : ' spento'}">
+          <div class="cero-testo"><h3>${accesa ? m.nome : `Vetrata ${k + 1}`}</h3><p>${accesa ? `«${m.epitaffio}» Dono: ${dono.nome}.` : k === n ? 'La prossima: tre frammenti di vetro, nelle urne di una stessa Veglia, la accendono.' : 'Spenta.'}</p></div>
+          <span class="cero-livelli" aria-label="${accesa ? 'Accesa' : 'Spenta'}">${accesa ? '<b></b>' : '<b class="vuota"></b>'}</span>
+        </li>`;
+    }).join('');
+    return `<section class="cappella-vetrate"><h3>Le Vetrate · ${n}/${MOSAICI_STANZE.length}</h3><ul class="cappella-ceri">${finestre}</ul></section>`;
   }
 
   private messaggio(testo: string): void {

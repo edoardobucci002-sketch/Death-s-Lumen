@@ -2,7 +2,7 @@
  * Rompibili del gioco a stanze (decisioni di Edoardo del 16/11): urne, giare e lanterne del survivor, da 1 a 2 per stanza
  * lungo i muri (ROMPIBILI_STANZE). Fanno da ostacolo e si rompono solo colpendoli (Lanterna a mano, Echi, Cerchio di luce).
  * Dentro c'è quello di sempre: la giara lascia gocce di Cera, che a fine fetta (o alla caduta) vanno alla Cappella; l'urna
- * a volte un frammento di vetro, e tre frammenti accendono il mosaico e il Bagliore (con le regole del survivor, ma da subito:
+ * a volte un frammento di vetro, e tre frammenti accendono il mosaico e il Bagliore (dopo la prima caduta, src/data/mosaici.ts;
  * al massimo 3 per Veglia); la lanterna intera fa luce, rotta lascia una chiazza d'olio che rallenta e
  * che le armi di fuoco accendono. Il caso dei rompibili è separato da quello di nemici e carte.
  */
@@ -16,6 +16,7 @@ import type { Arsenale } from './armi';
 import { Caso } from './caso';
 import { Chiazze } from './chiazze';
 import type { Effetti } from './effetti';
+import { MOSAICI_STANZE } from '../data/mosaici';
 import { Mosaico } from './mosaico';
 import { CERA_GOCCIA, CHIAVE_OGGETTO, FRAMMENTO, Oggetti } from './oggetti';
 import type { Orda } from './orda';
@@ -33,9 +34,14 @@ export class RompibiliStanza {
   readonly rompibili: Rompibili;
   readonly oggetti: Oggetti;
   readonly chiazze: Chiazze;
-  private readonly mosaico: Mosaico;
+  private mosaico: Mosaico;
   private readonly caso: Caso;
-  private readonly mosaiciAperti: boolean;
+  /** Le urne contengono frammenti (gioco a stanze, 19/11: dopo la prima caduta; lo decide la scena). */
+  mosaiciAperti = false;
+  /** Il mosaico che si sta cercando in questa Veglia (indice in MOSAICI_STANZE, lo sceglie la scena). */
+  indiceMosaico = 0;
+  /** Il mosaico è completo: la scena accende la Vetrata o dà la Cera (19/11). */
+  completo: () => void = () => {};
   cera = 0; // gocce raccolte in questa Veglia
   chiavi = 0; // chiavi raccolte e non ancora passate al percorso (la scena le prende a ogni passo)
   forzaChiave = false; // LAB: il prossimo vaso (urna o giara) lascia sempre una chiave
@@ -60,9 +66,18 @@ export class RompibiliStanza {
     this.chiazze = new Chiazze(scena, orda, arsenale);
     arsenale.rompibili = this.rompibili;
     arsenale.chiazze = this.chiazze;
+    this.interfaccia = interfaccia;
     this.mosaico = new Mosaico(interfaccia);
     this.caso = new Caso((seme ^ 0x5bd1e995) >>> 0);
-    this.mosaiciAperti = carica().vittorie >= ROMPIBILI_STANZE.vittorie;
+  }
+
+  private readonly interfaccia: HTMLElement;
+
+  /** Sceglie il mosaico della Veglia: il suo disegno (se manca, quello del primo). */
+  scegliMosaico(indice: number): void {
+    this.indiceMosaico = indice;
+    this.mosaico.distruggi();
+    this.mosaico = new Mosaico(this.interfaccia, MOSAICI_STANZE[indice].arte);
   }
 
   /**
@@ -163,6 +178,7 @@ export class RompibiliStanza {
     }
     this.frammenti = 0;
     this.iniziaBagliore();
+    this.completo();
   }
 
   iniziaBagliore(): void {
