@@ -33,7 +33,7 @@ export const NUMERI_UNIONI_STANZE = {
   midollo: { graffio: 20, grumo: 15, polvere: { durata: 1, cecita: 2, pausa: 4, raggio: 10, passo: 8, colore: 0xfff1b8, scuro: 0xf6b86a } },
   // Lapide inchiodata (effetto nuovo, Edoardo 19/11): ogni colpo critico, di qualsiasi arma, toglie «critico» secondi
   // all'attesa della prossima Lapide (nel survivor resta la lapide che seppellisce chi la tocca)
-  lapide: { critico: 2 },
+  lapide: { critico: 1 }, // 2 → 1 (Edoardo, 19/11: con 2 valeva +17%)
   // le Unioni del survivor con numeri diversi nelle stanze (19/11; il survivor resta con NUMERI_UNIONI): la scia del
   // Candelabro fa il 15% del danno della fiammella (survivor 40%); la Falce di Seth uccide sotto il 30%, i maledetti sotto
   // il 50% (survivor 15% e 30%); il Sudario tiene la Grazia fino a 9 s in tutto (survivor 6)

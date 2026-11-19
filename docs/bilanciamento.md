@@ -12,6 +12,11 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 19/11 — Lapide inchiodata a 1 s per critico; Midollo confermato
+
+- **Lapide inchiodata**: **2 → 1 s** tolti per critico (Edoardo: con 2 valeva +17%, sopra l'obiettivo del +10%). Midollo Splendente resta com'è; i colori della polvere vanno bene (l'effetto verrà ridisegnato).
+- `npm run sim-stanze -- 24 unioni solo=lapideInchiodata` (con / senza): Seth battuto **8/24 · 5/24**; i critici tolgono **159 s** a Veglia (erano 295); la Lapide fa il **24%** del danno (senza 16%); danno al secondo della build **+12%** (66,0 contro 59,1).
+
 ### 19/11 — Effetti nuovi di Lapide inchiodata e Midollo Splendente
 
 - Nuovi (`NUMERI_UNIONI_STANZE` in `src/data/unioni-stanze.ts`, Claude, *da rivedere*): **Lapide inchiodata** `lapide.critico` **2 s** tolti all'attesa della Lapide per ogni critico; **Midollo Splendente** `midollo.polvere`: un granello ogni **8 px**, dura **1 s**, tocco entro **10 px** più il corpo, cecità **2 s**, pausa **4 s**. Stima di Claude prima: Lapide circa +8%, Midollo circa 100 salute a Veglia.
