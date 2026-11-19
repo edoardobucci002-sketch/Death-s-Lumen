@@ -30,6 +30,7 @@ import { CAMPANARO } from '../data/campanaro';
 import { Seth } from './seth';
 import { SETH } from '../data/seth';
 import { Minacce } from './minacce';
+import { NUMERI_UNIONI_STANZE } from '../data/unioni-stanze';
 
 export const TIPI_STANZA = ['ricaduto', 'cantore'] as const;
 export type TipoStanza = (typeof TIPI_STANZA)[number];
@@ -38,7 +39,7 @@ export type TipoStanza = (typeof TIPI_STANZA)[number];
 export const STATO = { cammina: 1, avviso: 2, recupero: 3, aTerra: 4 } as const;
 
 /** Le armi a mano, ognuna con la sua Quiete. */
-export const FONTE = { lanterna: 0, abilita: 1 } as const;
+export const FONTE = { lanterna: 0, abilita: 1, midollo: 2 } as const; // midollo: un cieco che ne colpisce un altro (Midollo Splendente)
 
 const MAX_COMPARSE = ONDATA.massimo;
 const MAX_GRUMI = 16;
@@ -113,6 +114,8 @@ export class NemiciStanza {
   fermoImpatto = true;
   /** Lama di luce: cecità, sviamento in gradi e raggio di diffusione (0 = niente Lama); li imposta la scena dall'arsenale. */
   lama: { durata: number; sviamento: number; raggio: number } | null = null;
+  /** Midollo Splendente (Unione dell'Abbacinio, 19/11): i ciechi si colpiscono tra loro. La scena lo aggiorna a ogni passo. */
+  midollo = false;
   /** Nemici accecati dalla Lama (per il LAB e le prove). */
   accecati = 0;
   /** Il Campanaro, mini-boss del Mondo 1 (17/11): una sola istanza, in campo quando la Orda ha un nemico del suo tipo. */
@@ -314,6 +317,7 @@ export class NemiciStanza {
     let danno = 0;
     for (let i = o.numero - 1; i >= 0; i--) {
       if (o.segnoCorvo[i] > 0) o.segnoCorvo[i] -= dt;
+      if (o.lutto[i] > 0) o.lutto[i] -= dt;
       if (this.colpo[i] > 0) this.colpo[i] -= dt;
       if (this.rialza[i] > 0) this.rialza[i] -= dt;
       if (this.quieteLanterna[i] > 0) this.quieteLanterna[i] -= dt;
@@ -405,6 +409,7 @@ export class NemiciStanza {
           if (dentro) this.dentro[i] = prima;
           if (this.tempo[i] <= 0) {
             this.colpo[i] = NEMICI_STANZA.lampo * 1.2;
+            if (this.midollo && this.cieco[i] > 0) this.graffioSuiVicini(i);
             if (dentro) danno = Math.max(danno, R.graffio.danno);
             else if (this.dentro[i] <= this.finestra) {
               this.schivate++; // uscito dallo spicchio all'ultimo istante
@@ -466,6 +471,19 @@ export class NemiciStanza {
     const coseno = (dx * this.dirX[i] + dy * this.dirY[i]) / d;
     // l'angolo si allarga del corpo del personaggio, visto dalla distanza d
     return Math.acos(Phaser.Math.Clamp(coseno, -1, 1)) <= Phaser.Math.DegToRad(R.graffio.ampiezza / 2) + Math.asin(Math.min(1, this.corpo / d));
+  }
+
+  /** Midollo Splendente: il graffio del Ricaduto cieco i ferisce gli altri nemici dentro il suo spicchio. */
+  private graffioSuiVicini(i: number): void {
+    const o = this.orda, mezza = Phaser.Math.DegToRad(R.graffio.ampiezza / 2);
+    for (let j = 0; j < o.numero; j++) {
+      if (j === i || o.salute[j] <= 0) continue;
+      const dx = o.x[j] - o.x[i], dy = o.y[j] - o.y[i], d = Math.hypot(dx, dy);
+      if (d >= R.graffio.raggio + o.raggio[j]) continue;
+      const coseno = d > 0.01 ? (dx * this.dirX[i] + dy * this.dirY[i]) / d : 1;
+      if (d > o.raggio[j] && Math.acos(Phaser.Math.Clamp(coseno, -1, 1)) > mezza + Math.asin(Math.min(1, o.raggio[j] / d))) continue;
+      this.colpoArma(j, NUMERI_UNIONI_STANZE.midollo.graffio, this.dirX[i], this.dirY[i], FONTE.midollo);
+    }
   }
 
   private iniziaAvviso(i: number, dx: number, dy: number, durata: number): void {
@@ -563,6 +581,23 @@ export class NemiciStanza {
         this.pozza(Phaser.Math.Clamp(x, P.raggio, MISURA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, MISURA.altezza - P.raggio / 2));
         this.togliGrumo(k);
         continue;
+      }
+      // Midollo Splendente: il grumo di un Cantore cieco scoppia sul primo altro nemico che tocca e lo ferisce
+      if (this.gCieco[k] && this.midollo) {
+        const o = this.orda;
+        let preso = -1;
+        for (let j = 0; j < o.numero && preso < 0; j++) {
+          if (o.id[j] === this.gOrigine[k] || o.salute[j] <= 0) continue;
+          const rr = C.grumo.raggio + o.raggio[j];
+          if ((x - o.x[j]) ** 2 + (y - o.y[j]) ** 2 < rr * rr) preso = j;
+        }
+        if (preso >= 0) {
+          this.colpoArma(preso, NUMERI_UNIONI_STANZE.midollo.grumo, this.gVX[k] / C.grumo.velocita, this.gVY[k] / C.grumo.velocita, FONTE.midollo);
+          this.effetti.scoppio(x, y - C.grumo.altezza);
+          this.pozza(Phaser.Math.Clamp(x, P.raggio, MISURA.larghezza - P.raggio), Phaser.Math.Clamp(y, P.raggio / 2, MISURA.altezza - P.raggio / 2));
+          this.togliGrumo(k);
+          continue;
+        }
       }
       const d2 = (x - px) ** 2 + (y - py) ** 2;
       if (d2 < r * r) {

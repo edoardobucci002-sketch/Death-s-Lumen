@@ -22,6 +22,7 @@ import type { Chiazze } from './chiazze';
 import type { Rompibili } from './rompibili';
 import { ROMPIBILI } from '../data/rompibili';
 import { ROSARIO_VOLO } from '../data/armi-stanze';
+import { NUMERI_UNIONI_STANZE } from '../data/unioni-stanze';
 import { creaSpriteOggetti, SPRITE_CORVO, SPRITE_GRANO, SPRITE_LAPIDE, SPRITE_SASSO, SPRITE_VELO } from './segnaposto-oggetti';
 
 export const NUBE = 1;
@@ -126,6 +127,18 @@ export abstract class ArsenaleColpo {
   rompibili: Rompibili | null = null; // le armi li rompono con il loro impatto
   chiazze: Chiazze | null = null; // le armi di fuoco accendono l'olio
   protected unite: Partial<Record<Arma['id'], boolean>> = {};
+  /**
+   * Gioco a stanze (19/11): le Unioni di Fuoco fatuo e Corvo hanno l'effetto delle stanze (Fuochi erranti: le uccisioni
+   * accorciano la ricarica degli Echi; Stormo del lutto: il nemico beccato che muore cura) invece di quello del survivor.
+   */
+  unioniStanze = false;
+  accorcia = 0; // secondi da togliere alla ricarica degli Echi (Fuochi erranti), alla fine del passo
+  curaLutto = 0; // salute da dare al personaggio (Stormo del lutto): la preleva la scena a ogni passo
+  lampiFaro = 0; // lampi del Faro dei morti, uccisioni dei Fuochi erranti, nemici in lutto morti: per il LAB e le prove
+  uccisiFuochi = 0;
+  lutti = 0;
+  /** Gioco a stanze: il nemico j è un capo (Campanaro o Seth)? La Falce di Seth non li uccide all'istante. */
+  eCapo: ((j: number) => boolean) | null = null;
   protected raffiche = 0; // raffiche del Bastone (Verga dei nomi)
   protected uccisiPozze = 0; // uccisioni nelle pozze (Acquasantiera)
   protected attesaSorso = 0; // secondi prima che l'Acquasantiera possa ridare un sorso
@@ -331,6 +344,7 @@ export abstract class ArsenaleColpo {
   protected qDanno = new Float32Array(MAX_CODA);
   protected qMolt = new Float32Array(MAX_CODA); // Devozione: moltiplicatore della reazione in coda
   protected qComune = new Uint8Array(MAX_CODA); // 1 = nemico comune (né bruto, né élite, né Seth): con gli Stati certi niente nome
+  protected qLampo = new Uint8Array(MAX_CODA); // 1 = la reazione fa esplodere il lampo del Faro dei morti (gioco a stanze)
   protected cDt = 0;
   protected cProiettile = 0;
   protected cMigliore = -1;
@@ -417,7 +431,10 @@ export abstract class ArsenaleColpo {
     if (o.interrato(j)) this.dannoFonti[F.interramento] += danno * o.piuInterrato(j); // la parte in più dell'Interramento
     const viva = o.salute[j] > 0;
     o.colpisci(j, danno, respinta, dx, dy, lampeggia);
-    if (viva && o.salute[j] <= 0) o.uccisore[j] = this.fonte + 1; // per la simulazione: chi l'ha ucciso
+    if (viva && o.salute[j] <= 0) {
+      o.uccisore[j] = this.fonte + 1; // per la simulazione: chi l'ha ucciso
+      this.uccisione(j);
+    }
     // con gli Stati certi ogni colpo lascia lo stato, senza tirare il dado
     // con gli Stati certi ogni colpo lascia lo stato; zone e abilità (cRitmo) al massimo una volta ogni STATI_CERTI.ritmo s
     // per nemico e affinità, tranne il primo scatto dell'abilità (cForza)
@@ -433,6 +450,21 @@ export abstract class ArsenaleColpo {
     if (reazione) this.effetti.sommaReazione(reazione, this.cRX, this.cRY, danno, this.cRAperta);
     else if (o.elite[j] || comeSeth(o.tipo[j])) this.effetti.sommaDanno(o.id[j], o.x[j], o.y[j] - o.altezza(j), danno);
     else this.effetti.numero(o.x[j], o.y[j] - 2 * o.raggio[j], danno, this.critico);
+  }
+
+  /** Un'arma ha appena abbattuto il nemico j (gioco a stanze: Fuochi erranti e Stormo del lutto). */
+  protected uccisione(j: number): void {
+    if (!this.unioniStanze) return;
+    const N = NUMERI_UNIONI_STANZE;
+    if (this.unite.fuocoFatuo && this.fonte === F.fuocoFatuo) {
+      this.accorcia += N.fuochi.ricarica;
+      this.uccisiFuochi++;
+    }
+    if (this.unite.corvo && this.orda.lutto[j] > 0) {
+      this.curaLutto += N.lutto.cura;
+      this.lutti++;
+      this.orda.lutto[j] = 0;
+    }
   }
 
   /**
@@ -457,6 +489,7 @@ export abstract class ArsenaleColpo {
     this.qMolt[k] = molt;
     this.qDanno[k] = tipo === ECLISSI ? eclissi * molt : danno;
     this.qComune[k] = forte || o.tipo[j] === ID_BRUTO ? 0 : 1;
+    this.qLampo[k] = tipo !== ESPLOSIONE && this.unioniStanze && this.unite.lanterna && o.reazioneLuce ? 1 : 0;
   }
 
   /** Esegue le reazioni e le esplosioni in coda (i nemici non hanno ancora cambiato posto: i morti si tolgono dopo). */
@@ -502,6 +535,7 @@ export abstract class ArsenaleColpo {
       } else if (t === INTERRAMENTO) {
         this.effetti.reazione(x, y, REAZIONI.interramento.raggio, REAZIONI.interramento.colore, REAZIONI.interramento.bordo, REAZIONI.durataEffetto);
       }
+      if (this.qLampo[k]) this.lampoFaro(x, y, j);
       if (t !== ESPLOSIONE) {
         this.reazioni++;
         this.reazioniPerTipo[t]++;
@@ -509,6 +543,18 @@ export abstract class ArsenaleColpo {
       }
     }
     this.code = 0;
+  }
+
+  /** Faro dei morti (gioco a stanze, 19/11): il nemico j abbagliato che ha reagito esplode in un lampo che ferisce chi gli sta intorno. */
+  private lampoFaro(x: number, y: number, j: number): void {
+    const L = NUMERI_UNIONI_STANZE.faro.lampo;
+    this.lampiFaro++;
+    this.prepara(0, x, y, L.raggio, L.danno, 0); // senza affinità: il lampo non lascia stati, quindi non fa altre reazioni
+    this.fonte = F.lanterna;
+    this.orda.segno[j] = this.colpo; // lui no: ferisce chi gli sta vicino
+    this.orda.griglia.nelRaggio(x, y, L.raggio + 40, this.visitaColpo);
+    this.rompiForma();
+    this.effetti.reazione(x, y, L.raggio, L.colore, L.bordo, REAZIONI.durataEffetto);
   }
 
   /**

@@ -69,7 +69,8 @@ export const BOT_STANZE = {
   nemiciPerAbilita: 3,
   abilitaSotto: 0.4,
   // carte: più alto = la preferisce (nel modo «esplora» sceglie a caso, per provare tutti gli Echi e tutti i livelli)
-  carte: { lanterna: 3, ecoNuovo: 2.6, livelloEco: 2.2, donoNuovo: 1.6, livelloDono: 1.4 },
+  // unione (19/11): la carta Unione la prende sempre, come nel survivor (anche esplorando)
+  carte: { lanterna: 3, ecoNuovo: 2.6, livelloEco: 2.2, donoNuovo: 1.6, livelloDono: 1.4, unione: 10 },
   // porte: preferisce le stanze degli Echi d'inizio, poi le affinità degli Echi che ha (per farli salire), poi il dono.
   // Nella mappa (17/11) esplora tutte le stanze prima del Boss: le preferenze scelgono solo tra le stanze nuove accanto
   porte: { tesoro: 4, echi: 3, affinitaPosseduta: 2, dono: 1.5, altra: 1 }, // tesoro dal 18/11: appena lo vede ci va

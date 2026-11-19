@@ -41,6 +41,8 @@ export interface RisultatoStanze {
   gradi: { offerte: Record<IdGrado, number>; scelte: Record<IdGrado, number> }; // quante carte di ogni grado ha visto e preso (rarità, 17/11)
   stanze: StanzaSim[];
   danno: Record<string, number>; // danno fatto da ogni fonte (Lanterna, Echi, Cerchio di luce, reazioni)
+  /** le Unioni (19/11): offerte (nomi, una volta per stanza in cui la carta è comparsa), prese, nella stanza n; cura dello Stormo del lutto */
+  unioni: { offerte: number; prese: { nome: string; stanza: number }[]; curaLutto: number };
 }
 
 export class SimStanze {
@@ -51,6 +53,14 @@ export class SimStanze {
   private readonly gradi = { offerte: { fioca: 0, chiara: 0, ardente: 0 }, scelte: { fioca: 0, chiara: 0, ardente: 0 } };
   private inizio = 0; // secondi all'ingresso nella stanza in corso
   private ripulita = false;
+  private unioniOfferte = 0;
+  private readonly unioniPrese: { nome: string; stanza: number }[] = [];
+  private lutto = 0;
+
+  /** Stormo del lutto: salute curata. */
+  curaLutto(n: number): void {
+    this.lutto += n;
+  }
 
   /** Un passo di logica. */
   passo(dt: number, salute: number): void {
@@ -79,12 +89,16 @@ export class SimStanze {
 
   /** Le carte offerte in una stanza: per contare i gradi. */
   offerte(carte: readonly Dono[]): void {
-    for (const d of carte) this.gradi.offerte[gradoCarta(d)]++;
+    for (const d of carte) {
+      if (d.tipo === 'unione') this.unioniOfferte++;
+      else this.gradi.offerte[gradoCarta(d)]++;
+    }
   }
 
   carta(d: Dono): void {
-    this.gradi.scelte[gradoCarta(d)]++;
-    this.carte.push(d.tipo === 'arma' ? `${d.arma.nome} ${d.livello}` : d.tipo === 'passivo' ? `${d.passivo.nome} ${d.livello}` : d.tipo);
+    if (d.tipo === 'unione') this.unioniPrese.push({ nome: d.unione.nome, stanza: this.stanze[this.stanze.length - 1]?.stanza ?? 0 });
+    else this.gradi.scelte[gradoCarta(d)]++;
+    this.carte.push(d.tipo === 'arma' ? `${d.arma.nome} ${d.livello}` : d.tipo === 'passivo' ? `${d.passivo.nome} ${d.livello}` : d.tipo === 'unione' ? `Unione: ${d.unione.nome}` : d.tipo);
   }
 
   risultato(r: {
@@ -103,7 +117,7 @@ export class SimStanze {
       uccisi: r.uccisi, rinascite: r.rinascite, schivate: r.schivate, colpiLanterna: r.colpiLanterna, usiAbilita: r.usiAbilita,
       build: [`Lanterna ${r.livelloLanterna}`, ...r.arsenale.possedute.map((p) => `${p.arma.nome} ${p.livello}`), ...r.doni],
       carte: this.carte, gradi: this.gradi, stanze: this.stanze.map((s) => ({ ...s, secondi: Math.round(s.secondi * 10) / 10, dannoSubito: Math.round(s.dannoSubito), saluteEntrata: Math.round(s.saluteEntrata), saluteUscita: s.saluteUscita === null ? null : Math.round(s.saluteUscita) })),
-      danno,
+      danno, unioni: { offerte: this.unioniOfferte, prese: this.unioniPrese, curaLutto: Math.round(this.lutto) },
     };
   }
 }

@@ -162,7 +162,24 @@ Il gioco a stanze nasce accanto al survivor e si raggiunge **solo dal link di pr
 | Corvo | il nemico beccato subisce +20% di danno da tutto per 3 s |
 | Velo funebre | mentre stai fermo il velo si allarga fino al doppio in 1,5 s; camminando torna normale in 0,4 s |
 | Sampietrini | il rimbalzo va verso il nemico più vicino entro 220 px, invece che dritto |
-- Le Unioni non ci sono ancora nel gioco a stanze (nel pivot: arma al livello 4).
+- **Unioni** (19/11, decisioni di Edoardo sulla proposta di Claude; `src/data/unioni-stanze.ts`): un Eco o la Lanterna al **livello 4** (`LIVELLO_ARMA_UNIONE_STANZE`) e il suo dono al **massimo** (oggi 3 per tutti) aprono la sua Unione. La **prima stanza ripulita dopo** offre la **carta Unione in più** (3 carte invece di 2), da qualsiasi porta; il **forziere del tesoro** la offre al posto di una delle sue 3 carte. Se non la prendi ricompare alla stanza dopo; se ne sono pronte due, una per stanza (nell'ordine della tabella). Disponibili **da subito**, senza sblocco nella Cappella (se ne riparla con il Mondo 2 e la meta; con più Mondi anche il modo di ottenerle cambierà, Edoardo 19/11). L'Unione dà **solo l'effetto** (non cambia danno, ricarica, area) e **non è un livello**: l'arma unita può salire al 5, e Unione e potenziale si sommano. Si salva con la Veglia. La **carta**: al posto del grado il nastro «UNIONE» con il bordo azzurro #9fd6e0 (scelta #d8f0f4; `CARTA_UNIONE`, segnaposto); al posto dell'icona, l'icona dell'arma e quella del dono affiancate con un «+»; sotto, il nome e l'effetto. La **scoperta**: la prima volta su questo dispositivo che un'Unione è pronta parte l'animazione della scoperta del survivor (segnaposto dal codice), che resta finché non si tocca; le scoperte delle stanze sono separate da quelle del survivor. Il bot prende sempre la carta Unione. Le otto «come nel survivor» usano il suo effetto e i suoi numeri (`NUMERI_UNIONI`, *i numeri vanno verificati*, Edoardo 19/11); le quattro adattate hanno numeri loro (`NUMERI_UNIONI_STANZE`, *da rivedere*).
+
+| Unione | Arma | Dono | Effetto |
+| --- | --- | --- | --- |
+| Candelabro funebre | Candela | Cuore di cera | le fiammelle lasciano una scia che brucia (come nel survivor) |
+| Falce di Seth | Falce | Sale nero | uccide all'istante i nemici sotto il 15% di salute, i maledetti sotto il 30%; mai i capi (Campanaro e Seth) |
+| Campana a morto | Campana | Cera votiva | ogni rintocco ferma per 0,8 s i nemici che tocca |
+| Acquasantiera | Acqua santa | Calice riverso | ogni 40 uccisioni nelle pozze torna un sorso di fiaschetta, al massimo uno ogni 45 s; a fiaschetta piena il sorso diventa una pozza che cura |
+| Lapide inchiodata | Lapide | Chiodo di bara | la lapide resta a terra 3 s e seppellisce chi la tocca (con il potenziale: un muro che seppellisce) |
+| Rosario dei vespri | Rosario spezzato | Specchio | quando un grano uccide un maledetto, da lui riparte un grano nuovo (una volta per lancio) |
+| Sudario | Velo funebre | Campanella d'argento | in Grazia, finché un nemico è dentro il velo la Grazia non scade, fino a 6 s in tutto (il velo si tinge #fff1b8) |
+| Selciato | Sampietrini | Scudo di ferro | un sasso che colpisce un nemico fermo rimbalza una volta in più |
+| Faro dei morti | Lanterna | Stoppino lungo | l'arco del Fendente si allarga del 25%; un nemico abbagliato che fa scattare una reazione (Eclissi, Rivelazione, Interramento: ogni reazione che consuma la Luce, anche quando è il colpo di Luce a farla scattare) esplode in un lampo di luce che ferisce i nemici entro 64 px intorno a lui (non lui) con 15 di danno, conta come Lanterna e non lascia stati (cerchio #fff1b8, segnaposto) |
+| Fuochi erranti | Fuoco fatuo | Clessidra | ogni nemico ucciso da un fuoco toglie 0,3 s alla ricarica di tutti gli Echi |
+| Stormo del lutto | Corvo | Erbe amare | un nemico beccato che muore entro 3 s ti cura 2 salute |
+| Midollo Splendente | Abbacinio | Ali di falena | i nemici ciechi si colpiscono tra loro: il graffio del Ricaduto cieco ferisce gli altri nemici nel suo spicchio (20 di danno), il grumo del Cantore cieco scoppia sul primo altro nemico che tocca (15); il danno è di Luce e conta come Abbacinio |
+
+- LAB → Stanze → Unioni: per ogni Unione «Pronta» (arma al 4 e dono al massimo, poi «Ripulisci la stanza» per vedere la carta), «Unisci» (subito, senza carta), «Scoperta» (rivede l'animazione); «Dimentica le scoperte». Numeri in Numeri → unioni (le otto) e Numeri → unioniStanze (le quattro).
 - LAB → Stanze → Percorso: «Lanterna +1 livello», «Echi +1 livello», «Livelli a 1»; LAB → Stanze → Potenziali: un pulsante per Eco lo mette nella build al livello 5; i numeri si cambiano al volo in Numeri → armiStanze.
 
 #### Stanze · Lanterna

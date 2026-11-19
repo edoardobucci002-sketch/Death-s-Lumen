@@ -170,10 +170,11 @@ export abstract class ArsenaleVicine extends ArsenaleProiettili {
     this.ferisci(j, this.cDanno, FALCE.respinta, ex / d, ey / d, OMBRA);
     // potenziale (gioco a stanze): ruba una parte del danno che ha fatto davvero
     if (this.potenziale[F.falce] === 1) this.rubato += (prima - Math.max(0, o.salute[j])) * POTENZIALI.falce.furto;
-    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && !comeSeth(o.tipo[j]) && o.salute[j] < soglia * o.saluteMassima[j]) {
+    if (this.unite.falce && o.salute[j] > 0 && !o.elite[j] && !comeSeth(o.tipo[j]) && !this.eCapo?.(j) && o.salute[j] < soglia * o.saluteMassima[j]) {
       this.dannoFonti[F.falce] += o.salute[j];
       o.colpisci(j, o.salute[j], 0, 0, 0);
       o.uccisore[j] = F.falce + 1;
+      this.uccisione(j);
     }
     if (o.salute[j] <= 0) {
       // ogni uccisione allunga la lama per qualche secondo

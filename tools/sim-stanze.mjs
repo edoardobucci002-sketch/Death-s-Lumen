@@ -9,6 +9,8 @@
 //      npm run sim-stanze -- 24 esplora   (tutte con carte e porte a caso: provano tutti gli Echi)
 //      npm run sim-stanze -- 24 scelte    (tutte con le carte preferite)
 //      npm run sim-stanze -- 8 potenziali (8 partite per ogni Eco, che parte già al livello 5, il suo potenziale)
+//      npm run sim-stanze -- 4 unioni     (per ogni Unione 4 partite che partono con arma al 4 e dono al massimo già unita,
+//                                          e 4 con la stessa build senza Unione, per confrontare: 19/11)
 // Il bot non è perfetto: vede gli avvisi solo dopo un tempo di reazione (BOT_STANZE in src/data/bot.ts).
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -16,7 +18,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 const argomenti = process.argv.slice(2);
 const partite = Number(argomenti.find((a) => /^\d+$/.test(a))) || 24;
-const modo = argomenti.includes('potenziali') ? 'potenziali' : argomenti.includes('esplora') ? 'esplora' : argomenti.includes('scelte') ? 'scelte' : 'misto';
+const modo = argomenti.includes('unioni') ? 'unioni' : argomenti.includes('potenziali') ? 'potenziali' : argomenti.includes('esplora') ? 'esplora' : argomenti.includes('scelte') ? 'scelte' : 'misto';
+const UNIONI = ['candelabroFunebre', 'falceDelMietitore', 'campanaAMorto', 'acquasantiera', 'lapideInchiodata', 'rosarioDeiVespri', 'sudario', 'selciato', 'faroDeiMorti', 'fuochiErranti', 'stormoDelLutto', 'midolloSplendente'];
+const ARMA_UNIONE = { candelabroFunebre: 'candela', falceDelMietitore: 'falce', campanaAMorto: 'campana', acquasantiera: 'acquaSanta', lapideInchiodata: 'lapide', rosarioDeiVespri: 'rosarioSpezzato', sudario: 'veloFunebre', selciato: 'sampietrini', faroDeiMorti: 'lanterna', fuochiErranti: 'fuocoFatuo', stormoDelLutto: 'corvo', midolloSplendente: 'lamaDiLuce' };
 const ECHI = ['candela', 'falce', 'campana', 'fuocoFatuo', 'acquaSanta', 'lamaDiLuce', 'lapide', 'rosarioSpezzato', 'corvo', 'veloFunebre', 'sampietrini'];
 const INSIEME = 4; // partite in parallelo: di più non conviene con 8 GB di RAM
 const porta = Number(process.env.DL_PORTA) || 4321;
@@ -27,29 +31,30 @@ const browser = await chromium.launch();
 const inizio = Date.now();
 
 const coda = [];
-if (modo === 'potenziali') for (const eco of ECHI) for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: false, eco });
+if (modo === 'unioni') for (const unione of UNIONI) for (let k = 0; k < partite; k++) for (const unita of [true, false]) coda.push({ seme: 2001 + k, esplora: false, unione, unita });
+else if (modo === 'potenziali') for (const eco of ECHI) for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: false, eco });
 else for (let k = 0; k < partite; k++) coda.push({ seme: 2001 + k, esplora: modo === 'esplora' || (modo === 'misto' && k % 2 === 1) });
 const totale = coda.length;
 const risultati = [];
 let fatte = 0;
 
-async function gioca({ seme, esplora, eco }) {
+async function gioca({ seme, esplora, eco, unione, unita }) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
   const pag = await ctx.newPage();
   const errori = [];
   pag.on('pageerror', (e) => errori.push(e.message));
-  await pag.goto(`http://localhost:${porta}/?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}${eco ? `&potenziale=${eco}` : ''}`);
+  await pag.goto(`http://localhost:${porta}/?stanze&bot&seme=${seme}${esplora ? '&esplora=1' : ''}${eco ? `&potenziale=${eco}` : ''}${unione ? `&unione=${unione}${unita ? '' : '&unita=0'}` : ''}`);
   await pag.waitForFunction(() => window.__sim, null, { timeout: 5 * 60_000, polling: 500 }).catch(() => errori.push('la partita non finisce'));
   const r = await pag.evaluate(() => window.__sim ?? null);
   await ctx.close();
   fatte++;
   const ultima = r?.stanze?.at(-1);
   const esito = !r ? 'errore' : r.completata ? `battuto Seth dopo ${r.stanza} stanze (${ultima?.secondi ?? '?'} s contro di lui), salute ${r.salute}` : `caduto nella stanza ${r.stanza} (${ultima?.tipo === 'campanaro' ? 'Campanaro, ' : ultima?.tipo === 'boss' ? 'Seth, ' : ''}a ${ultima?.distanza ?? '?'} porte dall'ingresso)`;
-  console.log(`  [${fatte}/${totale}] seme ${seme}${esplora ? ' (esplora)' : ''}${eco ? ` (${eco} al 5)` : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
-  risultati.push({ seme, esplora, eco, ...r, errori });
+  console.log(`  [${fatte}/${totale}] seme ${seme}${esplora ? ' (esplora)' : ''}${eco ? ` (${eco} al 5)` : ''}${unione ? ` (${unione}${unita ? '' : ', senza unirla'})` : ''}: ${esito}, ${r?.secondi ?? '?'} s${errori.length ? '  errori: ' + errori.join(' | ') : ''}`);
+  risultati.push({ seme, esplora, eco, unione, unita, ...r, errori });
 }
 
-console.log(`Simulazione del gioco a stanze: ${totale} partite (${modo === 'potenziali' ? `${partite} per ogni Eco al livello 5` : modo === 'misto' ? 'metà carte preferite, metà a caso' : modo === 'esplora' ? 'carte e porte a caso' : 'carte preferite'})\n`);
+console.log(`Simulazione del gioco a stanze: ${totale} partite (${modo === 'unioni' ? `${partite} per ogni Unione, unita e no` : modo === 'potenziali' ? `${partite} per ogni Eco al livello 5` : modo === 'misto' ? 'metà carte preferite, metà a caso' : modo === 'esplora' ? 'carte e porte a caso' : 'carte preferite'})\n`);
 await Promise.all(Array.from({ length: INSIEME }, async () => {
   while (coda.length) await gioca(coda.shift());
 }));
@@ -83,6 +88,15 @@ const somma = (k, g) => ok.reduce((t, r) => t + (r.gradi?.[k]?.[g] ?? 0), 0);
 const tot = (k) => GR.reduce((t, g) => t + somma(k, g), 0);
 if (tot('offerte')) console.log(`\nCarte per grado (viste / prese): ${GR.map((g) => `${NOMI_GR[g]} ${Math.round((100 * somma('offerte', g)) / tot('offerte'))}% / ${Math.round((100 * somma('scelte', g)) / Math.max(1, tot('scelte')))}%`).join(', ')} su ${tot('offerte')} carte viste`);
 
+// le Unioni (19/11): in quante partite la carta è comparsa, quali ha preso il bot e in che stanza, cura dello Stormo del lutto
+const conUnione = ok.filter((r) => r.unioni?.prese?.length), prese = {};
+for (const r of conUnione) for (const u of r.unioni.prese) (prese[u.nome] ??= []).push(u.stanza);
+console.log(`\nUnioni: la carta è comparsa in ${ok.filter((r) => r.unioni?.offerte).length} partite su ${ok.length}, presa in ${conUnione.length}` +
+  (conUnione.length ? ` (${Object.entries(prese).map(([n, st]) => `${n} ${st.length}×, stanza ${Math.round(media(st))} in media`).join('; ')})` : '') +
+  (ok.some((r) => r.unioni?.curaLutto) ? `; Stormo del lutto: ${Math.round(media(ok.filter((r) => r.unioni?.curaLutto).map((r) => r.unioni.curaLutto)))} salute curata a partita` : ''));
+const vinteCon = conUnione.filter((r) => r.completata).length, senza = ok.filter((r) => !r.unioni?.prese?.length);
+if (conUnione.length) console.log(`  Seth battuto: ${vinteCon}/${conUnione.length} con un'Unione, ${senza.filter((r) => r.completata).length}/${senza.length} senza`);
+
 // quanto conta ogni arma: la sua parte del danno, nelle partite in cui c'era
 const NOMI = { lanterna: 'Lanterna', abilita: 'Cerchio di luce', candela: 'Candela', falce: 'Falce', campana: 'Campana', fuocoFatuo: 'Fuoco fatuo', acquaSanta: 'Acqua santa', lamaDiLuce: 'Abbacinio', lapide: 'Lapide', rosarioSpezzato: 'Rosario spezzato', corvo: 'Corvo', veloFunebre: 'Velo funebre', sampietrini: 'Sampietrini', eclissi: 'Eclissi', esorcismo: 'Esorcismo', interramento: 'Interramento', fuoco: 'Fuoco', martire: 'Martire' };
 const fonti = new Set(ok.flatMap((r) => Object.keys(r.danno)));
@@ -102,6 +116,17 @@ if (modo === 'potenziali') {
     const parte = media(rr.map((r) => (r.danno[eco] ?? 0) / Object.values(r.danno).reduce((x, y) => x + y, 0)));
     console.log(`  ${(NOMI[eco] ?? eco).padEnd(36)}${`${fatte.length}/${rr.length}`.padStart(11)}${String(fatte.length ? Math.round(media(fatte.map((r) => r.salute))) : '–').padStart(18)}` +
       `${(Math.round(parte * 100) + '%').padStart(17)}${media(rr.map((r) => (r.danno[eco] ?? 0) / r.secondi)).toFixed(1).padStart(18)}`);
+  }
+}
+
+// modo «unioni»: per ogni Unione, partite con l'Unione e con la stessa build senza: Seth battuto, stanze, parte del danno dell'arma
+if (modo === 'unioni') {
+  console.log('\nUnione (arma al 4, dono al massimo)   Seth battuto  stanze in media  parte del danno dell\'arma   (con l\'Unione / senza)');
+  for (const u of UNIONI) {
+    const arma = ARMA_UNIONE[u], con = ok.filter((r) => r.unione === u && r.unita), senza = ok.filter((r) => r.unione === u && !r.unita);
+    const parte = (rr) => Math.round(100 * media(rr.map((r) => (r.danno[arma] ?? 0) / Object.values(r.danno).reduce((x, y) => x + y, 0))));
+    console.log(`  ${u.padEnd(36)}${`${con.filter((r) => r.completata).length}/${con.length} · ${senza.filter((r) => r.completata).length}/${senza.length}`.padStart(13)}` +
+      `${`${media(con.map((r) => r.stanza)).toFixed(1)} · ${media(senza.map((r) => r.stanza)).toFixed(1)}`.padStart(17)}${`${parte(con)}% · ${parte(senza)}%`.padStart(27)}`);
   }
 }
 

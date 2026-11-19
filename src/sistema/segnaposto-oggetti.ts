@@ -6,6 +6,7 @@
 import type Phaser from 'phaser';
 import { ARMI_COMUNI, ARMI_INIZIALI } from '../data/armi';
 import { iconaUnione, UNIONI } from '../data/unioni';
+import { UNIONI_STANZE } from '../data/unioni-stanze';
 import { arte, registraArte } from './arte';
 
 const COLORI: Record<string, string> = {
@@ -43,7 +44,7 @@ export function creaIconeOggetti(): void {
 /** Icone provvisorie delle unioni: l'icona dell'arma con quattro angoli d'oro (24×24). */
 export function creaIconeUnioni(): void {
   const armi = [...Object.values(ARMI_INIZIALI), ...ARMI_COMUNI];
-  for (const u of UNIONI) {
+  for (const u of [...UNIONI, ...UNIONI_STANZE]) { // le stanze aggiungono Midollo Splendente (le altre ci sono già)
     const k = iconaUnione(u.id), base = arte(armi.find((a) => a.id === u.arma)!.icona);
     if (arte(k) || !base) continue;
     const t = document.createElement('canvas');

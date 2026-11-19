@@ -12,6 +12,8 @@
  * - la porta del Boss resta chiusa (il lucchetto) finché il Campanaro non è battuto: lui ha la chiave (passo 3, 18/11);
  * - entrati dal Boss le porte si chiudono alle spalle e non si torna; arriva Seth (src/sistema/seth.ts, 18/11), da solo
  *   come il Campanaro; battuto lui la fase è «fine»: il Mondo 1 è completato.
+ * Unioni (19/11, src/data/unioni-stanze.ts): quando un Eco o la Lanterna è al livello 4 e il suo dono al massimo, la stanza
+ * ripulita offre la carta Unione in più (il forziere del tesoro al posto di una carta); una per stanza, finché non la prendi.
  * Rarità (17/11, src/data/rarita.ts): ogni carta tira prima il grado (Fioca, Chiara, Ardente) tra quelli che la stanza può
  * dare, poi un oggetto di quel grado. Le carte si estraggono con un generatore del caso con seme (riproducibili).
  */
@@ -23,6 +25,8 @@ import { ECHI_STANZE, LANTERNA_STANZE } from '../data/armi-stanze';
 import { PASSIVI, type IdDono } from '../data/doni';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { GRADI, ORDINE_GRADI, type IdGrado } from '../data/rarita';
+import { LIVELLO_ARMA_UNIONE_STANZE, UNIONI_STANZE } from '../data/unioni-stanze';
+import { livelloDonoUnione, type Unione } from '../data/unioni';
 import { Caso } from './caso';
 import type { Arsenale } from './armi';
 import { gradoCarta, type Dono } from './doni';
@@ -46,6 +50,8 @@ export class Percorso {
   livelloLanterna = 1;
   /** LAB: le carte escono di questo grado, quando la stanza lo può dare (null = il caso di sempre). */
   forzaGrado: IdGrado | null = null;
+  /** Simulazioni (?unione=…&unita=0): la carta Unione non esce mai, per confrontare la stessa build senza Unione. */
+  senzaUnioni = false;
   readonly passivi: Record<IdDono, number>;
   private ondata = 0; // ondate già arrivate in questa stanza
   private attesa = 0;
@@ -185,7 +191,38 @@ export class Percorso {
     }
     // niente (o non abbastanza) da dare da lì, per esempio gli Echi con la build piena: il resto sono doni
     this.riempi(scelte, this.doni(), n);
+    // un'Unione pronta: la carta in più (Edoardo, 19/11)
+    const u = this.cartaUnione();
+    if (u) scelte.push(u);
     return scelte;
+  }
+
+  /** La prima Unione pronta (arma al livello 4, dono al massimo, non ancora unita), o null. */
+  unionePronta(): Unione | null {
+    if (this.senzaUnioni) return null;
+    return this.unioniPronte()[0] ?? null;
+  }
+
+  /** Le Unioni pronte, nell'ordine di UNIONI_STANZE (per il LAB e la scoperta). */
+  unioniPronte(): Unione[] {
+    return UNIONI_STANZE.filter((u) => {
+      const arma = this.armaUnione(u);
+      if (!arma || this.arsenale.unitaId(u.arma)) return false;
+      const l = arma === LANTERNA_STANZE ? this.livelloLanterna : this.arsenale.livello(arma);
+      return l >= LIVELLO_ARMA_UNIONE_STANZE && this.passivi[u.dono] >= livelloDonoUnione(u.dono);
+    });
+  }
+
+  /** L'arma di un'Unione, se è nella build (la Lanterna c'è sempre). */
+  armaUnione(u: Unione): Arma | undefined {
+    if (u.arma === LANTERNA_STANZE.id) return LANTERNA_STANZE;
+    return this.arsenale.possedute.find((p) => p.arma.id === u.arma)?.arma;
+  }
+
+  /** La carta della prima Unione pronta, o null. */
+  private cartaUnione(): Dono | null {
+    const u = this.unionePronta();
+    return u ? { tipo: 'unione', unione: u, arma: this.armaUnione(u)! } : null;
   }
 
   /**
@@ -197,6 +234,9 @@ export class Percorso {
     for (const aff of AFFINITA) tutte.push(...this.dallAffinita(aff));
     tutte.push(...this.doni());
     const scelte: Dono[] = [];
+    // un'Unione pronta prende il posto di una delle carte rare (19/11)
+    const u = this.cartaUnione();
+    if (u) scelte.push(u);
     this.riempi(scelte, tutte.filter((d) => T.gradi.includes(gradoCarta(d))), T.carte);
     this.riempi(scelte, tutte, T.carte);
     return scelte;
@@ -241,6 +281,8 @@ export class Percorso {
       else this.arsenale.potenzia(d.arma);
     } else if (d.tipo === 'passivo') {
       this.passivi[d.passivo.id] = d.livello;
+    } else if (d.tipo === 'unione') {
+      this.arsenale.unisci(d.arma); // anche la Lanterna: l'arsenale ricorda che è unita (si salva con la Veglia)
     }
     this.ripulita();
   }

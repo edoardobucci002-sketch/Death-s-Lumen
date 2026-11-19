@@ -14,6 +14,11 @@ import { nomeCampo, postoCampo, TAG } from '../data/glossario';
 import { CAMPI_ARMA, chiaro, DATI_DONI, gradoDevozione, INFO_AFFINITA, NOME_COLPI_IN_PIU, reazioneTra, SPIEGA_DONI, virgola } from '../data/spiegazioni';
 import { CARTA_STANZA, STRISCIA } from '../data/hud';
 import { BAGLIORE_ARDENTE, GRADI, type IdGrado } from '../data/rarita';
+import { CARTA_UNIONE } from '../data/unioni-stanze';
+
+/** L'aspetto di una carta delle stanze: il suo grado, o la carta Unione (19/11), con il nome in alto e i colori del bordo. */
+export type AspettoCarta = IdGrado | 'unione';
+export const aspettoCarta = (g: AspettoCarta): { nome: string; bordo: string; scelta: string } => (g === 'unione' ? CARTA_UNIONE : GRADI[g]);
 import { INTERRUTTORI } from './interruttori';
 import { arte, registraArte } from './arte';
 import { iconaAmuleto } from './amuleti';
@@ -227,14 +232,14 @@ const carteNove = new Map<string, string>();
  * La carta provvisoria (17/11): rettangolo scuro, cw × ch pixel disegnati, con il bordo del colore del grado (rarità,
  * src/data/rarita.ts); scelta = bordo più chiaro; bagliore = il bordo più spesso del lampo della carta Ardente.
  */
-export function cartaSemplice(cw: number, ch: number, scelta: boolean, grado: IdGrado = 'chiara', bagliore = false): string {
+export function cartaSemplice(cw: number, ch: number, scelta: boolean, grado: AspettoCarta = 'chiara', bagliore = false): string {
   const k = `semplice-${grado}${scelta ? '-scelta' : ''}${bagliore ? '-bagliore' : ''}@${cw}x${ch}`, pronta = carteNove.get(k);
   if (pronta) return pronta;
   const S = CARTA_STANZA.semplice, c = document.createElement('canvas');
   c.width = cw;
   c.height = ch;
   const g = c.getContext('2d')!, sp = S.spessore + (bagliore ? BAGLIORE_ARDENTE.spessore : 0);
-  g.fillStyle = scelta ? GRADI[grado].scelta : GRADI[grado].bordo;
+  g.fillStyle = scelta ? aspettoCarta(grado).scelta : aspettoCarta(grado).bordo;
   g.fillRect(0, 0, cw, ch);
   g.fillStyle = S.fondo;
   g.fillRect(sp, sp, cw - 2 * sp, ch - 2 * sp);

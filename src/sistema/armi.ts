@@ -16,6 +16,7 @@ import { ABILITA, type Abilita } from '../data/abilita';
 import { ACQUA_SANTA, COLPI, LAPIDE, MIRA, type Arma } from '../data/armi';
 import { NUMERI_UNIONI as U } from '../data/unioni';
 import { POTENZIALI } from '../data/armi-stanze';
+import { NUMERI_UNIONI_STANZE } from '../data/unioni-stanze';
 import { ROMPIBILI } from '../data/rompibili';
 import { RAGGIO_VELO } from './segnaposto-oggetti';
 import { NUBE, POZZA, CODICE_AFFINITA, ID_MIETITORE, MAX_EFFETTI, MAX_CORVI, PASSI_STORIA, SCIA, RACCOGLIE, F, type Posseduta } from './armi-colpo';
@@ -57,6 +58,11 @@ export class Arsenale extends ArsenaleVicine {
 
   unita(arma: Arma): boolean {
     return !!this.unite[arma.id];
+  }
+
+  /** L'arma con questo id è unita? (anche la Lanterna a mano del gioco a stanze, che non sta tra le possedute) */
+  unitaId(id: Arma['id']): boolean {
+    return !!this.unite[id];
   }
 
   potenzia(arma: Arma): void {
@@ -152,6 +158,11 @@ export class Arsenale extends ArsenaleVicine {
       }
       this.attesa[n] += this.spara(p) * this.bonus.ricarica;
       if (this.attesa[n] < 0) this.attesa[n] = 0;
+    }
+    // Fuochi erranti (gioco a stanze): le uccisioni dei fuochi accorciano la ricarica di tutti gli Echi
+    if (this.accorcia > 0) {
+      for (let n = 0; n < this.attesa.length; n++) this.attesa[n] = Math.max(0, this.attesa[n] - this.accorcia);
+      this.accorcia = 0;
     }
     this.aggiornaRitardati(dt);
     this.aggiornaRaffica(dt);
@@ -374,7 +385,7 @@ export class Arsenale extends ArsenaleVicine {
         // partono a raggiera e poi girano verso i nemici
         for (let k = 0; k < n; k++) {
           this.lancia(a.effetto, -1, a.velocita, a.vita, this.dannoColpo(l.danno, k, l.quantita), l.trapassa, a.raggio, a.sterzo, a.portata, false, (k / n) * Math.PI * 2, OMBRA);
-          if (this.unite.fuocoFatuo && this.proiettili) this.prUnione[this.proiettili - 1] = RACCOGLIE;
+          if (this.unite.fuocoFatuo && !this.unioniStanze && this.proiettili) this.prUnione[this.proiettili - 1] = RACCOGLIE; // nelle stanze: Fuochi erranti (uccisione)
         }
         return l.ricarica;
       }
@@ -416,7 +427,8 @@ export class Arsenale extends ArsenaleVicine {
         const o = this.orda;
         this.corvi = Math.min(l.quantita + piu, MAX_CORVI, this.scelti.length);
         // Stormo del lutto: per primi i nemici che con la Luce fanno una reazione (consacrati, maledetti, sepolti)
-        const stormo = !!this.unite.corvo;
+        // nelle stanze (19/11) lo Stormo del lutto è un altro: il nemico beccato, se muore entro poco, cura (uccisione)
+        const stormo = !!this.unite.corvo && !this.unioniStanze, lutto = !!this.unite.corvo && this.unioniStanze;
         for (let k = 0; k < this.corvi; k++) {
           const j = stormo ? this.piuVicinoCheReagisce(a.portata, k, LUCE) : this.piuVicino(a.portata, k);
           if (j < 0) break;
@@ -424,6 +436,7 @@ export class Arsenale extends ArsenaleVicine {
           this.cvMX[k] = o.x[j];
           this.cvMY[k] = o.y[j] - o.raggio[j];
           this.cvMira[k] = 0.18;
+          if (lutto) o.lutto[j] = NUMERI_UNIONI_STANZE.lutto.durata; // prima del colpo: se lo uccide la beccata stessa, cura
           this.ferisci(j, this.dannoColpo(l.danno, k, l.quantita), 0, 0, 0, LUCE);
           if (this.potenziale[F.corvo]) o.segnoCorvo[j] = POTENZIALI.corvo.durata; // potenziale: +danno subito per un po'
           this.rompibili?.colpitoDa(this.cvMX[k], this.cvMY[k], ROMPIBILI.raggio);

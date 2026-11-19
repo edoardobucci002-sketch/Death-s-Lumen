@@ -45,7 +45,8 @@ const num = (v: number): string => String(v).replace('.', ',');
 const N = NUMERI_UNIONI;
 
 export type IdUnione = 'faroDeiMorti' | 'vangaDelCustode' | 'incensiereUltimaOra' | 'vergaDeiNomi' | 'candelabroFunebre' | 'falceDelMietitore' | 'campanaAMorto' | 'fuochiErranti' | 'acquasantiera' | 'lamaDellAlba' | 'selciato'
-  | 'lapideInchiodata' | 'rosarioDeiVespri' | 'stormoDelLutto' | 'sudario';
+  | 'lapideInchiodata' | 'rosarioDeiVespri' | 'stormoDelLutto' | 'sudario'
+  | 'midolloSplendente'; // solo nel gioco a stanze (src/data/unioni-stanze.ts): il survivor non la offre
 
 export interface Unione { id: IdUnione; arma: IdArma; dono: IdDono; nome: string; testo: string }
 

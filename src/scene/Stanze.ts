@@ -29,6 +29,10 @@ import { ABILITA_STANZA, ATTACCO, COMBATTIMENTO_STANZA, GRAZIA_STANZA, IMPATTO, 
 import { Arsenale, type Bonus } from '../sistema/armi';
 import { CODICE_AFFINITA, F } from '../sistema/armi-colpo';
 import { FONTE } from '../sistema/nemici-stanza';
+import { NUMERI_UNIONI_STANZE } from '../data/unioni-stanze';
+import { NUMERI_UNIONI, iconaUnione, livelloDonoUnione, type IdUnione, type Unione } from '../data/unioni';
+import { LIVELLO_ARMA_UNIONE_STANZE, UNIONI_STANZE } from '../data/unioni-stanze';
+import { Rivelazione } from '../sistema/rivelazione';
 import { Percorso } from '../sistema/percorso';
 import { CANDELA_SPENTA, MURI, Porte, SIMBOLO_CANDELA, SIMBOLO_CHIAVE, davantiAlMuro, type Muro } from '../sistema/porte';
 import { CANDELA_ICONA, CHIAVE_DISEGNO, GOCCIA, telaDisegno } from '../sistema/oggetti';
@@ -49,6 +53,7 @@ import { NemiciStanza } from '../sistema/nemici-stanza';
 import { BarraSalute } from '../sistema/barra-salute';
 import { POTENZIALI } from '../data/armi-stanze';
 import { vibra } from '../sistema/mobile';
+import { carica, salva } from '../sistema/salvataggio';
 import { Caso } from '../sistema/caso';
 import { Comandi } from '../sistema/comandi';
 import { Effetti, PROFONDITA } from '../sistema/effetti';
@@ -85,7 +90,7 @@ export const STANZE_DISPONIBILI = import.meta.env.VITE_CANALE === 'prova' || imp
 const CAMPI_VEGLIA = ['salute', 'saluteMassima', 'extra', 'grazia', 'inQuiete', 'rallentatore', 'fermoColpo', 'lampoFerita', 'feritaAnim',
   'quiete', 'statGrazia', 'guardaX', 'guardaY', 'versoSinistra', 'inMoto', 'orologio', 'schivatePerfette', 'ferite', 'ondate', 'giriCarte',
   'attesaTremolio', 'fiamma', 'casoLuce', 'scrittaVita', 'avvisoVita', 'attesaCapo', 'durataPassaggio', 'portaScelta', 'velocita',
-  'rigenerazione', 'scudo', 'dannoLanterna', 'x', 'y'] as const;
+  'rigenerazione', 'scudo', 'dannoLanterna', 'x', 'y', 'graziaDa'] as const;
 
 export class Stanze extends Phaser.Scene {
   pg!: Personaggio;
@@ -144,6 +149,10 @@ export class Stanze extends Phaser.Scene {
   immortale = false; // LAB
   morto = false;
   grazia = 0; // secondi di Grazia rimasti
+  graziaDa = 0; // secondi dall'inizio della Grazia in corso (Sudario: la tiene fino a NUMERI_UNIONI.sudario.fino in tutto)
+  private sudarioTiene = false;
+  private rivelazione!: Rivelazione; // l'animazione della scoperta di un'Unione (la stessa del survivor)
+  private unioniScoperte = new Set<IdUnione>(); // Unioni delle stanze già scoperte su questo dispositivo
   schivatePerfette = 0; // in questa stanza (per il LAB e le prove)
   ferite = 0; // colpi subiti (per il LAB e le prove)
   ondate = 0; // ondate comparse
@@ -283,10 +292,15 @@ export class Stanze extends Phaser.Scene {
     this.arsenale.interrompi = (j) => this.nemici.interrompi(j);
     this.arsenale.inAvviso = (j) => this.nemici.inAvviso(j);
     this.arsenale.campo = { x0: STANZA.muroLati, y0: STANZA.muroAlto, x1: 0, y1: 0 };
+    // le Unioni delle stanze (19/11): Fuochi erranti e Stormo del lutto hanno l'effetto delle stanze; i capi non muoiono all'istante
+    this.arsenale.unioniStanze = true;
+    this.arsenale.eCapo = (j) => this.nemici.eCapo(j);
     this.campoArmi();
     this.nemici.muri = this.arsenale.muri;
     this.nemici.statoArma = (j) => this.arsenale.statoDaFuori(j, CODICE_AFFINITA.luce, F.abilita);
-    this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce, fonte === FONTE.lanterna ? F.lanterna : F.abilita);
+    // Midollo Splendente: il cieco che ferisce un altro conta come Abbacinio
+    this.nemici.colpoArma = (j, danno, dx, dy, fonte) => this.arsenale.colpoDaFuori(j, danno, dx, dy, CODICE_AFFINITA.luce,
+      fonte === FONTE.lanterna ? F.lanterna : fonte === FONTE.midollo ? F.lamaDiLuce : F.abilita);
     this.percorso = new Percorso(this.arsenale, this.mappa, this.seme);
     this.percorso.entra(this.mappa.ingresso);
     // ?potenziale=candela (per le simulazioni): la partita parte con quell'Eco già al livello 5
@@ -294,6 +308,20 @@ export class Stanze extends Phaser.Scene {
     if (eco) {
       this.arsenale.aggiungi(eco);
       while (this.arsenale.livello(eco) < eco.livelli.length) this.arsenale.potenzia(eco);
+    }
+    // ?unione=faroDeiMorti (per le simulazioni, 19/11): la partita parte con l'arma al livello 4 e il dono al massimo, già
+    // unita; con &unita=0 la stessa build senza l'Unione (per confrontare)
+    const un = UNIONI_STANZE.find((u) => u.id === parametri.get('unione'));
+    if (un) {
+      if (un.arma === LANTERNA_STANZE.id) this.percorso.livelloLanterna = LIVELLO_ARMA_UNIONE_STANZE;
+      else {
+        const a = ECHI_STANZE.find((x) => x.id === un.arma)!;
+        this.arsenale.aggiungi(a);
+        while (this.arsenale.livello(a) < LIVELLO_ARMA_UNIONE_STANZE) this.arsenale.potenzia(a);
+      }
+      this.percorso.passivi[un.dono] = livelloDonoUnione(un.dono);
+      if (parametri.get('unita') !== '0') this.arsenale.unisci(this.percorso.armaUnione(un)!);
+      else this.percorso.senzaUnioni = true;
     }
     this.porte = new Porte(this);
     // l'oggetto di tesoro e Sosta (segnaposto: il simbolo del medaglione, ingrandito 3 volte)
@@ -315,6 +343,10 @@ export class Stanze extends Phaser.Scene {
       arte: { base: ARTE_JOYSTICK.movimentoBase, pomello: ARTE_JOYSTICK.movimentoPomello },
     });
     this.creaInterfaccia(interfaccia);
+    this.rivelazione = new Rivelazione(interfaccia, () => {
+      if (!this.fermo()) this.anims.resumeAll();
+    });
+    this.unioniScoperte = new Set(carica().unioniStanzeScoperte);
     this.rompibili = new RompibiliStanza(this, this.nemici.orda, this.arsenale, interfaccia, this.seme, this.effetti, () => this.cambiaLuce());
     this.rompibili.nuovaStanza(this.semeStanza(this.mappa.ingresso + 1), 0, null); // l'ingresso è vuoto
     this.nemici.ostacoli = this.rompibili;
@@ -461,7 +493,7 @@ export class Stanze extends Phaser.Scene {
     this.arsenale.intervalloDaFuori(F.abilita, ABILITA_STANZA.colpo.danno, ABILITA_STANZA.colpo.dannoMassimo); // il colpo del Cerchio di luce
     this.attacco.ricarica = liv.ricarica * b.ricarica;
     this.attacco.raggio = liv.raggio * (1 + area);
-    this.attacco.ampiezza = liv.ampiezza;
+    this.attacco.ampiezza = liv.ampiezza * (this.arsenale.unitaId(LANTERNA_STANZE.id) ? 1 + NUMERI_UNIONI_STANZE.faro.arco : 1); // Faro dei morti
     this.attacco.spalle = liv.spalle;
     // la mossa dura quanto l'animazione attack, se lo sprite ce l'ha; il colpo ferisce quando l'asta cala
     const mossa = this.durataMossa;
@@ -505,6 +537,7 @@ export class Stanze extends Phaser.Scene {
 
   /** Schivata perfetta: parte la Grazia (più danno e più velocità per qualche secondo; una nuova non accorcia quella in corso). */
   iniziaGrazia(): void {
+    if (this.grazia <= 0) this.graziaDa = 0;
     this.grazia = Math.max(this.grazia, this.statGrazia.durata);
     this.rallentatore = GRAZIA_STANZA.rallentatore.durata; // un attimo al rallentatore: si sente che è riuscita
     this.scrittaVita = COMBATTIMENTO_STANZA.scritta.durata;
@@ -521,7 +554,7 @@ export class Stanze extends Phaser.Scene {
 
   /** Il gioco è fermo: pausa, Laboratorio aperto, telefono da ruotare, Lampionaio caduto, carte aperte, passaggio, fine. */
   fermo(): boolean {
-    return this.pausa || this.pausaLab || this.ruota || this.morto || this.doni?.aperta || this.passaggio > 0 || this.finita;
+    return this.pausa || this.pausaLab || this.ruota || this.morto || this.doni?.aperta || this.passaggio > 0 || this.finita || !!this.rivelazione?.attiva;
   }
 
   /** Tasto Indietro: apre la pausa e basta (dentro la pausa non fa niente: si riprende solo dal pulsante); dalla fine torna al menu. */
@@ -534,6 +567,7 @@ export class Stanze extends Phaser.Scene {
   apriPausa(): void {
     if (this.pausa || this.morto || this.finita) return;
     this.pausa = true;
+    this.rivelazione.salta();
     this.doni.sospesa = true;
     this.rompibili.nascondiMosaico();
     this.comandi.lascia();
@@ -559,7 +593,19 @@ export class Stanze extends Phaser.Scene {
       this.fiamma = this.casoLuce.intero(0, CHIAVI_BUIO.length - 1);
     }
     this.orologio += dt;
-    if (this.grazia > 0) this.grazia -= dt;
+    if (this.grazia > 0) {
+      // Sudario (Velo funebre unito): con un nemico dentro il velo la Grazia non scade, fino a NUMERI_UNIONI.sudario.fino s in tutto
+      this.graziaDa += dt;
+      const tiene = this.graziaDa + this.grazia < NUMERI_UNIONI.sudario.fino && this.arsenale.sudario();
+      if (tiene !== this.sudarioTiene) {
+        this.sudarioTiene = tiene;
+        this.arsenale.tingiVelo(tiene);
+      }
+      if (!tiene) this.grazia -= dt;
+    } else if (this.sudarioTiene) {
+      this.sudarioTiene = false;
+      this.arsenale.tingiVelo(false);
+    }
     if (this.inQuiete > 0) this.inQuiete -= dt;
     if (this.lampoFerita > 0) this.lampoFerita -= dt;
     if (this.feritaAnim > 0) this.feritaAnim -= dt;
@@ -620,6 +666,18 @@ export class Stanze extends Phaser.Scene {
     // le zone che curano (Acqua santa al potenziale): dentro una pozza si recupera salute
     const cura = this.arsenale.cura(this.saluteMassima);
     if (cura > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + cura * dt);
+    // Stormo del lutto: i nemici beccati che sono morti entro poco curano
+    if (this.arsenale.curaLutto > 0) {
+      if (!this.morto) this.salute = Math.min(this.saluteMassima, this.salute + this.arsenale.curaLutto);
+      this.sim.curaLutto(this.arsenale.curaLutto);
+      this.arsenale.curaLutto = 0;
+    }
+    // Acquasantiera: i sorsi guadagnati con le uccisioni nelle pozze (a fiaschetta piena il sorso diventa una pozza che cura)
+    this.arsenale.fiaschettaPiena = this.fiaschetta.sorsi >= this.fiaschetta.massimo;
+    if (this.arsenale.sorsiGuadagnati > 0) {
+      this.fiaschetta.sorsi = Math.min(this.fiaschetta.massimo, this.fiaschetta.sorsi + this.arsenale.sorsiGuadagnati);
+      this.arsenale.sorsiGuadagnati = 0;
+    }
     // la fiaschetta automatica: sotto la soglia si beve da sola, e il sorso cura una parte della salute massima in un secondo
     const sorso = this.fiaschetta.aggiorna(dt, this.salute, this.saluteMassima, !this.morto);
     if (sorso > 0 && !this.morto) this.salute = Math.min(this.saluteMassima, this.salute + sorso * this.saluteMassima);
@@ -629,6 +687,7 @@ export class Stanze extends Phaser.Scene {
       this.arsenale.rubato = 0;
     }
     this.nemici.lama = this.arsenale.lama(); // la Lama di luce accieca chi schivi
+    this.nemici.midollo = this.arsenale.unitaId('lamaDiLuce'); // Midollo Splendente: i ciechi si colpiscono tra loro
     const danno = this.nemici.aggiorna(dt, this.x, this.y, mezzaL, mezzaA);
     if (danno > 0) this.ferisci(danno);
     if (this.nemici.schivate > 0) {
@@ -801,11 +860,49 @@ export class Stanze extends Phaser.Scene {
       return;
     }
     if (!chiave && this.percorso.chiave) this.avvisa('La porta del capo è aperta'); // il Campanaro battuto: la chiave
+    else if (d?.tipo === 'unione') this.avvisa(d.unione.nome);
     this.mostraOggetto(); // il forziere del tesoro, aperto
     this.ricalcola();
     this.effetti.preparaFendente(this.attacco.raggio, this.attacco.ampiezza); // la carta può aver cambiato la Lanterna
     this.mostraPorte();
     suona('campana');
+    this.scopriUnioni();
+  }
+
+  /**
+   * Un'Unione si scopre quando arma e dono arrivano ai livelli che servono (19/11, come nel survivor): la prima volta su
+   * questo dispositivo parte l'animazione della scoperta, che resta finché non si tocca; la carta arriva alla stanza dopo.
+   */
+  scopriUnioni(): void {
+    if (this.bot) return;
+    const nuove = this.percorso.unioniPronte().filter((u) => !this.unioniScoperte.has(u.id));
+    if (!nuove.length) return;
+    for (const u of nuove) this.unioniScoperte.add(u.id);
+    if (!this.immortale) {
+      const s = carica();
+      s.unioniStanzeScoperte = [...this.unioniScoperte];
+      salva(s);
+    }
+    this.anims.pauseAll();
+    this.comandi.lascia();
+    this.attacco.lascia();
+    suona('reliquiario');
+    vibra('media');
+    for (const u of nuove) this.mostraScoperta(u);
+  }
+
+  /** LAB: le Unioni tornano da scoprire (l'animazione ricompare). */
+  dimenticaScoperte(): void {
+    this.unioniScoperte.clear();
+  }
+
+  /** L'animazione della scoperta di un'Unione (anche dal LAB). */
+  mostraScoperta(u: Unione): void {
+    const arma = this.percorso.armaUnione(u) ?? ECHI_STANZE.find((a) => a.id === u.arma) ?? LANTERNA_STANZE, dono = DONO[u.dono];
+    this.rivelazione.mostra({
+      nome: u.nome, ricetta: `${arma.nome} ${LIVELLO_ARMA_UNIONE_STANZE} + ${dono.nome} ${livelloDonoUnione(u.dono)}`,
+      arma: arma.icona, dono: dono.icona, unione: iconaUnione(u.id),
+    });
   }
 
   /**
@@ -937,6 +1034,7 @@ export class Stanze extends Phaser.Scene {
     ripristina(this, S.scena);
     ripristina(this.percorso, S.percorso);
     ripristina(this.arsenale, S.arsenale);
+    for (const p of this.arsenale.possedute) p.unita = this.arsenale.unita(p.arma); // le Unioni (19/11): si salvano in arsenale.unite
     ripristina(this.nemici, S.nemici);
     ripristina(this.nemici.orda, S.orda);
     ripristina(this.rompibili, S.rompibili);

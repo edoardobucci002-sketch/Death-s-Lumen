@@ -153,6 +153,7 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .doni-riga.reazione { color: #ffe08a; }
 .doni-simbolo { position: static; display: inline-block; vertical-align: text-bottom; margin-right: 0.25em; }
 .doni-segno { position: absolute; display: flex; justify-content: center; align-items: center; font-family: var(--f-pixel); color: var(--accento); line-height: 1; }
+.doni-piu { position: absolute; display: flex; justify-content: center; font-family: var(--f-pixel); } /* il «+» della carta Unione delle stanze (colore dal codice) */
 .doni-rimaste { margin: 0; color: var(--tenue); }
 .doni-tasto { position: absolute; font-family: var(--f-pixel); color: var(--tenue); line-height: 1; }
 @media (hover: none) { .doni-tasto { display: none; } }

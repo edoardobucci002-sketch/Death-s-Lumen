@@ -12,7 +12,8 @@
  * guardarla, generarne un'altra, controllare le regole su mille semi. Passo 2: andare in una stanza qualsiasi (il Campanaro,
  * il Boss), attraversare la porta di un muro, bloccare le porte per provare i muri. Passo 3 (18/11): dare o togliere la
  * chiave del Campanaro, che apre la porta del Boss. Passo 4 (18/11): spostare la minimappa a sinistra o a destra,
- * visitare tutte le stanze per vederla piena. Tesoro e Sosta (18/11): andarci, usare l'oggetto.
+ * visitare tutte le stanze per vederla piena. Tesoro e Sosta (18/11): andarci, usare l'oggetto. Unioni (19/11): rendere
+ * pronta un'Unione (arma al 4 e dono al massimo: la carta esce alla stanza ripulita), unirla subito, rivedere la scoperta.
  */
 import { Ombre } from './ombre';
 import { cancellaVeglia, caricaVeglia } from './veglia-salvata';
@@ -33,6 +34,9 @@ import { FIASCHETTA } from '../data/sopravvivenza';
 import { ID_CAMPANARO, ID_SETH } from './orda';
 import { CANDELE_LAB, controllaMappa, generaMappa, type Mappa } from './mappa';
 import { MAPPA, MINIMAPPA } from '../data/mappa';
+import { LIVELLO_ARMA_UNIONE_STANZE, UNIONI_STANZE } from '../data/unioni-stanze';
+import { livelloDonoUnione } from '../data/unioni';
+import { carica, salva } from './salvataggio';
 
 export type AttaccoCapo = 'rintocco' | 'carica' | 'chiamata';
 export type AttaccoSeth = 'falciata' | 'falci' | 'passo';
@@ -355,12 +359,72 @@ export class LabStanze {
     while (this.s.arsenale.livello(a) < a.livelli.length) this.s.arsenale.potenzia(a);
   }
 
+  /** Le Unioni delle stanze e a che punto sono: unita, pronta (la carta esce alla prossima stanza ripulita) o manca. */
+  unioni(): { id: string; nome: string; stato: 'unita' | 'pronta' | 'manca' }[] {
+    const s = this.s, pronte = s.percorso.unioniPronte();
+    return UNIONI_STANZE.map((u) => ({ id: u.id, nome: u.nome, stato: s.arsenale.unitaId(u.arma) ? 'unita' : pronte.includes(u) ? 'pronta' : 'manca' }));
+  }
+
+  /**
+   * Rende pronta l'Unione: l'arma al livello 4 (l'Eco entra nella build se non c'è, anche oltre i 3; la Lanterna sale) e il
+   * dono al massimo. Parte la scoperta (se non è già stata vista) e la carta esce alla prossima stanza ripulita.
+   */
+  preparaUnione(id: string): void {
+    const s = this.s, u = UNIONI_STANZE.find((x) => x.id === id);
+    if (!u) return;
+    if (u.arma === LANTERNA_STANZE.id) {
+      s.percorso.livelloLanterna = Math.max(s.percorso.livelloLanterna, LIVELLO_ARMA_UNIONE_STANZE);
+      this.intervalloSubito();
+    } else {
+      const a = ECHI_STANZE.find((x) => x.id === u.arma)!;
+      if (!s.arsenale.livello(a)) s.arsenale.aggiungi(a);
+      while (s.arsenale.livello(a) < LIVELLO_ARMA_UNIONE_STANZE) s.arsenale.potenzia(a);
+    }
+    s.percorso.passivi[u.dono] = Math.max(s.percorso.passivi[u.dono], livelloDonoUnione(u.dono));
+    s.scopriUnioni();
+  }
+
+  /** L'Unione subito: la rende pronta e unisce l'arma, senza passare dalla carta. */
+  unisciSubito(id: string): void {
+    const s = this.s, u = UNIONI_STANZE.find((x) => x.id === id);
+    if (!u) return;
+    this.preparaUnione(id);
+    const arma = s.percorso.armaUnione(u);
+    if (arma) s.arsenale.unisci(arma);
+  }
+
+  /** Rivede l'animazione della scoperta dell'Unione (senza cambiare la build). */
+  scoperta(id: string): void {
+    const u = UNIONI_STANZE.find((x) => x.id === id);
+    if (u) this.s.mostraScoperta(u);
+  }
+
+  /** Dimentica le Unioni scoperte su questo dispositivo: la scoperta torna a comparire la prima volta. */
+  dimenticaScoperte(): void {
+    const sv = carica();
+    sv.unioniStanzeScoperte = [];
+    salva(sv);
+    this.s.dimenticaScoperte();
+  }
+
   /** Acceca il nemico più vicino (come dopo una schivata perfetta con la Lama di luce); restituisce se ce n'era uno. */
   accecaVicino(): boolean {
     const n = this.s.nemici, j = n.vicino(this.s.x, this.s.y, 4000);
     if (j < 0) return false;
     n.accecaPerProva(j);
     return true;
+  }
+
+  /** Acceca tutti i nemici in campo (per provare Midollo Splendente: i ciechi si colpiscono tra loro). */
+  accecaTutti(): void {
+    const n = this.s.nemici;
+    for (let j = 0; j < n.orda.numero; j++) n.accecaPerProva(j);
+  }
+
+  /** Quante volte hanno agito gli effetti delle Unioni nuove: lampi del Faro, uccisioni dei Fuochi, lutti dello Stormo, danno dei ciechi. */
+  effettiUnioni(): { lampi: number; fuochi: number; lutti: number; midollo: number } {
+    const a = this.s.arsenale;
+    return { lampi: a.lampiFaro, fuochi: a.uccisiFuochi, lutti: a.lutti, midollo: Math.round(a.dannoFonti[F.lamaDiLuce]) };
   }
 
   /** Quanti nemici ha accecato la Lama di luce. */

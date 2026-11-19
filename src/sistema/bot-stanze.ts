@@ -182,12 +182,14 @@ export class BotStanze {
 
   /** Sceglie una delle carte: con le preferenze, o a caso nel modo «esplora». */
   scegliCarta(carte: Dono[], lanterna: Arma['id']): Dono {
+    const unione = carte.find((d) => d.tipo === 'unione');
+    if (unione) return unione; // l'Unione sempre, anche esplorando (B.carte.unione)
     if (this.esplora) return carte[this.esplora.intero(0, carte.length - 1)];
     let migliore = carte[0], valore = -Infinity;
     for (const d of carte) {
       const v = d.tipo === 'arma'
         ? d.arma.id === lanterna ? B.carte.lanterna : d.livello === 1 ? B.carte.ecoNuovo : B.carte.livelloEco
-        : d.tipo === 'passivo' ? (d.livello === 1 ? B.carte.donoNuovo : B.carte.livelloDono) : 0;
+        : d.tipo === 'passivo' ? (d.livello === 1 ? B.carte.donoNuovo : B.carte.livelloDono) : d.tipo === 'unione' ? B.carte.unione : 0;
       if (v > valore) {
         valore = v;
         migliore = d;

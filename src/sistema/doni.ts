@@ -19,10 +19,10 @@ import { ARMI_COMUNI, MAX_ARMI, type Arma } from '../data/armi';
 import { MAX_PASSIVI, PASSIVI, type IdDono, type Passivo } from '../data/doni';
 import type { Amuleto } from '../data/rosario';
 import type { IdUnione, Unione } from '../data/unioni';
-import { cartaSemplice, creaCarteStanza, creaStrisce, interniCarta, schedaDono, type Riga } from './scheda';
+import { aspettoCarta, cartaSemplice, creaCarteStanza, creaStrisce, interniCarta, schedaDono, type AspettoCarta, type Riga } from './scheda';
 import { AFFINITA_ARMI, type IdAffinita } from '../data/stati';
 import { NUMERI_VOTI } from '../data/voti';
-import { BAGLIORE_ARDENTE, GRADI, gradoDi, type IdGrado } from '../data/rarita';
+import { BAGLIORE_ARDENTE, gradoDi, type IdGrado } from '../data/rarita';
 
 export type Dono =
   | { tipo: 'arma'; arma: Arma; livello: number }
@@ -245,9 +245,9 @@ export class Doni {
     const sc = schedaDono(d, { armi: this.arsenale.possedute.map((p) => p.arma), graniUsati: r.usati, graniTotali: r.totale, doni: this.passivi, unioni: r.unioni, scoperte: r.scoperte, metaRaccolta: r.metaRaccolta, numeriArma: this.numeriArma });
     const b = document.createElement('button');
     b.type = 'button';
-    const grado = gradoCarta(d);
-    b.className = `doni-carta ${sc.categoria}${this.verticali ? ` grado-${grado}` : ''}`;
-    if (this.verticali) b.dataset.grado = grado;
+    const grado = gradoCarta(d), aspetto: AspettoCarta = d.tipo === 'unione' ? 'unione' : grado; // la carta Unione ha il suo aspetto (19/11)
+    b.className = `doni-carta ${sc.categoria}${this.verticali ? ` grado-${aspetto}` : ''}`;
+    if (this.verticali) b.dataset.grado = aspetto;
     const pezzo = (tag: string, classe: string, testo = ''): HTMLElement => {
       const e = document.createElement(tag);
       e.className = classe;
@@ -266,18 +266,23 @@ export class Doni {
     righe.append(...sc.righe.map((x) => this.riga(x)));
     const fondo = this.verticali ? 'Carta_Stanza' : 'Striscia_Dono';
     b.append(immagine(fondo, 'doni-fondo'), immagine(`${fondo}_Scelta`, 'doni-scelta'));
-    if (this.verticali && grado === 'ardente') {
+    if (this.verticali && aspetto === 'ardente') {
       const bg = immagine(fondo, 'doni-bagliore');
       bg.style.animationDuration = `${BAGLIORE_ARDENTE.periodo}s`;
       b.append(bg);
     }
-    if (sc.icona && arte(sc.icona)) b.append(immagine(sc.icona, 'doni-icona'));
+    const dono = d.tipo === 'unione' ? PASSIVI.find((q) => q.id === d.unione.dono) : undefined;
+    if (this.verticali && d.tipo === 'unione' && dono && arte(d.arma.icona) && arte(dono.icona)) {
+      // la carta Unione delle stanze: l'icona dell'arma e quella del dono, affiancate con un «+» in mezzo (19/11)
+      b.append(immagine(d.arma.icona, 'doni-icona doni-icona-arma'), immagine(dono.icona, 'doni-icona doni-icona-dono'), pezzo('span', 'doni-piu', '+'));
+      (b.lastElementChild as HTMLElement).style.color = aspettoCarta('unione').bordo;
+    } else if (sc.icona && arte(sc.icona)) b.append(immagine(sc.icona, 'doni-icona'));
     else b.append(pezzo('span', 'doni-segno', '+'));
     b.append(titolo, pezzo('span', 'doni-tag', sc.tag), dati, righe, pezzo('span', 'doni-tasto', String(n + 1)));
     if (this.verticali) {
       const g = pezzo('span', 'doni-grado');
-      g.style.color = GRADI[grado].bordo;
-      scritta(g, GRADI[grado].nome);
+      g.style.color = aspettoCarta(aspetto).bordo;
+      scritta(g, aspettoCarta(aspetto).nome);
       b.append(g);
     }
     b.addEventListener('click', () => this.chiudi(d));
@@ -407,7 +412,7 @@ export class Doni {
     const ri = interniCarta(cw, ch);
     // carta provvisoria del 17/11 (cartaNove resta per la carta disegnata), con il bordo del colore del grado
     const fondo = (el: HTMLElement, classe: string): string => {
-      const g = (el.dataset.grado ?? 'fioca') as IdGrado;
+      const g = (el.dataset.grado ?? 'fioca') as AspettoCarta;
       return classe === 'doni-scelta' ? cartaSemplice(cw, ch, true, g) : cartaSemplice(cw, ch, false, g, classe === 'doni-bagliore');
     };
     const kTitoli = Math.min(...carte.map((el) => scalaScritta((el.querySelector('.doni-titolo') as HTMLElement).dataset.testo ?? '', ri.titolo, zz, zz) || zz));
@@ -425,8 +430,22 @@ export class Doni {
         misura(se, ri.icona.l, ri.icona.a, zz, m);
         se.style.fontSize = `${TESTI.strisciaDato * 3 * zz * px}px`;
       }
+      // la carta Unione: le due icone da 24 pixel a grandezza 1, ai lati del pozzetto, e il «+» in mezzo
+      const ia = el.querySelector<HTMLElement>('.doni-icona-arma'), id = el.querySelector<HTMLElement>('.doni-icona-dono');
+      if (ia && id) {
+        const cy = ri.icona.y + ri.icona.a / 2 - 12, cx = ri.icona.x + ri.icona.l / 2;
+        posa(ia, (cx - 30) * zz, cy * zz, m);
+        posa(id, (cx + 6) * zz, cy * zz, m);
+        misura(ia, 24, 24, zz, m);
+        misura(id, 24, 24, zz, m);
+        const piu = el.querySelector<HTMLElement>('.doni-piu')!;
+        posa(piu, (cx - 6) * zz, cy * zz, m);
+        misura(piu, 12, 24, zz, m);
+        piu.style.fontSize = `${TESTI.strisciaDato * 2 * zz * px}px`;
+        piu.style.lineHeight = `${24 * zz * px}px`;
+      }
       // l'icona da 24 pixel ingrandita 2 volte, al centro del pozzetto
-      const ic = el.querySelector<HTMLElement>('.doni-icona');
+      const ic = ia ? null : el.querySelector<HTMLElement>('.doni-icona');
       if (ic) {
         posa(ic, (ri.icona.x + ri.icona.l / 2 - 24) * zz, (ri.icona.y + ri.icona.a / 2 - 24) * zz, m);
         misura(ic, 48, 48, zz, m);

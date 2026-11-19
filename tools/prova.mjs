@@ -1638,6 +1638,75 @@ for (const [nome, disp] of [
   console.log(`${errori.length ? '✗' : '✓'} Lama di luce: acceca dal LAB (${n} accecati)${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
 }
 
+// Unioni delle stanze (19/11): la scoperta, la carta Unione dopo la stanza ripulita, e gli effetti delle quattro adattate
+{
+  const errori = [];
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const pag = await ctx.newPage();
+  pag.on('pageerror', (e) => errori.push(e.message));
+  await pag.goto(`${url}?stanze`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non parte'));
+  const L = (f, ...a) => pag.evaluate(([f, a]) => window.__dl.scene.getScene('Stanze').lab[f](...a), [f, a]);
+  // chiude le animazioni della scoperta in coda (restano finché non si tocca)
+  const chiudiScoperte = async () => {
+    for (let k = 0; k < 8; k++) {
+      await pag.waitForTimeout(1800);
+      if (!(await pag.$('.rivelazione:not([hidden])'))) return;
+      await pag.click('.rivelazione');
+    }
+  };
+  await L('ondateAutomatiche', false);
+  await L('svuota');
+  await L('immortale', true);
+  await L('preparaUnione', 'campanaAMorto');
+  if (!(await pag.$('.rivelazione:not([hidden])'))) errori.push('la scoperta dell\'Unione non parte');
+  await chiudiScoperte();
+  // in una stanza da combattere (l'ingresso non ha carte): la si ripulisce subito
+  const m = await L('mappa');
+  await L('vaiAllaStanza', m.stanze.findIndex((st) => st.tipo === 'combattimento'));
+  await L('ripulisci');
+  await pag.waitForSelector('.doni-carta.grado-unione', { timeout: 5000 }).catch(() => errori.push('la carta Unione non compare'));
+  await pag.waitForTimeout(1200); // le carte compaiono a pop
+  await pag.screenshot({ path: 'prove/stanze-unione.png' });
+  await pag.click('.doni-carta.grado-unione').catch(() => {});
+  await pag.waitForTimeout(300);
+  if ((await L('unioni')).find((u) => u.id === 'campanaAMorto')?.stato !== 'unita') errori.push('scelta la carta, la Campana non è unita');
+  // tre delle adattate con il bot che gioca (Midollo Splendente a parte, qui sotto)
+  for (const id of ['faroDeiMorti', 'fuochiErranti', 'stormoDelLutto']) await L('unisciSubito', id);
+  await chiudiScoperte();
+  await L('bloccaPorte', true);
+  await L('bot', true);
+  for (let k = 0; k < 14; k++) {
+    if (k % 4 === 0) await L('ondata');
+    await pag.waitForTimeout(1000);
+  }
+  // Midollo Splendente: personaggio fermo al centro, cinque Ricaduti stretti davanti a lui, accecati di continuo; i graffi che
+  // sbagliano la mira devono ferire i vicini
+  const e3 = await L('effettiUnioni'); // in una pagina nuova: gli altri Echi (la Campana ferma i nemici) non devono disturbare
+  await pag.goto(`${url}?stanze`);
+  await pag.waitForFunction(() => window.__dl?.scene?.isActive('Stanze'), null, { timeout: 15000 }).catch(() => errori.push('la scena Stanze non riparte'));
+  await L('ondateAutomatiche', false);
+  await L('svuota');
+  await L('immortale', true);
+  await L('unisciSubito', 'midolloSplendente');
+  await chiudiScoperte();
+  await L('vai', 'centro');
+  const c = await L('stato');
+  for (const [dx, dy] of [[60, 0], [60, 36], [60, -36], [96, 18], [96, -18]]) await L('nemicoIn', 'ricaduto', c.x + dx, c.y + dy);
+  for (let k = 0; k < 10; k++) {
+    await pag.waitForTimeout(800);
+    await L('accecaTutti');
+  }
+  const e = { ...e3, midollo: (await L('effettiUnioni')).midollo };
+  if (!e.lampi) errori.push('il Faro dei morti non fa lampi');
+  if (!e.fuochi) errori.push('i Fuochi erranti non contano le uccisioni');
+  if (!e.lutti) errori.push('lo Stormo del lutto non cura');
+  if (!e.midollo) errori.push('i ciechi non si colpiscono tra loro (Midollo Splendente)');
+  await ctx.close();
+  if (errori.length) falliti++;
+  console.log(`${errori.length ? '✗' : '✓'} Unioni delle stanze: scoperta, carta Unione scelta, ${e.lampi} lampi del Faro, ${e.fuochi} uccisioni dei Fuochi, ${e.lutti} lutti, ${e.midollo} danno dei ciechi${errori.length ? '\n   errori: ' + errori.join(' | ') : ''}`);
+}
+
 // Salute in più della Falce (17/11): sta in cima alla salute, assorbe i colpi per prima e non scende sotto zero
 {
   const errori = [];
