@@ -150,6 +150,8 @@ L'ordine **dopo i Patti** era una proposta di Claude (superata dal pivot).
 
 ## Idee non ancora decise
 
+- **Uscire a metà combattimento come meccanica** (idea di Edoardo del 19/11): oggi, uscendo a metà stanza e riprendendo la Veglia, si riparte dall'ingresso con la salute di allora. Edoardo pensa che possa diventare una meccanica da esplorare (per esempio con un costo o un limite). Da decidere se e come.
+
 - Suoni e musica originali al posto di quelli sintetizzati.
 - Lingua del gioco: solo italiano, oppure anche inglese (il titolo è in inglese).
 - Nemici con uno stile grafico diverso da quello dei personaggi.
