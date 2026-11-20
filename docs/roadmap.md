@@ -167,6 +167,10 @@ L'ordine **dopo i Patti** era una proposta di Claude (superata dal pivot).
 - Il CSS usa ancora IM Fell English SC per alcuni titoli (`--f-titolo`: avviso, titolo della scelta dei doni, pannelli, nastri); i titoli decisi sono in Tiny5.
 - Disegnare gli asset elencati in [asset_da_creare.md](asset_da_creare.md).
 
+## Wiki dei contenuti (20/11)
+
+Fatta: `wiki/`, da aprire con Obsidian. Una scheda per ogni elemento del gioco a stanze (93 oggi) con lo sprite animato in cima, i numeri, le parole chiave collegate e lo stato del disegno (vero, segnaposto o mancante); la pagina «Sprite da fare» raccoglie i disegni che mancano; la vista a grafo colora le cartelle. Le schede le genera `tools/wiki.mjs` dai dati (`npm run wiki`, anche dentro `npm run build`); le note di Edoardo vanno in `wiki/Appunti/`. I Voti non hanno schede proprie, perché non sono ancora nel gioco a stanze: sono citati nelle schede dei personaggi.
+
 ## Mosaici e Vetrate
 
 Soggetti approvati da Edoardo il 7/11, per il mondo del cimitero, dal meno importante alle rivelazioni. ~~Si sbloccano solo dopo la prima alba vinta.~~ **Nel gioco a stanze (19/11)**: ritoccati per la cripta del Mondo 1 (soggetti nuovi nel GDD, «Mosaici e Vetrate»), frammenti dopo la prima caduta, ognuno sblocca un dono; nel survivor restano come sono.
