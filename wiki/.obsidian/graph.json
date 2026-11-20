@@ -1,0 +1,118 @@
+{
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": true,
+  "showOrphans": true,
+  "showArrow": false,
+  "colorGroups": [
+    {
+      "query": "path:\"Personaggi\"",
+      "color": {
+        "a": 1,
+        "rgb": 14913850
+      }
+    },
+    {
+      "query": "path:\"Echi\"",
+      "color": {
+        "a": 1,
+        "rgb": 15721416
+      }
+    },
+    {
+      "query": "path:\"Armi\"",
+      "color": {
+        "a": 1,
+        "rgb": 16502346
+      }
+    },
+    {
+      "query": "path:\"Doni\"",
+      "color": {
+        "a": 1,
+        "rgb": 14467194
+      }
+    },
+    {
+      "query": "path:\"Unioni\"",
+      "color": {
+        "a": 1,
+        "rgb": 10475232
+      }
+    },
+    {
+      "query": "path:\"Nemici\"",
+      "color": {
+        "a": 1,
+        "rgb": 12730669
+      }
+    },
+    {
+      "query": "path:\"Stati\"",
+      "color": {
+        "a": 1,
+        "rgb": 10844896
+      }
+    },
+    {
+      "query": "path:\"Reazioni\"",
+      "color": {
+        "a": 1,
+        "rgb": 13213951
+      }
+    },
+    {
+      "query": "path:\"Affinità\"",
+      "color": {
+        "a": 1,
+        "rgb": 12098164
+      }
+    },
+    {
+      "query": "path:\"Mosaici\"",
+      "color": {
+        "a": 1,
+        "rgb": 8832488
+      }
+    },
+    {
+      "query": "path:\"Stanze\"",
+      "color": {
+        "a": 1,
+        "rgb": 9075304
+      }
+    },
+    {
+      "query": "path:\"Oggetti\"",
+      "color": {
+        "a": 1,
+        "rgb": 7176076
+      }
+    },
+    {
+      "query": "path:\"Meccaniche\"",
+      "color": {
+        "a": 1,
+        "rgb": 7323466
+      }
+    },
+    {
+      "query": "path:\"Rarità\"",
+      "color": {
+        "a": 1,
+        "rgb": 16169066
+      }
+    },
+    {
+      "query": "path:\"Appunti\"",
+      "color": {
+        "a": 1,
+        "rgb": 16777215
+      }
+    }
+  ],
+  "nodeSizeMultiplier": 1.2,
+  "lineSizeMultiplier": 1,
+  "linkDistance": 180,
+  "repelStrength": 12
+}

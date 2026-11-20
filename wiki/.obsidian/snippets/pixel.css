@@ -1,0 +1,3 @@
+/* Sprite nitidi: niente sfumature quando Obsidian li ingrandisce (pixel art). */
+img[src*="_sprite"], .internal-embed img { image-rendering: pixelated; }
+.markdown-rendered .internal-embed img { margin-right: 12px; vertical-align: bottom; }

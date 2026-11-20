@@ -4,3 +4,8 @@ prove/
 .DS_Store
 *.keystore
 *.jks
+# la wiki di Obsidian si genera con npm run wiki: si tengono solo gli appunti di Edoardo e le impostazioni di Obsidian
+wiki/*
+!wiki/Appunti/
+!wiki/.obsidian/
+wiki/.obsidian/workspace*.json

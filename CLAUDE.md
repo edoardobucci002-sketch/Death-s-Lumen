@@ -98,6 +98,7 @@ Valgono finché il survivor e il gioco a stanze convivono sul ramo `prova` (deci
 4. **Una tappa non è finita finché `docs/GDD.md`, `docs/roadmap.md` e `docs/asset_da_creare.md` non riflettono il codice.** Prima di dire «fatto» controlla che i contenuti, i numeri e gli asset segnaposto descritti lì coincidano con `src/data/`, e riporta le simulazioni in `docs/bilanciamento.md`.
    - Lancia `npm run controlla-gdd`: confronta le tabelle del GDD con `src/data/`. **Se segnala differenze, la tappa non è finita.**
    - Il testo discorsivo del GDD lo script non lo vede: resta controllato a lettura.
+   - **Wiki dei contenuti** (`wiki/`, da Obsidian): si rigenera da sola con `npm run build`. Quando nasce un tipo di contenuto nuovo (un dato nuovo in `src/data/`: nemico, Eco, dono, Patto, stanza…) aggiungi le sue schede in `tools/wiki.mjs`, con sprite, numeri e collegamenti, e controlla che `npm run wiki` non lasci link rotti.
 5. **Decisioni che spettano a Edoardo**: alla fine di ogni tappa elencale, una per riga, in un blocco con questo titolo. Non scegliere tu i valori: se devi metterne uno per andare avanti, segnalo **«da rivedere»** nel GDD e nella roadmap («Da confermare»).
 6. Riassumi a Edoardo cosa è cambiato e come provarlo.
 7. **Il comportamento sul telefono si prova solo sull'APK**; il link serve per computer e amici. Ogni istruzione di prova per Edoardo indica una sola app e la firma da controllare.
@@ -118,6 +119,7 @@ Valgono finché il survivor e il gioco a stanze convivono sul ramo `prova` (deci
 | `docs/roadmap.md` | un solo piano: cosa è fatto, in corso e futuro |
 | `docs/asset_da_creare.md` | cosa Edoardo deve ancora disegnare e il segnaposto che c'è oggi |
 | `docs/proposte/` | archivio congelato delle proposte approvate: non si modifica |
+| `wiki/` | la wiki dei contenuti per Obsidian, **generata** da `tools/wiki.mjs` (`npm run wiki`, anche dentro `npm run build`): non si scrive a mano; `wiki/Appunti/` è di Edoardo e non si tocca |
 
 - **Decisioni superate**: non si cancellano, si ~~barrano~~ con l'indicazione di cosa le ha superate. Quello che Edoardo dice o propone dopo una decisione e che entra nel gioco diventa la novità (riga nuova, la vecchia barrata).
 - Un valore proposto da Claude e non ancora confermato da Edoardo si segna **«da rivedere»** dove compare, e va raccolto nell'elenco «Da confermare» di `docs/roadmap.md`.

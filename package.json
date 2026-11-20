@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc --noEmit && vite build && node tools/genera-sw.mjs",
+    "build": "tsc --noEmit && vite build && node tools/genera-sw.mjs && node tools/wiki.mjs",
+    "wiki": "node tools/wiki.mjs",
     "anteprima": "vite preview --host",
     "asset": "node tools/export-asset.mjs",
     "icone": "node tools/icone.mjs",
