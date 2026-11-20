@@ -12,6 +12,11 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 20/11 (sera) — Danno da contatto ad arco, deciso da Edoardo
+
+- **Contatto**: da un numero solo a un **arco**, come le armi. Ricaduto da 5 a **3–7**, Cantore da 5 a **2–5**, Campanaro da 10 a **11–15**, Seth da 10 a **11–19** (valori di Edoardo). La media resta quasi uguale per Ricaduto (5) e scende per il Cantore (3,5); per i capi sale (13 e 15).
+- `npm run sim-stanze -- 24`, stessi semi, contatto fisso · ad arco: Veglie finite 0 · **1**; nemici battuti 100,3 · 100,1; schivate 10,2 · 10,3; dove cade: Campanaro 19 · 20, Seth 4 · 2, prima del Campanaro 1 · 1. Nessuna differenza fuori dal rumore.
+
 ### 20/11 — Danno da contatto (numeri di Claude, *da rivedere*)
 
 - **Contatto**: Ricaduto e Cantore **5**, Campanaro e Seth **10** (`contatto` in `NEMICI_STANZA`, `CAMPANARO`, `SETH`). Criterio: un terzo del graffio (15) e meno del grumo (12), così toccare punisce ma pesa meno di un attacco preso in pieno; per i capi il doppio, sotto i loro attacchi (20–30). Con la Quiete di 0,5 s, restare addosso a un Ricaduto costa al massimo 10 di salute al secondo.

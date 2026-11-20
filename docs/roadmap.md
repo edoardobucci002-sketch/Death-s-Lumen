@@ -190,10 +190,7 @@ Soggetti approvati da Edoardo il 7/11, per il mondo del cimitero, dal meno impor
 
 - **Difficoltà scelta dal giocatore** (idea di Edoardo del 18/11, da Hades): dopo molte ore, personalizzare la Veglia con nemici più forti e il personaggio più debole. ~~Quando e come, da decidere.~~ **Sono i Patti** (19/11): il prossimo dei tre lavori.
 
-| Da rivedere (danno da contatto, 20/11) | Dove |
-| --- | --- |
-| Danno da contatto: Ricaduto e Cantore 5, Campanaro e Seth 10 | `contatto` in `src/data/stanze.ts`, `campanaro.ts`, `seth.ts`; GDD «Valore dei nemici» |
-| Contatto senza spinta: il Lampionaio non viene respinto quando tocca un nemico | `src/sistema/nemici-stanza.ts` |
+- **Archi di danno degli attacchi dei nemici** (regola di Edoardo del 20/11: il danno di ogni nemico è sempre un arco): oggi solo il contatto ha l'arco; graffio (15), grumo (12), pozza (6), Rintocco e anello (20), Carica (25), Falciata (25), Falci (16), Passo (30), detriti (12) aspettano i valori di Edoardo.
 
 | Da rivedere (Mosaici e Vetrate, 19/11) | Dove |
 | --- | --- |
