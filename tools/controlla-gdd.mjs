@@ -917,6 +917,7 @@ const tipo = (id) => N.NEMICI.find((t) => t.id === id);
     ['Ricaduto', 'salute {}, velocità {} px/s, corpo {} px', RI.salute, RI.velocita, RI.raggio],
     ['Graffio', 'avviso {} s da {} px; spicchio di {} px e {}°; danno {}; fermo {} s dopo', RI.avviso, RI.portata, RI.graffio.raggio, RI.graffio.ampiezza, RI.graffio.danno, RI.recupero],
     ['Rinascita', '{}%, dopo {} s a terra, con il {}% della salute', pct(RI.rinascita.probabilita), RI.rinascita.attesa, pct(RI.rinascita.salute)],
+    ['Contatto', 'Ricaduto {}, Cantore {}', RI.contatto, CA.contatto],
     ['Cantore', 'salute {}, velocità {} px/s, corpo {} px, tra {} e {} px', CA.salute, CA.velocita, CA.raggio, CA.distanza.minima, CA.distanza.massima],
     ['Avviso del canto', '{} s entro {} px; primo canto dopo {} s; ricarica {} s', CA.avviso, CA.portata, CA.primoCanto, CA.ricarica],
     ['Grumo', 'velocità {} px/s, raggio {} px, danno {}; ti cerca per {} s, al massimo {}°/s', CA.grumo.velocita, CA.grumo.raggio, CA.grumo.danno, CA.grumo.ricerca, CA.grumo.virata],

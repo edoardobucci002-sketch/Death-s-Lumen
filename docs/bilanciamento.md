@@ -12,6 +12,12 @@ Le regole vincolanti del gioco a stanze sono **sospese** finché non ci sono il 
 
 ## Registro
 
+### 20/11 — Danno da contatto (numeri di Claude, *da rivedere*)
+
+- **Contatto**: Ricaduto e Cantore **5**, Campanaro e Seth **10** (`contatto` in `NEMICI_STANZA`, `CAMPANARO`, `SETH`). Criterio: un terzo del graffio (15) e meno del grumo (12), così toccare punisce ma pesa meno di un attacco preso in pieno; per i capi il doppio, sotto i loro attacchi (20–30). Con la Quiete di 0,5 s, restare addosso a un Ricaduto costa al massimo 10 di salute al secondo.
+- Il bot ora sta lontano anche dal corpo del Cantore (prima evitava solo Ricaduti e capi).
+- `npm run sim-stanze -- 24`, stessi semi, prima · dopo: Veglie finite **1 · 0**; nemici battuti a Veglia 96,7 · 100,3; schivate perfette 9,6 · 10,2; dove cade: Campanaro 20 · 19, Seth 1 · 4, prima del Campanaro 2 · 1. Differenze dentro il rumore: il bot sta già lontano dai nemici, quindi il contatto lo tocca poco. Chi gioca a mano e passa in mezzo ai nemici lo sentirà di più.
+
 ### 19/11 — I doni dei mosaici: prima misura
 
 - Numeri di partenza di Claude (*da rivedere*): Fiamma custodita +30% entro 80 px; Ultimo cero 9 ceri da +4%; Brace nel petto 24 danni ogni 0,5 s entro 40 px; Mano tesa +12 salute a schivata perfetta; Corona incrinata +60% ai capi e +15% subito da loro. Mosaico ritrovato: 10 Cera.

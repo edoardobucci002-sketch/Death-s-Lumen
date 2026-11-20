@@ -16,6 +16,7 @@ export const SETH = {
   sprite: 'Il_Mietitore', // lo sprite del survivor (walk, hurt, special); attack e death sono da disegnare
   salute: 11000, // misurata con il bot (18/11), con le resistenze di Seth agli stati: obiettivo 90–120 s (da rivedere)
   raggio: 30, // il corpo
+  contatto: 10, // danno a chi lo tocca (20/11, da rivedere)
   velocita: 80, // camminando verso di te tra un attacco e l'altro
   pausa: 1.2, // secondi di camminata tra un attacco e il successivo
   vicino: 200, // più vicino di così sceglie la Falciata, più lontano le Falci spettrali

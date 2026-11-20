@@ -124,6 +124,8 @@ export class BotStanze {
         }
       } else if (ricaduto && d < R.portata + corpo + m) {
         s += (R.portata + corpo + m - d) * B.pesi.vicino; // troppo vicino a un Ricaduto: sta per graffiare
+      } else if (!ricaduto && d < C.raggio + corpo + m) {
+        s += (C.raggio + corpo + m - d) * B.pesi.vicino; // addosso a un Cantore: il contatto ferisce
       }
     }
     // i grumi: dove saranno tra poco (in linea retta)

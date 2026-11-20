@@ -493,7 +493,7 @@ scheda('Reazioni', 'Reazioni', {
     tipo: 'Nemico', tag: ['base', 'corpo-a-corpo'], immagini: [sprite(R.sprite, ['walk'])],
     citazione: 'Cammina dritto e lento verso di te; vicino si ferma, prepara il graffio e graffia davanti a sé.',
     righe: [
-      ['Salute', num(R.salute)], ['Velocità', `${num(R.velocita)} px/s`], ['Corpo', `${num(R.raggio)} px`],
+      ['Salute', num(R.salute)], ['Velocità', `${num(R.velocita)} px/s`], ['Corpo', `${num(R.raggio)} px`], ['Contatto', `${num(R.contatto)} danno a chi lo tocca`],
       ['Graffio', `${num(R.graffio.danno)} danno, spicchio di ${num(R.graffio.ampiezza)}° e ${num(R.graffio.raggio)} px`],
       ['Avviso', `si ferma a ${num(R.portata)} px, ${L('Glossario#Carica', 'carica')} di ${num(R.avviso)} s (spicchio rosso a terra)`],
       ['Recupero', `${num(R.recupero)} s`],
@@ -506,7 +506,7 @@ scheda('Reazioni', 'Reazioni', {
     tipo: 'Nemico', tag: ['base', 'a-distanza'], immagini: [sprite(C.sprite, ['walk']), sprite(N.effetti.grumo), sprite(N.effetti.pozza)],
     citazione: 'Resta a distanza; si ferma, a terra compare una linea verso di te, poi lancia un grumo di Lumen spento che ti cerca.',
     righe: [
-      ['Salute', num(C.salute)], ['Velocità', `${num(C.velocita)} px/s`], ['Corpo', `${num(C.raggio)} px`],
+      ['Salute', num(C.salute)], ['Velocità', `${num(C.velocita)} px/s`], ['Corpo', `${num(C.raggio)} px`], ['Contatto', `${num(C.contatto)} danno a chi lo tocca`],
       ['Distanza', `tra ${num(C.distanza.minima)} e ${num(C.distanza.massima)} px; canta entro ${num(C.portata)} px`],
       ['Avviso', `${num(C.avviso)} s (linea arancione a terra)`], ['Ricarica', `${num(C.ricarica)} s tra un canto e l'altro`],
       ['Grumo', `${num(C.grumo.danno)} danno, ${num(C.grumo.velocita)} px/s, ti cerca per ${num(C.grumo.ricerca)} s (virata ${num(C.grumo.virata)}°/s)`],
@@ -521,7 +521,7 @@ scheda('Reazioni', 'Reazioni', {
     citazione: 'Custode della cripta, con la sua campana. Sotto metà salute aggiunge la Chiamata e attacca più in fretta.',
     righe: [
       ['Dove', `la ${L('Mappa del Mondo', 'stanza doppia')} a metà strada tra ingresso e Boss`],
-      ['Salute', num(K.salute)], ['Velocità', `${num(K.velocita)} px/s`], ['Corpo', `${num(K.raggio)} px`],
+      ['Salute', num(K.salute)], ['Velocità', `${num(K.velocita)} px/s`], ['Corpo', `${num(K.raggio)} px`], ['Contatto', `${num(K.contatto)} danno a chi lo tocca`],
       ['Rintocco', `disco di ${num(K.rintocco.raggio)} px, avviso ${num(K.rintocco.avviso)} s, ${num(K.rintocco.danno)} danno`],
       ['Anello (fase 2)', `fino a ${num(K.anello.raggio)} px, avviso ${num(K.anello.avviso)} s, ${num(K.anello.danno)} danno`],
       ['Carica', `linea larga ${num(K.carica.larghezza)} px, avviso ${num(K.carica.avviso)} s, ${num(K.carica.danno)} danno; contro il muro resta stordito ${num(K.carica.stordito)} s`],
@@ -537,7 +537,7 @@ scheda('Reazioni', 'Reazioni', {
     citazione: 'Il Boss del Mondo 1. Battuto, il Mondo è completato.',
     righe: [
       ['Dove', `la ${L('Stanza del Boss')}`],
-      ['Salute', num(Z.salute)], ['Velocità', `${num(Z.velocita)} px/s`], ['Corpo', `${num(Z.raggio)} px`],
+      ['Salute', num(Z.salute)], ['Velocità', `${num(Z.velocita)} px/s`], ['Corpo', `${num(Z.raggio)} px`], ['Contatto', `${num(Z.contatto)} danno a chi lo tocca`],
       ['Falciata', `spicchio di ${num(Z.falciata.ampiezza)}° e ${num(Z.falciata.raggio)} px, avviso ${num(Z.falciata.avviso)} s, ${num(Z.falciata.danno)} danno`],
       ['Falci spettrali', `${Z.falci.quante} falci a ventaglio di ${num(Z.falci.ventaglio)}°, avviso ${num(Z.falci.avviso)} s, ${num(Z.falci.danno)} danno ciascuna`],
       ['Passo della Morte', `un attacco su ${Z.passoOgni}: cerchio di ${num(Z.passo.raggio)} px sotto di te, avviso ${num(Z.passo.avviso)} s, ${num(Z.passo.danno)} danno`],
