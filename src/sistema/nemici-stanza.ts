@@ -485,15 +485,24 @@ export class NemiciStanza {
       o.x[i] = Phaser.Math.Clamp(o.x[i], a.x0, a.x1);
       o.y[i] = Phaser.Math.Clamp(o.y[i], a.y0, a.y1);
     }
-    // danno da contatto (Edoardo, 20/11): chi tocca il personaggio lo ferisce; non chi è a terra, sepolto o fermato
+    // danno da contatto (Edoardo, 20/11): chi tocca il personaggio lo ferisce, con un numero a caso nel suo arco
+    // (da… a…); non chi è a terra, sepolto o fermato. Se lo toccano in tanti conta quello con l'arco più alto
+    let arco: readonly number[] | null = null, arcoCapo = false;
     for (let i = 0; i < o.numero; i++) {
       if (this.stato[i] === STATO.aTerra || this.fermi[i] || o.salute[i] <= 0) continue;
       const r = o.raggio[i] + this.corpo, ex = o.x[i] - px, ey = o.y[i] - py;
       if (ex * ex + ey * ey >= r * r) continue;
       const t = o.tipo[i];
-      if (t === ID_CAMPANARO) dCapo = Math.max(dCapo, CAMPANARO.contatto);
-      else if (t === ID_SETH) dCapo = Math.max(dCapo, SETH.contatto);
-      else danno = Math.max(danno, t === ID_RICADUTO ? R.contatto : C.contatto);
+      const a = t === ID_CAMPANARO ? CAMPANARO.contatto : t === ID_SETH ? SETH.contatto : t === ID_RICADUTO ? R.contatto : C.contatto;
+      if (!arco || a[1] > arco[1]) {
+        arco = a;
+        arcoCapo = t === ID_CAMPANARO || t === ID_SETH;
+      }
+    }
+    if (arco) {
+      const d = this.caso.intero(arco[0], arco[1]);
+      if (arcoCapo) dCapo = Math.max(dCapo, d);
+      else danno = Math.max(danno, d);
     }
     dCapo = Math.max(dCapo, this.seth.proiettili(this, dt, px, py));
     danno = Math.max(danno, this.aggiornaGrumi(dt, px, py));

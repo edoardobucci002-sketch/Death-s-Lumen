@@ -14,7 +14,7 @@ export const CAMPANARO = {
   sprite: 'Campanaro', // V1 del 19/11: pose di ChatGPT riportate alla griglia, animazioni di PixelLab (NEMICI/Campanaro)
   salute: 3000, // da rivedere (17/11: con 1200 il bot lo batteva in circa 10 s; obiettivo 60–90 s)
   raggio: 24, // il corpo
-  contatto: 10, // danno a chi lo tocca (20/11, da rivedere)
+  contatto: [11, 15], // danno a chi lo tocca, da… a… (Edoardo, 20/11)
   velocita: 70, // camminando verso di te tra un attacco e l'altro
   pausa: 1.3, // secondi di camminata tra un attacco e il successivo
   vicino: 170, // più vicino di così sceglie il Rintocco, più lontano la Carica

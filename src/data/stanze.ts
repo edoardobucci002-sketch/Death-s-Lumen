@@ -150,7 +150,8 @@ export const NEMICI_STANZA = {
     portata: 56, // a questa distanza si ferma e comincia l'avviso
     avviso: 0.5, // secondi tra l'avviso e il graffio: la direzione è decisa all'inizio dell'avviso
     graffio: { raggio: 72, ampiezza: 110, danno: 15 }, // spicchio davanti a lui
-    contatto: 5, // danno a chi lo tocca (Edoardo, 20/11: i nemici fanno danno da contatto; 5 è di Claude, da rivedere)
+    // danno a chi lo tocca, da… a… (Edoardo, 20/11: i nemici fanno danno da contatto, sempre come arco di numeri)
+    contatto: [3, 7],
     recupero: 0.7, // secondi fermo dopo il graffio
     // battuto, resta sempre a terra «attesa» secondi, senza segni e senza poter essere colpito; poi con questa probabilità
     // si rialza con questa parte della salute (una volta sola), se no sparisce (decisione di Edoardo del 13/11)
@@ -164,7 +165,7 @@ export const NEMICI_STANZA = {
     salute: 35, // 35 dal 14/11 (Edoardo; era 20, poi 30): con la Lanterna 12–18 servono 2 o 3 colpi
     velocita: 75,
     raggio: 15,
-    contatto: 5, // danno a chi lo tocca (20/11, da rivedere)
+    contatto: [2, 5], // danno a chi lo tocca, da… a… (Edoardo, 20/11)
     distanza: { minima: 200, massima: 250 }, // sotto si allontana, sopra si avvicina
     portata: 360, // canta solo se sei entro questa distanza
     primoCanto: 1.2, // secondi dopo la comparsa prima del primo canto
