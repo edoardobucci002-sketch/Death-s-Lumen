@@ -187,6 +187,8 @@ Soggetti approvati da Edoardo il 7/11, per il mondo del cimitero, dal meno impor
 
 ## Da confermare
 
+- **Effetto CRT** (23/11, proposte di Claude *da rivedere*): spento di serie; curvatura 0,08, rosso e blu sfasati di 0,4 px, sfocatura 0,3, bloom 0,45 (soglia 0,5, raggio 3 px), righe al 32% spesse un terzo di riga, bordi in ombra dal 55% fino al 50%, grana 0,05; solo sopra il mondo, non sopra HUD e pulsanti; interruttore nella pausa del gioco a stanze accanto a Menu (`src/data/crt.ts`; LAB → Schermo → «Effetto CRT»). Da provare sul S25, anche i fotogrammi al secondo.
+
 
 - **Difficoltà scelta dal giocatore** (idea di Edoardo del 18/11, da Hades): dopo molte ore, personalizzare la Veglia con nemici più forti e il personaggio più debole. ~~Quando e come, da decidere.~~ **Sono i Patti** (19/11): il prossimo dei tre lavori.
 

@@ -35,7 +35,10 @@ html, body {
   -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
 }
 #gioco { position: fixed; inset: 0; display: grid; place-items: center; }
-#gioco canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+#gioco canvas { grid-area: 1 / 1; image-rendering: pixelated; image-rendering: crisp-edges; }
+/* effetto CRT (src/sistema/crt.ts): sopra la tela, stessa misura e stesso centro; non si tocca */
+#gioco > .crt { grid-area: 1 / 1; pointer-events: none; }
+#gioco > .crt[hidden] { display: none; }
 #interfaccia { position: fixed; inset: 0; pointer-events: none; }
 #interfaccia > * { pointer-events: auto; }
 button { font: inherit; color: inherit; cursor: pointer; }
@@ -395,6 +398,7 @@ p.hud-pannello-testo { white-space: pre-line; line-height: 1.25; font-family: va
 .stanze-pausa { background-repeat: repeat; image-rendering: pixelated; }
 .stanze-ruota { background: var(--sfondo); }
 .stanze-pausa[hidden], .stanze-ruota[hidden] { display: none; }
+.stanze-riga { display: flex; gap: 24px; }
 .stanze-tasto { min-width: 44px; min-height: 52px; padding: 10px 24px; background: var(--pannello); border: 2px solid var(--accento); cursor: pointer; }
 .menu-testata .menu-stanze, .menu-testata .menu-continua { margin-top: 10px; min-height: 44px; padding: 6px 14px; font-size: 16px; }
 .stanze-linea { position: fixed; top: 0; bottom: 0; left: 50%; width: 0; border-left: 2px dashed #a57ae0; pointer-events: none; z-index: 1; }

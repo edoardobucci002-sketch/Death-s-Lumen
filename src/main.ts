@@ -13,6 +13,7 @@ import { calcolaMisure } from './sistema/pixel';
 import { avviaAggiornamenti } from './sistema/aggiornamenti';
 import { avviaIndietro } from './sistema/indietro';
 import { avviaMobile, nativo, schermoAcceso } from './sistema/mobile';
+import { avviaCrt } from './sistema/crt';
 
 const m = calcolaMisure();
 
@@ -39,6 +40,8 @@ const gioco = new Phaser.Game({
   scene: [Avvio, Menu, Gioco, Stanze],
 });
 gioco.registry.set('scala', m.scala);
+// effetto CRT (src/sistema/crt.ts): un velo sopra la tela, appena Phaser l'ha creata
+gioco.events.once(Phaser.Core.Events.READY, () => avviaCrt(gioco, document.getElementById('gioco')!));
 
 let attesa = 0;
 function ridimensiona(): void {

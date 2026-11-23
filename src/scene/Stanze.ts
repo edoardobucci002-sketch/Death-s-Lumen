@@ -15,7 +15,7 @@
  * Sosta (18/11): al centro un oggetto da toccare, il forziere (3 carte rare) e la fonte (fiaschetta piena).
  * Il gioco a stanze è in orizzontale: sul telefono in verticale si ferma e chiede di ruotarlo.
  * Pausa con il pulsante provvisorio in alto a destra (piccolo, area di tocco di 44 punti), P o Esc, Indietro e quando l'app va in secondo piano (pausa provvisoria:
- * Riprendi e Menu). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
+ * Riprendi, Menu e l'effetto CRT). La logica avanza a passo fisso (60 al secondo), il disegno arrotonda tutto al pixel.
  * Nell'indirizzo, per le prove: ?stanze (salta il menu; solo sul link di prova, in sviluppo e nelle prove automatiche).
  */
 import Phaser from 'phaser';
@@ -61,6 +61,7 @@ import { Effetti, PROFONDITA } from '../sistema/effetti';
 import { AttaccoATasto } from '../sistema/attacco';
 import { COLPI } from '../data/armi';
 import { audioAttivo, impostaAudio, suona } from '../sistema/audio';
+import { crtAcceso, impostaCrt } from '../sistema/crt';
 import { CHIAVI_ALONE, CHIAVI_BUIO, creaBuio } from '../sistema/luce';
 import { Ombre } from '../sistema/ombre';
 import { MISURA, areaCamminabile, creaStanza, eDoppia, misuraStanza } from '../sistema/stanza';
@@ -1418,7 +1419,18 @@ export class Stanze extends Phaser.Scene {
     const menu = this.tastoScritta('Menu', () => this.scene.start('Menu'));
     this.mappaPausa = document.createElement('canvas');
     this.mappaPausa.className = 'stanze-mappa-pausa';
-    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), this.mappaPausa, riprendi, menu);
+    // effetto CRT (src/sistema/crt.ts): accanto a Menu; la scritta dice se è acceso
+    const crt = this.tastoScritta(crtAcceso() ? 'CRT acceso' : 'CRT spento', () => {
+      impostaCrt(!crtAcceso());
+      crt.replaceChildren(this.scrittaPixel(crtAcceso() ? 'CRT acceso' : 'CRT spento', ''));
+      crt.setAttribute('aria-pressed', String(crtAcceso()));
+      this.disponi();
+    });
+    crt.setAttribute('aria-pressed', String(crtAcceso()));
+    const riga = document.createElement('div');
+    riga.className = 'stanze-riga';
+    riga.append(menu, crt);
+    this.pannelloPausa.append(this.scrittaPixel('Pausa', 'stanze-titolo'), this.mappaPausa, riprendi, riga);
     this.minimappa = document.createElement('canvas');
     this.minimappa.className = 'stanze-minimappa';
     this.avvisoRuota = document.createElement('div');

@@ -39,6 +39,8 @@ import * as mosaici from '../data/mosaici';
 import * as mappa from '../data/mappa';
 import type { Mappa } from './mappa';
 import * as campanaro from '../data/campanaro';
+import * as crt from '../data/crt';
+import { crtAcceso, impostaCrt } from './crt';
 import * as seth from '../data/seth';
 import { ECHI_STANZE } from '../data/armi-stanze';
 import * as doni from '../data/doni';
@@ -59,7 +61,7 @@ import * as stanze from '../data/stanze';
 import * as unioni from '../data/unioni';
 
 const CHIAVE_NUMERI = 'dl-lab-numeri';
-const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, doni, effetti, hud, mappa, meta, mondo, mosaici, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, seth, sopravvivenza, stanze, stati, unioni, unioniStanze };
+const MODULI: Record<string, Record<string, unknown>> = { abilita, armi, armiStanze, campanaro, crt, doni, effetti, hud, mappa, meta, mondo, mosaici, nemici, oggetti, personaggi, progressione, rarita, rompibili, rosario, seth, sopravvivenza, stanze, stati, unioni, unioniStanze };
 
 // ——— Numeri di src/data/ ———
 type Nodo = Record<string, unknown>;
@@ -736,6 +738,11 @@ export function avviaLaboratorio(gioco: Phaser.Game): void {
         window.dispatchEvent(new Event('resize')); // abilità, fiaschetta e HUD si rimettono al loro posto
         ridisegna();
       }, scambiati ? 'acceso' : '')),
+      titolo('Effetto CRT'),
+      riga(
+        tasto(crtAcceso() ? 'CRT: acceso' : 'CRT: spento', () => { impostaCrt(!crtAcceso()); ridisegna(); }, crtAcceso() ? 'acceso' : ''),
+      ),
+      el('p', 'lab-nota', 'Vecchio televisore sopra il mondo (non sopra HUD e pulsanti): curvatura, rosso e blu sfasati, sfocatura, bloom delle luci, righe scure, bordi in ombra e grana. Si accende anche dalla pausa del gioco a stanze e resta acceso o spento sul dispositivo. Numeri in Numeri → crt → CRT (ognuno a 0 si spegne), si vedono subito. Per il peso sul telefono: accendi il contatore qui sotto e confronta con il CRT acceso e spento.'),
       titolo('Prova prestazioni'),
       el('p', 'lab-nota', 'Un tocco e aspetta un minuto senza toccare niente: alla fine c\'è un testo da copiare. Da una partita chiede conferma, la chiude, torna al menu e parte da lì; Cera, record e sblocchi non cambiano.'),
       riga(tasto(INTERRUTTORI.provaConEffetti ? 'Con effetti: sì' : 'Con effetti: no', () => { INTERRUTTORI.provaConEffetti = !INTERRUTTORI.provaConEffetti; ridisegna(); }, INTERRUTTORI.provaConEffetti ? 'acceso' : '')),

@@ -74,14 +74,14 @@ export function avviaMobile(a: Ascoltatori): void {
   });
 }
 
-function leggi(chiave: string): string | null {
+export function leggi(chiave: string): string | null {
   try {
     return localStorage.getItem(chiave);
   } catch {
     return null;
   }
 }
-function scrivi(chiave: string, valore: string): void {
+export function scrivi(chiave: string, valore: string): void {
   try {
     localStorage.setItem(chiave, valore);
   } catch {
