@@ -1519,6 +1519,18 @@ for (const [nome, disp] of [
       if (await pag.evaluate(() => document.querySelector('.stanze-capo').hidden)) errori.push('la barra del Campanaro non si vede');
       await L('attaccoCampanaro', 'carica');
       await pag.waitForTimeout(500);
+      // la posa della mira secondo la direzione (24/11): di lato entro «diagonale» gradi, poi in su o in giù; guarda dove corre
+      const pc = await pag.evaluate(() => {
+        const s = window.__dl.scene.getScene('Stanze'), n = s.nemici, c = n.capo, i = n.indiceCapo(), sp = n.orda.spriteDi(i);
+        const spe = s.anims.get('Campanaro:special');
+        return { mira: c.mossa === 3, dx: c.dirX, dy: c.dirY, k: c.spicchio(spe), frame: String(sp.frame.name), flip: sp.flipX, special: spe.frames.map((f) => String(f.textureFrame)) };
+      });
+      if (pc.mira && pc.special.length >= 6) {
+        const k = pc.k;
+        if ((k === 2 && pc.dy >= 0) || (k === 4 && pc.dy <= 0) || (k === 0 && Math.abs(pc.dy) > 0.9)) errori.push(`la mira del Campanaro (${pc.dx.toFixed(2)}, ${pc.dy.toFixed(2)}) sceglie la posa ${k}`);
+        if (pc.frame !== pc.special[k]) errori.push(`la mira del Campanaro (${pc.dx.toFixed(2)}, ${pc.dy.toFixed(2)}) mostra ${pc.frame}, non ${pc.special[k]}`);
+        if (Math.abs(pc.dx) > 0.01 && pc.flip !== pc.dx < 0) errori.push('durante la mira il Campanaro non guarda dove corre');
+      } else if (!pc.mira) errori.push('il Campanaro non prende la mira della Carica');
       if (nome === 'stanze-desktop') await pag.screenshot({ path: `prove/${nome}-campanaro.png` });
       await L('ripulisci');
       if (!(await quando('l.stato().carteAperte', '', 3000))) errori.push('dopo il Campanaro le carte non arrivano');

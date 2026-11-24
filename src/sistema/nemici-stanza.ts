@@ -361,7 +361,9 @@ export class NemiciStanza {
         const passo = dt * o.fattoreVelocita(i, false) * (dentroCerchio ? 1 - this.cerchioLento : 1);
         dCapo = Math.max(dCapo, this.capo.passo(this, i, dt, passo, px, py));
         this.stato[i] = this.capo.inAvviso ? STATO.avviso : STATO.cammina;
-        if (Math.abs(px - o.x[i]) > 1 && !this.capo.inAvviso) this.verso[i] = px < o.x[i] ? 1 : 0;
+        const vc = this.capo.versoCarica;
+        if (vc !== 0) this.verso[i] = vc < 0 ? 1 : 0;
+        else if (Math.abs(px - o.x[i]) > 1 && !this.capo.inAvviso) this.verso[i] = px < o.x[i] ? 1 : 0;
         continue;
       }
       if (o.tipo[i] === ID_SETH) {

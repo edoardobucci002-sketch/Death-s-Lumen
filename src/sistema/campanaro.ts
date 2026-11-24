@@ -207,9 +207,9 @@ export class Campanaro {
       case MOSSA_CAPO.chiamata:
         return f(att, Math.min(meta - 1, Math.floor(pieno * meta)));
       case MOSSA_CAPO.mira:
-        return f(spe, 0);
+        return f(spe, this.spicchio(spe));
       case MOSSA_CAPO.carica:
-        return f(spe, 1);
+        return f(spe, this.spicchio(spe) + 1);
       case MOSSA_CAPO.stordito:
         return f(att, att.frames.length - 1);
       case MOSSA_CAPO.recupero: // subito dopo il Rintocco, finché si vede l'onda, la campana a terra (il colpo)
@@ -217,6 +217,21 @@ export class Campanaro {
       default:
         return this.onda > 0 ? f(att, meta) : null;
     }
+  }
+
+  /**
+   * Quale coppia di «special» (mira, corsa) secondo la direzione della Carica: 0 di lato, 2 in diagonale in su, 4 in
+   * diagonale in giù. Con uno sprite di sole 2 pose resta di lato.
+   */
+  private spicchio(spe: Phaser.Animations.Animation): number {
+    if (spe.frames.length < 6 || Math.abs(this.dirY) <= Math.sin((K.carica.diagonale * Math.PI) / 180)) return 0;
+    return this.dirY < 0 ? 2 : 4;
+  }
+
+  /** Durante la mira e la corsa guarda dove corre, non il personaggio (−1 sinistra, 1 destra, 0 = come prima). */
+  get versoCarica(): number {
+    if (this.mossa !== MOSSA_CAPO.mira && this.mossa !== MOSSA_CAPO.carica) return 0;
+    return this.dirX < -0.01 ? -1 : this.dirX > 0.01 ? 1 : 0;
   }
 
   /**

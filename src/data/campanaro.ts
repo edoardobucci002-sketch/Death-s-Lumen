@@ -22,7 +22,10 @@ export const CAMPANARO = {
   rintocco: { avviso: 1.0, raggio: 150, onda: 0.25, danno: 20, recupero: 0.7 },
   // fase 2: dopo il disco, l'anello tra il raggio del Rintocco e questo, con il suo avviso
   anello: { raggio: 260, avviso: 0.7, danno: 20 },
-  carica: { avviso: 0.8, larghezza: 44, velocita: 520, danno: 25, stordito: 1.5, recupero: 0.4 },
+  carica: { avviso: 0.8, larghezza: 44, velocita: 520, danno: 25, stordito: 1.5, recupero: 0.4,
+    // la posa della mira e della corsa: di lato se la Carica va entro tanti gradi dall'orizzontale, altrimenti la
+    // diagonale in su o in giù (anche dritto in verticale); a sinistra il gioco ribalta (Edoardo, 24/11)
+    diagonale: 30 },
   chiamata: { avviso: 0.8, ricaduti: 2, ogni: 3, recupero: 0.6 }, // ogni: un attacco su tre in fase 2
   fase2: { soglia: 0.5, ritmo: 0.8 }, // sotto metà salute: pause e avvisi all'80% (gli attacchi arrivano il 20% prima)
   // la ricompensa: «sorsi» sorsi della fiaschetta (decisione di Edoardo del 17/11: un sorso vero, non più una cura diretta;
